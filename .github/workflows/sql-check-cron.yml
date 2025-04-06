@@ -1,0 +1,42 @@
+name: 定时执行SQL检查
+
+on:
+  schedule:
+    # 每天北京时间上午10点执行（UTC时间2点）
+    - cron: '0 2 * * *'
+  # 允许手动触发工作流
+  workflow_dispatch:
+
+jobs:
+  run-sql-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+      
+      - name: 设置Node.js环境
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: 安装依赖
+        run: npm ci
+      
+      - name: 创建环境变量文件
+        run: |
+          echo "# db config" > .env.loval
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.loval
+          echo "# Slack webhook" >> .env.loval
+          echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}" >> .env.loval
+          echo "# env" >> .env.loval
+          echo "NODE_ENV=production" >> .env.loval
+      
+      - name: 执行SQL检查脚本
+        run: npx ts-node scripts/sql_scripts/run_sql.ts check_order_duplicates
+      
+      - name: 检查执行结果
+        if: ${{ failure() }}
+        run: |
+          echo "::error::SQL检查脚本执行失败" 
