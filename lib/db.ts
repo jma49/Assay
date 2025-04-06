@@ -2,7 +2,7 @@ import { Pool, QueryResult } from "pg";
 import dotenv from "dotenv";
 
 // 加载环境变量
-dotenv.config({ path: ".env.loval" });
+dotenv.config({ path: ".env.local" });
 
 // 创建数据库连接池
 const pool = new Pool({
