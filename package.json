@@ -6,22 +6,31 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "sql:check": "ts-node scripts/sql_scripts/run_sql.ts check_order_duplicates",
+    "sql:run": "ts-node scripts/sql_scripts/run_sql.ts"
   },
   "dependencies": {
+    "@types/axios": "^0.9.36",
+    "@types/dotenv": "^6.1.1",
+    "axios": "^1.8.4",
+    "dotenv": "^16.4.7",
+    "next": "15.2.4",
+    "pg": "^8.14.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "next": "15.2.4"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.11.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
-    "@eslint/eslintrc": "^3"
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.1",
+    "typescript": "^5"
   }
 }
