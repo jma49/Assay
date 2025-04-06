@@ -1,42 +1,53 @@
-name: 定时执行SQL检查
+name: SQL Script Cron Job
 
 on:
   schedule:
-    # 每天北京时间上午10点执行（UTC时间2点）
-    - cron: '0 2 * * *'
-  # 允许手动触发工作流
+    # Run daily at 7:00 PM UTC (2:00 PM Central Time/Chicago)
+    - cron: '0 19 * * *'
+  # Allow manual workflow triggering
   workflow_dispatch:
+
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
 jobs:
   run-sql-check:
     runs-on: ubuntu-latest
     
     steps:
-      - name: 检出代码
+      - name: Checkout repository
         uses: actions/checkout@v3
-      
-      - name: 设置Node.js环境
+        
+      - name: Setup Node.js environment
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'npm'
-      
-      - name: 安装依赖
+          
+      - name: Install dependencies
         run: npm ci
-      
-      - name: 创建环境变量文件
+        
+      - name: Create environment file
         run: |
-          echo "# db config" > .env.loval
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.loval
-          echo "# Slack webhook" >> .env.loval
-          echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}" >> .env.loval
-          echo "# env" >> .env.loval
-          echo "NODE_ENV=production" >> .env.loval
-      
-      - name: 执行SQL检查脚本
+          echo "# db config" > .env.local
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.local
+          echo "# Notification webhooks" >> .env.local
+          echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}" >> .env.local
+          echo "# env" >> .env.local
+          echo "NODE_ENV=production" >> .env.local
+          
+      - name: Execute SQL check script
+        id: sql-check
         run: npx ts-node scripts/sql_scripts/run_sql.ts check_order_duplicates
-      
-      - name: 检查执行结果
-        if: ${{ failure() }}
+        
+      - name: Send success notification
+        if: success()
         run: |
-          echo "::error::SQL检查脚本执行失败" 
+          curl -X POST -H "Content-Type: application/json" -d "{\"text\":\"✅ SQL Check Succeeded: Script executed successfully on $(date)\nView Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" ${{ secrets.SLACK_WEBHOOK_URL }}
+          
+      - name: Send failure notification
+        if: failure()
+        run: |
+          curl -X POST -H "Content-Type: application/json" -d "{\"text\":\"🚨 SQL Check Failed: Script execution failed on $(date)\nCheck logs for details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" ${{ secrets.SLACK_WEBHOOK_URL }}
+          echo "::error::SQL check script execution failed"
