@@ -58,7 +58,7 @@ npm run sql:run -- path/to/your/sql/file.sql
 
 该项目配置了 GitHub Actions 工作流，会按照以下时间表自动执行：
 
-- 每天北京时间上午 10 点执行 Square 订单重复检查
+- 每天芝加哥时间下午 2 点执行 Square 订单重复检查
 - 将检查结果通过 Slack 通知
 
 ## 添加新的 SQL 脚本
