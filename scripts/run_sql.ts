@@ -32,36 +32,12 @@ async function sendSlackNotification(
       return;
     }
 
-    await axios.post(webhookUrl, {
-      blocks: [
-        {
-          type: "header",
-          text: {
-            type: "plain_text",
-            text: `SQL脚本执行${isError ? "失败" : "成功"}: ${title}`,
-            emoji: true,
-          },
-        },
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: message,
-          },
-        },
-        {
-          type: "context",
-          elements: [
-            {
-              type: "mrkdwn",
-              text: `*执行时间*: ${new Date().toLocaleString("zh-CN", {
-                timeZone: "Asia/Shanghai",
-              })}`,
-            },
-          ],
-        },
-      ],
-    });
+    // 使用最基础的Slack消息格式
+    const formattedMessage = `*${title}*\n${
+      isError ? "❌ 错误" : "✅ 成功"
+    }\n\n${message}`;
+
+    await axios.post(webhookUrl, { text: formattedMessage });
     console.log("Slack通知已发送");
   } catch (error) {
     console.error("发送Slack通知失败:", error);
@@ -227,3 +203,6 @@ if (require.main === module) {
     process.exit(1);
   });
 }
+
+// 导出函数供测试使用
+export { sendSlackNotification };
