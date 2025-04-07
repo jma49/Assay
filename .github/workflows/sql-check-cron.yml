@@ -2,9 +2,7 @@ name: SQL Script Cron Job
 
 on:
   schedule:
-    # Run daily at 7:00 PM UTC (2:00 PM Central Time/Chicago)
-    - cron: '0 19 * * *'
-  # Allow manual workflow triggering
+    - cron: '0 19 * * *' # 每天 UTC 7 PM
   workflow_dispatch:
 
 env:
@@ -14,40 +12,25 @@ env:
 jobs:
   run-sql-check:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        
-      - name: Setup Node.js environment
+
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'npm'
-          
+
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Create environment file
         run: |
-          echo "# db config" > .env.local
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.local
-          echo "# Notification webhooks" >> .env.local
           echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}" >> .env.local
-          echo "# env" >> .env.local
           echo "NODE_ENV=production" >> .env.local
-          
-      - name: Execute SQL check script
-        id: sql-check
+
+      - name: Run SQL Script
         run: npx ts-node scripts/sql_scripts/run_sql.ts check_order_duplicates
-        
-      - name: Send success notification
-        if: success()
-        run: |
-          curl -X POST -H "Content-Type: application/json" -d "{\"text\":\"✅ SQL Check Succeeded: Script executed successfully on $(date)\nView Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" ${{ secrets.SLACK_WEBHOOK_URL }}
-          
-      - name: Send failure notification
-        if: failure()
-        run: |
-          curl -X POST -H "Content-Type: application/json" -d "{\"text\":\"🚨 SQL Check Failed: Script execution failed on $(date)\nCheck logs for details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" ${{ secrets.SLACK_WEBHOOK_URL }}
-          echo "::error::SQL check script execution failed"
