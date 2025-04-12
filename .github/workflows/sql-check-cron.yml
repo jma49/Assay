@@ -41,6 +41,8 @@ jobs:
 
       - name: Run SQL Script
         run: |
-          cd scripts
-          npx ts-node run_sql.ts check_order_duplicates
+          echo "当前工作目录: $(pwd)"
+          echo "检查 scripts 目录内容:"
+          ls -la scripts/
+          npx ts-node scripts/run_sql.ts check_order_duplicates
         continue-on-error: false
