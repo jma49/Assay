@@ -33,4 +33,4 @@ jobs:
           echo "NODE_ENV=production" >> .env.local
 
       - name: Run SQL Script
-        run: npx ts-node scripts/sql_scripts/run_sql.ts check_order_duplicates
+        run: npx ts-node scripts/run_sql.ts check_order_duplicates
