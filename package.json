@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "sql:check": "ts-node scripts/sql_scripts/run_sql.ts check_order_duplicates",
-    "sql:run": "ts-node scripts/sql_scripts/run_sql.ts",
+    "sql:check": "ts-node scripts/sql_scripts/run_script.ts check_order_duplicates",
+    "sql:run": "ts-node scripts/run_sql.ts",
     "test:db": "NODE_OPTIONS='--import=ts-node/register --loader=ts-node/esm' node --no-warnings test/database/connection.test.ts",
     "test:script": "NODE_OPTIONS='--import=ts-node/register' ts-node src/scripts/check_order_duplicates.ts",
     "test:notify": "ts-node test/notifications/slack.test.ts"
