@@ -15,13 +15,13 @@ interface ExecutionResult {
 }
 
 /**
- * 发送Slack通知
- * @param title 通知标题
+ * 发送Slack通知 (适配Workflow Builder触发器)
+ * @param scriptName 脚本名称
  * @param message 通知内容
  * @param isError 是否为错误通知
  */
 async function sendSlackNotification(
-  title: string,
+  scriptName: string,
   message: string,
   isError = false
 ): Promise<void> {
@@ -32,12 +32,35 @@ async function sendSlackNotification(
       return;
     }
 
-    // 使用最基础的Slack消息格式
-    const formattedMessage = `*${title}*\n${
-      isError ? "❌ 错误" : "✅ 成功"
-    }\n\n${message}`;
+    const now = new Date();
+    const timestamp = now.toLocaleString("en-US", {
+      timeZone: "America/Chicago",
+      hour12: false,
+    });
 
-    await axios.post(webhookUrl, { text: formattedMessage });
+    const githubLogUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+
+    // 为Workflow Builder触发器准备数据 - 确保变量名与Slack中的完全匹配
+    const status = isError ? "❌ 失败" : "✅ 成功";
+
+    // 按照Slack Workflow Builder的变量命名方式
+    // 使用Record<string, string>类型避免TypeScript错误
+    const payload: Record<string, string> = {
+      script_name: scriptName, // 注意：使用小写和下划线
+      status: status, // 变量名完全匹配Slack中设置的
+      github_log_url: githubLogUrl || "本地执行无日志链接",
+      Time_when_workflow_started: timestamp, // 与Slack中的变量名完全匹配
+    };
+
+    // 将Message作为附加消息添加
+    if (message) {
+      payload.message = message;
+    }
+
+    console.log("发送的Slack通知数据:", payload);
+
+    // 发送请求
+    await axios.post(webhookUrl, payload);
     console.log("Slack通知已发送");
   } catch (error) {
     console.error("发送Slack通知失败:", error);
@@ -50,30 +73,38 @@ async function sendSlackNotification(
  */
 function formatQueryResults(results: QueryResult[]): string {
   let formattedResults = "";
+  let totalRows = 0;
 
   results.forEach((result, index) => {
     if (result.rows && result.rows.length > 0) {
-      formattedResults += `\n*查询${index + 1}结果*:\n`;
-      formattedResults += "```\n";
+      totalRows += result.rows.length;
+      formattedResults += `查询${index + 1}: 返回${result.rows.length}行数据\n`;
 
-      // 获取列名
-      const columns = Object.keys(result.rows[0]);
-      formattedResults += columns.join(" | ") + "\n";
-      formattedResults += columns.map(() => "---").join(" | ") + "\n";
+      // 限制每个查询最多显示5行数据
+      const displayRows = result.rows.slice(0, 5);
+      const columns = Object.keys(displayRows[0]);
 
-      // 添加行数据
-      result.rows.forEach((row) => {
-        formattedResults +=
-          columns.map((col) => String(row[col] || "")).join(" | ") + "\n";
+      displayRows.forEach((row, rowIndex) => {
+        formattedResults += `行${rowIndex + 1}: `;
+        formattedResults += columns
+          .map((col) => `${col}=${row[col]}`)
+          .join(", ");
+        formattedResults += "\n";
       });
 
-      formattedResults += "```\n";
+      // 如果有更多行，显示省略信息
+      if (result.rows.length > 5) {
+        formattedResults += `...以及其他${result.rows.length - 5}行数据\n`;
+      }
+
+      formattedResults += "\n";
     } else {
-      formattedResults += `\n*查询${index + 1}*: 没有返回结果\n`;
+      formattedResults += `查询${index + 1}: 没有返回结果\n\n`;
     }
   });
 
-  return formattedResults || "没有查询结果";
+  // 在顶部添加摘要
+  return `总结: 共执行${results.length}个查询，返回${totalRows}行数据\n\n${formattedResults}`;
 }
 
 /**

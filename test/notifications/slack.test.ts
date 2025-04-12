@@ -17,8 +17,6 @@ async function testNotifications() {
       "Webhook URL类型检查:",
       webhookUrl.includes("hooks.slack.com")
         ? "Slack Webhook"
-        : webhookUrl.includes("discord.com")
-        ? "Discord Webhook"
         : "未知Webhook类型"
     );
   }
