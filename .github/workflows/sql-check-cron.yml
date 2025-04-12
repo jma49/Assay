@@ -44,5 +44,13 @@ jobs:
           echo "当前工作目录: $(pwd)"
           echo "检查 scripts 目录内容:"
           ls -la scripts/
-          npx ts-node scripts/run_sql.ts check_order_duplicates
+          echo "检查 scripts/sql_scripts 目录内容:"
+          ls -la scripts/sql_scripts/
+          if [ -f "scripts/sql_scripts/run_sql.ts" ]; then
+            echo "正在使用 scripts/sql_scripts/run_sql.ts"
+            npx ts-node scripts/sql_scripts/run_sql.ts check_order_duplicates
+          else
+            echo "正在使用 scripts/run_sql.ts"
+            npx ts-node scripts/run_sql.ts check_order_duplicates
+          fi
         continue-on-error: false
