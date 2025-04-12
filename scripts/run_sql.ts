@@ -187,6 +187,7 @@ async function executeSqlFile(filePath: string): Promise<ExecutionResult> {
 async function executeCheckOrderDuplicates(): Promise<void> {
   const scriptPath = path.resolve(
     __dirname,
+    "sql_scripts",
     "check_order_duplicates.sql"
   );
   console.log(`执行脚本: ${scriptPath}`);
