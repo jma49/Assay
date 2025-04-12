@@ -2,7 +2,7 @@ name: SQL Script Cron Job
 
 on:
   schedule:
-    - cron: '0 19 * * *' # 每天 UTC 7 PM
+    - cron: "0 19 * * *" # 每天 UTC 7 PM
   workflow_dispatch:
 
 env:
@@ -20,8 +20,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -32,5 +32,16 @@ jobs:
           echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}" >> .env.local
           echo "NODE_ENV=production" >> .env.local
 
+      - name: Debug directory structure
+        run: |
+          pwd
+          ls -la
+          ls -la scripts/
+          ls -la scripts/sql_scripts/
+
       - name: Run SQL Script
-        run: npx ts-node scripts/run_sql.ts check_order_duplicates
+        run: |
+          echo "当前目录: $(pwd)"
+          echo "脚本路径: scripts/run_sql.ts"
+          npx ts-node scripts/run_sql.ts check_order_duplicates
+        continue-on-error: false
