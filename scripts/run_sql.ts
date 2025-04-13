@@ -1,16 +1,27 @@
-import fs from "fs";
-import path from "path";
-import axios from "axios";
 import dotenv from "dotenv";
+import path from "path";
+import fs from "fs";
+import axios from "axios";
 import { QueryResult } from "pg";
 import db from "../src/lib/db";
 import mongoDbClient from "../src/lib/mongodb";
 import { Collection, ObjectId } from "mongodb";
 
+// Load environment variables FIRST!
 dotenv.config({
   path: path.resolve(__dirname, "../.env.local"),
   override: true,
 });
+// Check if MONGODB_URI is loaded immediately after config
+if (!process.env.MONGODB_URI) {
+  console.error(
+    "错误：dotenv 加载后 MONGODB_URI 仍然未定义！检查路径和文件内容。"
+  );
+  // You might want to exit here depending on required functionality
+  // process.exit(1);
+} else {
+  console.log("信息：dotenv 加载成功，MONGODB_URI 已设置。");
+}
 
 interface SqlCheckHistoryDocument {
   _id?: ObjectId;
@@ -26,7 +37,7 @@ interface SqlCheckHistoryDocument {
 interface ExecutionResult {
   success: boolean;
   message: string;
-  data?: QueryResult[];
+  data?: QueryResult[] | undefined;
 }
 
 async function saveResultToMongo(
