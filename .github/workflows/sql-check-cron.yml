@@ -30,6 +30,7 @@ jobs:
         run: |
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.local
           echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}" >> .env.local
+          echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env.local
           echo "NODE_ENV=production" >> .env.local
 
       - name: Debug directory structure
@@ -38,15 +39,18 @@ jobs:
           ls -la
           ls -la scripts/
           ls -la scripts/sql_scripts/
+          echo "--- .env.local content start ---"
+          cat .env.local || echo ".env.local not found or empty"
+          echo "--- .env.local content end ---"
 
       - name: Run SQL Script
         env:
-          # Explicitly tell dotenv where to find the .env file
           DOTENV_CONFIG_PATH: .env.local 
         run: |
           echo "当前工作目录: $(pwd)"
           echo "将使用 .env 文件: ${DOTENV_CONFIG_PATH}"
-          ls -la ${DOTENV_CONFIG_PATH} # Verify .env.local exists
+          ls -la ${DOTENV_CONFIG_PATH}
+          echo "即将执行 ts-node..."
           # Use ts-node with -r to preload dotenv/config
           npx ts-node -r dotenv/config scripts/run_sql.ts check_order_duplicates
         continue-on-error: false
