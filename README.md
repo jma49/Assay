@@ -1,38 +1,77 @@
 # SQL 脚本自动化执行工具
 
-这个项目用于自动化执行 SQL 脚本，并将执行结果通过 Slack 通知。主要用于定期检查系统中的数据问题，如 订单系统中的重复订单。
+这个项目用于自动化执行 SQL 脚本，监控数据质量，并将执行结果和摘要通过 Slack 通知。同时，详细的执行历史和查询结果行会存储在 MongoDB 中，以便后续分析和在 Dashboard 中展示。
+
+## 主要功能
+
+- **自动化执行:** 通过 GitHub Actions 定时或手动触发 SQL 脚本执行。
+- **结果存储:** 将每次执行的状态、摘要和原始查询结果存储到独立的 MongoDB 数据库中。
+- **Slack 通知:** 发送包含执行状态、摘要和 GitHub Actions 链接的 Slack 通知。
+- **前端 Dashboard:** (可选，如果部署了前端) 提供一个可视化界面展示最近的检查历史和结果详情。
 
 ## 项目结构
 
 ```
 .
-├── .env.loval            # 环境变量配置文件
-├── .github               # GitHub相关配置
-│   └── workflows         # GitHub Actions工作流配置
-│       └── sql-check-cron.yml  # 定时执行SQL检查的工作流
-├── lib                   # 工具库
-│   └── db.ts             # 数据库连接配置
-├── scripts               # 脚本目录
-│   └── sql_scripts       # SQL脚本目录
-│       ├── run_sql.ts    # SQL脚本执行器
-│       └── check_order_duplicates.sql  # 订单重复检查脚本
-└── package.json          # 项目依赖配置
+├── .env.local            # 本地开发环境变量配置文件
+├── .github/
+│   └── workflows/
+│       └── sql-check-cron.yml  # GitHub Actions 工作流配置
+├── public/               # Next.js 公共资源
+├── scripts/
+│   ├── run_sql.ts        # 主要的 SQL 脚本执行器 (包括写入 MongoDB)
+│   └── sql_scripts/      # 存放 SQL 查询脚本
+│       └── check_order_duplicates.sql
+├── src/
+│   ├── app/              # Next.js 应用目录 (包括 API 和页面)
+│   │   ├── api/check-history/route.ts # 获取检查历史的 API
+│   │   └── page.tsx      # Dashboard 主页面
+│   ├── components/       # React 组件 (如 Dashboard)
+│   │   └── Dashboard.tsx
+│   └── lib/              # 工具库
+│       ├── db.ts         # PostgreSQL 数据库连接 (被检查的库)
+│       └── mongodb.ts    # MongoDB 数据库连接 (用于存储历史结果)
+├── test/
+│   └── database/         # 数据库连接测试脚本
+│       └── mongodb.test.ts
+├── .gitignore
+├── next.config.ts        # Next.js 配置
+├── package.json          # 项目依赖与脚本配置
+├── README.md             # 项目说明 (本文档)
+└── tsconfig.json         # TypeScript 配置
 ```
 
 ## 环境变量配置
 
-在`.env.loval`文件中配置以下环境变量：
+### 本地开发 (`.env.local`)
 
-```
-# 数据库配置
+在项目根目录创建 `.env.local` 文件并配置以下变量：
+
+```dotenv
+# 被检查数据库的连接信息
 DATABASE_URL="postgresql://用户名:密码@主机:端口/数据库名"
 
-# Slack webhook
+# 用于存储历史记录的 MongoDB 连接字符串
+MONGODB_URI="mongodb+srv://用户名:密码@主机/数据库名?options"
+
+# Slack webhook URL
 SLACK_WEBHOOK_URL="https://hooks.slack.com/YOUR_WEBHOOK_URL"
 
-# 环境
+# Node.js 环境
 NODE_ENV="development"
 ```
+
+**注意:** `.env.local` 文件不应提交到 Git 仓库。
+
+### GitHub Actions (Secrets)
+
+在你的 GitHub 仓库 `Settings` -> `Secrets and variables` -> `Actions` 中配置以下 Secrets：
+
+- `DATABASE_URL`: 被检查数据库的连接信息。
+- `MONGODB_URI`: 用于存储历史记录的 MongoDB 连接字符串。
+- `SLACK_WEBHOOK_URL`: Slack Webhook URL。
+
+工作流文件 (`sql-check-cron.yml`) 会自动从这些 Secrets 读取配置。
 
 ## 安装依赖
 
@@ -42,42 +81,53 @@ npm install
 
 ## 使用方法
 
-### 本地执行 Square 订单重复检查
+### 运行检查脚本 (本地)
+
+- 执行默认的检查 (例如 `check_order_duplicates`):
+
+  ```bash
+  npm run sql:check
+  ```
+
+  _(注意: `sql:check` 当前在 `package.json` 中可能硬编码了特定脚本，需要检查或修改)_
+
+- 执行指定的 SQL 文件:
+  ```bash
+  npm run sql:run scripts/sql_scripts/your_sql_file.sql
+  ```
+
+### 运行 MongoDB 连接测试 (本地)
 
 ```bash
-npm run sql:check
+npm run test:mongodb
 ```
 
-### 执行其他 SQL 脚本
+### 运行 Next.js 前端 (本地)
 
 ```bash
-npm run sql:run -- path/to/your/sql/file.sql
+npm run dev
 ```
+
+访问 `http://localhost:3000` 查看 Dashboard。
 
 ## GitHub Actions 自动化
 
-该项目配置了 GitHub Actions 工作流，会按照以下时间表自动执行：
+该项目配置了 GitHub Actions 工作流 (`.github/workflows/sql-check-cron.yml`)，它会：
 
-- 每天芝加哥时间下午 2 点执行 Square 订单重复检查
-- 将检查结果通过 Slack 通知
+- **定时执行:** 默认每天 UTC 时间 19:00 执行 `check_order_duplicates.sql` 脚本。
+- **手动触发:** 允许通过 GitHub Actions UI 手动触发工作流。
+- **结果处理:** 将执行结果写入配置的 MongoDB 数据库，并通过 Slack 发送通知。
 
-## 添加新的 SQL 脚本
+## 添加新的 SQL 检查脚本
 
-1. 在`scripts/sql_scripts`目录下创建新的 SQL 脚本文件
-2. 脚本应该只包含查询操作，不应包含修改操作
-3. 可以使用以下格式的注释添加脚本说明：
-
-```sql
-/*
-Purpose: 脚本目的
-Scope: 数据范围
-Author: 作者
-Created: 创建日期
-*/
-```
+1.  在 `scripts/sql_scripts/` 目录下创建新的 `.sql` 文件。
+2.  脚本应主要包含 `SELECT` 查询，避免执行数据修改操作。
+3.  (可选) 如果需要让某个新脚本成为默认的定时检查任务，需要修改 `.github/workflows/sql-check-cron.yml` 中 `Run SQL Script` 步骤调用的脚本名称。
 
 ## 安全注意事项
 
-- 数据库连接信息和 Slack Webhook URL 应该作为 GitHub Secrets 配置，而不是直接提交到代码库
-- SQL 脚本应该只包含查询操作，不应包含修改操作
-- 在 GitHub Actions 中，使用生产环境时请谨慎配置数据库权限
+- **切勿**将包含敏感凭证（数据库密码、Webhook）的 `.env.local` 文件提交到版本控制系统。
+- 始终使用 GitHub Secrets 来管理生产环境或 CI/CD 环境中的凭证。
+- 确保用于执行 SQL 检查的数据库用户权限最小化（通常只需要读取权限）。
+- 确保 MongoDB 用户对历史记录数据库有写入权限。
+- 定期审查 SQL 脚本内容，确保没有潜在的破坏性操作。
