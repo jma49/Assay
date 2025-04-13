@@ -11,7 +11,8 @@
     "sql:run": "ts-node scripts/run_sql.ts",
     "test:db": "NODE_OPTIONS='--import=ts-node/register --loader=ts-node/esm' node --no-warnings test/database/connection.test.ts",
     "test:script": "NODE_OPTIONS='--import=ts-node/register' ts-node src/scripts/check_order_duplicates.ts",
-    "test:notify": "ts-node test/notifications/slack.test.ts"
+    "test:notify": "ts-node test/notifications/slack.test.ts",
+    "test:mongodb": "ts-node test/database/mongodb.test.ts"
   },
   "dependencies": {
     "@types/axios": "^0.9.36",
@@ -19,6 +20,7 @@
     "axios": "^1.8.4",
     "dotenv": "^16.4.7",
     "lucide-react": "0.487.0",
+    "mongodb": "^6.15.0",
     "next": "15.2.4",
     "pg": "^8.14.1",
     "react": "^19.0.0",
