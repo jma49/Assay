@@ -207,15 +207,15 @@ const Dashboard = () => {
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {checks.length === 0 && (
-                  <tr>
-                      <td colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                          暂无检查历史记录
-                      </td>
-                  </tr>
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                    暂无检查历史记录
+                  </td>
+                </tr>
               )}
               {checks.map((check) => (
-                <React.Fragment key={check._id}> {/* Use Fragment for key */}
-                  <tr className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${expandedCheckId === check._id ? 'bg-blue-50 dark:bg-blue-900/30' : ''}`}> {/* Highlight expanded row */}
+                <React.Fragment key={check._id}>
+                  <tr className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${expandedCheckId === check._id ? 'bg-blue-50 dark:bg-blue-900/30' : ''}`}>
                     <td className="px-4 py-4 whitespace-nowrap">
                       {check.status === CheckStatus.SUCCESS ? (
                         <CheckCircle className="h-5 w-5 text-green-500" />
@@ -232,26 +232,25 @@ const Dashboard = () => {
                     <td className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
                       {check.findings}
                     </td>
-                     <td className="px-4 py-4 whitespace-nowrap text-sm">
-                       <button
-                         onClick={() => toggleExpand(check._id)}
-                         className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center"
-                         title={expandedCheckId === check._id ? "收起详情" : "展开详情"}
-                       >
-                         <Database size={16} className="mr-1" />
-                         {expandedCheckId === check._id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                       </button>
-                     </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => toggleExpand(check._id)}
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center"
+                        title={expandedCheckId === check._id ? "收起详情" : "展开详情"}
+                      >
+                        <Database size={16} className="mr-1" />
+                        {expandedCheckId === check._id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </button>
+                    </td>
                   </tr>
-                  {/* Expanded Row for Details */}
                   {expandedCheckId === check._id && (
                     <tr className="bg-gray-50 dark:bg-gray-800/50">
                       <td colSpan={5} className="px-4 py-3">
                         <div className="text-sm">
-                            <p className="font-medium mb-1">消息:</p>
-                            <p className="text-gray-700 dark:text-gray-300 mb-3 whitespace-pre-wrap">{check.message}</p>
-                            <p className="font-medium mb-1">原始查询结果:</p>
-                            <RawResultsTable results={check.raw_results} />
+                          <p className="font-medium mb-1">消息:</p>
+                          <p className="text-gray-700 dark:text-gray-300 mb-3 whitespace-pre-wrap">{check.message}</p>
+                          <p className="font-medium mb-1">原始查询结果:</p>
+                          <RawResultsTable results={check.raw_results} />
                         </div>
                       </td>
                     </tr>
