@@ -4,9 +4,24 @@ import axios from "axios";
 import dotenv from "dotenv";
 import { QueryResult } from "pg";
 import db from "../src/lib/db";
+import mongoDbClient from "../src/lib/mongodb";
+import { Collection, ObjectId } from "mongodb";
 
-// 加载环境变量
-dotenv.config({ path: ".env.local" });
+dotenv.config({
+  path: path.resolve(__dirname, "../.env.local"),
+  override: true,
+});
+
+interface SqlCheckHistoryDocument {
+  _id?: ObjectId;
+  script_name: string;
+  execution_time: Date;
+  status: "success" | "failure";
+  message: string;
+  findings: string;
+  raw_results: Record<string, unknown>[];
+  github_run_id?: string | number;
+}
 
 interface ExecutionResult {
   success: boolean;
@@ -14,12 +29,39 @@ interface ExecutionResult {
   data?: QueryResult[];
 }
 
-/**
- * 发送Slack通知 (适配Workflow Builder触发器)
- * @param scriptName 脚本名称
- * @param message 通知内容
- * @param isError 是否为错误通知
- */
+async function saveResultToMongo(
+  scriptName: string,
+  status: "success" | "failure",
+  message: string,
+  findings: string,
+  results?: QueryResult[]
+): Promise<void> {
+  try {
+    const db = await mongoDbClient.getDb();
+    const collection: Collection<SqlCheckHistoryDocument> =
+      db.collection("result");
+
+    const rawResults: Record<string, unknown>[] = results
+      ? results.map((r) => r.rows || []).flat()
+      : [];
+
+    const historyDoc: SqlCheckHistoryDocument = {
+      script_name: scriptName,
+      execution_time: new Date(),
+      status: status,
+      message: message,
+      findings: findings,
+      raw_results: rawResults,
+      github_run_id: process.env.GITHUB_RUN_ID,
+    };
+
+    await collection.insertOne(historyDoc);
+    console.log("执行结果已保存到 MongoDB");
+  } catch (error) {
+    console.error("保存结果到 MongoDB 失败:", error);
+  }
+}
+
 async function sendSlackNotification(
   scriptName: string,
   message: string,
@@ -40,26 +82,21 @@ async function sendSlackNotification(
 
     const githubLogUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 
-    // 为Workflow Builder触发器准备数据 - 确保变量名与Slack中的完全匹配
     const status = isError ? "❌ 失败" : "✅ 成功";
 
-    // 按照Slack Workflow Builder的变量命名方式
-    // 使用Record<string, string>类型避免TypeScript错误
     const payload: Record<string, string> = {
-      script_name: scriptName, // 注意：使用小写和下划线
-      status: status, // 变量名完全匹配Slack中设置的
+      script_name: scriptName,
+      status: status,
       github_log_url: githubLogUrl || "本地执行无日志链接",
-      Time_when_workflow_started: timestamp, // 与Slack中的变量名完全匹配
+      Time_when_workflow_started: timestamp,
     };
 
-    // 将Message作为附加消息添加
     if (message) {
       payload.message = message;
     }
 
     console.log("发送的Slack通知数据:", payload);
 
-    // 发送请求
     await axios.post(webhookUrl, payload);
     console.log("Slack通知已发送");
   } catch (error) {
@@ -67,93 +104,68 @@ async function sendSlackNotification(
   }
 }
 
-/**
- * 格式化SQL查询结果
- * @param results 查询结果数组
- */
-function formatQueryResults(results: QueryResult[]): string {
-  let formattedResults = "";
+function formatQueryFindings(results: QueryResult[]): string {
   let totalRows = 0;
-
-  results.forEach((result, index) => {
-    if (result.rows && result.rows.length > 0) {
+  results.forEach((result) => {
+    if (result.rows) {
       totalRows += result.rows.length;
-      formattedResults += `查询${index + 1}: 返回${result.rows.length}行数据\n`;
-
-      // 限制每个查询最多显示5行数据
-      const displayRows = result.rows.slice(0, 5);
-      const columns = Object.keys(displayRows[0]);
-
-      displayRows.forEach((row, rowIndex) => {
-        formattedResults += `行${rowIndex + 1}: `;
-        formattedResults += columns
-          .map((col) => `${col}=${row[col]}`)
-          .join(", ");
-        formattedResults += "\n";
-      });
-
-      // 如果有更多行，显示省略信息
-      if (result.rows.length > 5) {
-        formattedResults += `...以及其他${result.rows.length - 5}行数据\n`;
-      }
-
-      formattedResults += "\n";
-    } else {
-      formattedResults += `查询${index + 1}: 没有返回结果\n\n`;
     }
   });
-
-  // 在顶部添加摘要
-  return `总结: 共执行${results.length}个查询，返回${totalRows}行数据\n\n${formattedResults}`;
+  if (totalRows > 0) {
+    return `${totalRows} 条记录被查出`;
+  } else {
+    return "未查出相关记录";
+  }
 }
 
-/**
- * 执行SQL文件
- * @param filePath SQL文件路径
- */
 async function executeSqlFile(filePath: string): Promise<ExecutionResult> {
+  const fileName = path.basename(filePath);
+  let results: QueryResult[] | undefined = undefined;
+  let successMessage = ``;
+  let errorMessage = ``;
+  let findings = "执行未完成";
+
   try {
-    // 测试数据库连接
     const isConnected = await db.testConnection();
     if (!isConnected) {
       throw new Error("数据库连接失败");
     }
 
-    // 读取SQL文件
     const sqlContent = fs.readFileSync(filePath, "utf8");
-
-    // 提取SQL查询
     const queryRegex = /(?:WITH[\s\S]*?SELECT[\s\S]*?;)|(?:SELECT[\s\S]*?;)/gi;
     const queries = [];
     let match;
-
     while ((match = queryRegex.exec(sqlContent)) !== null) {
       queries.push(match[0]);
     }
-
     if (queries.length === 0) {
       throw new Error("未找到有效的SQL查询");
     }
 
-    // 执行查询
-    const results: QueryResult[] = [];
+    results = [];
     for (const query of queries) {
       console.log(`执行查询: ${query.substring(0, 100)}...`);
       const result = await db.query(query);
       results.push(result);
     }
 
-    // 生成成功消息
-    const fileName = path.basename(filePath);
-    const successMessage = `SQL脚本 ${fileName} 执行成功`;
+    successMessage = `SQL脚本 ${fileName} 执行成功`;
+    findings = formatQueryFindings(results);
     console.log(successMessage);
+    console.log(`发现: ${findings}`);
 
-    // 格式化和发送结果
-    const formattedResults = formatQueryResults(results);
     await sendSlackNotification(
       fileName,
-      `${successMessage}\n${formattedResults}`,
+      `${successMessage} - ${findings}`,
       false
+    );
+
+    await saveResultToMongo(
+      fileName,
+      "success",
+      successMessage,
+      findings,
+      results
     );
 
     return {
@@ -162,28 +174,31 @@ async function executeSqlFile(filePath: string): Promise<ExecutionResult> {
       data: results,
     };
   } catch (error: Error | unknown) {
-    const fileName = path.basename(filePath);
-    const errorMessage = `SQL脚本 ${fileName} 执行失败: ${
+    errorMessage = `SQL脚本 ${fileName} 执行失败: ${
       error instanceof Error ? error.message : String(error)
     }`;
+    findings = "执行失败";
     console.error(errorMessage);
 
-    // 发送错误通知
     await sendSlackNotification(fileName, errorMessage, true);
+
+    await saveResultToMongo(
+      fileName,
+      "failure",
+      errorMessage,
+      findings,
+      results
+    );
 
     return {
       success: false,
       message: errorMessage,
     };
   } finally {
-    // 关闭数据库连接
     await db.closePool();
   }
 }
 
-/**
- * 执行check_order_duplicates.sql脚本
- */
 async function executeCheckOrderDuplicates(): Promise<void> {
   const scriptPath = path.resolve(
     __dirname,
@@ -199,42 +214,36 @@ async function executeCheckOrderDuplicates(): Promise<void> {
   }
 }
 
-// 主函数
 async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-
-  // 如果没有参数，默认执行check_order_duplicates.sql
-  if (args.length === 0) {
-    await executeCheckOrderDuplicates();
-    return;
-  }
-
-  const scriptName = args[0];
-
-  // 检查是否是特定脚本
-  if (scriptName === "check_order_duplicates") {
-    await executeCheckOrderDuplicates();
-    return;
-  }
-
-  // 否则尝试执行指定的脚本文件
-  const filePath = args[0];
-  if (!fs.existsSync(filePath)) {
-    console.error("SQL文件不存在:", filePath);
+  try {
+    const args = process.argv.slice(2);
+    if (args.length === 0) {
+      await executeCheckOrderDuplicates();
+      return;
+    }
+    const scriptName = args[0];
+    if (scriptName === "check_order_duplicates") {
+      await executeCheckOrderDuplicates();
+      return;
+    }
+    const filePath = args[0];
+    if (!fs.existsSync(filePath)) {
+      console.error("SQL文件不存在:", filePath);
+      process.exit(1);
+    }
+    const result = await executeSqlFile(filePath);
+    process.exit(result.success ? 0 : 1);
+  } catch (error) {
+    console.error("主程序执行错误:", error);
     process.exit(1);
+  } finally {
+    console.log("尝试关闭 MongoDB 连接...");
+    await mongoDbClient.closeConnection();
   }
-
-  const result = await executeSqlFile(filePath);
-  process.exit(result.success ? 0 : 1);
 }
 
-// 执行主函数
 if (require.main === module) {
-  main().catch((error) => {
-    console.error("程序执行错误:", error);
-    process.exit(1);
-  });
+  main();
 }
 
-// 导出函数供测试使用
 export { sendSlackNotification };
