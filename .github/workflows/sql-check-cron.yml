@@ -40,8 +40,13 @@ jobs:
           ls -la scripts/sql_scripts/
 
       - name: Run SQL Script
+        env:
+          # Explicitly tell dotenv where to find the .env file
+          DOTENV_CONFIG_PATH: .env.local 
         run: |
           echo "当前工作目录: $(pwd)"
-          echo "使用新的入口脚本执行"
-          npx ts-node scripts/sql_scripts/run_script.ts check_order_duplicates
+          echo "将使用 .env 文件: ${DOTENV_CONFIG_PATH}"
+          ls -la ${DOTENV_CONFIG_PATH} # Verify .env.local exists
+          # Use ts-node with -r to preload dotenv/config
+          npx ts-node -r dotenv/config scripts/run_sql.ts check_order_duplicates
         continue-on-error: false
