@@ -7,12 +7,7 @@ import mongoDbClient from "../src/lib/mongodb";
 import { Collection, ObjectId } from "mongodb";
 
 // Define types (consider sharing with API route later)
-interface ScriptManifestEntry {
-  id: string;
-  name: string;
-  description: string;
-  filePath: string;
-}
+// Removed ScriptManifestEntry interface as manifest.json is no longer used
 
 // Load environment variables FIRST!
 // Note: dotenv/config is preloaded via ts-node -r, no need for explicit dotenv.config() here
@@ -39,25 +34,8 @@ if (!process.env.SLACK_WEBHOOK_URL) {
   console.log("信息：SLACK_WEBHOOK_URL 已设置。");
 }
 
-// --- Load Script Manifest ---
-let scriptManifest: ScriptManifestEntry[] = [];
-const manifestPath = path.resolve(__dirname, "sql_scripts", "manifest.json");
-try {
-  if (fs.existsSync(manifestPath)) {
-    const manifestContent = fs.readFileSync(manifestPath, "utf-8");
-    scriptManifest = JSON.parse(manifestContent);
-    console.log(
-      `信息：成功加载 ${scriptManifest.length} 个脚本从 manifest.json`
-    );
-  } else {
-    console.error(`错误：脚本清单文件未找到于 ${manifestPath}`);
-    // Decide if this is a fatal error depending on script usage
-    // process.exit(1);
-  }
-} catch (error) {
-  console.error("错误：加载或解析 manifest.json 失败:", error);
-  // process.exit(1);
-}
+// --- Manifest Loading Removed ---
+// Script discovery is now based on the provided script ID argument matching a .sql file name.
 
 interface SqlCheckHistoryDocument {
   _id?: ObjectId;
@@ -92,9 +70,8 @@ async function saveResultToMongo(
       ? results.map((r) => r.rows || []).flat()
       : [];
 
-    // Find the friendly name from the manifest if possible
-    const scriptEntry = scriptManifest.find((s) => s.id === scriptId);
-    const nameToSave = scriptEntry ? scriptEntry.name : scriptId; // Fallback to ID if not found
+    // Use scriptId directly as manifest is removed
+    const nameToSave = scriptId;
 
     const historyDoc: SqlCheckHistoryDocument = {
       script_name: nameToSave, // Use the resolved name
@@ -141,9 +118,8 @@ async function sendSlackNotification(
 
     const status = isError ? "❌ 失败" : "✅ 成功";
 
-    // Find the friendly name from the manifest
-    const scriptEntry = scriptManifest.find((s) => s.id === scriptId);
-    const nameToNotify = scriptEntry ? scriptEntry.name : scriptId; // Fallback to ID
+    // Use scriptId directly as manifest is removed
+    const nameToNotify = scriptId;
 
     const payload: Record<string, string> = {
       script_name: nameToNotify,
@@ -190,8 +166,8 @@ async function executeSqlFile(
   let errorMessage = ``;
   let findings = "执行未完成";
 
-  const scriptEntry = scriptManifest.find((s) => s.id === scriptId);
-  const scriptDisplayName = scriptEntry ? scriptEntry.name : scriptId;
+  // Use scriptId directly as manifest is removed
+  const scriptDisplayName = scriptId;
 
   console.log(
     `开始执行脚本: ${scriptDisplayName} (ID: ${scriptId}) 从文件: ${filePath}`
@@ -318,42 +294,34 @@ async function main(): Promise<void> {
   try {
     const args = process.argv.slice(2);
 
-    if (args.length > 0) {
-      // Argument provided, assume it's the script_id
-      scriptToExecuteId = args[0];
-      console.log(
-        `信息：接收到命令行参数，尝试执行脚本 ID: ${scriptToExecuteId}`
-      );
-    } else {
-      // No argument, assume default cron job behavior
-      // Find the default script (e.g., the first one in the manifest or a specific ID)
-      const defaultScriptId = "check_order_duplicates"; // Or use scriptManifest[0]?.id
-      if (scriptManifest.some((s) => s.id === defaultScriptId)) {
-        scriptToExecuteId = defaultScriptId;
-        console.log(
-          `信息：无命令行参数，执行默认脚本 ID: ${scriptToExecuteId}`
-        );
-      } else {
-        throw new Error(
-          "错误：未提供脚本 ID 参数，且无法找到默认脚本 'check_order_duplicates'。请检查 manifest.json。"
-        );
-      }
+    if (args.length === 0) {
+      throw new Error("错误：必须提供一个脚本 ID 作为命令行参数。");
     }
 
-    // Find the script details in the manifest
-    const scriptEntry = scriptManifest.find((s) => s.id === scriptToExecuteId);
+    // Argument provided, assume it's the script_id
+    scriptToExecuteId = args[0];
+    console.log(
+      `信息：接收到命令行参数，尝试执行脚本 ID: ${scriptToExecuteId}`
+    );
 
-    if (!scriptEntry) {
+    // Construct the absolute path for the script file based on the ID
+    // Assumes the script file is located in 'sql_scripts' relative to this script's directory
+    // and the filename matches the ID with a .sql extension.
+    const scriptFilePath = path.resolve(
+      __dirname,
+      "sql_scripts",
+      `${scriptToExecuteId}.sql`
+    );
+
+    // Check if the derived file path actually exists before proceeding
+    if (!fs.existsSync(scriptFilePath)) {
       throw new Error(
-        `错误：未在 manifest.json 中找到 ID 为 '${scriptToExecuteId}' 的脚本条目。`
+        `错误：无法找到与 ID '${scriptToExecuteId}' 对应的 SQL 文件于: ${scriptFilePath}`
       );
     }
-
-    // Construct the absolute path for the script file
-    const scriptFilePath = path.resolve(__dirname, scriptEntry.filePath);
 
     // Execute the found script
-    const result = await executeSqlFile(scriptEntry.id, scriptFilePath);
+    const result = await executeSqlFile(scriptToExecuteId, scriptFilePath);
 
     if (!result.success) {
       console.error(`脚本执行失败: ${result.message}`);
