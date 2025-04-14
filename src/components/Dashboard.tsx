@@ -10,6 +10,8 @@ import {
   ChevronUp,
   Database,
   Loader2, // For loading state
+  Play, // For the run button
+  List, // For the script list
 } from 'lucide-react';
 
 // Keep CheckStatus if still relevant, or adjust based on API data
@@ -28,6 +30,13 @@ interface Check {
   findings: string;
   raw_results: Record<string, unknown>[];
   github_run_id?: string | number;
+}
+
+// Define the type for the script info fetched from the API
+interface ScriptInfo {
+  id: string;
+  name: string;
+  description: string;
 }
 
 // Removed Mock Data
@@ -84,34 +93,63 @@ const RawResultsTable = ({ results }: { results: Record<string, unknown>[] }) =>
 
 const Dashboard = () => {
   const [checks, setChecks] = useState<Check[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Combined loading state initially
   const [error, setError] = useState<string | null>(null);
   const [nextScheduled, setNextScheduled] = useState<Date | null>(null);
   const [expandedCheckId, setExpandedCheckId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
 
+  // State for script execution
+  const [availableScripts, setAvailableScripts] = useState<ScriptInfo[]>([]);
+  const [selectedScriptId, setSelectedScriptId] = useState<string>('');
+  const [isFetchingScripts, setIsFetchingScripts] = useState(true); // Separate loading for scripts
+  const [isTriggering, setIsTriggering] = useState(false);
+  const [triggerMessage, setTriggerMessage] = useState<string | null>(null);
+
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+    // Fetch both check history and available scripts
+    const loadInitialData = async () => {
+      setLoading(true); // Indicate overall loading start
+      setIsFetchingScripts(true);
       setError(null);
+      setTriggerMessage(null); // Clear previous trigger messages
+
       try {
-        const response = await fetch('/api/check-history');
-        if (!response.ok) {
-          throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        // Fetch history (parallel fetch)
+        const historyPromise = fetch('/api/check-history').then(res => {
+          if (!res.ok) throw new Error(`API Error (History): ${res.status} ${res.statusText}`);
+          return res.json();
+        });
+
+        // Fetch scripts (parallel fetch)
+        const scriptsPromise = fetch('/api/list-scripts').then(res => {
+          if (!res.ok) throw new Error(`API Error (Scripts): ${res.status} ${res.statusText}`);
+          return res.json();
+        });
+
+        // Wait for both fetches to complete
+        const [historyData, scriptsData]: [Check[], ScriptInfo[]] = await Promise.all([historyPromise, scriptsPromise]);
+
+        setChecks(historyData);
+        setAvailableScripts(scriptsData);
+
+        // Set default selected script if available
+        if (scriptsData.length > 0) {
+          setSelectedScriptId(scriptsData[0].id);
         }
-        const data: Check[] = await response.json();
-        setChecks(data);
+
       } catch (err) {
-        console.error("Failed to fetch check history:", err);
-        setError(err instanceof Error ? err.message : '获取检查历史失败');
+        console.error("Failed to fetch initial data:", err);
+        setError(err instanceof Error ? err.message : '获取初始化数据失败');
       } finally {
-        setLoading(false);
+        setLoading(false); // Overall loading finished
+        setIsFetchingScripts(false); // Script fetching finished
       }
     };
 
-    fetchData();
+    loadInitialData();
 
-    // Calculate next scheduled run (assuming cron is '0 19 * * *')
+    // Calculate next scheduled run (remains the same)
     const now = new Date();
     const nextRun = new Date();
     nextRun.setUTCHours(19, 0, 0, 0);
@@ -119,16 +157,75 @@ const Dashboard = () => {
       nextRun.setDate(nextRun.getDate() + 1);
     }
     setNextScheduled(nextRun);
+
   }, []); // Empty dependency array means run once on mount
 
   const toggleExpand = (checkId: string) => {
     setExpandedCheckId(expandedCheckId === checkId ? null : checkId);
   };
 
+  // --- Trigger Check Function ---
+  const handleTriggerCheck = async () => {
+    if (!selectedScriptId || isTriggering) {
+      return; // Prevent triggering if no script is selected or already triggering
+    }
+
+    setIsTriggering(true);
+    setTriggerMessage(null); // Clear previous message
+    // console.log(`准备触发脚本: ${selectedScriptId}`); // Keep for debugging if needed
+
+    try {
+      // Real API call to trigger the check
+      const response = await fetch('/api/run-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scriptId: selectedScriptId })
+      });
+
+      // Check if the API request itself was successful
+      if (!response.ok) {
+        let errorMessage = `API 错误: ${response.status} ${response.statusText}`;
+        try {
+          // Try to parse a more specific error message from the API response body
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage; // Use API message if available
+        } catch {
+          // Ignore if response body isn't valid JSON
+        }
+        throw new Error(errorMessage);
+      }
+
+      // API request succeeded, get the confirmation message
+      const result = await response.json(); 
+      console.log('Trigger API response:', result); 
+
+      // Update UI with the success message from the API response
+      setTriggerMessage(`✅ ${result.message || '检查已成功触发。'}`); // Use message from API
+
+      // Optionally, set a timeout to clear the message
+      setTimeout(() => setTriggerMessage(null), 8000); // Clear after 8 seconds
+
+      // Optionally, refresh history after a delay (consider if needed)
+      // setTimeout(() => { loadInitialData(); /* Or just fetchData() if scripts don't change */ }, 5000); 
+
+    } catch (err) {
+      console.error("Failed to trigger check:", err);
+      const errorMessage = err instanceof Error ? err.message : '触发检查失败';
+      setTriggerMessage(`❌ ${errorMessage}`);
+      // Keep error message displayed longer or until next attempt
+      setTimeout(() => setTriggerMessage(null), 10000); 
+    } finally {
+      setIsTriggering(false);
+    }
+  };
+
   // Filter checks based on status
-  const filteredChecks = filterStatus 
+  const filteredChecks = filterStatus
     ? checks.filter(check => check.status === filterStatus)
     : checks;
+
+  // Find selected script details for display
+  const selectedScript = availableScripts.find(s => s.id === selectedScriptId);
 
   // --- Render Logic ---
 
@@ -235,6 +332,77 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8 transition-all hover:shadow-lg">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+            <List className="h-5 w-5 mr-2 text-indigo-500" />
+            手动触发检查
+          </h2>
+          
+          {isFetchingScripts ? (
+            <div className="flex items-center text-gray-500 dark:text-gray-400">
+              <Loader2 className="animate-spin h-5 w-5 mr-2" />
+              <span>加载可用脚本...</span>
+            </div>
+          ) : availableScripts.length > 0 ? (
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="script-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  选择要执行的脚本
+                </label>
+                <select
+                  id="script-select"
+                  value={selectedScriptId}
+                  onChange={(e) => setSelectedScriptId(e.target.value)}
+                  disabled={isTriggering}
+                  className="block w-full mt-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {availableScripts.map((script) => (
+                    <option key={script.id} value={script.id}>
+                      {script.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedScript && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 italic">
+                  {selectedScript.description}
+                </p>
+              )}
+
+              <button
+                onClick={handleTriggerCheck}
+                disabled={!selectedScriptId || isTriggering}
+                className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white 
+                            ${isTriggering 
+                              ? 'bg-gray-400 cursor-not-allowed' 
+                              : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'}
+                            disabled:opacity-70 disabled:cursor-not-allowed transition-colors`}
+              >
+                {isTriggering ? (
+                  <>
+                    <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                    触发中...
+                  </>
+                ) : (
+                  <>
+                    <Play className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                    执行检查
+                  </>
+                )}
+              </button>
+
+              {triggerMessage && (
+                <div className={`mt-4 p-3 rounded-md text-sm ${triggerMessage.startsWith('❌') ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200' : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'}`}>
+                  {triggerMessage}
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400">没有可用的检查脚本。</p>
+          )}
         </div>
         
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden mb-8 transition-all hover:shadow-lg">
