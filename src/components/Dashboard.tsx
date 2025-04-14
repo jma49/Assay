@@ -9,7 +9,12 @@ import {
   ChevronDown,
   ChevronUp,
   Database,
-  Loader2, // For loading state
+  Loader2,
+  Play,
+  List,
+  ExternalLink, // Added for external links
+  Filter, // Added for filter section
+  RefreshCw, // Added for reload button
 } from 'lucide-react';
 
 // Keep CheckStatus if still relevant, or adjust based on API data
@@ -30,7 +35,12 @@ interface Check {
   github_run_id?: string | number;
 }
 
-// Removed Mock Data
+// Define the type for the script info fetched from the API
+interface ScriptInfo {
+  id: string;
+  name: string;
+  description: string;
+}
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -40,34 +50,35 @@ const formatDate = (dateString: string) => {
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
+    second: '2-digit', // Added seconds for more precision
   });
 };
 
 // Helper to render raw results as a simple table
 const RawResultsTable = ({ results }: { results: Record<string, unknown>[] }) => {
   if (!results || results.length === 0) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400 italic">无原始数据</p>;
+    return <p className="text-sm text-gray-500 dark:text-gray-400 italic mt-2">无原始数据</p>;
   }
 
   const headers = Object.keys(results[0]);
 
   return (
-    <div className="overflow-x-auto mt-2 border border-gray-200 dark:border-gray-700 rounded">
-      <table className="min-w-full text-xs">
-        <thead className="bg-gray-100 dark:bg-gray-900">
+    <div className="overflow-x-auto mt-2 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+      <table className="min-w-full text-xs divide-y divide-gray-200 dark:divide-gray-700">
+        <thead className="bg-gray-50 dark:bg-gray-700/50">
           <tr>
             {headers.map((header) => (
-              <th key={header} className="px-2 py-1 text-left font-medium text-gray-600 dark:text-gray-300">
+              <th key={header} className="px-3 py-2 text-left font-semibold text-gray-600 dark:text-gray-300 tracking-wide">
                 {header}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
           {results.map((row, index) => (
-            <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+            <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
               {headers.map((header) => (
-                <td key={header} className="px-2 py-1 whitespace-nowrap">
+                <td key={header} className="px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-300">
                   {/* Display basic types, stringify others */}
                   {typeof row[header] === 'string' || typeof row[header] === 'number' || typeof row[header] === 'boolean'
                     ? String(row[header])
@@ -90,55 +101,131 @@ const Dashboard = () => {
   const [expandedCheckId, setExpandedCheckId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await fetch('/api/check-history');
-        if (!response.ok) {
-          throw new Error(`API Error: ${response.status} ${response.statusText}`);
-        }
-        const data: Check[] = await response.json();
-        setChecks(data);
-      } catch (err) {
-        console.error("Failed to fetch check history:", err);
-        setError(err instanceof Error ? err.message : '获取检查历史失败');
-      } finally {
-        setLoading(false);
+  const [availableScripts, setAvailableScripts] = useState<ScriptInfo[]>([]);
+  const [selectedScriptId, setSelectedScriptId] = useState<string>('');
+  const [isFetchingScripts, setIsFetchingScripts] = useState(true);
+  const [isTriggering, setIsTriggering] = useState(false);
+  const [triggerMessage, setTriggerMessage] = useState<string | null>(null);
+  const [triggerMessageType, setTriggerMessageType] = useState<'success' | 'error' | null>(null); // For styling message
+
+  const loadInitialData = async () => {
+    setLoading(true);
+    setIsFetchingScripts(true);
+    setError(null);
+    setTriggerMessage(null);
+    setTriggerMessageType(null);
+
+    try {
+      const historyPromise = fetch('/api/check-history').then(res => {
+        if (!res.ok) throw new Error(`API Error (History): ${res.status} ${res.statusText}`);
+        return res.json();
+      });
+
+      const scriptsPromise = fetch('/api/list-scripts').then(res => {
+        if (!res.ok) throw new Error(`API Error (Scripts): ${res.status} ${res.statusText}`);
+        return res.json();
+      });
+
+      const [historyData, scriptsData]: [Check[], ScriptInfo[]] = await Promise.all([historyPromise, scriptsPromise]);
+
+      // Sort history data by execution time descending
+      const sortedHistory = historyData.sort((a, b) => new Date(b.execution_time).getTime() - new Date(a.execution_time).getTime());
+      setChecks(sortedHistory);
+
+      setAvailableScripts(scriptsData);
+
+      if (scriptsData.length > 0 && !selectedScriptId) { // Only set default if not already set
+        setSelectedScriptId(scriptsData[0].id);
       }
-    };
 
-    fetchData();
+    } catch (err) {
+      console.error("Failed to fetch initial data:", err);
+      setError(err instanceof Error ? err.message : '获取初始化数据失败');
+    } finally {
+      setLoading(false);
+      setIsFetchingScripts(false);
+    }
+  };
 
-    // Calculate next scheduled run (assuming cron is '0 19 * * *')
+
+  useEffect(() => {
+    loadInitialData();
+
     const now = new Date();
     const nextRun = new Date();
-    nextRun.setUTCHours(19, 0, 0, 0);
+    nextRun.setUTCHours(19, 0, 0, 0); // Assuming UTC 19:00 is the target
     if (nextRun < now) {
       nextRun.setDate(nextRun.getDate() + 1);
     }
     setNextScheduled(nextRun);
-  }, []); // Empty dependency array means run once on mount
+
+    // Optional: Set up polling or SSE for real-time updates if needed
+    // const intervalId = setInterval(loadInitialData, 60000); // Refresh every minute
+    // return () => clearInterval(intervalId);
+
+  }, []); // Run once on mount
 
   const toggleExpand = (checkId: string) => {
     setExpandedCheckId(expandedCheckId === checkId ? null : checkId);
   };
 
-  // Filter checks based on status
-  const filteredChecks = filterStatus 
+  const handleTriggerCheck = async () => {
+    if (!selectedScriptId || isTriggering) return;
+
+    setIsTriggering(true);
+    setTriggerMessage(null);
+    setTriggerMessageType(null);
+
+    try {
+      const response = await fetch('/api/run-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scriptId: selectedScriptId })
+      });
+
+      const result = await response.json(); // Try to parse JSON regardless of status
+
+      if (!response.ok) {
+        throw new Error(result.message || `API 错误: ${response.status} ${response.statusText}`);
+      }
+
+      console.log('Trigger API response:', result);
+      setTriggerMessage(result.message || '检查已成功触发。');
+      setTriggerMessageType('success');
+
+      // Refresh history after a short delay to allow processing
+      setTimeout(loadInitialData, 3000); // Refresh after 3 seconds
+
+    } catch (err) {
+      console.error("Failed to trigger check:", err);
+      const errorMessage = err instanceof Error ? err.message : '触发检查失败';
+      setTriggerMessage(errorMessage);
+      setTriggerMessageType('error');
+    } finally {
+      setIsTriggering(false);
+      // Clear message after a longer delay
+      setTimeout(() => {
+        setTriggerMessage(null);
+        setTriggerMessageType(null);
+      }, 8000);
+    }
+  };
+
+  const filteredChecks = filterStatus
     ? checks.filter(check => check.status === filterStatus)
     : checks;
 
+  const selectedScript = availableScripts.find(s => s.id === selectedScriptId);
+
   // --- Render Logic ---
 
-  if (loading) {
+  if (loading && checks.length === 0) { // Show initial loading only if no data is present yet
     return (
-      <div className="flex flex-col justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg flex flex-col items-center">
-          <Loader2 className="animate-spin h-12 w-12 text-blue-500 mb-4" />
-          <span className="text-lg font-medium">加载历史记录中...</span>
-          <p className="text-gray-500 dark:text-gray-400 mt-2">请稍候，正在获取最新数据</p>
+      <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/30 p-4">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-xl text-center">
+          <Loader2 className="animate-spin h-12 w-12 text-blue-500 mx-auto mb-5" />
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">加载仪表盘数据</h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">请稍候，正在获取最新检查记录...</p>
         </div>
       </div>
     );
@@ -146,165 +233,266 @@ const Dashboard = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-red-200 dark:border-red-900">
-          <div className="flex items-center text-red-500 mb-4">
-            <AlertCircle className="h-8 w-8 mr-3" />
-            <h2 className="text-xl font-semibold">数据加载失败</h2>
-          </div>
-          <p className="text-gray-700 dark:text-gray-300">错误信息: {error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-6 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors"
+      <div className="flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-gray-50 to-red-50 dark:from-gray-900 dark:to-red-900/30 p-4">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-xl border border-red-200 dark:border-red-700 text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-5" />
+          <h2 className="text-xl font-semibold text-red-600 dark:text-red-400">数据加载失败</h2>
+          <p className="text-gray-700 dark:text-gray-300 mt-3 mb-6 max-w-md mx-auto">无法连接到服务器或处理请求时出错。请检查您的网络连接或稍后重试。</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 p-3 rounded-md font-mono break-all">错误: {error}</p>
+          <button
+            onClick={() => window.location.reload()} // Simple reload for now
+            className="mt-8 inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
           >
-            重新加载
+            <RefreshCw className="h-5 w-5 mr-2" />
+            重试加载
           </button>
         </div>
       </div>
     );
   }
-  
-  // Calculate stats based on fetched checks (handle empty checks)
+
   const successCount = checks.filter(c => c.status === CheckStatus.SUCCESS).length;
   const failureCount = checks.filter(c => c.status === CheckStatus.FAILURE).length;
-  const successRate = checks.length > 0 ? Math.round((successCount / checks.length) * 100) : 0;
+  const totalChecks = checks.length;
+  const successRate = totalChecks > 0 ? Math.round((successCount / totalChecks) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-10 px-4 sm:px-6">
-      <div className="max-w-6xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center">
-            <Database className="mr-3 h-8 w-8 text-blue-500" />
-            SQL Check Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 max-w-3xl">
-            实时监控自动化 SQL 检查任务执行情况，帮助 QA 团队监控数据
-          </p>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <header className="pb-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
+                <Database className="h-8 w-8 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                SQL Check Dashboard
+              </h1>
+              <p className="mt-2 text-base text-gray-600 dark:text-gray-400 max-w-3xl">
+                实时监控自动化 SQL 检查任务执行情况，追踪数据质量和一致性。
+              </p>
+            </div>
+            {/* Optional: Add a refresh button here */}
+            <button
+              onClick={loadInitialData}
+              disabled={loading}
+              className="flex-shrink-0 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-wait"
+              title="刷新数据"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              刷新
+            </button>
+          </div>
         </header>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md border-l-4 border-blue-500 transition-all hover:shadow-lg">
-            <div className="flex items-center">
-              <div className="rounded-full bg-blue-100 dark:bg-blue-900/30 p-3 mr-4">
-                <Clock className="h-6 w-6 text-blue-500" />
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Next Scheduled Card */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 transition-all hover:shadow-xl hover:-translate-y-1">
+            <div className="flex items-center space-x-4">
+              <div className="flex-shrink-0 rounded-full bg-blue-100 dark:bg-blue-900/50 p-3">
+                <Clock className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <div>
-                <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">下次计划检查</h2>
-                <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">下次计划检查</h3>
+                <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">
                   {nextScheduled ? formatDate(nextScheduled.toISOString()) : '计算中...'}
                 </p>
               </div>
             </div>
           </div>
-          
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md border-l-4 border-emerald-500 transition-all hover:shadow-lg">
-            <div className="flex items-center">
-              <div className="rounded-full bg-emerald-100 dark:bg-emerald-900/30 p-3 mr-4">
-                <BarChart2 className="h-6 w-6 text-emerald-500" />
+
+          {/* Success Rate Card */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 transition-all hover:shadow-xl hover:-translate-y-1">
+            <div className="flex items-center space-x-4">
+              <div className="flex-shrink-0 rounded-full bg-emerald-100 dark:bg-emerald-900/50 p-3">
+                <BarChart2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <div>
-                <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">成功率</h2>
-                <div className="flex items-end">
-                  <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{successRate}%</p>
-                  <p className="ml-2 text-sm text-gray-500 dark:text-gray-400">共 {checks.length} 次检查</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">成功率</h3>
+                <div className="flex items-baseline mt-1 space-x-2">
+                  <p className="text-2xl font-semibold text-gray-900 dark:text-white">{successRate}%</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">({successCount}/{totalChecks})</p>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2">
-                  <div 
-                    className="bg-emerald-500 h-2 rounded-full" 
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
+                  <div
+                    className="bg-gradient-to-r from-emerald-400 to-emerald-600 dark:from-emerald-500 dark:to-emerald-700 h-1.5 rounded-full"
                     style={{ width: `${successRate}%` }}
                   ></div>
                 </div>
               </div>
             </div>
           </div>
-          
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md border-l-4 border-amber-500 transition-all hover:shadow-lg">
-            <div className="flex items-center">
-              <div className="rounded-full bg-amber-100 dark:bg-amber-900/30 p-3 mr-4">
-                <AlertCircle className="h-6 w-6 text-amber-500" />
+
+          {/* Failure Count Card */}
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 transition-all hover:shadow-xl hover:-translate-y-1">
+            <div className="flex items-center space-x-4">
+              <div className="flex-shrink-0 rounded-full bg-amber-100 dark:bg-amber-900/50 p-3">
+                <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
               </div>
-              <div>
-                <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">失败检查</h2>
-                <div className="flex items-end">
-                  <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">{failureCount}</p>
-                  <p className="ml-2 text-sm text-gray-500 dark:text-gray-400">/ {checks.length} 次检查</p>
-                </div>
-                {failureCount > 0 && (
-                  <p className="mt-1 text-red-500 text-sm">需要关注 {Math.round((failureCount/checks.length)*100)}% 的检查失败</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">失败检查</h3>
+                 <div className="flex items-baseline mt-1 space-x-2">
+                    <p className="text-2xl font-semibold text-gray-900 dark:text-white">{failureCount}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">/ {totalChecks} 次检查</p>
+                 </div>
+                {failureCount > 0 && totalChecks > 0 && (
+                  <p className="mt-1 text-red-600 dark:text-red-400 text-xs font-medium">
+                    {Math.round((failureCount / totalChecks) * 100)}% 的检查需要关注
+                  </p>
                 )}
               </div>
             </div>
           </div>
         </div>
-        
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden mb-8 transition-all hover:shadow-lg">
-          <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-wrap gap-4">
-            <div>
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white">历史检查记录</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">显示最近 {checks.length} 次检查的详细结果</p>
+
+        {/* Manual Trigger Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all hover:shadow-xl">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2.5">
+            <List className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+            手动触发检查
+          </h2>
+
+          {isFetchingScripts ? (
+            <div className="flex items-center text-gray-500 dark:text-gray-400 space-x-2">
+              <Loader2 className="animate-spin h-5 w-5" />
+              <span>加载可用脚本...</span>
             </div>
-            
-            <div className="flex space-x-2">
-              <button 
+          ) : availableScripts.length > 0 ? (
+            <div className="space-y-5">
+              <div>
+                <label htmlFor="script-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  选择要执行的脚本:
+                </label>
+                <select
+                  id="script-select"
+                  value={selectedScriptId}
+                  onChange={(e) => setSelectedScriptId(e.target.value)}
+                  disabled={isTriggering || loading}
+                  className="block w-full mt-1 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 disabled:opacity-60 disabled:cursor-not-allowed transition duration-150 ease-in-out"
+                >
+                  {availableScripts.map((script) => (
+                    <option key={script.id} value={script.id}>
+                      {script.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedScript && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-700/50 p-3 rounded-md border border-gray-200 dark:border-gray-600">
+                  {selectedScript.description || "此脚本没有描述信息。"}
+                </p>
+              )}
+
+              <button
+                onClick={handleTriggerCheck}
+                disabled={!selectedScriptId || isTriggering || loading}
+                className={`inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white 
+                            ${isTriggering || loading
+                              ? 'bg-gray-400 dark:bg-gray-600 cursor-wait'
+                              : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800'}
+                            disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-150 ease-in-out transform hover:scale-105`}
+              >
+                {isTriggering ? (
+                  <>
+                    <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                    执行中...
+                  </>
+                ) : (
+                  <>
+                    <Play className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                    执行检查
+                  </>
+                )}
+              </button>
+
+              {triggerMessage && (
+                <div className={`mt-4 p-4 rounded-lg text-sm font-medium flex items-start gap-3 shadow-sm border ${
+                  triggerMessageType === 'error'
+                    ? 'bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200 border-red-200 dark:border-red-600/50'
+                    : 'bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-600/50'
+                }`}>
+                  {triggerMessageType === 'error' ? <AlertCircle className="h-5 w-5 flex-shrink-0" /> : <CheckCircle className="h-5 w-5 flex-shrink-0" />}
+                  <span>{triggerMessage}</span>
+                </div>
+              )}
+            </div>
+          ) : (
+             <div className="text-center py-6 px-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
+                <Database className="h-10 w-10 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
+                <p className="text-gray-600 dark:text-gray-400 font-medium">没有可用的检查脚本</p>
+                <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">请确保脚本已正确配置并部署。</p>
+             </div>
+          )}
+        </div>
+
+        {/* History Table Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-all hover:shadow-xl">
+          <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2.5">
+                <Clock className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+                历史检查记录
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">显示最近 {totalChecks} 次检查的详细结果</p>
+            </div>
+
+            {/* Filter Buttons */}
+            <div className="flex items-center space-x-2 flex-wrap gap-y-2">
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400 mr-2 hidden sm:inline">筛选:</span>
+              <button
                 onClick={() => setFilterStatus(null)}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  filterStatus === null 
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200' 
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors duration-150 flex items-center gap-1.5 ${
+                  filterStatus === null
+                    ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 ring-1 ring-blue-300 dark:ring-blue-700'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
-                全部
+                <Filter size={14} /> 全部 ({totalChecks})
               </button>
-              <button 
+              <button
                 onClick={() => setFilterStatus(CheckStatus.SUCCESS)}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors duration-150 flex items-center gap-1.5 ${
                   filterStatus === CheckStatus.SUCCESS
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' 
+                    ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 ring-1 ring-green-300 dark:ring-green-700'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
-                <span className="flex items-center">
-                  <CheckCircle className="h-4 w-4 mr-1.5" />
-                  成功
-                </span>
+                <CheckCircle size={14} /> 成功 ({successCount})
               </button>
-              <button 
+              <button
                 onClick={() => setFilterStatus(CheckStatus.FAILURE)}
-                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors duration-150 flex items-center gap-1.5 ${
                   filterStatus === CheckStatus.FAILURE
-                    ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200' 
+                    ? 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 ring-1 ring-red-300 dark:ring-red-700'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
-                <span className="flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1.5" />
-                  失败
-                </span>
+                <AlertCircle size={14} /> 失败 ({failureCount})
               </button>
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-900/50">
+              <thead className="bg-gray-50 dark:bg-gray-700/50 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">状态</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">脚本</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">执行时间</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">发现</th>
-                  <th className="px-4 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">详情</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">状态</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">脚本名称</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">执行时间</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider max-w-xs truncate">发现/消息</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">操作</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredChecks.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <td colSpan={5} className="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
                       <div className="flex flex-col items-center">
-                        <Database className="h-10 w-10 text-gray-400 dark:text-gray-600 mb-3" />
-                        <p>暂无匹配的检查记录</p>
+                        <Database className="h-12 w-12 text-gray-400 dark:text-gray-600 mb-4" />
+                        <p className="font-medium">暂无匹配的检查记录</p>
                         {filterStatus && (
-                          <button 
+                          <button
                             onClick={() => setFilterStatus(null)}
-                            className="mt-3 text-blue-500 hover:text-blue-600 text-sm"
+                            className="mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline"
                           >
                             清除筛选条件
                           </button>
@@ -315,80 +503,82 @@ const Dashboard = () => {
                 )}
                 {filteredChecks.map((check) => (
                   <React.Fragment key={check._id}>
-                    <tr className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${
-                      expandedCheckId === check._id 
-                        ? 'bg-blue-50 dark:bg-blue-900/20' 
-                        : ''
-                    } transition-colors`}>
-                      <td className="px-4 py-4 whitespace-nowrap">
+                    <tr className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150 ${
+                      expandedCheckId === check._id ? 'bg-blue-50 dark:bg-blue-900/30' : ''
+                    }`}>
+                      <td className="px-4 py-3 whitespace-nowrap">
                         {check.status === CheckStatus.SUCCESS ? (
-                          <span className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-1 text-xs font-medium text-green-800 dark:text-green-300">
-                            <CheckCircle className="h-4 w-4 mr-1" />
+                          <span className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/50 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-300 border border-green-200 dark:border-green-700">
+                            <CheckCircle className="h-3.5 w-3.5 mr-1" />
                             成功
                           </span>
                         ) : (
-                          <span className="inline-flex items-center rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-1 text-xs font-medium text-red-800 dark:text-red-300">
-                            <AlertCircle className="h-4 w-4 mr-1" />
+                          <span className="inline-flex items-center rounded-full bg-red-100 dark:bg-red-900/50 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:text-red-300 border border-red-200 dark:border-red-700">
+                            <AlertCircle className="h-3.5 w-3.5 mr-1" />
                             失败
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                         {check.script_name}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {formatDate(check.execution_time)}
                       </td>
-                      <td className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
-                        {check.findings || "无异常发现"}
+                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 max-w-xs truncate" title={check.findings || check.message || "无"}>
+                        {check.findings || check.message || <span className="italic text-gray-400 dark:text-gray-500">无</span>}
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
                         <button
                           onClick={() => toggleExpand(check._id)}
-                          className={`group px-3 py-1.5 rounded transition-colors ${
+                          className={`inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150 ${
                             expandedCheckId === check._id
-                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                              ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 ring-1 ring-blue-200 dark:ring-blue-700'
+                              : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'
                           }`}
                           title={expandedCheckId === check._id ? "收起详情" : "展开详情"}
                         >
-                          <span className="flex items-center">
-                            <Database size={16} className="mr-1.5" />
-                            {expandedCheckId === check._id ? (
-                              <>收起<ChevronUp size={16} className="ml-1" /></>
-                            ) : (
-                              <>详情<ChevronDown size={16} className="ml-1" /></>
-                            )}
-                          </span>
+                          {expandedCheckId === check._id ? (
+                            <>收起<ChevronUp size={14} className="ml-1" /></>
+                          ) : (
+                            <>详情<ChevronDown size={14} className="ml-1" /></>
+                          )}
                         </button>
                       </td>
                     </tr>
                     {expandedCheckId === check._id && (
-                      <tr className="bg-gray-50 dark:bg-gray-800/50">
-                        <td colSpan={5} className="px-6 py-5">
-                          <div className="bg-white dark:bg-gray-700 rounded-lg p-4 text-sm shadow-inner">
-                            <div className="mb-4">
-                              <p className="font-medium mb-2 text-gray-700 dark:text-gray-300">执行消息:</p>
-                              <div className="bg-gray-50 dark:bg-gray-800 rounded p-3 border border-gray-200 dark:border-gray-600">
-                                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{check.message || "无消息"}</p>
+                      <tr className="bg-gray-50 dark:bg-gray-800/70 border-l-4 border-blue-500 dark:border-blue-400">
+                        <td colSpan={5} className="px-5 py-5">
+                          <div className="bg-white dark:bg-gray-700 rounded-lg p-5 shadow-inner border border-gray-200 dark:border-gray-600 space-y-5">
+                            <div>
+                              <h4 className="text-sm font-semibold mb-2 text-gray-800 dark:text-gray-200">执行消息:</h4>
+                              <div className="bg-gray-100 dark:bg-gray-800 rounded p-3 border border-gray-200 dark:border-gray-600">
+                                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">{check.message || <span className="italic text-gray-500">无消息</span>}</p>
                               </div>
                             </div>
+                             {check.findings && (
+                                <div>
+                                <h4 className="text-sm font-semibold mb-2 text-gray-800 dark:text-gray-200">发现:</h4>
+                                <div className="bg-yellow-50 dark:bg-yellow-900/30 rounded p-3 border border-yellow-200 dark:border-yellow-700">
+                                    <p className="text-sm text-yellow-800 dark:text-yellow-200 whitespace-pre-wrap break-words">{check.findings}</p>
+                                </div>
+                                </div>
+                            )}
                             <div>
-                              <p className="font-medium mb-2 text-gray-700 dark:text-gray-300">原始查询结果:</p>
+                              <h4 className="text-sm font-semibold mb-2 text-gray-800 dark:text-gray-200">原始查询结果:</h4>
                               <RawResultsTable results={check.raw_results} />
                             </div>
                             {check.github_run_id && (
                               <div className="mt-4 text-right">
-                                <a 
-                                  href={`https://github.com/your-org/your-repo/actions/runs/${check.github_run_id}`}
+                                <a
+                                  // Assuming a standard GitHub URL structure, replace if needed
+                                  href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO || 'your-org/your-repo'}/actions/runs/${check.github_run_id}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-blue-500 hover:text-blue-600 flex items-center justify-end text-sm"
+                                  className="inline-flex items-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline"
                                 >
-                                  查看 GitHub Action 运行详情
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                  </svg>
+                                  查看 GitHub Action 运行
+                                  <ExternalLink size={14} className="ml-1.5" />
                                 </a>
                               </div>
                             )}
@@ -402,11 +592,11 @@ const Dashboard = () => {
             </table>
           </div>
         </div>
-        
-        <footer className="text-center text-sm text-gray-500 dark:text-gray-400 py-4 border-t border-gray-200 dark:border-gray-800">
-          <p>SQL Check System • 数据库监控工具 • {new Date().getFullYear()}</p>
+
+        <footer className="text-center text-sm text-gray-500 dark:text-gray-400 py-6 border-t border-gray-200 dark:border-gray-700">
+          <p>SQL Check System &copy; {new Date().getFullYear()}</p>
           <p className="mt-1">
-            自动化检查每日执行，通过 GitHub Actions 与 MongoDB 追踪历史数据
+            自动化检查由 GitHub Actions 驱动，数据存储于 MongoDB。
           </p>
         </footer>
       </div>

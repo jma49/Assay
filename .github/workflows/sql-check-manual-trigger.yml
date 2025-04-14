@@ -1,0 +1,58 @@
+# .github/workflows/sql-check-manual-trigger.yml
+name: Manual SQL Script Trigger
+
+on:
+  workflow_dispatch:
+    inputs:
+      script_id:
+        description: 'The ID of the SQL script to run (from manifest.json)'
+        required: true
+        type: string
+
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  MONGODB_URI: ${{ secrets.MONGODB_URI }} # Make sure MONGODB_URI is also a secret
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed if run_sql needs it, otherwise optional
+
+jobs:
+  run-manual-sql-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create environment file
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.local
+          echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}" >> .env.local
+          echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env.local
+          # Pass the GitHub Run ID for potential linking in saved results
+          echo "GITHUB_RUN_ID=${{ github.run_id }}" >> .env.local 
+          echo "GITHUB_SERVER_URL=${{ github.server_url }}" >> .env.local
+          echo "GITHUB_REPOSITORY=${{ github.repository }}" >> .env.local
+          echo "NODE_ENV=production" >> .env.local
+          echo "--- .env.local content (for manual trigger) ---"
+          cat .env.local || echo ".env.local not found or empty"
+          echo "--- .env.local content end ---"
+        
+      - name: Run SQL Script with ID
+        env:
+          DOTENV_CONFIG_PATH: .env.local
+        run: |
+          echo "当前工作目录: $(pwd)"
+          echo "将使用 .env 文件: ${DOTENV_CONFIG_PATH}"
+          echo "即将执行 ts-node for script ID: ${{ github.event.inputs.script_id }}"
+          # Execute run_sql.ts and pass the script_id from the input
+          npx ts-node -r dotenv/config scripts/run_sql.ts ${{ github.event.inputs.script_id }}
+        continue-on-error: false # Fail the workflow if the script fails 
