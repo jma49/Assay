@@ -2,63 +2,62 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 
-// 定义脚本清单中条目的类型 (与 list-scripts 一致)
-interface ScriptManifestEntry {
-  id: string;
-  name: string;
-  description: string;
-  filePath: string;
-}
-
-// 定义预期的请求体
+// Define the expected request body
 interface RequestBody {
   scriptId?: string;
 }
 
-// 从环境变量读取配置
+// From environment variables
 const GITHUB_PAT = process.env.GITHUB_PAT;
 const GITHUB_OWNER = process.env.GITHUB_OWNER;
 const GITHUB_REPO = process.env.GITHUB_REPO;
-const WORKFLOW_FILE_NAME = "sql-check-manual-trigger.yml"; // 确认这是你创建的 workflow 文件名
-const GITHUB_BRANCH = "main"; // 确认这是你的默认分支
+const WORKFLOW_FILE_NAME =
+  process.env.GITHUB_WORKFLOW_FILENAME || "sql-check-manual-trigger.yml"; // Allow override via env
+const GITHUB_BRANCH = process.env.GITHUB_BRANCH || "main"; // Allow override via env
 
-// 辅助函数：读取并解析 manifest 文件
-async function getManifest(): Promise<ScriptManifestEntry[]> {
-  const manifestPath = path.join(
+// Helper function to check if a script file exists
+async function scriptFileExists(scriptId: string): Promise<boolean> {
+  const scriptPath = path.join(
     process.cwd(),
     "scripts",
     "sql_scripts",
-    "manifest.json"
+    `${scriptId}.sql` // Construct path from ID
   );
   try {
-    const fileContent = await fs.readFile(manifestPath, "utf-8");
-    return JSON.parse(fileContent);
+    await fs.access(scriptPath, fs.constants.F_OK); // Check if file exists and is accessible
+    return true;
   } catch (error) {
-    console.error("读取或解析 manifest.json 失败:", error);
-    throw new Error("无法加载脚本清单。");
+    // ENOENT means file doesn't exist, other errors might be permissions etc.
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+        console.warn(`Script file not found for ID: ${scriptId} at path: ${scriptPath}`);
+    } else {
+        console.error(`Error accessing script file for ID ${scriptId}:`, error);
+    }
+    return false;
   }
 }
 
 export async function POST(request: Request) {
-  // 1. 检查必要的环境变量是否已配置
+  // 1. Check necessary environment variables
   if (!GITHUB_PAT || !GITHUB_OWNER || !GITHUB_REPO) {
     console.error(
-      "错误：缺少必要的 GitHub 环境变量 (GITHUB_PAT, GITHUB_OWNER, GITHUB_REPO)"
+      "Error: Missing required GitHub environment variables (GITHUB_PAT, GITHUB_OWNER, GITHUB_REPO)"
     );
     return NextResponse.json(
-      { message: "服务器配置不完整，无法触发检查。请联系管理员。" },
+      { message: "Server configuration incomplete. Cannot trigger check." },
       { status: 500 }
     );
   }
 
   try {
-    // 2. 解析请求体
+    // 2. Parse request body
     let body: RequestBody;
     try {
       body = await request.json();
     } catch (parseError) {
+      console.error("Failed to parse request body:", parseError); // Log the error
       return NextResponse.json(
-        { message: "无效的请求体，请确保发送 JSON 数据。" },
+        { message: "Invalid request body. Please send JSON data." },
         { status: 400 }
       );
     }
@@ -67,85 +66,83 @@ export async function POST(request: Request) {
 
     if (!scriptId || typeof scriptId !== "string") {
       return NextResponse.json(
-        { message: "请求体中缺少有效的 scriptId (字符串类型)" },
+        { message: "Missing valid 'scriptId' (string) in request body." },
         { status: 400 }
       );
     }
 
-    // 3. 根据 manifest 验证 scriptId 的有效性
-    const manifest = await getManifest();
-    const isValidScript = manifest.some((script) => script.id === scriptId);
+    // 3. Validate scriptId by checking if the corresponding .sql file exists
+    const isValidScript = await scriptFileExists(scriptId);
 
     if (!isValidScript) {
-      console.warn(`警告：收到无效的 scriptId: ${scriptId}`);
+      console.warn(`Warning: Received request for non-existent scriptId: ${scriptId}`);
       return NextResponse.json(
-        { message: `无效的脚本 ID: ${scriptId}` },
-        { status: 400 }
+        { message: `Invalid or non-existent script ID: ${scriptId}` },
+        { status: 404 } // Use 404 Not Found as the script doesn't exist
       );
     }
 
-    // 4. 准备调用 GitHub API
+    // 4. Prepare GitHub API call
     const dispatchUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_FILE_NAME}/dispatches`;
 
     const githubApiHeaders = {
       Accept: "application/vnd.github.v3+json",
       Authorization: `Bearer ${GITHUB_PAT}`,
       "Content-Type": "application/json",
-      "User-Agent": "NextJS-SQL-Check-Dashboard-Trigger", // 推荐设置 User-Agent
+      "User-Agent": "NextJS-SQL-Check-Dashboard-Trigger",
     };
 
     const githubApiBody = JSON.stringify({
-      ref: GITHUB_BRANCH, // 使用从环境变量或常量配置的分支
+      ref: GITHUB_BRANCH,
       inputs: {
-        script_id: scriptId, // 将 scriptId 作为输入传递给 workflow
+        script_id: scriptId, // Pass scriptId (filename without extension) to workflow
       },
     });
 
     console.log(
-      `信息：准备触发 workflow dispatch for scriptId: ${scriptId} 到 ${dispatchUrl} on branch ${GITHUB_BRANCH}`
+      `Info: Triggering workflow dispatch for scriptId: ${scriptId} to ${dispatchUrl} on branch ${GITHUB_BRANCH}`
     );
 
-    // 5. 发起 GitHub API 请求
+    // 5. Make GitHub API request
     const githubResponse = await fetch(dispatchUrl, {
       method: "POST",
       headers: githubApiHeaders,
       body: githubApiBody,
     });
 
-    // 6. 处理 GitHub API 的响应
+    // 6. Handle GitHub API response
     if (githubResponse.status === 204) {
-      // 成功触发 (GitHub 对于 dispatch 成功返回 204 No Content)
-      const scriptName =
-        manifest.find((s) => s.id === scriptId)?.name || scriptId;
+      // Success (GitHub returns 204 No Content for successful dispatch)
       console.log(
-        `成功：Workflow for script '${scriptName}' (ID: ${scriptId}) 已触发。`
+        `Success: Workflow for script '${scriptId}' triggered.`
       );
+      // Use scriptId in the message as we don't have the friendly name here anymore
       return NextResponse.json({
-        message: `脚本 '${scriptName}' 已成功触发，请稍后在历史记录中查看结果。`,
+        message: `脚本 '${scriptId}' 已成功触发，请稍后在历史记录中查看结果。`,
       });
     } else {
-      // 触发失败
+      // Failure
       let errorDetails = `Status Code: ${githubResponse.status}`;
       try {
-        const errorBody = await githubResponse.json(); // 尝试解析 GitHub 返回的错误信息
+        const errorBody = await githubResponse.json();
         errorDetails += `, Body: ${JSON.stringify(errorBody)}`;
       } catch {
-        errorDetails += `, Body: (无法解析响应体)`;
+        errorDetails += `, Body: (Could not parse response body)`;
       }
-      console.error(`错误：触发 GitHub Workflow 失败。 ${errorDetails}`);
+      console.error(`Error: Failed to trigger GitHub Workflow. ${errorDetails}`);
       return NextResponse.json(
         {
           message: `触发 GitHub Action 失败。请检查 Vercel 日志和 GitHub Action 配置。 (${githubResponse.status})`,
         },
-        { status: 500 } // 返回 500，因为是后端与外部服务交互失败
+        { status: 500 } // Return 500 as it's a backend interaction failure
       );
     }
   } catch (error) {
-    // 处理 manifest 读取错误或其他意外错误
-    console.error("错误：在 /api/run-check 处理请求时发生异常:", error);
+    // Catch unexpected errors during file system access or other operations
+    console.error("Error: Exception occurred in /api/run-check:", error);
     return NextResponse.json(
       {
-        message: "触发检查时发生内部服务器错误。 ",
+        message: "触发检查时发生内部服务器错误。",
         error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
