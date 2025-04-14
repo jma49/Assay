@@ -122,7 +122,10 @@ npm run dev
 
 1.  在 `scripts/sql_scripts/` 目录下创建新的 `.sql` 文件。
 2.  脚本应主要包含 `SELECT` 查询，避免执行数据修改操作。
-3.  (可选) 如果需要让某个新脚本成为默认的定时检查任务，需要修改 `.github/workflows/sql-check-cron.yml` 中 `Run SQL Script` 步骤调用的脚本名称。
+3.  所有的sql脚本都需要以在脚本最开头添加以下信息，供给前端获取对应信息。  
+    `-- NAME:`  
+    `-- DESCRIPTION: `  
+4.  (可选) 如果需要让某个新脚本成为默认的定时检查任务，需要修改 `.github/workflows/sql-check-cron.yml` 中 `Run SQL Script` 步骤调用的脚本名称。
 
 ## 安全注意事项
 
