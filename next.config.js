@@ -1,13 +1,14 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   /* config options here */
   output: "export",
-  distDir: ".next",
+  distDir: "out",
+  images: {
+    unoptimized: true,
+  },
+  trailingSlash: true,
   // 添加Netlify部署中禁用revalidation路径的配置
-  exportPathMap: async function (
-    defaultPathMap: Record<string, { page: string }>
-  ) {
+  exportPathMap: async function (defaultPathMap) {
     // 从默认路径映射中删除/revalidation路径
     delete defaultPathMap["/revalidation"];
 
@@ -18,4 +19,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
