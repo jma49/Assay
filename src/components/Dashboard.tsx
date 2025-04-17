@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   CheckCircle,
   AlertCircle,
@@ -108,7 +108,7 @@ const Dashboard = () => {
   const [triggerMessage, setTriggerMessage] = useState<string | null>(null);
   const [triggerMessageType, setTriggerMessageType] = useState<'success' | 'error' | null>(null); // For styling message
 
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     setLoading(true);
     setIsFetchingScripts(true);
     setError(null);
@@ -145,8 +145,7 @@ const Dashboard = () => {
       setLoading(false);
       setIsFetchingScripts(false);
     }
-  };
-
+  }, []);
 
   useEffect(() => {
     loadInitialData();
@@ -163,7 +162,7 @@ const Dashboard = () => {
     // const intervalId = setInterval(loadInitialData, 60000); // Refresh every minute
     // return () => clearInterval(intervalId);
 
-  }, []); // Run once on mount
+  }, [loadInitialData]); // Add memoized loadInitialData to dependency array
 
   const toggleExpand = (checkId: string) => {
     setExpandedCheckId(expandedCheckId === checkId ? null : checkId);
