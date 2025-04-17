@@ -5,9 +5,12 @@
 [build.environment]
   NETLIFY_NEXT_PLUGIN_SKIP = "true"
   NODE_VERSION = "18"
+  NEXT_DISABLE_NETLIFY_PLUGIN = "true"
+  NETLIFY_USE_NEXT_RUNTIME = "false"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+# 确保不使用Netlify的Next.js插件
+# [[plugins]]
+#   package = "@netlify/plugin-nextjs"
 
 [[redirects]]
   from = "/revalidation"
