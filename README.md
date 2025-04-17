@@ -7,7 +7,7 @@
 - **自动化执行:** 通过 GitHub Actions 定时或手动触发 SQL 脚本执行。
 - **结果存储:** 将每次执行的状态、摘要和原始查询结果存储到独立的 MongoDB 数据库中。
 - **Slack 通知:** 发送包含执行状态、摘要和 GitHub Actions 链接的 Slack 通知。
-- **前端 Dashboard:** (可选，如果部署了前端) 提供一个可视化界面展示最近的检查历史和结果详情。
+- **前端 Dashboard:** 提供一个可视化界面展示最近的检查历史和结果详情，并支持主题切换。
 
 ## 项目结构
 
@@ -27,7 +27,9 @@
 │   │   ├── api/check-history/route.ts # 获取检查历史的 API
 │   │   └── page.tsx      # Dashboard 主页面
 │   ├── components/       # React 组件 (如 Dashboard)
-│   │   └── Dashboard.tsx
+│   │   ├── Dashboard.tsx
+│   │   └── ui/           # UI 组件
+│   │       └── theme-toggle.tsx  # 主题切换组件
 │   └── lib/              # 工具库
 │       ├── db.ts         # PostgreSQL 数据库连接 (被检查的库)
 │       └── mongodb.ts    # MongoDB 数据库连接 (用于存储历史结果)
@@ -122,9 +124,9 @@ npm run dev
 
 1.  在 `scripts/sql_scripts/` 目录下创建新的 `.sql` 文件。
 2.  脚本应主要包含 `SELECT` 查询，避免执行数据修改操作。
-3.  所有的sql脚本都需要以在脚本最开头添加以下信息，供给前端获取对应信息。  
+3.  所有的 sql 脚本都需要以在脚本最开头添加以下信息，供给前端获取对应信息。  
     `-- NAME:`  
-    `-- DESCRIPTION: `  
+    `-- DESCRIPTION: `
 4.  (可选) 如果需要让某个新脚本成为默认的定时检查任务，需要修改 `.github/workflows/sql-check-cron.yml` 中 `Run SQL Script` 步骤调用的脚本名称。
 
 ## 安全注意事项
