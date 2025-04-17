@@ -184,25 +184,29 @@ async function executeSqlFile(
     }
 
     const sqlContent = fs.readFileSync(filePath, "utf8");
-    // Simple split by semicolon, ignoring comments or complex cases for now
-    // WARNING: This is a basic split and might fail with complex SQL (e.g., semicolons in strings/comments)
-    // Consider a more robust SQL parser if needed.
-    const queries = sqlContent
-      .split(";")
-      .map((q) => q.trim())
-      .filter(
-        (q) => q.length > 0 && !q.startsWith("--") && !q.startsWith("/*")
-      );
 
-    console.log(`找到 ${queries.length} 个查询语句`);
+    // --- 修改后的 SQL 解析逻辑 ---
+    // 1. 移除块注释 /* ... */ (非贪婪匹配, s 标志使 . 匹配换行符)
+    let processedContent = sqlContent.replace(/\/\*.*?\*\//gs, "");
+    // 2. 移除行注释 -- ... (到行尾)
+    processedContent = processedContent.replace(/--.*/g, "");
+
+    // 3. 分割语句
+    const queries = processedContent
+      .split(";")
+      .map((q) => q.trim()) // Trim whitespace
+      .filter((q) => q.length > 0); // Filter only empty strings after trimming
+    // --- 结束修改后的 SQL 解析逻辑 ---
+
+    console.log(`找到 ${queries.length} 个查询语句（已移除注释）`);
 
     if (queries.length === 0) {
       // Allow files with no executable queries (maybe just comments or setup)
       console.warn(
-        `警告: 在 ${scriptDisplayName} (${filePath}) 中未找到可执行的 SQL 查询语句。`
+        `警告: 在 ${scriptDisplayName} (${filePath}) 中移除注释后未找到可执行的 SQL 查询语句。`
       );
-      successMessage = `SQL 脚本 ${scriptDisplayName} 执行完成，但未找到可执行查询。`;
-      findings = "无查询执行";
+      successMessage = `SQL 脚本 ${scriptDisplayName} 执行完成，但移除注释后未找到可执行查询。`;
+      findings = "无查询执行（移除注释后）"; // 更新 findings 消息
       results = []; // Ensure results is an empty array
     } else {
       // Check for forbidden statements before executing anything
