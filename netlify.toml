@@ -8,8 +8,8 @@
   NODE_VERSION = "18"
 
 # 恢复Netlify Next.js插件
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+# [[plugins]]
+#   package = "@netlify/plugin-nextjs"
 
 # 移除静态站点的 /* -> index.html 重定向
 # [[redirects]]
