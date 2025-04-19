@@ -543,16 +543,16 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8 animate-fadeIn">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <header className="pb-6 border-b">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="min-h-screen bg-background pt-4 pb-8 px-3 sm:px-5 lg:px-6 animate-fadeIn">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <header className="pb-4 mb-2 border-b">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-                <Database className="h-8 w-8 text-primary flex-shrink-0" />
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
+                <Database className="h-6 w-6 sm:h-7 sm:w-7 text-primary flex-shrink-0" />
                 {t('dashboardTitle')}
               </h1>
-              <p className="mt-2 text-base text-muted-foreground max-w-3xl">
+              <p className="mt-1.5 text-sm sm:text-base text-muted-foreground max-w-3xl">
                 {t('dashboardDesc')}
               </p>
             </div>
@@ -561,9 +561,9 @@ const Dashboard = () => {
               disabled={loading || isRefreshing}
               variant="outline"
               size="sm"
-              className="relative"
+              className="relative shadow-sm hover:shadow transition-all"
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? t('refreshing') : t('refresh')}
               {isRefreshing && (
                 <span className="absolute inset-0 rounded-md bg-primary/10 animate-pulse"></span>
@@ -572,18 +572,18 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-blue-500 dark:border-l-blue-400">
-            <CardHeader className="pb-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+          <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-blue-500 dark:border-l-blue-400 shadow-sm hover:translate-y-[-2px]">
+            <CardHeader className="pb-1.5 pt-3 px-4">
               <CardTitle className="text-sm text-muted-foreground font-normal">{t('nextCheck')}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-4">
-                <div className="bg-primary/10 p-3 rounded-full">
-                  <Clock className="h-6 w-6 text-primary" />
+            <CardContent className="px-4 pb-3.5">
+              <div className="flex items-center space-x-3">
+                <div className="bg-primary/10 p-2.5 rounded-full">
+                  <Clock className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold">
+                  <p className="text-xl sm:text-2xl font-semibold">
                     {nextScheduled ? formatDate(nextScheduled.toISOString(), language) : t('calculating')}
                   </p>
                 </div>
@@ -591,19 +591,19 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-emerald-500 dark:border-l-emerald-400">
-            <CardHeader className="pb-2">
+          <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-emerald-500 dark:border-l-emerald-400 shadow-sm hover:translate-y-[-2px]">
+            <CardHeader className="pb-1.5 pt-3 px-4">
               <CardTitle className="text-sm text-muted-foreground font-normal">{t('successRate')}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-4">
-                <div className="bg-emerald-500/10 p-3 rounded-full">
-                  <BarChart2 className="h-6 w-6 text-emerald-500" />
+            <CardContent className="px-4 pb-3.5">
+              <div className="flex items-center space-x-3">
+                <div className="bg-emerald-500/10 p-2.5 rounded-full">
+                  <BarChart2 className="h-5 w-5 text-emerald-500" />
                 </div>
-                <div className="space-y-2 flex-1">
+                <div className="space-y-1.5 flex-1">
                   <div className="flex items-baseline space-x-2">
-                    <p className="text-2xl font-semibold">{successRate}%</p>
-                    <p className="text-sm text-muted-foreground">({successCount}/{allChecksCount})</p>
+                    <p className="text-xl sm:text-2xl font-semibold">{successRate}%</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">({successCount}/{allChecksCount})</p>
                   </div>
                   <Progress className="h-1.5" value={successRate} />
                 </div>
@@ -611,19 +611,19 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-amber-500 dark:border-l-amber-400">
-            <CardHeader className="pb-2">
+          <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-amber-500 dark:border-l-amber-400 shadow-sm hover:translate-y-[-2px]">
+            <CardHeader className="pb-1.5 pt-3 px-4">
               <CardTitle className="text-sm text-muted-foreground font-normal">{t('failedChecks')}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-4">
-                <div className="bg-amber-500/10 p-3 rounded-full">
-                  <AlertCircle className="h-6 w-6 text-amber-500" />
+            <CardContent className="px-4 pb-3.5">
+              <div className="flex items-center space-x-3">
+                <div className="bg-amber-500/10 p-2.5 rounded-full">
+                  <AlertCircle className="h-5 w-5 text-amber-500" />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <div className="flex items-baseline space-x-2">
-                    <p className="text-2xl font-semibold">{failureCount}</p>
-                    <p className="text-sm text-muted-foreground">/ {allChecksCount} {t('checks')}</p>
+                    <p className="text-xl sm:text-2xl font-semibold">{failureCount}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">/ {allChecksCount} {t('checks')}</p>
                   </div>
                   {failureCount > 0 && allChecksCount > 0 && (
                     <p className="text-red-500 text-xs font-medium">
@@ -636,25 +636,25 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <Card className="overflow-hidden border-t-4 border-t-primary">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2.5">
+        <Card className="overflow-hidden border-t-4 border-t-primary shadow-sm hover:shadow-md transition-all duration-300">
+          <CardHeader className="px-5 py-4 bg-card/50">
+            <CardTitle className="flex items-center gap-2">
               <List className="h-5 w-5 text-primary" />
               {t('manualTrigger')}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="mt-1">
               {t('selectScriptDesc')}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-5 pb-4">
             {isFetchingScripts ? (
               <div className="flex items-center text-muted-foreground space-x-2">
                 <Loader2 className="animate-spin h-5 w-5" />
                 <span>{t('loadingScripts')}</span>
               </div>
             ) : availableScripts.length > 0 ? (
-              <div className="space-y-5">
-                <div className="grid gap-2">
+              <div className="space-y-4">
+                <div className="grid gap-1.5">
                   <label htmlFor="script-select" className="text-sm font-medium">
                     {t('selectScriptLabel')}
                   </label>
@@ -663,7 +663,7 @@ const Dashboard = () => {
                     value={selectedScriptId}
                     onChange={(e) => setSelectedScriptId(e.target.value)}
                     disabled={isTriggering || loading}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {availableScripts.map((script) => (
                       <option key={script.id} value={script.id}>
@@ -674,7 +674,7 @@ const Dashboard = () => {
                 </div>
 
                 {selectedScript && (
-                  <div className="bg-muted/50 p-3 rounded-md text-sm text-muted-foreground italic">
+                  <div className="bg-muted/50 p-2.5 rounded-md text-sm text-muted-foreground italic border border-muted/80">
                     {selectedScript.description || t('noScriptDesc')}
                   </div>
                 )}
@@ -682,23 +682,23 @@ const Dashboard = () => {
                 <Button
                   onClick={handleTriggerCheck}
                   disabled={!selectedScriptId || isTriggering || loading}
-                  className="w-full"
+                  className="w-full shadow-sm hover:shadow transition-all"
                 >
                   {isTriggering ? (
                     <>
-                      <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                      <Loader2 className="animate-spin mr-1.5 h-4 w-4" />
                       {t('runningCheck')}
                     </>
                   ) : (
                     <>
-                      <Play className="mr-2 h-4 w-4" />
+                      <Play className="mr-1.5 h-4 w-4" />
                       {t('runCheck')}
                     </>
                   )}
                 </Button>
 
                 {triggerMessage && (
-                  <Alert variant={triggerMessageType === 'error' ? "destructive" : "default"}>
+                  <Alert variant={triggerMessageType === 'error' ? "destructive" : "default"} className="mt-3 shadow-sm">
                     <AlertTitle>
                       {triggerMessageType === 'error' ? t('triggerErrorTitle') : t('triggerSuccessTitle')}
                     </AlertTitle>
@@ -709,8 +709,8 @@ const Dashboard = () => {
                 )}
               </div>
             ) : (
-               <div className="text-center py-6 px-4 bg-muted/50 rounded-lg border border-dashed">
-                  <Database className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+               <div className="text-center py-5 px-4 bg-muted/50 rounded-lg border border-dashed">
+                  <Database className="h-9 w-9 text-muted-foreground mx-auto mb-2.5" />
                   <p className="font-medium">{t('noScriptsAvailable')}</p>
                   <p className="text-sm text-muted-foreground mt-1">{t('ensureConfigured')}</p>
                </div>
@@ -718,67 +718,71 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <Card className="shadow-sm hover:shadow-md transition-all duration-300">
+          <CardHeader className="px-5 py-4 bg-card/50 border-b border-border/50">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
               <div>
-                <CardTitle className="flex items-center gap-2.5">
+                <CardTitle className="flex items-center gap-2">
                   <Clock className="h-5 w-5 text-muted-foreground" />
                   {t('historyTitle')}
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="mt-1">
                   {t('historyDesc').replace('%s', String(allChecksCount))}
                 </CardDescription>
               </div>
 
-              <div className="space-y-2 w-full sm:w-auto">
-                <div className="relative w-full sm:w-64">
-                  <input
-                    type="text"
-                    placeholder={t('searchPlaceholder')}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full h-9 pl-9 pr-9 text-sm rounded-md border border-input ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus:ring-offset-2"
-                  />
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  {searchTerm && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="absolute right-1 top-1 h-7 w-7 p-0 text-muted-foreground hover:text-foreground" 
-                      onClick={() => setSearchTerm('')}
-                    >
-                      <span className="sr-only">{t('clearSearch')}</span>
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                </div>
-
-                <div className="flex items-center space-x-2 flex-wrap gap-y-2">
+              <div className="w-full sm:w-auto space-y-3">
+                <div className="flex flex-wrap items-center gap-1.5 justify-between sm:justify-end">
                   <Button
                     variant={filterStatus === null ? "default" : "outline"}
                     size="sm"
                     onClick={() => { setFilterStatus(null); setCurrentPage(1); }}
-                    className="h-8 gap-1 transition-all duration-200"
+                    className="h-7 px-2 gap-1 text-xs transition-all duration-200 shadow-sm"
                   >
-                    <Filter size={14} /> {t('filterAll')} <Badge variant="secondary" className="ml-1">{allChecksCount}</Badge>
+                    <Filter size={12} /> {t('filterAll')} <Badge variant="secondary" className="ml-0.5 h-4 text-[10px] px-1">{allChecksCount}</Badge>
                   </Button>
                   <Button
                     variant={filterStatus === CheckStatus.SUCCESS ? "default" : "outline"}
                     size="sm"
                     onClick={() => { setFilterStatus(CheckStatus.SUCCESS); setCurrentPage(1); }}
-                    className="h-8 gap-1 transition-all duration-200"
+                    className="h-7 px-2 gap-1 text-xs transition-all duration-200 shadow-sm"
                   >
-                    <CheckCircle size={14} /> {t('filterSuccess')} <Badge variant="secondary" className="ml-1">{successCount}</Badge>
+                    <CheckCircle size={12} /> {t('filterSuccess')} <Badge variant="secondary" className="ml-0.5 h-4 text-[10px] px-1">{successCount}</Badge>
                   </Button>
                   <Button
                     variant={filterStatus === CheckStatus.FAILURE ? "default" : "outline"}
                     size="sm"
                     onClick={() => { setFilterStatus(CheckStatus.FAILURE); setCurrentPage(1); }}
-                    className="h-8 gap-1 transition-all duration-200"
+                    className="h-7 px-2 gap-1 text-xs transition-all duration-200 shadow-sm"
                   >
-                    <AlertCircle size={14} /> {t('filterFailed')} <Badge variant="secondary" className="ml-1">{failureCount}</Badge>
+                    <AlertCircle size={12} /> {t('filterFailed')} <Badge variant="secondary" className="ml-0.5 h-4 text-[10px] px-1">{failureCount}</Badge>
                   </Button>
+                </div>
+                
+                <div className="relative w-full">
+                  <div className="flex w-full items-center space-x-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder={t('searchPlaceholder')}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full h-9 pl-8 pr-8 text-sm rounded-md border border-input bg-card/50 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus:ring-offset-2 shadow-sm"
+                      />
+                      {searchTerm && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="absolute right-1 top-1 h-7 w-7 p-0 text-muted-foreground hover:text-foreground hover:bg-background/80" 
+                          onClick={() => setSearchTerm('')}
+                        >
+                          <span className="sr-only">{t('clearSearch')}</span>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -787,25 +791,29 @@ const Dashboard = () => {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-muted/30 hover:bg-muted/40">
                     <TableHead className="w-[100px]">{t('tableStatus')}</TableHead>
                     <TableHead 
                       className="cursor-pointer hover:bg-muted/50 transition-colors"
                       onClick={() => requestSort('script_name')}
                     >
-                      {t('tableScriptName')}
-                      {sortConfig.key === 'script_name' && (
-                        <span className="ml-1">{sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-                      )}
+                      <div className="flex items-center">
+                        {t('tableScriptName')}
+                        {sortConfig.key === 'script_name' && (
+                          <span className="ml-1">{sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
                     </TableHead>
                     <TableHead 
                       className="hidden md:table-cell cursor-pointer hover:bg-muted/50 transition-colors"
                       onClick={() => requestSort('execution_time')}
                     >
-                      {t('tableExecutionTime')}
-                      {sortConfig.key === 'execution_time' && (
-                        <span className="ml-1">{sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-                      )}
+                      <div className="flex items-center">
+                        {t('tableExecutionTime')}
+                        {sortConfig.key === 'execution_time' && (
+                          <span className="ml-1">{sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
                     </TableHead>
                     <TableHead className="hidden sm:table-cell max-w-xs">{t('tableFindings')}</TableHead>
                     <TableHead className="text-center">{t('tableActions')}</TableHead>
@@ -816,13 +824,13 @@ const Dashboard = () => {
                     <TableRow>
                       <TableCell colSpan={5} className="h-32 text-center">
                         <div className="flex flex-col items-center">
-                          <Database className="h-12 w-12 text-muted-foreground mb-4" />
+                          <Database className="h-12 w-12 text-muted-foreground mb-3" />
                           <p className="font-medium">{t('noMatchingRecords')}</p>
                           {filterStatus && (
                             <Button
                               onClick={() => setFilterStatus(null)}
                               variant="link"
-                              className="mt-2"
+                              className="mt-1.5"
                             >
                               {t('clearFilters')}
                             </Button>
@@ -834,7 +842,7 @@ const Dashboard = () => {
                   {paginatedChecks.map((check) => (
                     <React.Fragment key={check._id}>
                       <TableRow className={cn(
-                        "transition-colors",
+                        "transition-colors hover:bg-muted/20",
                         expandedCheckId === check._id ? "bg-muted/60" : ""
                       )}>
                         <TableCell>
@@ -860,17 +868,17 @@ const Dashboard = () => {
                           {check.findings || check.message || <span className="italic text-muted-foreground">{t('noData')}</span>}
                         </TableCell>
                         <TableCell className="text-center">
-                          <div className="flex justify-center gap-2">
+                          <div className="flex justify-center gap-1.5">
                             <Button
                               variant={expandedCheckId === check._id ? "default" : "outline"}
                               size="sm"
                               onClick={() => toggleExpand(check._id)}
-                              className="h-8 px-2 gap-1"
+                              className="h-7 px-2 text-xs shadow-sm"
                             >
                               {expandedCheckId === check._id ? (
-                                <><ChevronUp size={14} className="mr-1"/>{t('collapse')}</>
+                                <><ChevronUp size={12} className="mr-1"/>{t('collapse')}</>
                               ) : (
-                                <><ChevronDown size={14} className="mr-1"/>{t('expand')}</>
+                                <><ChevronDown size={12} className="mr-1"/>{t('expand')}</>
                               )}
                             </Button>
                             
@@ -879,9 +887,9 @@ const Dashboard = () => {
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  className="h-8 w-8"
+                                  className="h-7 w-7 shadow-sm"
                                 >
-                                  <ExternalLink size={14} />
+                                  <ExternalLink size={12} />
                                 </Button>
                               </SheetTrigger>
                               <SheetContent>
@@ -891,9 +899,9 @@ const Dashboard = () => {
                                     {check.script_name} - {formatDate(check.execution_time, language)}
                                   </SheetDescription>
                                 </SheetHeader>
-                                <div className="space-y-6 py-6">
+                                <div className="space-y-4 py-4">
                                   <div>
-                                    <h4 className="text-sm font-semibold mb-2">{t('executionStatus')}</h4>
+                                    <h4 className="text-sm font-semibold mb-1.5">{t('executionStatus')}</h4>
                                     {check.status === CheckStatus.SUCCESS ? (
                                       <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
                                         <CheckCircle className="h-3.5 w-3.5 mr-1" />
@@ -907,33 +915,33 @@ const Dashboard = () => {
                                     )}
                                   </div>
                                   <div>
-                                    <h4 className="text-sm font-semibold mb-2">{t('executionMessage')}</h4>
-                                    <div className="bg-muted p-3 rounded text-sm break-words">
+                                    <h4 className="text-sm font-semibold mb-1.5">{t('executionMessage')}</h4>
+                                    <div className="bg-muted p-2.5 rounded text-sm break-words">
                                       {check.message || <span className="italic text-muted-foreground">{t('noMessage')}</span>}
                                     </div>
                                   </div>
                                   {check.findings && (
                                     <div>
-                                      <h4 className="text-sm font-semibold mb-2">{t('findings')}</h4>
-                                      <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 break-words">
+                                      <h4 className="text-sm font-semibold mb-1.5">{t('findings')}</h4>
+                                      <div className="bg-amber-50 dark:bg-amber-950 p-2.5 rounded text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 break-words">
                                         {check.findings}
                                       </div>
                                     </div>
                                   )}
                                   <div>
-                                    <h4 className="text-sm font-semibold mb-2">{t('rawResults')}</h4>
+                                    <h4 className="text-sm font-semibold mb-1.5">{t('rawResults')}</h4>
                                     <RawResultsTable results={check.raw_results} noDataText={t('noRawData')} />
                                   </div>
                                   {check.github_run_id && (
                                     <div className="text-right">
-                                      <Button asChild variant="outline" size="sm">
+                                      <Button asChild variant="outline" size="sm" className="shadow-sm">
                                         <a
                                           href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO || 'your-org/your-repo'}/actions/runs/${check.github_run_id}`}
                                           target="_blank"
                                           rel="noopener noreferrer"
                                         >
                                           {t('viewGitHubAction')}
-                                          <ExternalLink size={14} className="ml-1.5" />
+                                          <ExternalLink size={12} className="ml-1" />
                                         </a>
                                       </Button>
                                     </div>
@@ -947,37 +955,37 @@ const Dashboard = () => {
 
                       {expandedCheckId === check._id && (
                         <TableRow className="bg-muted/30">
-                          <TableCell colSpan={5} className="p-5">
+                          <TableCell colSpan={5} className="p-4">
                             <Card className="shadow-sm border">
-                              <CardContent className="space-y-5 pt-6">
+                              <CardContent className="space-y-4 pt-4 px-4">
                                 <div>
-                                  <h4 className="text-sm font-semibold mb-2">{t('executionMessage')}</h4>
-                                  <div className="bg-background rounded p-3 border text-sm break-words">
+                                  <h4 className="text-sm font-semibold mb-1.5">{t('executionMessage')}</h4>
+                                  <div className="bg-background rounded p-2.5 border text-sm break-words">
                                     {check.message || <span className="italic text-muted-foreground">{t('noMessage')}</span>}
                                   </div>
                                 </div>
                                 {check.findings && (
                                   <div>
-                                    <h4 className="text-sm font-semibold mb-2">{t('findings')}</h4>
-                                    <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 break-words">
+                                    <h4 className="text-sm font-semibold mb-1.5">{t('findings')}</h4>
+                                    <div className="bg-amber-50 dark:bg-amber-950 p-2.5 rounded text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 break-words">
                                       {check.findings}
                                     </div>
                                   </div>
                                 )}
                                 <div>
-                                  <h4 className="text-sm font-semibold mb-2">{t('rawResults')}</h4>
+                                  <h4 className="text-sm font-semibold mb-1.5">{t('rawResults')}</h4>
                                   <RawResultsTable results={check.raw_results} noDataText={t('noRawData')} />
                                 </div>
                                 {check.github_run_id && (
-                                  <div className="text-right">
-                                    <Button asChild variant="outline" size="sm">
+                                  <div className="text-right mt-3">
+                                    <Button asChild variant="outline" size="sm" className="shadow-sm">
                                       <a
                                         href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO || 'your-org/your-repo'}/actions/runs/${check.github_run_id}`}
                                           target="_blank"
                                           rel="noopener noreferrer"
                                         >
                                           {t('viewGitHubAction')}
-                                          <ExternalLink size={14} className="ml-1.5" />
+                                          <ExternalLink size={12} className="ml-1" />
                                         </a>
                                       </Button>
                                     </div>
@@ -994,18 +1002,19 @@ const Dashboard = () => {
             </div>
           </CardContent>
           {totalPages > 1 && (
-            <CardFooter className="flex items-center justify-between border-t px-6 py-3">
-              <div className="text-xs text-muted-foreground">
+            <CardFooter className="flex items-center justify-between border-t px-4 py-2.5 text-xs bg-card/50">
+              <div className="text-muted-foreground">
                 {t('pageInfo').replace('%s', String(currentPage)).replace('%s', String(totalPages))}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
+                  className="h-7 px-2 text-xs shadow-sm"
                 >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                   {t('previous')}
                 </Button>
                 <Button
@@ -1013,16 +1022,17 @@ const Dashboard = () => {
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
+                  className="h-7 px-2 text-xs shadow-sm"
                 >
                   {t('next')}
-                  <ChevronRight className="h-4 w-4 ml-1" />
+                  <ChevronRight className="h-3.5 w-3.5 ml-1" />
                 </Button>
               </div>
             </CardFooter>
           )}
         </Card>
 
-        <footer className="text-center text-sm text-muted-foreground py-6 border-t">
+        <footer className="text-center text-xs text-muted-foreground py-4 border-t">
           <p>{t('footerSystem')} &copy; {new Date().getFullYear()}</p>
           <p className="mt-1">
             {t('footerInfo')}
