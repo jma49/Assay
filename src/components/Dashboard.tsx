@@ -17,11 +17,14 @@ import {
   RefreshCw,
   Search,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
+import { useLanguage } from '@/components/ClientLayoutWrapper';
 
-// 导入shadcn UI组件
+// Import shadcn UI components
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,17 +35,168 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-// Keep CheckStatus if still relevant, or adjust based on API data
+// --- Translations Definition ---
+const dashboardTranslations = {
+  en: {
+    // General
+    loading: "Loading...",
+    refreshing: "Refreshing...",
+    refresh: "Refresh",
+    errorTitle: "Data Loading Failed",
+    errorDescription: "Could not connect or process the request. Check your connection or try again later.",
+    errorInfo: "Error Information",
+    retry: "Retry Load",
+    noData: "No Data",
+    // Header
+    dashboardTitle: "SQL Check Dashboard",
+    dashboardDesc: "Monitor automated SQL check tasks, track data quality and consistency in real-time.",
+    // Stats Cards
+    nextCheck: "Next Scheduled Check",
+    calculating: "Calculating...",
+    successRate: "Success Rate",
+    checks: "checks",
+    failedChecks: "Failed Checks",
+    attentionNeeded: "%s% checks require attention",
+    // Manual Trigger
+    manualTrigger: "Manual Trigger Check",
+    selectScriptDesc: "Select and run an SQL check script",
+    loadingScripts: "Loading available scripts...",
+    selectScriptLabel: "Select script to execute:",
+    noScriptDesc: "No description available for this script.",
+    runCheck: "Run Check",
+    runningCheck: "Running...",
+    triggerSuccessTitle: "Execution Successful",
+    triggerErrorTitle: "Execution Failed",
+    checkTriggered: "Check Triggered",
+    checkTriggeredDesc: "Check successfully triggered.",
+    triggerFailed: "Trigger Check Failed",
+    noScriptsAvailable: "No Check Scripts Available",
+    ensureConfigured: "Ensure scripts are correctly configured and deployed.",
+    // History Table
+    historyTitle: "Check History",
+    historyDesc: "Showing results for the last %s checks",
+    searchPlaceholder: "Search script name or message...",
+    clearSearch: "Clear",
+    filterAll: "All",
+    filterSuccess: "Success",
+    filterFailed: "Failure",
+    tableStatus: "Status",
+    tableScriptName: "Script Name",
+    tableExecutionTime: "Execution Time",
+    tableFindings: "Findings/Message",
+    tableActions: "Actions",
+    noMatchingRecords: "No matching check records found",
+    clearFilters: "Clear Filters",
+    // Row Actions
+    collapse: "Collapse",
+    expand: "Details",
+    viewDetailsSidebar: "View Details in Sidebar",
+    // Detail View (Sheet & Expanded Row)
+    checkDetails: "Check Details",
+    executionStatus: "Execution Status:",
+    executionMessage: "Execution Message:",
+    findings: "Findings:",
+    rawResults: "Raw Query Results:",
+    noRawData: "No raw data",
+    viewGitHubAction: "View GitHub Action",
+    noMessage: "No message",
+    // Footer
+    footerSystem: "SQL Check System",
+    footerInfo: "Automated checks driven by GitHub Actions, data stored in MongoDB.",
+    footerTheme: "Current Theme: %s",
+    previous: "Previous",
+    next: "Next",
+    pageInfo: "Page %s of %s",
+  },
+  zh: {
+    // General
+    loading: "加载中...",
+    refreshing: "刷新中...",
+    refresh: "刷新",
+    errorTitle: "数据加载失败",
+    errorDescription: "无法连接到服务器或处理请求时出错。请检查您的网络连接或稍后重试。",
+    errorInfo: "错误信息",
+    retry: "重试加载",
+    noData: "无数据",
+    // Header
+    dashboardTitle: "SQL 检查仪表盘",
+    dashboardDesc: "实时监控自动化 SQL 检查任务执行情况，追踪数据质量和一致性。",
+    // Stats Cards
+    nextCheck: "下次计划检查",
+    calculating: "计算中...",
+    successRate: "成功率",
+    checks: "次检查",
+    failedChecks: "失败检查",
+    attentionNeeded: "%s% 的检查需要关注",
+    // Manual Trigger
+    manualTrigger: "手动触发检查",
+    selectScriptDesc: "选择并运行SQL检查脚本",
+    loadingScripts: "加载可用脚本...",
+    selectScriptLabel: "选择要执行的脚本:",
+    noScriptDesc: "此脚本没有描述信息。",
+    runCheck: "执行检查",
+    runningCheck: "执行中...",
+    triggerSuccessTitle: "执行成功",
+    triggerErrorTitle: "执行失败",
+    checkTriggered: "检查已触发",
+    checkTriggeredDesc: "检查已成功触发。",
+    triggerFailed: "触发检查失败",
+    noScriptsAvailable: "没有可用的检查脚本",
+    ensureConfigured: "请确保脚本已正确配置并部署。",
+    // History Table
+    historyTitle: "历史检查记录",
+    historyDesc: "显示最近 %s 次检查的详细结果",
+    searchPlaceholder: "搜索脚本名称或消息...",
+    clearSearch: "清除",
+    filterAll: "全部",
+    filterSuccess: "成功",
+    filterFailed: "失败",
+    tableStatus: "状态",
+    tableScriptName: "脚本名称",
+    tableExecutionTime: "执行时间",
+    tableFindings: "发现/消息",
+    tableActions: "操作",
+    noMatchingRecords: "暂无匹配的检查记录",
+    clearFilters: "清除筛选条件",
+    // Row Actions
+    collapse: "收起",
+    expand: "详情",
+    viewDetailsSidebar: "在侧边栏查看详情",
+    // Detail View (Sheet & Expanded Row)
+    checkDetails: "检查详情",
+    executionStatus: "执行状态:",
+    executionMessage: "执行消息:",
+    findings: "发现:",
+    rawResults: "原始查询结果:",
+    noRawData: "无原始数据",
+    viewGitHubAction: "查看 GitHub Action",
+    noMessage: "无消息",
+    // Footer
+    footerSystem: "SQL 检查系统",
+    footerInfo: "自动化检查由 GitHub Actions 驱动，数据存储于 MongoDB。",
+    footerTheme: "当前主题: %s",
+    previous: "上一页",
+    next: "下一页",
+    pageInfo: "第 %s 页 / 共 %s 页",
+  }
+};
+
+// Type for translation keys
+type DashboardTranslationKeys = keyof typeof dashboardTranslations['en'];
+
+// --- Constants ---
 const CheckStatus = {
   SUCCESS: 'success',
   FAILURE: 'failure',
 } as const;
 
-// Update Check interface to match API response
+const ITEMS_PER_PAGE = 10;
+
+// --- Interfaces ---
 interface Check {
   _id: string;
   script_name: string;
-  execution_time: string; // API returns Date, but fetch converts to string
+  execution_time: string;
   status: typeof CheckStatus[keyof typeof CheckStatus];
   message: string;
   findings: string;
@@ -50,33 +204,32 @@ interface Check {
   github_run_id?: string | number;
 }
 
-// Define the type for the script info fetched from the API
 interface ScriptInfo {
   id: string;
   name: string;
   description: string;
 }
 
-const formatDate = (dateString: string) => {
+// --- Helper Components ---
+const formatDate = (dateString: string, locale: string = 'en-US') => {
   const date = new Date(dateString);
-  return date.toLocaleString('zh-CN', {
+  // Adjust locale based on language context
+  const effectiveLocale = locale.startsWith('zh') ? 'zh-CN' : 'en-US';
+  return date.toLocaleString(effectiveLocale, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit', // Added seconds for more precision
+    second: '2-digit',
   });
 };
 
-// Helper to render raw results as a simple table
-const RawResultsTable = ({ results }: { results: Record<string, unknown>[] }) => {
+const RawResultsTable = ({ results, noDataText }: { results: Record<string, unknown>[], noDataText: string }) => {
   if (!results || results.length === 0) {
-    return <p className="text-sm text-muted-foreground italic mt-2">无原始数据</p>;
+    return <p className="text-sm text-muted-foreground italic mt-2">{noDataText}</p>;
   }
-
   const headers = Object.keys(results[0]);
-
   return (
     <div className="overflow-x-auto mt-2 border rounded-lg">
       <Table>
@@ -105,7 +258,6 @@ const RawResultsTable = ({ results }: { results: Record<string, unknown>[] }) =>
   );
 };
 
-// 添加骨架屏组件
 const SkeletonCard = () => (
   <Card>
     <CardHeader className="space-y-2">
@@ -131,14 +283,16 @@ const SkeletonTable = () => (
       <Skeleton className="h-4 w-2/5" />
     </CardHeader>
     <CardContent className="space-y-4">
-      {Array(4).fill(0).map((_, i) => (
+      {Array(ITEMS_PER_PAGE).fill(0).map((_, i) => (
         <Skeleton key={i} className="h-10 w-full" />
       ))}
     </CardContent>
   </Card>
 );
 
+// --- Main Component ---
 const Dashboard = () => {
+  // --- State Hooks ---
   const [checks, setChecks] = useState<Check[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -150,17 +304,26 @@ const Dashboard = () => {
     key: keyof Check | '';
     direction: 'ascending' | 'descending';
   }>({ key: 'execution_time', direction: 'descending' });
-
   const [availableScripts, setAvailableScripts] = useState<ScriptInfo[]>([]);
   const [selectedScriptId, setSelectedScriptId] = useState<string>('');
   const [isFetchingScripts, setIsFetchingScripts] = useState(true);
   const [isTriggering, setIsTriggering] = useState(false);
   const [triggerMessage, setTriggerMessage] = useState<string | null>(null);
-  const [triggerMessageType, setTriggerMessageType] = useState<'success' | 'error' | null>(null); // For styling message
-
-  const { theme } = useTheme();
+  const [triggerMessageType, setTriggerMessageType] = useState<'success' | 'error' | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
+  // --- Context Hooks ---
+  const { theme } = useTheme();
+  const { language } = useLanguage();
+
+  // --- Translation Helper ---
+  const t = useCallback((key: DashboardTranslationKeys): string => {
+    const langTranslations = dashboardTranslations[language] || dashboardTranslations.en;
+    return langTranslations[key] || key;
+  }, [language]);
+
+  // --- Data Fetching ---
   const loadInitialData = useCallback(async () => {
     setLoading(true);
     setIsFetchingScripts(true);
@@ -168,141 +331,122 @@ const Dashboard = () => {
     setTriggerMessage(null);
     setTriggerMessageType(null);
     setIsRefreshing(true);
+    setCurrentPage(1);
 
     try {
       const historyPromise = fetch('/api/check-history').then(res => {
-        if (!res.ok) throw new Error(`API Error (History): ${res.status} ${res.statusText}`);
+        if (!res.ok) throw new Error(`${t('errorInfo')}: ${res.status} ${res.statusText}`);
         return res.json();
       });
 
       const scriptsPromise = fetch('/api/list-scripts').then(res => {
-        if (!res.ok) throw new Error(`API Error (Scripts): ${res.status} ${res.statusText}`);
+        if (!res.ok) throw new Error(`${t('errorInfo')} (Scripts): ${res.status} ${res.statusText}`);
         return res.json();
       });
 
       const [historyData, scriptsData]: [Check[], ScriptInfo[]] = await Promise.all([historyPromise, scriptsPromise]);
 
-      // Sort history data by execution time descending
-      const sortedHistory = historyData.sort((a, b) => new Date(b.execution_time).getTime() - new Date(a.execution_time).getTime());
-      setChecks(sortedHistory);
-
+      setChecks(historyData);
       setAvailableScripts(scriptsData);
 
-      if (scriptsData.length > 0 && !selectedScriptId) { // Only set default if not already set
+      if (scriptsData.length > 0 && !selectedScriptId) {
         setSelectedScriptId(scriptsData[0].id);
       }
 
     } catch (err) {
       console.error("Failed to fetch initial data:", err);
-      setError(err instanceof Error ? err.message : '获取初始化数据失败');
+      setError(err instanceof Error ? err.message : t('errorTitle'));
     } finally {
       setLoading(false);
       setIsFetchingScripts(false);
       setIsRefreshing(false);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedScriptId, t]);
 
   useEffect(() => {
     loadInitialData();
 
     const now = new Date();
     const nextRun = new Date();
-    nextRun.setUTCHours(19, 0, 0, 0); // Assuming UTC 19:00 is the target
+    nextRun.setUTCHours(19, 0, 0, 0);
     if (nextRun < now) {
       nextRun.setDate(nextRun.getDate() + 1);
     }
     setNextScheduled(nextRun);
 
-    // Optional: Set up polling or SSE for real-time updates if needed
-    // const intervalId = setInterval(loadInitialData, 60000); // Refresh every minute
-    // return () => clearInterval(intervalId);
-
-    // 添加淡入动画样式作为内联样式
     const style = document.createElement('style');
     style.textContent = `
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-      .animate-fadeIn {
-        animation: fadeIn 0.5s ease-in-out;
-      }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      .animate-fadeIn { animation: fadeIn 0.5s ease-in-out; }
     `;
     document.head.appendChild(style);
-
-    // 组件卸载时清理
     return () => {
-      document.head.removeChild(style);
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
     };
-  }, [loadInitialData]); // Add memoized loadInitialData to dependency array
+  }, [loadInitialData]);
 
   const toggleExpand = (checkId: string) => {
     setExpandedCheckId(expandedCheckId === checkId ? null : checkId);
   };
 
-  const handleTriggerCheck = async () => {
+  const handleTriggerCheck = useCallback(async () => {
     if (!selectedScriptId || isTriggering) return;
-
     setIsTriggering(true);
     setTriggerMessage(null);
     setTriggerMessageType(null);
-
     try {
       const response = await fetch('/api/run-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scriptId: selectedScriptId })
       });
-
-      const result = await response.json(); // Try to parse JSON regardless of status
-
+      const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.message || `API 错误: ${response.status} ${response.statusText}`);
+        throw new Error(result.message || `${t('triggerFailed')}: ${response.status} ${response.statusText}`);
       }
-
-      console.log('Trigger API response:', result);
-      const successMessage = result.message || '检查已成功触发。';
+      const successMessage = result.message || t('checkTriggeredDesc');
       setTriggerMessage(successMessage);
       setTriggerMessageType('success');
-      
-      // 使用Sonner通知
-      toast.success('检查已触发', {
+      toast.success(t('checkTriggered'), {
         description: successMessage,
         duration: 5000,
       });
-
-      // Refresh history after a short delay to allow processing
-      setTimeout(loadInitialData, 3000); // Refresh after 3 seconds
-
+      setTimeout(loadInitialData, 3000);
     } catch (err) {
       console.error("Failed to trigger check:", err);
-      const errorMessage = err instanceof Error ? err.message : '触发检查失败';
+      const errorMessage = err instanceof Error ? err.message : t('triggerFailed');
       setTriggerMessage(errorMessage);
       setTriggerMessageType('error');
-      
-      // 使用Sonner通知
-      toast.error('触发检查失败', {
+      toast.error(t('triggerFailed'), {
         description: errorMessage,
         duration: 8000,
       });
     } finally {
       setIsTriggering(false);
-      // Clear message after a longer delay
       setTimeout(() => {
         setTriggerMessage(null);
         setTriggerMessageType(null);
       }, 8000);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedScriptId, loadInitialData, t]);
+
+  const requestSort = (key: keyof Check) => {
+    if (sortConfig.key === key) {
+      setSortConfig({ key, direction: sortConfig.direction === 'ascending' ? 'descending' : 'ascending' });
+    } else {
+      setSortConfig({ key, direction: 'descending' });
+    }
+    setCurrentPage(1);
   };
 
-  // 按条件过滤和排序数据
   const filteredAndSortedChecks = React.useMemo(() => {
-    // 首先按状态过滤
     let filtered = filterStatus
       ? checks.filter(check => check.status === filterStatus)
       : checks;
-    
-    // 然后按搜索词过滤
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(check => 
@@ -311,20 +455,14 @@ const Dashboard = () => {
         (check.findings && check.findings.toLowerCase().includes(term))
       );
     }
-    
-    // 最后排序
     if (sortConfig.key !== '') {
       filtered = [...filtered].sort((a, b) => {
         const key = sortConfig.key as keyof Check;
-        
-        // 适配不同类型的值
         if (key === 'execution_time') {
-          // 日期类型特殊处理
           return sortConfig.direction === 'ascending' 
             ? new Date(a[key] as string).getTime() - new Date(b[key] as string).getTime()
             : new Date(b[key] as string).getTime() - new Date(a[key] as string).getTime();
         } else {
-          // 字符串类型比较
           const aValue = String(a[key] || '');
           const bValue = String(b[key] || '');
           return sortConfig.direction === 'ascending' 
@@ -333,27 +471,20 @@ const Dashboard = () => {
         }
       });
     }
-    
     return filtered;
   }, [checks, filterStatus, searchTerm, sortConfig]);
-  
-  // 排序处理函数
-  const requestSort = (key: keyof Check) => {
-    // 如果点击的是当前排序的列，切换排序方向
-    if (sortConfig.key === key) {
-      setSortConfig({
-        key,
-        direction: sortConfig.direction === 'ascending' ? 'descending' : 'ascending'
-      });
-    } else {
-      // 否则按新列降序排序
-      setSortConfig({ key, direction: 'descending' });
-    }
-  };
+
+  const totalChecks = filteredAndSortedChecks.length;
+  const totalPages = Math.ceil(totalChecks / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedChecks = filteredAndSortedChecks.slice(startIndex, endIndex);
 
   const selectedScript = availableScripts.find(s => s.id === selectedScriptId);
-
-  // --- Render Logic ---
+  const successCount = checks.filter(c => c.status === CheckStatus.SUCCESS).length;
+  const failureCount = checks.filter(c => c.status === CheckStatus.FAILURE).length;
+  const allChecksCount = checks.length;
+  const successRate = allChecksCount > 0 ? Math.round((successCount / allChecksCount) * 100) : 0;
 
   if (loading && checks.length === 0) {
     return (
@@ -366,18 +497,12 @@ const Dashboard = () => {
             </div>
             <Skeleton className="h-10 w-24" />
           </div>
-          
-          {/* 骨架屏-统计卡片 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
           </div>
-          
-          {/* 骨架屏-触发部分 */}
           <SkeletonTable />
-          
-          {/* 骨架屏-历史记录表 */}
           <SkeletonTable />
         </div>
       </div>
@@ -390,14 +515,14 @@ const Dashboard = () => {
         <Card className="w-full max-w-md border-destructive">
           <CardHeader>
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-2" />
-            <CardTitle className="text-center text-destructive">数据加载失败</CardTitle>
+            <CardTitle className="text-center text-destructive">{t('errorTitle')}</CardTitle>
             <CardDescription className="text-center">
-              无法连接到服务器或处理请求时出错。请检查您的网络连接或稍后重试。
+              {t('errorDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Alert variant="destructive">
-              <AlertTitle>错误信息</AlertTitle>
+              <AlertTitle>{t('errorInfo')}</AlertTitle>
               <AlertDescription className="font-mono text-sm break-all">
                 {error}
               </AlertDescription>
@@ -409,18 +534,13 @@ const Dashboard = () => {
               className="mt-2"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              重试加载
+              {t('retry')}
             </Button>
           </CardFooter>
         </Card>
       </div>
     );
   }
-
-  const successCount = checks.filter(c => c.status === CheckStatus.SUCCESS).length;
-  const failureCount = checks.filter(c => c.status === CheckStatus.FAILURE).length;
-  const totalChecks = checks.length;
-  const successRate = totalChecks > 0 ? Math.round((successCount / totalChecks) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8 animate-fadeIn">
@@ -430,10 +550,10 @@ const Dashboard = () => {
             <div>
               <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
                 <Database className="h-8 w-8 text-primary flex-shrink-0" />
-                SQL Check Dashboard
+                {t('dashboardTitle')}
               </h1>
               <p className="mt-2 text-base text-muted-foreground max-w-3xl">
-                实时监控自动化 SQL 检查任务执行情况，追踪数据质量和一致性。
+                {t('dashboardDesc')}
               </p>
             </div>
             <Button
@@ -444,7 +564,7 @@ const Dashboard = () => {
               className="relative"
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-              {isRefreshing ? '刷新中...' : '刷新'}
+              {isRefreshing ? t('refreshing') : t('refresh')}
               {isRefreshing && (
                 <span className="absolute inset-0 rounded-md bg-primary/10 animate-pulse"></span>
               )}
@@ -452,12 +572,10 @@ const Dashboard = () => {
           </div>
         </header>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Next Scheduled Card */}
           <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-blue-500 dark:border-l-blue-400">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground font-normal">下次计划检查</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground font-normal">{t('nextCheck')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-4">
@@ -466,17 +584,16 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-semibold">
-                    {nextScheduled ? formatDate(nextScheduled.toISOString()) : '计算中...'}
+                    {nextScheduled ? formatDate(nextScheduled.toISOString(), language) : t('calculating')}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Success Rate Card */}
           <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-emerald-500 dark:border-l-emerald-400">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground font-normal">成功率</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground font-normal">{t('successRate')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-4">
@@ -486,7 +603,7 @@ const Dashboard = () => {
                 <div className="space-y-2 flex-1">
                   <div className="flex items-baseline space-x-2">
                     <p className="text-2xl font-semibold">{successRate}%</p>
-                    <p className="text-sm text-muted-foreground">({successCount}/{totalChecks})</p>
+                    <p className="text-sm text-muted-foreground">({successCount}/{allChecksCount})</p>
                   </div>
                   <Progress className="h-1.5" value={successRate} />
                 </div>
@@ -494,10 +611,9 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Failure Count Card */}
           <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-amber-500 dark:border-l-amber-400">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground font-normal">失败检查</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground font-normal">{t('failedChecks')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-4">
@@ -507,11 +623,11 @@ const Dashboard = () => {
                 <div className="space-y-1">
                   <div className="flex items-baseline space-x-2">
                     <p className="text-2xl font-semibold">{failureCount}</p>
-                    <p className="text-sm text-muted-foreground">/ {totalChecks} 次检查</p>
+                    <p className="text-sm text-muted-foreground">/ {allChecksCount} {t('checks')}</p>
                   </div>
-                  {failureCount > 0 && totalChecks > 0 && (
+                  {failureCount > 0 && allChecksCount > 0 && (
                     <p className="text-red-500 text-xs font-medium">
-                      {Math.round((failureCount / totalChecks) * 100)}% 的检查需要关注
+                      {t('attentionNeeded').replace('%s', String(Math.round((failureCount / allChecksCount) * 100)))}
                     </p>
                   )}
                 </div>
@@ -520,28 +636,27 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Manual Trigger Section */}
         <Card className="overflow-hidden border-t-4 border-t-primary">
           <CardHeader>
             <CardTitle className="flex items-center gap-2.5">
               <List className="h-5 w-5 text-primary" />
-              手动触发检查
+              {t('manualTrigger')}
             </CardTitle>
             <CardDescription>
-              选择并运行SQL检查脚本
+              {t('selectScriptDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {isFetchingScripts ? (
               <div className="flex items-center text-muted-foreground space-x-2">
                 <Loader2 className="animate-spin h-5 w-5" />
-                <span>加载可用脚本...</span>
+                <span>{t('loadingScripts')}</span>
               </div>
             ) : availableScripts.length > 0 ? (
               <div className="space-y-5">
                 <div className="grid gap-2">
                   <label htmlFor="script-select" className="text-sm font-medium">
-                    选择要执行的脚本:
+                    {t('selectScriptLabel')}
                   </label>
                   <select
                     id="script-select"
@@ -560,7 +675,7 @@ const Dashboard = () => {
 
                 {selectedScript && (
                   <div className="bg-muted/50 p-3 rounded-md text-sm text-muted-foreground italic">
-                    {selectedScript.description || "此脚本没有描述信息。"}
+                    {selectedScript.description || t('noScriptDesc')}
                   </div>
                 )}
 
@@ -572,12 +687,12 @@ const Dashboard = () => {
                   {isTriggering ? (
                     <>
                       <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                      执行中...
+                      {t('runningCheck')}
                     </>
                   ) : (
                     <>
                       <Play className="mr-2 h-4 w-4" />
-                      执行检查
+                      {t('runCheck')}
                     </>
                   )}
                 </Button>
@@ -585,7 +700,7 @@ const Dashboard = () => {
                 {triggerMessage && (
                   <Alert variant={triggerMessageType === 'error' ? "destructive" : "default"}>
                     <AlertTitle>
-                      {triggerMessageType === 'error' ? "执行失败" : "执行成功"}
+                      {triggerMessageType === 'error' ? t('triggerErrorTitle') : t('triggerSuccessTitle')}
                     </AlertTitle>
                     <AlertDescription>
                       {triggerMessage}
@@ -596,76 +711,73 @@ const Dashboard = () => {
             ) : (
                <div className="text-center py-6 px-4 bg-muted/50 rounded-lg border border-dashed">
                   <Database className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                  <p className="font-medium">没有可用的检查脚本</p>
-                  <p className="text-sm text-muted-foreground mt-1">请确保脚本已正确配置并部署。</p>
+                  <p className="font-medium">{t('noScriptsAvailable')}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t('ensureConfigured')}</p>
                </div>
             )}
           </CardContent>
         </Card>
 
-        {/* History Table Section */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <CardTitle className="flex items-center gap-2.5">
                   <Clock className="h-5 w-5 text-muted-foreground" />
-                  历史检查记录
+                  {t('historyTitle')}
                 </CardTitle>
                 <CardDescription>
-                  显示最近 {totalChecks} 次检查的详细结果
+                  {t('historyDesc').replace('%s', String(allChecksCount))}
                 </CardDescription>
               </div>
 
               <div className="space-y-2 w-full sm:w-auto">
-                {/* 搜索框 - 优化搜索图标 */}
                 <div className="relative w-full sm:w-64">
                   <input
                     type="text"
-                    placeholder="搜索脚本名称或消息..."
+                    placeholder={t('searchPlaceholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full h-9 pl-9 pr-4 text-sm rounded-md border border-input ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus:ring-offset-2"
+                    className="w-full h-9 pl-9 pr-9 text-sm rounded-md border border-input ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus:ring-offset-2"
                   />
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   {searchTerm && (
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="absolute right-1 top-1 h-7 w-7 p-0" 
+                      className="absolute right-1 top-1 h-7 w-7 p-0 text-muted-foreground hover:text-foreground" 
                       onClick={() => setSearchTerm('')}
                     >
-                      <span className="sr-only">清除</span>
-                      <X className="h-3 w-3" />
+                      <span className="sr-only">{t('clearSearch')}</span>
+                      <X className="h-3.5 w-3.5" />
                     </Button>
                   )}
                 </div>
 
-                {/* Filter Buttons - 添加动画效果 */}
                 <div className="flex items-center space-x-2 flex-wrap gap-y-2">
                   <Button
                     variant={filterStatus === null ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setFilterStatus(null)}
+                    onClick={() => { setFilterStatus(null); setCurrentPage(1); }}
                     className="h-8 gap-1 transition-all duration-200"
                   >
-                    <Filter size={14} /> 全部 <Badge variant="secondary" className="ml-1">{totalChecks}</Badge>
+                    <Filter size={14} /> {t('filterAll')} <Badge variant="secondary" className="ml-1">{allChecksCount}</Badge>
                   </Button>
                   <Button
                     variant={filterStatus === CheckStatus.SUCCESS ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setFilterStatus(CheckStatus.SUCCESS)}
+                    onClick={() => { setFilterStatus(CheckStatus.SUCCESS); setCurrentPage(1); }}
                     className="h-8 gap-1 transition-all duration-200"
                   >
-                    <CheckCircle size={14} /> 成功 <Badge variant="secondary" className="ml-1">{successCount}</Badge>
+                    <CheckCircle size={14} /> {t('filterSuccess')} <Badge variant="secondary" className="ml-1">{successCount}</Badge>
                   </Button>
                   <Button
                     variant={filterStatus === CheckStatus.FAILURE ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setFilterStatus(CheckStatus.FAILURE)}
+                    onClick={() => { setFilterStatus(CheckStatus.FAILURE); setCurrentPage(1); }}
                     className="h-8 gap-1 transition-all duration-200"
                   >
-                    <AlertCircle size={14} /> 失败 <Badge variant="secondary" className="ml-1">{failureCount}</Badge>
+                    <AlertCircle size={14} /> {t('filterFailed')} <Badge variant="secondary" className="ml-1">{failureCount}</Badge>
                   </Button>
                 </div>
               </div>
@@ -676,54 +788,50 @@ const Dashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[100px]">状态</TableHead>
+                    <TableHead className="w-[100px]">{t('tableStatus')}</TableHead>
                     <TableHead 
                       className="cursor-pointer hover:bg-muted/50 transition-colors"
                       onClick={() => requestSort('script_name')}
                     >
-                      脚本名称
+                      {t('tableScriptName')}
                       {sortConfig.key === 'script_name' && (
-                        <span className="ml-1">
-                          {sortConfig.direction === 'ascending' ? '↑' : '↓'}
-                        </span>
+                        <span className="ml-1">{sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
                       )}
                     </TableHead>
                     <TableHead 
                       className="hidden md:table-cell cursor-pointer hover:bg-muted/50 transition-colors"
                       onClick={() => requestSort('execution_time')}
                     >
-                      执行时间
+                      {t('tableExecutionTime')}
                       {sortConfig.key === 'execution_time' && (
-                        <span className="ml-1">
-                          {sortConfig.direction === 'ascending' ? '↑' : '↓'}
-                        </span>
+                        <span className="ml-1">{sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
                       )}
                     </TableHead>
-                    <TableHead className="hidden sm:table-cell max-w-xs">发现/消息</TableHead>
-                    <TableHead className="text-center">操作</TableHead>
+                    <TableHead className="hidden sm:table-cell max-w-xs">{t('tableFindings')}</TableHead>
+                    <TableHead className="text-center">{t('tableActions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAndSortedChecks.length === 0 && (
+                  {paginatedChecks.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={5} className="h-32 text-center">
                         <div className="flex flex-col items-center">
                           <Database className="h-12 w-12 text-muted-foreground mb-4" />
-                          <p className="font-medium">暂无匹配的检查记录</p>
+                          <p className="font-medium">{t('noMatchingRecords')}</p>
                           {filterStatus && (
                             <Button
                               onClick={() => setFilterStatus(null)}
                               variant="link"
                               className="mt-2"
                             >
-                              清除筛选条件
+                              {t('clearFilters')}
                             </Button>
                           )}
                         </div>
                       </TableCell>
                     </TableRow>
                   )}
-                  {filteredAndSortedChecks.map((check) => (
+                  {paginatedChecks.map((check) => (
                     <React.Fragment key={check._id}>
                       <TableRow className={cn(
                         "transition-colors",
@@ -733,12 +841,12 @@ const Dashboard = () => {
                           {check.status === CheckStatus.SUCCESS ? (
                             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
                               <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                              成功
+                              {t('filterSuccess')}
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800">
                               <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                              失败
+                              {t('filterFailed')}
                             </Badge>
                           )}
                         </TableCell>
@@ -746,10 +854,10 @@ const Dashboard = () => {
                           {check.script_name}
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-muted-foreground">
-                          {formatDate(check.execution_time)}
+                          {formatDate(check.execution_time, language)}
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell max-w-xs truncate" title={check.findings || check.message || "无"}>
-                          {check.findings || check.message || <span className="italic text-muted-foreground">无</span>}
+                        <TableCell className="hidden sm:table-cell max-w-xs truncate" title={check.findings || check.message || t('noData')}>
+                          {check.findings || check.message || <span className="italic text-muted-foreground">{t('noData')}</span>}
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex justify-center gap-2">
@@ -760,9 +868,9 @@ const Dashboard = () => {
                               className="h-8 px-2 gap-1"
                             >
                               {expandedCheckId === check._id ? (
-                                <>收起<ChevronUp size={14} /></>
+                                <><ChevronUp size={14} className="mr-1"/>{t('collapse')}</>
                               ) : (
-                                <>详情<ChevronDown size={14} /></>
+                                <><ChevronDown size={14} className="mr-1"/>{t('expand')}</>
                               )}
                             </Button>
                             
@@ -770,51 +878,51 @@ const Dashboard = () => {
                               <SheetTrigger asChild>
                                 <Button
                                   variant="outline"
-                                  size="sm"
-                                  className="h-8 px-2"
+                                  size="icon"
+                                  className="h-8 w-8"
                                 >
                                   <ExternalLink size={14} />
                                 </Button>
                               </SheetTrigger>
                               <SheetContent>
                                 <SheetHeader>
-                                  <SheetTitle>检查详情</SheetTitle>
+                                  <SheetTitle>{t('checkDetails')}</SheetTitle>
                                   <SheetDescription>
-                                    {check.script_name} - {formatDate(check.execution_time)}
+                                    {check.script_name} - {formatDate(check.execution_time, language)}
                                   </SheetDescription>
                                 </SheetHeader>
                                 <div className="space-y-6 py-6">
                                   <div>
-                                    <h4 className="text-sm font-semibold mb-2">执行状态:</h4>
+                                    <h4 className="text-sm font-semibold mb-2">{t('executionStatus')}</h4>
                                     {check.status === CheckStatus.SUCCESS ? (
                                       <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
                                         <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                                        成功
+                                        {t('filterSuccess')}
                                       </Badge>
                                     ) : (
                                       <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800">
                                         <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                                        失败
+                                        {t('filterFailed')}
                                       </Badge>
                                     )}
                                   </div>
                                   <div>
-                                    <h4 className="text-sm font-semibold mb-2">执行消息:</h4>
-                                    <div className="bg-muted p-3 rounded text-sm">
-                                      {check.message || <span className="italic text-muted-foreground">无消息</span>}
+                                    <h4 className="text-sm font-semibold mb-2">{t('executionMessage')}</h4>
+                                    <div className="bg-muted p-3 rounded text-sm break-words">
+                                      {check.message || <span className="italic text-muted-foreground">{t('noMessage')}</span>}
                                     </div>
                                   </div>
                                   {check.findings && (
                                     <div>
-                                      <h4 className="text-sm font-semibold mb-2">发现:</h4>
-                                      <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                      <h4 className="text-sm font-semibold mb-2">{t('findings')}</h4>
+                                      <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 break-words">
                                         {check.findings}
                                       </div>
                                     </div>
                                   )}
                                   <div>
-                                    <h4 className="text-sm font-semibold mb-2">原始查询结果:</h4>
-                                    <RawResultsTable results={check.raw_results} />
+                                    <h4 className="text-sm font-semibold mb-2">{t('rawResults')}</h4>
+                                    <RawResultsTable results={check.raw_results} noDataText={t('noRawData')} />
                                   </div>
                                   {check.github_run_id && (
                                     <div className="text-right">
@@ -824,7 +932,7 @@ const Dashboard = () => {
                                           target="_blank"
                                           rel="noopener noreferrer"
                                         >
-                                          查看 GitHub Action
+                                          {t('viewGitHubAction')}
                                           <ExternalLink size={14} className="ml-1.5" />
                                         </a>
                                       </Button>
@@ -843,37 +951,37 @@ const Dashboard = () => {
                             <Card className="shadow-sm border">
                               <CardContent className="space-y-5 pt-6">
                                 <div>
-                                  <h4 className="text-sm font-semibold mb-2">执行消息:</h4>
-                                  <div className="bg-background rounded p-3 border text-sm">
-                                    {check.message || <span className="italic text-muted-foreground">无消息</span>}
+                                  <h4 className="text-sm font-semibold mb-2">{t('executionMessage')}</h4>
+                                  <div className="bg-background rounded p-3 border text-sm break-words">
+                                    {check.message || <span className="italic text-muted-foreground">{t('noMessage')}</span>}
                                   </div>
                                 </div>
                                 {check.findings && (
                                   <div>
-                                    <h4 className="text-sm font-semibold mb-2">发现:</h4>
-                                    <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                    <h4 className="text-sm font-semibold mb-2">{t('findings')}</h4>
+                                    <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 break-words">
                                       {check.findings}
                                     </div>
                                   </div>
                                 )}
                                 <div>
-                                  <h4 className="text-sm font-semibold mb-2">原始查询结果:</h4>
-                                  <RawResultsTable results={check.raw_results} />
+                                  <h4 className="text-sm font-semibold mb-2">{t('rawResults')}</h4>
+                                  <RawResultsTable results={check.raw_results} noDataText={t('noRawData')} />
                                 </div>
                                 {check.github_run_id && (
                                   <div className="text-right">
                                     <Button asChild variant="outline" size="sm">
                                       <a
                                         href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO || 'your-org/your-repo'}/actions/runs/${check.github_run_id}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                      >
-                                        查看 GitHub Action
-                                        <ExternalLink size={14} className="ml-1.5" />
-                                      </a>
-                                    </Button>
-                                  </div>
-                                )}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                        >
+                                          {t('viewGitHubAction')}
+                                          <ExternalLink size={14} className="ml-1.5" />
+                                        </a>
+                                      </Button>
+                                    </div>
+                                  )}
                               </CardContent>
                             </Card>
                           </TableCell>
@@ -885,13 +993,42 @@ const Dashboard = () => {
               </Table>
             </div>
           </CardContent>
+          {totalPages > 1 && (
+            <CardFooter className="flex items-center justify-between border-t px-6 py-3">
+              <div className="text-xs text-muted-foreground">
+                {t('pageInfo').replace('%s', String(currentPage)).replace('%s', String(totalPages))}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  {t('previous')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  {t('next')}
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </CardFooter>
+          )}
         </Card>
 
         <footer className="text-center text-sm text-muted-foreground py-6 border-t">
-          <p>SQL Check System &copy; {new Date().getFullYear()}</p>
+          <p>{t('footerSystem')} &copy; {new Date().getFullYear()}</p>
           <p className="mt-1">
-            自动化检查由 GitHub Actions 驱动，数据存储于 MongoDB。
-            <span className="inline-block ml-2 text-primary">当前主题: {theme || '加载中...'}</span>
+            {t('footerInfo')}
+            <span className="inline-block ml-2 text-primary">
+              {t('footerTheme').replace('%s', theme || t('loading'))}
+            </span>
           </p>
         </footer>
       </div>
