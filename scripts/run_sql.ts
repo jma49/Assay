@@ -37,7 +37,7 @@ if (!process.env.SLACK_WEBHOOK_URL) {
 // --- Manifest Loading Removed ---
 // Script discovery is now based on the provided script ID argument matching a .sql file name.
 
-interface SqlCheckHistoryDocument {
+export interface SqlCheckHistoryDocument {
   _id?: ObjectId;
   script_name: string; // Will use script ID/name from manifest
   execution_time: Date;
@@ -48,10 +48,23 @@ interface SqlCheckHistoryDocument {
   github_run_id?: string | number;
 }
 
-interface ExecutionResult {
+export interface ExecutionResult {
   success: boolean;
   message: string;
+  findings: string;
   data?: QueryResult[] | undefined;
+}
+
+// --- Type definition for Slack Block Kit payload ---
+interface SlackBlock {
+  type: string;
+  text?: { type: string; text: string };
+  fields?: { type: string; text: string }[];
+}
+
+interface SlackPayload {
+  text: string; // Fallback text
+  blocks: SlackBlock[];
 }
 
 async function saveResultToMongo(
@@ -114,31 +127,69 @@ async function sendSlackNotification(
       process.env.GITHUB_REPOSITORY &&
       process.env.GITHUB_RUN_ID
         ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
-        : "本地执行无日志链接";
+        : "(手动触发或本地执行)"; // Adjust message for non-GH runs
 
     const status = isError ? "❌ 失败" : "✅ 成功";
 
     // Use scriptId directly as manifest is removed
     const nameToNotify = scriptId;
 
-    const payload: Record<string, string> = {
-      script_name: nameToNotify,
-      status: status,
-      github_log_url: githubLogUrl,
-      Time_when_workflow_started: timestamp,
+    // Construct a typed payload
+    const payload: SlackPayload = {
+      text: `*脚本执行通知:* ${nameToNotify} - ${status}`, // More informative fallback text
+      blocks: [
+        {
+          type: "section",
+          fields: [
+            { type: "mrkdwn", text: `*脚本名称:*\\n${nameToNotify}` },
+            { type: "mrkdwn", text: `*状态:*\\n${status}` },
+            { type: "mrkdwn", text: `*执行时间:*\\n${timestamp} (CST)` },
+            {
+              type: "mrkdwn",
+              text: `*来源:*\\n${
+                process.env.GITHUB_ACTIONS
+                  ? `<${githubLogUrl}|GitHub Action>`
+                  : "手动触发/本地"
+              }`,
+            }, // Updated Source Field
+          ],
+        },
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `*消息/结果:*\\n\`\`\`${message}\`\`\``,
+          },
+        },
+      ],
     };
 
-    if (message) {
-      payload.message = message; // Keep the detailed message
-    }
+    console.log(
+      `发送 Slack 通知 (${nameToNotify}):`,
+      JSON.stringify(payload).substring(0, 200) + "..."
+    );
 
-    console.log(`发送 Slack 通知 (${nameToNotify}):`, payload);
-
-    await axios.post(webhookUrl, payload);
+    await axios.post(webhookUrl, payload, {
+      headers: { "Content-Type": "application/json" },
+    });
     console.log(`Slack 通知 (${nameToNotify}) 已发送`);
-  } catch (error) {
-    console.error(`发送 Slack 通知 (${scriptId}) 失败:`, error);
-    // Avoid crashing the script just because notification failed
+  } catch (error: unknown) {
+    // Check for Axios error using property check (more robust across versions)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const axiosError = error as any;
+    if (axiosError?.isAxiosError) {
+      console.error(
+        `发送 Slack 通知 (${scriptId}) 失败 (Axios Error ${
+          axiosError.code || "N/A"
+        }):`,
+        axiosError.response?.data || axiosError.message
+      );
+    } else {
+      console.error(
+        `发送 Slack 通知 (${scriptId}) 失败 (Non-Axios Error):`,
+        error
+      );
+    }
   }
 }
 
@@ -156,7 +207,7 @@ function formatQueryFindings(results: QueryResult[]): string {
   }
 }
 
-async function executeSqlFile(
+export async function executeSqlFile(
   scriptId: string,
   filePath: string
 ): Promise<ExecutionResult> {
@@ -259,6 +310,7 @@ async function executeSqlFile(
     return {
       success: true,
       message: successMessage,
+      findings: findings,
       data: results,
     };
   } catch (error: Error | unknown) {
@@ -282,6 +334,7 @@ async function executeSqlFile(
     return {
       success: false,
       message: errorMessage,
+      findings: findings,
     };
   } finally {
     // Ensure pool is closed even if DB connection failed initially
@@ -294,18 +347,23 @@ async function executeSqlFile(
 async function main(): Promise<void> {
   let scriptToExecuteId: string | null = null;
   let exitCode = 0;
+  const executionContext = process.env.GITHUB_ACTIONS
+    ? "[GitHub Action]"
+    : "[CLI]";
 
   try {
     const args = process.argv.slice(2);
 
     if (args.length === 0) {
-      throw new Error("错误：必须提供一个脚本 ID 作为命令行参数。");
+      throw new Error(
+        `${executionContext} 错误：必须提供一个脚本 ID 作为命令行参数。`
+      );
     }
 
     // Argument provided, assume it's the script_id
     scriptToExecuteId = args[0];
     console.log(
-      `信息：接收到命令行参数，尝试执行脚本 ID: ${scriptToExecuteId}`
+      `${executionContext} 信息：接收到参数，尝试执行脚本 ID: ${scriptToExecuteId}`
     );
 
     // Construct the absolute path for the script file based on the ID
@@ -320,7 +378,7 @@ async function main(): Promise<void> {
     // Check if the derived file path actually exists before proceeding
     if (!fs.existsSync(scriptFilePath)) {
       throw new Error(
-        `错误：无法找到与 ID '${scriptToExecuteId}' 对应的 SQL 文件于: ${scriptFilePath}`
+        `${executionContext} 错误：无法找到与 ID '${scriptToExecuteId}' 对应的 SQL 文件于: ${scriptFilePath}`
       );
     }
 
@@ -328,11 +386,13 @@ async function main(): Promise<void> {
     const result = await executeSqlFile(scriptToExecuteId, scriptFilePath);
 
     if (!result.success) {
-      console.error(`脚本执行失败: ${result.message}`);
+      console.error(`${executionContext} 脚本执行失败: ${result.message}`);
       exitCode = 1; // Indicate failure
+    } else {
+      console.log(`${executionContext} 脚本执行成功: ${result.message}`);
     }
   } catch (error) {
-    console.error("主程序执行错误:", error);
+    console.error(`${executionContext} 主程序执行错误:`, error);
     exitCode = 1; // Indicate failure
     // Attempt to send a notification for the main error if possible
     await sendSlackNotification(
@@ -343,11 +403,13 @@ async function main(): Promise<void> {
       true
     );
   } finally {
-    console.log("执行流程结束，尝试关闭 MongoDB 连接...");
+    console.log(`${executionContext} 执行流程结束，尝试关闭 MongoDB 连接...`);
     await mongoDbClient
       .closeConnection()
-      .catch((err) => console.error("关闭 MongoDB 连接时出错:", err));
-    console.log(`脚本以退出码 ${exitCode} 结束。`);
+      .catch((err) =>
+        console.error(`${executionContext} 关闭 MongoDB 连接时出错:`, err)
+      );
+    console.log(`${executionContext} 脚本以退出码 ${exitCode} 结束。`);
     process.exit(exitCode);
   }
 }
