@@ -1,91 +1,91 @@
-# SQL Script Deployment System
+# SQL 脚本部署系统
 
-A robust system for managing, executing, and monitoring SQL check scripts. This application runs SQL queries against your database, saves execution results, and sends notifications via Slack.
+一个用于管理、执行和监控 SQL 检查脚本。该应用程序可以对数据库运行 SQL 查询，保存执行结果，并通过 Slack 发送通知的系统
 
-## Features
+## 主要功能
 
-- **Manual Script Execution**: Trigger SQL checks directly from the UI
-- **Scheduled Execution**: Automated checks via GitHub Actions
-- **Result History**: View past execution results with search and filtering
-- **Slack Notifications**: Real-time alerts for successful and failed checks
-- **Security Restrictions**: Prevents data-modifying operations
+- **手动脚本执行**：直接从 UI 触发 SQL 检查
+- **定时执行**：通过 GitHub Actions 自动执行检查
+- **结果历史**：查看过去的执行结果，支持搜索和过滤
+- **Slack 通知**：成功和失败检查的实时提醒
+- **安全限制**：防止数据修改操作
 
-## Architecture
+## 系统架构
 
-The system consists of:
+系统由以下部分组成：
 
-1. **Web Dashboard**: Next.js application for monitoring and manual triggering
-2. **API Routes**:
-   - `/api/run-check`: For manual script execution
-   - `/api/check-history`: For retrieving execution history
-   - `/api/list-scripts`: For fetching available scripts
-3. **Core Execution Engine**: `scripts/run-sql.ts` for running SQL scripts
-4. **MongoDB Integration**: Stores execution results and metadata
-5. **PostgreSQL Connectivity**: Executes SQL queries against your database
+1. **Web 仪表盘**：用于监控和手动触发的 Next.js 应用程序
+2. **API 路由**：
+   - `/api/run-check`：用于手动脚本执行
+   - `/api/check-history`：用于检索执行历史
+   - `/api/list-scripts`：用于获取可用脚本
+3. **核心执行引擎**：`scripts/run-sql.ts`用于运行 SQL 脚本
+4. **MongoDB 集成**：存储执行结果和元数据
+5. **PostgreSQL 连接**：对数据库执行 SQL 查询
 
-## Project Structure
+## 项目结构
 
 ```
 .
 ├── scripts/
-│   ├── run-sql.ts           # Core script execution engine
-│   └── sql_scripts/         # SQL script files
+│   ├── run-sql.ts           # 核心脚本执行引擎
+│   └── sql_scripts/         # SQL脚本文件
 │       └── check-order-duplicates.sql
 ├── src/
 │   ├── app/                 # Next.js App Router
 │   │   ├── api/
 │   │   │   ├── check-history/
 │   │   │   ├── list-scripts/
-│   │   │   └── run-check/    # Direct script execution API
-│   │   ├── page.tsx         # Dashboard page
+│   │   │   └── run-check/    # 直接脚本执行API
+│   │   ├── page.tsx         # 仪表盘页面
 │   │   └── layout.tsx
-│   ├── components/          # React components
-│   │   └── dashboard/       # Dashboard UI components
-│   └── lib/                 # Utility libraries
-│       ├── db.ts            # PostgreSQL connection
-│       ├── mongodb.ts       # MongoDB connection
-│       └── script-executor.ts # API execution wrapper
+│   ├── components/          # React组件
+│   │   └── dashboard/       # 仪表盘UI组件
+│   └── lib/                 # 实用工具库
+│       ├── db.ts            # PostgreSQL连接
+│       ├── mongodb.ts       # MongoDB连接
+│       └── script-executor.ts # API执行包装器
 ```
 
-## Setup and Configuration
+## 设置与配置
 
-### Environment Variables
+### 环境变量
 
-Create a `.env.local` file with:
+创建一个`.env.local`文件，包含：
 
 ```
-# PostgreSQL Database
+# PostgreSQL数据库
 DATABASE_URL="postgresql://user:password@host:port/database"
 
-# MongoDB Database
+# MongoDB数据库
 MONGODB_URI="mongodb+srv://..."
 
-# Slack Notifications
+# Slack通知
 SLACK_WEBHOOK_URL="https://hooks.slack.com/..."
 
-# GitHub (for scheduled tasks)
+# GitHub（用于定时任务）
 GITHUB_PAT="..."
 GITHUB_OWNER="..."
 GITHUB_REPO="..."
 ```
 
-### Installation
+### 安装
 
 ```bash
-# Install dependencies
+# 安装依赖
 npm install
 
-# Run development server
+# 运行开发服务器
 npm run dev
 
-# Manually run a script
+# 手动运行脚本
 npm run sql:run check-order-duplicates
 ```
 
-## Adding New SQL Scripts
+## 添加新的 SQL 脚本
 
-1. Create a `.sql` file in `scripts/sql_scripts/` directory
-2. Ensure it includes metadata comments:
+1. 在`scripts/sql_scripts/`目录中创建一个`.sql`文件
+2. 确保包含元数据注释：
 
 ```sql
 -- NAME: your-script-name
@@ -94,44 +94,23 @@ npm run sql:run check-order-duplicates
 -- CN_DESCRIPTION: 中文描述
 ```
 
-3. Write your SQL queries (data-modifying operations are forbidden)
-4. The script will be automatically available in the UI
+3. 编写 SQL 查询（禁止数据修改操作）
+4. 该脚本将自动在 UI 中可用
 
-## Key File Descriptions
+## 关键文件说明
 
-- **run-sql.ts**: Core script execution engine - handles SQL parsing, execution, result saving, and notifications
-- **script-executor.ts**: Bridge between API routes and execution engine
-- **db.ts**: Database connection manager for PostgreSQL
-- **mongodb.ts**: MongoDB client for storing execution results
+- **run-sql.ts**：核心脚本执行引擎 - 处理 SQL 解析、执行、结果保存和通知
+- **script-executor.ts**：API 路由和执行引擎之间的桥梁
+- **db.ts**：PostgreSQL 数据库连接管理器
+- **mongodb.ts**：用于存储执行结果的 MongoDB 客户端
 
-## Running in Production
+## 生产环境运行
 
-Build and start the application:
+构建并启动应用程序：
 
 ```bash
 npm run build
 npm run start
 ```
 
-For scheduled execution, use the GitHub Actions workflow in `.github/workflows/`.
-
-## Changelog
-
-### 2023-06-18 Unification Update
-
-- **Naming Conventions**:
-
-  - Unified file naming to kebab-case (e.g., `run-sql.ts` instead of `run_sql.ts`)
-  - Renamed SQL script files to follow the same pattern
-  - Updated all import paths to match new naming convention
-
-- **Internationalization**:
-
-  - Changed all user-facing messages to English
-  - Updated Slack notifications to use English exclusively
-  - Modified console logs to use English for better international support
-
-- **Documentation**:
-  - Created comprehensive README with setup instructions
-  - Added detailed project structure documentation
-  - Included instructions for adding new SQL scripts
+对于定时执行，使用`.github/workflows/`中的 GitHub Actions 工作流。
