@@ -208,7 +208,8 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                           variant={expandedCheckId === check._id ? "default" : "outline"}
                           size="sm"
                           onClick={() => toggleExpand(check._id)}
-                          className="h-7 px-2 text-xs shadow-sm"
+                          className="h-7 px-2 text-xs shadow-sm transition-all duration-150 hover:shadow"
+                          title={expandedCheckId === check._id ? t('collapseDetails') : t('expandDetails')}
                         >
                           {expandedCheckId === check._id ? (
                             <><ChevronUp size={12} className="mr-1"/>{t('collapse')}</>
@@ -222,12 +223,13 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                             <Button
                               variant="outline"
                               size="icon"
-                              className="h-7 w-7 shadow-sm"
+                              className="h-7 w-7 shadow-sm transition-all duration-150 hover:shadow hover:bg-muted/70 focus:ring-1 focus:ring-primary/30"
+                              title={t('viewInSidebar')}
                             >
                               <ExternalLink size={12} />
                             </Button>
                           </SheetTrigger>
-                          <SheetContent className="overflow-y-auto">
+                          <SheetContent className="overflow-y-auto sm:max-w-md">
                             <SheetHeader className="border-b pb-4">
                               <SheetTitle className="text-xl flex items-center gap-2">
                                 {check.status === CheckStatus.SUCCESS ? (

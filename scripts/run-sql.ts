@@ -12,26 +12,28 @@ import { Collection, ObjectId } from "mongodb";
 // Load environment variables FIRST!
 // Note: dotenv/config is preloaded via ts-node -r, no need for explicit dotenv.config() here
 // unless running this script directly without the preload.
-console.log("信息：尝试加载环境变量 (期望由 ts-node -r dotenv/config 预加载)");
+console.log(
+  "Info: Attempting to load environment variables (expected to be preloaded by ts-node -r dotenv/config)"
+);
 if (!process.env.MONGODB_URI) {
   console.warn(
-    "警告：MONGODB_URI 未定义。确保使用 'ts-node -r dotenv/config' 运行或已手动设置环境变量。"
+    "Warning: MONGODB_URI is not defined. Ensure you're using 'ts-node -r dotenv/config' or have set the environment variable manually."
   );
 } else {
   console.log(
-    "信息：MONGODB_URI 已设置。",
-    process.env.MONGODB_URI ? "(有值)" : "(无值，检查 .env.local)"
+    "Info: MONGODB_URI is set.",
+    process.env.MONGODB_URI ? "(has value)" : "(no value, check .env.local)"
   );
 }
 if (!process.env.DATABASE_URL) {
-  console.warn("警告：DATABASE_URL 未定义。");
+  console.warn("Warning: DATABASE_URL is not defined.");
 } else {
-  console.log("信息：DATABASE_URL 已设置。");
+  console.log("Info: DATABASE_URL is set.");
 }
 if (!process.env.SLACK_WEBHOOK_URL) {
-  console.warn("警告：SLACK_WEBHOOK_URL 未定义。");
+  console.warn("Warning: SLACK_WEBHOOK_URL is not defined.");
 } else {
-  console.log("信息：SLACK_WEBHOOK_URL 已设置。");
+  console.log("Info: SLACK_WEBHOOK_URL is set.");
 }
 
 // --- Manifest Loading Removed ---
@@ -53,18 +55,6 @@ export interface ExecutionResult {
   message: string;
   findings: string;
   data?: QueryResult[] | undefined;
-}
-
-// --- Type definition for Slack Block Kit payload ---
-interface SlackBlock {
-  type: string;
-  text?: { type: string; text: string };
-  fields?: { type: string; text: string }[];
-}
-
-interface SlackPayload {
-  text: string; // Fallback text
-  blocks: SlackBlock[];
 }
 
 async function saveResultToMongo(
@@ -97,9 +87,9 @@ async function saveResultToMongo(
     };
 
     await collection.insertOne(historyDoc);
-    console.log(`执行结果 (${nameToSave}) 已保存到 MongoDB`);
+    console.log(`Result (${nameToSave}) saved to MongoDB`);
   } catch (error) {
-    console.error(`保存结果 (${scriptId}) 到 MongoDB 失败:`, error);
+    console.error(`Failed to save result (${scriptId}) to MongoDB:`, error);
     // Avoid crashing the script just because saving failed
   }
 }
@@ -112,7 +102,7 @@ async function sendSlackNotification(
   try {
     const webhookUrl = process.env.SLACK_WEBHOOK_URL;
     if (!webhookUrl) {
-      console.error("Slack Webhook URL 未配置, 跳过通知");
+      console.error("Slack Webhook URL not configured, skipping notification");
       return;
     }
 
@@ -127,66 +117,73 @@ async function sendSlackNotification(
       process.env.GITHUB_REPOSITORY &&
       process.env.GITHUB_RUN_ID
         ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
-        : "(手动触发或本地执行)"; // Adjust message for non-GH runs
+        : "(Manual trigger/Local execution)"; // Adjust message for non-GH runs
 
-    const status = isError ? "❌ 失败" : "✅ 成功";
+    const status = isError ? "❌ Failed" : "✅ Successful";
 
     // Use scriptId directly as manifest is removed
     const nameToNotify = scriptId;
 
-    // Construct a typed payload
-    const payload: SlackPayload = {
-      text: `*脚本执行通知:* ${nameToNotify} - ${status}`, // More informative fallback text
+    // Create payload with both original parameters and Block Kit format
+    const payload = {
+      // Original fields - maintain backward compatibility
+      script_name: nameToNotify,
+      status: status,
+      github_log_url: githubLogUrl,
+      Time_when_workflow_started: timestamp,
+      message: message,
+
+      // Block Kit format - for better readability in Slack UI
       blocks: [
         {
           type: "section",
           fields: [
-            { type: "mrkdwn", text: `*脚本名称:*\\n${nameToNotify}` },
-            { type: "mrkdwn", text: `*状态:*\\n${status}` },
-            { type: "mrkdwn", text: `*执行时间:*\\n${timestamp} (CST)` },
+            { type: "mrkdwn", text: `*Script Name:*\\n${nameToNotify}` },
+            { type: "mrkdwn", text: `*Status:*\\n${status}` },
+            { type: "mrkdwn", text: `*Execution Time:*\\n${timestamp} (CST)` },
             {
               type: "mrkdwn",
-              text: `*来源:*\\n${
+              text: `*Source:*\\n${
                 process.env.GITHUB_ACTIONS
                   ? `<${githubLogUrl}|GitHub Action>`
-                  : "手动触发/本地"
+                  : "Manual trigger/Local"
               }`,
-            }, // Updated Source Field
+            },
           ],
         },
         {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `*消息/结果:*\\n\`\`\`${message}\`\`\``,
+            text: `*Message/Results:*\\n\`\`\`${message}\`\`\``,
           },
         },
       ],
     };
 
     console.log(
-      `发送 Slack 通知 (${nameToNotify}):`,
+      `Sending Slack notification (${nameToNotify}):`,
       JSON.stringify(payload).substring(0, 200) + "..."
     );
 
     await axios.post(webhookUrl, payload, {
       headers: { "Content-Type": "application/json" },
     });
-    console.log(`Slack 通知 (${nameToNotify}) 已发送`);
+    console.log(`Slack notification for (${nameToNotify}) sent`);
   } catch (error: unknown) {
     // Check for Axios error using property check (more robust across versions)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const axiosError = error as any;
     if (axiosError?.isAxiosError) {
       console.error(
-        `发送 Slack 通知 (${scriptId}) 失败 (Axios Error ${
+        `Failed to send Slack notification (${scriptId}) (Axios Error ${
           axiosError.code || "N/A"
         }):`,
         axiosError.response?.data || axiosError.message
       );
     } else {
       console.error(
-        `发送 Slack 通知 (${scriptId}) 失败 (Non-Axios Error):`,
+        `Failed to send Slack notification (${scriptId}) (Non-Axios Error):`,
         error
       );
     }
@@ -201,9 +198,9 @@ function formatQueryFindings(results: QueryResult[]): string {
     }
   });
   if (totalRows > 0) {
-    return `${totalRows} 条记录被查出`;
+    return `${totalRows} records found`;
   } else {
-    return "未查出相关记录";
+    return "No matching records found";
   }
 }
 
@@ -215,49 +212,49 @@ export async function executeSqlFile(
   let results: QueryResult[] | undefined = undefined;
   let successMessage = ``;
   let errorMessage = ``;
-  let findings = "执行未完成";
+  let findings = "Execution not completed";
 
   // Use scriptId directly as manifest is removed
   const scriptDisplayName = scriptId;
 
   console.log(
-    `开始执行脚本: ${scriptDisplayName} (ID: ${scriptId}) 从文件: ${filePath}`
+    `Starting script execution: ${scriptDisplayName} (ID: ${scriptId}) from file: ${filePath}`
   );
 
   try {
     if (!fs.existsSync(filePath)) {
-      throw new Error(`SQL 文件未找到: ${filePath}`);
+      throw new Error(`SQL file not found: ${filePath}`);
     }
 
     const isConnected = await db.testConnection();
     if (!isConnected) {
-      throw new Error("数据库连接失败");
+      throw new Error("Database connection failed");
     }
 
     const sqlContent = fs.readFileSync(filePath, "utf8");
 
-    // --- 修改后的 SQL 解析逻辑 ---
-    // 1. 移除块注释 /* ... */ (非贪婪匹配, s 标志使 . 匹配换行符)
+    // --- Modified SQL parsing logic ---
+    // 1. Remove block comments /* ... */ (non-greedy match, s flag makes . match newlines)
     let processedContent = sqlContent.replace(/\/\*.*?\*\//gs, "");
-    // 2. 移除行注释 -- ... (到行尾)
+    // 2. Remove line comments -- ... (to end of line)
     processedContent = processedContent.replace(/--.*/g, "");
 
-    // 3. 分割语句
+    // 3. Split statements
     const queries = processedContent
       .split(";")
       .map((q) => q.trim()) // Trim whitespace
       .filter((q) => q.length > 0); // Filter only empty strings after trimming
-    // --- 结束修改后的 SQL 解析逻辑 ---
+    // --- End modified SQL parsing logic ---
 
-    console.log(`找到 ${queries.length} 个查询语句（已移除注释）`);
+    console.log(`Found ${queries.length} queries (comments removed)`);
 
     if (queries.length === 0) {
       // Allow files with no executable queries (maybe just comments or setup)
       console.warn(
-        `警告: 在 ${scriptDisplayName} (${filePath}) 中移除注释后未找到可执行的 SQL 查询语句。`
+        `Warning: No executable SQL queries found in ${scriptDisplayName} (${filePath}) after removing comments.`
       );
-      successMessage = `SQL 脚本 ${scriptDisplayName} 执行完成，但移除注释后未找到可执行查询。`;
-      findings = "无查询执行（移除注释后）"; // 更新 findings 消息
+      successMessage = `SQL script ${scriptDisplayName} executed, but no executable queries found after removing comments.`;
+      findings = "No queries executed (after comments removed)"; // Update findings message
       results = []; // Ensure results is an empty array
     } else {
       // Check for forbidden statements before executing anything
@@ -273,7 +270,7 @@ export async function executeSqlFile(
         for (const pattern of forbiddenPatterns) {
           if (pattern.test(query)) {
             throw new Error(
-              `安全限制：脚本 ${scriptDisplayName} 包含禁止的操作 (${pattern.source})`
+              `Security restriction: Script ${scriptDisplayName} contains forbidden operation (${pattern.source})`
             );
           }
         }
@@ -281,15 +278,15 @@ export async function executeSqlFile(
 
       results = [];
       for (const query of queries) {
-        console.log(`执行查询: ${query.substring(0, 100)}...`);
+        console.log(`Executing query: ${query.substring(0, 100)}...`);
         const result = await db.query(query);
         results.push(result);
       }
 
-      successMessage = `SQL 脚本 ${scriptDisplayName} 执行成功`;
+      successMessage = `SQL script ${scriptDisplayName} executed successfully`;
       findings = formatQueryFindings(results);
       console.log(successMessage);
-      console.log(`发现: ${findings}`);
+      console.log(`Findings: ${findings}`);
     }
 
     // Use scriptId for notifications and saving
@@ -314,10 +311,10 @@ export async function executeSqlFile(
       data: results,
     };
   } catch (error: Error | unknown) {
-    errorMessage = `SQL 脚本 ${scriptDisplayName} (ID: ${scriptId}) 执行失败: ${
+    errorMessage = `SQL script ${scriptDisplayName} (ID: ${scriptId}) execution failed: ${
       error instanceof Error ? error.message : String(error)
     }`;
-    findings = "执行失败";
+    findings = "Execution failed";
     console.error(errorMessage);
 
     // Use scriptId for notifications and saving
@@ -340,7 +337,9 @@ export async function executeSqlFile(
     // Ensure pool is closed even if DB connection failed initially
     await db
       .closePool()
-      .catch((err) => console.error("关闭数据库连接池时出错:", err));
+      .catch((err) =>
+        console.error("Error closing database connection pool:", err)
+      );
   }
 }
 
@@ -356,14 +355,14 @@ async function main(): Promise<void> {
 
     if (args.length === 0) {
       throw new Error(
-        `${executionContext} 错误：必须提供一个脚本 ID 作为命令行参数。`
+        `${executionContext} Error: A script ID must be provided as a command line argument.`
       );
     }
 
     // Argument provided, assume it's the script_id
     scriptToExecuteId = args[0];
     console.log(
-      `${executionContext} 信息：接收到参数，尝试执行脚本 ID: ${scriptToExecuteId}`
+      `${executionContext} Info: Received parameter, attempting to execute script ID: ${scriptToExecuteId}`
     );
 
     // Construct the absolute path for the script file based on the ID
@@ -378,7 +377,7 @@ async function main(): Promise<void> {
     // Check if the derived file path actually exists before proceeding
     if (!fs.existsSync(scriptFilePath)) {
       throw new Error(
-        `${executionContext} 错误：无法找到与 ID '${scriptToExecuteId}' 对应的 SQL 文件于: ${scriptFilePath}`
+        `${executionContext} Error: Could not find SQL file corresponding to ID '${scriptToExecuteId}' at: ${scriptFilePath}`
       );
     }
 
@@ -386,30 +385,41 @@ async function main(): Promise<void> {
     const result = await executeSqlFile(scriptToExecuteId, scriptFilePath);
 
     if (!result.success) {
-      console.error(`${executionContext} 脚本执行失败: ${result.message}`);
+      console.error(
+        `${executionContext} Script execution failed: ${result.message}`
+      );
       exitCode = 1; // Indicate failure
     } else {
-      console.log(`${executionContext} 脚本执行成功: ${result.message}`);
+      console.log(
+        `${executionContext} Script executed successfully: ${result.message}`
+      );
     }
   } catch (error) {
-    console.error(`${executionContext} 主程序执行错误:`, error);
+    console.error(`${executionContext} Main program execution error:`, error);
     exitCode = 1; // Indicate failure
     // Attempt to send a notification for the main error if possible
     await sendSlackNotification(
       scriptToExecuteId || "unknown_script",
-      `主程序执行失败: ${
+      `Main program execution failed: ${
         error instanceof Error ? error.message : String(error)
       }`,
       true
     );
   } finally {
-    console.log(`${executionContext} 执行流程结束，尝试关闭 MongoDB 连接...`);
+    console.log(
+      `${executionContext} Execution flow complete, attempting to close MongoDB connection...`
+    );
     await mongoDbClient
       .closeConnection()
       .catch((err) =>
-        console.error(`${executionContext} 关闭 MongoDB 连接时出错:`, err)
+        console.error(
+          `${executionContext} Error closing MongoDB connection:`,
+          err
+        )
       );
-    console.log(`${executionContext} 脚本以退出码 ${exitCode} 结束。`);
+    console.log(
+      `${executionContext} Script terminated with exit code ${exitCode}.`
+    );
     process.exit(exitCode);
   }
 }
@@ -419,5 +429,5 @@ if (require.main === module) {
   main();
 }
 
-// Keep export if needed by other modules (though likely not anymore)
-// export { sendSlackNotification };
+// Export for testing
+export { sendSlackNotification };

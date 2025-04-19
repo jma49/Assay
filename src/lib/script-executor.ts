@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
-// Assuming executeSqlFile and ExecutionResult will be exported from run_sql.ts
-import { executeSqlFile, ExecutionResult } from "@/scripts/run_sql";
+// Use relative path instead of alias path
+import { executeSqlFile, ExecutionResult } from "../../scripts/run-sql";
 
 /**
  * Executes a specified SQL script, saves the result to MongoDB, and sends a Slack notification.
@@ -35,7 +35,7 @@ export async function executeScriptAndNotify(
     return {
       success: false,
       message: errorMsg,
-      findings: "配置错误", // Indicate the type of error
+      findings: "Configuration Error", // Indicate the type of error
     };
   }
 
@@ -63,7 +63,7 @@ export async function executeScriptAndNotify(
     return {
       success: false,
       message: errorMsg,
-      findings: "执行异常", // Indicate an execution error
+      findings: "Execution Error", // Indicate an execution error
     };
   }
 }

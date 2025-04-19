@@ -1,6 +1,82 @@
 // 类型定义
 export type DashboardTranslationKeys =
-  keyof (typeof dashboardTranslations)["en"];
+  | "findings"
+  | "checks"
+  | "loading"
+  | "refreshing"
+  | "refresh"
+  | "errorTitle"
+  | "errorDescription"
+  | "errorInfo"
+  | "retry"
+  | "noData"
+  | "dashboardTitle"
+  | "dashboardDesc"
+  | "nextCheck"
+  | "scheduled"
+  | "automatic"
+  | "manual"
+  | "today"
+  | "tomorrow"
+  | "successRate"
+  | "totalChecks"
+  | "checksFailed"
+  | "checksSucceeded"
+  | "manualTrigger"
+  | "selectScriptDesc"
+  | "selectScriptLabel"
+  | "loadingScripts"
+  | "noScriptsAvailable"
+  | "ensureConfigured"
+  | "noScriptDesc"
+  | "runCheck"
+  | "runningCheck"
+  | "triggerSuccessTitle"
+  | "triggerErrorTitle"
+  | "historyTitle"
+  | "historyDesc"
+  | "filterAll"
+  | "filterSuccess"
+  | "filterFailed"
+  | "searchPlaceholder"
+  | "clearSearch"
+  | "tableStatus"
+  | "tableScriptName"
+  | "tableExecutionTime"
+  | "tableFindings"
+  | "tableActions"
+  | "noMatchingRecords"
+  | "clearFilters"
+  | "expand"
+  | "collapse"
+  | "checkDetails"
+  | "noResults"
+  | "previous"
+  | "next"
+  | "pageInfo"
+  | "checkTriggered"
+  | "checkTriggeredDesc"
+  | "triggerFailed"
+  | "poweredBy"
+  | "collapseDetails"
+  | "expandDetails"
+  | "viewInSidebar"
+  | "calculating"
+  | "attentionNeeded"
+  | "failedChecks"
+  | "viewDetailsSidebar"
+  | "executionStatus"
+  | "executionMessage"
+  | "rawResults"
+  | "noRawData"
+  | "viewGitHubAction"
+  | "noMessage"
+  | "footerSystem"
+  | "footerInfo"
+  | "footerTheme";
+
+// 定义翻译记录类型
+export type TranslationRecord = Record<DashboardTranslationKeys, string>;
 
 // 常量定义
 export const CheckStatus = {
@@ -31,7 +107,7 @@ export interface ScriptInfo {
 }
 
 // 翻译配置
-export const dashboardTranslations = {
+export const dashboardTranslations: Record<string, TranslationRecord> = {
   en: {
     // General
     loading: "Loading...",
@@ -105,6 +181,20 @@ export const dashboardTranslations = {
     previous: "Previous",
     next: "Next",
     pageInfo: "Page %s of %s",
+    collapseDetails: "Collapse details",
+    expandDetails: "Expand details",
+    viewInSidebar: "View in sidebar",
+    // 以下是需要补充的键
+    scheduled: "Scheduled",
+    automatic: "Automatic",
+    manual: "Manual",
+    today: "Today",
+    tomorrow: "Tomorrow",
+    totalChecks: "Total Checks",
+    checksSucceeded: "Successful Checks",
+    checksFailed: "Failed Checks",
+    noResults: "No Results",
+    poweredBy: "Powered by",
   },
   zh: {
     // General
@@ -178,5 +268,19 @@ export const dashboardTranslations = {
     previous: "上一页",
     next: "下一页",
     pageInfo: "第 %s 页 / 共 %s 页",
+    collapseDetails: "收起详情",
+    expandDetails: "展开详情",
+    viewInSidebar: "在侧边栏查看",
+    // 以下是需要补充的键
+    scheduled: "计划中",
+    automatic: "自动",
+    manual: "手动",
+    today: "今天",
+    tomorrow: "明天",
+    totalChecks: "总检查数",
+    checksSucceeded: "成功的检查",
+    checksFailed: "失败的检查",
+    noResults: "无结果",
+    poweredBy: "技术支持",
   },
 };
