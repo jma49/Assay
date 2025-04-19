@@ -1,54 +1,64 @@
-import { sendSlackNotification } from "../../scripts/run_sql";
+import { sendSlackNotification } from "../../scripts/run-sql";
 import dotenv from "dotenv";
 
-// 确保加载环境变量
+// Ensure environment variables are loaded
 dotenv.config({ path: ".env.local" });
 
 async function testNotifications() {
-  console.log("开始测试Slack通知功能...");
+  console.log("Starting Slack notification tests...");
 
-  // 检查环境变量
+  // Check environment variables
   if (!process.env.SLACK_WEBHOOK_URL) {
-    console.warn("警告: SLACK_WEBHOOK_URL 环境变量未设置，测试可能会失败");
+    console.warn(
+      "Warning: SLACK_WEBHOOK_URL environment variable is not set, tests may fail"
+    );
   } else {
-    // 检查webhook URL格式
+    // Check webhook URL format
     const webhookUrl = process.env.SLACK_WEBHOOK_URL;
     console.log(
-      "Webhook URL类型检查:",
+      "Webhook URL type check:",
       webhookUrl.includes("hooks.slack.com")
         ? "Slack Webhook"
-        : "未知Webhook类型"
+        : "Unknown Webhook type"
     );
   }
 
   try {
-    // 测试成功通知
-    console.log("测试场景1: 发送成功通知");
-    await sendSlackNotification("测试通知", "这是一个测试成功消息", false);
-    console.log("✅ 成功通知发送成功");
+    // Test success notification
+    console.log("Test Case 1: Sending success notification");
+    await sendSlackNotification(
+      "Test Notification",
+      "This is a test success message",
+      false
+    );
+    console.log("✅ Success notification sent successfully");
 
-    // 测试错误通知
-    console.log("测试场景2: 发送错误通知");
-    await sendSlackNotification("测试错误", "模拟错误发生", true);
-    console.log("✅ 错误通知发送成功");
+    // Test error notification
+    console.log("Test Case 2: Sending error notification");
+    await sendSlackNotification("Test Error", "Simulated error occurred", true);
+    console.log("✅ Error notification sent successfully");
 
-    // 测试带有格式化消息的通知
-    console.log("测试场景3: 发送带有表格的通知");
+    // Test notification with formatted message
+    console.log("Test Case 3: Sending notification with formatted table");
     const formattedMessage = `
-*SQL查询结果*:
+*SQL Query Results*:
 \`\`\`
-ID | 名称 | 状态
+ID | Name | Status
 --- | --- | ---
-1 | 测试1 | 成功
-2 | 测试2 | 失败
+1 | Test1 | Success
+2 | Test2 | Failed
 \`\`\`
 `;
-    await sendSlackNotification("格式化消息测试", formattedMessage, false);
-    console.log("✅ 格式化消息通知发送成功");
+    await sendSlackNotification(
+      "Formatted Message Test",
+      formattedMessage,
+      false
+    );
+    console.log("✅ Formatted message notification sent successfully");
 
-    console.log("所有测试完成！");
+    console.log("All tests completed!");
   } catch (error) {
-    console.error("❌ 测试失败:", error);
+    console.error("❌ Test failed:", error);
     process.exit(1);
   }
 }

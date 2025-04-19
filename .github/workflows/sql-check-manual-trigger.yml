@@ -46,13 +46,14 @@ jobs:
           cat .env.local || echo ".env.local not found or empty"
           echo "--- .env.local content end ---"
         
-      - name: Run SQL Script with ID
+      - name: Run SQL Check Script
         env:
-          DOTENV_CONFIG_PATH: .env.local
+          DOTENV_CONFIG_PATH: .env.local 
         run: |
-          echo "当前工作目录: $(pwd)"
-          echo "将使用 .env 文件: ${DOTENV_CONFIG_PATH}"
-          echo "即将执行 ts-node for script ID: ${{ github.event.inputs.script_id }}"
-          # Execute run_sql.ts and pass the script_id from the input
-          npx ts-node -r dotenv/config scripts/run_sql.ts ${{ github.event.inputs.script_id }}
+          echo "Current working directory: $(pwd)"
+          echo "Using .env file: ${DOTENV_CONFIG_PATH}"
+          ls -la ${DOTENV_CONFIG_PATH}
+          echo "About to execute ts-node..."
+          # Use ts-node with -r to preload dotenv/config
+          npx ts-node -r dotenv/config scripts/run-sql.ts check-order-duplicates
         continue-on-error: false # Fail the workflow if the script fails 

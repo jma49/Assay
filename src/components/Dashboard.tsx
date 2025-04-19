@@ -59,7 +59,7 @@ const Dashboard = () => {
   // --- Translation Helper ---
   const t = useCallback((key: DashboardTranslationKeys): string => {
     const langTranslations = dashboardTranslations[language] || dashboardTranslations.en;
-    return langTranslations[key] || key;
+    return langTranslations[key as keyof typeof langTranslations] || key;
   }, [language]);
 
   // --- Data Fetching ---
@@ -140,13 +140,16 @@ const Dashboard = () => {
       const response = await fetch('/api/run-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scriptId: selectedScriptId })
+        body: JSON.stringify({ 
+          scriptId: selectedScriptId,
+          language
+        })
       });
       const result = await response.json();
       if (!response.ok) {
         throw new Error(result.message || `${t('triggerFailed')}: ${response.status} ${response.statusText}`);
       }
-      const successMessage = result.message || t('checkTriggeredDesc');
+      const successMessage = result.localizedMessage || result.message || t('checkTriggeredDesc');
       setTriggerMessage(successMessage);
       setTriggerMessageType('success');
       toast.success(t('checkTriggered'), {
@@ -156,11 +159,27 @@ const Dashboard = () => {
       setTimeout(loadInitialData, 3000);
     } catch (err) {
       console.error("Failed to trigger check:", err);
-      const errorMessage = err instanceof Error ? err.message : t('triggerFailed');
-      setTriggerMessage(errorMessage);
+      const errorMessage = err instanceof Error 
+        ? (err.message || t('triggerFailed')) 
+        : t('triggerFailed');
+      // 尝试提取本地化错误消息
+      let localizedErrorMessage = errorMessage;
+      try {
+        if (err instanceof Error && err.cause && typeof err.cause === 'object') {
+          const cause = err.cause as Record<string, unknown>;
+          if ('localizedMessage' in cause && typeof cause.localizedMessage === 'string') {
+            localizedErrorMessage = cause.localizedMessage;
+          }
+        }
+      } catch (extractError) {
+        console.error("Error extracting localized message:", extractError);
+        // 出错时使用默认错误消息
+      }
+      
+      setTriggerMessage(localizedErrorMessage);
       setTriggerMessageType('error');
       toast.error(t('triggerFailed'), {
-        description: errorMessage,
+        description: localizedErrorMessage,
         duration: 8000,
       });
     } finally {
