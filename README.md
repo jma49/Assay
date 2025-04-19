@@ -169,8 +169,16 @@ npm run dev
 2.  脚本应主要包含 `SELECT` 查询，避免执行数据修改操作。
 3.  所有的 sql 脚本都需要以在脚本最开头添加以下信息，供给前端获取对应信息：
     ```sql
-    -- NAME: 脚本名称
-    -- DESCRIPTION: 脚本功能描述
+    -- NAME: script_name_in_english
+    -- CN_NAME: 脚本中文名称
+    -- DESCRIPTION: English description of what this script does.
+    -- CN_DESCRIPTION: 此脚本功能的中文描述。
+    /*
+    Purpose: 脚本目的（可选，如果没有CN_DESCRIPTION将作为备选）
+    Scope: 脚本作用范围
+    Author: 作者名称
+    Created: YYYY/MM/DD
+    */
     ```
 4.  (可选) 如果需要让某个新脚本成为默认的定时检查任务，需要修改 `.github/workflows/sql-check-cron.yml` 中 `Run SQL Script` 步骤调用的脚本名称。
 

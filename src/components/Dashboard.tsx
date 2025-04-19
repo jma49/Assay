@@ -208,6 +208,8 @@ interface ScriptInfo {
   id: string;
   name: string;
   description: string;
+  cn_name?: string;
+  cn_description?: string;
 }
 
 // --- Helper Components ---
@@ -231,20 +233,20 @@ const RawResultsTable = ({ results, noDataText }: { results: Record<string, unkn
   }
   const headers = Object.keys(results[0]);
   return (
-    <div className="overflow-x-auto mt-2 border rounded-lg">
+    <div className="overflow-x-auto mt-2 rounded-md border shadow-sm">
       <Table>
         <TableHeader>
-          <TableRow>
+          <TableRow className="bg-muted/50 hover:bg-muted/70">
             {headers.map((header) => (
-              <TableHead key={header}>{header}</TableHead>
+              <TableHead key={header} className="py-2 px-3 text-xs font-medium">{header}</TableHead>
             ))}
           </TableRow>
         </TableHeader>
         <TableBody>
           {results.map((row, index) => (
-            <TableRow key={index}>
+            <TableRow key={index} className="hover:bg-muted/30 transition-colors">
               {headers.map((header) => (
-                <TableCell key={header}>
+                <TableCell key={header} className="py-2 px-3 text-xs">
                   {typeof row[header] === 'string' || typeof row[header] === 'number' || typeof row[header] === 'boolean'
                     ? String(row[header])
                     : JSON.stringify(row[header])}
@@ -665,17 +667,25 @@ const Dashboard = () => {
                     disabled={isTriggering || loading}
                     className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {availableScripts.map((script) => (
-                      <option key={script.id} value={script.id}>
-                        {script.name}
-                      </option>
-                    ))}
+                    {availableScripts.map((script) => {
+                      const displayName = language === 'zh' && script.cn_name
+                        ? script.cn_name 
+                        : script.name;
+                      
+                      return (
+                        <option key={script.id} value={script.id}>
+                          {displayName}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
 
                 {selectedScript && (
                   <div className="bg-muted/50 p-2.5 rounded-md text-sm text-muted-foreground italic border border-muted/80">
-                    {selectedScript.description || t('noScriptDesc')}
+                    {language === 'zh' && selectedScript.cn_description 
+                      ? selectedScript.cn_description 
+                      : selectedScript.description || t('noScriptDesc')}
                   </div>
                 )}
 
@@ -892,16 +902,32 @@ const Dashboard = () => {
                                   <ExternalLink size={12} />
                                 </Button>
                               </SheetTrigger>
-                              <SheetContent>
-                                <SheetHeader>
-                                  <SheetTitle>{t('checkDetails')}</SheetTitle>
-                                  <SheetDescription>
-                                    {check.script_name} - {formatDate(check.execution_time, language)}
+                              <SheetContent className="overflow-y-auto">
+                                <SheetHeader className="border-b pb-4">
+                                  <SheetTitle className="text-xl flex items-center gap-2">
+                                    {check.status === CheckStatus.SUCCESS ? (
+                                      <CheckCircle className="h-5 w-5 text-green-500" />
+                                    ) : (
+                                      <AlertCircle className="h-5 w-5 text-red-500" />
+                                    )}
+                                    {t('checkDetails')}
+                                  </SheetTitle>
+                                  <SheetDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-sm">
+                                    <span className="font-semibold">{check.script_name}</span>
+                                    <span className="hidden sm:inline text-muted-foreground">•</span>
+                                    <span className="text-muted-foreground">{formatDate(check.execution_time, language)}</span>
                                   </SheetDescription>
                                 </SheetHeader>
-                                <div className="space-y-4 py-4">
-                                  <div>
-                                    <h4 className="text-sm font-semibold mb-1.5">{t('executionStatus')}</h4>
+                                <div className="space-y-6 py-6">
+                                  <div className="bg-card rounded-lg border shadow-sm p-4">
+                                    <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                                      {check.status === CheckStatus.SUCCESS ? (
+                                        <CheckCircle className="h-4 w-4 text-green-500" />
+                                      ) : (
+                                        <AlertCircle className="h-4 w-4 text-red-500" />
+                                      )}
+                                      {t('executionStatus')}
+                                    </h4>
                                     {check.status === CheckStatus.SUCCESS ? (
                                       <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
                                         <CheckCircle className="h-3.5 w-3.5 mr-1" />
@@ -914,34 +940,39 @@ const Dashboard = () => {
                                       </Badge>
                                     )}
                                   </div>
-                                  <div>
-                                    <h4 className="text-sm font-semibold mb-1.5">{t('executionMessage')}</h4>
-                                    <div className="bg-muted p-2.5 rounded text-sm break-words">
+                                  
+                                  <div className="bg-card rounded-lg border shadow-sm p-4">
+                                    <h4 className="text-sm font-semibold mb-2">{t('executionMessage')}</h4>
+                                    <div className="bg-muted/50 p-3 rounded-md text-sm break-words border">
                                       {check.message || <span className="italic text-muted-foreground">{t('noMessage')}</span>}
                                     </div>
                                   </div>
+                                  
                                   {check.findings && (
-                                    <div>
-                                      <h4 className="text-sm font-semibold mb-1.5">{t('findings')}</h4>
-                                      <div className="bg-amber-50 dark:bg-amber-950 p-2.5 rounded text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 break-words">
+                                    <div className="bg-card rounded-lg border shadow-sm p-4">
+                                      <h4 className="text-sm font-semibold mb-2">{t('findings')}</h4>
+                                      <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded-md text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 break-words">
                                         {check.findings}
                                       </div>
                                     </div>
                                   )}
-                                  <div>
-                                    <h4 className="text-sm font-semibold mb-1.5">{t('rawResults')}</h4>
+                                  
+                                  <div className="bg-card rounded-lg border shadow-sm p-4">
+                                    <h4 className="text-sm font-semibold mb-2">{t('rawResults')}</h4>
                                     <RawResultsTable results={check.raw_results} noDataText={t('noRawData')} />
                                   </div>
+                                  
                                   {check.github_run_id && (
-                                    <div className="text-right">
-                                      <Button asChild variant="outline" size="sm" className="shadow-sm">
+                                    <div className="flex justify-end mt-2">
+                                      <Button asChild variant="outline" size="sm" className="shadow-sm hover:bg-primary/10 transition-colors">
                                         <a
                                           href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO || 'your-org/your-repo'}/actions/runs/${check.github_run_id}`}
                                           target="_blank"
                                           rel="noopener noreferrer"
+                                          className="flex items-center"
                                         >
                                           {t('viewGitHubAction')}
-                                          <ExternalLink size={12} className="ml-1" />
+                                          <ExternalLink size={12} className="ml-1.5" />
                                         </a>
                                       </Button>
                                     </div>
@@ -957,39 +988,65 @@ const Dashboard = () => {
                         <TableRow className="bg-muted/30">
                           <TableCell colSpan={5} className="p-4">
                             <Card className="shadow-sm border">
-                              <CardContent className="space-y-4 pt-4 px-4">
-                                <div>
-                                  <h4 className="text-sm font-semibold mb-1.5">{t('executionMessage')}</h4>
-                                  <div className="bg-background rounded p-2.5 border text-sm break-words">
+                              <CardContent className="space-y-5 pt-5 px-4 pb-4">
+                                <div className="bg-card rounded-lg border shadow-sm p-4">
+                                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                                    {check.status === CheckStatus.SUCCESS ? (
+                                      <CheckCircle className="h-4 w-4 text-green-500" />
+                                    ) : (
+                                      <AlertCircle className="h-4 w-4 text-red-500" />
+                                    )}
+                                    {t('executionStatus')}
+                                  </h4>
+                                  {check.status === CheckStatus.SUCCESS ? (
+                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
+                                      <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                                      {t('filterSuccess')}
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800">
+                                      <AlertCircle className="h-3.5 w-3.5 mr-1" />
+                                      {t('filterFailed')}
+                                    </Badge>
+                                  )}
+                                </div>
+                                
+                                <div className="bg-card rounded-lg border shadow-sm p-4">
+                                  <h4 className="text-sm font-semibold mb-2">{t('executionMessage')}</h4>
+                                  <div className="bg-muted/50 p-3 rounded-md text-sm break-words border">
                                     {check.message || <span className="italic text-muted-foreground">{t('noMessage')}</span>}
                                   </div>
                                 </div>
+
                                 {check.findings && (
-                                  <div>
-                                    <h4 className="text-sm font-semibold mb-1.5">{t('findings')}</h4>
-                                    <div className="bg-amber-50 dark:bg-amber-950 p-2.5 rounded text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 break-words">
+                                  <div className="bg-card rounded-lg border shadow-sm p-4">
+                                    <h4 className="text-sm font-semibold mb-2">{t('findings')}</h4>
+                                    <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded-md text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 break-words">
                                       {check.findings}
                                     </div>
                                   </div>
                                 )}
-                                <div>
-                                  <h4 className="text-sm font-semibold mb-1.5">{t('rawResults')}</h4>
+
+                                <div className="bg-card rounded-lg border shadow-sm p-4">
+                                  <h4 className="text-sm font-semibold mb-2">{t('rawResults')}</h4>
                                   <RawResultsTable results={check.raw_results} noDataText={t('noRawData')} />
                                 </div>
+
                                 {check.github_run_id && (
-                                  <div className="text-right mt-3">
-                                    <Button asChild variant="outline" size="sm" className="shadow-sm">
+                                  <div className="flex justify-end mt-2">
+                                    <Button asChild variant="outline" size="sm" className="shadow-sm hover:bg-primary/10 transition-colors">
                                       <a
                                         href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO || 'your-org/your-repo'}/actions/runs/${check.github_run_id}`}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                        >
-                                          {t('viewGitHubAction')}
-                                          <ExternalLink size={12} className="ml-1" />
-                                        </a>
-                                      </Button>
-                                    </div>
-                                  )}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center"
+                                      >
+                                        {t('viewGitHubAction')}
+                                        <ExternalLink size={12} className="ml-1.5" />
+                                      </a>
+                                    </Button>
+                                  </div>
+                                )}
                               </CardContent>
                             </Card>
                           </TableCell>
