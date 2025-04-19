@@ -28,10 +28,12 @@ async function scriptFileExists(scriptId: string): Promise<boolean> {
     return true;
   } catch (error) {
     // ENOENT means file doesn't exist, other errors might be permissions etc.
-    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
-        console.warn(`Script file not found for ID: ${scriptId} at path: ${scriptPath}`);
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      console.warn(
+        `Script file not found for ID: ${scriptId} at path: ${scriptPath}`
+      );
     } else {
-        console.error(`Error accessing script file for ID ${scriptId}:`, error);
+      console.error(`Error accessing script file for ID ${scriptId}:`, error);
     }
     return false;
   }
@@ -75,7 +77,9 @@ export async function POST(request: Request) {
     const isValidScript = await scriptFileExists(scriptId);
 
     if (!isValidScript) {
-      console.warn(`Warning: Received request for non-existent scriptId: ${scriptId}`);
+      console.warn(
+        `Warning: Received request for non-existent scriptId: ${scriptId}`
+      );
       return NextResponse.json(
         { message: `Invalid or non-existent script ID: ${scriptId}` },
         { status: 404 } // Use 404 Not Found as the script doesn't exist
@@ -113,9 +117,7 @@ export async function POST(request: Request) {
     // 6. Handle GitHub API response
     if (githubResponse.status === 204) {
       // Success (GitHub returns 204 No Content for successful dispatch)
-      console.log(
-        `Success: Workflow for script '${scriptId}' triggered.`
-      );
+      console.log(`Success: Workflow for script '${scriptId}' triggered.`);
       // Use scriptId in the message as we don't have the friendly name here anymore
       return NextResponse.json({
         message: `脚本 '${scriptId}' 已成功触发，请稍后在历史记录中查看结果。`,
@@ -129,7 +131,9 @@ export async function POST(request: Request) {
       } catch {
         errorDetails += `, Body: (Could not parse response body)`;
       }
-      console.error(`Error: Failed to trigger GitHub Workflow. ${errorDetails}`);
+      console.error(
+        `Error: Failed to trigger GitHub Workflow. ${errorDetails}`
+      );
       return NextResponse.json(
         {
           message: `触发 GitHub Action 失败。请检查 Vercel 日志和 GitHub Action 配置。 (${githubResponse.status})`,
