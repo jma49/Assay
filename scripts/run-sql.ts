@@ -368,16 +368,32 @@ async function main(): Promise<void> {
     // Construct the absolute path for the script file based on the ID
     // Assumes the script file is located in 'sql_scripts' relative to this script's directory
     // and the filename matches the ID with a .sql extension.
-    const scriptFilePath = path.resolve(
-      __dirname,
-      "sql_scripts",
-      `${scriptToExecuteId}.sql`
-    );
+    const scriptBaseDir = path.resolve(__dirname, "sql_scripts");
+    const dashFilename = `${scriptToExecuteId}.sql`;
+    const underscoreFilename = scriptToExecuteId.replace(/-/g, "_") + ".sql";
+
+    const dashFilePath = path.join(scriptBaseDir, dashFilename);
+    const underscoreFilePath = path.join(scriptBaseDir, underscoreFilename);
+
+    let scriptFilePath = "";
+
+    // 检查横线版本文件是否存在
+    if (fs.existsSync(dashFilePath)) {
+      scriptFilePath = dashFilePath;
+    }
+    // 检查下划线版本文件是否存在
+    else if (fs.existsSync(underscoreFilePath)) {
+      scriptFilePath = underscoreFilePath;
+    }
+    // 两个版本都不存在，使用默认路径（与原来一致）
+    else {
+      scriptFilePath = dashFilePath;
+    }
 
     // Check if the derived file path actually exists before proceeding
     if (!fs.existsSync(scriptFilePath)) {
       throw new Error(
-        `${executionContext} Error: Could not find SQL file corresponding to ID '${scriptToExecuteId}' at: ${scriptFilePath}`
+        `${executionContext} Error: Could not find SQL file corresponding to ID '${scriptToExecuteId}' at: ${scriptFilePath}. Tried both formats: ${dashFilename} and ${underscoreFilename}`
       );
     }
 
