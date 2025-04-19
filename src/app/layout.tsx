@@ -1,9 +1,7 @@
 import React from 'react';
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "next-themes";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { ClientLayoutWrapper } from '@/components/ClientLayoutWrapper'; // Import the new wrapper
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,9 +14,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Keep metadata export here (Server Component)
 export const metadata: Metadata = {
-  title: "SQL 脚本自动化执行工具",
-  description: "内部SQL数据质量监控系统",
+  title: "SQL Script Automation Tool", // Default title
+  description: "Internal system for monitoring SQL data quality.", // Default description
 };
 
 export default function RootLayout({
@@ -26,38 +25,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Combine font variables into a single string
+  const fontClassName = `${geistSans.variable} ${geistMono.variable}`;
+
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <div className="min-h-screen flex flex-col">
-            <header className="bg-card text-card-foreground border-b border-border py-4">
-              <div className="container mx-auto px-4">
-                <div className="flex justify-between items-center">
-                  <h1 className="text-xl font-bold">SQL 脚本自动化执行工具</h1>
-                  <div className="flex items-center gap-4">
-                    <div className="text-sm bg-primary/10 text-primary px-3 py-1 rounded-full">
-                      内部工具
-                    </div>
-                    <ThemeToggle />
-                  </div>
-                </div>
-              </div>
-            </header>
-            <main className="flex-grow container mx-auto px-4 py-6">
-              {children}
-            </main>
-            <footer className="bg-card text-card-foreground border-t border-border py-4">
-              <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-                &copy; {new Date().getFullYear()} Designed By Jincheng
-              </div>
-            </footer>
-          </div>
-          <Toaster />
-        </ThemeProvider>
-      </body>
+    // lang attribute will be set dynamically in ClientLayoutWrapper via useEffect
+    <html suppressHydrationWarning>
+      {/* Pass font class name and children to the client wrapper */}
+      {/* The <body> tag is now rendered inside ClientLayoutWrapper */}
+      <ClientLayoutWrapper fontClassName={fontClassName}>
+        {children}
+      </ClientLayoutWrapper>
     </html>
   );
 }
