@@ -6,7 +6,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { toast } from "sonner";
-import { useTheme } from "next-themes";
 import { useLanguage } from '@/components/ClientLayoutWrapper';
 
 // Import shadcn UI components
@@ -28,6 +27,7 @@ import { CheckHistory } from '@/components/dashboard/CheckHistory';
 import { LoadingError } from '@/components/dashboard/LoadingError';
 import { SkeletonCard, SkeletonTable } from '@/components/dashboard/SkeletonComponents';
 import { DashboardFooter } from '@/components/dashboard/DashboardFooter';
+import { StatsChart } from '@/components/dashboard/StatsChart';
 
 // --- Main Component ---
 const Dashboard = () => {
@@ -53,7 +53,6 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   // --- Context Hooks ---
-  const { theme } = useTheme();
   const { language } = useLanguage();
 
   // --- Translation Helper ---
@@ -232,6 +231,33 @@ const Dashboard = () => {
     return filtered;
   }, [checks, filterStatus, searchTerm, sortConfig]);
 
+  // 计算今天和昨天的检查数量
+  const { todayChecks, yesterdayChecks } = React.useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const dayBefore = new Date(yesterday);
+    dayBefore.setDate(dayBefore.getDate() - 1);
+    
+    const todayChecksCount = checks.filter(check => {
+      const checkDate = new Date(check.execution_time);
+      return checkDate >= today;
+    }).length;
+    
+    const yesterdayChecksCount = checks.filter(check => {
+      const checkDate = new Date(check.execution_time);
+      return checkDate >= yesterday && checkDate < today;
+    }).length;
+    
+    return {
+      todayChecks: todayChecksCount,
+      yesterdayChecks: yesterdayChecksCount
+    };
+  }, [checks]);
+
   const totalChecks = filteredAndSortedChecks.length;
   const totalPages = Math.ceil(totalChecks / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -311,20 +337,32 @@ const Dashboard = () => {
           t={t}
         />
 
-        <ManualTrigger 
-          availableScripts={availableScripts}
-          selectedScriptId={selectedScriptId}
-          selectedScript={selectedScript}
-          isTriggering={isTriggering}
-          isFetchingScripts={isFetchingScripts}
-          loading={loading}
-          triggerMessage={triggerMessage}
-          triggerMessageType={triggerMessageType}
-          language={language}
-          t={t}
-          setSelectedScriptId={setSelectedScriptId}
-          handleTriggerCheck={handleTriggerCheck}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ManualTrigger 
+            availableScripts={availableScripts}
+            selectedScriptId={selectedScriptId}
+            selectedScript={selectedScript}
+            isTriggering={isTriggering}
+            isFetchingScripts={isFetchingScripts}
+            loading={loading}
+            triggerMessage={triggerMessage}
+            triggerMessageType={triggerMessageType}
+            language={language}
+            t={t}
+            setSelectedScriptId={setSelectedScriptId}
+            handleTriggerCheck={handleTriggerCheck}
+          />
+
+          <StatsChart 
+            successCount={successCount}
+            failureCount={failureCount}
+            allChecksCount={allChecksCount}
+            successRate={successRate}
+            todayChecks={todayChecks}
+            yesterdayChecks={yesterdayChecks}
+            t={t}
+          />
+        </div>
 
         <CheckHistory 
           paginatedChecks={paginatedChecks}
@@ -344,9 +382,11 @@ const Dashboard = () => {
           setSearchTerm={setSearchTerm}
           setCurrentPage={setCurrentPage}
           requestSort={requestSort}
+          startIndex={startIndex}
+          endIndex={endIndex}
         />
 
-        <DashboardFooter theme={theme} t={t} />
+        <DashboardFooter t={t} />
       </div>
     </div>
   );

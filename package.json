@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "sql:check": "ts-node scripts/sql_scripts/run_script.ts check_order_duplicates",
+    "sql:check": "ts-node scripts/run-sql.ts check-order-duplicates",
     "sql:run": "ts-node scripts/run-sql.ts",
     "test:db": "NODE_OPTIONS='--import=ts-node/register --loader=ts-node/esm' node --no-warnings test/database/connection.test.ts",
     "test:script": "ts-node src/scripts/check-order-duplicates.ts",

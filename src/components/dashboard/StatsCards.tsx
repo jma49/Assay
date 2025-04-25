@@ -1,8 +1,6 @@
 import React from 'react';
-import { AlertCircle, BarChart2, Clock } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { formatDate } from './utils';
+import { FileText, Clock, Activity } from 'lucide-react';
+import { Card, CardContent } from "@/components/ui/card";
 import { DashboardTranslationKeys } from './types';
 
 interface StatsCardsProps {
@@ -15,78 +13,72 @@ interface StatsCardsProps {
   t: (key: DashboardTranslationKeys) => string;
 }
 
+interface StatItem {
+  title: string;
+  value: number | string;
+  unit?: string;
+  description?: string;
+  icon: React.ReactNode;
+}
+
 export const StatsCards: React.FC<StatsCardsProps> = ({
-  nextScheduled,
   successCount,
   failureCount,
   allChecksCount,
   successRate,
-  language,
   t
 }) => {
+  const stats: StatItem[] = [
+    {
+      title: t('totalChecks'),
+      value: allChecksCount,
+      icon: <Activity className="h-5 w-5 text-primary" />,
+      description: successRate > 0 ? `${successRate}% ${t('successRate')}` : '',
+    },
+    {
+      title: t('checksSucceeded'),
+      value: successCount,
+      icon: <FileText className="h-5 w-5 text-primary" />,
+      description: allChecksCount > 0 ? `${t('checks')}` : '',
+    },
+    {
+      title: t('checksFailed'),
+      value: failureCount,
+      icon: <Clock className="h-5 w-5 text-primary" />,
+      description: allChecksCount > 0 ? `${t('attentionNeeded').replace('%s', ((failureCount / allChecksCount) * 100).toFixed(0))}` : '',
+    }
+  ];
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
-      <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-blue-500 dark:border-l-blue-400 shadow-sm hover:translate-y-[-2px]">
-        <CardHeader className="pb-1.5 pt-3 px-4">
-          <CardTitle className="text-sm text-muted-foreground font-normal">{t('nextCheck')}</CardTitle>
-        </CardHeader>
-        <CardContent className="px-4 pb-3.5">
-          <div className="flex items-center space-x-3">
-            <div className="bg-primary/10 p-2.5 rounded-full">
-              <Clock className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-xl sm:text-2xl font-semibold">
-                {nextScheduled ? formatDate(nextScheduled.toISOString(), language) : t('calculating')}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-emerald-500 dark:border-l-emerald-400 shadow-sm hover:translate-y-[-2px]">
-        <CardHeader className="pb-1.5 pt-3 px-4">
-          <CardTitle className="text-sm text-muted-foreground font-normal">{t('successRate')}</CardTitle>
-        </CardHeader>
-        <CardContent className="px-4 pb-3.5">
-          <div className="flex items-center space-x-3">
-            <div className="bg-emerald-500/10 p-2.5 rounded-full">
-              <BarChart2 className="h-5 w-5 text-emerald-500" />
-            </div>
-            <div className="space-y-1.5 flex-1">
-              <div className="flex items-baseline space-x-2">
-                <p className="text-xl sm:text-2xl font-semibold">{successRate}%</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">({successCount}/{allChecksCount})</p>
+    <div className="grid gap-4 md:grid-cols-3">
+      {stats.map((stat, i) => (
+        <Card 
+          key={i} 
+          className="unified-card bounce-in shadow-sm hover:shadow-md transition-all duration-300" 
+          style={{ animationDelay: `${i * 100}ms` }}
+        >
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                <div className="flex items-baseline mt-2">
+                  <h4 className="text-2xl font-semibold">
+                    {stat.value}{stat.unit && <span className="ml-1 text-sm text-muted-foreground">{stat.unit}</span>}
+                  </h4>
+                </div>
+                {stat.description && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {stat.description}
+                  </p>
+                )}
               </div>
-              <Progress className="h-1.5" value={successRate} />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="transition-all duration-300 hover:shadow-md border-l-4 border-l-amber-500 dark:border-l-amber-400 shadow-sm hover:translate-y-[-2px]">
-        <CardHeader className="pb-1.5 pt-3 px-4">
-          <CardTitle className="text-sm text-muted-foreground font-normal">{t('failedChecks')}</CardTitle>
-        </CardHeader>
-        <CardContent className="px-4 pb-3.5">
-          <div className="flex items-center space-x-3">
-            <div className="bg-amber-500/10 p-2.5 rounded-full">
-              <AlertCircle className="h-5 w-5 text-amber-500" />
-            </div>
-            <div className="space-y-0.5">
-              <div className="flex items-baseline space-x-2">
-                <p className="text-xl sm:text-2xl font-semibold">{failureCount}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">/ {allChecksCount} {t('checks')}</p>
+              <div className="icon-container bg-primary/10 rounded-lg">
+                {stat.icon}
               </div>
-              {failureCount > 0 && allChecksCount > 0 && (
-                <p className="text-red-500 text-xs font-medium">
-                  {t('attentionNeeded').replace('%s', String(Math.round((failureCount / allChecksCount) * 100)))}
-                </p>
-              )}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
-}; 
+};

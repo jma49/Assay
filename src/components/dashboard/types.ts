@@ -18,6 +18,7 @@ export type DashboardTranslationKeys =
   | "manual"
   | "today"
   | "tomorrow"
+  | "yesterday"
   | "successRate"
   | "totalChecks"
   | "checksFailed"
@@ -73,7 +74,15 @@ export type DashboardTranslationKeys =
   | "noMessage"
   | "footerSystem"
   | "footerInfo"
-  | "footerTheme";
+  | "footerTheme"
+  | "checksStatistics"
+  | "checkPerformanceOverview"
+  | "checksDistribution"
+  | "resultsShowing"
+  | "totalPages"
+  | "totalRuns"
+  | "successfulRuns"
+  | "needsAttention";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -102,8 +111,13 @@ export interface ScriptInfo {
   id: string;
   name: string;
   description: string;
+  path: string;
   cn_name?: string;
   cn_description?: string;
+  scope?: string;
+  cn_scope?: string;
+  author?: string;
+  created?: string;
 }
 
 // 翻译配置
@@ -180,7 +194,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     footerTheme: "Current Theme: %s",
     previous: "Previous",
     next: "Next",
-    pageInfo: "Page %s of %s",
+    pageInfo: "Showing %s-%s of %s results (Page %s of %s)",
     collapseDetails: "Collapse details",
     expandDetails: "Expand details",
     viewInSidebar: "View in sidebar",
@@ -190,11 +204,21 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     manual: "Manual",
     today: "Today",
     tomorrow: "Tomorrow",
+    yesterday: "Yesterday",
     totalChecks: "Total Checks",
     checksSucceeded: "Successful Checks",
     checksFailed: "Failed Checks",
     noResults: "No Results",
     poweredBy: "Powered by",
+    // 新增键
+    checksStatistics: "Check Statistics",
+    checkPerformanceOverview: "Performance overview of your SQL checks",
+    checksDistribution: "Success/Failure Distribution",
+    resultsShowing: "Results",
+    totalPages: "Pages",
+    totalRuns: "Total Script Runs",
+    successfulRuns: "Successful Executions",
+    needsAttention: "Needs Attention",
   },
   zh: {
     // General
@@ -267,7 +291,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     footerTheme: "当前主题: %s",
     previous: "上一页",
     next: "下一页",
-    pageInfo: "第 %s 页 / 共 %s 页",
+    pageInfo: "显示第 %s-%s 条，共 %s 条结果（第 %s 页/共 %s 页）",
     collapseDetails: "收起详情",
     expandDetails: "展开详情",
     viewInSidebar: "在侧边栏查看",
@@ -277,10 +301,20 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     manual: "手动",
     today: "今天",
     tomorrow: "明天",
+    yesterday: "昨天",
     totalChecks: "总检查数",
     checksSucceeded: "成功的检查",
     checksFailed: "失败的检查",
     noResults: "无结果",
     poweredBy: "技术支持",
+    // 新增键
+    checksStatistics: "检查统计",
+    checkPerformanceOverview: "SQL检查性能概览",
+    checksDistribution: "成功/失败分布",
+    resultsShowing: "结果",
+    totalPages: "页",
+    totalRuns: "脚本总运行次数",
+    successfulRuns: "成功执行",
+    needsAttention: "需要关注",
   },
 };
