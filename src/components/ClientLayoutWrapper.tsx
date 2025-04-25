@@ -20,11 +20,10 @@ type TranslationKeys = 'title' | 'description' | 'internalTool' | 'changeLanguag
 interface LanguageContextType {
   language: 'en' | 'zh';
   setLanguage: (lang: 'en' | 'zh') => void;
-  t: (key: TranslationKeys) => string; // Adjust t function signature if it handles dashboard keys too
+  t: (key: TranslationKeys) => string;
 }
 
 // Language context
-// Export it so it can be imported by useLanguage hook and potentially other components
 export const LanguageContext = React.createContext<LanguageContextType>({
   language: 'en',
   setLanguage: () => {},

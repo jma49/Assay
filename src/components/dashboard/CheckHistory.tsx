@@ -31,6 +31,8 @@ interface CheckHistoryProps {
   setSearchTerm: (term: string) => void;
   setCurrentPage: (page: number) => void;
   requestSort: (key: keyof Check) => void;
+  startIndex: number;
+  endIndex: number;
 }
 
 export const CheckHistory: React.FC<CheckHistoryProps> = ({
@@ -50,15 +52,19 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
   setFilterStatus,
   setSearchTerm,
   setCurrentPage,
-  requestSort
+  requestSort,
+  startIndex,
+  endIndex
 }) => {
   return (
-    <Card className="shadow-sm hover:shadow-md transition-all duration-300">
+    <Card className="unified-card shadow-sm hover:shadow-md transition-all duration-300">
       <CardHeader className="px-5 py-4 bg-card/50 border-b border-border/50">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-muted-foreground" />
+              <div className="icon-container bg-primary/10 rounded-lg">
+                <Clock className="h-5 w-5 text-primary" />
+              </div>
               {t('historyTitle')}
             </CardTitle>
             <CardDescription className="mt-1">
@@ -72,7 +78,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                 variant={filterStatus === null ? "default" : "outline"}
                 size="sm"
                 onClick={() => { setFilterStatus(null); setCurrentPage(1); }}
-                className="h-7 px-2 gap-1 text-xs transition-all duration-200 shadow-sm"
+                className="h-7 px-2 gap-1 text-xs transition-all duration-200 shadow-sm hover:shadow"
               >
                 <Filter size={12} /> {t('filterAll')} <Badge variant="secondary" className="ml-0.5 h-4 text-[10px] px-1">{allChecksCount}</Badge>
               </Button>
@@ -80,7 +86,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                 variant={filterStatus === CheckStatus.SUCCESS ? "default" : "outline"}
                 size="sm"
                 onClick={() => { setFilterStatus(CheckStatus.SUCCESS); setCurrentPage(1); }}
-                className="h-7 px-2 gap-1 text-xs transition-all duration-200 shadow-sm"
+                className="h-7 px-2 gap-1 text-xs transition-all duration-200 shadow-sm hover:shadow"
               >
                 <CheckCircle size={12} /> {t('filterSuccess')} <Badge variant="secondary" className="ml-0.5 h-4 text-[10px] px-1">{successCount}</Badge>
               </Button>
@@ -88,7 +94,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                 variant={filterStatus === CheckStatus.FAILURE ? "default" : "outline"}
                 size="sm"
                 onClick={() => { setFilterStatus(CheckStatus.FAILURE); setCurrentPage(1); }}
-                className="h-7 px-2 gap-1 text-xs transition-all duration-200 shadow-sm"
+                className="h-7 px-2 gap-1 text-xs transition-all duration-200 shadow-sm hover:shadow"
               >
                 <AlertCircle size={12} /> {t('filterFailed')} <Badge variant="secondary" className="ml-0.5 h-4 text-[10px] px-1">{failureCount}</Badge>
               </Button>
@@ -135,7 +141,9 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                   <div className="flex items-center">
                     {t('tableScriptName')}
                     {sortConfig.key === 'script_name' && (
-                      <span className="ml-1">{sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                      <span className="ml-1 text-primary">
+                        {sortConfig.direction === 'ascending' ? <ChevronUp className="h-3.5 w-3.5 inline-block" /> : <ChevronDown className="h-3.5 w-3.5 inline-block" />}
+                      </span>
                     )}
                   </div>
                 </TableHead>
@@ -146,7 +154,9 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                   <div className="flex items-center">
                     {t('tableExecutionTime')}
                     {sortConfig.key === 'execution_time' && (
-                      <span className="ml-1">{sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                      <span className="ml-1 text-primary">
+                        {sortConfig.direction === 'ascending' ? <ChevronUp className="h-3.5 w-3.5 inline-block" /> : <ChevronDown className="h-3.5 w-3.5 inline-block" />}
+                      </span>
                     )}
                   </div>
                 </TableHead>
@@ -159,7 +169,9 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                 <TableRow>
                   <TableCell colSpan={5} className="h-32 text-center">
                     <div className="flex flex-col items-center">
-                      <Database className="h-12 w-12 text-muted-foreground mb-3" />
+                      <div className="icon-container bg-muted/20 rounded-lg p-1 mb-3">
+                        <Database className="h-10 w-10 text-muted-foreground" />
+                      </div>
                       <p className="font-medium">{t('noMatchingRecords')}</p>
                       {filterStatus && (
                         <Button
@@ -268,7 +280,13 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
       {totalPages > 1 && (
         <CardFooter className="flex items-center justify-between border-t px-4 py-2.5 text-xs bg-card/50">
           <div className="text-muted-foreground">
-            {t('pageInfo').replace('%s', String(currentPage)).replace('%s', String(totalPages))}
+            {t('pageInfo')
+              .replace('%s', String(startIndex + 1))
+              .replace('%s', String(Math.min(endIndex, allChecksCount)))
+              .replace('%s', String(allChecksCount))
+              .replace('%s', String(currentPage))
+              .replace('%s', String(totalPages))
+            }
           </div>
           <div className="flex items-center gap-1.5">
             <Button
@@ -276,7 +294,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               size="sm"
               onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
               disabled={currentPage === 1}
-              className="h-7 px-2 text-xs shadow-sm"
+              className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
             >
               <ChevronLeft className="h-3.5 w-3.5 mr-1" />
               {t('previous')}
@@ -286,7 +304,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               size="sm"
               onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className="h-7 px-2 text-xs shadow-sm"
+              className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
             >
               {t('next')}
               <ChevronRight className="h-3.5 w-3.5 ml-1" />

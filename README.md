@@ -9,6 +9,7 @@
 - **结果历史**：查看过去的执行结果，支持搜索和过滤
 - **Slack 通知**：成功和失败检查的实时提醒
 - **安全限制**：防止数据修改操作
+- **双语支持**：支持英文和中文界面切换
 
 ## 系统架构
 
@@ -82,18 +83,49 @@ npm run dev
 npm run sql:run check-order-duplicates
 ```
 
+## SQL 脚本格式要求
+
+SQL 脚本必须严格遵循以下格式规范：
+
+1. **文件位置**：所有 SQL 脚本必须放在 `scripts/sql_scripts/` 目录中
+2. **文件命名**：使用连字符分隔的小写字母（例如：`check-data-consistency.sql`）
+3. **元数据格式**：脚本必须在文件顶部包含元数据块注释：
+
+```sql
+/*
+Name: script-name-in-english
+Description: Detailed description of what this script does
+Scope: area of application (optional)
+Author: your name
+Created: YYYY/MM/DD
+CN_Name: 脚本中文名称
+CN_Description: 脚本功能的中文描述
+CN_Scope: 应用范围（可选）
+*/
+```
+
+4. **查询要求**：
+
+   - 脚本必须仅包含读取操作（SELECT 查询）
+   - 严禁包含任何数据修改操作（INSERT, UPDATE, DELETE, DROP 等）
+   - 查询应以分号（;）结尾分隔多个语句
+   - 每个查询必须有明确目的，查询结果应易于解释
+
+5. **注释规范**：
+
+   - 使用 `--` 添加行注释说明复杂逻辑
+   - 为复杂查询的各部分添加注释以提高可读性
+
+6. **安全考虑**：
+   - 避免使用动态 SQL 或不安全的查询模式
+   - 查询应高效且有索引支持，避免全表扫描
+
+系统会自动解析这些元数据并在 UI 中显示，支持中英文切换显示相应的名称和描述。
+
 ## 添加新的 SQL 脚本
 
 1. 在`scripts/sql_scripts/`目录中创建一个`.sql`文件
-2. 确保包含元数据注释：
-
-```sql
--- NAME: your-script-name
--- CN_NAME: 中文名称
--- DESCRIPTION: What this script does
--- CN_DESCRIPTION: 中文描述
-```
-
+2. 确保包含完整的元数据块注释（如上所述）
 3. 编写 SQL 查询（禁止数据修改操作）
 4. 该脚本将自动在 UI 中可用
 
