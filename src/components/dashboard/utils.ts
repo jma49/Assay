@@ -1,9 +1,9 @@
 // 日期格式化函数
 export const formatDate = (dateString: string, locale: string = "en-US") => {
   const date = new Date(dateString);
-  // 根据语言上下文调整区域设置
-  const effectiveLocale = locale.startsWith("zh") ? "zh-CN" : "en-US";
-  return date.toLocaleString(effectiveLocale, {
+  // 统一使用美国中部时区
+  return date.toLocaleString(locale, {
+    timeZone: "America/Chicago",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

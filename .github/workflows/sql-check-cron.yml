@@ -2,7 +2,7 @@ name: SQL Script Cron Job
 
 on:
   schedule:
-    - cron: "0 19 * * *" # Every day at UTC 7 PM
+    - cron: "0 19 * * *" # 每天 UTC 19:00 (美国中部时间 14:00)
   workflow_dispatch:
 
 env:
