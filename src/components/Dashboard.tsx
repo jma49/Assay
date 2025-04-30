@@ -107,11 +107,14 @@ const Dashboard = () => {
 
     const now = new Date();
     const nextRun = new Date();
+    // 设置美国中部时间 14:00
     nextRun.setUTCHours(19, 0, 0, 0);
-    if (nextRun < now) {
-      nextRun.setDate(nextRun.getDate() + 1);
+    // 转换为美国中部时间
+    const centralTime = new Date(nextRun.toLocaleString("en-US", { timeZone: "America/Chicago" }));
+    if (centralTime < now) {
+      centralTime.setDate(centralTime.getDate() + 1);
     }
-    setNextScheduled(nextRun);
+    setNextScheduled(centralTime);
 
     const style = document.createElement('style');
     style.textContent = `

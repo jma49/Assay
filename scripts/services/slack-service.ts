@@ -20,10 +20,9 @@ export async function sendSlackNotification(
     }
 
     const now = new Date();
-    // 考虑将时区设为可配置项或使用 UTC
-    const timestamp = now.toLocaleString("zh-CN", {
-      // 使用中文区域设置
-      timeZone: "Asia/Shanghai", // 使用中国时区
+    // 使用美国中部时区
+    const timestamp = now.toLocaleString("en-US", {
+      timeZone: "America/Chicago", // 使用美国中部时区
       hour12: false,
     });
 
@@ -35,7 +34,7 @@ export async function sendSlackNotification(
         ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
         : "(手动触发/本地执行)"; // 非 GitHub Actions 环境下的提示
 
-    const status = isError ? "❌ 失败" : "✅ 成功";
+    const status = isError ? "❌ Failed" : "✅ Success";
 
     // 使用 Block Kit 格式化消息以获得更好的 Slack 显示效果
     const payload = {
@@ -45,7 +44,10 @@ export async function sendSlackNotification(
           fields: [
             { type: "mrkdwn", text: `*脚本名称:*\n${scriptId}` },
             { type: "mrkdwn", text: `*状态:*\n${status}` },
-            { type: "mrkdwn", text: `*执行时间:*\n${timestamp} (北京时间)` }, // 明确时区
+            {
+              type: "mrkdwn",
+              text: `*执行时间:*\n${timestamp} (美国中部时间)`,
+            }, // 更新时区说明
             {
               type: "mrkdwn",
               text: `*来源:*\n${
