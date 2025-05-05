@@ -83,6 +83,56 @@ npm run dev
 npm run sql:run check-order-duplicates
 ```
 
+### 连接生产环境数据库 (使用 SSL)
+
+生产环境的 PostgreSQL 数据库通常需要使用 SSL 加密连接以确保安全。如果您需要连接到需要 SSL 证书的生产数据库，请按以下步骤操作：
+
+1.  **获取证书文件**：
+    您需要以下文件（通常由数据库管理员提供）：
+
+    - **服务器 CA 证书 (`.ca`)**：用于验证数据库服务器的证书颁发机构。
+    - **客户端证书 (`.crt`)**：用于向服务器证明您的客户端身份。
+    - **客户端私钥 (`.key`)**：与客户端证书配对的私钥。**请注意：**  `.csr` 文件，是一个证书签名请求文件，通常用于申请证书，而不是用于建立连接。您需要的是与 `.crt` 文件对应的 `.key` 私钥文件。请确认您拥有正确的 `.key` 文件。
+
+2.  **存储证书文件**：
+    确保证书文件 (`.ca`, `.crt`, `.key`) 存储在应用程序运行时可以访问的安全位置。**不要将私钥直接提交到代码仓库中！** 常见的做法包括：
+
+    - 将文件放在项目部署包中的一个安全目录。
+    - 使用环境变量传递证书文件的内容（适用于某些部署平台）。
+    - 将文件存储在安全的服务器卷中，并在运行时引用其路径。
+
+3.  **配置 `DATABASE_URL`**：
+    修改 `.env.local` 文件中的 `DATABASE_URL`，添加 SSL 相关参数。参数格式如下：
+
+    ```
+    DATABASE_URL="postgresql://user:password@host:port/database?sslmode=verify-full&sslrootcert=<path_to_ca_file>&sslcert=<path_to_crt_file>&sslkey=<path_to_key_file>"
+    ```
+
+    - 将 `<path_to_ca_file>`, `<path_to_crt_file>`, `<path_to_key_file>` 替换为您实际存储证书文件的**绝对路径或相对路径**（相对于应用的运行目录）。
+    - `sslmode=verify-full` 是推荐的安全模式，它会验证服务器证书并检查服务器主机名。根据您的服务器配置，可能需要其他模式（如 `require`, `verify-ca`），请参考 PostgreSQL 文档或咨询数据库管理员。
+
+    **示例 `.env.local` 配置**：
+
+    ```dotenv
+    # PostgreSQL数据库 (生产环境示例，使用SSL)
+    # 注意：路径需要根据实际部署情况修改
+    DATABASE_URL="postgresql://prod_user:prod_password@prod.db.example.com:5432/prod_db?sslmode=verify-full&sslrootcert=/etc/ssl/certs/server-ca.pem&sslcert=/app/certs/client-cert.pem&sslkey=/app/certs/client-key.pem"
+
+    # MongoDB数据库
+    MONGODB_URI="mongodb+srv://..."
+
+    # Slack通知
+    SLACK_WEBHOOK_URL="https://hooks.slack.com/..."
+
+    # GitHub（用于定时任务）
+    # GITHUB_PAT="..." # 在生产环境中，这些可能通过其他方式注入
+    # GITHUB_OWNER="..."
+    # GITHUB_REPO="..."
+    ```
+
+4.  **测试连接**：
+    在配置完成后，确保应用程序能够成功连接到生产数据库。您可能需要在本地模拟生产环境的证书路径进行测试，或者直接在部署环境中测试。
+
 ## SQL 脚本格式要求
 
 SQL 脚本必须严格遵循以下格式规范：
