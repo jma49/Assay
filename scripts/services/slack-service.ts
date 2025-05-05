@@ -20,10 +20,17 @@ export async function sendSlackNotification(
     }
 
     const now = new Date();
-    // 使用美国中部时区
+    // 使用美国中部时区，并明确格式
     const timestamp = now.toLocaleString("en-US", {
-      timeZone: "America/Chicago", // 使用美国中部时区
-      hour12: false,
+      timeZone: "America/Chicago", // 确保使用美国中部时区
+      year: "numeric", // 年份 (e.g., 2025)
+      month: "short", // 月份缩写 (e.g., May)
+      day: "numeric", // 日期 (e.g., 5)
+      hour: "numeric", // 小时 (e.g., 2)
+      minute: "2-digit", // 分钟 (e.g., 16)
+      second: "2-digit", // 秒 (e.g., 30)
+      hour12: true, // 使用 12 小时制 (e.g., 2:16 PM)
+      timeZoneName: "short", // 包含时区缩写 (e.g., CDT/CST)
     });
 
     // 构造 GitHub Action 日志链接（如果适用）
@@ -46,8 +53,8 @@ export async function sendSlackNotification(
             { type: "mrkdwn", text: `*状态:*\n${status}` },
             {
               type: "mrkdwn",
-              text: `*执行时间:*\n${timestamp} (美国中部时间)`,
-            }, // 更新时区说明
+              text: `*执行时间:*\n${timestamp}`,
+            },
             {
               type: "mrkdwn",
               text: `*来源:*\n${
