@@ -107,14 +107,14 @@ const Dashboard = () => {
 
     const now = new Date();
     const nextRun = new Date();
-    // 设置美国中部时间 14:00
+    // 设置下一个运行时间为 UTC 19:00
     nextRun.setUTCHours(19, 0, 0, 0);
-    // 转换为美国中部时间
-    const centralTime = new Date(nextRun.toLocaleString("en-US", { timeZone: "America/Chicago" }));
-    if (centralTime < now) {
-      centralTime.setDate(centralTime.getDate() + 1);
+    // 如果 UTC 19:00 已经过去，则设置为明天的 UTC 19:00
+    if (nextRun < now) {
+      nextRun.setDate(nextRun.getDate() + 1);
     }
-    setNextScheduled(centralTime);
+    //直接将 Date 对象传递给状态，显示时会由 formatDate 处理
+    setNextScheduled(nextRun);
 
     const style = document.createElement('style');
     style.textContent = `
