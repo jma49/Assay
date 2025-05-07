@@ -13,10 +13,14 @@ export interface SqlCheckHistoryDocument {
   github_run_id?: string | number; // 关联的 GitHub Actions 运行 ID（如果适用）
 }
 
+// 新增：定义执行状态的类型
+export type ExecutionStatusType = "success" | "failure" | "attention_needed";
+
 // 定义脚本执行结果的结构
 export interface ExecutionResult {
-  success: boolean; // 是否成功
-  message: string; // 执行消息
-  findings: string; // 检查结果概述
-  data?: QueryResult[] | undefined; // 原始查询结果（可选）
+  success: boolean; // true 代表执行过程本身没有抛出未捕获错误 (涵盖 'success' 和 'attention_needed')
+  statusType: ExecutionStatusType; // 新增字段，更具体的执行状态
+  message: string;
+  findings: string;
+  data?: QueryResult[] | any;
 }

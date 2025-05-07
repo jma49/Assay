@@ -1,16 +1,17 @@
 import axios from "axios";
+import { ExecutionStatusType } from "../types";
 
 /**
  * 发送 Slack 通知。
  *
  * @param scriptId 脚本的唯一标识符。
- * @param message 要发送的消息内容。
- * @param isError 指示消息是否为错误消息，默认为 false。
+ * @param message 要发送的消息内容，此消息应已包含 findings。
+ * @param statusType 执行的状态类型。
  */
 export async function sendSlackNotification(
   scriptId: string,
   message: string,
-  isError = false
+  statusType: ExecutionStatusType
 ): Promise<void> {
   try {
     const webhookUrl = process.env.SLACK_WEBHOOK_URL;
@@ -41,7 +42,24 @@ export async function sendSlackNotification(
         ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
         : "(手动触发/本地执行)"; // 非 GitHub Actions 环境下的提示
 
-    const status = isError ? "❌ Failed" : "✅ Success";
+    let statusText: string;
+    let icon: string;
+
+    switch (statusType) {
+      case "failure":
+        statusText = "❌ Failed";
+        icon = "❌";
+        break;
+      case "attention_needed":
+        statusText = "❗ Attention Needed";
+        icon = "❗";
+        break;
+      case "success":
+      default:
+        statusText = "✅ Success";
+        icon = "✅";
+        break;
+    }
 
     // 使用 Block Kit 格式化消息以获得更好的 Slack 显示效果
     const payload = {
@@ -50,7 +68,7 @@ export async function sendSlackNotification(
           type: "section",
           fields: [
             { type: "mrkdwn", text: `*脚本名称:*\n${scriptId}` },
-            { type: "mrkdwn", text: `*状态:*\n${status}` },
+            { type: "mrkdwn", text: `*状态:*\n${icon} ${statusText}` },
             {
               type: "mrkdwn",
               text: `*执行时间:*\n${timestamp}`,
@@ -75,7 +93,7 @@ export async function sendSlackNotification(
       ],
       // 保留一些原始字段以兼容可能存在的旧接收端
       script_name: scriptId,
-      status: status,
+      status: statusText,
       github_log_url: githubLogUrl,
       message: message,
     };

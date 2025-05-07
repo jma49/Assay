@@ -3,7 +3,7 @@ import { QueryResult } from "pg";
 import db from "../../src/lib/db"; // 调整路径
 import { saveResultToMongo } from "../services/mongo-service";
 import { sendSlackNotification } from "../services/slack-service";
-import { ExecutionResult } from "../types";
+import { ExecutionResult, ExecutionStatusType } from "../types";
 
 /**
  * 格式化查询结果，生成简短的摘要信息。
@@ -13,15 +13,17 @@ import { ExecutionResult } from "../types";
  */
 function formatQueryFindings(results: QueryResult[]): string {
   let totalRows = 0;
-  results.forEach((result) => {
+  results.forEach((result /*, index*/) => {
+    // Commented out unused index
+    // console.log(`Query #${index + 1} (command: ${result.command}) actual rowCount from DB: ${result.rowCount}`); // Debug log
     if (result.rows) {
       totalRows += result.rows.length;
     }
   });
   if (totalRows > 0) {
-    return `Found ${totalRows} records`; // 中文提示
+    return `Found ${totalRows} records`;
   } else {
-    return "No matching records found"; // 中文提示
+    return "No matching records found";
   }
 }
 
@@ -38,12 +40,18 @@ export async function executeSqlFile(
   scriptId: string,
   filePath: string
 ): Promise<ExecutionResult> {
+  const executionTimestamp = Date.now();
+  console.log(
+    `[EXEC ${executionTimestamp}] Starting script execution: ${scriptId} (File: ${filePath})`
+  );
+
   let results: QueryResult[] | undefined = undefined;
   let successMessage = ``;
   let errorMessage = ``;
-  let findings = "Execution incomplete"; // 默认提示
+  let findings = "Execution incomplete";
+  let statusType: ExecutionStatusType = "failure"; // 默认失败
 
-  console.log(`Starting script execution: ${scriptId} (File: ${filePath})`);
+  // console.log(`[EXEC ${executionTimestamp}] Initializing script execution: ${scriptId} (File: ${filePath})`); // Redundant with the one above, remove or comment
 
   try {
     // 检查文件是否存在
@@ -71,76 +79,116 @@ export async function executeSqlFile(
       .filter((q) => q.length > 0);
     // --- SQL 解析逻辑结束 ---
 
-    console.log(`Parsed ${queries.length} SQL queries (comments removed)`);
+    console.log(
+      `[EXEC ${executionTimestamp}] Parsed ${queries.length} SQL queries (comments removed)`
+    ); // Keep this general log
 
     if (queries.length === 0) {
       // 如果没有有效查询，视为成功但发出警告
       successMessage = "SQL file is empty or contains only comments.";
       findings = "No valid queries";
+      statusType = "success"; // 空文件视为普通成功
       results = [];
-      console.warn(`${scriptId}: ${successMessage}`);
+      console.warn(
+        `[EXEC ${executionTimestamp}] ${scriptId}: ${successMessage}`
+      );
       await saveResultToMongo(
         scriptId,
-        "success",
+        statusType,
         successMessage,
         findings,
         results
       );
       // 即使没有查询，也发送通知，说明情况
-      await sendSlackNotification(scriptId, `${successMessage} (${findings})`);
-      return { success: true, message: successMessage, findings };
+      await sendSlackNotification(
+        scriptId,
+        `${successMessage} (${findings})`,
+        statusType
+      );
+      return { success: true, statusType, message: successMessage, findings };
     }
 
     // 执行查询
     results = [];
+    // let queryIndex = 0; // queryIndex was only for debug logs, commented out
     for (const queryText of queries) {
-      console.log(`Executing query: ${queryText.substring(0, 100)}...`); // 日志中截断长查询
-      // db.query 内部有错误处理和日志
+      // queryIndex++; // Debug log related
+      // console.log(`[EXEC ${executionTimestamp}] --------------------------------------------------`);
+      // console.log(`[EXEC ${executionTimestamp}] SQL Executor: About to execute Query #${queryIndex} (from script: ${scriptId}):`);
+      // console.log(queryText); // Debug log - full query text
+      // console.log(`[EXEC ${executionTimestamp}] --------------------------------------------------`);
       const result = await db.query(queryText);
       results.push(result);
     }
 
-    // 查询成功完成
-    findings = formatQueryFindings(results);
+    findings = formatQueryFindings(results); // No longer passing executionTimestamp
     successMessage = `Script ${scriptId} executed successfully. ${findings}.`;
-    console.log(successMessage);
+    console.log(`[EXEC ${executionTimestamp}] ${successMessage}`);
+
+    // 根据脚本ID和findings判断statusType
+    if (
+      scriptId === "check-order-duplicates" &&
+      findings !== "No matching records found" &&
+      findings !== "No valid queries"
+    ) {
+      statusType = "attention_needed";
+    } else {
+      statusType = "success";
+    }
 
     // 保存成功结果并发送通知
     await saveResultToMongo(
       scriptId,
-      "success",
+      statusType === "attention_needed" ? "success" : statusType,
       successMessage,
       findings,
       results
     );
-    await sendSlackNotification(scriptId, successMessage);
+    await sendSlackNotification(scriptId, successMessage, statusType);
 
-    return { success: true, message: successMessage, findings, data: results };
+    // // 调试点 2: (Commented out)
+    // console.log(`[EXEC ${executionTimestamp}] Before returning from executeSqlFile - Query #1 rowCount: ${results?.[0]?.rowCount}, rows.length: ${results?.[0]?.rows?.length}`);
+    // console.log(`[EXEC ${executionTimestamp}] Before returning from executeSqlFile - Query #2 rowCount: ${results?.[1]?.rowCount}, rows.length: ${results?.[1]?.rows?.length}`);
+
+    return {
+      success: true,
+      statusType,
+      message: successMessage,
+      findings,
+      data: results,
+    };
   } catch (error: unknown) {
     // 统一处理执行过程中的错误
     errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     console.error(
-      `Script ${scriptId} execution failed: ${errorMessage}`,
+      `[EXEC ${executionTimestamp}] Script ${scriptId} execution failed: ${errorMessage}`, // Keep this error log
       error
     );
     findings = "Execution failed";
+    statusType = "failure"; // 明确失败状态
 
     // 保存失败结果并发送错误通知
     // 注意：即使保存或通知失败，也不应影响主错误流程
     await saveResultToMongo(
       scriptId,
-      "failure",
+      statusType, // For failure, statusType is 'failure', which is fine
       errorMessage,
       findings,
-      results // 可能部分执行有结果
+      results
     );
     await sendSlackNotification(
       scriptId,
       `Execution failed: ${errorMessage}`,
-      true
+      statusType // statusType is 'failure' here
     );
 
-    return { success: false, message: errorMessage, findings, data: results };
+    return {
+      success: false,
+      statusType,
+      message: errorMessage,
+      findings,
+      data: results,
+    };
   }
 }
