@@ -92,7 +92,7 @@ npm run sql:run check-order-duplicates
 
     - **服务器 CA 证书 (`.ca`)**：用于验证数据库服务器的证书颁发机构。
     - **客户端证书 (`.crt`)**：用于向服务器证明您的客户端身份。
-    - **客户端私钥 (`.key`)**：与客户端证书配对的私钥。**请注意：**  `.csr` 文件，是一个证书签名请求文件，通常用于申请证书，而不是用于建立连接。您需要的是与 `.crt` 文件对应的 `.key` 私钥文件。请确认您拥有正确的 `.key` 文件。
+    - **客户端私钥 (`.key`)**：与客户端证书配对的私钥。**请注意：** `.csr` 文件，是一个证书签名请求文件，通常用于申请证书，而不是用于建立连接。您需要的是与 `.crt` 文件对应的 `.key` 私钥文件。请确认您拥有正确的 `.key` 文件。
 
 2.  **存储证书文件**：
     确保证书文件 (`.ca`, `.crt`, `.key`) 存储在应用程序运行时可以访问的安全位置。**不要将私钥直接提交到代码仓库中！** 常见的做法包括：
@@ -135,42 +135,64 @@ npm run sql:run check-order-duplicates
 
 ## SQL 脚本格式要求
 
-SQL 脚本必须严格遵循以下格式规范：
+所有 SQL 脚本都应遵循特定的格式，以便系统能够正确解析和执行。
 
-1. **文件位置**：所有 SQL 脚本必须放在 `scripts/sql_scripts/` 目录中
-2. **文件命名**：使用连字符分隔的小写字母（例如：`check-data-consistency.sql`）
-3. **元数据格式**：脚本必须在文件顶部包含元数据块注释：
+1.  **文件位置**：
+    所有 SQL 脚本必须存储在项目根目录下的 `scripts/sql_scripts/` 文件夹中。
 
-```sql
-/*
-Name: script-name-in-english
-Description: Detailed description of what this script does
-Scope: area of application (optional)
-Author: your name
-Created: YYYY/MM/DD
-CN_Name: 脚本中文名称
-CN_Description: 脚本功能的中文描述
-CN_Scope: 应用范围（可选）
-*/
-```
+2.  **文件命名**：
+    脚本文件名应使用小写字母，并用连字符 (`-`) 分隔单词。例如：`check-user-activity.sql`，`validate-order-data.sql`。文件名（不含 `.sql` 后缀）将作为脚本的唯一 ID。
 
-4. **查询要求**：
+3.  **元数据头部**：
+    每个 SQL 脚本的开头必须包含一个注释块，用于定义脚本的元数据。这些元数据用于在系统中展示脚本信息，并支持国际化。
 
-   - 脚本必须仅包含读取操作（SELECT 查询）
-   - 严禁包含任何数据修改操作（INSERT, UPDATE, DELETE, DROP 等）
-   - 查询应以分号（;）结尾分隔多个语句
-   - 每个查询必须有明确目的，查询结果应易于解释
+    元数据块格式如下：
 
-5. **注释规范**：
+    ```sql
+    /*
+    Name: script-unique-id (matches filename without .sql)
+    CN_Name: 脚本的中文名称
+    Description: A concise description of what the script does and why it's important.
+    CN_Description: 脚本功能的中文详细描述。
+    Scope: The area or data the script operates on (e.g., "User Accounts", "Product Inventory").
+    CN_Scope: 脚本影响的范围（中文描述，例如："用户账户"，"产品库存"）。
+    Author: Your Name or Team Name
+    Created: YYYY/MM/DD (Date of script creation)
+    */
 
-   - 使用 `--` 添加行注释说明复杂逻辑
-   - 为复杂查询的各部分添加注释以提高可读性
+    -- SQL query starts here
+    SELECT * FROM your_table WHERE condition;
+    ```
 
-6. **安全考虑**：
-   - 避免使用动态 SQL 或不安全的查询模式
-   - 查询应高效且有索引支持，避免全表扫描
+    **字段说明**：
 
-系统会自动解析这些元数据并在 UI 中显示，支持中英文切换显示相应的名称和描述。
+    - `Name`: 脚本的唯一英文标识符，应与不带 `.sql` 扩展名的文件名完全一致。
+    - `CN_Name`: 脚本的中文名称，用于在中文界面显示。
+    - `Description`: 对脚本功能的英文描述。应清晰说明脚本的用途和重要性。
+    - `CN_Description`: 对脚本功能的中文描述。
+    - `Scope`: 脚本操作的数据范围或业务领域（英文）。
+    - `CN_Scope`: 脚本操作的数据范围或业务领域（中文）。
+    - `Author`: 脚本的创建者或负责团队的名称。
+    - `Created`: 脚本的创建日期，格式为 `YYYY/MM/DD`。
+
+4.  **查询要求**：
+
+    - **只读操作**：脚本的核心功能必须是执行只读的 `SELECT` 查询。
+    - **禁止修改数据**：严禁在脚本中包含任何数据定义语言 (DDL) 如 `CREATE`, `ALTER`, `DROP`，或数据操作语言 (DML) 如 `INSERT`, `UPDATE`, `DELETE` 等命令。系统设计有防止此类操作的机制，但脚本本身也应遵守此规则。
+    - **语句分隔**：如果脚本包含多个 `SELECT` 语句，应使用分号 (`;`) 进行分隔。通常建议一个脚本专注于一个核心检查任务。
+    - **清晰明确**：查询应编写清晰，易于理解其目的和预期的输出结果。
+
+5.  **注释规范**：
+
+    - 使用 `--` 进行单行注释，解释复杂的逻辑判断或计算步骤。
+    - 对于较长的或多步骤的查询，可以在关键部分添加注释以提高可读性。
+
+6.  **安全与性能**：
+
+    - 避免使用动态 SQL 或可能引入 SQL 注入风险的查询模式。
+    - 查询应尽可能高效，考虑使用索引，避免对大表进行无条件的全表扫描，以减少数据库负载。
+
+系统会自动解析元数据头部，并在用户界面中显示相关信息，支持根据用户语言偏好（中文或英文）展示对应的名称和描述。
 
 ## 添加新的 SQL 脚本
 
