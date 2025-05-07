@@ -94,7 +94,8 @@ export async function executeSqlFile(
       );
       await saveResultToMongo(
         scriptId,
-        statusType,
+        statusType, // status
+        statusType, // statusType
         successMessage,
         findings,
         results
@@ -139,7 +140,8 @@ export async function executeSqlFile(
     // 保存成功结果并发送通知
     await saveResultToMongo(
       scriptId,
-      statusType === "attention_needed" ? "success" : statusType,
+      statusType === "attention_needed" ? "success" : statusType, // base status
+      statusType, // actual statusType
       successMessage,
       findings,
       results
@@ -172,7 +174,8 @@ export async function executeSqlFile(
     // 注意：即使保存或通知失败，也不应影响主错误流程
     await saveResultToMongo(
       scriptId,
-      statusType, // For failure, statusType is 'failure', which is fine
+      statusType, // status is 'failure'
+      statusType, // statusType is 'failure'
       errorMessage,
       findings,
       results
