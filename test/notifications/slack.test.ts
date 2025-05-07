@@ -1,4 +1,4 @@
-import { sendSlackNotification } from "../../scripts/run-sql";
+import { sendSlackNotification } from "../../scripts/services/slack-service";
 import dotenv from "dotenv";
 
 // Ensure environment variables are loaded
@@ -27,21 +27,36 @@ async function testNotifications() {
     // Test success notification
     console.log("Test Case 1: Sending success notification");
     await sendSlackNotification(
-      "Test Notification",
-      "This is a test success message",
-      false
+      "Test Success Notification",
+      "This is a test success message.",
+      "success"
     );
     console.log("✅ Success notification sent successfully");
 
     // Test error notification
-    console.log("Test Case 2: Sending error notification");
-    await sendSlackNotification("Test Error", "Simulated error occurred", true);
-    console.log("✅ Error notification sent successfully");
+    console.log("Test Case 2: Sending failure notification");
+    await sendSlackNotification(
+      "Test Failure Notification",
+      "Simulated failure occurred.",
+      "failure"
+    );
+    console.log("✅ Failure notification sent successfully");
 
-    // Test notification with formatted message
-    console.log("Test Case 3: Sending notification with formatted table");
+    // Test attention_needed notification
+    console.log("Test Case 3: Sending attention_needed notification");
+    await sendSlackNotification(
+      "Test Attention Notification",
+      "This is a test attention_needed message (e.g., duplicates found).",
+      "attention_needed"
+    );
+    console.log("✅ Attention_needed notification sent successfully");
+
+    // Test notification with formatted message (as success)
+    console.log(
+      "Test Case 4: Sending success notification with formatted table"
+    );
     const formattedMessage = `
-*SQL Query Results*:
+*SQL Query Results*: (This is part of the main message)
 \`\`\`
 ID | Name | Status
 --- | --- | ---
@@ -50,11 +65,11 @@ ID | Name | Status
 \`\`\`
 `;
     await sendSlackNotification(
-      "Formatted Message Test",
+      "Formatted Success Message Test",
       formattedMessage,
-      false
+      "success"
     );
-    console.log("✅ Formatted message notification sent successfully");
+    console.log("✅ Formatted success message notification sent successfully");
 
     console.log("All tests completed!");
   } catch (error) {
