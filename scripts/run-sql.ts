@@ -61,7 +61,7 @@ async function main(): Promise<void> {
     await sendSlackNotification(
       scriptId,
       `执行失败: ${errorMsg} (路径: ${scriptFilePath})`,
-      true
+      "failure"
     );
     process.exit(1);
   }
@@ -81,7 +81,7 @@ async function main(): Promise<void> {
     const errorMsg =
       error instanceof Error ? error.message : "发生未知的顶层错误";
     console.error(`执行脚本 ${scriptId} 时发生意外错误:`, errorMsg);
-    await sendSlackNotification(scriptId, `意外错误: ${errorMsg}`, true);
+    await sendSlackNotification(scriptId, `意外错误: ${errorMsg}`, "failure");
     process.exit(1); // 发生意外错误时退出
   } finally {
     // 无论成功或失败，最后尝试关闭数据库连接

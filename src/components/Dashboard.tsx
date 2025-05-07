@@ -99,7 +99,6 @@ const Dashboard = () => {
       setIsFetchingScripts(false);
       setIsRefreshing(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedScriptId, t]);
 
   useEffect(() => {
@@ -191,8 +190,7 @@ const Dashboard = () => {
         setTriggerMessageType(null);
       }, 8000);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedScriptId, loadInitialData, t]);
+  }, [selectedScriptId, t, isTriggering, language, loadInitialData]);
 
   const requestSort = (key: keyof Check) => {
     if (sortConfig.key === key) {

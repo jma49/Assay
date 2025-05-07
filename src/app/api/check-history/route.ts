@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import mongoDbClient from "@/lib/mongodb"; // 使用路径别名
 import { Collection, Document, WithId } from "mongodb";
-import { ExecutionStatusType } from "../../../scripts/types"; // 导入 ExecutionStatusType
+import { ExecutionStatusType } from "@/../scripts/types"; // 假设 @/ 解析到 src/，scripts 与 src 平级
 
 // 定义返回给前端的数据结构（可以与 MongoDB 文档略有不同，例如处理 _id）
 interface CheckHistoryApiResponse extends Omit<WithId<Document>, "_id"> {

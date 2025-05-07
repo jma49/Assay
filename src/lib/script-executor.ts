@@ -37,6 +37,7 @@ export async function executeScriptAndNotify(
     // 返回符合 ExecutionResult 结构的失败结果
     return {
       success: false,
+      statusType: "failure",
       message: errorMsg,
       findings: "Configuration Error",
     };
@@ -67,6 +68,7 @@ export async function executeScriptAndNotify(
     }`;
     return {
       success: false,
+      statusType: "failure",
       message: errorMsg,
       findings: "Execution Error",
     };
