@@ -1,3 +1,5 @@
+import { ExecutionStatusType } from "../../../scripts/types";
+
 // 类型定义
 export type DashboardTranslationKeys =
   | "findings"
@@ -101,6 +103,7 @@ export interface Check {
   script_name: string;
   execution_time: string;
   status: (typeof CheckStatus)[keyof typeof CheckStatus];
+  statusType?: ExecutionStatusType;
   message: string;
   findings: string;
   raw_results: Record<string, unknown>[];

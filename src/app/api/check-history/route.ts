@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import mongoDbClient from "@/lib/mongodb"; // 使用路径别名
 import { Collection, Document, WithId } from "mongodb";
+import { ExecutionStatusType } from "../../../scripts/types"; // 导入 ExecutionStatusType
 
 // 定义返回给前端的数据结构（可以与 MongoDB 文档略有不同，例如处理 _id）
 interface CheckHistoryApiResponse extends Omit<WithId<Document>, "_id"> {
@@ -8,6 +9,7 @@ interface CheckHistoryApiResponse extends Omit<WithId<Document>, "_id"> {
   script_name: string;
   execution_time: Date;
   status: "success" | "failure";
+  statusType?: ExecutionStatusType; // 添加 statusType
   message: string;
   findings: string;
   raw_results: Record<string, unknown>[];
@@ -41,6 +43,7 @@ export async function GET() {
       script_name: doc.script_name,
       execution_time: doc.execution_time,
       status: doc.status,
+      statusType: doc.statusType as ExecutionStatusType | undefined, // 添加 statusType，并进行类型断言
       message: doc.message,
       findings: doc.findings,
       raw_results: doc.raw_results,

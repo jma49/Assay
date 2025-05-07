@@ -193,7 +193,12 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                     expandedCheckId === check._id ? "bg-muted/60" : ""
                   )}>
                     <TableCell>
-                      {check.status === CheckStatus.SUCCESS ? (
+                      {check.statusType === "attention_needed" ? (
+                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300 dark:bg-yellow-950 dark:text-yellow-400 dark:border-yellow-700">
+                          <AlertCircle className="h-3.5 w-3.5 mr-1 text-yellow-600 dark:text-yellow-500" />
+                          {t('needsAttention') || 'Attention Needed'}
+                        </Badge>
+                      ) : check.status === CheckStatus.SUCCESS ? (
                         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
                           <CheckCircle className="h-3.5 w-3.5 mr-1" />
                           {t('filterSuccess')}
@@ -244,7 +249,9 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                           <SheetContent className="overflow-y-auto sm:max-w-md">
                             <SheetHeader className="border-b pb-4">
                               <SheetTitle className="text-xl flex items-center gap-2">
-                                {check.status === CheckStatus.SUCCESS ? (
+                                {check.statusType === "attention_needed" ? (
+                                  <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
+                                ) : check.status === CheckStatus.SUCCESS ? (
                                   <CheckCircle className="h-5 w-5 text-green-500" />
                                 ) : (
                                   <AlertCircle className="h-5 w-5 text-red-500" />
