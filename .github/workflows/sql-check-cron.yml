@@ -53,4 +53,5 @@ jobs:
           echo "About to execute ts-node..."
           # Use ts-node with -r to preload dotenv/config
           npx ts-node -r dotenv/config scripts/run-sql.ts check-order-duplicates
+          npx ts-node -r dotenv/config scripts/run-sql.ts orders-sync-daily
         continue-on-error: false
