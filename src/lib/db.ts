@@ -74,42 +74,42 @@ const downloadFile = (url: string): Promise<Buffer> => {
 // 准备SSL文件
 const prepareSSLFiles = async () => {
   const tmpDir = "/tmp";
-  // 确保 /tmp 目录存在
   if (!fs.existsSync(tmpDir)) {
     try {
       fs.mkdirSync(tmpDir, { recursive: true });
-      console.log(`Created directory: ${tmpDir}`);
+      console.log(`[prepareSSLFiles] Created directory: ${tmpDir}`);
     } catch (error) {
-      console.error(`Failed to create directory ${tmpDir}:`, error);
-      // 如果无法创建关键目录，则抛出错误
+      console.error(
+        `[prepareSSLFiles] Failed to create directory ${tmpDir}:`,
+        error
+      );
       throw new Error(
-        `Critical setup failure: unable to create directory ${tmpDir}. ${
+        `[prepareSSLFiles] Critical setup failure: unable to create directory ${tmpDir}. ${
           error instanceof Error ? error.message : String(error)
         }`
       );
     }
   }
 
-  // 从环境变量获取Blob URL
   const clientKeyUrl = process.env.CLIENT_KEY_BLOB_URL;
   const clientCertUrl = process.env.CLIENT_CERT_BLOB_URL;
   const caCertUrl = process.env.CA_CERT_BLOB_URL;
 
   if (!clientKeyUrl || !clientCertUrl || !caCertUrl) {
     console.warn(
-      "SSL certificate URLs (CLIENT_KEY_BLOB_URL, CLIENT_CERT_BLOB_URL, CA_CERT_BLOB_URL) are not fully provided. SSL connection will likely fail if required."
+      "[prepareSSLFiles] SSL certificate URLs (CLIENT_KEY_BLOB_URL, CLIENT_CERT_BLOB_URL, CA_CERT_BLOB_URL) are not fully provided. SSL connection will likely fail if required."
     );
     return null;
   }
 
   try {
-    console.log("Starting download of SSL files...");
+    console.log("[prepareSSLFiles] Starting download of SSL files...");
     const [clientKey, clientCert, caCert] = await Promise.all([
       downloadFile(clientKeyUrl),
       downloadFile(clientCertUrl),
       downloadFile(caCertUrl),
     ]);
-    console.log("SSL files downloaded successfully.");
+    console.log("[prepareSSLFiles] SSL files downloaded successfully.");
 
     const clientKeyPath = path.join(tmpDir, "client-key.pem");
     const clientCertPath = path.join(tmpDir, "client-cert.pem");
@@ -119,8 +119,26 @@ const prepareSSLFiles = async () => {
     fs.writeFileSync(clientCertPath, clientCert);
     fs.writeFileSync(caCertPath, caCert);
     console.log(
-      `SSL files written to /tmp: ${clientKeyPath}, ${clientCertPath}, ${caCertPath}`
+      `[prepareSSLFiles] SSL files written to /tmp: ${clientKeyPath}, ${clientCertPath}, ${caCertPath}`
     );
+
+    // **新增：回读并记录CA证书文件内容以供诊断**
+    try {
+      const caFileContentCheck = fs.readFileSync(caCertPath, "utf-8");
+      console.log(
+        `[prepareSSLFiles] CA cert file /tmp/ca-cert.pem read back. Length: ${
+          caFileContentCheck.length
+        }. First 70 chars: ${caFileContentCheck
+          .substring(0, 70)
+          .replace(/\n/g, "\\n")}...`
+      );
+    } catch (readError) {
+      console.error(
+        `[prepareSSLFiles] CRITICAL: Failed to read back /tmp/ca-cert.pem after writing:`,
+        readError
+      );
+      // 即使回读失败，也继续尝试，但记录此严重错误
+    }
 
     return {
       key: clientKey,
@@ -128,9 +146,12 @@ const prepareSSLFiles = async () => {
       caCertFilePath: caCertPath,
     };
   } catch (error) {
-    console.error("Failed to prepare SSL files (download or write):", error);
+    console.error(
+      "[prepareSSLFiles] Failed to prepare SSL files (download or write):",
+      error
+    );
     throw new Error(
-      `Failed to prepare SSL files: ${
+      `[prepareSSLFiles] Failed to prepare SSL files: ${
         error instanceof Error ? error.message : String(error)
       }`
     );
@@ -144,7 +165,7 @@ const createPool = async () => {
     sslFiles = await prepareSSLFiles();
   } catch (error) {
     console.error(
-      "Critical error during SSL file preparation, cannot create pool:",
+      "[createPool] Critical error during SSL file preparation, cannot create pool:",
       error
     );
     throw error;
@@ -157,7 +178,6 @@ const createPool = async () => {
   const dbUrl = process.env.DATABASE_URL || "";
   const sslRequiredByUrl =
     dbUrl.includes("sslmode=require") ||
-    dbUrl.includes("ssl=true") ||
     dbUrl.includes("sslmode=verify-ca") ||
     dbUrl.includes("sslmode=verify-full");
 
@@ -167,7 +187,12 @@ const createPool = async () => {
       `[createPool] NODE_EXTRA_CA_CERTS set to: ${process.env.NODE_EXTRA_CA_CERTS}`
     );
 
-    // 只包含客户端key和cert，以及rejectUnauthorized。CA信任依赖NODE_EXTRA_CA_CERTS
+    // **新增：诊断性延时**
+    await new Promise((resolve) => setTimeout(resolve, 300)); // 300ms 延时
+    console.log(
+      "[createPool] Diagnostic delay (300ms) complete after setting NODE_EXTRA_CA_CERTS."
+    );
+
     const sslOptions: ConnectionOptions = {
       rejectUnauthorized: true,
       key: sslFiles.key,
@@ -184,7 +209,7 @@ const createPool = async () => {
         "[createPool] SSL files could not be prepared, but DATABASE_URL suggests SSL is required. Database connection will likely fail."
       );
       throw new Error(
-        "SSL required by DATABASE_URL, but certificate preparation failed or URLs are missing."
+        "[createPool] SSL required by DATABASE_URL, but certificate preparation failed or URLs are missing."
       );
     } else {
       console.log(
