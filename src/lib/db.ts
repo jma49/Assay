@@ -102,52 +102,85 @@ const prepareSSLFiles = async () => {
     return null;
   }
 
+  let caCertBuffer: Buffer;
   try {
-    console.log("[prepareSSLFiles] Starting download of SSL files...");
-    const [clientKey, clientCert, caCert] = await Promise.all([
+    console.log(
+      "[prepareSSLFiles] Starting download of SSL files (Key, Cert, CA)..."
+    );
+    const [clientKey, clientCert, downloadedCaCert] = await Promise.all([
       downloadFile(clientKeyUrl),
       downloadFile(clientCertUrl),
       downloadFile(caCertUrl),
     ]);
     console.log("[prepareSSLFiles] SSL files downloaded successfully.");
+    caCertBuffer = downloadedCaCert;
+
+    // ---- 更详细的 CA 证书内容检查 ----
+    console.log(
+      `[prepareSSLFiles] CA Cert Buffer downloaded. Byte length: ${caCertBuffer.length}`
+    );
+    const caCertString = caCertBuffer.toString("utf-8");
+    console.log(
+      `[prepareSSLFiles] CA Cert converted to string. String length: ${caCertString.length}`
+    );
+
+    const startsWithPemHeader = caCertString.startsWith(
+      "-----BEGIN CERTIFICATE-----"
+    );
+    // 检查时去除可能的尾部空白和换行符
+    const endsWithPemFooter = caCertString
+      .trimEnd()
+      .endsWith("-----END CERTIFICATE-----");
+    console.log(
+      `[prepareSSLFiles] CA Cert string starts with '-----BEGIN CERTIFICATE-----': ${startsWithPemHeader}`
+    );
+    console.log(
+      `[prepareSSLFiles] CA Cert string (trimmed) ends with '-----END CERTIFICATE-----': ${endsWithPemFooter}`
+    );
+
+    if (!startsWithPemHeader || !endsWithPemFooter) {
+      console.error(
+        "[prepareSSLFiles] CRITICAL DIAGNOSTIC: Downloaded CA certificate content does NOT appear to have correct PEM start/end markers."
+      );
+      // 记录部分内容帮助分析
+      console.log(
+        `[prepareSSLFiles] CA Cert Content (first 200 chars): ${caCertString
+          .substring(0, 200)
+          .replace(/\n/g, "\\n")}...`
+      );
+      console.log(
+        `[prepareSSLFiles] CA Cert Content (last 200 chars): ...${caCertString
+          .substring(Math.max(0, caCertString.length - 200))
+          .replace(/\n/g, "\\n")}`
+      );
+      // 即使标记不正确，也继续尝试，但这个日志非常重要
+    } else {
+      console.log(
+        "[prepareSSLFiles] Downloaded CA certificate content appears to have correct PEM start/end markers."
+      );
+      // 记录完整内容到日志 - Vercel可能会截断，但尽力而为
+      // console.log("[prepareSSLFiles] Full CA Cert String (may be truncated by logger):\n", caCertString);
+    }
+    // ---- 检查结束 ----
 
     const clientKeyPath = path.join(tmpDir, "client-key.pem");
     const clientCertPath = path.join(tmpDir, "client-cert.pem");
-    const caCertPath = path.join(tmpDir, "ca-cert.pem");
-
+    const caCertPath = path.join(tmpDir, "ca-cert.pem"); // 仍然写入，用于可能的外部验证
     fs.writeFileSync(clientKeyPath, clientKey);
     fs.writeFileSync(clientCertPath, clientCert);
-    fs.writeFileSync(caCertPath, caCert);
+    fs.writeFileSync(caCertPath, caCertBuffer);
     console.log(
-      `[prepareSSLFiles] SSL files written to /tmp: ${clientKeyPath}, ${clientCertPath}, ${caCertPath}`
+      `[prepareSSLFiles] SSL files written to /tmp for debugging: ${clientKeyPath}, ${clientCertPath}, ${caCertPath}`
     );
-
-    // **新增：回读并记录CA证书文件内容以供诊断**
-    try {
-      const caFileContentCheck = fs.readFileSync(caCertPath, "utf-8");
-      console.log(
-        `[prepareSSLFiles] CA cert file /tmp/ca-cert.pem read back. Length: ${
-          caFileContentCheck.length
-        }. First 70 chars: ${caFileContentCheck
-          .substring(0, 70)
-          .replace(/\n/g, "\\n")}...`
-      );
-    } catch (readError) {
-      console.error(
-        `[prepareSSLFiles] CRITICAL: Failed to read back /tmp/ca-cert.pem after writing:`,
-        readError
-      );
-      // 即使回读失败，也继续尝试，但记录此严重错误
-    }
 
     return {
       key: clientKey,
       cert: clientCert,
-      caCertFilePath: caCertPath,
+      ca: caCertBuffer,
     };
   } catch (error) {
     console.error(
-      "[prepareSSLFiles] Failed to prepare SSL files (download or write):",
+      "[prepareSSLFiles] Failed to prepare SSL files (download, content check, or write):",
       error
     );
     throw new Error(
@@ -163,6 +196,11 @@ const createPool = async () => {
   let sslFiles;
   try {
     sslFiles = await prepareSSLFiles();
+    if (!sslFiles) {
+      throw new Error(
+        "[createPool] SSL file preparation returned null. This usually means CA or client cert/key URLs are missing or failed to process."
+      );
+    }
   } catch (error) {
     console.error(
       "[createPool] Critical error during SSL file preparation, cannot create pool:",
@@ -181,39 +219,29 @@ const createPool = async () => {
     dbUrl.includes("sslmode=verify-ca") ||
     dbUrl.includes("sslmode=verify-full");
 
-  if (sslFiles && sslFiles.caCertFilePath) {
-    process.env.NODE_EXTRA_CA_CERTS = sslFiles.caCertFilePath;
-    console.log(
-      `[createPool] NODE_EXTRA_CA_CERTS set to: ${process.env.NODE_EXTRA_CA_CERTS}`
-    );
-
-    // **新增：诊断性延时**
-    await new Promise((resolve) => setTimeout(resolve, 300)); // 300ms 延时
-    console.log(
-      "[createPool] Diagnostic delay (300ms) complete after setting NODE_EXTRA_CA_CERTS."
-    );
-
+  if (sslFiles.key && sslFiles.cert && sslFiles.ca) {
     const sslOptions: ConnectionOptions = {
       rejectUnauthorized: true,
       key: sslFiles.key,
       cert: sslFiles.cert,
+      ca: sslFiles.ca,
     };
     poolConfig.ssl = sslOptions;
     console.log(
-      "[createPool] SSL configuration for pg PoolConfig (relying on NODE_EXTRA_CA_CERTS for CA):",
+      "[createPool] SSL configuration for pg PoolConfig (using direct ca, key, cert Buffers):",
       JSON.stringify(Object.keys(sslOptions))
     );
   } else {
     if (sslRequiredByUrl) {
       console.error(
-        "[createPool] SSL files could not be prepared, but DATABASE_URL suggests SSL is required. Database connection will likely fail."
+        "[createPool] SSL files (key, cert, or CA cert) could not be fully prepared, but DATABASE_URL suggests SSL is required. Database connection will likely fail."
       );
       throw new Error(
-        "[createPool] SSL required by DATABASE_URL, but certificate preparation failed or URLs are missing."
+        "[createPool] SSL required by DATABASE_URL, but certificate preparation failed or essential certificate content is missing."
       );
     } else {
       console.log(
-        "[createPool] Attempting database connection without custom SSL certificates."
+        "[createPool] Attempting database connection without custom SSL certificates (SSL files not fully prepared, or URLs/env vars not provided, or SSL not explicitly required by DATABASE_URL)."
       );
     }
   }
@@ -223,7 +251,18 @@ const createPool = async () => {
     JSON.stringify(
       {
         ...poolConfig,
-        ssl: poolConfig.ssl ? Object.keys(poolConfig.ssl) : undefined,
+        ssl: poolConfig.ssl
+          ? {
+              ...Object.fromEntries(
+                Object.entries(poolConfig.ssl).map(([k, v]) => [
+                  k,
+                  typeof v === "boolean"
+                    ? v
+                    : `Buffer(length:${(v as Buffer).length})`,
+                ])
+              ),
+            }
+          : undefined,
       },
       null,
       2
