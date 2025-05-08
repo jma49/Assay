@@ -1,8 +1,9 @@
-import { Pool, QueryResult } from "pg";
+import { Pool, QueryResult, PoolConfig } from "pg";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import https from "https";
+import { ConnectionOptions } from "tls";
 
 // Loading environment variables
 dotenv.config({ path: ".env.local" });
@@ -98,18 +99,20 @@ const createPool = async () => {
   // 准备SSL文件
   const sslFiles = await prepareSSLFiles();
 
-  const poolConfig: any = {
+  const poolConfig: PoolConfig = {
     connectionString: process.env.DATABASE_URL,
   };
 
   // 如果SSL文件准备成功，配置SSL选项
   if (sslFiles) {
-    poolConfig.ssl = {
+    const sslOptions: ConnectionOptions = {
       rejectUnauthorized: true,
       key: sslFiles.key,
       cert: sslFiles.cert,
       ca: sslFiles.ca,
     };
+
+    poolConfig.ssl = sslOptions;
     console.log("SSL configuration applied with certificate files");
   } else {
     console.log("Using database connection without custom SSL certificates");
