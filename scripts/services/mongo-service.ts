@@ -12,6 +12,7 @@ import { SqlCheckHistoryDocument, ExecutionStatusType } from "../types";
  * @param message 执行的消息（成功信息或错误描述）。
  * @param findings 脚本执行结果的摘要（例如，"找到 5 条记录"）。
  * @param results 可选的原始查询结果数组。
+ * @returns 包含 insertedId 和操作成功状态的对象
  */
 export async function saveResultToMongo(
   scriptId: string,
@@ -20,7 +21,7 @@ export async function saveResultToMongo(
   message: string,
   findings: string,
   results?: QueryResult[]
-): Promise<void> {
+): Promise<{ success: boolean; insertedId?: any }> {
   try {
     const db = await mongoDbClient.getDb();
     const collection: Collection<SqlCheckHistoryDocument> =
@@ -41,12 +42,21 @@ export async function saveResultToMongo(
       github_run_id: process.env.GITHUB_RUN_ID, // 从环境变量获取 GitHub Run ID
     };
 
-    await collection.insertOne(historyDoc);
+    const result = await collection.insertOne(historyDoc);
     console.log(
-      `结果 (${scriptId}) 已保存到 MongoDB (status: ${status}, statusType: ${statusType})`
+      `结果 (${scriptId}) 已保存到 MongoDB (status: ${status}, statusType: ${statusType}), ID: ${result.insertedId}`
     );
+
+    // 返回包含 insertedId 的结果
+    return {
+      success: true,
+      insertedId: result.insertedId,
+    };
   } catch (error) {
     console.error(`将结果 (${scriptId}) 保存到 MongoDB 失败:`, error);
-    // 注意：这里选择不抛出错误，以免保存失败导致整个脚本中断
+    // 返回失败结果，但不抛出错误
+    return {
+      success: false,
+    };
   }
 }
