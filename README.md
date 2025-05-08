@@ -55,19 +55,22 @@
 创建一个`.env.local`文件，包含：
 
 ```
-# PostgreSQL数据库
-DATABASE_URL="postgresql://user:password@host:port/database"
+# PostgreSQL数据库 (本地开发推荐，使用文件证书)
+DATABASE_URL="postgresql://user:password@host:port/database?sslmode=verify-full&sslrootcert=certs/ca.pem"
+# 注意: 上述连接字符串中的 `certs/ca.pem` 指向项目根目录下 `certs` 文件夹中的 `ca.pem` 文件。
+# 您需要确保该文件存在，并且包含了正确的 CA 证书。
+# user, password, host, port, database 需要替换为您的本地数据库信息。
 
 # MongoDB数据库
-MONGODB_URI="mongodb+srv://..."
+MONGODB_URI="mongodb://localhost:27017/your_dev_db"
 
-# Slack通知
-SLACK_WEBHOOK_URL="https://hooks.slack.com/..."
+# Slack通知 (可选)
+SLACK_WEBHOOK_URL="https://hooks.slack.com/services/YOUR_PLACEHOLDER"
 
-# GitHub（用于定时任务）
-GITHUB_PAT="..."
-GITHUB_OWNER="..."
-GITHUB_REPO="..."
+# GitHub（用于定时任务, 通常在 CI/CD 环境中设置，本地开发可选）
+# GITHUB_PAT="..."
+# GITHUB_OWNER="..."
+# GITHUB_REPO="..."
 ```
 
 ### 安装
@@ -85,9 +88,10 @@ npm run sql:run check-order-duplicates
 
 ### 连接生产环境数据库 (使用 SSL)
 
+当连接到生产环境的 PostgreSQL 数据库，或者需要通过 URL 下载 SSL 证书时，通常需要更复杂的 SSL 配置。
 生产环境的 PostgreSQL 数据库通常需要使用 SSL 加密连接以确保安全。如果您需要连接到需要 SSL 证书的生产数据库，请按以下步骤操作：
 
-1.  **获取证书文件**：
+1.  **获取证书文件或其安全 URL**：
     您需要以下文件（通常由数据库管理员提供）：
 
     - **服务器 CA 证书 (`.ca`)**：用于验证数据库服务器的证书颁发机构。
@@ -102,7 +106,15 @@ npm run sql:run check-order-duplicates
     - 将文件存储在安全的服务器卷中，并在运行时引用其路径。
 
 3.  **配置 `DATABASE_URL`**：
-    修改 `.env.local` 文件中的 `DATABASE_URL`，添加 SSL 相关参数。参数格式如下：
+    修改 `.env.local` 文件中的 `DATABASE_URL`，并可能需要设置以下用于从远程位置下载证书的环境变量：
+
+    - `CLIENT_KEY_BLOB_URL`: 客户端私钥文件的安全下载 URL。
+    - `CLIENT_CERT_BLOB_URL`: 客户端证书文件的安全下载 URL。
+    - `CA_CERT_BLOB_URL`: 服务器 CA 证书文件的安全下载 URL。
+
+    如果通过上述 URL 下载证书，连接逻辑 (`src/lib/db.ts`) 会优先使用这些下载的证书。
+
+    或者，如果证书文件直接部署在应用可以访问的路径，您可以构造包含 SSL 参数的 `DATABASE_URL`，例如：
 
     ```
     DATABASE_URL="postgresql://user:password@host:port/database?sslmode=verify-full&sslrootcert=<path_to_ca_file>&sslcert=<path_to_crt_file>&sslkey=<path_to_key_file>"
@@ -114,9 +126,14 @@ npm run sql:run check-order-duplicates
     **示例 `.env.local` 配置**：
 
     ```dotenv
-    # PostgreSQL数据库 (生产环境示例，使用SSL)
-    # 注意：路径需要根据实际部署情况修改
-    DATABASE_URL="postgresql://prod_user:prod_password@prod.db.example.com:5432/prod_db?sslmode=verify-full&sslrootcert=/etc/ssl/certs/server-ca.pem&sslcert=/app/certs/client-cert.pem&sslkey=/app/certs/client-key.pem"
+    # PostgreSQL数据库 (生产环境示例，证书路径可能由部署环境决定或通过环境变量注入)
+    # DATABASE_URL="postgresql://prod_user:prod_password@prod.db.example.com:5432/prod_db?sslmode=verify-full&sslrootcert=/etc/ssl/certs/server-ca.pem&sslcert=/app/certs/client-cert.pem&sslkey=/app/certs/client-key.pem"
+    #
+    # 或者，如果使用环境变量下载证书 (推荐用于 Vercel 等平台):
+    # DATABASE_URL="postgresql://prod_user:prod_password@prod.db.example.com:5432/prod_db?sslmode=verify-full"
+    # CLIENT_KEY_BLOB_URL="https://your-blob-storage/client-key.pem"
+    # CLIENT_CERT_BLOB_URL="https://your-blob-storage/client-cert.pem"
+    # CA_CERT_BLOB_URL="https://your-blob-storage/ca-cert.pem"
 
     # MongoDB数据库
     MONGODB_URI="mongodb+srv://..."

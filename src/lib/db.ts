@@ -193,20 +193,46 @@ const prepareSSLFiles = async () => {
 
 // 创建数据库连接池
 const createPool = async () => {
-  let sslFiles;
-  try {
-    sslFiles = await prepareSSLFiles();
-    if (!sslFiles) {
-      throw new Error(
-        "[createPool] SSL file preparation returned null. This usually means CA or client cert/key URLs are missing or failed to process."
+  let sslFiles = null; // Initialize to null
+  let sslPreparationAttempted = false;
+  let sslPreparationError = null;
+
+  // Check if environment variables for SSL blob URLs are set
+  const clientKeyUrl = process.env.CLIENT_KEY_BLOB_URL;
+  const clientCertUrl = process.env.CLIENT_CERT_BLOB_URL;
+  const caCertUrl = process.env.CA_CERT_BLOB_URL;
+
+  if (clientKeyUrl && clientCertUrl && caCertUrl) {
+    sslPreparationAttempted = true;
+    try {
+      console.log(
+        "[createPool] Attempting to prepare SSL files from BLOB URLs..."
       );
+      sslFiles = await prepareSSLFiles();
+      if (!sslFiles) {
+        // This case should ideally be handled within prepareSSLFiles by throwing an error if URLs are present but download fails.
+        // However, if prepareSSLFiles returns null despite URLs being present, we log it.
+        console.warn(
+          "[createPool] prepareSSLFiles returned null despite SSL URLs being provided. This might indicate an issue in prepareSSLFiles logic or file content."
+        );
+        // We will proceed without these sslFiles, allowing pg to use connection string params.
+      } else {
+        console.log(
+          "[createPool] SSL files successfully prepared from BLOB URLs."
+        );
+      }
+    } catch (error) {
+      sslPreparationError = error;
+      console.error(
+        "[createPool] Error during SSL file preparation from BLOB URLs:",
+        error
+      );
+      // Do not throw here, let it fallback to connection string if possible
     }
-  } catch (error) {
-    console.error(
-      "[createPool] Critical error during SSL file preparation, cannot create pool:",
-      error
+  } else {
+    console.log(
+      "[createPool] SSL BLOB URLs not fully provided. Will rely on DATABASE_URL parameters for SSL if required."
     );
-    throw error;
   }
 
   const poolConfig: PoolConfig = {
@@ -214,36 +240,50 @@ const createPool = async () => {
   };
 
   const dbUrl = process.env.DATABASE_URL || "";
-  const sslRequiredByUrl =
+  const sslRequiredByUrlParams =
     dbUrl.includes("sslmode=require") ||
     dbUrl.includes("sslmode=verify-ca") ||
     dbUrl.includes("sslmode=verify-full");
 
-  if (sslFiles.key && sslFiles.cert && sslFiles.ca) {
+  if (sslFiles && sslFiles.key && sslFiles.cert && sslFiles.ca) {
+    // If SSL files were successfully prepared from URLs, use them.
     const sslOptions: ConnectionOptions = {
-      rejectUnauthorized: true,
+      rejectUnauthorized: true, // Default to true, can be overridden by connection string if pg supports it.
       key: sslFiles.key,
       cert: sslFiles.cert,
       ca: sslFiles.ca,
     };
     poolConfig.ssl = sslOptions;
     console.log(
-      "[createPool] SSL configuration for pg PoolConfig (using direct ca, key, cert Buffers):",
-      JSON.stringify(Object.keys(sslOptions))
+      "[createPool] SSL configuration applied from downloaded certs (key, cert, ca Buffers)."
     );
-  } else {
-    if (sslRequiredByUrl) {
-      console.error(
-        "[createPool] SSL files (key, cert, or CA cert) could not be fully prepared, but DATABASE_URL suggests SSL is required. Database connection will likely fail."
-      );
-      throw new Error(
-        "[createPool] SSL required by DATABASE_URL, but certificate preparation failed or essential certificate content is missing."
-      );
-    } else {
-      console.log(
-        "[createPool] Attempting database connection without custom SSL certificates (SSL files not fully prepared, or URLs/env vars not provided, or SSL not explicitly required by DATABASE_URL)."
-      );
-    }
+  } else if (sslPreparationAttempted && sslPreparationError) {
+    // If preparation was attempted from URLs but failed, and SSL is required by URL params,
+    // it's a critical issue because the primary SSL method (URL download) failed.
+    // However, we still allow pg to try with connection string if possible.
+    console.warn(
+      `[createPool] SSL file preparation from BLOB URLs failed. Error: ${
+        sslPreparationError instanceof Error
+          ? sslPreparationError.message
+          : String(sslPreparationError)
+      }. ` +
+        "Proceeding to let pg library attempt connection using DATABASE_URL parameters."
+    );
+    // No explicit poolConfig.ssl is set here, pg will use connection string.
+  } else if (!sslPreparationAttempted && sslRequiredByUrlParams) {
+    // If SSL URLs were not provided, but DATABASE_URL indicates SSL is needed (e.g. sslmode=verify-full and sslrootcert is present)
+    // Log that we are relying on pg to handle SSL via connection string.
+    console.log(
+      "[createPool] SSL BLOB URLs not provided. Relying on pg library to handle SSL based on DATABASE_URL parameters (e.g., sslmode, sslrootcert)."
+    );
+    // No explicit poolConfig.ssl is set here, pg will use connection string.
+  } else if (!sslRequiredByUrlParams && !sslFiles) {
+    // Neither URL params require SSL nor were files prepared.
+    // This could be a non-SSL connection or SSL configured entirely by connection string without explicit sslmode=require/verify-*
+    console.log(
+      "[createPool] Attempting database connection. SSL not explicitly required by sslmode in DATABASE_URL and no SSL files prepared via BLOB URLs. " +
+        "If SSL is needed, it must be fully specified in DATABASE_URL."
+    );
   }
 
   console.log(
