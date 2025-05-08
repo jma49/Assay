@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
-import mongoDbClient from "../../../../lib/mongodb"; // 调整路径以匹配项目结构
+import mongoDbClient from "../../../../lib/mongodb";
 import { ObjectId } from "mongodb";
+
+// 从环境变量获取集合名称，默认为"result"
+const MONGO_COLLECTION_NAME = process.env.MONGO_COLLECTION_NAME || "result";
 
 export async function GET(
   request: Request,
@@ -14,28 +17,49 @@ export async function GET(
 
   try {
     const db = await mongoDbClient.getDb();
-    const historyCollection = db.collection("result"); // 使用实际的集合名称
+    const historyCollection = db.collection(MONGO_COLLECTION_NAME);
+
+    console.log(`正在从集合 ${MONGO_COLLECTION_NAME} 中查询记录: ${resultId}`);
 
     const result = await historyCollection.findOne({
       _id: new ObjectId(resultId),
     });
 
     if (!result) {
+      console.warn(`未找到ID为 ${resultId} 的执行结果`);
       return NextResponse.json({ message: "未找到执行结果" }, { status: 404 });
     }
 
-    // 为了安全和简洁，只返回必要的信息，特别是 findings
-    // 您可以根据需要调整返回的字段
+    // 动态适应不同的字段命名
+    const scriptId = result.script_name || result.scriptId;
+    const executedAt = result.execution_time || result.executedAt;
+    const findings = result.raw_results || result.findings;
+
+    // 记录找到的数据结构类型，便于调试
+    console.log(
+      `找到脚本 ${scriptId} 的执行结果，包含 ${
+        Array.isArray(findings) ? findings.length : 0
+      } 条记录`
+    );
+
+    // 映射结果对象，提供更一致的接口
     return NextResponse.json({
-      scriptId: result.script_name, // 注意字段可能是script_name而不是scriptId
-      executedAt: result.execution_time, // 注意字段可能是execution_time而不是executedAt
+      scriptId,
+      executedAt,
       status: result.status,
+      statusType: result.statusType || result.status, // 支持两种字段名
       message: result.message,
-      findings: result.raw_results || result.findings, // 根据您的数据结构调整
-      _id: result._id.toString(), // 将 ObjectId 转换为字符串
+      findings,
+      _id: result._id.toString(),
     });
   } catch (error) {
     console.error("获取执行详情时出错:", error);
-    return NextResponse.json({ message: "服务器内部错误" }, { status: 500 });
+    return NextResponse.json(
+      {
+        message: "服务器内部错误",
+        error: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
   }
 }

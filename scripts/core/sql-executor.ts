@@ -6,6 +6,41 @@ import { sendSlackNotification } from "../services/slack-service";
 import { ExecutionResult, ExecutionStatusType } from "../types";
 
 /**
+ * 确定脚本是否属于检查或验证类型
+ * @param scriptId 脚本ID
+ * @returns 如果脚本是检查或验证类型则返回true
+ */
+function isCheckOrValidateScript(scriptId: string): boolean {
+  const checkPrefixes = ["check-", "validate-", "monitor-", "audit-"];
+  return checkPrefixes.some((prefix) => scriptId.startsWith(prefix));
+}
+
+/**
+ * 确定基于查询结果决定脚本执行状态
+ * @param scriptId 脚本ID
+ * @param findings 查询结果摘要
+ * @param results 详细查询结果
+ * @returns 执行的状态类型
+ */
+function determineStatusType(
+  scriptId: string,
+  findings: string,
+  results?: QueryResult[]
+): ExecutionStatusType {
+  // 如果是检查类脚本且发现了问题，则标记为需要关注
+  if (
+    isCheckOrValidateScript(scriptId) &&
+    findings !== "No matching records found" &&
+    findings !== "No valid queries" &&
+    results?.some((r) => r.rows && r.rows.length > 0)
+  ) {
+    return "attention_needed";
+  }
+
+  return "success";
+}
+
+/**
  * 格式化查询结果，生成简短的摘要信息。
  *
  * @param results 查询结果数组。
@@ -13,9 +48,7 @@ import { ExecutionResult, ExecutionStatusType } from "../types";
  */
 function formatQueryFindings(results: QueryResult[]): string {
   let totalRows = 0;
-  results.forEach((result /*, index*/) => {
-    // Commented out unused index
-    // console.log(`Query #${index + 1} (command: ${result.command}) actual rowCount from DB: ${result.rowCount}`); // Debug log
+  results.forEach((result) => {
     if (result.rows) {
       totalRows += result.rows.length;
     }
@@ -52,48 +85,37 @@ export async function executeSqlFile(
   let statusType: ExecutionStatusType = "failure"; // 默认失败
   let mongoResultId: string | undefined = undefined; // 用于存储MongoDB返回的_id
 
-  // console.log(`[EXEC ${executionTimestamp}] Initializing script execution: ${scriptId} (File: ${filePath})`); // Redundant with the one above, remove or comment
-
   try {
-    // 检查文件是否存在
     if (!fs.existsSync(filePath)) {
       throw new Error(`SQL file not found: ${filePath}`);
     }
 
-    // 测试数据库连接
-    const isConnected = await db.testConnection(); // db.ts 中已有中文日志
+    const isConnected = await db.testConnection();
     if (!isConnected) {
-      throw new Error("Database connection failed"); // testConnection 内部已有日志
+      throw new Error("Database connection failed");
     }
 
     const sqlContent = fs.readFileSync(filePath, "utf8");
-
-    // --- SQL 解析逻辑 ---
-    // 1. 移除块注释 /* ... */
     let processedContent = sqlContent.replace(/\/\*.*?\*\//gs, "");
-    // 2. 移除行注释 -- ...
     processedContent = processedContent.replace(/--.*/g, "");
-    // 3. 按分号分割语句，并清理空语句
     const queries = processedContent
       .split(";")
       .map((q) => q.trim())
       .filter((q) => q.length > 0);
-    // --- SQL 解析逻辑结束 ---
 
     console.log(
       `[EXEC ${executionTimestamp}] Parsed ${queries.length} SQL queries (comments removed)`
-    ); // Keep this general log
+    );
 
     if (queries.length === 0) {
-      // 如果没有有效查询，视为成功但发出警告
       successMessage = "SQL file is empty or contains only comments.";
       findings = "No valid queries";
-      statusType = "success"; // 空文件视为普通成功
+      statusType = "success";
       results = [];
       console.warn(
         `[EXEC ${executionTimestamp}] ${scriptId}: ${successMessage}`
       );
-      // 保存到MongoDB并获取ID
+      // 保存到MongoDB并获取ID - 即使是空查询，我们也保存结果记录并传递ID
       const mongoSaveResult = await saveResultToMongo(
         scriptId,
         statusType,
@@ -103,15 +125,20 @@ export async function executeSqlFile(
         results
       );
       if (mongoSaveResult && mongoSaveResult.insertedId) {
-        // 假设 saveResultToMongo 返回 { insertedId: ... }
         mongoResultId = mongoSaveResult.insertedId.toString();
+        console.log(
+          `[EXEC ${executionTimestamp}] 保存结果到MongoDB，ID: ${mongoResultId}`
+        );
       }
+
+      // 对所有脚本类型都传递mongoResultId，无论状态如何
       await sendSlackNotification(
         scriptId,
         `${successMessage} (${findings})`,
         statusType,
-        mongoResultId // 传递 mongoResultId
+        mongoResultId // 总是传递 mongoResultId，即使是空查询
       );
+
       return {
         success: true,
         statusType,
@@ -121,37 +148,20 @@ export async function executeSqlFile(
       };
     }
 
-    // 执行查询
     results = [];
-    // let queryIndex = 0; // queryIndex was only for debug logs, commented out
     for (const queryText of queries) {
-      // queryIndex++; // Debug log related
-      // console.log(`[EXEC ${executionTimestamp}] --------------------------------------------------`);
-      // console.log(`[EXEC ${executionTimestamp}] SQL Executor: About to execute Query #${queryIndex} (from script: ${scriptId}):`);
-      // console.log(queryText); // Debug log - full query text
-      // console.log(`[EXEC ${executionTimestamp}] --------------------------------------------------`);
       const result = await db.query(queryText);
       results.push(result);
     }
 
-    findings = formatQueryFindings(results); // No longer passing executionTimestamp
+    findings = formatQueryFindings(results);
     successMessage = `Script ${scriptId} executed successfully. ${findings}.`;
     console.log(`[EXEC ${executionTimestamp}] ${successMessage}`);
 
-    // 根据脚本ID和findings判断statusType - 这里可以扩展为更通用的逻辑
-    // 例如，可以有一个配置来决定哪些脚本的哪些结果是 attention_needed
-    if (
-      (scriptId === "check-order-duplicates" ||
-        scriptId.includes("check-") ||
-        scriptId.includes("validate-")) && // 更通用的检查脚本命名约定
-      findings !== "No matching records found" &&
-      findings !== "No valid queries"
-    ) {
-      statusType = "attention_needed";
-    } else {
-      statusType = "success";
-    }
+    // 使用通用函数决定状态类型
+    statusType = determineStatusType(scriptId, findings, results);
 
+    // 保存结果到MongoDB并获取ID - 注意：我们对所有脚本执行结果都保存记录
     const mongoSaveResultOnSuccess = await saveResultToMongo(
       scriptId,
       statusType === "attention_needed" ? "success" : statusType, // base status
@@ -160,20 +170,21 @@ export async function executeSqlFile(
       findings,
       results
     );
+
     if (mongoSaveResultOnSuccess && mongoSaveResultOnSuccess.insertedId) {
       mongoResultId = mongoSaveResultOnSuccess.insertedId.toString();
+      console.log(
+        `[EXEC ${executionTimestamp}] 保存结果到MongoDB，ID: ${mongoResultId}`
+      );
     }
 
+    // 对所有脚本类型都传递mongoResultId，不仅限于检查/验证脚本
     await sendSlackNotification(
       scriptId,
       successMessage,
       statusType,
       mongoResultId
-    ); // 传递 mongoResultId
-
-    // // 调试点 2: (Commented out)
-    // console.log(`[EXEC ${executionTimestamp}] Before returning from executeSqlFile - Query #1 rowCount: ${results?.[0]?.rowCount}, rows.length: ${results?.[0]?.rows?.length}`);
-    // console.log(`[EXEC ${executionTimestamp}] Before returning from executeSqlFile - Query #2 rowCount: ${results?.[1]?.rowCount}, rows.length: ${results?.[1]?.rows?.length}`);
+    );
 
     return {
       success: true,
@@ -181,20 +192,19 @@ export async function executeSqlFile(
       message: successMessage,
       findings,
       data: results,
-      mongoResultId, // 将 mongoResultId 也包含在返回结果中
+      mongoResultId,
     };
   } catch (error: unknown) {
-    // 统一处理执行过程中的错误
     errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     console.error(
-      `[EXEC ${executionTimestamp}] Script ${scriptId} execution failed: ${errorMessage}`, // Keep this error log
+      `[EXEC ${executionTimestamp}] Script ${scriptId} execution failed: ${errorMessage}`,
       error
     );
     findings = "Execution failed";
-    statusType = "failure"; // 明确失败状态
+    statusType = "failure";
 
-    // 尝试保存失败结果并获取ID (如果适用)
+    // 尝试保存失败结果并获取ID
     try {
       const mongoSaveResultOnError = await saveResultToMongo(
         scriptId,
@@ -206,6 +216,9 @@ export async function executeSqlFile(
       );
       if (mongoSaveResultOnError && mongoSaveResultOnError.insertedId) {
         mongoResultId = mongoSaveResultOnError.insertedId.toString();
+        console.log(
+          `[EXEC ${executionTimestamp}] 保存错误结果到MongoDB，ID: ${mongoResultId}`
+        );
       }
     } catch (mongoError) {
       console.error(
@@ -214,12 +227,12 @@ export async function executeSqlFile(
       );
     }
 
-    // 始终尝试发送失败通知，如果 mongoResultId 获取到了，就传递它
+    // 即使是失败的结果，也传递mongoResultId
     await sendSlackNotification(
       scriptId,
       `Execution failed: ${errorMessage}`,
       statusType,
-      mongoResultId // 传递 mongoResultId (可能为 undefined)
+      mongoResultId
     );
 
     return {
@@ -228,7 +241,7 @@ export async function executeSqlFile(
       message: errorMessage,
       findings,
       data: results,
-      mongoResultId, // 将 mongoResultId 也包含在返回结果中
+      mongoResultId,
     };
   }
 }
