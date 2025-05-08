@@ -24,4 +24,5 @@ export interface ExecutionResult {
   message: string;
   findings: string;
   data?: QueryResult[];
+  mongoResultId?: string; // 添加 mongoResultId 作为可选属性
 }
