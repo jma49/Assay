@@ -84,7 +84,46 @@ export type DashboardTranslationKeys =
   | "totalPages"
   | "totalRuns"
   | "successfulRuns"
-  | "needsAttention";
+  | "needsAttention"
+  | "addNewScriptButton"
+  | "createScriptTitle"
+  | "editScriptTitle"
+  | "fieldScriptId"
+  | "fieldScriptNameEn"
+  | "fieldScriptNameCn"
+  | "fieldScriptDescriptionEn"
+  | "fieldScriptDescriptionCn"
+  | "fieldScriptScopeEn"
+  | "fieldScriptScopeCn"
+  | "fieldScriptAuthor"
+  | "fieldSqlContent"
+  | "fieldIsScheduled"
+  | "fieldCronSchedule"
+  | "saveScriptButton"
+  | "cancelButton"
+  | "deleteScriptButton"
+  | "confirmDeleteScriptTitle"
+  | "confirmDeleteScriptMessage"
+  | "scriptIdPlaceholder"
+  | "cronSchedulePlaceholder"
+  | "scriptSavedSuccess"
+  | "scriptSaveError"
+  | "scriptLoadedSuccess"
+  | "scriptLoadError"
+  | "scriptDeletedSuccess"
+  | "scriptDeleteError"
+  | "scriptUpdatedSuccess"
+  | "scriptUpdateError"
+  | "nextScheduledCheck"
+  | "refreshingStatusText"
+  | "refreshDataButton"
+  | "checkHistoryTitle"
+  | "footerText"
+  | "scriptMetadataTitle"
+  | "scriptMetadataDesc"
+  | "fillRequiredFieldsError"
+  | "invalidScriptIdError"
+  | "savingStatusText";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -111,16 +150,17 @@ export interface Check {
 }
 
 export interface ScriptInfo {
-  id: string;
+  scriptId: string;
   name: string;
-  description: string;
-  path: string;
-  cn_name?: string;
-  cn_description?: string;
+  description?: string;
+  cnName?: string;
+  cnDescription?: string;
   scope?: string;
-  cn_scope?: string;
+  cnScope?: string;
   author?: string;
-  created?: string;
+  createdAt?: Date;
+  isScheduled?: boolean;
+  sqlContent?: string;
 }
 
 // 翻译配置
@@ -222,6 +262,48 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     totalRuns: "Total Script Runs",
     successfulRuns: "Successful Executions",
     needsAttention: "Needs Attention",
+    addNewScriptButton: "Add New Script",
+    createScriptTitle: "Create New SQL Script",
+    editScriptTitle: "Edit SQL Script",
+    fieldScriptId: "Script ID",
+    fieldScriptNameEn: "Script Name (EN)",
+    fieldScriptNameCn: "Script Name (CN)",
+    fieldScriptDescriptionEn: "Description (EN)",
+    fieldScriptDescriptionCn: "Description (CN)",
+    fieldScriptScopeEn: "Scope (EN)",
+    fieldScriptScopeCn: "Scope (CN)",
+    fieldScriptAuthor: "Author",
+    fieldSqlContent: "SQL Content",
+    fieldIsScheduled: "Enable Schedule",
+    fieldCronSchedule: "Cron Schedule",
+    saveScriptButton: "Save Script",
+    cancelButton: "Cancel",
+    deleteScriptButton: "Delete Script",
+    confirmDeleteScriptTitle: "Confirm Deletion",
+    confirmDeleteScriptMessage:
+      "Are you sure you want to delete the script '{scriptName}'? This action cannot be undone.",
+    scriptIdPlaceholder: "e.g., check-user-activity",
+    cronSchedulePlaceholder: "e.g., 0 0 * * * (daily at midnight)",
+    scriptSavedSuccess: "Script saved successfully.",
+    scriptSaveError: "Failed to save script.",
+    scriptLoadedSuccess: "Script loaded successfully.",
+    scriptLoadError: "Failed to load script details.",
+    scriptDeletedSuccess: "Script deleted successfully.",
+    scriptDeleteError: "Failed to delete script.",
+    scriptUpdatedSuccess: "Script updated successfully.",
+    scriptUpdateError: "Failed to update script.",
+    nextScheduledCheck: "Next Scheduled Check",
+    refreshingStatusText: "Refreshing...",
+    refreshDataButton: "Refresh Data",
+    checkHistoryTitle: "Check History",
+    footerText: "SQL Check System. All rights reserved.",
+    scriptMetadataTitle: "Script Metadata",
+    scriptMetadataDesc: "Provide details for the SQL script.",
+    fillRequiredFieldsError:
+      "Please fill all required fields: Script ID, Name, and SQL Content.",
+    invalidScriptIdError:
+      "Invalid Script ID format. Use lowercase letters, numbers, and hyphens.",
+    savingStatusText: "Saving...",
   },
   zh: {
     // General
@@ -318,6 +400,46 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     totalPages: "页",
     totalRuns: "脚本总运行次数",
     successfulRuns: "成功执行",
-    needsAttention: "需要关注",
+    needsAttention: "需注意",
+    addNewScriptButton: "添加新脚本",
+    createScriptTitle: "创建新 SQL 脚本",
+    editScriptTitle: "编辑 SQL 脚本",
+    fieldScriptId: "脚本ID",
+    fieldScriptNameEn: "脚本名称 (英文)",
+    fieldScriptNameCn: "脚本名称 (中文)",
+    fieldScriptDescriptionEn: "描述 (英文)",
+    fieldScriptDescriptionCn: "描述 (中文)",
+    fieldScriptScopeEn: "范围 (英文)",
+    fieldScriptScopeCn: "范围 (中文)",
+    fieldScriptAuthor: "作者",
+    fieldSqlContent: "SQL 内容",
+    fieldIsScheduled: "启用定时任务",
+    fieldCronSchedule: "Cron 表达式",
+    saveScriptButton: "保存脚本",
+    cancelButton: "取消",
+    deleteScriptButton: "删除脚本",
+    confirmDeleteScriptTitle: "确认删除",
+    confirmDeleteScriptMessage:
+      "您确定要删除脚本 '{scriptName}' 吗？此操作无法撤销。",
+    scriptIdPlaceholder: "例如, check-user-activity",
+    cronSchedulePlaceholder: "例如, 0 0 * * * (每天零点)",
+    scriptSavedSuccess: "脚本保存成功。",
+    scriptSaveError: "脚本保存失败。",
+    scriptLoadedSuccess: "脚本加载成功。",
+    scriptLoadError: "加载脚本详情失败。",
+    scriptDeletedSuccess: "脚本删除成功。",
+    scriptDeleteError: "删除脚本失败。",
+    scriptUpdatedSuccess: "脚本更新成功。",
+    scriptUpdateError: "更新脚本失败。",
+    nextScheduledCheck: "下次计划检查",
+    refreshingStatusText: "刷新中...",
+    refreshDataButton: "刷新数据",
+    checkHistoryTitle: "检查历史",
+    footerText: "SQL 检查系统。保留所有权利。",
+    scriptMetadataTitle: "脚本元数据",
+    scriptMetadataDesc: "请提供 SQL 脚本的详细信息。",
+    fillRequiredFieldsError: "请填写所有必填项：脚本ID、名称和 SQL 内容。",
+    invalidScriptIdError: "无效的脚本ID格式。请使用小写字母、数字和连字符。",
+    savingStatusText: "保存中...",
   },
 };
