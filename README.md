@@ -304,7 +304,6 @@ export async function GET(request: Request) {
 
 ## 未来工作与待办事项
 
-- **前端脚本编辑与删除**: 在仪表盘或专门的脚本列表页面实现编辑和删除脚本的功能。
 - **前端调度设置 UI**: 在创建/编辑脚本页面，允许用户通过 UI 设置 `isScheduled` 和 `cronSchedule` 字段。
 - **实现 `/api/run-scheduled-scripts`**: 完成该 API 端点的逻辑，使其能够正确获取和执行所有计划的脚本。
 - **数据分析页面**: 实现 `/data-analysis` 页面的具体图表和数据展示功能。
