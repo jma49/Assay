@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import mongoDbClient from "@/lib/mongodb";
 import { Collection, Document } from "mongodb";
 
@@ -8,11 +8,11 @@ async function getSqlScriptsCollection(): Promise<Collection<Document>> {
   return db.collection("sql_scripts"); // From sql_script_result DB
 }
 
-interface RouteContext {
-  params: {
-    scriptId: string;
-  };
-}
+// interface RouteContext {  // No longer needed
+//   params: {
+//     scriptId: string;
+//   };
+// }
 
 interface UpdateScriptData {
   name?: string;
@@ -50,9 +50,13 @@ function containsHarmfulSql(sqlContent: string): boolean {
 }
 
 // GET a single script by scriptId
-export async function GET(request: Request, context: RouteContext) {
+export async function GET(
+  request: NextRequest,
+  { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
+) {
   try {
-    const { scriptId } = context.params;
+    const params = await paramsPromise; // Await the promise
+    const { scriptId } = params;
 
     if (!scriptId) {
       return NextResponse.json(
@@ -92,9 +96,13 @@ export async function GET(request: Request, context: RouteContext) {
 }
 
 // PUT (update) a script by scriptId
-export async function PUT(request: Request, context: RouteContext) {
+export async function PUT(
+  request: NextRequest,
+  { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
+) {
   try {
-    const { scriptId } = context.params;
+    const params = await paramsPromise; // Await the promise
+    const { scriptId } = params;
     const body = await request.json();
     const {
       name,
@@ -188,7 +196,14 @@ export async function PUT(request: Request, context: RouteContext) {
       { status: 200 }
     );
   } catch (error) {
-    console.error(`Error updating script ${context.params.scriptId}:`, error);
+    // It's tricky to get paramsPromise reliably here if the above await failed.
+    // For logging, it might be better to extract it from the request URL if possible or log a generic message.
+    // However, if paramsPromise itself is the issue, this won't work.
+    // For now, we'll assume params.scriptId might not be available if the promise itself rejects.
+    console.error(
+      `Error updating script (ID might be unavailable if promise rejected):`,
+      error
+    );
     if (error instanceof SyntaxError) {
       // JSON parsing error
       return NextResponse.json(
@@ -206,9 +221,13 @@ export async function PUT(request: Request, context: RouteContext) {
 }
 
 // DELETE a script by scriptId
-export async function DELETE(request: Request, context: RouteContext) {
+export async function DELETE(
+  request: NextRequest,
+  { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
+) {
   try {
-    const { scriptId } = context.params;
+    const params = await paramsPromise; // Await the promise
+    const { scriptId } = params;
 
     if (!scriptId) {
       return NextResponse.json(
@@ -235,7 +254,11 @@ export async function DELETE(request: Request, context: RouteContext) {
       { status: 200 }
     );
   } catch (error) {
-    console.error(`Error deleting script ${context.params.scriptId}:`, error);
+    // Similar to PUT, params.scriptId might be unavailable if paramsPromise rejected.
+    console.error(
+      `Error deleting script (ID might be unavailable if promise rejected):`,
+      error
+    );
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(

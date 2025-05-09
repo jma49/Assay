@@ -65,12 +65,10 @@ const Dashboard = () => {
   const loadInitialData = useCallback(async () => {
     setLoading(true);
     setIsFetchingScripts(true);
+    setIsRefreshing(true);
     setError(null);
     setTriggerMessage(null);
     setTriggerMessageType(null);
-    if (!loading) {
-      setIsRefreshing(true);
-    }
     setCurrentPage(1);
 
     try {
@@ -116,7 +114,7 @@ const Dashboard = () => {
       setIsFetchingScripts(false);
       setIsRefreshing(false);
     }
-  }, [t]);
+  }, [t, selectedScriptId]);
 
   useEffect(() => {
     loadInitialData();
