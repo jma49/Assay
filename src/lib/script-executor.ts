@@ -1,76 +1,96 @@
 import path from "path";
 import fs from "fs";
-// 保持相对路径引用，因为 core/sql-executor 移动到了 scripts 目录下
-import { executeSqlFile } from "../../scripts/core/sql-executor";
-import { ExecutionResult } from "../../scripts/types"; // 引入统一的类型定义
+import mongoDbClient from "@/lib/mongodb"; // For fetching script content
+import { Collection, Document } from "mongodb"; // For type hinting
+// Changed import to the new function name
+import { executeSqlScriptFromDb } from "../../scripts/core/sql-executor";
+import { ExecutionResult } from "../../scripts/types";
+
+// Helper function to get the MongoDB collection for sql_scripts
+// This is similar to what we have in API routes and ensures consistency.
+async function getSqlScriptsCollection(): Promise<Collection<Document>> {
+  const db = await mongoDbClient.getDb();
+  return db.collection("sql_scripts"); // Assuming db is for 'sql_script_result' and collection is 'sql_scripts'
+}
 
 /**
- * 执行指定的 SQL 脚本，此函数由 API 路由调用以响应手动触发。
- * 它负责查找脚本文件并调用核心执行逻辑。
+ * Fetches a script from MongoDB, then executes it using its content.
+ * This function is typically called by API routes in response to manual triggers or by scheduled jobs.
  *
- * @param scriptId 要执行的脚本的 ID (对应于 .sql 文件名，不含扩展名)。
- * @returns 一个解析为 ExecutionResult 对象的 Promise。
+ * @param scriptId The unique ID of the script to execute.
+ * @returns A Promise that resolves to an ExecutionResult object.
  */
 export async function executeScriptAndNotify(
   scriptId: string
 ): Promise<ExecutionResult> {
   console.log(
-    `[API Triggered] Received script execution request, ID: ${scriptId}`
+    `[Script Executor] Received script execution request, ID: ${scriptId}`
   );
 
-  const scriptFileName = `${scriptId}.sql`;
-  // 使用 process.cwd() 作为基础路径，通常在 Next.js 环境中更可靠
-  // 路径指向拆分后的 scripts/sql_scripts 目录
-  const scriptFilePath = path.resolve(
-    process.cwd(),
-    "scripts",
-    "sql_scripts",
-    scriptFileName
-  );
-
-  console.log(`[API Triggered] Looking for script file at: ${scriptFilePath}`);
-
-  // 在调用核心执行器之前检查文件是否存在
-  if (!fs.existsSync(scriptFilePath)) {
-    console.error(`[API Triggered] SQL file not found: ${scriptFilePath}`);
-    const errorMsg = `SQL file '${scriptFileName}' not found.`;
-    // 返回符合 ExecutionResult 结构的失败结果
-    return {
-      success: false,
-      statusType: "failure",
-      message: errorMsg,
-      findings: "Configuration Error",
-    };
-  }
-
-  // 调用核心的 executeSqlFile 函数，它处理：
-  // 1. 数据库连接和查询执行
-  // 2. 保存结果到 MongoDB
-  // 3. 发送 Slack 通知
   try {
-    // 等待核心执行函数的结果
-    const result = await executeSqlFile(scriptId, scriptFilePath);
+    const collection = await getSqlScriptsCollection();
+    // Fetch the script document by its scriptId
+    // We only need the sqlContent field for execution, but fetching the whole doc might be fine.
+    // If performance becomes an issue with many fields, add projection: { sqlContent: 1 }
+    const scriptDocument = await collection.findOne({ scriptId });
+
+    if (!scriptDocument) {
+      console.error(`[Script Executor] Script not found in DB: ${scriptId}`);
+      return {
+        success: false,
+        statusType: "failure",
+        message: `Script with ID '${scriptId}' not found in the database.`,
+        findings: "Configuration Error",
+      };
+    }
+
+    const sqlContent = scriptDocument.sqlContent as string | undefined;
+
+    if (
+      !sqlContent ||
+      typeof sqlContent !== "string" ||
+      sqlContent.trim() === ""
+    ) {
+      console.error(
+        `[Script Executor] SQL content is missing or empty for script: ${scriptId}`
+      );
+      // This scenario should ideally be prevented by validation when saving scripts.
+      // However, good to have a check here.
+      return {
+        success: false, // Or true, with a specific statusType like 'no_content'
+        statusType: "failure", // Or a custom status like "no_content_error"
+        message: `SQL content is missing or empty for script '${scriptId}'.`,
+        findings: "Invalid Script Data",
+      };
+    }
+
     console.log(
-      `[API Triggered] Script ${scriptId} execution completed, status: ${
+      `[Script Executor] Found script '${scriptId}' in DB, proceeding with execution.`
+    );
+
+    // Call the refactored core execution function with scriptId and sqlContent
+    const result = await executeSqlScriptFromDb(scriptId, sqlContent);
+
+    console.log(
+      `[Script Executor] Script ${scriptId} execution completed, status: ${
         result.success ? "Success" : "Failure"
       }`
     );
-    return result; // 将详细结果传递回 API 路由
+    return result;
   } catch (error) {
-    // 这个 catch 块处理调用 executeSqlFile 过程中可能发生的意外错误，
-    // 尽管 executeSqlFile 被设计为捕获其内部错误并返回 ExecutionResult。
+    // This catch block handles unexpected errors during DB fetch or if executeSqlScriptFromDb itself throws an unhandled error.
     console.error(
-      `[API Triggered] Unexpected error occurred while executing script ${scriptId}:`,
+      `[Script Executor] Unexpected error occurred while preparing or executing script ${scriptId}:`,
       error
     );
-    const errorMsg = `Execution unexpectedly failed: ${
+    const errorMsg = `Execution script '${scriptId}' unexpectedly failed: ${
       error instanceof Error ? error.message : String(error)
     }`;
     return {
       success: false,
       statusType: "failure",
       message: errorMsg,
-      findings: "Execution Error",
+      findings: "Execution Engine Error", // More specific error finding
     };
   }
 }

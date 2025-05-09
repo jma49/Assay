@@ -1,4 +1,3 @@
-import fs from "fs";
 import { QueryResult } from "pg";
 import db from "../../src/lib/db"; // 调整路径
 import { saveResultToMongo } from "../services/mongo-service";
@@ -61,21 +60,22 @@ function formatQueryFindings(results: QueryResult[]): string {
 }
 
 /**
- * 执行指定的 SQL 文件。
- * 该函数负责读取 SQL 文件，解析并执行其中的查询，
+ * 执行从数据库获取的 SQL 脚本内容。
+ * 该函数负责解析并执行 SQL 内容，
  * 然后调用服务保存结果到 MongoDB 并发送 Slack 通知。
  *
  * @param scriptId 脚本的唯一标识符。
- * @param filePath SQL 文件的完整路径。
+ * @param sqlContent SQL 脚本的完整内容。
  * @returns 返回一个包含执行结果的 Promise 对象。
  */
-export async function executeSqlFile(
+export async function executeSqlScriptFromDb(
   scriptId: string,
-  filePath: string
+  sqlContent: string // Changed from filePath
 ): Promise<ExecutionResult> {
   const executionTimestamp = Date.now();
   console.log(
-    `[EXEC ${executionTimestamp}] Starting script execution: ${scriptId} (File: ${filePath})`
+    // Updated log message
+    `[EXEC ${executionTimestamp}] Starting script execution: ${scriptId} (from DB content)`
   );
 
   let results: QueryResult[] | undefined = undefined;
@@ -83,19 +83,53 @@ export async function executeSqlFile(
   let errorMessage = ``;
   let findings = "Execution incomplete";
   let statusType: ExecutionStatusType = "failure"; // 默认失败
-  let mongoResultId: string | undefined = undefined; // 用于存储MongoDB返回的_id
+  let mongoResultId: string | undefined = undefined;
 
   try {
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`SQL file not found: ${filePath}`);
-    }
+    // Removed: if (!fs.existsSync(filePath)) { ... }
 
     const isConnected = await db.testConnection();
     if (!isConnected) {
       throw new Error("Database connection failed");
     }
 
-    const sqlContent = fs.readFileSync(filePath, "utf8");
+    // Removed: const sqlContentFromFile = fs.readFileSync(filePath, "utf8");
+    // sqlContent is now a parameter
+
+    if (!sqlContent || sqlContent.trim() === "") {
+      successMessage = "SQL content is empty.";
+      findings = "No SQL content provided";
+      statusType = "success"; // Or perhaps a specific status like 'no_content'
+      results = [];
+      console.warn(
+        `[EXEC ${executionTimestamp}] ${scriptId}: ${successMessage}`
+      );
+      const mongoSaveResult = await saveResultToMongo(
+        scriptId,
+        statusType,
+        statusType,
+        successMessage,
+        findings,
+        results
+      );
+      if (mongoSaveResult && mongoSaveResult.insertedId) {
+        mongoResultId = mongoSaveResult.insertedId.toString();
+      }
+      await sendSlackNotification(
+        scriptId,
+        `${successMessage} (${findings})`,
+        statusType,
+        mongoResultId
+      );
+      return {
+        success: true, // Technically not a failure, but script didn't run SQL
+        statusType,
+        message: successMessage,
+        findings,
+        mongoResultId,
+      };
+    }
+
     let processedContent = sqlContent.replace(/\/\*.*?\*\//gs, "");
     processedContent = processedContent.replace(/--.*/g, "");
     const queries = processedContent
@@ -108,14 +142,15 @@ export async function executeSqlFile(
     );
 
     if (queries.length === 0) {
-      successMessage = "SQL file is empty or contains only comments.";
-      findings = "No valid queries";
+      successMessage =
+        "SQL content is empty or contains only comments after processing."; // Adjusted message
+      findings = "No valid queries after processing";
       statusType = "success";
       results = [];
+      // ... (rest of the block for no queries is the same as original)
       console.warn(
         `[EXEC ${executionTimestamp}] ${scriptId}: ${successMessage}`
       );
-      // 保存到MongoDB并获取ID - 即使是空查询，我们也保存结果记录并传递ID
       const mongoSaveResult = await saveResultToMongo(
         scriptId,
         statusType,
@@ -130,15 +165,12 @@ export async function executeSqlFile(
           `[EXEC ${executionTimestamp}] 保存结果到MongoDB，ID: ${mongoResultId}`
         );
       }
-
-      // 对所有脚本类型都传递mongoResultId，无论状态如何
       await sendSlackNotification(
         scriptId,
         `${successMessage} (${findings})`,
         statusType,
-        mongoResultId // 总是传递 mongoResultId，即使是空查询
+        mongoResultId
       );
-
       return {
         success: true,
         statusType,
@@ -158,14 +190,12 @@ export async function executeSqlFile(
     successMessage = `Script ${scriptId} executed successfully. ${findings}.`;
     console.log(`[EXEC ${executionTimestamp}] ${successMessage}`);
 
-    // 使用通用函数决定状态类型
     statusType = determineStatusType(scriptId, findings, results);
 
-    // 保存结果到MongoDB并获取ID - 注意：我们对所有脚本执行结果都保存记录
     const mongoSaveResultOnSuccess = await saveResultToMongo(
       scriptId,
-      statusType === "attention_needed" ? "success" : statusType, // base status
-      statusType, // actual statusType
+      statusType === "attention_needed" ? "success" : statusType,
+      statusType,
       successMessage,
       findings,
       results
@@ -178,7 +208,6 @@ export async function executeSqlFile(
       );
     }
 
-    // 对所有脚本类型都传递mongoResultId，不仅限于检查/验证脚本
     await sendSlackNotification(
       scriptId,
       successMessage,
@@ -204,7 +233,6 @@ export async function executeSqlFile(
     findings = "Execution failed";
     statusType = "failure";
 
-    // 尝试保存失败结果并获取ID
     try {
       const mongoSaveResultOnError = await saveResultToMongo(
         scriptId,
@@ -212,7 +240,7 @@ export async function executeSqlFile(
         statusType,
         errorMessage,
         findings,
-        results // results 可能为 undefined，saveResultToMongo 应能处理
+        results
       );
       if (mongoSaveResultOnError && mongoSaveResultOnError.insertedId) {
         mongoResultId = mongoSaveResultOnError.insertedId.toString();
@@ -227,7 +255,6 @@ export async function executeSqlFile(
       );
     }
 
-    // 即使是失败的结果，也传递mongoResultId
     await sendSlackNotification(
       scriptId,
       `Execution failed: ${errorMessage}`,

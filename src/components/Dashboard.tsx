@@ -2,15 +2,15 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Database,
   RefreshCw,
+  PlusCircle,
 } from 'lucide-react';
 import { toast } from "sonner";
 import { useLanguage } from '@/components/ClientLayoutWrapper';
+import Link from 'next/link';
 
 // Import shadcn UI components
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 
 // Import subcomponents and types from dashboard folder
 import {
@@ -27,7 +27,6 @@ import { CheckHistory } from '@/components/dashboard/CheckHistory';
 import { LoadingError } from '@/components/dashboard/LoadingError';
 import { SkeletonCard, SkeletonTable } from '@/components/dashboard/SkeletonComponents';
 import { DashboardFooter } from '@/components/dashboard/DashboardFooter';
-import { StatsChart } from '@/components/dashboard/StatsChart';
 
 // --- Main Component ---
 const Dashboard = () => {
@@ -68,7 +67,9 @@ const Dashboard = () => {
     setError(null);
     setTriggerMessage(null);
     setTriggerMessageType(null);
-    setIsRefreshing(true);
+    if (!loading) {
+      setIsRefreshing(true);
+    }
     setCurrentPage(1);
 
     try {
@@ -79,16 +80,25 @@ const Dashboard = () => {
 
       const scriptsPromise = fetch('/api/list-scripts').then(res => {
         if (!res.ok) throw new Error(`${t('errorInfo')} (Scripts): ${res.status} ${res.statusText}`);
-        return res.json();
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            return res.json();
+        } else {
+            console.warn('Received non-JSON response from /api/list-scripts');
+            return [];
+        }
       });
 
       const [historyData, scriptsData]: [Check[], ScriptInfo[]] = await Promise.all([historyPromise, scriptsPromise]);
 
       setChecks(historyData);
-      setAvailableScripts(scriptsData);
+      setAvailableScripts(scriptsData || []);
 
-      if (scriptsData.length > 0 && !selectedScriptId) {
-        setSelectedScriptId(scriptsData[0].id);
+      if (scriptsData && scriptsData.length > 0 && !selectedScriptId) {
+        setSelectedScriptId(scriptsData[0].scriptId);
+      }
+      if ((!scriptsData || scriptsData.length === 0) && selectedScriptId) {
+        setSelectedScriptId('');
       }
 
     } catch (err) {
@@ -99,7 +109,7 @@ const Dashboard = () => {
       setIsFetchingScripts(false);
       setIsRefreshing(false);
     }
-  }, [selectedScriptId, t]);
+  }, [language, t]);
 
   useEffect(() => {
     loadInitialData();
@@ -126,7 +136,7 @@ const Dashboard = () => {
         document.head.removeChild(style);
       }
     };
-  }, [loadInitialData]);
+  }, [language, t, loadInitialData]);
 
   const toggleExpand = (checkId: string) => {
     setExpandedCheckId(expandedCheckId === checkId ? null : checkId);
@@ -232,64 +242,28 @@ const Dashboard = () => {
     return filtered;
   }, [checks, filterStatus, searchTerm, sortConfig]);
 
-  // 计算今天和昨天的检查数量
-  const { todayChecks, yesterdayChecks } = React.useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    const dayBefore = new Date(yesterday);
-    dayBefore.setDate(dayBefore.getDate() - 1);
-    
-    const todayChecksCount = checks.filter(check => {
-      const checkDate = new Date(check.execution_time);
-      return checkDate >= today;
-    }).length;
-    
-    const yesterdayChecksCount = checks.filter(check => {
-      const checkDate = new Date(check.execution_time);
-      return checkDate >= yesterday && checkDate < today;
-    }).length;
-    
-    return {
-      todayChecks: todayChecksCount,
-      yesterdayChecks: yesterdayChecksCount
-    };
-  }, [checks]);
-
   const totalChecks = filteredAndSortedChecks.length;
   const totalPages = Math.ceil(totalChecks / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedChecks = filteredAndSortedChecks.slice(startIndex, endIndex);
 
-  const selectedScript = availableScripts.find(s => s.id === selectedScriptId);
+  const selectedScript = React.useMemo(() => 
+    availableScripts.find(s => s.scriptId === selectedScriptId)
+  , [availableScripts, selectedScriptId]);
+
   const successCount = checks.filter(c => c.status === CheckStatus.SUCCESS).length;
   const failureCount = checks.filter(c => c.status === CheckStatus.FAILURE).length;
   const allChecksCount = checks.length;
   const successRate = allChecksCount > 0 ? Math.round((successCount / allChecksCount) * 100) : 0;
 
-  if (loading && checks.length === 0) {
+  if (loading && checks.length === 0 && isFetchingScripts) {
     return (
-      <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8 animate-fadeIn">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div className="flex items-center justify-between pb-6 border-b">
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-64" />
-              <Skeleton className="h-4 w-96" />
-            </div>
-            <Skeleton className="h-10 w-24" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
-          <SkeletonTable />
-          <SkeletonTable />
-        </div>
+      <div className="space-y-6 p-4 md:p-6 lg:p-8">
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonTable />
       </div>
     );
   }
@@ -299,96 +273,117 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-4 pb-8 px-3 sm:px-5 lg:px-6 animate-fadeIn">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <header className="pb-4 mb-2 border-b">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-2">
-                <Database className="h-6 w-6 sm:h-7 sm:w-7 text-primary flex-shrink-0" />
-                {t('dashboardTitle')}
-              </h1>
-              <p className="mt-1.5 text-sm sm:text-base text-muted-foreground max-w-3xl">
-                {t('dashboardDesc')}
-              </p>
-            </div>
-            <Button
-              onClick={loadInitialData}
-              disabled={loading || isRefreshing}
-              variant="outline"
+    <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-fadeIn">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+            {t('dashboardTitle')}
+          </h1>
+          {nextScheduled && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {t('nextScheduledCheck')}: {nextScheduled.toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' })}
+            </p>
+          )}
+        </div>
+        <Button onClick={loadInitialData} disabled={isRefreshing} variant="outline">
+          <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          {isRefreshing ? t('refreshingStatusText') : t('refreshDataButton')}
+        </Button>
+      </header>
+
+      <StatsCards 
+        nextScheduled={nextScheduled} 
+        successCount={successCount}
+        failureCount={failureCount}
+        allChecksCount={allChecksCount}
+        successRate={successRate}
+        language={language}
+        t={t}
+      />
+
+      <ManualTrigger 
+        availableScripts={availableScripts}
+        selectedScriptId={selectedScriptId}
+        selectedScript={selectedScript}
+        isTriggering={isTriggering}
+        isFetchingScripts={isFetchingScripts}
+        loading={loading && isFetchingScripts}
+        triggerMessage={triggerMessage}
+        triggerMessageType={triggerMessageType}
+        language={language}
+        t={t}
+        setSelectedScriptId={setSelectedScriptId}
+        handleTriggerCheck={handleTriggerCheck}
+      />
+
+      <div className="flex justify-between items-center mt-8 mb-4">
+        <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
+          {t('checkHistoryTitle')} 
+        </h2>
+        <Link href="/scripts/new" passHref legacyBehavior>
+          <Button variant="outline" asChild>
+            <a>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              {t('addNewScriptButton')}
+            </a>
+          </Button>
+        </Link>
+      </div>
+
+      <CheckHistory 
+        paginatedChecks={paginatedChecks}
+        allChecksCount={allChecksCount}
+        totalPages={totalPages}
+        currentPage={currentPage}
+        filterStatus={filterStatus}
+        searchTerm={searchTerm}
+        expandedCheckId={expandedCheckId}
+        sortConfig={sortConfig}
+        successCount={successCount} 
+        failureCount={failureCount} 
+        language={language}
+        t={t}
+        toggleExpand={toggleExpand}
+        setFilterStatus={setFilterStatus}
+        setSearchTerm={setSearchTerm}
+        setCurrentPage={setCurrentPage}
+        requestSort={requestSort}
+        startIndex={startIndex}
+        endIndex={endIndex}
+      />
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-4">
+          <p className="text-sm text-muted-foreground">
+            {t('pageInfo')
+              .replace('%s', (startIndex + 1).toString())
+              .replace('%s', Math.min(endIndex, totalChecks).toString())
+              .replace('%s', totalChecks.toString())
+              .replace('%s', currentPage.toString())
+              .replace('%s', totalPages.toString())}
+          </p>
+          <div className="space-x-2">
+            <Button 
+              variant="outline" 
               size="sm"
-              className="relative shadow-sm hover:shadow transition-all"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
+              disabled={currentPage === 1}
             >
-              <RefreshCw className={`h-4 w-4 mr-1.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              {isRefreshing ? t('refreshing') : t('refresh')}
-              {isRefreshing && (
-                <span className="absolute inset-0 rounded-md bg-primary/10 animate-pulse"></span>
-              )}
+              {t('previous')}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} 
+              disabled={currentPage === totalPages}
+            >
+              {t('next')}
             </Button>
           </div>
-        </header>
-
-        <StatsCards 
-          nextScheduled={nextScheduled}
-          successCount={successCount}
-          failureCount={failureCount}
-          allChecksCount={allChecksCount}
-          successRate={successRate}
-          language={language}
-          t={t}
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ManualTrigger 
-            availableScripts={availableScripts}
-            selectedScriptId={selectedScriptId}
-            selectedScript={selectedScript}
-            isTriggering={isTriggering}
-            isFetchingScripts={isFetchingScripts}
-            loading={loading}
-            triggerMessage={triggerMessage}
-            triggerMessageType={triggerMessageType}
-            language={language}
-            t={t}
-            setSelectedScriptId={setSelectedScriptId}
-            handleTriggerCheck={handleTriggerCheck}
-          />
-
-          <StatsChart 
-            successCount={successCount}
-            failureCount={failureCount}
-            allChecksCount={allChecksCount}
-            successRate={successRate}
-            todayChecks={todayChecks}
-            yesterdayChecks={yesterdayChecks}
-            t={t}
-          />
         </div>
+      )}
 
-        <CheckHistory 
-          paginatedChecks={paginatedChecks}
-          allChecksCount={allChecksCount}
-          totalPages={totalPages}
-          currentPage={currentPage}
-          filterStatus={filterStatus}
-          searchTerm={searchTerm}
-          expandedCheckId={expandedCheckId}
-          sortConfig={sortConfig}
-          successCount={successCount}
-          failureCount={failureCount}
-          language={language}
-          t={t}
-          toggleExpand={toggleExpand}
-          setFilterStatus={setFilterStatus}
-          setSearchTerm={setSearchTerm}
-          setCurrentPage={setCurrentPage}
-          requestSort={requestSort}
-          startIndex={startIndex}
-          endIndex={endIndex}
-        />
-
-        <DashboardFooter t={t} />
-      </div>
+      <DashboardFooter t={t} />
     </div>
   );
 };
