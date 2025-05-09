@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   RefreshCw,
-  PlusCircle,
   AreaChart,
+  ListChecks,
 } from 'lucide-react';
 import { toast } from "sonner";
 import { useLanguage } from '@/components/ClientLayoutWrapper';
@@ -116,7 +116,7 @@ const Dashboard = () => {
       setIsFetchingScripts(false);
       setIsRefreshing(false);
     }
-  }, [language, t]);
+  }, [t]);
 
   useEffect(() => {
     loadInitialData();
@@ -143,7 +143,7 @@ const Dashboard = () => {
         document.head.removeChild(style);
       }
     };
-  }, [language, t, loadInitialData]);
+  }, [t, loadInitialData]);
 
   const toggleExpand = (checkId: string) => {
     setExpandedCheckId(expandedCheckId === checkId ? null : checkId);
@@ -337,11 +337,11 @@ const Dashboard = () => {
         <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
           {t('checkHistoryTitle')} 
         </h2>
-        <Link href="/scripts/new" passHref legacyBehavior>
+        <Link href="/manage-scripts" passHref legacyBehavior>
           <Button variant="outline" asChild>
             <a>
-              <PlusCircle className="mr-0 h-4 w-4" />
-              {t('addNewScriptButton')}
+              <ListChecks className="mr-0 h-4 w-4" />
+              {t('manageScriptsButton')}
             </a>
           </Button>
         </Link>
@@ -368,37 +368,6 @@ const Dashboard = () => {
         startIndex={startIndex}
         endIndex={endIndex}
       />
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4">
-          <p className="text-sm text-muted-foreground">
-            {t('pageInfo')
-              .replace('%s', (startIndex + 1).toString())
-              .replace('%s', Math.min(endIndex, totalChecks).toString())
-              .replace('%s', totalChecks.toString())
-              .replace('%s', currentPage.toString())
-              .replace('%s', totalPages.toString())}
-          </p>
-          <div className="space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
-              disabled={currentPage === 1}
-            >
-              {t('previous')}
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} 
-              disabled={currentPage === totalPages}
-            >
-              {t('next')}
-            </Button>
-          </div>
-        </div>
-      )}
 
       <DashboardFooter t={t} />
     </div>

@@ -125,7 +125,16 @@ export type DashboardTranslationKeys =
   | "invalidScriptIdError"
   | "savingStatusText"
   | "dataAnalysisButton"
-  | "dataAnalysisTitle";
+  | "dataAnalysisTitle"
+  | "backToList"
+  | "manageScriptsPageTitle"
+  | "manageScriptsPageDescription"
+  | "addScriptDialogTitle"
+  | "editScriptDialogTitle"
+  | "fieldUpdatedAt"
+  | "confirmAction"
+  | "noScriptsYet"
+  | "manageScriptsButton";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -163,6 +172,23 @@ export interface ScriptInfo {
   createdAt?: Date;
   isScheduled?: boolean;
   sqlContent?: string;
+}
+
+export interface SqlScript {
+  _id?: string; // MongoDB ID, optional as it's not present before creation
+  scriptId: string;
+  name: string;
+  cnName?: string;
+  description?: string;
+  cnDescription?: string;
+  scope?: string;
+  cnScope?: string;
+  author: string;
+  sqlContent: string;
+  isScheduled?: boolean;
+  cronSchedule?: string;
+  createdAt?: Date | string; // Allow string for API response, Date for client state
+  updatedAt?: Date | string; // Allow string for API response, Date for client state
 }
 
 // 翻译配置
@@ -309,6 +335,16 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     // Data Analysis
     dataAnalysisButton: "Data Analysis",
     dataAnalysisTitle: "Data Analysis",
+    backToList: "Back to List",
+    manageScriptsPageTitle: "Manage Scripts",
+    manageScriptsPageDescription:
+      "Create, view, update, and delete your SQL scripts from a centralized interface.",
+    addScriptDialogTitle: "Add New SQL Script",
+    editScriptDialogTitle: "Edit SQL Script",
+    fieldUpdatedAt: "Updated At",
+    confirmAction: "Confirm Action",
+    noScriptsYet: "No scripts found. Get started by adding a new one!",
+    manageScriptsButton: "Manage Scripts",
   },
   zh: {
     // General
@@ -449,5 +485,15 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     // Data Analysis
     dataAnalysisButton: "数据分析",
     dataAnalysisTitle: "数据分析",
+    backToList: "返回列表",
+    manageScriptsPageTitle: "脚本管理",
+    manageScriptsPageDescription:
+      "从集中界面创建、查看、更新和删除您的 SQL 脚本。",
+    addScriptDialogTitle: "添加新 SQL 脚本",
+    editScriptDialogTitle: "编辑 SQL 脚本",
+    fieldUpdatedAt: "更新于",
+    confirmAction: "确认操作",
+    noScriptsYet: "暂无脚本，点击“添加新脚本”开始创建吧！",
+    manageScriptsButton: "管理脚本",
   },
 };
