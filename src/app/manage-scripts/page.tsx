@@ -297,7 +297,7 @@ const ManageScriptsPage = () => {
               <AlertTriangle className="mx-auto h-12 w-12 text-destructive mb-4" />
               <p className="text-destructive mb-2">{t('errorTitle')}: {error}</p>
               <Button onClick={fetchScripts} variant="outline">
-                <RefreshCw className="mr-2 h-4 w-4" /> {t('retry')}
+                <RefreshCw className="mr-0 h-4 w-4" /> {t('retry')}
               </Button>
             </div>
           )}
@@ -379,7 +379,7 @@ const ManageScriptsPage = () => {
                 <Button type="button" variant="outline" disabled={isSubmitting}>{t('cancelButton')}</Button>
             </DialogClose>
             <Button type="button" onClick={handleDialogSave} disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {isSubmitting ? <Loader2 className="mr-0 h-4 w-4 animate-spin" /> : <Save className="mr-0 h-4 w-4" />}
               {t('saveScriptButton')}
             </Button>
           </DialogFooter>
@@ -401,7 +401,7 @@ const ManageScriptsPage = () => {
               disabled={isSubmitting}
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 
+              {isSubmitting && <Loader2 className="mr-0 h-4 w-4 animate-spin" />} 
               {t('deleteButton') || 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
