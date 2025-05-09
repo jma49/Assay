@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import mongoDbClient from "@/lib/mongodb"; // 假设 mongodb.ts 位于 src/lib/
-import { Collection, Document } from "mongodb";
+import { Collection, Document, ObjectId } from "mongodb";
 
 // 定义脚本数据的接口
 interface NewScriptData {
@@ -171,3 +171,77 @@ export async function POST(request: Request) {
 }
 
 // 未来可以添加 GET (获取列表或单个), PUT (更新), DELETE (删除) 方法
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function GET(_request: Request) {
+  try {
+    console.log("API: GET /api/scripts - 请求已收到");
+
+    const collection = await getSqlScriptsCollection();
+    const scriptsFromDb = await collection
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    console.log(
+      `API: GET /api/scripts - 从数据库中找到 ${scriptsFromDb.length} 个脚本`
+    );
+
+    // 明确定义从数据库获取的文档类型
+    interface ScriptDocumentFromDb extends Document {
+      _id: ObjectId;
+      scriptId: string;
+      name: string;
+      cnName?: string;
+      description?: string;
+      cnDescription?: string;
+      scope?: string;
+      cnScope?: string;
+      author: string;
+      sqlContent: string;
+      isScheduled?: boolean;
+      cronSchedule?: string;
+      createdAt: Date | string;
+      updatedAt: Date | string;
+    }
+
+    const scripts = scriptsFromDb.map((docUncasted) => {
+      const doc = docUncasted as ScriptDocumentFromDb;
+      const { _id, createdAt, updatedAt, ...rest } = doc;
+      return {
+        ...rest,
+        _id: _id.toString(),
+        scriptId: doc.scriptId,
+        name: doc.name,
+        cnName: doc.cnName || "",
+        description: doc.description || "",
+        cnDescription: doc.cnDescription || "",
+        scope: doc.scope || "",
+        cnScope: doc.cnScope || "",
+        author: doc.author,
+        sqlContent: doc.sqlContent,
+        isScheduled: doc.isScheduled || false,
+        cronSchedule: doc.cronSchedule || "",
+        createdAt:
+          createdAt instanceof Date
+            ? createdAt.toISOString()
+            : String(createdAt),
+        updatedAt:
+          updatedAt instanceof Date
+            ? updatedAt.toISOString()
+            : String(updatedAt),
+      };
+    });
+
+    return NextResponse.json(scripts, { status: 200 });
+  } catch (error) {
+    console.error("API: GET /api/scripts - 获取脚本列表时出错:", error);
+
+    const errorMessage =
+      error instanceof Error ? error.message : "获取脚本列表时发生未知错误。";
+
+    return NextResponse.json(
+      { message: `获取脚本列表失败: ${errorMessage}`, error: String(error) },
+      { status: 500 }
+    );
+  }
+}

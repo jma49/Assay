@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import mongoDbClient from "@/lib/mongodb";
 import { Collection, Document } from "mongodb";
-import { ObjectId } from "mongodb"; // For validating MongoDB ObjectId if used directly, though we use scriptId
 
 // Helper function to get the MongoDB collection
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
@@ -9,7 +8,7 @@ async function getSqlScriptsCollection(): Promise<Collection<Document>> {
   return db.collection("sql_scripts"); // From sql_script_result DB
 }
 
-interface ScriptParams {
+interface RouteContext {
   params: {
     scriptId: string;
   };
@@ -51,9 +50,9 @@ function containsHarmfulSql(sqlContent: string): boolean {
 }
 
 // GET a single script by scriptId
-export async function GET(request: Request, { params }: ScriptParams) {
+export async function GET(request: Request, context: RouteContext) {
   try {
-    const { scriptId } = params;
+    const { scriptId } = context.params;
 
     if (!scriptId) {
       return NextResponse.json(
@@ -93,9 +92,9 @@ export async function GET(request: Request, { params }: ScriptParams) {
 }
 
 // PUT (update) a script by scriptId
-export async function PUT(request: Request, { params }: ScriptParams) {
+export async function PUT(request: Request, context: RouteContext) {
   try {
-    const { scriptId } = params;
+    const { scriptId } = context.params;
     const body = await request.json();
     const {
       name,
@@ -189,7 +188,7 @@ export async function PUT(request: Request, { params }: ScriptParams) {
       { status: 200 }
     );
   } catch (error) {
-    console.error(`Error updating script ${params.scriptId}:`, error);
+    console.error(`Error updating script ${context.params.scriptId}:`, error);
     if (error instanceof SyntaxError) {
       // JSON parsing error
       return NextResponse.json(
@@ -207,9 +206,9 @@ export async function PUT(request: Request, { params }: ScriptParams) {
 }
 
 // DELETE a script by scriptId
-export async function DELETE(request: Request, { params }: ScriptParams) {
+export async function DELETE(request: Request, context: RouteContext) {
   try {
-    const { scriptId } = params;
+    const { scriptId } = context.params;
 
     if (!scriptId) {
       return NextResponse.json(
@@ -236,7 +235,7 @@ export async function DELETE(request: Request, { params }: ScriptParams) {
       { status: 200 }
     );
   } catch (error) {
-    console.error(`Error deleting script ${params.scriptId}:`, error);
+    console.error(`Error deleting script ${context.params.scriptId}:`, error);
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
