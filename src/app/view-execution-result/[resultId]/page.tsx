@@ -44,6 +44,7 @@ const viewResultTranslations = {
     message: 'Message',
     resultId: 'Result ID',
     queryFindings: 'Query Findings',
+    createdAt: 'Created At', 
     noData: 'No Data Found',
     noDataDesc: 'This script execution did not return any data',
     scriptTypes: {
@@ -73,6 +74,7 @@ const viewResultTranslations = {
     message: '消息',
     resultId: '结果 ID',
     queryFindings: '查询发现',
+    createdAt: '创建时间',
     noData: '无数据发现',
     noDataDesc: '此脚本执行未返回任何数据结果',
     scriptTypes: {

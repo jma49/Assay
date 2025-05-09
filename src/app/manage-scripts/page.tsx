@@ -316,7 +316,7 @@ const ManageScriptsPage = () => {
                     <TableHead className="w-[200px]">{t('fieldScriptId')}</TableHead>
                     <TableHead>{t('fieldScriptNameEn')}</TableHead>
                     <TableHead className="hidden md:table-cell">{t('fieldScriptAuthor')}</TableHead>
-                    <TableHead className="hidden lg:table-cell">{t('createdAt')}</TableHead>
+                    <TableHead className="hidden lg:table-cell">{t('fieldCreatedAt')}</TableHead>
                     <TableHead className="hidden lg:table-cell">{t('fieldUpdatedAt')}</TableHead>
                     <TableHead className="text-right w-[120px]">{t('tableActions')}</TableHead>
                   </TableRow>
