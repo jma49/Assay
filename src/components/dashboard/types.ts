@@ -123,7 +123,9 @@ export type DashboardTranslationKeys =
   | "scriptMetadataDesc"
   | "fillRequiredFieldsError"
   | "invalidScriptIdError"
-  | "savingStatusText";
+  | "savingStatusText"
+  | "dataAnalysisButton"
+  | "dataAnalysisTitle";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -304,6 +306,9 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     invalidScriptIdError:
       "Invalid Script ID format. Use lowercase letters, numbers, and hyphens.",
     savingStatusText: "Saving...",
+    // Data Analysis
+    dataAnalysisButton: "Data Analysis",
+    dataAnalysisTitle: "Data Analysis",
   },
   zh: {
     // General
@@ -441,5 +446,8 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     fillRequiredFieldsError: "请填写所有必填项：脚本ID、名称和 SQL 内容。",
     invalidScriptIdError: "无效的脚本ID格式。请使用小写字母、数字和连字符。",
     savingStatusText: "保存中...",
+    // Data Analysis
+    dataAnalysisButton: "数据分析",
+    dataAnalysisTitle: "数据分析",
   },
 };

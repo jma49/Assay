@@ -54,7 +54,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
       {stats.map((stat, i) => (
         <Card 
           key={i} 
-          className="unified-card bounce-in shadow-sm hover:shadow-md transition-all duration-300" 
+          className="unified-card bounce-in shadow-sm hover:shadow-md transition-all duration-300 bg-card bg-opacity-[.98] dark:bg-opacity-[.98]" 
           style={{ animationDelay: `${i * 100}ms` }}
         >
           <CardContent className="p-5">

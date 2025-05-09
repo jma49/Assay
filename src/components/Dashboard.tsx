@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   RefreshCw,
   PlusCircle,
+  AreaChart,
 } from 'lucide-react';
 import { toast } from "sonner";
 import { useLanguage } from '@/components/ClientLayoutWrapper';
@@ -89,15 +90,21 @@ const Dashboard = () => {
         }
       });
 
-      const [historyData, scriptsData]: [Check[], ScriptInfo[]] = await Promise.all([historyPromise, scriptsPromise]);
+      const [historyData, scriptsDataJSON]: [Check[], ScriptInfo[]] = await Promise.all([historyPromise, scriptsPromise]);
+
+      // Process scriptsDataJSON to convert createdAt strings to Date objects
+      const processedScriptsData: ScriptInfo[] = (scriptsDataJSON || []).map(script => ({
+        ...script,
+        createdAt: script.createdAt ? new Date(script.createdAt) : undefined,
+      }));
 
       setChecks(historyData);
-      setAvailableScripts(scriptsData || []);
+      setAvailableScripts(processedScriptsData);
 
-      if (scriptsData && scriptsData.length > 0 && !selectedScriptId) {
-        setSelectedScriptId(scriptsData[0].scriptId);
+      if (processedScriptsData && processedScriptsData.length > 0 && !selectedScriptId) {
+        setSelectedScriptId(processedScriptsData[0].scriptId);
       }
-      if ((!scriptsData || scriptsData.length === 0) && selectedScriptId) {
+      if ((!processedScriptsData || processedScriptsData.length === 0) && selectedScriptId) {
         setSelectedScriptId('');
       }
 
@@ -285,10 +292,20 @@ const Dashboard = () => {
             </p>
           )}
         </div>
-        <Button onClick={loadInitialData} disabled={isRefreshing} variant="outline">
-          <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? t('refreshingStatusText') : t('refreshDataButton')}
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Link href="/data-analysis" passHref legacyBehavior>
+             <Button variant="outline" className="w-32" asChild>
+               <a>
+                 <AreaChart className="mr-0 h-4 w-4" />
+                 {t('dataAnalysisButton')}
+               </a>
+             </Button>
+           </Link>
+           <Button onClick={loadInitialData} disabled={isRefreshing} variant="outline" className="w-32">
+             <RefreshCw className={`mr-0 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+             {isRefreshing ? t('refreshingStatusText') : t('refreshDataButton')}
+           </Button>
+        </div>
       </header>
 
       <StatsCards 
@@ -323,7 +340,7 @@ const Dashboard = () => {
         <Link href="/scripts/new" passHref legacyBehavior>
           <Button variant="outline" asChild>
             <a>
-              <PlusCircle className="mr-2 h-4 w-4" />
+              <PlusCircle className="mr-0 h-4 w-4" />
               {t('addNewScriptButton')}
             </a>
           </Button>

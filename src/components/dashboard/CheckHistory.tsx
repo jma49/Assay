@@ -57,7 +57,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
   endIndex
 }) => {
   return (
-    <Card className="unified-card shadow-sm hover:shadow-md transition-all duration-300">
+    <Card className="unified-card shadow-sm hover:shadow-md transition-all duration-300 bg-card bg-opacity-[.98] dark:bg-opacity-[.98]">
       <CardHeader className="px-5 py-4 bg-card/50 border-b border-border/50">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
           <div>
