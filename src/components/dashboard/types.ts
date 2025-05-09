@@ -134,7 +134,8 @@ export type DashboardTranslationKeys =
   | "fieldUpdatedAt"
   | "confirmAction"
   | "noScriptsYet"
-  | "manageScriptsButton";
+  | "manageScriptsButton"
+  | "fieldCreatedAt";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -341,6 +342,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
       "Create, view, update, and delete your SQL scripts from a centralized interface.",
     addScriptDialogTitle: "Add New SQL Script",
     editScriptDialogTitle: "Edit SQL Script",
+    fieldCreatedAt: "Created At",
     fieldUpdatedAt: "Updated At",
     confirmAction: "Confirm Action",
     noScriptsYet: "No scripts found. Get started by adding a new one!",
@@ -455,6 +457,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     fieldScriptAuthor: "作者",
     fieldSqlContent: "SQL 内容",
     fieldIsScheduled: "启用定时任务",
+    fieldCreatedAt: "创建时间",
     fieldCronSchedule: "Cron 表达式",
     saveScriptButton: "保存脚本",
     cancelButton: "取消",
