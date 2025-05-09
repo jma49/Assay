@@ -5,6 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardTranslationKeys, ScriptInfo } from './types';
+import { formatDate } from './utils';
 
 interface ManualTriggerProps {
   availableScripts: ScriptInfo[];
@@ -45,33 +46,34 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
   // 确保选中的脚本始终有值
   React.useEffect(() => {
     if (!selectedScriptId && availableScripts.length > 0) {
-      console.log("自动选择第一个脚本:", availableScripts[0].id);
-      setSelectedScriptId(availableScripts[0].id);
+      console.log("自动选择第一个脚本:", availableScripts[0].scriptId);
+      setSelectedScriptId(availableScripts[0].scriptId);
     }
   }, [availableScripts, selectedScriptId, setSelectedScriptId]);
   
   // 获取显示的描述文本（根据语言）
-  const getLocalizedField = (field: string, cnField?: string): string => {
+  const getLocalizedField = (field: string | undefined, cnField?: string): string => {
+    const defaultField = field ?? '-';
     if (language === 'zh' && cnField) {
       return cnField;
     }
-    return field || '-';
+    return defaultField;
   };
   
   const noScriptDesc = t('noScriptDesc') || "No description available for this script.";
   
   // 获取当前显示的描述文本
   const scriptDescription = selectedScript 
-    ? getLocalizedField(selectedScript.description, selectedScript.cn_description) 
+    ? getLocalizedField(selectedScript.description, selectedScript.cnDescription) 
     : noScriptDesc;
     
   // 获取当前显示的范围文本
   const scriptScope = selectedScript 
-    ? getLocalizedField(selectedScript.scope || '', selectedScript.cn_scope) 
+    ? getLocalizedField(selectedScript.scope, selectedScript.cnScope) 
     : '-';
   
   return (
-    <Card className="unified-card shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col">
+    <Card className="unified-card shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col bg-card bg-opacity-[.98] dark:bg-opacity-[.98]">
       <CardHeader className="px-4 py-3 bg-card/50 border-b border-border/50">
         <div className="flex items-center gap-2">
           <div className="icon-container bg-primary/10 rounded-lg">
@@ -103,16 +105,12 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                 className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {availableScripts.map((script) => {
-                  // 获取脚本展示名称（根据语言环境选择）
                   let displayName = script.name;
-                  
-                  // 如果是中文环境且有中文名称，则使用中文名称
-                  if (language === 'zh' && script.cn_name) {
-                    displayName = script.cn_name;
+                  if (language === 'zh' && script.cnName) {
+                    displayName = script.cnName;
                   }
-                  
                   return (
-                    <option key={script.id} value={script.id}>
+                    <option key={script.scriptId} value={script.scriptId}>
                       {displayName}
                     </option>
                   );
@@ -122,9 +120,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
 
             {selectedScript && (
               <div className="bg-card rounded-md text-sm border border-border/30 shadow-sm hover:shadow transition-all duration-300 slide-in-left flex-1 overflow-auto">
-                {/* 脚本元数据展示区 */}
                 <div className="p-4 space-y-4">
-                  {/* 描述区域 - 始终显示 */}
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium flex items-center gap-1.5 text-primary">
                       <div className="icon-container bg-primary/10 rounded-md p-0.5">
@@ -137,7 +133,6 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                     </div>
                   </div>
                   
-                  {/* 范围区域 - 始终显示 */}
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium flex items-center gap-1.5 text-primary">
                       <div className="icon-container bg-primary/10 rounded-md p-0.5">
@@ -150,7 +145,6 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                     </div>
                   </div>
                   
-                  {/* 作者区域 - 始终显示 */}
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium flex items-center gap-1.5 text-primary">
                       <div className="icon-container bg-primary/10 rounded-md p-0.5">
@@ -163,7 +157,6 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                     </div>
                   </div>
                   
-                  {/* 创建日期区域 - 始终显示 */}
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium flex items-center gap-1.5 text-primary">
                       <div className="icon-container bg-primary/10 rounded-md p-0.5">
@@ -172,7 +165,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                       <span>Created</span>
                     </h4>
                     <div className="pl-5 text-sm text-muted-foreground">
-                      {selectedScript.created || '-'}
+                      {selectedScript.createdAt ? formatDate(selectedScript.createdAt.toISOString(), language) : '-'}
                     </div>
                   </div>
                 </div>

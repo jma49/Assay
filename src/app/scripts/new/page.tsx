@@ -24,6 +24,16 @@ const initialFormData: ScriptFormData = {
   cnScope: '',
 };
 
+// Helper function to generate script ID from name
+const generateScriptIdFromName = (name: string): string => {
+  if (!name) return '';
+  return name
+    .toLowerCase()
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/[^a-z0-9-]/g, '') // Remove invalid characters
+    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens (just in case)
+};
+
 export default function NewScriptPage() {
   const router = useRouter();
   const { language } = useLanguage();
@@ -45,6 +55,8 @@ export default function NewScriptPage() {
     )
   );
   const [isSaving, setIsSaving] = useState(false);
+  // Track if scriptId was manually edited to prevent overwriting user input
+  const [scriptIdManuallyEdited, setScriptIdManuallyEdited] = useState(false);
 
   const t = useCallback((key: DashboardTranslationKeys | string): string => {
     const langTranslations = dashboardTranslations[language] || dashboardTranslations.en;
@@ -52,12 +64,31 @@ export default function NewScriptPage() {
     return langTranslations[key as keyof typeof langTranslations] || key.toString();
   }, [language]);
 
-  const handleFormChange = (fieldName: keyof ScriptFormData, value: string) => {
+  const handleFormChange = (
+    fieldName: keyof ScriptFormData,
+    value: string
+  ) => {
+    let newScriptId = formData.scriptId;
+    let isManuallyEditingScriptId = scriptIdManuallyEdited;
+
+    if (fieldName === 'scriptId') {
+      // If user types in scriptId field, mark it as manually edited
+      isManuallyEditingScriptId = true;
+      setScriptIdManuallyEdited(true);
+      newScriptId = value; // Update newScriptId directly
+    } else if (fieldName === 'name' && !isManuallyEditingScriptId) {
+      // If name changes AND scriptId hasn't been manually edited, suggest new ID
+      newScriptId = generateScriptIdFromName(value);
+    } else {
+      // For other fields, scriptId remains unchanged unless it was derived above
+    }
+    
+    // Update the state for the changed field and potentially the scriptId
     setFormData((prev) => ({
       ...prev,
       [fieldName]: value,
+      scriptId: newScriptId, // Update scriptId based on logic above
     }));
-    // TODO: Add better scriptId generation/validation
   };
 
   const handleSqlContentChange = (content: string) => {
@@ -114,17 +145,15 @@ export default function NewScriptPage() {
         {/* Optional: Add a subtitle or breadcrumbs here */}
       </header>
 
-      <ScriptMetadataForm formData={formData} onFormChange={handleFormChange} t={t} />
+      <ScriptMetadataForm formData={formData} onFormChange={handleFormChange} t={t} isEditMode={false} />
 
       {/* CodeMirror SQL Editor Section */}
       <div className="mt-6 space-y-2">
         <Label htmlFor="sqlContent">{t('fieldSqlContent') || 'SQL Content'} <span className="text-destructive">*</span></Label>
-        {/* Replaced Textarea with CodeMirrorEditor */}
         <CodeMirrorEditor 
           value={sqlContent} 
           onChange={handleSqlContentChange} 
-          t={t} 
-          minHeight="350px" // Slightly increased minHeight
+          minHeight="350px"
         />
       </div>
 
