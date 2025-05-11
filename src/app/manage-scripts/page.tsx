@@ -277,7 +277,7 @@ const ManageScriptsPage = () => {
           <div className="mb-4 relative flex items-center">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <Input
-              placeholder={t('searchScriptsPlaceholder') || 'Search by ID, name, author...'}
+              placeholder={t('searchScriptsPlaceholder') || 'Search by ID, name, author...'} // TODO: add translation
               value={searchTerm}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
               className="max-w-sm pl-10"
