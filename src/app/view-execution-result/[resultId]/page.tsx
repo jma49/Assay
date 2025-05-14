@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useLanguage } from '@/components/ClientLayoutWrapper';
+import { Button } from '@/components/ui/button';
+import { Home } from 'lucide-react';
 
 // 基于SQL脚本实际输出的精确类型定义
 interface OrderDuplicateDetail {
@@ -188,12 +190,10 @@ export default function ViewExecutionResultPage() {
           >
             {t.retry}
           </button>
-          <button 
-            onClick={handleGoToDashboard}
-            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
-          >
+          <Button onClick={handleGoToDashboard}>
+            <Home className="h-4 w-4" /> 
             {t.back}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -204,12 +204,10 @@ export default function ViewExecutionResultPage() {
       <div className="container mx-auto p-8 bg-yellow-50 rounded-lg text-center">
         <h2 className="text-2xl font-bold text-yellow-700">{t.notFound}</h2>
         <p className="mt-4">{t.noResultFound} {resultId} 的执行结果。</p>
-        <button 
-          onClick={handleGoToDashboard}
-          className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-        >
+        <Button onClick={handleGoToDashboard} className="mt-6">
+          <Home className="h-4 w-4" /> 
           {t.back}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -284,7 +282,7 @@ export default function ViewExecutionResultPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-8 bg-gray-50 min-h-screen">
-      <div className="bg-white shadow-lg rounded-lg p-6 md:p-8">
+      <div className="bg-card/90 dark:bg-card/90 backdrop-blur-sm shadow-lg rounded-lg p-6 md:p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">{t.executionDetails}</h1>
           <span className={`text-sm font-medium px-3 py-1 rounded-full ${scriptType.color} bg-opacity-10`}>
@@ -323,12 +321,10 @@ export default function ViewExecutionResultPage() {
         </div>
         
         <div className="mt-8 text-center">
-          <button 
-            onClick={handleGoToDashboard}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-          >
+          <Button onClick={handleGoToDashboard}>
+            <Home className="h-4 w-4" /> 
             {t.back}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

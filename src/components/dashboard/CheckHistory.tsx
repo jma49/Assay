@@ -58,8 +58,8 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
   endIndex
 }) => {
   return (
-    <Card className="unified-card shadow-sm hover:shadow-md transition-all duration-300 bg-card bg-opacity-[.98] dark:bg-opacity-[.98]">
-      <CardHeader className="px-5 py-4 bg-card/50 border-b border-border/50">
+    <Card className="shadow-sm hover:shadow-md transition-all duration-300 bg-card/90 dark:bg-card/90 backdrop-blur-sm">
+      <CardHeader className="px-5 py-4 border-b border-border/50">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
           <div>
             <CardTitle className="flex items-center gap-2">
@@ -285,7 +285,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
         </div>
       </CardContent>
       {totalPages > 1 && (
-        <CardFooter className="flex items-center justify-between border-t px-4 py-2.5 text-xs bg-card/50">
+        <CardFooter className="flex items-center justify-between border-t px-5 py-2.5 text-xs">
           <div className="text-muted-foreground">
             {t('pageInfo')
               .replace('%s', String(startIndex + 1))

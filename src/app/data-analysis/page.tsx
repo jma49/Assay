@@ -25,7 +25,7 @@ export default function DataAnalysisPage() {
         </h1>
       </header>
       
-      <Card>
+      <Card className="bg-card/90 dark:bg-card/90 backdrop-blur-sm">
         <CardHeader>
           <CardTitle>{t('dataAnalysisPlaceholderTitle') || 'Analysis Area'}</CardTitle>
           <CardDescription>
