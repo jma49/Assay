@@ -3,7 +3,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Checkbox } from "@/components/ui/checkbox";
 import { DashboardTranslationKeys } from '@/components/dashboard/types'; // For t function type
+import { Clock } from 'lucide-react'; // 新增：导入 Clock 图标
 
 // Define the shape of the script metadata
 export interface ScriptFormData {
@@ -15,12 +17,14 @@ export interface ScriptFormData {
   author: string;
   scope: string;
   cnScope: string;
+  isScheduled: boolean;
+  cronSchedule: string;
   // sqlContent will be handled separately by the CodeMirror editor
 }
 
 interface ScriptMetadataFormProps {
   formData: ScriptFormData;
-  onFormChange: (fieldName: keyof ScriptFormData, value: string) => void;
+  onFormChange: (fieldName: keyof ScriptFormData, value: string | boolean) => void;
   t: (key: DashboardTranslationKeys | string) => string; // Allow string for new keys initially
   isEditMode?: boolean; // To disable scriptId field in edit mode
 }
@@ -35,6 +39,12 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     onFormChange(e.target.name as keyof ScriptFormData, e.target.value);
+  };
+
+  const handleCheckboxChange = (checked: boolean | 'indeterminate') => {
+    if (typeof checked === 'boolean') {
+      onFormChange('isScheduled', checked);
+    }
   };
 
   return (
@@ -146,6 +156,43 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
               />
             </div>
           </div>
+        </div>
+
+        {/* Scheduling Fields - New Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t">
+          {/* isScheduled Checkbox */}
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="isScheduled"
+              name="isScheduled"
+              checked={formData.isScheduled}
+              onCheckedChange={handleCheckboxChange}
+              aria-label={t('fieldIsScheduled') || 'Enable Schedule'}
+            />
+            <Label 
+              htmlFor="isScheduled" 
+              className="font-normal flex items-center gap-1.5 cursor-pointer text-sm"
+            >
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              {t('fieldIsScheduled') || 'Enable Schedule'}
+            </Label>
+          </div>
+
+          {/* cronSchedule Input (conditionally rendered/enabled) */}
+          {formData.isScheduled && (
+            <div className="space-y-2">
+              <Label htmlFor="cronSchedule">{t('fieldCronSchedule') || 'Cron Schedule'} <span className="text-destructive">*</span></Label>
+              <Input
+                id="cronSchedule"
+                name="cronSchedule"
+                value={formData.cronSchedule}
+                onChange={handleChange}
+                placeholder={t('cronSchedulePlaceholder') || 'e.g., 0 0 * * *'}
+                disabled={!formData.isScheduled} // Also disable if not scheduled
+                required={formData.isScheduled} // Required only if scheduling is enabled
+              />
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -23,8 +23,9 @@ interface UpdateScriptData {
   cnScope?: string;
   author?: string;
   sqlContent?: string;
+  isScheduled?: boolean;
+  cronSchedule?: string;
   // scriptId is from URL param, not body for update
-  // isScheduled and cronSchedule are handled by a separate route
 }
 
 // Helper function: 检查 SQL 内容的安全性 (基础 DDL/DML 检查) - Copied from POST route for consistency
@@ -113,6 +114,8 @@ export async function PUT(
       cnScope,
       author,
       sqlContent,
+      isScheduled,
+      cronSchedule,
     } = body as UpdateScriptData;
 
     if (!scriptId) {
@@ -157,6 +160,12 @@ export async function PUT(
     if (cnScope !== undefined) updateData.cnScope = cnScope;
     if (author !== undefined) updateData.author = author;
     if (sqlContent !== undefined) updateData.sqlContent = sqlContent;
+    if (isScheduled !== undefined && typeof isScheduled === "boolean") {
+      updateData.isScheduled = isScheduled;
+    }
+    if (cronSchedule !== undefined && typeof cronSchedule === "string") {
+      updateData.cronSchedule = cronSchedule;
+    }
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(

@@ -191,6 +191,7 @@ export interface ScriptInfo {
   author?: string;
   createdAt?: Date;
   isScheduled?: boolean;
+  cronSchedule?: string;
   sqlContent?: string;
 }
 

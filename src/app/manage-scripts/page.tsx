@@ -97,12 +97,18 @@ const ManageScriptsPage = () => {
         scriptId: newScriptId,
         name: '', cnName: '', description: '', cnDescription: '',
         scope: '', cnScope: '', author: '',
+        isScheduled: false,
+        cronSchedule: '',
       });
       setCurrentSqlContent(templateSql);
       setInitialSqlContentForEdit(templateSql);
       setScriptIdManuallyEdited(false);
     } else if (scriptData) {
-      setCurrentFormScript({...scriptData});
+      setCurrentFormScript({
+        ...scriptData,
+        isScheduled: typeof scriptData.isScheduled === 'boolean' ? scriptData.isScheduled : false,
+        cronSchedule: scriptData.cronSchedule || '',
+      });
       setCurrentSqlContent(scriptData.sqlContent || '');
       setInitialSqlContentForEdit(scriptData.sqlContent || '');
       setScriptIdManuallyEdited(true);
@@ -110,7 +116,7 @@ const ManageScriptsPage = () => {
     setIsDialogOpen(true);
   };
 
-  const handleMetadataChange = (fieldName: keyof ScriptFormData, value: string) => {
+  const handleMetadataChange = (fieldName: keyof ScriptFormData, value: string | boolean) => {
     setCurrentFormScript((prev: ManageScriptFormState) => ({
       ...prev,
       [fieldName]: value,
@@ -118,7 +124,7 @@ const ManageScriptsPage = () => {
     if (fieldName === 'scriptId') {
       setScriptIdManuallyEdited(true);
     }
-    if (dialogMode === 'add' && fieldName === 'name' && !scriptIdManuallyEdited && value) {
+    if (dialogMode === 'add' && fieldName === 'name' && !scriptIdManuallyEdited && typeof value === 'string' && value) {
       const suggestedId = value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       setCurrentFormScript((prev: ManageScriptFormState) => ({ ...prev, scriptId: suggestedId }));
     }
@@ -159,7 +165,7 @@ const ManageScriptsPage = () => {
         successMessage = t('scriptSavedSuccess');
         errorMessageKey = 'scriptSaveError';
       } else {
-        const updatePayload: Partial<Omit<SqlScript, 'scriptId' | '_id' | 'createdAt' | 'updatedAt'>> = {
+        const updatePayload: Partial<SqlScript> = {
           name: currentPayload.name,
           cnName: currentPayload.cnName,
           description: currentPayload.description,
@@ -167,13 +173,20 @@ const ManageScriptsPage = () => {
           scope: currentPayload.scope,
           cnScope: currentPayload.cnScope,
           author: currentPayload.author,
+          isScheduled: currentPayload.isScheduled,
+          cronSchedule: currentPayload.cronSchedule,
         };
+
         if (currentSqlContent !== initialSqlContentForEdit) {
           updatePayload.sqlContent = currentSqlContent;
         }
-        Object.keys(updatePayload).forEach(key => 
-          updatePayload[key as keyof typeof updatePayload] === undefined && delete updatePayload[key as keyof typeof updatePayload]
-        );
+        
+        Object.keys(updatePayload).forEach(key => {
+          const typedKey = key as keyof typeof updatePayload;
+          if (updatePayload[typedKey] === undefined) {
+            delete updatePayload[typedKey];
+          }
+        });
 
         response = await fetch(`/api/scripts/${currentFormScript.scriptId}`, {
           method: 'PUT',
@@ -250,6 +263,8 @@ const ManageScriptsPage = () => {
     author: currentFormScript.author || '',
     scope: currentFormScript.scope || '',
     cnScope: currentFormScript.cnScope || '',
+    isScheduled: typeof currentFormScript.isScheduled === 'boolean' ? currentFormScript.isScheduled : false,
+    cronSchedule: currentFormScript.cronSchedule || '',
   };
 
   return (
