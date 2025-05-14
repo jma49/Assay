@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, ChangeEvent } from 'react';
+import Link from 'next/link';
 import { 
-  PlusCircle, Edit, Trash2, RefreshCw, Search, AlertTriangle, Save, Loader2 
+  PlusCircle, Edit, Trash2, RefreshCw, Search, AlertTriangle, Save, Loader2, Home
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -407,6 +408,17 @@ const ManageScriptsPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <div className="flex justify-end mt-8">
+        <Link href="/" passHref legacyBehavior>
+          <Button asChild>
+            <a>
+              <Home className="h-4 w-4" /> 
+              {t('backToDashboardButton') || 'Back to Dashboard'}
+            </a>
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 };

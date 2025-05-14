@@ -127,6 +127,8 @@ export type DashboardTranslationKeys =
   | "dataAnalysisButton"
   | "dataAnalysisTitle"
   | "backToList"
+  | "backToDashboardButton"
+  | "viewFullReportButton"
   | "manageScriptsPageTitle"
   | "manageScriptsPageDescription"
   | "addScriptDialogTitle"
@@ -231,6 +233,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     triggerFailed: "Trigger Check Failed",
     noScriptsAvailable: "No Check Scripts Available",
     ensureConfigured: "Ensure scripts are correctly configured and deployed.",
+    backToDashboardButton: 'Back to Dashboard',
     // History Table
     historyTitle: "Check History",
     historyDesc: "Showing results for the last %s checks",
@@ -259,6 +262,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     noRawData: "No raw data",
     viewGitHubAction: "View GitHub Action",
     noMessage: "No message",
+    viewFullReportButton: 'View Full Report',
     // Footer
     footerSystem: "SQL Check System",
     footerInfo:
@@ -485,6 +489,8 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     fillRequiredFieldsError: "请填写所有必填项：脚本ID、名称和 SQL 内容。",
     invalidScriptIdError: "无效的脚本ID格式。请使用小写字母、数字和连字符。",
     savingStatusText: "保存中...",
+    backToDashboardButton: '返回仪表盘',
+    viewFullReportButton: '查看完整报告',
     // Data Analysis
     dataAnalysisButton: "数据分析",
     dataAnalysisTitle: "数据分析",

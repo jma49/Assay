@@ -1,9 +1,10 @@
 import React from 'react';
-import { AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock, Database, ExternalLink, Filter, Search, X } from 'lucide-react';
+import Link from 'next/link';
+import { AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock, Database, ExternalLink, Filter, Search, X, FileText } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Check, CheckStatus, DashboardTranslationKeys } from './types';
@@ -248,23 +249,22 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                           </SheetTrigger>
                           <SheetContent className="overflow-y-auto sm:max-w-md">
                             <SheetHeader className="border-b pb-4">
-                              <SheetTitle className="text-xl flex items-center gap-2">
-                                {check.statusType === "attention_needed" ? (
-                                  <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
-                                ) : check.status === CheckStatus.SUCCESS ? (
-                                  <CheckCircle className="h-5 w-5 text-green-500" />
-                                ) : (
-                                  <AlertCircle className="h-5 w-5 text-red-500" />
-                                )}
-                                {t('checkDetails')}
-                              </SheetTitle>
-                              <SheetDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 text-sm">
-                                <span className="font-semibold">{check.script_name}</span>
-                                <span className="hidden sm:inline text-muted-foreground">•</span>
-                                <span className="text-muted-foreground">{formatDate(check.execution_time, language)}</span>
+                              <SheetTitle>{t('checkDetailsTitle')} - {check.script_name}</SheetTitle>
+                              <SheetDescription>
+                                {t('checkDetailsDesc').replace('{scriptId}', check.script_id).replace('{executionTime}', formatDate(check.execution_time, language))}
                               </SheetDescription>
                             </SheetHeader>
-                            <CheckDetails check={check} mode="sheet" t={t} />
+                            <CheckDetails check={check} t={t} language={language} />
+                            <SheetFooter className="pt-4 mt-auto border-t">
+                                <Link href={`/view-execution-result/${check._id}`} passHref legacyBehavior>
+                                  <Button asChild variant="outline">
+                                    <a>
+                                      <FileText className="mr-2 h-4 w-4" />
+                                      {t('viewFullReportButton') || 'View Full Report'}
+                                    </a>
+                                  </Button>
+                                </Link>
+                            </SheetFooter>
                           </SheetContent>
                         </Sheet>
                       </div>
