@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  Card, CardContent, CardHeader, CardTitle, CardDescription
+  Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter
 } from '@/components/ui/card';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
@@ -254,7 +254,7 @@ const ManageScriptsPage = () => {
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-6">
-      <Card>
+      <Card className="bg-card/90 dark:bg-card/90 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div>
             <CardTitle className="text-2xl font-bold">
@@ -349,6 +349,16 @@ const ManageScriptsPage = () => {
             </div>
           )}
         </CardContent>
+        <CardFooter className="flex justify-end pt-6 border-t">
+          <Link href="/" passHref legacyBehavior>
+            <Button asChild>
+              <a>
+                <Home className="h-4 w-4" /> 
+                {t('backToDashboardButton') || 'Back to Dashboard'}
+              </a>
+            </Button>
+          </Link>
+        </CardFooter>
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -408,17 +418,6 @@ const ManageScriptsPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <div className="flex justify-end mt-8">
-        <Link href="/" passHref legacyBehavior>
-          <Button asChild>
-            <a>
-              <Home className="h-4 w-4" /> 
-              {t('backToDashboardButton') || 'Back to Dashboard'}
-            </a>
-          </Button>
-        </Link>
-      </div>
     </div>
   );
 };

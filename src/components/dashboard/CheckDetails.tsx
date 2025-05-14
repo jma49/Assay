@@ -15,7 +15,7 @@ interface CheckDetailsProps {
 export const CheckDetails: React.FC<CheckDetailsProps> = ({ check, mode, t }) => {
   const content = (
     <>
-      <div className="bg-card rounded-lg border shadow-sm p-4">
+      <div className="bg-card/90 dark:bg-card/90 backdrop-blur-sm rounded-lg border shadow-sm p-4">
         <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
           {check.statusType === "attention_needed" ? (
             <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
@@ -44,7 +44,7 @@ export const CheckDetails: React.FC<CheckDetailsProps> = ({ check, mode, t }) =>
         )}
       </div>
       
-      <div className="bg-card rounded-lg border shadow-sm p-4">
+      <div className="bg-card/90 dark:bg-card/90 backdrop-blur-sm rounded-lg border shadow-sm p-4">
         <h4 className="text-sm font-semibold mb-2">{t('executionMessage')}</h4>
         <div className="bg-muted/50 p-3 rounded-md text-sm break-words border">
           {check.message || <span className="italic text-muted-foreground">{t('noMessage')}</span>}
@@ -52,7 +52,7 @@ export const CheckDetails: React.FC<CheckDetailsProps> = ({ check, mode, t }) =>
       </div>
 
       {check.findings && (
-        <div className="bg-card rounded-lg border shadow-sm p-4">
+        <div className="bg-card/90 dark:bg-card/90 backdrop-blur-sm rounded-lg border shadow-sm p-4">
           <h4 className="text-sm font-semibold mb-2">{t('findings')}</h4>
           <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded-md text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 break-words">
             {check.findings}
@@ -60,7 +60,7 @@ export const CheckDetails: React.FC<CheckDetailsProps> = ({ check, mode, t }) =>
         </div>
       )}
 
-      <div className="bg-card rounded-lg border shadow-sm p-4">
+      <div className="bg-card/90 dark:bg-card/90 backdrop-blur-sm rounded-lg border shadow-sm p-4">
         <h4 className="text-sm font-semibold mb-2">{t('rawResults')}</h4>
         <RawResultsTable results={check.raw_results} noDataText={t('noRawData')} />
       </div>

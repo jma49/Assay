@@ -13,7 +13,7 @@ interface LoadingErrorProps {
 export const LoadingError: React.FC<LoadingErrorProps> = ({ error, t }) => {
   return (
     <div className="flex flex-col justify-center items-center min-h-screen bg-background p-4">
-      <Card className="w-full max-w-md border-destructive">
+      <Card className="w-full max-w-md border-destructive bg-card/90 dark:bg-card/90 backdrop-blur-sm">
         <CardHeader>
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-2" />
           <CardTitle className="text-center text-destructive">{t('errorTitle')}</CardTitle>

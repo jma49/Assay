@@ -73,8 +73,8 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
     : '-';
   
   return (
-    <Card className="unified-card shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col bg-card bg-opacity-[.98] dark:bg-opacity-[.98]">
-      <CardHeader className="px-4 py-3 bg-card/50 border-b border-border/50">
+    <Card className="shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col bg-card/90 dark:bg-card/90 backdrop-blur-sm">
+      <CardHeader className="px-4 py-3 border-b border-border/50">
         <div className="flex items-center gap-2">
           <div className="icon-container bg-primary/10 rounded-lg">
             <List className="h-5 w-5 text-primary" />
