@@ -3,7 +3,7 @@ import mongoDbClient from "@/lib/mongodb";
 import { Collection, Document } from "mongodb";
 import { executeScriptAndNotify } from "@/lib/script-executor";
 import { SqlScript } from "@/components/dashboard/types"; // Using existing SqlScript type
-import { ExecutionResult } from "@/scripts/types"; // For typing the result of executeScriptAndNotify
+import { ExecutionResult } from "../../../../scripts/types"; // Corrected path
 
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
   const db = await mongoDbClient.getDb();
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
         isScheduled: true,
         cronSchedule: { $exists: true, $ne: "" }, // Ensure cronSchedule is present and not empty
       })
-      .toArray()) as SqlScript[];
+      .toArray()) as unknown as SqlScript[];
 
     if (scriptsToRun.length === 0) {
       console.log(
