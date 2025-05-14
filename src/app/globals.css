@@ -156,42 +156,48 @@ body {
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #24273a; /* Base */
+  --foreground: #cad3f5; /* Text */
+  --card: #1e2030; /* Mantle */
+  --card-foreground: #cad3f5; /* Text */
+  --popover: #1e2030; /* Mantle */
+  --popover-foreground: #cad3f5; /* Text */
+  --primary: #89b4fa; /* Blue */
+  --primary-foreground: #181926; /* Crust */
+  --secondary: #494d64; /* Surface1 */
+  --secondary-foreground: #cad3f5; /* Text */
+  --muted: #363a4f; /* Surface0 */
+  --muted-foreground: #a5adce; /* Subtext0 */
+  --accent: #94e2d5; /* Teal */
+  --accent-foreground: #181926; /* Crust */
+  --destructive: #f38ba8; /* Red */
+  --destructive-foreground: #181926; /* Crust - 新增以确保对比度 */
+  --border: #494d64; /* Surface1 */
+  --input: #363a4f; /* Surface0 */
+  --ring: #89b4fa; /* Blue */
+
+  /* 图表颜色 */
+  --chart-1: #a6e3a1; /* Green */
+  --chart-2: #89b4fa; /* Blue */
+  --chart-3: #f9e2af; /* Yellow */
+  --chart-4: #fab387; /* Peach */
+  --chart-5: #cba6f7; /* Mauve */
+
+  /* 侧边栏颜色 */
+  --sidebar: #1e2030; /* Mantle */
+  --sidebar-foreground: #cad3f5; /* Text */
+  --sidebar-primary: #89b4fa; /* Blue */
+  --sidebar-primary-foreground: #181926; /* Crust */
+  --sidebar-accent: #94e2d5; /* Teal */
+  --sidebar-accent-foreground: #181926; /* Crust */
+  --sidebar-border: #494d64; /* Surface1 */
+  --sidebar-ring: #89b4fa; /* Blue */
   
-  /* 深色模式下的特色化设计变量 */
+  /* 深色模式下的特色化设计变量 - 保留原样或根据新主题调整 */
+  /* 以下变量暂时保留原样，您可以根据 Catppuccin 风格进一步调整这些阴影和效果 */
   --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
   --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.6);
-  --texture-opacity: 0.05;
+  --texture-opacity: 0.05; /* Catppuccin 通常比较扁平，可以考虑减小或移除纹理 */
   --gradient-angle: 135deg;
 }
 
