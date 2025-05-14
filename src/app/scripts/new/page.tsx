@@ -22,6 +22,8 @@ const initialFormData: ScriptFormData = {
   author: '',
   scope: '',
   cnScope: '',
+  isScheduled: false,
+  cronSchedule: '',
 };
 
 // Helper function to generate script ID from name
@@ -66,28 +68,25 @@ export default function NewScriptPage() {
 
   const handleFormChange = (
     fieldName: keyof ScriptFormData,
-    value: string
+    value: string | boolean
   ) => {
     let newScriptId = formData.scriptId;
     let isManuallyEditingScriptId = scriptIdManuallyEdited;
 
-    if (fieldName === 'scriptId') {
-      // If user types in scriptId field, mark it as manually edited
+    if (fieldName === 'scriptId' && typeof value === 'string') {
       isManuallyEditingScriptId = true;
       setScriptIdManuallyEdited(true);
-      newScriptId = value; // Update newScriptId directly
-    } else if (fieldName === 'name' && !isManuallyEditingScriptId) {
-      // If name changes AND scriptId hasn't been manually edited, suggest new ID
+      newScriptId = value;
+    } else if (fieldName === 'name' && typeof value === 'string' && !isManuallyEditingScriptId) {
       newScriptId = generateScriptIdFromName(value);
     } else {
-      // For other fields, scriptId remains unchanged unless it was derived above
+      // For other fields or if value is boolean, scriptId logic doesn't apply directly here
     }
     
-    // Update the state for the changed field and potentially the scriptId
     setFormData((prev) => ({
       ...prev,
       [fieldName]: value,
-      scriptId: newScriptId, // Update scriptId based on logic above
+      scriptId: newScriptId, 
     }));
   };
 
@@ -113,7 +112,10 @@ export default function NewScriptPage() {
       const response = await fetch('/api/scripts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, sqlContent }),
+        body: JSON.stringify({ 
+          ...formData,
+          sqlContent 
+        }),
       });
 
       const result = await response.json();
