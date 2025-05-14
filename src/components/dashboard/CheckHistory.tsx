@@ -134,9 +134,9 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/40">
-                <TableHead className="w-[100px]">{t('tableStatus')}</TableHead>
+                <TableHead className="w-[100px] px-3 sm:px-4">{t('tableStatus')}</TableHead>
                 <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  className="cursor-pointer hover:bg-muted/50 transition-colors px-3 sm:px-4"
                   onClick={() => requestSort('script_name')}
                 >
                   <div className="flex items-center">
@@ -149,7 +149,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="hidden md:table-cell cursor-pointer hover:bg-muted/50 transition-colors"
+                  className="hidden md:table-cell cursor-pointer hover:bg-muted/50 transition-colors px-3 sm:px-4"
                   onClick={() => requestSort('execution_time')}
                 >
                   <div className="flex items-center">
@@ -161,8 +161,8 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                     )}
                   </div>
                 </TableHead>
-                <TableHead className="hidden sm:table-cell max-w-xs">{t('tableFindings')}</TableHead>
-                <TableHead className="text-center">{t('tableActions')}</TableHead>
+                <TableHead className="hidden sm:table-cell max-w-xs px-3 sm:px-4">{t('tableFindings')}</TableHead>
+                <TableHead className="text-center px-3 sm:px-4">{t('tableActions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -193,7 +193,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                     "transition-colors hover:bg-muted/20",
                     expandedCheckId === check._id ? "bg-muted/60" : ""
                   )}>
-                    <TableCell>
+                    <TableCell className="px-3 sm:px-4">
                       {check.statusType === "attention_needed" ? (
                         <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300 dark:bg-yellow-950 dark:text-yellow-400 dark:border-yellow-700">
                           <AlertCircle className="h-3.5 w-3.5 mr-1 text-yellow-600 dark:text-yellow-500" />
@@ -211,16 +211,16 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium px-3 sm:px-4">
                       {check.script_name}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-muted-foreground">
+                    <TableCell className="hidden md:table-cell text-muted-foreground px-3 sm:px-4">
                       {formatDate(check.execution_time, language)}
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell max-w-xs truncate" title={check.findings || check.message || t('noData')}>
+                    <TableCell className="hidden sm:table-cell max-w-xs truncate px-3 sm:px-4" title={check.findings || check.message || t('noData')}>
                       {check.findings || check.message || <span className="italic text-muted-foreground">{t('noData')}</span>}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center px-3 sm:px-4">
                       <div className="flex justify-center gap-1.5">
                         <Button
                           variant={expandedCheckId === check._id ? "default" : "outline"}
@@ -254,7 +254,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                                 {t('checkDetailsDesc').replace('{scriptId}', check.script_id).replace('{executionTime}', formatDate(check.execution_time, language))}
                               </SheetDescription>
                             </SheetHeader>
-                            <CheckDetails check={check} t={t} language={language} />
+                            <CheckDetails check={check} t={t} mode="sheet" />
                             <SheetFooter className="pt-4 mt-auto border-t">
                                 <Link href={`/view-execution-result/${check._id}`} passHref legacyBehavior>
                                   <Button asChild variant="outline">
