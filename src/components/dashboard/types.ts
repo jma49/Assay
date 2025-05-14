@@ -139,7 +139,21 @@ export type DashboardTranslationKeys =
   | "manageScriptsButton"
   | "checkDetailsTitle"
   | "checkDetailsDesc"
-  | "fieldCreatedAt";
+  | "fieldCreatedAt"
+  | "dataAnalysisSubTitle"
+  | "selectAnalysisParamsTitle"
+  | "selectAnalysisParamsDesc"
+  | "dateRangeLabel"
+  | "scriptTypeLabel"
+  | "analysisPeriodLabel"
+  | "generateReportButton"
+  | "analysisResultsTitle"
+  | "analysisResultsDesc"
+  | "chartPlaceholderTitle"
+  | "summaryTablePlaceholderTitle"
+  | "noDataForAnalysis"
+  | "comingSoonMessage"
+  | "selectScriptPlaceholder";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -355,7 +369,25 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     noScriptsYet: "No scripts found. Get started by adding a new one!",
     manageScriptsButton: "Manage Scripts",
     checkDetailsTitle: "Check Details",
-    checkDetailsDesc: "Details for script {scriptId}, executed at {executionTime}.",
+    checkDetailsDesc:
+      "Details for script {scriptId}, executed at {executionTime}.",
+    dataAnalysisSubTitle:
+      "Explore trends and insights from your script execution data.",
+    selectAnalysisParamsTitle: "Analysis Parameters",
+    selectAnalysisParamsDesc: "Filter data to refine your analysis.",
+    dateRangeLabel: "Date Range",
+    scriptTypeLabel: "Script Type",
+    analysisPeriodLabel: "Analysis Period",
+    generateReportButton: "Generate Report",
+    analysisResultsTitle: "Analysis Results",
+    analysisResultsDesc: "Visualizations and summaries will appear here.",
+    chartPlaceholderTitle: "Performance Trend (Placeholder)",
+    summaryTablePlaceholderTitle: "Key Metrics Summary (Placeholder)",
+    noDataForAnalysis:
+      "No data available for analysis under the current criteria.",
+    comingSoonMessage:
+      "More detailed analysis features are coming soon! Stay tuned.",
+    selectScriptPlaceholder: "Select a script to run",
   },
   zh: {
     // General
@@ -511,5 +543,19 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     manageScriptsButton: "管理脚本",
     checkDetailsTitle: "检查详情",
     checkDetailsDesc: "脚本 {scriptId} 的详情，执行于 {executionTime}。",
+    dataAnalysisSubTitle: "探索脚本执行数据的趋势和洞察。",
+    selectAnalysisParamsTitle: "分析参数",
+    selectAnalysisParamsDesc: "筛选数据以优化您的分析。",
+    dateRangeLabel: "日期范围",
+    scriptTypeLabel: "脚本类型",
+    analysisPeriodLabel: "分析周期",
+    generateReportButton: "生成报告",
+    analysisResultsTitle: "分析结果",
+    analysisResultsDesc: "图表和数据摘要将在此处显示。",
+    chartPlaceholderTitle: "性能趋势图 (占位符)",
+    summaryTablePlaceholderTitle: "关键指标摘要 (占位符)",
+    noDataForAnalysis: "当前条件下无可用数据进行分析。",
+    comingSoonMessage: "更多详细的分析功能即将推出！敬请期待。",
+    selectScriptPlaceholder: "请选择要运行的脚本",
   },
 };

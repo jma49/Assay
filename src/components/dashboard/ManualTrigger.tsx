@@ -4,6 +4,8 @@ import { Database, List, Loader2, Play, Calendar, User, Book, FileText } from 'l
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { DashboardTranslationKeys, ScriptInfo } from './types';
 import { formatDate } from './utils';
 
@@ -94,28 +96,31 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
         ) : availableScripts.length > 0 ? (
           <div className="space-y-3 flex-1 flex flex-col">
             <div className="grid gap-1">
-              <label htmlFor="script-select" className="text-sm font-medium">
+              <Label htmlFor="script-select" className="text-sm font-medium">
                 {t('selectScriptLabel')}
-              </label>
-              <select
-                id="script-select"
-                value={selectedScriptId}
-                onChange={(e) => setSelectedScriptId(e.target.value)}
+              </Label>
+              <Select 
+                value={selectedScriptId} 
+                onValueChange={setSelectedScriptId} 
                 disabled={isTriggering || loading}
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {availableScripts.map((script) => {
-                  let displayName = script.name;
-                  if (language === 'zh' && script.cnName) {
-                    displayName = script.cnName;
-                  }
-                  return (
-                    <option key={script.scriptId} value={script.scriptId}>
-                      {displayName}
-                    </option>
-                  );
-                })}
-              </select>
+                <SelectTrigger id="script-select" className="w-full">
+                  <SelectValue placeholder={t('selectScriptPlaceholder') || "Select a script"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableScripts.map((script) => {
+                    let displayName = script.name;
+                    if (language === 'zh' && script.cnName) {
+                      displayName = script.cnName;
+                    }
+                    return (
+                      <SelectItem key={script.scriptId} value={script.scriptId}>
+                        {displayName}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
             </div>
 
             {selectedScript && (
