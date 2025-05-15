@@ -333,8 +333,12 @@ export default function ViewExecutionResultPage() {
         </div>
         
         <div className="mt-8 text-center">
-          <Button onClick={handleGoToDashboard} variant="outline" className="dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10">
-            <Home className="h-4 w-4 mr-2" />
+          <Button 
+            onClick={handleGoToDashboard} 
+            variant="default"
+            className="dark:bg-[var(--primary)] dark:text-[var(--primary-foreground)] dark:hover:brightness-90"
+          >
+            <Home className="h-4 w-4" />
             {t.back}
           </Button>
         </div>
