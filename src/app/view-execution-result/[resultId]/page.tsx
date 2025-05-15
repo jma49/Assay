@@ -117,7 +117,16 @@ export default function ViewExecutionResultPage() {
           }
           return res.json();
         })
-        .then((data) => {
+        .then((data: ExecutionResult) => {
+          // 特定脚本状态调整
+          if (
+            data.scriptId === 'orders-sync-daily' &&
+            data.status === 'success' &&
+            Array.isArray(data.findings) &&
+            data.findings.length > 0
+          ) {
+            data.statusType = 'attention_needed';
+          }
           setResult(data);
           setLoading(false);
         })
@@ -150,12 +159,14 @@ export default function ViewExecutionResultPage() {
   };
 
   // 获取脚本类型 (check, validate 等)
-  const getScriptType = (scriptId: string): { type: string, color: string } => {
-    if (scriptId.startsWith('check-')) return { type: t.scriptTypes.check, color: 'text-orange-600' };
-    if (scriptId.startsWith('validate-')) return { type: t.scriptTypes.validate, color: 'text-purple-600' };
-    if (scriptId.startsWith('monitor-')) return { type: t.scriptTypes.monitor, color: 'text-blue-600' };
-    if (scriptId.startsWith('report-')) return { type: t.scriptTypes.report, color: 'text-green-600' };
-    return { type: t.scriptTypes.other, color: 'text-gray-600' };
+  const getScriptType = (scriptId: string): { type: string, textColor: string, bgColor: string } => {
+    // Colors based on Catppuccin Mocha theme from globals.css
+    // Light mode colors are placeholders and should be reviewed if light theme is also Catppuccin
+    if (scriptId.startsWith('check-')) return { type: t.scriptTypes.check, textColor: 'text-orange-600 dark:text-[#fab387]', bgColor: 'bg-orange-100 dark:bg-[#fab387]/20' }; // Peach
+    if (scriptId.startsWith('validate-')) return { type: t.scriptTypes.validate, textColor: 'text-purple-600 dark:text-[#cba6f7]', bgColor: 'bg-purple-100 dark:bg-[#cba6f7]/20' }; // Mauve
+    if (scriptId.startsWith('monitor-')) return { type: t.scriptTypes.monitor, textColor: 'text-blue-600 dark:text-[#89b4fa]', bgColor: 'bg-blue-100 dark:bg-[#89b4fa]/20' }; // Blue
+    if (scriptId.startsWith('report-')) return { type: t.scriptTypes.report, textColor: 'text-green-600 dark:text-[#a6e3a1]', bgColor: 'bg-green-100 dark:bg-[#a6e3a1]/20' }; // Green
+    return { type: t.scriptTypes.other, textColor: 'text-gray-600 dark:text-[#a5adce]', bgColor: 'bg-gray-100 dark:bg-[#363a4f]' }; // Subtext0 on Surface0
   };
 
   const handleRetry = () => {
@@ -172,26 +183,26 @@ export default function ViewExecutionResultPage() {
   if (loading) {
     return (
       <div className="container mx-auto p-8 text-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-        <p className="mt-4 text-lg">{t.loading}</p>
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 dark:border-[#89b4fa] border-r-transparent"></div>
+        <p className="mt-4 text-lg text-gray-700 dark:text-[#a5adce]">{t.loading}</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto p-8 bg-red-50 rounded-lg text-center">
-        <h2 className="text-2xl font-bold text-red-700 mb-4">{t.loadingFailed}</h2>
-        <p className="text-lg text-red-600 mb-6">{error}</p>
+      <div className="container mx-auto p-8 bg-red-50 dark:bg-[#f38ba8]/30 rounded-lg text-center">
+        <h2 className="text-2xl font-bold text-red-700 dark:text-[#f38ba8] mb-4">{t.loadingFailed}</h2>
+        <p className="text-lg text-red-600 dark:text-[#f38ba8] mb-6">{error}</p>
         <div className="flex justify-center gap-4">
-          <button 
+          <button
             onClick={handleRetry}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-[var(--primary)] dark:text-[var(--primary-foreground)] dark:hover:brightness-90 transition"
           >
             {t.retry}
           </button>
-          <Button onClick={handleGoToDashboard}>
-            <Home className="h-4 w-4" /> 
+          <Button onClick={handleGoToDashboard} variant="outline" className="dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10">
+            <Home className="h-4 w-4 mr-2" />
             {t.back}
           </Button>
         </div>
@@ -201,18 +212,18 @@ export default function ViewExecutionResultPage() {
 
   if (!result) {
     return (
-      <div className="container mx-auto p-8 bg-yellow-50 rounded-lg text-center">
-        <h2 className="text-2xl font-bold text-yellow-700">{t.notFound}</h2>
-        <p className="mt-4">{t.noResultFound} {resultId} 的执行结果。</p>
-        <Button onClick={handleGoToDashboard} className="mt-6">
-          <Home className="h-4 w-4" /> 
+      <div className="container mx-auto p-8 bg-yellow-50 dark:bg-[#f9e2af]/30 rounded-lg text-center">
+        <h2 className="text-2xl font-bold text-yellow-700 dark:text-[#f9e2af]">{t.notFound}</h2>
+        <p className="mt-4 text-gray-700 dark:text-[#a5adce]">{t.noResultFound} {resultId} 的执行结果。</p>
+        <Button onClick={handleGoToDashboard} className="mt-6 dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10" variant="outline">
+          <Home className="h-4 w-4 mr-2" />
           {t.back}
         </Button>
       </div>
     );
   }
 
-  const scriptType = getScriptType(result.scriptId);
+  const scriptTypeInfo = getScriptType(result.scriptId);
 
   // 格式化 findings
   let findingsContent;
@@ -221,27 +232,27 @@ export default function ViewExecutionResultPage() {
     const headers = Object.keys(result.findings[0]);
     findingsContent = (
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-[#494d64]">
+          <thead className="bg-gray-50 dark:bg-[#363a4f]">
             <tr>
               {headers.map((header) => (
-                <th key={header} scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th key={header} scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-[#a5adce] uppercase tracking-wider">
                   {header.replace(/_/g, ' ')}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white dark:bg-[#1e2030] divide-y divide-gray-200 dark:divide-[#494d64]">
             {result.findings.map((row, rowIndex) => (
-              <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+              <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-white dark:bg-[#1e2030]' : 'bg-gray-50 dark:bg-[#24273a]'}>
                 {headers.map((header) => {
                   const value = row[header as keyof typeof row];
                   return (
-                    <td key={`${rowIndex}-${header}`} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {value === null ? 
-                        <span className="text-gray-400">NULL</span> :
-                        typeof value === 'object' ? 
-                          JSON.stringify(value) : 
+                    <td key={`${rowIndex}-${header}`} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-[#cad3f5]">
+                      {value === null ?
+                        <span className="text-gray-400 dark:text-[#a5adce]">NULL</span> :
+                        typeof value === 'object' ?
+                          JSON.stringify(value) :
                           String(value)}
                     </td>
                   );
@@ -254,75 +265,76 @@ export default function ViewExecutionResultPage() {
     );
   } else if (typeof result.findings === 'string') {
     findingsContent = (
-      <div className="p-4 border border-gray-200 rounded-md bg-gray-50">
-        <p className="text-gray-700 whitespace-pre-wrap">{result.findings}</p>
+      <div className="p-4 border border-gray-200 dark:border-[#494d64] rounded-md bg-gray-50 dark:bg-[#363a4f]">
+        <p className="text-gray-700 dark:text-[#cad3f5] whitespace-pre-wrap">{result.findings}</p>
       </div>
     );
   } else {
     findingsContent = (
-      <div className="p-6 text-center border border-gray-200 rounded-md bg-gray-50">
-        <p className="text-gray-500">{t.noData}</p>
-        <p className="text-sm text-gray-400 mt-2">{t.noDataDesc}</p>
+      <div className="p-6 text-center border border-gray-200 dark:border-[#494d64] rounded-md bg-gray-50 dark:bg-[#363a4f]">
+        <p className="text-gray-500 dark:text-[#a5adce]">{t.noData}</p>
+        <p className="text-sm text-gray-400 dark:text-[#a5adce] mt-2">{t.noDataDesc}</p>
       </div>
     );
   }
 
   // 状态显示逻辑
-  const statusColor = result.status === 'success' && result.statusType === 'attention_needed' 
-    ? 'text-yellow-600' 
-    : result.status === 'success' 
-      ? 'text-green-600' 
-      : 'text-red-600';
+  // Catppuccin Mocha theme colors: Yellow (#f9e2af), Green (#a6e3a1), Red (#f38ba8)
+  const statusColor = result.status === 'success' && result.statusType === 'attention_needed'
+    ? 'text-yellow-600 dark:text-[#f9e2af]'
+    : result.status === 'success'
+      ? 'text-green-600 dark:text-[#a6e3a1]'
+      : 'text-red-600 dark:text-[#f38ba8]';
 
-  const statusText = result.statusType === 'attention_needed' 
+  const statusText = result.statusType === 'attention_needed'
     ? t.statusTexts.attentionNeeded
-    : result.status === 'success' 
+    : result.status === 'success'
       ? t.statusTexts.success
       : t.statusTexts.failure;
 
   return (
-    <div className="container mx-auto p-4 md:p-8 bg-gray-50 min-h-screen">
-      <div className="bg-card/90 dark:bg-card/90 backdrop-blur-sm shadow-lg rounded-lg p-6 md:p-8">
+    <div className="container mx-auto p-4 md:p-8 bg-gray-50 dark:bg-[#24273a] min-h-screen">
+      <div className="bg-white dark:bg-[#1e2030]/90 backdrop-blur-sm shadow-lg rounded-lg p-6 md:p-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">{t.executionDetails}</h1>
-          <span className={`text-sm font-medium px-3 py-1 rounded-full ${scriptType.color} bg-opacity-10`}>
-            {scriptType.type}脚本
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-[#cad3f5]">{t.executionDetails}</h1>
+          <span className={`text-sm font-medium px-3 py-1 rounded-full ${scriptTypeInfo.textColor} ${scriptTypeInfo.bgColor}`}>
+            {scriptTypeInfo.type}脚本
           </span>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
-            <p className="text-sm font-medium text-gray-500">{t.scriptId}</p>
-            <p className="text-lg text-gray-900">{result.scriptId}</p>
+            <p className="text-sm font-medium text-gray-500 dark:text-[#a5adce]">{t.scriptId}</p>
+            <p className="text-lg text-gray-900 dark:text-[#cad3f5]">{result.scriptId}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">{t.executionTime}</p>
-            <p className="text-lg text-gray-900">{formatDate(result.executedAt)}</p>
+            <p className="text-sm font-medium text-gray-500 dark:text-[#a5adce]">{t.executionTime}</p>
+            <p className="text-lg text-gray-900 dark:text-[#cad3f5]">{formatDate(result.executedAt)}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">{t.status}</p>
+            <p className="text-sm font-medium text-gray-500 dark:text-[#a5adce]">{t.status}</p>
             <p className={`text-lg font-semibold ${statusColor}`}>{statusText}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">{t.message}</p>
-            <p className="text-lg text-gray-900">{result.message}</p>
+            <p className="text-sm font-medium text-gray-500 dark:text-[#a5adce]">{t.message}</p>
+            <p className="text-lg text-gray-900 dark:text-[#cad3f5]">{result.message}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">{t.resultId}</p>
-            <p className="text-lg text-gray-900 font-mono text-sm">{result._id}</p>
+            <p className="text-sm font-medium text-gray-500 dark:text-[#a5adce]">{t.resultId}</p>
+            <p className="text-lg text-gray-900 dark:text-[#cad3f5] font-mono text-sm">{result._id}</p>
           </div>
         </div>
 
         <div className="mt-8">
-          <h2 className="text-xl md:text-2xl font-semibold text-gray-700 mb-4">{t.queryFindings}</h2>
-          <div className="overflow-x-auto border border-gray-200 rounded-md">
+          <h2 className="text-xl md:text-2xl font-semibold text-gray-700 dark:text-[#cad3f5] mb-4">{t.queryFindings}</h2>
+          <div className="overflow-x-auto border border-gray-200 dark:border-[#494d64] rounded-md">
             {findingsContent}
           </div>
         </div>
         
         <div className="mt-8 text-center">
-          <Button onClick={handleGoToDashboard}>
-            <Home className="h-4 w-4" /> 
+          <Button onClick={handleGoToDashboard} variant="outline" className="dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10">
+            <Home className="h-4 w-4 mr-2" />
             {t.back}
           </Button>
         </div>
