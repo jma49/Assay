@@ -90,7 +90,6 @@ const Dashboard = () => {
 
       const [historyData, scriptsDataJSON]: [Check[], ScriptInfo[]] = await Promise.all([historyPromise, scriptsPromise]);
 
-      // Process scriptsDataJSON to convert createdAt strings to Date objects
       const processedScriptsData: ScriptInfo[] = (scriptsDataJSON || []).map(script => ({
         ...script,
         createdAt: script.createdAt ? new Date(script.createdAt) : undefined,
@@ -98,13 +97,6 @@ const Dashboard = () => {
 
       setChecks(historyData);
       setAvailableScripts(processedScriptsData);
-
-      if (processedScriptsData && processedScriptsData.length > 0 && !selectedScriptId) {
-        setSelectedScriptId(processedScriptsData[0].scriptId);
-      }
-      if ((!processedScriptsData || processedScriptsData.length === 0) && selectedScriptId) {
-        setSelectedScriptId('');
-      }
 
     } catch (err) {
       console.error("Failed to fetch initial data:", err);
@@ -114,7 +106,7 @@ const Dashboard = () => {
       setIsFetchingScripts(false);
       setIsRefreshing(false);
     }
-  }, [t, selectedScriptId]);
+  }, [t]);
 
   useEffect(() => {
     loadInitialData();
@@ -141,7 +133,18 @@ const Dashboard = () => {
         document.head.removeChild(style);
       }
     };
-  }, [t, loadInitialData]);
+  }, [loadInitialData]);
+
+  useEffect(() => {
+    // Only set a default if no script is currently selected AND there are available scripts
+    if (!selectedScriptId && availableScripts.length > 0) {
+      setSelectedScriptId(availableScripts[0].scriptId);
+    }
+    // If scripts become unavailable AND a script was previously selected, clear the selection
+    else if (selectedScriptId && availableScripts.length === 0) {
+      setSelectedScriptId('');
+    }
+  }, [availableScripts, selectedScriptId]);
 
   const toggleExpand = (checkId: string) => {
     setExpandedCheckId(expandedCheckId === checkId ? null : checkId);
