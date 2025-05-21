@@ -273,8 +273,10 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
 
                   {expandedCheckId === check._id && (
                     <TableRow className="bg-muted/30">
-                      <TableCell colSpan={5} className="p-4">
-                        <CheckDetails check={check} mode="expanded" t={t} />
+                      <TableCell colSpan={5} className="p-0">
+                        <div className="p-4 overflow-x-hidden">
+                          <CheckDetails check={check} mode="expanded" t={t} />
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
