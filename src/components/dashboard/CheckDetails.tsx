@@ -85,7 +85,7 @@ export const CheckDetails: React.FC<CheckDetailsProps> = ({ check, mode, t }) =>
 
   if (mode === 'expanded') {
     return (
-      <Card className="shadow-sm border">
+      <Card className="shadow-sm border overflow-x-hidden">
         <CardContent className="space-y-5 pt-5 px-4 pb-4">
           {content}
         </CardContent>

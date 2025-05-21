@@ -28,6 +28,13 @@ interface ExecutionResult {
   message: string;
   findings: FindingDetail[] | string; // findings 可以是对象数组或字符串
   _id: string;
+  name?: string;
+  cnName?: string;
+  description?: string;
+  cnDescription?: string;
+  scope?: string;
+  cnScope?: string;
+  author?: string;
 }
 
 // 语言翻译对象
@@ -41,6 +48,14 @@ const viewResultTranslations = {
     noResultFound: 'Could not find execution result with ID',
     executionDetails: 'Execution Result Details',
     scriptId: 'Script ID',
+    name: 'Name',
+    cnName: 'Name (CN)',
+    description: 'Description',
+    cnDescription: 'Description (CN)',
+    scope: 'Scope',
+    cnScope: 'Scope (CN)',
+    author: 'Author',
+    scriptMetadata: 'Script Metadata',
     executionTime: 'Execution Time',
     status: 'Status',
     message: 'Message',
@@ -71,6 +86,14 @@ const viewResultTranslations = {
     noResultFound: '无法找到ID为',
     executionDetails: '执行结果详情',
     scriptId: '脚本 ID',
+    name: '名称',
+    cnName: '中文名称',
+    description: '描述',
+    cnDescription: '中文描述',
+    scope: '范围',
+    cnScope: '中文范围',
+    author: '作者',
+    scriptMetadata: '脚本元数据',
     executionTime: '执行时间',
     status: '状态',
     message: '消息',
@@ -158,17 +181,6 @@ export default function ViewExecutionResultPage() {
     }
   };
 
-  // 获取脚本类型 (check, validate 等)
-  const getScriptType = (scriptId: string): { type: string, textColor: string, bgColor: string } => {
-    // Colors based on Catppuccin Mocha theme from globals.css
-    // Light mode colors are placeholders and should be reviewed if light theme is also Catppuccin
-    if (scriptId.startsWith('check-')) return { type: t.scriptTypes.check, textColor: 'text-orange-600 dark:text-[#fab387]', bgColor: 'bg-orange-100 dark:bg-[#fab387]/20' }; // Peach
-    if (scriptId.startsWith('validate-')) return { type: t.scriptTypes.validate, textColor: 'text-purple-600 dark:text-[#cba6f7]', bgColor: 'bg-purple-100 dark:bg-[#cba6f7]/20' }; // Mauve
-    if (scriptId.startsWith('monitor-')) return { type: t.scriptTypes.monitor, textColor: 'text-blue-600 dark:text-[#89b4fa]', bgColor: 'bg-blue-100 dark:bg-[#89b4fa]/20' }; // Blue
-    if (scriptId.startsWith('report-')) return { type: t.scriptTypes.report, textColor: 'text-green-600 dark:text-[#a6e3a1]', bgColor: 'bg-green-100 dark:bg-[#a6e3a1]/20' }; // Green
-    return { type: t.scriptTypes.other, textColor: 'text-gray-600 dark:text-[#a5adce]', bgColor: 'bg-gray-100 dark:bg-[#363a4f]' }; // Subtext0 on Surface0
-  };
-
   const handleRetry = () => {
     setLoading(true);
     setError(null);
@@ -222,8 +234,6 @@ export default function ViewExecutionResultPage() {
       </div>
     );
   }
-
-  const scriptTypeInfo = getScriptType(result.scriptId);
 
   // 格式化 findings
   let findingsContent;
@@ -297,9 +307,6 @@ export default function ViewExecutionResultPage() {
       <div className="bg-white dark:bg-[#1e2030]/90 backdrop-blur-sm shadow-lg rounded-lg p-6 md:p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-[#cad3f5]">{t.executionDetails}</h1>
-          <span className={`text-sm font-medium px-3 py-1 rounded-full ${scriptTypeInfo.textColor} ${scriptTypeInfo.bgColor}`}>
-            {scriptTypeInfo.type}脚本
-          </span>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -324,6 +331,47 @@ export default function ViewExecutionResultPage() {
             <p className="text-lg text-gray-900 dark:text-[#cad3f5] font-mono text-sm">{result._id}</p>
           </div>
         </div>
+
+        {/* 将脚本元数据卡片移动到 Query Findings 上方 */}
+        {result && (result.name || result.cnName || result.description || result.cnDescription || result.scope || result.cnScope || result.author) && (
+          <div className="mt-8 bg-white dark:bg-[#1e2030]/90 backdrop-blur-sm shadow-lg rounded-lg p-6 md:p-8">
+            <h2 className="text-xl md:text-2xl font-semibold text-gray-700 dark:text-[#cad3f5] mb-4">
+              {t.scriptMetadata || (language === 'en' ? 'Script Metadata' : '脚本元数据')}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+              {(language === 'en' ? result.name : result.cnName || result.name) && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500 dark:text-[#a5adce]">{t.name || (language === 'en' ? 'Name' : '名称')}</p>
+                  <p className="text-lg text-gray-900 dark:text-[#cad3f5]">
+                    {language === 'en' ? result.name : result.cnName || result.name}
+                  </p>
+                </div>
+              )}
+              {result.author && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500 dark:text-[#a5adce]">{t.author || (language === 'en' ? 'Author' : '作者')}</p>
+                  <p className="text-lg text-gray-900 dark:text-[#cad3f5]">{result.author}</p>
+                </div>
+              )}
+              {(language === 'en' ? result.description : result.cnDescription || result.description) && (
+                <div className="md:col-span-2">
+                  <p className="text-sm font-medium text-gray-500 dark:text-[#a5adce]">{t.description || (language === 'en' ? 'Description' : '描述')}</p>
+                  <p className="text-lg text-gray-900 dark:text-[#cad3f5] whitespace-pre-wrap">
+                    {language === 'en' ? result.description : result.cnDescription || result.description}
+                  </p>
+                </div>
+              )}
+              {(language === 'en' ? result.scope : result.cnScope || result.scope) && (
+                <div className="md:col-span-2">
+                  <p className="text-sm font-medium text-gray-500 dark:text-[#a5adce]">{t.scope || (language === 'en' ? 'Scope' : '范围')}</p>
+                  <p className="text-lg text-gray-900 dark:text-[#cad3f5] whitespace-pre-wrap">
+                    {language === 'en' ? result.scope : result.cnScope || result.scope}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="mt-8">
           <h2 className="text-xl md:text-2xl font-semibold text-gray-700 dark:text-[#cad3f5] mb-4">{t.queryFindings}</h2>

@@ -14,7 +14,7 @@ export const RawResultsTable = ({ results, noDataText }: RawResultsTableProps) =
   const headers = Object.keys(results[0]);
   
   return (
-    <div className="overflow-x-auto mt-2 rounded-md border shadow-sm">
+    <div className="mt-2 rounded-md border shadow-sm">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/70">
