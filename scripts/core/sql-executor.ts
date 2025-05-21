@@ -5,16 +5,6 @@ import { sendSlackNotification } from "../services/slack-service";
 import { ExecutionResult, ExecutionStatusType } from "../types";
 
 /**
- * 确定脚本是否属于检查或验证类型
- * @param scriptId 脚本ID
- * @returns 如果脚本是检查或验证类型则返回true
- */
-function isCheckOrValidateScript(scriptId: string): boolean {
-  const checkPrefixes = ["check-", "validate-", "monitor-", "audit-"];
-  return checkPrefixes.some((prefix) => scriptId.startsWith(prefix));
-}
-
-/**
  * 确定基于查询结果决定脚本执行状态
  * @param scriptId 脚本ID
  * @param findings 查询结果摘要
@@ -27,8 +17,8 @@ function determineStatusType(
   results?: QueryResult[]
 ): ExecutionStatusType {
   // 如果是检查类脚本且发现了问题，则标记为需要关注
+  // 移除 isCheckOrValidateScript(scriptId) &&
   if (
-    isCheckOrValidateScript(scriptId) &&
     findings !== "No matching records found" &&
     findings !== "No valid queries" &&
     results?.some((r) => r.rows && r.rows.length > 0)
