@@ -102,12 +102,26 @@ const Dashboard = () => {
         console.log(`API returned ${historyData.length} records out of ${meta.total_count || 'unknown'} total records`);
       }
 
+      // 对历史数据进行状态调整处理，与view-execution-result页面保持一致
+      const processedHistoryData = historyData.map(check => {
+        // 特定脚本状态调整
+        if (
+          check.script_id === 'orders-sync-daily' &&
+          check.status === 'success' &&
+          Array.isArray(check.raw_results) &&
+          check.raw_results.length > 0
+        ) {
+          return { ...check, statusType: 'attention_needed' as const };
+        }
+        return check;
+      });
+
       const processedScriptsData: ScriptInfo[] = (scriptsDataJSON || []).map(script => ({
         ...script,
         createdAt: script.createdAt ? new Date(script.createdAt) : undefined,
       }));
 
-      setChecks(historyData);
+      setChecks(processedHistoryData);
       setAvailableScripts(processedScriptsData);
 
     } catch (err) {
@@ -236,7 +250,7 @@ const Dashboard = () => {
     
     // 根据不同的筛选状态进行过滤
     if (filterStatus === "success") {
-      filtered = filtered.filter(check => check.status === "success");
+      filtered = filtered.filter(check => check.status === "success" && check.statusType !== "attention_needed");
     } else if (filterStatus === "failure") {
       filtered = filtered.filter(check => check.status === "failure");
     } else if (filterStatus === "attention_needed") {
@@ -281,7 +295,7 @@ const Dashboard = () => {
     availableScripts.find(s => s.scriptId === selectedScriptId)
   , [availableScripts, selectedScriptId]);
 
-  const successCount = checks.filter(c => c.status === "success").length;
+  const successCount = checks.filter(c => c.status === "success" && c.statusType !== "attention_needed").length;
   const failureCount = checks.filter(c => c.status === "failure").length;
   const needsAttentionCount = checks.filter(c => c.statusType === "attention_needed").length;
   const allChecksCount = checks.length;
