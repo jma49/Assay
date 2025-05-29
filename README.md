@@ -498,4 +498,4 @@ npm run test:script      # 测试脚本执行
 - **Icons**: Lucide React
 - **Notifications**: Sonner (Toast)
 
-**Made with ❤️ by Jincheng** | **v0.1.8** | **最后更新: 2024 年 12 月**
+**Made with ❤️ by Jincheng** | **v0.1.8** | **最后更新: 2025 年 5 月**
