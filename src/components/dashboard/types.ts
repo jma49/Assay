@@ -183,7 +183,37 @@ export type DashboardTranslationKeys =
   | "noMatchingExecutionRecords"
   | "viewAndManageAllRecords"
   | "needsAttentionRatePercentage"
-  | "noAttentionRecords";
+  | "noAttentionRecords"
+  // 新增的CodeMirror编辑器相关翻译键
+  | "sqlEditorTitle"
+  | "sqlEditorDescription"
+  | "codeStatisticsLines"
+  | "codeStatisticsChars"
+  | "previewMode"
+  | "editMode"
+  | "formatCode"
+  | "formatting"
+  | "sqlPreviewLabel"
+  | "noCodeContent"
+  | "editorStatusReady"
+  | "editorHelpText"
+  | "formatSuccess"
+  | "formatSuccessDesc"
+  | "formatError"
+  | "formatErrorDesc"
+  | "noCodeToFormat"
+  | "sqlPlaceholder"
+  // 新增的ScriptMetadataForm相关翻译键
+  | "basicIdentityInfo"
+  | "multiLanguageInfo"
+  | "englishSection"
+  | "chineseSection"
+  | "scheduleConfig"
+  | "readOnlyField"
+  | "editModeLabel"
+  | "newModeLabel"
+  | "scheduleEnabledDesc"
+  | "cronFormatHelp";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -449,6 +479,40 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     needsAttentionRatePercentage: "Needs Attention Rate Percentage",
     noAttentionRecords: "No Attention Records",
     scripts: "Scripts",
+    // 新增的CodeMirror编辑器相关翻译
+    sqlEditorTitle: "SQL Editor",
+    sqlEditorDescription: "Write and format your SQL queries",
+    codeStatisticsLines: "lines",
+    codeStatisticsChars: "characters",
+    previewMode: "Preview",
+    editMode: "Edit",
+    formatCode: "Format",
+    formatting: "Formatting...",
+    sqlPreviewLabel: "SQL Preview",
+    noCodeContent: "No code content...",
+    editorStatusReady: "SQL",
+    editorHelpText:
+      "Use Ctrl+A to select all, Ctrl+Z to undo. Click the Format button to automatically organize SQL code format.",
+    formatSuccess: "SQL code formatted successfully",
+    formatSuccessDesc: "Code has been rearranged according to standard format",
+    formatError: "Formatting failed",
+    formatErrorDesc: "Please check if the SQL syntax is correct",
+    noCodeToFormat: "No code to format",
+    sqlPlaceholder:
+      "-- Enter your SQL query here\n-- Example: SELECT * FROM users WHERE active = true;",
+    // 新增的ScriptMetadataForm相关翻译
+    basicIdentityInfo: "Basic Identity Information",
+    multiLanguageInfo: "Multi-language Information",
+    englishSection: "English",
+    chineseSection: "Chinese",
+    scheduleConfig: "Schedule Configuration",
+    readOnlyField: "Read Only",
+    editModeLabel: "Edit Mode",
+    newModeLabel: "New Mode",
+    scheduleEnabledDesc:
+      "When enabled, the script will be executed automatically according to the specified schedule",
+    cronFormatHelp:
+      "Use Cron format: minute hour day month weekday (e.g., 0 9 * * 1-5 means weekdays at 9 AM)",
   },
   zh: {
     // General
@@ -648,5 +712,38 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     needsAttentionRatePercentage: "需要关注率",
     noAttentionRecords: "无关注记录",
     scripts: "个脚本",
+    // 新增的CodeMirror编辑器相关翻译
+    sqlEditorTitle: "SQL 编辑器",
+    sqlEditorDescription: "编写和格式化您的 SQL 查询",
+    codeStatisticsLines: "行",
+    codeStatisticsChars: "字符",
+    previewMode: "预览",
+    editMode: "编辑",
+    formatCode: "格式化",
+    formatting: "格式化中...",
+    sqlPreviewLabel: "SQL 预览",
+    noCodeContent: "暂无代码内容...",
+    editorStatusReady: "SQL",
+    editorHelpText:
+      "使用 Ctrl+A 全选，Ctrl+Z 撤销。点击格式化按钮可以自动整理 SQL 代码格式。",
+    formatSuccess: "SQL 代码格式化成功",
+    formatSuccessDesc: "代码已按照标准格式重新排列",
+    formatError: "格式化失败",
+    formatErrorDesc: "请检查SQL语法是否正确",
+    noCodeToFormat: "没有代码需要格式化",
+    sqlPlaceholder:
+      "-- 在此输入您的 SQL 查询语句\n-- 例如：SELECT * FROM users WHERE active = true;",
+    // 新增的ScriptMetadataForm相关翻译
+    basicIdentityInfo: "基础标识信息",
+    multiLanguageInfo: "多语言信息",
+    englishSection: "English",
+    chineseSection: "中文",
+    scheduleConfig: "调度配置",
+    readOnlyField: "只读",
+    editModeLabel: "编辑模式",
+    newModeLabel: "新建模式",
+    scheduleEnabledDesc: "启用后，脚本将按照指定的时间表自动执行",
+    cronFormatHelp:
+      "使用 Cron 格式: 分 时 日 月 周 (例如: 0 9 * * 1-5 表示工作日上午9点)",
   },
 };

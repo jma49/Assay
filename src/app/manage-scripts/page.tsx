@@ -505,6 +505,7 @@ const ManageScriptsPage = () => {
                 value={currentSqlContent}
                 onChange={setCurrentSqlContent}
                 minHeight='250px'
+                t={t}
               />
             </div>
           </div>
