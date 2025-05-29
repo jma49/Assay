@@ -397,7 +397,8 @@ const Dashboard = () => {
 
             <CheckHistory 
               paginatedChecks={paginatedChecks}
-              allChecksCount={allChecksCount}
+              allChecksCount={totalChecks}
+              totalUnfilteredCount={allChecksCount}
               totalPages={totalPages}
               currentPage={currentPage}
               filterStatus={filterStatus}
