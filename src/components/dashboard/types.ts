@@ -326,6 +326,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     clearFilters: "Clear Filters",
     // Row Actions
     viewDetailsSidebar: "View Details in Sidebar",
+    viewInSidebar: "View in Sidebar",
     // Detail View (Sheet & Expanded Row)
     checkDetails: "Check Details",
     executionStatus: "Execution Status:",
@@ -561,6 +562,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     clearFilters: "清除筛选条件",
     // Row Actions
     viewDetailsSidebar: "在侧边栏查看详情",
+    viewInSidebar: "在侧边栏查看详情",
     // Detail View (Sheet & Expanded Row)
     checkDetails: "检查详情",
     executionStatus: "执行状态:",

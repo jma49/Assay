@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useLanguage } from '@/components/ClientLayoutWrapper';
 import { Button } from '@/components/ui/button';
@@ -138,7 +138,7 @@ export default function ViewExecutionResultPage() {
   const scrollBarRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showScrollBar, setShowScrollBar] = useState(false);
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | undefined>(undefined);
   const dragStartRef = useRef<{ startX: number; startScrollLeft: number; startScrollBarLeft: number }>({
     startX: 0,
     startScrollLeft: 0,
@@ -161,11 +161,12 @@ export default function ViewExecutionResultPage() {
       ...result.findings.map(row => 
         headers.map(header => {
           const value = row[header as keyof typeof row];
-          if (value === null) return '';
-          if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
-            return `"${value.replace(/"/g, '""')}"`;
+          if (value === null || value === undefined) return '';
+          const stringValue = String(value);
+          if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+            return `"${stringValue.replace(/"/g, '""')}"`;
           }
-          return String(value);
+          return stringValue;
         }).join(',')
       )
     ].join('\n');
@@ -184,7 +185,7 @@ export default function ViewExecutionResultPage() {
   };
 
   // 优化后的滚动条更新函数
-  const updateScrollBarPosition = () => {
+  const updateScrollBarPosition = useCallback(() => {
     const container = scrollContainerRef.current;
     const scrollBar = scrollBarRef.current;
     if (!container || !scrollBar || isDragging) return;
@@ -196,7 +197,7 @@ export default function ViewExecutionResultPage() {
     
     const newLeft = scrollRatio * maxScrollBarLeft;
     scrollBar.style.transform = `translateX(${newLeft}px)`;
-  };
+  }, [isDragging]);
 
   // 检查是否需要显示滚动条
   useEffect(() => {
@@ -225,7 +226,7 @@ export default function ViewExecutionResultPage() {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [result]);
+  }, [result, updateScrollBarPosition]);
 
   // 初始化滚动条
   useEffect(() => {
@@ -235,7 +236,7 @@ export default function ViewExecutionResultPage() {
         requestAnimationFrame(updateScrollBarPosition);
       });
     }
-  }, [result, showScrollBar]);
+  }, [result, showScrollBar, updateScrollBarPosition]);
 
   // 传统滚动条拖动处理 - 只允许点击滑块本身拖动
   const handleScrollBarMouseDown = (e: React.MouseEvent) => {
@@ -420,7 +421,7 @@ export default function ViewExecutionResultPage() {
   let findingsContent;
   const hasTableData = Array.isArray(result.findings) && result.findings.length > 0;
   
-  if (hasTableData) {
+  if (hasTableData && Array.isArray(result.findings)) {
     // 设置表格标题和数据
     const headers = Object.keys(result.findings[0]);
     findingsContent = (
