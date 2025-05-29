@@ -17,15 +17,14 @@ interface CheckHistoryApiResponse extends Omit<WithId<Document>, "_id"> {
 }
 
 const COLLECTION_NAME = "result";
-const DEFAULT_LIMIT = 20; // 减少默认返回数量
-const MAX_LIMIT = 100; // 最大限制
+const DEFAULT_LIMIT = 100; // 返回最近100条记录供前端分页
+const MAX_LIMIT = 200; // 最大限制避免性能问题
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
 
-    // 获取查询参数
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    // 为了保持前端兼容性，我们仍接受分页参数，但主要用于限制数据量
     const limit = Math.min(
       MAX_LIMIT,
       Math.max(
@@ -36,8 +35,6 @@ export async function GET(request: NextRequest) {
     const scriptName = searchParams.get("script_name");
     const status = searchParams.get("status");
     const includeResults = searchParams.get("include_results") === "true";
-
-    const skip = (page - 1) * limit;
 
     const db = await mongoDbClient.getDb();
     const collection: Collection<Document> = db.collection(COLLECTION_NAME);
@@ -66,21 +63,18 @@ export async function GET(request: NextRequest) {
       projection.raw_results = 1;
     }
 
-    console.log(`API: Fetching records with query:`, {
+    console.log(`API: Fetching recent ${limit} records with query:`, {
       query,
-      page,
       limit,
-      skip,
       includeResults,
     });
 
-    // 使用 Promise.all 并行执行查询和计数
+    // 获取最近的记录，不分页（供前端客户端分页）
     const [historyDocs, totalCount] = await Promise.all([
       collection
         .find(query, { projection })
         .sort({ execution_time: -1 })
-        .skip(skip)
-        .limit(limit)
+        .limit(limit) // 只限制总数量，不分页
         .toArray(),
       collection.countDocuments(query),
     ]);
@@ -103,21 +97,15 @@ export async function GET(request: NextRequest) {
       github_run_id: doc.github_run_id,
     })) as CheckHistoryApiResponse[];
 
-    // 返回分页信息
-    const totalPages = Math.ceil(totalCount / limit);
-    const hasNext = page < totalPages;
-    const hasPrev = page > 1;
-
+    // 简化返回格式，提供元数据但让前端处理分页
     return NextResponse.json(
       {
         data: responseData,
-        pagination: {
-          current_page: page,
-          limit,
+        meta: {
+          returned_count: historyDocs.length,
           total_count: totalCount,
-          total_pages: totalPages,
-          has_next: hasNext,
-          has_prev: hasPrev,
+          limit_applied: limit,
+          client_pagination: true, // 指示前端这是供客户端分页的数据
         },
         query_info: {
           script_name: scriptName,

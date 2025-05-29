@@ -153,7 +153,14 @@ export type DashboardTranslationKeys =
   | "summaryTablePlaceholderTitle"
   | "noDataForAnalysis"
   | "comingSoonMessage"
-  | "selectScriptPlaceholder";
+  | "selectScriptPlaceholder"
+  | "jumpToPage"
+  | "pageJump"
+  | "jumpToFirst"
+  | "jumpToLast"
+  | "pageNumber"
+  | "of"
+  | "pages";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -389,6 +396,13 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     comingSoonMessage:
       "More detailed analysis features are coming soon! Stay tuned.",
     selectScriptPlaceholder: "Select a script to run",
+    jumpToPage: "Jump",
+    pageJump: "Go",
+    jumpToFirst: "Jump to first page",
+    jumpToLast: "Jump to last page",
+    pageNumber: "Page",
+    of: "of",
+    pages: "pages",
   },
   zh: {
     // General
@@ -558,5 +572,12 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     noDataForAnalysis: "当前条件下无可用数据进行分析。",
     comingSoonMessage: "更多详细的分析功能即将推出！敬请期待。",
     selectScriptPlaceholder: "请选择要运行的脚本",
+    jumpToPage: "跳转",
+    pageJump: "跳转",
+    jumpToFirst: "跳转到首页",
+    jumpToLast: "跳转到末页",
+    pageNumber: "第",
+    of: "/",
+    pages: "页",
   },
 };

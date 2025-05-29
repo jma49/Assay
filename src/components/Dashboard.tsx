@@ -88,12 +88,17 @@ const Dashboard = () => {
         }
       });
 
-      const [historyResponse, scriptsResponse]: [{ data: Check[] }, { data: ScriptInfo[] }] = await Promise.all([historyPromise, scriptsPromise]);
+      const [historyResponse, scriptsResponse]: [{ data: Check[], meta?: any }, { data: ScriptInfo[] }] = await Promise.all([historyPromise, scriptsPromise]);
 
       // 从响应中提取数据数组
       const historyData = historyResponse.data || [];
       const scriptsDataJSON = scriptsResponse.data || [];
       
+      // 记录API返回的元数据（可选）
+      if (historyResponse.meta) {
+        console.log("History API meta:", historyResponse.meta);
+      }
+
       const processedScriptsData: ScriptInfo[] = (scriptsDataJSON || []).map(script => ({
         ...script,
         createdAt: script.createdAt ? new Date(script.createdAt) : undefined,

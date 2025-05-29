@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock, Database, ExternalLink, Filter, Search, X, FileText } from 'lucide-react';
+import { AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock, Database, ExternalLink, Filter, Search, X, FileText, MoreHorizontal } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,6 +57,31 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
   startIndex,
   endIndex
 }) => {
+  const [pageInput, setPageInput] = useState('');
+
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageInput(e.target.value);
+  };
+
+  const handlePageInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const page = parseInt(pageInput, 10);
+    if (!isNaN(page) && page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      setPageInput(''); // 清空输入框
+    }
+  };
+
+  const handlePageInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handlePageInputSubmit(e);
+    }
+    // 限制只能输入数字
+    if (!/[\d\b]/.test(e.key) && !['ArrowLeft', 'ArrowRight', 'Delete', 'Backspace', 'Tab'].includes(e.key)) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <Card className="shadow-sm hover:shadow-md transition-all duration-300 bg-card/90 dark:bg-card/90 backdrop-blur-sm">
       <CardHeader className="px-5 py-4 border-b border-border/50">
@@ -287,8 +312,8 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
         </div>
       </CardContent>
       {totalPages > 1 && (
-        <CardFooter className="flex items-center justify-between border-t px-5 py-2.5 text-xs">
-          <div className="text-muted-foreground">
+        <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t px-5 py-3 text-xs gap-2">
+          <div className="text-muted-foreground text-center sm:text-left">
             {t('pageInfo')
               .replace('%s', String(startIndex + 1))
               .replace('%s', String(Math.min(endIndex, allChecksCount)))
@@ -297,7 +322,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               .replace('%s', String(totalPages))
             }
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -306,8 +331,73 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
             >
               <ChevronLeft className="h-3.5 w-3.5 mr-1" />
-              {t('previous')}
+              <span className="hidden sm:inline">{t('previous')}</span>
             </Button>
+            
+            <div className="flex items-center gap-1.5 px-2">
+              <div className="hidden md:flex items-center gap-1">
+                {currentPage > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCurrentPage(1)}
+                    className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground"
+                    title={t('jumpToFirst')}
+                  >
+                    1
+                  </Button>
+                )}
+                {currentPage > 3 && <span className="text-muted-foreground">...</span>}
+              </div>
+              
+              <span className="text-muted-foreground text-xs">{t('pageNumber')}</span>
+              <span className="font-medium text-xs min-w-[1.5rem] text-center">{currentPage}</span>
+              <span className="text-muted-foreground text-xs">{t('of')} {totalPages} {t('pages')}</span>
+              
+              <div className="hidden md:flex items-center gap-1">
+                {currentPage < totalPages - 2 && <span className="text-muted-foreground">...</span>}
+                {currentPage < totalPages && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground"
+                    title={t('jumpToLast')}
+                  >
+                    {totalPages}
+                  </Button>
+                )}
+              </div>
+              
+              {totalPages > 5 && (
+                <div className="hidden lg:flex items-center gap-1 ml-2">
+                  <MoreHorizontal className="h-3 w-3 text-muted-foreground" />
+                  <form onSubmit={handlePageInputSubmit} className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalPages}
+                      value={pageInput}
+                      onChange={handlePageInputChange}
+                      onKeyDown={handlePageInputKeyDown}
+                      placeholder={t('jumpToPage')}
+                      className="w-12 h-6 px-1 text-xs text-center border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                    <Button
+                      type="submit"
+                      variant="outline"
+                      size="sm"
+                      disabled={!pageInput || isNaN(parseInt(pageInput, 10)) || parseInt(pageInput, 10) < 1 || parseInt(pageInput, 10) > totalPages}
+                      className="h-6 px-2 text-xs"
+                      title={t('pageJump')}
+                    >
+                      {t('pageJump')}
+                    </Button>
+                  </form>
+                </div>
+              )}
+            </div>
+            
             <Button
               variant="outline"
               size="sm"
@@ -315,7 +405,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               disabled={currentPage === totalPages}
               className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
             >
-              {t('next')}
+              <span className="hidden sm:inline">{t('next')}</span>
               <ChevronRight className="h-3.5 w-3.5 ml-1" />
             </Button>
           </div>
