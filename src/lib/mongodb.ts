@@ -3,6 +3,8 @@ import { MongoClient, Db } from "mongodb";
 // 用于在开发环境中缓存 MongoDB 连接 Promise 的全局变量类型扩展
 const globalWithMongo = global as typeof globalThis & {
   _mongoClientPromise: Promise<MongoClient> | null;
+  _isConnected: boolean;
+  _hasLoggedDbName: boolean; // 新增：跟踪是否已打印数据库名称
 };
 
 /**
@@ -14,6 +16,10 @@ class MongoDbClient {
   private clientPromise: Promise<MongoClient>;
   private dbName: string = "sql_check_history_db"; // 默认数据库名称。确保这个是您想要的，如果 MONGODB_URI 中没有指定。
   private uri: string;
+  private isLoggedConnection: boolean = false;
+  private static readonly shouldLog =
+    process.env.NODE_ENV === "development" &&
+    process.env.MONGODB_SILENT !== "true";
 
   constructor() {
     const mongoUri = process.env.MONGODB_URI;
@@ -22,24 +28,40 @@ class MongoDbClient {
     }
     this.uri = mongoUri;
 
-    const options = {};
+    const options = {
+      maxPoolSize: 10, // 最大连接池大小
+      serverSelectionTimeoutMS: 5000, // 连接超时时间
+      socketTimeoutMS: 45000, // Socket 超时时间
+      maxIdleTimeMS: 30000, // 连接最大空闲时间
+      connectTimeoutMS: 10000,
+    };
 
     if (process.env.NODE_ENV === "development") {
       if (!globalWithMongo._mongoClientPromise) {
         this.client = new MongoClient(this.uri, options);
         globalWithMongo._mongoClientPromise = this.client.connect();
-        console.log("开发环境：创建新的 MongoDB 连接 Promise");
+        globalWithMongo._isConnected = false;
+        globalWithMongo._hasLoggedDbName = false; // 初始化
+        if (!globalWithMongo._isConnected) {
+          if (MongoDbClient.shouldLog) {
+            console.log("开发环境：创建新的 MongoDB 连接 Promise");
+          }
+          globalWithMongo._isConnected = true;
+        }
       } else {
         // In development, client can be new for each instance, but clientPromise is shared.
         this.client = new MongoClient(this.uri, options);
-        console.log("开发环境：使用缓存的 MongoDB 连接 Promise");
       }
       this.clientPromise =
         globalWithMongo._mongoClientPromise as Promise<MongoClient>;
     } else {
+      // 在生产环境中，只有第一次创建时才打印日志
+      if (!this.isLoggedConnection && process.env.NODE_ENV !== "production") {
+        console.log("生产/其他环境：创建新的 MongoDB 连接 Promise");
+        this.isLoggedConnection = true;
+      }
       this.client = new MongoClient(this.uri, options);
       this.clientPromise = this.client.connect();
-      console.log("生产/其他环境：创建新的 MongoDB 连接 Promise");
     }
 
     try {
@@ -48,12 +70,22 @@ class MongoDbClient {
       if (pathDbName) {
         this.dbName = pathDbName;
       }
-      console.log(`将连接到 MongoDB 数据库: ${this.dbName}`);
+      // 使用全局状态避免重复打印数据库名称
+      // 在构建时(process.env.NODE_ENV === 'production')完全静默
+      const shouldLogDbName =
+        MongoDbClient.shouldLog && !globalWithMongo._hasLoggedDbName;
+
+      if (shouldLogDbName) {
+        console.log(`将连接到 MongoDB 数据库: ${this.dbName}`);
+        globalWithMongo._hasLoggedDbName = true;
+      }
     } catch (e) {
-      console.warn(
-        `无法从 URI '${this.uri}' 解析数据库名称，将使用默认值: ${this.dbName}`,
-        e
-      );
+      if (MongoDbClient.shouldLog) {
+        console.warn(
+          `无法从 URI '${this.uri}' 解析数据库名称，将使用默认值: ${this.dbName}`,
+          e
+        );
+      }
     }
   }
 
@@ -73,11 +105,15 @@ class MongoDbClient {
 
   public async closeConnection(): Promise<void> {
     try {
-      const clientInstance = await this.clientPromise;
+      const clientInstance = await this.getClient();
       await clientInstance.close();
-      console.log("MongoDB 连接已关闭");
+      if (MongoDbClient.shouldLog) {
+        console.log("MongoDB 连接已关闭");
+      }
       if (process.env.NODE_ENV === "development") {
         globalWithMongo._mongoClientPromise = null;
+        globalWithMongo._isConnected = false;
+        globalWithMongo._hasLoggedDbName = false; // 重置日志状态
       }
     } catch (error) {
       console.error("关闭 MongoDB 连接失败:", error);
@@ -85,5 +121,14 @@ class MongoDbClient {
   }
 }
 
-const mongoDbClient = new MongoDbClient();
-export default mongoDbClient;
+// 使用单例模式，确保整个应用只有一个MongoDB客户端实例
+let mongoDbClientInstance: MongoDbClient | null = null;
+
+function getMongoDbClient(): MongoDbClient {
+  if (!mongoDbClientInstance) {
+    mongoDbClientInstance = new MongoDbClient();
+  }
+  return mongoDbClientInstance;
+}
+
+export default getMongoDbClient();
