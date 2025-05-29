@@ -7,7 +7,9 @@
 - **脚本管理 (CRUD)**: 通过 Web UI 创建、查看、编辑和删除 SQL 脚本。脚本定义（包括 SQL 内容、元数据等）存储在 MongoDB。
 - **SQL 编辑器**: 集成 CodeMirror，在创建/编辑脚本时提供 SQL 语法高亮、自动补全（基础）和主题切换功能。
 - **手动脚本执行**: 从 UI 选择存储在 MongoDB 中的脚本并立即触发执行。
-- **定时执行**: 通过 Vercel Cron Jobs 实现自动化、可配置的定时脚本执行。
+- **批量脚本执行**: ⭐ **新功能** - 支持从 MongoDB 批量获取并执行脚本，可选择执行所有脚本或仅执行启用定时任务的脚本。
+- **GitHub Actions 自动化**: ⭐ **新功能** - 通过 GitHub Actions 工作流实现定时自动执行，支持手动触发和调度执行。
+- **定时执行**: 通过 Vercel Cron Jobs 和 GitHub Actions 实现自动化、可配置的定时脚本执行。
 - **结果历史**: 查看过去的执行结果，支持按状态、脚本名称、内容进行搜索和过滤。
 - **Slack 通知**: 成功和失败检查的实时提醒。
 - **安全限制**: 强制执行的 SQL 脚本为只读 (`SELECT`) 操作，防止数据意外修改。
@@ -25,17 +27,19 @@
       - `/api/scripts/[scriptId]`: 用于获取特定脚本 (GET)、更新脚本 (PUT) 和删除脚本 (DELETE)。
       - `/api/run-check`: 用于手动触发脚本执行。
       - `/api/check-history`: 用于检索执行历史。
-      - `/api/run-scheduled-scripts`: (待实现) 由 Vercel Cron Job 调用，用于执行所有计划的脚本。
+      - `/api/run-scheduled-scripts`: 由 Vercel Cron Job 调用，用于执行所有计划的脚本。
 2.  **核心执行引擎**:
     - `src/lib/script-executor.ts`: 包装器，处理从 API 调用脚本执行的逻辑，包括从 MongoDB 获取脚本内容。
     - `scripts/core/sql-executor.ts`: 包含核心的 `executeSqlScriptFromDb` 函数，负责实际连接 PostgreSQL 并执行 SQL。
-3.  **数据存储**:
+    - `scripts/run-all-scripts.ts`: ⭐ **新增** - 批量执行脚本工具，支持从 MongoDB 获取并执行多个脚本。
+3.  **自动化执行**:
+    - **GitHub Actions**: 配置在 `.github/workflows/sql-check-cron.yml`，实现定时和手动触发的脚本执行。
+    - **Vercel Cron Jobs**: 用于配置和触发定时的脚本执行任务，会调用 `/api/run-scheduled-scripts` 端点。
+4.  **数据存储**:
     - **MongoDB**:
       - `sql_scripts` 集合: 存储用户定义的 SQL 脚本及其元数据。
-      - `sql_script_results` 集合: 存储每次脚本执行的历史结果。
+      - `result` 集合: 存储每次脚本执行的历史结果。
     - **PostgreSQL**: 目标数据库，SQL 脚本在此数据库上执行。
-4.  **定时调度**:
-    - **Vercel Cron Jobs**: 用于配置和触发定时的脚本执行任务，会调用 `/api/run-scheduled-scripts` 端点。
 5.  **通知服务**:
     - **Slack Webhook**: 用于发送脚本执行结果的通知。
 
@@ -43,39 +47,111 @@
 
 ```
 .
+├── .github/
+│   └── workflows/
+│       └── sql-check-cron.yml         # GitHub Actions 工作流配置
 ├── src/
-│   ├── app/                 # Next.js App Router
+│   ├── app/                           # Next.js App Router
 │   │   ├── api/
 │   │   │   ├── scripts/
 │   │   │   │   ├── route.ts               # POST /api/scripts, GET /api/scripts
 │   │   │   │   └── [scriptId]/
 │   │   │   │       └── route.ts           # GET, PUT, DELETE /api/scripts/[scriptId]
-│   │   │   ├── check-history/route.ts   # GET /api/check-history
-│   │   │   ├── list-scripts/route.ts    # (已更新) GET /api/list-scripts (从MongoDB获取)
-│   │   └── run-check/route.ts       # POST /api/run-check
+│   │   │   ├── check-history/route.ts     # GET /api/check-history
+│   │   │   ├── list-scripts/route.ts      # GET /api/list-scripts (从MongoDB获取)
+│   │   │   └── run-check/route.ts         # POST /api/run-check
+│   │   │   └── run-scheduled-scripts/route.ts # GET /api/run-scheduled-scripts (定时执行)
 │   │   ├── scripts/
 │   │   │   └── new/
-│   │   │       └── page.tsx             # 创建新脚本的前端页面
+│   │   │       └── page.tsx               # 创建新脚本的前端页面
 │   │   ├── data-analysis/
-│   │   │   └── page.tsx             # 数据分析占位符页面
-│   │   ├── page.tsx                 # 主仪表盘页面
+│   │   │   └── page.tsx                   # 数据分析占位符页面
+│   │   ├── page.tsx                       # 主仪表盘页面
 │   │   └── layout.tsx
 │   ├── components/
-│   │   ├── dashboard/               # 仪表盘UI组件
-│   │   ├── scripts/                 # 脚本管理相关UI组件 (如 ScriptMetadataForm, CodeMirrorEditor)
-│   │   └── ui/                      # Shadcn/ui 生成的组件
+│   │   ├── dashboard/                     # 仪表盘UI组件
+│   │   ├── scripts/                       # 脚本管理相关UI组件 (如 ScriptMetadataForm, CodeMirrorEditor)
+│   │   └── ui/                            # Shadcn/ui 生成的组件
 │   └── lib/
-│       ├── db.ts                    # PostgreSQL连接逻辑
-│       ├── mongodb.ts               # MongoDB连接逻辑
-│       └── script-executor.ts       # API调用的脚本执行包装器 (从DB获取脚本)
+│       ├── db.ts                          # PostgreSQL连接逻辑
+│       ├── mongodb.ts                     # MongoDB连接逻辑
+│       └── script-executor.ts             # API调用的脚本执行包装器 (从DB获取脚本)
 ├── scripts/
-│   ├── run-sql.ts               # 命令行手动执行脚本的工具 (从DB获取脚本)
-│   └── core/
-│       └── sql-executor.ts        # 核心SQL执行逻辑 (executeSqlScriptFromDb)
-├── public/                    # 静态资源
-├── vercel.json                # (推荐添加) Vercel 配置文件，用于 Cron Jobs
-└── .env.local                 # 环境变量
+│   ├── run-sql.ts                         # 命令行单个脚本执行工具 (从DB获取脚本)
+│   ├── run-all-scripts.ts                 # ⭐ 新增：批量脚本执行工具
+│   ├── core/
+│   │   └── sql-executor.ts                # 核心SQL执行逻辑 (executeSqlScriptFromDb)
+│   ├── services/
+│   │   ├── slack-service.ts               # Slack通知服务
+│   │   └── mongo-service.ts               # MongoDB结果保存服务
+│   └── types.ts                           # TypeScript类型定义
+├── public/                                # 静态资源
+├── vercel.json                            # Vercel 配置文件，用于 Cron Jobs
+└── .env.local                             # 环境变量
 ```
+
+## 💡 批量执行功能 (新增)
+
+### 概述
+
+新增的批量执行系统允许从 MongoDB 中获取所有存储的 SQL 脚本并批量执行，解决了从文件系统迁移到数据库存储后的脚本执行问题。
+
+### 执行模式
+
+- **`all`**: 执行所有存储在 MongoDB 中的脚本
+- **`scheduled`**: 仅执行标记为 `isScheduled: true` 的脚本（推荐用于生产环境）
+- **`enabled`**: 与 `scheduled` 模式相同
+
+### 使用方式
+
+#### 1. 命令行执行
+
+```bash
+# 执行所有脚本
+npx ts-node scripts/run-all-scripts.ts all
+
+# 仅执行启用定时任务的脚本 (推荐)
+npx ts-node scripts/run-all-scripts.ts scheduled
+
+# 默认模式 (等同于 all)
+npx ts-node scripts/run-all-scripts.ts
+
+# 显示帮助信息
+npx ts-node scripts/run-all-scripts.ts --help
+```
+
+#### 2. GitHub Actions 自动执行
+
+配置在 `.github/workflows/sql-check-cron.yml` 中：
+
+- **调度时间**: 每天 UTC 19:00 (美国中部时间 14:00)
+- **默认模式**: `scheduled` (仅执行启用定时任务的脚本)
+- **手动触发**: 支持在 GitHub Actions 页面手动触发，可选择执行模式
+
+##### 手动触发步骤:
+
+1. 在 GitHub 仓库页面，点击 "Actions" 标签
+2. 选择 "SQL Script Cron Job" 工作流
+3. 点击 "Run workflow"
+4. 选择执行模式：
+   - `scheduled`: 仅执行启用定时任务的脚本 (推荐)
+   - `all`: 执行所有脚本 (谨慎使用)
+
+### 安全特性
+
+- **默认安全**: GitHub Actions 默认使用 `scheduled` 模式，只执行明确启用的脚本
+- **执行间隔**: 脚本间添加 1 秒延迟，避免数据库压力
+- **详细日志**: 每个脚本的执行状态都会被记录和报告
+- **Slack 通知**: 支持单个脚本和批量执行的通知
+
+### 执行流程
+
+1. 环境变量检查
+2. 连接 MongoDB 获取符合条件的脚本
+3. 按创建时间顺序执行脚本
+4. 记录每个脚本的执行结果
+5. 发送汇总通知到 Slack
+6. 清理数据库连接
 
 ## 技术栈
 
@@ -87,7 +163,7 @@
 - **UI**: [React](https://react.dev/), [Tailwind CSS](https://tailwindcss.com/), [Shadcn/ui](https://ui.shadcn.com/)
 - **SQL 编辑器**: [@uiw/react-codemirror](https://uiwjs.github.io/react-codemirror/), CodeMirror 6
 - **核心脚本执行**: Node.js / ts-node
-- **定时任务**: [Vercel Cron Jobs](https://vercel.com/docs/cron-jobs)
+- **自动化**: GitHub Actions, Vercel Cron Jobs
 - **包管理器**: [npm](https://www.npmjs.com/)
 - **通知**: Slack
 
@@ -180,15 +256,19 @@ npm run start
 
 ### 命令行脚本执行
 
-您仍然可以通过命令行手动执行存储在数据库中的特定脚本：
+系统提供两种命令行执行方式：
 
 ```bash
-# 执行指定 ID 的脚本
+# 执行指定 ID 的单个脚本
 npm run sql:run <script-id-from-database>
-```
+# 例如: npm run sql:run check-user-activity
 
-例如: `npm run sql:run check-user-activity` (假设 `check-user-activity` 是一个存在于 MongoDB 中的脚本 ID)。
-该命令会调用 `scripts/run-sql.ts`。
+# ⭐ 新增：批量执行脚本
+npx ts-node scripts/run-all-scripts.ts [mode]
+# 例如:
+npx ts-node scripts/run-all-scripts.ts scheduled  # 仅执行启用定时任务的脚本
+npx ts-node scripts/run-all-scripts.ts all        # 执行所有脚本
+```
 
 ## SQL 脚本要求 (通过 UI 创建)
 
@@ -306,6 +386,178 @@ export async function GET(request: Request) {
 
 - **前端调度设置 UI**: 在创建/编辑脚本页面，允许用户通过 UI 设置 `isScheduled` 和 `cronSchedule` 字段。 - 5/14 已实现
 - **实现 `/api/run-scheduled-scripts`**: 完成该 API. 端点的逻辑，使其能够正确获取和执行所有计划的脚本。 - 5/14 已实现.
-- **数据分析页面**: 实现 `/data-analysis` 页面的具体图表和数据展示功能。 - 5/14 添加新的UI界面和占位符，需要清洗掉测试数据来展示.
+- **数据分析页面**: 实现 `/data-analysis` 页面的具体图表和数据展示功能。 - 5/14 添加新的 UI 界面和占位符，需要清洗掉测试数据来展示.
 - **更完善的错误处理和日志记录**: 在整个应用中增强错误处理和日志记录。
 - **测试**: 添加更全面的单元测试和端到端测试。
+- **分库**: 生产环境的执行结果与 staging 环境的执行结果分离。
+- **部署**: 解决部署问题，部署到线上。
+
+## 🧪 测试指令
+
+### 1. 环境准备
+
+确保已安装依赖并配置环境变量：
+
+```bash
+npm install
+# 确保 .env.local 包含必要的环境变量
+```
+
+### 2. 语法检查
+
+检查新创建的批量执行脚本语法：
+
+```bash
+npx tsc --noEmit scripts/run-all-scripts.ts
+```
+
+### 3. 本地测试
+
+#### 测试批量执行脚本（帮助信息）
+
+```bash
+npx ts-node scripts/run-all-scripts.ts --help
+```
+
+#### 测试单个脚本执行（如果 MongoDB 中有脚本）
+
+```bash
+# 替换 your-script-id 为实际的脚本ID
+npx ts-node scripts/run-sql.ts your-script-id
+```
+
+#### 测试批量执行（需要有效的数据库连接）
+
+```bash
+# 仅显示会执行哪些脚本（推荐先执行这个）
+npx ts-node scripts/run-all-scripts.ts scheduled
+
+# 如果确认无误，可以测试执行所有脚本
+npx ts-node scripts/run-all-scripts.ts all
+```
+
+### 4. GitHub Actions 测试
+
+#### 本地模拟 GitHub Actions 环境
+
+```bash
+# 设置GitHub Actions环境变量
+export GITHUB_RUN_ID="test-run-12345"
+
+# 模拟GitHub Actions的执行
+npx ts-node -r dotenv/config scripts/run-all-scripts.ts scheduled
+```
+
+#### 手动触发 GitHub Actions
+
+1. 进入 GitHub 仓库页面
+2. 点击 "Actions" → "SQL Script Cron Job"
+3. 点击 "Run workflow"
+4. 选择执行模式并运行
+
+### 5. Web API 测试
+
+#### 测试定时脚本 API（如果配置了 CRON_SECRET）
+
+```bash
+# 需要设置正确的CRON_SECRET
+curl -X GET "http://localhost:3000/api/run-scheduled-scripts" \
+  -H "Authorization: Bearer YOUR_CRON_SECRET"
+```
+
+### 6. 数据库连接测试
+
+```bash
+# 测试PostgreSQL连接
+npx ts-node -e "
+import db from './src/lib/db';
+(async () => {
+  const isConnected = await db.testConnection();
+  console.log('PostgreSQL连接:', isConnected ? '成功' : '失败');
+  await db.closePool();
+})();
+"
+
+# 测试MongoDB连接
+npx ts-node -e "
+import mongoDbClient from './src/lib/mongodb';
+(async () => {
+  try {
+    const db = await mongoDbClient.getDb();
+    const collections = await db.listCollections().toArray();
+    console.log('MongoDB连接成功，集合数:', collections.length);
+    await mongoDbClient.closeConnection();
+  } catch (error) {
+    console.error('MongoDB连接失败:', error.message);
+  }
+})();
+"
+```
+
+### 7. 故障排除
+
+#### 常见错误及解决方法
+
+**环境变量未设置**
+
+```bash
+# 检查环境变量
+npx ts-node -e "console.log('DATABASE_URL:', !!process.env.DATABASE_URL);"
+npx ts-node -e "console.log('MONGODB_URI:', !!process.env.MONGODB_URI);"
+```
+
+**TypeScript 编译错误**
+
+```bash
+# 检查所有TypeScript文件
+npx tsc --noEmit
+
+# 检查特定文件
+npx tsc --noEmit scripts/run-all-scripts.ts
+```
+
+**数据库连接问题**
+
+```bash
+# 使用详细日志运行
+DEBUG=* npx ts-node scripts/run-all-scripts.ts --help
+```
+
+## 📋 系统迁移说明
+
+### 迁移背景
+
+本系统已从基于文件系统的脚本管理迁移到基于 MongoDB 的脚本管理：
+
+### 迁移对比
+
+| 功能         | 旧系统                                      | 新系统                        |
+| ------------ | ------------------------------------------- | ----------------------------- |
+| 脚本存储     | `scripts/sql_scripts/` 目录下的 `.sql` 文件 | MongoDB `sql_scripts` 集合    |
+| 执行方式     | GitHub Actions 硬编码特定脚本名             | 从 MongoDB 动态获取并批量执行 |
+| 管理界面     | 文件系统操作                                | Web UI 管理                   |
+| 元数据管理   | 文件名和注释                                | 结构化的 MongoDB 文档         |
+| 定时任务控制 | 工作流配置文件                              | 数据库中的 `isScheduled` 字段 |
+
+### 新系统优势
+
+- ✅ **集中管理**: 所有脚本及其元数据集中存储在数据库中
+- ✅ **动态执行**: 无需修改工作流配置即可添加新脚本
+- ✅ **权限控制**: 通过 `isScheduled` 字段精确控制哪些脚本定时执行
+- ✅ **元数据丰富**: 支持中英文名称、描述、作者等详细信息
+- ✅ **Web 管理**: 通过友好的 Web 界面管理脚本
+- ✅ **执行历史**: 完整的执行历史记录和结果存储
+- ✅ **通知增强**: 支持单个和批量执行的 Slack 通知
+
+### 向后兼容性
+
+- ✅ 保留了原有的单脚本执行接口 (`scripts/run-sql.ts`)
+- ✅ 维持了相同的执行结果格式和通知机制
+- ✅ 保持了 GitHub Actions 的调度时间和基本流程
+
+### 使用建议
+
+1. **生产环境**: 使用 `scheduled` 模式，只执行明确启用的脚本
+2. **开发测试**: 可以使用 `all` 模式测试所有脚本
+3. **脚本管理**: 通过 Web 界面添加和管理脚本，设置合适的 `isScheduled` 状态
+4. **监控**: 通过 Slack 通知和执行历史页面监控脚本执行状态

@@ -4,10 +4,20 @@ on:
   schedule:
     - cron: "0 19 * * *" # 每天 UTC 19:00 (美国中部时间 14:00)
   workflow_dispatch:
+    inputs:
+      execution_mode:
+        description: '执行模式 (all: 所有脚本, scheduled: 仅定时脚本)'
+        required: false
+        default: 'scheduled'
+        type: choice
+        options:
+          - scheduled
+          - all
 
 env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  MONGODB_URI: ${{ secrets.MONGODB_URI }}
 
 jobs:
   run-sql-check:
@@ -33,25 +43,29 @@ jobs:
           echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env.local
           echo "NODE_ENV=production" >> .env.local
 
-      - name: Debug directory structure
+      - name: Debug environment setup
         run: |
           pwd
           ls -la
-          ls -la scripts/
-          ls -la scripts/sql_scripts/
           echo "--- .env.local content start ---"
           cat .env.local || echo ".env.local not found or empty"
           echo "--- .env.local content end ---"
+          echo "NODE_ENV: $NODE_ENV"
+          echo "GitHub Run ID: $GITHUB_RUN_ID"
+          echo "Execution Mode: ${{ github.event.inputs.execution_mode || 'scheduled' }}"
 
-      - name: Run SQL Check Script
+      - name: Run SQL Scripts from MongoDB
         env:
           DOTENV_CONFIG_PATH: .env.local 
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          EXECUTION_MODE: ${{ github.event.inputs.execution_mode || 'scheduled' }}
         run: |
           echo "Current working directory: $(pwd)"
           echo "Using .env file: ${DOTENV_CONFIG_PATH}"
+          echo "GitHub Run ID: ${GITHUB_RUN_ID}"
+          echo "执行模式: ${EXECUTION_MODE}"
           ls -la ${DOTENV_CONFIG_PATH}
-          echo "About to execute ts-node..."
-          # Use ts-node with -r to preload dotenv/config
-          npx ts-node -r dotenv/config scripts/run-sql.ts check-order-duplicates
-          npx ts-node -r dotenv/config scripts/run-sql.ts orders-sync-daily
+          echo "开始从MongoDB批量执行SQL脚本..."
+          # 使用新的批量执行脚本，根据执行模式运行
+          npx ts-node -r dotenv/config scripts/run-all-scripts.ts ${EXECUTION_MODE}
         continue-on-error: false
