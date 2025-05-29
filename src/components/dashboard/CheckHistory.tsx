@@ -13,6 +13,7 @@ import { CheckDetails } from './CheckDetails';
 interface CheckHistoryProps {
   paginatedChecks: Check[];
   allChecksCount: number;
+  totalUnfilteredCount: number;
   totalPages: number;
   currentPage: number;
   filterStatus: string | null;
@@ -39,6 +40,7 @@ interface CheckHistoryProps {
 export const CheckHistory: React.FC<CheckHistoryProps> = ({
   paginatedChecks,
   allChecksCount,
+  totalUnfilteredCount,
   totalPages,
   currentPage,
   filterStatus,
@@ -98,7 +100,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               <span className="text-gradient">{t('historyTitle')}</span>
             </CardTitle>
             <CardDescription className="text-base text-muted-foreground">
-              {t('historyDesc').replace('%s', String(allChecksCount))} · {t('viewAndManageAllRecords')}
+              {t('historyDesc').replace('%s', String(totalUnfilteredCount))} · {t('viewAndManageAllRecords')}
             </CardDescription>
           </div>
 
@@ -122,7 +124,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                 <Filter size={14} className="group-hover/filter:rotate-12 transition-transform duration-200" /> 
                 {t('filterAll')} 
                 <Badge variant="secondary" className="ml-0.5 h-5 text-xs px-2 bg-primary/10 text-primary border-primary/20">
-                  {allChecksCount}
+                  {totalUnfilteredCount}
                 </Badge>
               </Button>
               
@@ -399,7 +401,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
         </div>
       </CardContent>
       {totalPages > 1 && (
-        <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t px-5 py-3 text-xs gap-2">
+        <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t px-5 py-3 text-xs gap-2 relative z-10">
           <div className="text-muted-foreground text-center sm:text-left">
             {t('pageInfo')
               .replace('%s', String(startIndex + 1))
@@ -409,26 +411,26 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               .replace('%s', String(totalPages))
             }
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 relative z-20">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
               disabled={currentPage === 1}
-              className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
+              className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150 relative z-30"
             >
               <ChevronLeft className="h-3.5 w-3.5 mr-1" />
               <span className="hidden sm:inline">{t('previous')}</span>
             </Button>
             
-            <div className="flex items-center gap-1.5 px-2">
+            <div className="flex items-center gap-1.5 px-2 relative z-30">
               <div className="hidden md:flex items-center gap-1">
                 {currentPage > 1 && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setCurrentPage(1)}
-                    className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground"
+                    className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground relative z-40"
                     title={t('jumpToFirst')}
                   >
                     1
@@ -448,7 +450,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                     variant="ghost"
                     size="sm"
                     onClick={() => setCurrentPage(totalPages)}
-                    className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground"
+                    className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground relative z-40"
                     title={t('jumpToLast')}
                   >
                     {totalPages}
@@ -457,7 +459,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               </div>
               
               {totalPages > 5 && (
-                <div className="hidden lg:flex items-center gap-1 ml-2">
+                <div className="hidden lg:flex items-center gap-1 ml-2 relative z-40">
                   <MoreHorizontal className="h-3 w-3 text-muted-foreground" />
                   <form onSubmit={handlePageInputSubmit} className="flex items-center gap-1">
                     <input
@@ -468,15 +470,17 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                       onChange={handlePageInputChange}
                       onKeyDown={handlePageInputKeyDown}
                       placeholder={t('jumpToPage')}
-                      className="w-12 h-6 px-1 text-xs text-center border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="w-12 h-6 px-1 text-xs text-center border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
+                      style={{ pointerEvents: 'auto' }}
                     />
                     <Button
                       type="submit"
                       variant="outline"
                       size="sm"
                       disabled={!pageInput || isNaN(parseInt(pageInput, 10)) || parseInt(pageInput, 10) < 1 || parseInt(pageInput, 10) > totalPages}
-                      className="h-6 px-2 text-xs"
+                      className="h-6 px-2 text-xs relative z-50"
                       title={t('pageJump')}
+                      style={{ pointerEvents: 'auto' }}
                     >
                       {t('pageJump')}
                     </Button>
@@ -490,7 +494,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               size="sm"
               onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
+              className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150 relative z-30"
             >
               <span className="hidden sm:inline">{t('next')}</span>
               <ChevronRight className="h-3.5 w-3.5 ml-1" />
