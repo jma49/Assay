@@ -17,7 +17,6 @@ import { Button } from "@/components/ui/button";
 // Import subcomponents and types from dashboard folder
 import {
   Check,
-  CheckStatus,
   dashboardTranslations,
   DashboardTranslationKeys,
   ITEMS_PER_PAGE,
@@ -236,10 +235,10 @@ const Dashboard = () => {
     let filtered = checks;
     
     // 根据不同的筛选状态进行过滤
-    if (filterStatus === CheckStatus.SUCCESS) {
-      filtered = filtered.filter(check => check.status === CheckStatus.SUCCESS);
-    } else if (filterStatus === CheckStatus.FAILURE) {
-      filtered = filtered.filter(check => check.status === CheckStatus.FAILURE);
+    if (filterStatus === "success") {
+      filtered = filtered.filter(check => check.status === "success");
+    } else if (filterStatus === "failure") {
+      filtered = filtered.filter(check => check.status === "failure");
     } else if (filterStatus === "attention_needed") {
       filtered = filtered.filter(check => check.statusType === "attention_needed");
     }
@@ -282,8 +281,8 @@ const Dashboard = () => {
     availableScripts.find(s => s.scriptId === selectedScriptId)
   , [availableScripts, selectedScriptId]);
 
-  const successCount = checks.filter(c => c.status === CheckStatus.SUCCESS).length;
-  const failureCount = checks.filter(c => c.status === CheckStatus.FAILURE).length;
+  const successCount = checks.filter(c => c.status === "success").length;
+  const failureCount = checks.filter(c => c.status === "failure").length;
   const needsAttentionCount = checks.filter(c => c.statusType === "attention_needed").length;
   const allChecksCount = checks.length;
   const successRate = allChecksCount > 0 ? Math.round((successCount / allChecksCount) * 100) : 0;
@@ -385,7 +384,6 @@ const Dashboard = () => {
                   </div>
                   {t('checkHistoryTitle')}
                 </h2>
-                <p className="text-muted-foreground">{t('viewAndManageAllRecords')}</p>
               </div>
               <Link href="/manage-scripts" passHref legacyBehavior>
                 <Button variant="outline" size="lg" className="group shadow-md hover:shadow-lg transition-all duration-300" asChild>

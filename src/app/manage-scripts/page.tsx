@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, ChangeEvent } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { 
-  PlusCircle, Edit, Trash2, RefreshCw, Search, AlertTriangle, Save, Loader2, Home
+  PlusCircle, Edit, Trash2, RefreshCw, Search, AlertTriangle, Save, Loader2, Home, FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter
+  Card, CardContent, CardHeader, CardTitle, CardDescription
 } from '@/components/ui/card';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
@@ -268,113 +268,182 @@ const ManageScriptsPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-6">
-      <Card className="bg-card/90 dark:bg-card/90 backdrop-blur-sm">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div>
-            <CardTitle className="text-2xl font-bold">
-              {t('manageScriptsPageTitle') || 'Manage SQL Scripts'}
-            </CardTitle>
-            <CardDescription>
-              {t('manageScriptsPageDescription') || 'Create, view, update, and delete your SQL scripts.'}
-            </CardDescription>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button onClick={fetchScripts} variant="outline" size="icon" disabled={isLoading || isSubmitting} aria-label={t('refresh') as string}>
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </Button>
-            <Button onClick={() => handleOpenDialog('add')}>
-              <PlusCircle className="mr-0 h-4 w-4" />
-              {t('addNewScriptButton')}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4 relative flex items-center">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <Input
-              placeholder={t('searchScriptsPlaceholder') || 'Search by ID, name, author...'} // TODO: add translation
-              value={searchTerm}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-              className="max-w-sm pl-10"
-            />
-          </div>
-
-          {isLoading && scripts.length === 0 && (
-            <div className="space-y-2 pt-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-12 bg-muted rounded-md animate-pulse" />
-              ))}
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="space-y-8 animate-fadeIn">
+          {/* Header Section */}
+          <header className="text-center lg:text-left">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+              <div className="space-y-2">
+                <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+                  {t('manageScriptsPageTitle')}
+                </h1>
+                <p className="text-lg text-muted-foreground">
+                  {t('manageScriptsPageDescription')}
+                </p>
+              </div>
             </div>
-          )}
+          </header>
 
-          {!isLoading && error && scripts.length === 0 && (
-            <div className="text-center py-10">
-              <AlertTriangle className="mx-auto h-12 w-12 text-destructive mb-4" />
-              <p className="text-destructive mb-2">{t('errorTitle')}: {error}</p>
-              <Button onClick={fetchScripts} variant="outline">
-                <RefreshCw className="mr-0 h-4 w-4" /> {t('retry')}
+          {/* Search and Actions */}
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground pointer-events-none" />
+              <Input
+                type="text"
+                placeholder={t('searchPlaceholder')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-11 text-sm border-2 border-border/50 bg-background/80 backdrop-blur-sm focus:border-primary/50 shadow-md transition-all duration-300"
+              />
+            </div>
+            <Button
+              onClick={fetchScripts}
+              disabled={isLoading}
+              variant="outline"
+              size="lg"
+              className="group shadow-md hover:shadow-lg transition-all duration-300"
+            >
+              <RefreshCw className={`mr-2 h-5 w-5 transition-transform ${isLoading ? 'animate-spin' : 'group-hover:rotate-45'}`} />
+              {isLoading ? t('loading') : t('refresh')}
+            </Button>
+          </div>
+
+          {/* Scripts Table */}
+          <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
+            {/* 装饰性背景 */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+            
+            <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
+                  <FileText className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
+                </div>
+                <div className="space-y-1">
+                  <CardTitle className="text-xl font-bold text-foreground">
+                    {filteredScripts.length > 0 ? `${filteredScripts.length} ${t('scripts')}` : t('manageScriptsPageTitle')}
+                  </CardTitle>
+                  <CardDescription className="text-base text-muted-foreground">
+                    {filteredScripts.length === 0 && !isLoading && !error ? t('noScriptsYet') : ''}
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="relative p-0">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12 text-muted-foreground space-x-3">
+                  <Loader2 className="animate-spin h-6 w-6 text-primary" />
+                  <span className="text-lg font-medium">{t('loading')}</span>
+                </div>
+              ) : error ? (
+                <div className="p-6 text-center space-y-4">
+                  <div className="p-6 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-dashed border-muted-foreground/20 max-w-md mx-auto">
+                    <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                    <p className="text-lg font-medium text-foreground">{t('errorTitle')}</p>
+                    <p className="text-sm text-muted-foreground mt-2">{error}</p>
+                  </div>
+                  <Button onClick={fetchScripts} variant="outline" className="mt-4">
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    {t('retry')}
+                  </Button>
+                </div>
+              ) : filteredScripts.length === 0 ? (
+                <div className="p-8 text-center space-y-4">
+                  <div className="p-6 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-dashed border-muted-foreground/20 max-w-md mx-auto">
+                    <PlusCircle className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                    <p className="text-lg font-medium text-muted-foreground">{t('noScriptsYet')}</p>
+                    <p className="text-sm text-muted-foreground/70 mt-2">{t('manageScriptsPageDescription')}</p>
+                  </div>
+                  <Button onClick={() => handleOpenDialog('add')} className="mt-4">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    {t('addNewScriptButton')}
+                  </Button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gradient-to-r from-muted/40 to-muted/20 hover:from-muted/50 hover:to-muted/30 border-b-2 border-border/30">
+                        <TableHead className="h-14 px-6 font-semibold text-foreground">{t('fieldScriptId')}</TableHead>
+                        <TableHead className="h-14 px-6 font-semibold text-foreground">{t('fieldScriptNameEn')}</TableHead>
+                        <TableHead className="h-14 px-6 font-semibold text-foreground">{t('fieldScriptAuthor')}</TableHead>
+                        <TableHead className="h-14 px-6 font-semibold text-foreground">{t('fieldCreatedAt')}</TableHead>
+                        <TableHead className="h-14 px-6 font-semibold text-foreground text-center">{t('tableActions')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredScripts.map((script) => (
+                        <TableRow 
+                          key={script._id || script.scriptId} 
+                          className="transition-colors hover:bg-muted/20"
+                        >
+                          <TableCell className="px-6 font-medium max-w-48 truncate" title={script.scriptId}>
+                            {script.scriptId}
+                          </TableCell>
+                          <TableCell className="px-6 max-w-56 truncate" title={script.name}>
+                            {script.name}
+                          </TableCell>
+                          <TableCell className="px-6 max-w-32 truncate" title={script.author}>
+                            {script.author}
+                          </TableCell>
+                          <TableCell className="px-6 text-muted-foreground max-w-40 truncate">
+                            {script.createdAt ? formatDate(script.createdAt instanceof Date ? script.createdAt.toISOString() : script.createdAt.toString(), language) : t('unknown')}
+                          </TableCell>
+                          <TableCell className="px-6 text-center">
+                            <div className="flex justify-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenDialog('edit', script)}
+                                className="h-8 px-3 shadow-sm transition-all duration-150 hover:shadow hover:bg-muted/70"
+                                title={t('editScriptTitle')}
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteClick(script)}
+                                className="h-8 px-3 shadow-sm transition-all duration-150 hover:shadow hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-950/20 dark:hover:text-red-400 dark:hover:border-red-800"
+                                title={t('deleteScriptButton')}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons - Bottom Right */}
+          <div className="flex justify-end">
+            <div className="flex items-center space-x-3">
+              <Button
+                onClick={() => handleOpenDialog('add')}
+                size="lg"
+                className="group shadow-md hover:shadow-lg transition-all duration-300"
+              >
+                <PlusCircle className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                {t('addNewScriptButton')}
               </Button>
+              <Link href="/" passHref legacyBehavior>
+                <Button variant="outline" size="lg" className="group shadow-md hover:shadow-lg transition-all duration-300" asChild>
+                  <a>
+                    <Home className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                    {t('backToDashboardButton')}
+                  </a>
+                </Button>
+              </Link>
             </div>
-          )}
-
-          {!isLoading && !error && filteredScripts.length === 0 && (
-             <div className="text-center py-10">
-                <p className="text-muted-foreground">{searchTerm ? t('noMatchingRecords') : t('noScriptsYet')}</p>
-             </div>
-          )}
-
-          {filteredScripts.length > 0 && (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[200px]">{t('fieldScriptId')}</TableHead>
-                    <TableHead>{t('fieldScriptNameEn')}</TableHead>
-                    <TableHead className="hidden md:table-cell">{t('fieldScriptAuthor')}</TableHead>
-                    <TableHead className="hidden lg:table-cell">{t('fieldCreatedAt')}</TableHead>
-                    <TableHead className="hidden lg:table-cell">{t('fieldUpdatedAt')}</TableHead>
-                    <TableHead className="text-right w-[120px]">{t('tableActions')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredScripts.map((script) => (
-                    <TableRow key={script.scriptId}>
-                      <TableCell className="font-mono text-sm">{script.scriptId}</TableCell>
-                      <TableCell>{language === 'zh' && script.cnName ? script.cnName : script.name}</TableCell>
-                      <TableCell className="hidden md:table-cell">{script.author || '-'}</TableCell>
-                      <TableCell className="hidden lg:table-cell text-xs">
-                        {script.createdAt ? formatDate(script.createdAt.toString(), language) : '-'}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-xs">
-                        {script.updatedAt ? formatDate(script.updatedAt.toString(), language) : '-'}
-                      </TableCell>
-                      <TableCell className="text-right space-x-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenDialog('edit', script)} aria-label={t('editScriptButton') as string}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(script)} aria-label={t('deleteScriptButton') as string}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-end pt-6 border-t">
-          <Link href="/" passHref legacyBehavior>
-            <Button asChild>
-              <a>
-                <Home className="h-4 w-4" /> 
-                {t('backToDashboardButton') || 'Back to Dashboard'}
-              </a>
-            </Button>
-          </Link>
-        </CardFooter>
-      </Card>
+          </div>
+        </div>
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[70vw] max-h-[90vh] flex flex-col">

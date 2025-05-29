@@ -137,6 +137,7 @@ export type DashboardTranslationKeys =
   | "confirmAction"
   | "noScriptsYet"
   | "manageScriptsButton"
+  | "scripts"
   | "checkDetailsTitle"
   | "checkDetailsDesc"
   | "fieldCreatedAt"
@@ -447,6 +448,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     viewAndManageAllRecords: "View and Manage All Records",
     needsAttentionRatePercentage: "Needs Attention Rate Percentage",
     noAttentionRecords: "No Attention Records",
+    scripts: "Scripts",
   },
   zh: {
     // General
@@ -645,5 +647,6 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     viewAndManageAllRecords: "查看和管理所有记录",
     needsAttentionRatePercentage: "需要关注率",
     noAttentionRecords: "无关注记录",
+    scripts: "个脚本",
   },
 };
