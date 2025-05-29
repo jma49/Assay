@@ -50,8 +50,6 @@ export type DashboardTranslationKeys =
   | "tableActions"
   | "noMatchingRecords"
   | "clearFilters"
-  | "expand"
-  | "collapse"
   | "checkDetails"
   | "noResults"
   | "previous"
@@ -61,8 +59,6 @@ export type DashboardTranslationKeys =
   | "checkTriggeredDesc"
   | "triggerFailed"
   | "poweredBy"
-  | "collapseDetails"
-  | "expandDetails"
   | "viewInSidebar"
   | "calculating"
   | "attentionNeeded"
@@ -102,6 +98,7 @@ export type DashboardTranslationKeys =
   | "saveScriptButton"
   | "cancelButton"
   | "deleteScriptButton"
+  | "deleteButton"
   | "confirmDeleteScriptTitle"
   | "confirmDeleteScriptMessage"
   | "scriptIdPlaceholder"
@@ -328,8 +325,6 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     noMatchingRecords: "No matching check records found",
     clearFilters: "Clear Filters",
     // Row Actions
-    collapse: "Collapse",
-    expand: "Details",
     viewDetailsSidebar: "View Details in Sidebar",
     // Detail View (Sheet & Expanded Row)
     checkDetails: "Check Details",
@@ -349,9 +344,6 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     previous: "Previous",
     next: "Next",
     pageInfo: "Showing %s-%s of %s results (Page %s of %s)",
-    collapseDetails: "Collapse details",
-    expandDetails: "Expand details",
-    viewInSidebar: "View in sidebar",
     // 以下是需要补充的键
     scheduled: "Scheduled",
     automatic: "Automatic",
@@ -390,6 +382,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     saveScriptButton: "Save Script",
     cancelButton: "Cancel",
     deleteScriptButton: "Delete Script",
+    deleteButton: "Delete",
     confirmDeleteScriptTitle: "Confirm Deletion",
     confirmDeleteScriptMessage:
       "Are you sure you want to delete the script '{scriptName}'? This action cannot be undone.",
@@ -567,8 +560,6 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     noMatchingRecords: "暂无匹配的检查记录",
     clearFilters: "清除筛选条件",
     // Row Actions
-    collapse: "收起",
-    expand: "详情",
     viewDetailsSidebar: "在侧边栏查看详情",
     // Detail View (Sheet & Expanded Row)
     checkDetails: "检查详情",
@@ -586,9 +577,6 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     previous: "上一页",
     next: "下一页",
     pageInfo: "显示第 %s-%s 条，共 %s 条结果（第 %s 页/共 %s 页）",
-    collapseDetails: "收起详情",
-    expandDetails: "展开详情",
-    viewInSidebar: "在侧边栏查看",
     // 以下是需要补充的键
     scheduled: "计划中",
     automatic: "自动",
@@ -628,6 +616,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     saveScriptButton: "保存脚本",
     cancelButton: "取消",
     deleteScriptButton: "删除脚本",
+    deleteButton: "删除",
     confirmDeleteScriptTitle: "确认删除",
     confirmDeleteScriptMessage:
       "您确定要删除脚本 '{scriptName}' 吗？此操作无法撤销。",

@@ -537,7 +537,7 @@ const ManageScriptsPage = () => {
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               {isSubmitting && <Loader2 className="mr-0 h-4 w-4 animate-spin" />} 
-              {t('deleteButton') || 'Delete'}
+              {t('deleteButton')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
