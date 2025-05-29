@@ -30,6 +30,7 @@ import { containsHarmfulSql } from '@/lib/utils';
 import { ScriptMetadataForm, ScriptFormData } from '@/components/scripts/ScriptMetadataForm';
 import CodeMirrorEditor from '@/components/scripts/CodeMirrorEditor';
 import { generateSqlTemplateWithTranslation } from '@/components/dashboard/scriptTranslations';
+import { cn } from '@/lib/utils';
 
 // Helper type for the form state, combining metadata and SQL content
 type ManageScriptFormState = Partial<SqlScript>;
@@ -361,61 +362,99 @@ const ManageScriptsPage = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gradient-to-r from-muted/40 to-muted/20 hover:from-muted/50 hover:to-muted/30 border-b-2 border-border/30">
-                        <TableHead className="h-14 px-6 font-semibold text-foreground">{t('fieldScriptId')}</TableHead>
-                        <TableHead className="h-14 px-6 font-semibold text-foreground">{t('fieldScriptNameEn')}</TableHead>
-                        <TableHead className="h-14 px-6 font-semibold text-foreground">{t('fieldScriptAuthor')}</TableHead>
-                        <TableHead className="h-14 px-6 font-semibold text-foreground">{t('fieldCreatedAt')}</TableHead>
-                        <TableHead className="h-14 px-6 font-semibold text-foreground text-center">{t('tableActions')}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredScripts.map((script) => (
-                        <TableRow 
-                          key={script._id || script.scriptId} 
-                          className="transition-colors hover:bg-muted/20"
-                        >
-                          <TableCell className="px-6 font-medium max-w-48 truncate" title={script.scriptId}>
-                            {script.scriptId}
-                          </TableCell>
-                          <TableCell className="px-6 max-w-56 truncate" title={script.name}>
-                            {script.name}
-                          </TableCell>
-                          <TableCell className="px-6 max-w-32 truncate" title={script.author}>
-                            {script.author}
-                          </TableCell>
-                          <TableCell className="px-6 text-muted-foreground max-w-40 truncate">
-                            {script.createdAt ? formatDate(script.createdAt instanceof Date ? script.createdAt.toISOString() : script.createdAt.toString(), language) : t('unknown')}
-                          </TableCell>
-                          <TableCell className="px-6 text-center">
-                            <div className="flex justify-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleOpenDialog('edit', script)}
-                                className="h-8 px-3 shadow-sm transition-all duration-150 hover:shadow hover:bg-muted/70"
-                                title={t('editScriptTitle')}
-                              >
-                                <Edit className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDeleteClick(script)}
-                                className="h-8 px-3 shadow-sm transition-all duration-150 hover:shadow hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-950/20 dark:hover:text-red-400 dark:hover:border-red-800"
-                                title={t('deleteScriptButton')}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                <div className="overflow-hidden rounded-lg border border-border/20 shadow-inner bg-gradient-to-b from-background to-muted/10">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gradient-to-r from-primary/5 via-primary/3 to-primary/5 border-b-2 border-primary/20 backdrop-blur-sm">
+                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-blue-400/60"></div>
+                              {t('fieldScriptId')}
                             </div>
-                          </TableCell>
+                          </TableHead>
+                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-emerald-400/60"></div>
+                              {t('fieldScriptNameEn')}
+                            </div>
+                          </TableHead>
+                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-amber-400/60"></div>
+                              {t('fieldScriptAuthor')}
+                            </div>
+                          </TableHead>
+                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-purple-400/60"></div>
+                              {t('fieldCreatedAt')}
+                            </div>
+                          </TableHead>
+                          <TableHead className="h-16 px-4 font-bold text-foreground/90 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-pink-400/60"></div>
+                              {t('tableActions')}
+                            </div>
+                          </TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody className="divide-y divide-border/20">
+                        {filteredScripts.map((script, index) => (
+                          <TableRow 
+                            key={script._id || script.scriptId} 
+                            className={cn(
+                              "group/row transition-all duration-200 hover:bg-gradient-to-r hover:from-muted/30 hover:to-muted/10 hover:shadow-sm",
+                              index % 2 === 0 ? "bg-background" : "bg-muted/5"
+                            )}
+                          >
+                            <TableCell className="px-4 py-4 font-semibold max-w-48 group-hover/row:text-primary transition-colors duration-200" title={script.scriptId}>
+                              <div className="truncate">
+                                {script.scriptId}
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-4 py-4 font-medium max-w-56" title={script.name}>
+                              <div className="truncate">
+                                {script.name}
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-4 py-4 text-muted-foreground max-w-32" title={script.author}>
+                              <div className="truncate">
+                                {script.author}
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-4 py-4 text-muted-foreground max-w-40 font-mono text-sm">
+                              <div className="truncate">
+                                {script.createdAt ? formatDate(script.createdAt instanceof Date ? script.createdAt.toISOString() : script.createdAt.toString(), language) : t('unknown')}
+                              </div>
+                            </TableCell>
+                            <TableCell className="px-4 py-4 text-center">
+                              <div className="flex justify-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleOpenDialog('edit', script)}
+                                  className="h-8 px-3 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 dark:hover:bg-blue-950/20 dark:hover:border-blue-700/50 dark:hover:text-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
+                                  title={t('editScriptTitle')}
+                                >
+                                  <Edit className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteClick(script)}
+                                  className="h-8 px-3 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:bg-red-50 hover:border-red-300 hover:text-red-700 dark:hover:bg-red-950/20 dark:hover:border-red-700/50 dark:hover:text-red-400 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-800"
+                                  title={t('deleteScriptButton')}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               )}
             </CardContent>
