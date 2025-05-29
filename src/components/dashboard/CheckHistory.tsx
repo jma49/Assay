@@ -25,6 +25,7 @@ interface CheckHistoryProps {
   };
   successCount: number;
   failureCount: number;
+  needsAttentionCount: number;
   language: string;
   t: (key: DashboardTranslationKeys) => string;
   toggleExpand: (checkId: string) => void;
@@ -47,6 +48,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
   sortConfig,
   successCount,
   failureCount,
+  needsAttentionCount,
   language,
   t,
   toggleExpand,
@@ -83,131 +85,163 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
   };
 
   return (
-    <Card className="shadow-sm hover:shadow-md transition-all duration-300 bg-card/90 dark:bg-card/90 backdrop-blur-sm">
-      <CardHeader className="px-5 py-4 border-b border-border/50">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <div className="icon-container bg-primary/10 rounded-lg">
-                <Clock className="h-5 w-5 text-primary" />
+    <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
+      {/* 装饰性背景 */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+      
+      <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6">
+          <div className="space-y-2">
+            <CardTitle className="text-xl font-bold flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
+                <Clock className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
               </div>
-              {t('historyTitle')}
+              <span className="text-gradient">{t('historyTitle')}</span>
             </CardTitle>
-            <CardDescription className="mt-1">
+            <CardDescription className="text-base text-muted-foreground">
               {t('historyDesc').replace('%s', String(allChecksCount))}
             </CardDescription>
           </div>
 
-          <div className="w-full sm:w-auto space-y-3">
-            <div className="flex flex-wrap items-center gap-1.5 justify-between sm:justify-end">
+          <div className="w-full sm:w-auto space-y-4">
+            {/* 第一行：All筛选器和搜索栏 */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full">
               <Button
                 variant={filterStatus === null ? "default" : "outline"}
                 size="sm"
                 onClick={() => { setFilterStatus(null); setCurrentPage(1); }}
-                className="h-7 px-2 gap-1 text-xs transition-all duration-200 shadow-sm hover:shadow"
+                className="h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 sm:flex-initial sm:min-w-[120px]"
               >
-                <Filter size={12} /> {t('filterAll')} <Badge variant="secondary" className="ml-0.5 h-4 text-[10px] px-1">{allChecksCount}</Badge>
+                <Filter size={14} className="group-hover/filter:rotate-12 transition-transform duration-200" /> 
+                {t('filterAll')} 
+                <Badge variant="secondary" className="ml-0.5 h-5 text-xs px-2 bg-primary/10 text-primary border-primary/20">
+                  {allChecksCount}
+                </Badge>
               </Button>
+              
+              {/* 搜索栏 */}
+              <div className="relative flex-1 sm:w-80">
+                <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder={t('searchPlaceholder')}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full h-11 pl-10 pr-10 text-sm rounded-lg border-2 border-border/50 bg-background/80 backdrop-blur-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus:ring-offset-2 focus:border-primary/50 shadow-md transition-all duration-300 placeholder:text-muted-foreground/60"
+                />
+                {searchTerm && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="absolute right-1 top-1 h-9 w-9 p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-all duration-200" 
+                    onClick={() => setSearchTerm('')}
+                  >
+                    <span className="sr-only">{t('clearSearch')}</span>
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+            
+            {/* 第二行：Success、Attention、Failure筛选器 */}
+            <div className="flex items-center gap-3 w-full">
               <Button
                 variant={filterStatus === CheckStatus.SUCCESS ? "default" : "outline"}
                 size="sm"
                 onClick={() => { setFilterStatus(CheckStatus.SUCCESS); setCurrentPage(1); }}
-                className="h-7 px-2 gap-1 text-xs transition-all duration-200 shadow-sm hover:shadow"
+                className="h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 min-w-0"
               >
-                <CheckCircle size={12} /> {t('filterSuccess')} <Badge variant="secondary" className="ml-0.5 h-4 text-[10px] px-1">{successCount}</Badge>
+                <CheckCircle size={14} className="group-hover/filter:scale-110 transition-transform duration-200" /> 
+                <span className="truncate">{t('filterSuccess')}</span> 
+                <Badge variant="secondary" className="ml-0.5 h-5 text-xs px-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800">
+                  {successCount}
+                </Badge>
+              </Button>
+              <Button
+                variant={filterStatus === "attention_needed" ? "default" : "outline"}
+                size="sm"
+                onClick={() => { setFilterStatus("attention_needed"); setCurrentPage(1); }}
+                className="h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 min-w-0"
+              >
+                <AlertCircle size={14} className="group-hover/filter:scale-110 transition-transform duration-200" /> 
+                <span className="truncate">{t('needsAttention')}</span> 
+                <Badge variant="secondary" className="ml-0.5 h-5 text-xs px-2 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800">
+                  {needsAttentionCount}
+                </Badge>
               </Button>
               <Button
                 variant={filterStatus === CheckStatus.FAILURE ? "default" : "outline"}
                 size="sm"
                 onClick={() => { setFilterStatus(CheckStatus.FAILURE); setCurrentPage(1); }}
-                className="h-7 px-2 gap-1 text-xs transition-all duration-200 shadow-sm hover:shadow"
+                className="h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 min-w-0"
               >
-                <AlertCircle size={12} /> {t('filterFailed')} <Badge variant="secondary" className="ml-0.5 h-4 text-[10px] px-1">{failureCount}</Badge>
+                <AlertCircle size={14} className="group-hover/filter:scale-110 transition-transform duration-200" /> 
+                <span className="truncate">{t('filterFailed')}</span> 
+                <Badge variant="secondary" className="ml-0.5 h-5 text-xs px-2 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800">
+                  {failureCount}
+                </Badge>
               </Button>
-            </div>
-            
-            <div className="relative w-full">
-              <div className="flex w-full items-center space-x-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  <input
-                    type="text"
-                    placeholder={t('searchPlaceholder')}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full h-9 pl-8 pr-8 text-sm rounded-md border border-input bg-card/50 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus:ring-offset-2 shadow-sm"
-                  />
-                  {searchTerm && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="absolute right-1 top-1 h-7 w-7 p-0 text-muted-foreground hover:text-foreground hover:bg-background/80" 
-                      onClick={() => setSearchTerm('')}
-                    >
-                      <span className="sr-only">{t('clearSearch')}</span>
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
+      
+      <CardContent className="relative p-0">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/30 hover:bg-muted/40">
-                <TableHead className="w-[100px] px-3 sm:px-4">{t('tableStatus')}</TableHead>
+              <TableRow className="bg-gradient-to-r from-muted/40 to-muted/20 hover:from-muted/50 hover:to-muted/30 border-b-2 border-border/30">
+                <TableHead className="h-14 px-4 sm:px-6 font-semibold text-foreground">{t('tableStatus')}</TableHead>
                 <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors px-3 sm:px-4"
+                  className="cursor-pointer hover:bg-muted/30 transition-colors px-4 sm:px-6 font-semibold text-foreground group/sort"
                   onClick={() => requestSort('script_name')}
                 >
-                  <div className="flex items-center">
+                  <div className="flex items-center gap-2">
                     {t('tableScriptName')}
                     {sortConfig.key === 'script_name' && (
-                      <span className="ml-1 text-primary">
-                        {sortConfig.direction === 'ascending' ? <ChevronUp className="h-3.5 w-3.5 inline-block" /> : <ChevronDown className="h-3.5 w-3.5 inline-block" />}
+                      <span className="text-primary">
+                        {sortConfig.direction === 'ascending' ? 
+                          <ChevronUp className="h-4 w-4 inline-block" /> : 
+                          <ChevronDown className="h-4 w-4 inline-block" />
+                        }
                       </span>
                     )}
+                    <ChevronUp className="h-3 w-3 opacity-30 group-hover/sort:opacity-60 transition-opacity duration-200" />
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="hidden md:table-cell cursor-pointer hover:bg-muted/50 transition-colors px-3 sm:px-4"
+                  className="hidden md:table-cell cursor-pointer hover:bg-muted/30 transition-colors px-4 sm:px-6 font-semibold text-foreground group/sort"
                   onClick={() => requestSort('execution_time')}
                 >
-                  <div className="flex items-center">
+                  <div className="flex items-center gap-2">
                     {t('tableExecutionTime')}
                     {sortConfig.key === 'execution_time' && (
-                      <span className="ml-1 text-primary">
-                        {sortConfig.direction === 'ascending' ? <ChevronUp className="h-3.5 w-3.5 inline-block" /> : <ChevronDown className="h-3.5 w-3.5 inline-block" />}
+                      <span className="text-primary">
+                        {sortConfig.direction === 'ascending' ? 
+                          <ChevronUp className="h-4 w-4 inline-block" /> : 
+                          <ChevronDown className="h-4 w-4 inline-block" />
+                        }
                       </span>
                     )}
+                    <ChevronUp className="h-3 w-3 opacity-30 group-hover/sort:opacity-60 transition-opacity duration-200" />
                   </div>
                 </TableHead>
-                <TableHead className="hidden sm:table-cell max-w-xs px-3 sm:px-4">{t('tableFindings')}</TableHead>
-                <TableHead className="text-center px-3 sm:px-4">{t('tableActions')}</TableHead>
+                <TableHead className="hidden sm:table-cell max-w-xs px-4 sm:px-6 font-semibold text-foreground">{t('tableFindings')}</TableHead>
+                <TableHead className="text-center px-4 sm:px-6 font-semibold text-foreground">{t('tableActions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedChecks.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center">
-                    <div className="flex flex-col items-center">
-                      <div className="icon-container bg-muted/20 rounded-lg p-1 mb-3">
-                        <Database className="h-10 w-10 text-muted-foreground" />
+                  <TableCell colSpan={5} className="h-40 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                      <div className="p-6 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-dashed border-muted-foreground/20">
+                        <Database className="h-12 w-12 text-muted-foreground/50 mx-auto" />
                       </div>
-                      <p className="font-medium">{t('noMatchingRecords')}</p>
-                      {filterStatus && (
-                        <Button
-                          onClick={() => setFilterStatus(null)}
-                          variant="link"
-                          className="mt-1.5"
-                        >
-                          {t('clearFilters')}
-                        </Button>
-                      )}
+                      <div className="space-y-2">
+                        <p className="text-lg font-medium text-muted-foreground">{t('noDataFound')}</p>
+                        <p className="text-sm text-muted-foreground/70">{t('noMatchingExecutionRecords')}</p>
+                      </div>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -218,7 +252,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                     "transition-colors hover:bg-muted/20",
                     expandedCheckId === check._id ? "bg-muted/60" : ""
                   )}>
-                    <TableCell className="px-3 sm:px-4">
+                    <TableCell className="px-4 sm:px-6">
                       {check.statusType === "attention_needed" ? (
                         <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300 dark:bg-yellow-950 dark:text-yellow-400 dark:border-yellow-700">
                           <AlertCircle className="h-3.5 w-3.5 mr-1 text-yellow-600 dark:text-yellow-500" />
@@ -236,16 +270,16 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="font-medium px-3 sm:px-4">
+                    <TableCell className="font-medium px-4 sm:px-6">
                       {check.script_name}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-muted-foreground px-3 sm:px-4">
+                    <TableCell className="hidden md:table-cell text-muted-foreground px-4 sm:px-6">
                       {formatDate(check.execution_time, language)}
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell max-w-xs truncate px-3 sm:px-4" title={check.findings || check.message || t('noData')}>
+                    <TableCell className="hidden sm:table-cell max-w-xs truncate px-4 sm:px-6" title={check.findings || check.message || t('noData')}>
                       {check.findings || check.message || <span className="italic text-muted-foreground">{t('noData')}</span>}
                     </TableCell>
-                    <TableCell className="text-center px-3 sm:px-4">
+                    <TableCell className="text-center px-4 sm:px-6">
                       <div className="flex justify-center gap-1.5">
                         <Button
                           variant={expandedCheckId === check._id ? "default" : "outline"}

@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     const collection = await getSqlScriptsCollection();
 
     // 构建查询条件
-    const query: Record<string, any> = {};
+    const query: Record<string, unknown> = {};
     if (includeScheduledOnly) {
       query.isScheduled = true;
     }

@@ -18,7 +18,7 @@ interface CheckHistoryApiResponse extends Omit<WithId<Document>, "_id"> {
 
 const COLLECTION_NAME = "result";
 const DEFAULT_LIMIT = 100; // 返回最近100条记录供前端分页
-const MAX_LIMIT = 200; // 最大限制避免性能问题
+const MAX_LIMIT = 500; // 增加最大限制以支持更多数据
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     const collection: Collection<Document> = db.collection(COLLECTION_NAME);
 
     // 构建查询条件
-    const query: Record<string, any> = {};
+    const query: Record<string, unknown> = {};
     if (scriptName) {
       query.script_name = scriptName;
     }

@@ -160,7 +160,29 @@ export type DashboardTranslationKeys =
   | "jumpToLast"
   | "pageNumber"
   | "of"
-  | "pages";
+  | "pages"
+  | "totalChecksExecuted"
+  | "successRatePercentage"
+  | "noSuccessRecords"
+  | "excellentTrend"
+  | "goodTrend"
+  | "averageTrend"
+  | "needsAttentionTrend"
+  | "normalTrend"
+  | "needsProcessingTrend"
+  | "failureRatePercentage"
+  | "noFailureRecords"
+  | "scriptDetails"
+  | "description"
+  | "scope"
+  | "author"
+  | "createdAt"
+  | "unknown"
+  | "noDataFound"
+  | "noMatchingExecutionRecords"
+  | "viewAndManageAllRecords"
+  | "needsAttentionRatePercentage"
+  | "noAttentionRecords";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -403,6 +425,28 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     pageNumber: "Page",
     of: "of",
     pages: "pages",
+    totalChecksExecuted: "Total Checks Executed",
+    successRatePercentage: "Success Rate Percentage",
+    noSuccessRecords: "No Success Records",
+    excellentTrend: "Excellent Trend",
+    goodTrend: "Good Trend",
+    averageTrend: "Average Trend",
+    needsAttentionTrend: "Needs Attention Trend",
+    normalTrend: "Normal Trend",
+    needsProcessingTrend: "Needs Processing Trend",
+    failureRatePercentage: "Failure Rate Percentage",
+    noFailureRecords: "No Failure Records",
+    scriptDetails: "Script Details",
+    description: "Description",
+    scope: "Scope",
+    author: "Author",
+    createdAt: "Created At",
+    unknown: "Unknown",
+    noDataFound: "No Data Found",
+    noMatchingExecutionRecords: "No Matching Execution Records",
+    viewAndManageAllRecords: "View and Manage All Records",
+    needsAttentionRatePercentage: "Needs Attention Rate Percentage",
+    noAttentionRecords: "No Attention Records",
   },
   zh: {
     // General
@@ -579,5 +623,27 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     pageNumber: "第",
     of: "/",
     pages: "页",
+    totalChecksExecuted: "检查执行总次数",
+    successRatePercentage: "成功率",
+    noSuccessRecords: "暂无成功记录",
+    excellentTrend: "优秀",
+    goodTrend: "良好",
+    averageTrend: "一般",
+    needsAttentionTrend: "需要关注",
+    normalTrend: "正常",
+    needsProcessingTrend: "需要处理",
+    failureRatePercentage: "失败率",
+    noFailureRecords: "暂无失败记录",
+    scriptDetails: "脚本详情",
+    description: "描述",
+    scope: "范围",
+    author: "作者",
+    createdAt: "创建时间",
+    unknown: "未知",
+    noDataFound: "无数据",
+    noMatchingExecutionRecords: "无匹配执行记录",
+    viewAndManageAllRecords: "查看和管理所有记录",
+    needsAttentionRatePercentage: "需要关注率",
+    noAttentionRecords: "无关注记录",
   },
 };

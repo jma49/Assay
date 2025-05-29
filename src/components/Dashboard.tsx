@@ -5,6 +5,7 @@ import {
   RefreshCw,
   AreaChart,
   ListChecks,
+  Clock,
 } from 'lucide-react';
 import { toast } from "sonner";
 import { useLanguage } from '@/components/ClientLayoutWrapper';
@@ -72,7 +73,8 @@ const Dashboard = () => {
     setCurrentPage(1);
 
     try {
-      const historyPromise = fetch('/api/check-history').then(res => {
+      // 修改API调用：获取完整的历史数据（包含raw_results）和更大的数据集
+      const historyPromise = fetch('/api/check-history?limit=400&include_results=true').then(res => {
         if (!res.ok) throw new Error(`${t('errorInfo')}: ${res.status} ${res.statusText}`);
         return res.json();
       });
@@ -88,7 +90,7 @@ const Dashboard = () => {
         }
       });
 
-      const [historyResponse, scriptsResponse]: [{ data: Check[], meta?: any }, { data: ScriptInfo[] }] = await Promise.all([historyPromise, scriptsPromise]);
+      const [historyResponse, scriptsResponse]: [{ data: Check[], meta?: unknown }, { data: ScriptInfo[] }] = await Promise.all([historyPromise, scriptsPromise]);
 
       // 从响应中提取数据数组
       const historyData = historyResponse.data || [];
@@ -97,6 +99,8 @@ const Dashboard = () => {
       // 记录API返回的元数据（可选）
       if (historyResponse.meta) {
         console.log("History API meta:", historyResponse.meta);
+        const meta = historyResponse.meta as { total_count?: number };
+        console.log(`API returned ${historyData.length} records out of ${meta.total_count || 'unknown'} total records`);
       }
 
       const processedScriptsData: ScriptInfo[] = (scriptsDataJSON || []).map(script => ({
@@ -229,9 +233,18 @@ const Dashboard = () => {
   };
 
   const filteredAndSortedChecks = React.useMemo(() => {
-    let filtered = filterStatus
-      ? checks.filter(check => check.status === filterStatus)
-      : checks;
+    let filtered = checks;
+    
+    // 根据不同的筛选状态进行过滤
+    if (filterStatus === CheckStatus.SUCCESS) {
+      filtered = filtered.filter(check => check.status === CheckStatus.SUCCESS);
+    } else if (filterStatus === CheckStatus.FAILURE) {
+      filtered = filtered.filter(check => check.status === CheckStatus.FAILURE);
+    } else if (filterStatus === "attention_needed") {
+      filtered = filtered.filter(check => check.statusType === "attention_needed");
+    }
+    // filterStatus === null 时显示所有记录
+    
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(check => 
@@ -271,6 +284,7 @@ const Dashboard = () => {
 
   const successCount = checks.filter(c => c.status === CheckStatus.SUCCESS).length;
   const failureCount = checks.filter(c => c.status === CheckStatus.FAILURE).length;
+  const needsAttentionCount = checks.filter(c => c.statusType === "attention_needed").length;
   const allChecksCount = checks.length;
   const successRate = allChecksCount > 0 ? Math.round((successCount / allChecksCount) * 100) : 0;
 
@@ -290,96 +304,129 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 lg:p-8 animate-fadeIn">
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-            {t('dashboardTitle')}
-          </h1>
-          {nextScheduled && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t('nextScheduledCheck')}: {nextScheduled.toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' })}
-            </p>
-          )}
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="space-y-8 animate-fadeIn">
+          {/* Header Section */}
+          <header className="text-center lg:text-left">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+              <div className="space-y-2">
+                <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+                  {t('dashboardTitle')}
+                </h1>
+                {nextScheduled && (
+                  <p className="text-base text-muted-foreground flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    {t('nextScheduledCheck')}: {nextScheduled.toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' })}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center space-x-3">
+                <Link href="/data-analysis" passHref legacyBehavior>
+                  <Button variant="outline" size="lg" className="group shadow-md hover:shadow-lg transition-all duration-300" asChild>
+                    <a>
+                      <AreaChart className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                      {t('dataAnalysisButton')}
+                    </a>
+                  </Button>
+                </Link>
+                <Button 
+                  onClick={loadInitialData} 
+                  disabled={isRefreshing} 
+                  variant="outline" 
+                  size="lg"
+                  className="group shadow-md hover:shadow-lg transition-all duration-300"
+                >
+                  <RefreshCw className={`mr-2 h-5 w-5 transition-transform ${isRefreshing ? 'animate-spin' : 'group-hover:rotate-45'}`} />
+                  {isRefreshing ? t('refreshingStatusText') : t('refreshDataButton')}
+                </Button>
+              </div>
+            </div>
+          </header>
+
+          {/* Stats Cards Section */}
+          <section className="space-y-4">
+            <StatsCards 
+              nextScheduled={nextScheduled} 
+              successCount={successCount}
+              allChecksCount={allChecksCount}
+              needsAttentionCount={needsAttentionCount}
+              successRate={successRate}
+              language={language}
+              t={t}
+            />
+          </section>
+
+          {/* Manual Trigger Section */}
+          <section className="space-y-4">
+            <ManualTrigger 
+              availableScripts={availableScripts}
+              selectedScriptId={selectedScriptId}
+              selectedScript={selectedScript}
+              isTriggering={isTriggering}
+              isFetchingScripts={isFetchingScripts}
+              loading={loading && isFetchingScripts}
+              triggerMessage={triggerMessage}
+              triggerMessageType={triggerMessageType}
+              language={language}
+              t={t}
+              setSelectedScriptId={setSelectedScriptId}
+              handleTriggerCheck={handleTriggerCheck}
+            />
+          </section>
+
+          {/* Check History Section */}
+          <section className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="space-y-1">
+                <h2 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+                  <div className="icon-container bg-primary/10 rounded-xl p-2">
+                    <ListChecks className="h-6 w-6 text-primary" />
+                  </div>
+                  {t('checkHistoryTitle')}
+                </h2>
+                <p className="text-muted-foreground">{t('viewAndManageAllRecords')}</p>
+              </div>
+              <Link href="/manage-scripts" passHref legacyBehavior>
+                <Button variant="outline" size="lg" className="group shadow-md hover:shadow-lg transition-all duration-300" asChild>
+                  <a>
+                    <ListChecks className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                    {t('manageScriptsButton')}
+                  </a>
+                </Button>
+              </Link>
+            </div>
+
+            <CheckHistory 
+              paginatedChecks={paginatedChecks}
+              allChecksCount={allChecksCount}
+              totalPages={totalPages}
+              currentPage={currentPage}
+              filterStatus={filterStatus}
+              searchTerm={searchTerm}
+              expandedCheckId={expandedCheckId}
+              sortConfig={sortConfig}
+              successCount={successCount} 
+              failureCount={failureCount} 
+              needsAttentionCount={needsAttentionCount}
+              language={language}
+              t={t}
+              toggleExpand={toggleExpand}
+              setFilterStatus={setFilterStatus}
+              setSearchTerm={setSearchTerm}
+              setCurrentPage={setCurrentPage}
+              requestSort={requestSort}
+              startIndex={startIndex}
+              endIndex={endIndex}
+            />
+          </section>
+
+          {/* Footer Section */}
+          <section className="pt-8 border-t border-border/20">
+            <DashboardFooter t={t} />
+          </section>
         </div>
-        <div className="flex items-center space-x-2">
-          <Link href="/data-analysis" passHref legacyBehavior>
-             <Button variant="outline" className="w-32" asChild>
-               <a>
-                 <AreaChart className="mr-0 h-4 w-4" />
-                 {t('dataAnalysisButton')}
-               </a>
-             </Button>
-           </Link>
-           <Button onClick={loadInitialData} disabled={isRefreshing} variant="outline" className="w-32">
-             <RefreshCw className={`mr-0 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-             {isRefreshing ? t('refreshingStatusText') : t('refreshDataButton')}
-           </Button>
-        </div>
-      </header>
-
-      <StatsCards 
-        nextScheduled={nextScheduled} 
-        successCount={successCount}
-        failureCount={failureCount}
-        allChecksCount={allChecksCount}
-        successRate={successRate}
-        language={language}
-        t={t}
-      />
-
-      <ManualTrigger 
-        availableScripts={availableScripts}
-        selectedScriptId={selectedScriptId}
-        selectedScript={selectedScript}
-        isTriggering={isTriggering}
-        isFetchingScripts={isFetchingScripts}
-        loading={loading && isFetchingScripts}
-        triggerMessage={triggerMessage}
-        triggerMessageType={triggerMessageType}
-        language={language}
-        t={t}
-        setSelectedScriptId={setSelectedScriptId}
-        handleTriggerCheck={handleTriggerCheck}
-      />
-
-      <div className="flex justify-between items-center mt-8 mb-4">
-        <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
-          {t('checkHistoryTitle')} 
-        </h2>
-        <Link href="/manage-scripts" passHref legacyBehavior>
-          <Button variant="outline" asChild>
-            <a>
-              <ListChecks className="mr-0 h-4 w-4" />
-              {t('manageScriptsButton')}
-            </a>
-          </Button>
-        </Link>
       </div>
-
-      <CheckHistory 
-        paginatedChecks={paginatedChecks}
-        allChecksCount={allChecksCount}
-        totalPages={totalPages}
-        currentPage={currentPage}
-        filterStatus={filterStatus}
-        searchTerm={searchTerm}
-        expandedCheckId={expandedCheckId}
-        sortConfig={sortConfig}
-        successCount={successCount} 
-        failureCount={failureCount} 
-        language={language}
-        t={t}
-        toggleExpand={toggleExpand}
-        setFilterStatus={setFilterStatus}
-        setSearchTerm={setSearchTerm}
-        setCurrentPage={setCurrentPage}
-        requestSort={requestSort}
-        startIndex={startIndex}
-        endIndex={endIndex}
-      />
-
-      <DashboardFooter t={t} />
     </div>
   );
 };
