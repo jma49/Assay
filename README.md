@@ -333,7 +333,19 @@ npm run test:script
 
 ## 📈 版本历史
 
-### v0.1.7 (当前版本)
+### v0.1.8 (当前版本)
+
+- ✅ 修复 TypeScript 构建错误
+  - 修复 `useRef<number>()` 类型错误，改为 `useRef<number | undefined>(undefined)`
+  - 解决 `useEffect` 依赖警告，添加 `useCallback` 优化
+  - 修复 CSV 导出函数中的字符串类型检查错误
+  - 解决数组类型检查问题，确保 `result.findings.map()` 的类型安全
+- ✅ 添加SQL格式化插件。全面优化脚本编辑界面。
+- ✅ 添加表格滚动条
+- ✅ 构建系统优化
+
+
+### v0.1.7
 
 - ✅ 修复翻页功能问题
 - ✅ 优化 Success 按钮筛选逻辑
