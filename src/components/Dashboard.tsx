@@ -84,12 +84,16 @@ const Dashboard = () => {
             return res.json();
         } else {
             console.warn('Received non-JSON response from /api/list-scripts');
-            return [];
+            return { data: [] }; // 返回包含空数据数组的对象
         }
       });
 
-      const [historyData, scriptsDataJSON]: [Check[], ScriptInfo[]] = await Promise.all([historyPromise, scriptsPromise]);
+      const [historyResponse, scriptsResponse]: [{ data: Check[] }, { data: ScriptInfo[] }] = await Promise.all([historyPromise, scriptsPromise]);
 
+      // 从响应中提取数据数组
+      const historyData = historyResponse.data || [];
+      const scriptsDataJSON = scriptsResponse.data || [];
+      
       const processedScriptsData: ScriptInfo[] = (scriptsDataJSON || []).map(script => ({
         ...script,
         createdAt: script.createdAt ? new Date(script.createdAt) : undefined,
