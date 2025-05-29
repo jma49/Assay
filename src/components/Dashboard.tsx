@@ -36,7 +36,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nextScheduled, setNextScheduled] = useState<Date | null>(null);
-  const [expandedCheckId, setExpandedCheckId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortConfig, setSortConfig] = useState<{
@@ -171,10 +170,6 @@ const Dashboard = () => {
       setSelectedScriptId('');
     }
   }, [availableScripts, selectedScriptId]);
-
-  const toggleExpand = (checkId: string) => {
-    setExpandedCheckId(expandedCheckId === checkId ? null : checkId);
-  };
 
   const handleTriggerCheck = useCallback(async () => {
     if (!selectedScriptId || isTriggering) return;
@@ -417,14 +412,12 @@ const Dashboard = () => {
               currentPage={currentPage}
               filterStatus={filterStatus}
               searchTerm={searchTerm}
-              expandedCheckId={expandedCheckId}
               sortConfig={sortConfig}
               successCount={successCount} 
               failureCount={failureCount} 
               needsAttentionCount={needsAttentionCount}
               language={language}
               t={t}
-              toggleExpand={toggleExpand}
               setFilterStatus={setFilterStatus}
               setSearchTerm={setSearchTerm}
               setCurrentPage={setCurrentPage}

@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useLanguage } from '@/components/ClientLayoutWrapper';
 import { Button } from '@/components/ui/button';
-import { Home, Clock, AlertCircle, CheckCircle, Database, Search } from 'lucide-react';
+import { Home, Clock, AlertCircle, CheckCircle, Database, Search, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // 基于SQL脚本实际输出的精确类型定义
@@ -65,6 +65,9 @@ const viewResultTranslations = {
     createdAt: 'Created At', 
     noData: 'No Data Found',
     noDataDesc: 'This script execution did not return any data',
+    exportCsv: 'Export CSV',
+    exportCsvDesc: 'Download findings as CSV file',
+    noDataToExport: 'No data available for export',
     scriptTypes: {
       check: 'Check',
       validate: 'Validate',
@@ -103,6 +106,9 @@ const viewResultTranslations = {
     createdAt: '创建时间',
     noData: '无数据发现',
     noDataDesc: '此脚本执行未返回任何数据结果',
+    exportCsv: '导出 CSV',
+    exportCsvDesc: '下载发现结果为 CSV 文件',
+    noDataToExport: '无可导出的数据',
     scriptTypes: {
       check: '检查',
       validate: '验证',
@@ -127,9 +133,183 @@ export default function ViewExecutionResultPage() {
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState<number>(0);
   
+  // 可拖动滚动条状态
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollBarRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [showScrollBar, setShowScrollBar] = useState(false);
+  const animationFrameRef = useRef<number>();
+  const dragStartRef = useRef<{ startX: number; startScrollLeft: number; startScrollBarLeft: number }>({
+    startX: 0,
+    startScrollLeft: 0,
+    startScrollBarLeft: 0
+  });
+
   // 使用全局语言系统
   const { language } = useLanguage();
   const t = viewResultTranslations[language];
+
+  // CSV导出功能
+  const exportToCSV = () => {
+    if (!result || !Array.isArray(result.findings) || result.findings.length === 0) {
+      return; // 无数据时不执行
+    }
+
+    const headers = Object.keys(result.findings[0]);
+    const csvContent = [
+      headers.join(','),
+      ...result.findings.map(row => 
+        headers.map(header => {
+          const value = row[header as keyof typeof row];
+          if (value === null) return '';
+          if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+            return `"${value.replace(/"/g, '""')}"`;
+          }
+          return String(value);
+        }).join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${result.scriptId}_findings_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  // 优化后的滚动条更新函数
+  const updateScrollBarPosition = () => {
+    const container = scrollContainerRef.current;
+    const scrollBar = scrollBarRef.current;
+    if (!container || !scrollBar || isDragging) return;
+
+    const scrollRatio = container.scrollLeft / Math.max(1, container.scrollWidth - container.clientWidth);
+    const scrollBarTrackWidth = scrollBar.parentElement!.clientWidth;
+    const scrollBarWidth = scrollBar.clientWidth;
+    const maxScrollBarLeft = Math.max(0, scrollBarTrackWidth - scrollBarWidth);
+    
+    const newLeft = scrollRatio * maxScrollBarLeft;
+    scrollBar.style.transform = `translateX(${newLeft}px)`;
+  };
+
+  // 检查是否需要显示滚动条
+  useEffect(() => {
+    const checkScrollBar = () => {
+      if (scrollContainerRef.current) {
+        const { scrollWidth, clientWidth } = scrollContainerRef.current;
+        const needsScrollBar = scrollWidth > clientWidth + 1; // 添加1px容差
+        setShowScrollBar(needsScrollBar);
+        
+        if (needsScrollBar) {
+          // 初始化滚动条位置
+          requestAnimationFrame(updateScrollBarPosition);
+        }
+      }
+    };
+
+    checkScrollBar();
+    const handleResize = () => {
+      requestAnimationFrame(checkScrollBar);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [result]);
+
+  // 初始化滚动条
+  useEffect(() => {
+    if (result && showScrollBar) {
+      // 延迟一帧确保DOM已经渲染完成
+      requestAnimationFrame(() => {
+        requestAnimationFrame(updateScrollBarPosition);
+      });
+    }
+  }, [result, showScrollBar]);
+
+  // 传统滚动条拖动处理 - 只允许点击滑块本身拖动
+  const handleScrollBarMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation(); // 防止事件冒泡到轨道
+    setIsDragging(true);
+    
+    const container = scrollContainerRef.current;
+    const scrollBar = scrollBarRef.current;
+    if (!container || !scrollBar) return;
+
+    // 记录拖动开始时的状态
+    const currentTransform = scrollBar.style.transform;
+    const currentLeft = parseFloat(currentTransform.replace('translateX(', '').replace('px)', '') || '0');
+    
+    dragStartRef.current = {
+      startX: e.clientX,
+      startScrollLeft: container.scrollLeft,
+      startScrollBarLeft: currentLeft
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      
+      animationFrameRef.current = requestAnimationFrame(() => {
+        const container = scrollContainerRef.current;
+        const scrollBar = scrollBarRef.current;
+        if (!container || !scrollBar) return;
+
+        // 计算鼠标移动的距离
+        const deltaX = e.clientX - dragStartRef.current.startX;
+        const trackWidth = scrollBar.parentElement!.clientWidth;
+        const scrollBarWidth = scrollBar.clientWidth;
+        const maxScrollBarLeft = Math.max(0, trackWidth - scrollBarWidth);
+        
+        // 计算新的滚动条位置（基于相对位移）
+        const newScrollBarLeft = Math.max(0, Math.min(maxScrollBarLeft, dragStartRef.current.startScrollBarLeft + deltaX));
+        
+        // 计算对应的容器滚动位置
+        const scrollRatio = maxScrollBarLeft > 0 ? newScrollBarLeft / maxScrollBarLeft : 0;
+        const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
+        const newScrollLeft = scrollRatio * maxScrollLeft;
+        
+        // 更新位置
+        container.scrollLeft = newScrollLeft;
+        scrollBar.style.transform = `translateX(${newScrollBarLeft}px)`;
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  // 优化的容器滚动处理
+  const handleContainerScroll = () => {
+    if (isDragging) return;
+    
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    
+    animationFrameRef.current = requestAnimationFrame(updateScrollBarPosition);
+  };
 
   useEffect(() => {
     if (resultId) {
@@ -238,43 +418,71 @@ export default function ViewExecutionResultPage() {
 
   // 格式化 findings
   let findingsContent;
-  if (Array.isArray(result.findings) && result.findings.length > 0) {
+  const hasTableData = Array.isArray(result.findings) && result.findings.length > 0;
+  
+  if (hasTableData) {
     // 设置表格标题和数据
     const headers = Object.keys(result.findings[0]);
     findingsContent = (
-      <div className="overflow-x-auto">
-        <table className="min-w-full">
-          <thead>
-            <tr className="bg-gradient-to-r from-muted/40 to-muted/20 border-b-2 border-border/30">
-              {headers.map((header) => (
-                <th key={header} scope="col" className="px-4 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider whitespace-nowrap">
-                  {header.replace(/_/g, ' ')}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border/20">
-            {result.findings.map((row, rowIndex) => (
-              <tr key={rowIndex} className={cn(
-                "transition-colors hover:bg-muted/20",
-                rowIndex % 2 === 0 ? 'bg-card' : 'bg-muted/10'
-              )}>
-                {headers.map((header) => {
-                  const value = row[header as keyof typeof row];
-                  return (
-                    <td key={`${rowIndex}-${header}`} className="px-4 py-3 text-sm text-foreground whitespace-nowrap" title={String(value)}>
-                      {value === null ?
-                        <span className="text-muted-foreground italic">NULL</span> :
-                        typeof value === 'object' ?
-                          JSON.stringify(value) :
-                          String(value)}
-                    </td>
-                  );
-                })}
+      <div className="space-y-4">
+        <div 
+          ref={scrollContainerRef}
+          onScroll={handleContainerScroll}
+          className="overflow-x-auto"
+        >
+          <table className="min-w-full">
+            <thead>
+              <tr className="bg-gradient-to-r from-muted/40 to-muted/20 border-b-2 border-border/30">
+                {headers.map((header) => (
+                  <th key={header} scope="col" className="px-4 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider whitespace-nowrap">
+                    {header.replace(/_/g, ' ')}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-border/20">
+              {result.findings.map((row, rowIndex) => (
+                <tr key={rowIndex} className={cn(
+                  "transition-colors hover:bg-muted/20",
+                  rowIndex % 2 === 0 ? 'bg-card' : 'bg-muted/10'
+                )}>
+                  {headers.map((header) => {
+                    const value = row[header as keyof typeof row];
+                    return (
+                      <td key={`${rowIndex}-${header}`} className="px-4 py-3 text-sm text-foreground whitespace-nowrap" title={String(value)}>
+                        {value === null ?
+                          <span className="text-muted-foreground italic">NULL</span> :
+                          typeof value === 'object' ?
+                            JSON.stringify(value) :
+                            String(value)}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        
+        {/* 自定义滚动条 */}
+        {showScrollBar && (
+          <div className="relative h-3 bg-muted/20 rounded-full border border-border/20 shadow-inner">
+            <div
+              ref={scrollBarRef}
+              className={cn(
+                "absolute top-0 h-full bg-gradient-to-r from-primary/60 to-primary/80 rounded-full shadow-sm cursor-grab transition-colors duration-200 border border-primary/20",
+                isDragging ? "cursor-grabbing bg-primary/90 from-primary/80 to-primary/90" : "hover:from-primary/70 hover:to-primary/90 hover:shadow-md"
+              )}
+              style={{
+                width: `${Math.max(20, (scrollContainerRef.current?.clientWidth || 0) / (scrollContainerRef.current?.scrollWidth || 1) * 100)}%`,
+                transform: 'translateX(0px)',
+                transition: isDragging ? 'none' : 'transform 0.1s ease-out, box-shadow 0.2s ease-out'
+              }}
+              onMouseDown={handleScrollBarMouseDown}
+              title="拖动以横向滚动表格"
+            />
+          </div>
+        )}
       </div>
     );
   } else if (typeof result.findings === 'string') {
@@ -467,11 +675,27 @@ export default function ViewExecutionResultPage() {
           <div className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40 rounded-xl">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
             <div className="relative p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20">
-                  <Search className="h-6 w-6 text-primary" />
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20">
+                    <Search className="h-6 w-6 text-primary" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-foreground">{t.queryFindings}</h2>
                 </div>
-                <h2 className="text-2xl font-bold text-foreground">{t.queryFindings}</h2>
+                
+                {/* CSV 导出按钮 */}
+                {hasTableData && (
+                  <Button
+                    onClick={exportToCSV}
+                    variant="outline"
+                    size="sm"
+                    className="group shadow-md hover:shadow-lg transition-all duration-300 h-10 px-4 gap-2"
+                    title={t.exportCsvDesc}
+                  >
+                    <Download className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                    <span className="hidden sm:inline">{t.exportCsv}</span>
+                  </Button>
+                )}
               </div>
               <div className="overflow-hidden rounded-xl border border-border/30 shadow-md">
                 {findingsContent}
@@ -492,4 +716,4 @@ export default function ViewExecutionResultPage() {
       </div>
     </div>
   );
-} 
+}

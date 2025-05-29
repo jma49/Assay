@@ -8,7 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { Check, DashboardTranslationKeys } from './types';
 import { formatDate } from './utils';
-import { CheckDetails } from './CheckDetails';
 
 interface CheckHistoryProps {
   paginatedChecks: Check[];
@@ -18,7 +17,6 @@ interface CheckHistoryProps {
   currentPage: number;
   filterStatus: string | null;
   searchTerm: string;
-  expandedCheckId: string | null;
   sortConfig: {
     key: keyof Check | '';
     direction: 'ascending' | 'descending';
@@ -28,7 +26,6 @@ interface CheckHistoryProps {
   needsAttentionCount: number;
   language: string;
   t: (key: DashboardTranslationKeys) => string;
-  toggleExpand: (checkId: string) => void;
   setFilterStatus: (status: string | null) => void;
   setSearchTerm: (term: string) => void;
   setCurrentPage: (page: number) => void;
@@ -45,14 +42,12 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
   currentPage,
   filterStatus,
   searchTerm,
-  expandedCheckId,
   sortConfig,
   successCount,
   failureCount,
   needsAttentionCount,
   language,
   t,
-  toggleExpand,
   setFilterStatus,
   setSearchTerm,
   setCurrentPage,
@@ -308,7 +303,6 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                   <React.Fragment key={check._id}>
                     <TableRow className={cn(
                       "group/row transition-all duration-200 hover:bg-gradient-to-r hover:from-muted/30 hover:to-muted/10 hover:shadow-sm",
-                      expandedCheckId === check._id ? "bg-gradient-to-r from-primary/5 to-primary/2 shadow-inner" : "",
                       index % 2 === 0 ? "bg-background" : "bg-muted/5"
                     )}>
                       <TableCell className="px-4 py-4">
@@ -347,52 +341,24 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                         </div>
                       </TableCell>
                       <TableCell className="text-center px-4 py-4">
-                        <div className="flex justify-center gap-2">
-                          <Button
-                            variant={expandedCheckId === check._id ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => toggleExpand(check._id)}
-                            className={cn(
-                              "h-8 px-3 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md",
-                              expandedCheckId === check._id 
-                                ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                                : "hover:bg-muted/70 hover:border-primary/50"
-                            )}
-                            title={expandedCheckId === check._id ? t('collapseDetails') : t('expandDetails')}
-                          >
-                            {expandedCheckId === check._id ? (
-                              <><ChevronUp size={14} className="mr-1.5"/><span className="hidden sm:inline">{t('collapse')}</span></>
-                            ) : (
-                              <><ChevronDown size={14} className="mr-1.5"/><span className="hidden sm:inline">{t('expand')}</span></>
-                            )}
-                          </Button>
-                          
+                        <div className="flex justify-center">
                           <Link href={`/view-execution-result/${check._id}`} passHref legacyBehavior>
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-8 w-8 shadow-sm transition-all duration-200 hover:shadow-md hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 dark:hover:bg-blue-950/20 dark:hover:border-blue-700/50 dark:hover:text-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
+                              className="h-8 px-4 gap-2 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 dark:hover:bg-blue-950/20 dark:hover:border-blue-700/50 dark:hover:text-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
                               title={t('viewFullReportButton') || 'View Full Report'}
                               asChild
                             >
                               <a>
                                 <ExternalLink size={14} />
+                                <span className="hidden sm:inline">{t('viewFullReportButton') || 'View Report'}</span>
                               </a>
                             </Button>
                           </Link>
                         </div>
                       </TableCell>
                     </TableRow>
-
-                    {expandedCheckId === check._id && (
-                      <TableRow className="bg-gradient-to-r from-muted/40 to-muted/20 border-l-4 border-primary/50">
-                        <TableCell colSpan={5} className="p-0">
-                          <div className="p-6 bg-gradient-to-br from-muted/20 to-muted/5 border-t border-border/20">
-                            <CheckDetails check={check} mode="expanded" t={t} />
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
                   </React.Fragment>
                 ))}
               </TableBody>
