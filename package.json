@@ -1,6 +1,6 @@
 {
   "name": "sql_script_depoly",
-  "version": "0.1.0",
+  "version": "0.1.7",
   "private": true,
   "engines": {
     "node": ">=18.18.0"

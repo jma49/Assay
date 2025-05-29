@@ -218,144 +218,184 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
       </CardHeader>
       
       <CardContent className="relative p-0">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gradient-to-r from-muted/40 to-muted/20 hover:from-muted/50 hover:to-muted/30 border-b-2 border-border/30">
-                <TableHead className="h-14 px-3 font-semibold text-foreground w-32">{t('tableStatus')}</TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/30 transition-colors px-3 font-semibold text-foreground group/sort w-56"
-                  onClick={() => requestSort('script_name')}
-                >
-                  <div className="flex items-center gap-2">
-                    {t('tableScriptName')}
-                    {sortConfig.key === 'script_name' && (
-                      <span className="text-primary">
-                        {sortConfig.direction === 'ascending' ? 
-                          <ChevronUp className="h-4 w-4 inline-block" /> : 
-                          <ChevronDown className="h-4 w-4 inline-block" />
-                        }
-                      </span>
-                    )}
-                    <ChevronUp className="h-3 w-3 opacity-30 group-hover/sort:opacity-60 transition-opacity duration-200" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="hidden lg:table-cell cursor-pointer hover:bg-muted/30 transition-colors px-3 font-semibold text-foreground group/sort w-48"
-                  onClick={() => requestSort('execution_time')}
-                >
-                  <div className="flex items-center gap-2">
-                    {t('tableExecutionTime')}
-                    {sortConfig.key === 'execution_time' && (
-                      <span className="text-primary">
-                        {sortConfig.direction === 'ascending' ? 
-                          <ChevronUp className="h-4 w-4 inline-block" /> : 
-                          <ChevronDown className="h-4 w-4 inline-block" />
-                        }
-                      </span>
-                    )}
-                    <ChevronUp className="h-3 w-3 opacity-30 group-hover/sort:opacity-60 transition-opacity duration-200" />
-                  </div>
-                </TableHead>
-                <TableHead className="hidden md:table-cell px-3 font-semibold text-foreground">{t('tableFindings')}</TableHead>
-                <TableHead className="text-center px-3 font-semibold text-foreground w-40">{t('tableActions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedChecks.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-40 text-center">
-                    <div className="flex flex-col items-center justify-center space-y-4">
-                      <div className="p-6 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-dashed border-muted-foreground/20">
-                        <Database className="h-12 w-12 text-muted-foreground/50 mx-auto" />
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-lg font-medium text-muted-foreground">{t('noDataFound')}</p>
-                        <p className="text-sm text-muted-foreground/70">{t('noMatchingExecutionRecords')}</p>
+        <div className="overflow-hidden rounded-lg border border-border/20 shadow-inner bg-gradient-to-b from-background to-muted/10">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gradient-to-r from-primary/5 via-primary/3 to-primary/5 border-b-2 border-primary/20 backdrop-blur-sm">
+                  <TableHead className="h-16 px-4 font-bold text-foreground/90 w-36 text-center border-r border-border/10 last:border-r-0">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-primary/40"></div>
+                      {t('tableStatus')}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-primary/10 transition-all duration-300 px-4 font-bold text-foreground/90 group/sort w-64 border-r border-border/10 last:border-r-0"
+                    onClick={() => requestSort('script_name')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-blue-400/60"></div>
+                      {t('tableScriptName')}
+                      <div className="flex flex-col items-center">
+                        {sortConfig.key === 'script_name' && (
+                          <span className="text-primary">
+                            {sortConfig.direction === 'ascending' ? 
+                              <ChevronUp className="h-4 w-4" /> : 
+                              <ChevronDown className="h-4 w-4" />
+                            }
+                          </span>
+                        )}
+                        <ChevronUp className="h-3 w-3 opacity-20 group-hover/sort:opacity-50 transition-all duration-300" />
                       </div>
                     </div>
-                  </TableCell>
+                  </TableHead>
+                  <TableHead 
+                    className="hidden lg:table-cell cursor-pointer hover:bg-primary/10 transition-all duration-300 px-4 font-bold text-foreground/90 group/sort w-52 border-r border-border/10 last:border-r-0"
+                    onClick={() => requestSort('execution_time')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-emerald-400/60"></div>
+                      {t('tableExecutionTime')}
+                      <div className="flex flex-col items-center">
+                        {sortConfig.key === 'execution_time' && (
+                          <span className="text-primary">
+                            {sortConfig.direction === 'ascending' ? 
+                              <ChevronUp className="h-4 w-4" /> : 
+                              <ChevronDown className="h-4 w-4" />
+                            }
+                          </span>
+                        )}
+                        <ChevronUp className="h-3 w-3 opacity-20 group-hover/sort:opacity-50 transition-all duration-300" />
+                      </div>
+                    </div>
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-amber-400/60"></div>
+                      {t('tableFindings')}
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-center px-4 font-bold text-foreground/90 w-44">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-purple-400/60"></div>
+                      {t('tableActions')}
+                    </div>
+                  </TableHead>
                 </TableRow>
-              )}
-              {paginatedChecks.map((check) => (
-                <React.Fragment key={check._id}>
-                  <TableRow className={cn(
-                    "transition-colors hover:bg-muted/20",
-                    expandedCheckId === check._id ? "bg-muted/60" : ""
-                  )}>
-                    <TableCell className="px-3">
-                      {check.statusType === "attention_needed" ? (
-                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300 dark:bg-yellow-950 dark:text-yellow-400 dark:border-yellow-700 text-xs">
-                          <AlertCircle className="h-3 w-3 mr-1 text-yellow-600 dark:text-yellow-500" />
-                          {t('needsAttention') || 'Attention Needed'}
-                        </Badge>
-                      ) : check.status === "success" ? (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800 text-xs">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          {t('filterSuccess')}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800 text-xs">
-                          <AlertCircle className="h-3 w-3 mr-1" />
-                          {t('filterFailed')}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium px-3 max-w-56 truncate" title={check.script_name}>
-                      {check.script_name}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-muted-foreground px-3 max-w-48 truncate">
-                      {formatDate(check.execution_time, language)}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell px-3 truncate" title={check.findings || check.message || t('noData')}>
-                      {check.findings || check.message || <span className="italic text-muted-foreground">{t('noData')}</span>}
-                    </TableCell>
-                    <TableCell className="text-center px-3">
-                      <div className="flex justify-center gap-1.5">
-                        <Button
-                          variant={expandedCheckId === check._id ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => toggleExpand(check._id)}
-                          className="h-7 px-2 text-xs shadow-sm transition-all duration-150 hover:shadow"
-                          title={expandedCheckId === check._id ? t('collapseDetails') : t('expandDetails')}
-                        >
-                          {expandedCheckId === check._id ? (
-                            <><ChevronUp size={12} className="mr-1"/>{t('collapse')}</>
-                          ) : (
-                            <><ChevronDown size={12} className="mr-1"/>{t('expand')}</>
-                          )}
-                        </Button>
-                        
-                        <Link href={`/view-execution-result/${check._id}`} passHref legacyBehavior>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7 shadow-sm transition-all duration-150 hover:shadow hover:bg-muted/70 focus:ring-1 focus:ring-primary/30"
-                            title={t('viewFullReportButton') || 'View Full Report'}
-                            asChild
-                          >
-                            <a>
-                              <ExternalLink size={12} />
-                            </a>
-                          </Button>
-                        </Link>
+              </TableHeader>
+              <TableBody className="divide-y divide-border/20">
+                {paginatedChecks.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-48 text-center bg-gradient-to-b from-muted/20 to-muted/5">
+                      <div className="flex flex-col items-center justify-center space-y-6">
+                        <div className="relative">
+                          <div className="p-8 rounded-3xl bg-gradient-to-br from-muted/40 to-muted/20 border-2 border-dashed border-muted-foreground/30 shadow-lg">
+                            <Database className="h-16 w-16 text-muted-foreground/60 mx-auto" />
+                          </div>
+                          <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary/20 rounded-full animate-pulse"></div>
+                        </div>
+                        <div className="space-y-3 text-center">
+                          <p className="text-xl font-semibold text-muted-foreground">{t('noDataFound')}</p>
+                          <p className="text-sm text-muted-foreground/80 max-w-md mx-auto leading-relaxed">{t('noMatchingExecutionRecords')}</p>
+                        </div>
                       </div>
                     </TableCell>
                   </TableRow>
-
-                  {expandedCheckId === check._id && (
-                    <TableRow className="bg-muted/30">
-                      <TableCell colSpan={5} className="p-0">
-                        <div className="p-4 overflow-x-hidden">
-                          <CheckDetails check={check} mode="expanded" t={t} />
+                )}
+                {paginatedChecks.map((check, index) => (
+                  <React.Fragment key={check._id}>
+                    <TableRow className={cn(
+                      "group/row transition-all duration-200 hover:bg-gradient-to-r hover:from-muted/30 hover:to-muted/10 hover:shadow-sm",
+                      expandedCheckId === check._id ? "bg-gradient-to-r from-primary/5 to-primary/2 shadow-inner" : "",
+                      index % 2 === 0 ? "bg-background" : "bg-muted/5"
+                    )}>
+                      <TableCell className="px-4 py-4">
+                        <div className="flex justify-center">
+                          {check.statusType === "attention_needed" ? (
+                            <Badge variant="outline" className="bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-amber-300/60 dark:from-amber-950/20 dark:to-yellow-950/20 dark:text-amber-400 dark:border-amber-700/50 text-xs font-medium shadow-sm">
+                              <AlertCircle className="h-3.5 w-3.5 mr-1.5 text-amber-600 dark:text-amber-500" />
+                              {t('needsAttention') || 'Attention'}
+                            </Badge>
+                          ) : check.status === "success" ? (
+                            <Badge variant="outline" className="bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-300/60 dark:from-green-950/20 dark:to-emerald-950/20 dark:text-green-400 dark:border-green-700/50 text-xs font-medium shadow-sm">
+                              <CheckCircle className="h-3.5 w-3.5 mr-1.5 text-green-600 dark:text-green-500" />
+                              {t('filterSuccess')}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-gradient-to-r from-red-50 to-rose-50 text-red-700 border-red-300/60 dark:from-red-950/20 dark:to-rose-950/20 dark:text-red-400 dark:border-red-700/50 text-xs font-medium shadow-sm">
+                              <AlertCircle className="h-3.5 w-3.5 mr-1.5 text-red-600 dark:text-red-500" />
+                              {t('filterFailed')}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-semibold px-4 py-4 max-w-64 group-hover/row:text-primary transition-colors duration-200" title={check.script_name}>
+                        <div className="truncate">
+                          {check.script_name}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground px-4 py-4 max-w-52 font-mono text-sm">
+                        <div className="truncate">
+                          {formatDate(check.execution_time, language)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell px-4 py-4 text-sm leading-relaxed" title={check.findings || check.message || t('noData')}>
+                        <div className="max-w-md truncate">
+                          {check.findings || check.message || <span className="italic text-muted-foreground/80">{t('noData')}</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center px-4 py-4">
+                        <div className="flex justify-center gap-2">
+                          <Button
+                            variant={expandedCheckId === check._id ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => toggleExpand(check._id)}
+                            className={cn(
+                              "h-8 px-3 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md",
+                              expandedCheckId === check._id 
+                                ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                                : "hover:bg-muted/70 hover:border-primary/50"
+                            )}
+                            title={expandedCheckId === check._id ? t('collapseDetails') : t('expandDetails')}
+                          >
+                            {expandedCheckId === check._id ? (
+                              <><ChevronUp size={14} className="mr-1.5"/><span className="hidden sm:inline">{t('collapse')}</span></>
+                            ) : (
+                              <><ChevronDown size={14} className="mr-1.5"/><span className="hidden sm:inline">{t('expand')}</span></>
+                            )}
+                          </Button>
+                          
+                          <Link href={`/view-execution-result/${check._id}`} passHref legacyBehavior>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-8 shadow-sm transition-all duration-200 hover:shadow-md hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 dark:hover:bg-blue-950/20 dark:hover:border-blue-700/50 dark:hover:text-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
+                              title={t('viewFullReportButton') || 'View Full Report'}
+                              asChild
+                            >
+                              <a>
+                                <ExternalLink size={14} />
+                              </a>
+                            </Button>
+                          </Link>
                         </div>
                       </TableCell>
                     </TableRow>
-                  )}
-                </React.Fragment>
-              ))}
-            </TableBody>
-          </Table>
+
+                    {expandedCheckId === check._id && (
+                      <TableRow className="bg-gradient-to-r from-muted/40 to-muted/20 border-l-4 border-primary/50">
+                        <TableCell colSpan={5} className="p-0">
+                          <div className="p-6 bg-gradient-to-br from-muted/20 to-muted/5 border-t border-border/20">
+                            <CheckDetails check={check} mode="expanded" t={t} />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </CardContent>
       {totalPages > 1 && (
