@@ -4,7 +4,8 @@ import { sql } from '@codemirror/lang-sql';
 import { okaidia } from '@uiw/codemirror-theme-okaidia'; // Use @uiw dark theme
 import { githubLight } from '@uiw/codemirror-theme-github'; 
 import { useTheme } from 'next-themes';
-import { format } from 'sql-formatter';
+// 动态导入sql-formatter来避免webpack模块加载问题
+// import { format } from 'sql-formatter';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -47,6 +48,8 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
     setIsFormatting(true);
     try {
+      // 动态导入sql-formatter来避免webpack模块加载问题
+      const { format } = await import('sql-formatter');
       const formatted = format(value, {
         language: 'sql',
         keywordCase: 'upper',
