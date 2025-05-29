@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock, Database, ExternalLink, Filter, Search, X, FileText, MoreHorizontal } from 'lucide-react';
+import { AlertCircle, CheckCircle, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock, Database, ExternalLink, Filter, Search, X, MoreHorizontal } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Check, CheckStatus, DashboardTranslationKeys } from './types';
+import { Check, DashboardTranslationKeys } from './types';
 import { formatDate } from './utils';
 import { CheckDetails } from './CheckDetails';
 
@@ -99,7 +98,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               <span className="text-gradient">{t('historyTitle')}</span>
             </CardTitle>
             <CardDescription className="text-base text-muted-foreground">
-              {t('historyDesc').replace('%s', String(allChecksCount))}
+              {t('historyDesc').replace('%s', String(allChecksCount))} · {t('viewAndManageAllRecords')}
             </CardDescription>
           </div>
 
@@ -107,10 +106,18 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
             {/* 第一行：All筛选器和搜索栏 */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full">
               <Button
-                variant={filterStatus === null ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                onClick={() => { setFilterStatus(null); setCurrentPage(1); }}
-                className="h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 sm:flex-initial sm:min-w-[120px]"
+                onClick={() => { 
+                  setFilterStatus(null); 
+                  setCurrentPage(1);
+                  // 点击All时设置按执行时间降序排序（最新的在前）
+                  requestSort('execution_time');
+                }}
+                className={cn(
+                  "h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 sm:flex-initial sm:min-w-[120px]",
+                  filterStatus === null && "ring-2 ring-primary/50 ring-offset-2 ring-offset-background border-primary/30 shadow-lg shadow-primary/10"
+                )}
               >
                 <Filter size={14} className="group-hover/filter:rotate-12 transition-transform duration-200" /> 
                 {t('filterAll')} 
@@ -146,10 +153,18 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
             {/* 第二行：Success、Attention、Failure筛选器 */}
             <div className="flex items-center gap-3 w-full">
               <Button
-                variant={filterStatus === CheckStatus.SUCCESS ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                onClick={() => { setFilterStatus(CheckStatus.SUCCESS); setCurrentPage(1); }}
-                className="h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 min-w-0"
+                onClick={() => { 
+                  setFilterStatus("success"); 
+                  setCurrentPage(1);
+                  // 确保按时间降序排序
+                  requestSort('execution_time');
+                }}
+                className={cn(
+                  "h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 min-w-0",
+                  filterStatus === "success" && "ring-2 ring-green-500/50 ring-offset-2 ring-offset-background border-green-500/30 shadow-lg shadow-green-500/10"
+                )}
               >
                 <CheckCircle size={14} className="group-hover/filter:scale-110 transition-transform duration-200" /> 
                 <span className="truncate">{t('filterSuccess')}</span> 
@@ -158,10 +173,18 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                 </Badge>
               </Button>
               <Button
-                variant={filterStatus === "attention_needed" ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                onClick={() => { setFilterStatus("attention_needed"); setCurrentPage(1); }}
-                className="h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 min-w-0"
+                onClick={() => { 
+                  setFilterStatus("attention_needed"); 
+                  setCurrentPage(1);
+                  // 确保按时间降序排序
+                  requestSort('execution_time');
+                }}
+                className={cn(
+                  "h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 min-w-0",
+                  filterStatus === "attention_needed" && "ring-2 ring-amber-500/50 ring-offset-2 ring-offset-background border-amber-500/30 shadow-lg shadow-amber-500/10"
+                )}
               >
                 <AlertCircle size={14} className="group-hover/filter:scale-110 transition-transform duration-200" /> 
                 <span className="truncate">{t('needsAttention')}</span> 
@@ -170,10 +193,18 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                 </Badge>
               </Button>
               <Button
-                variant={filterStatus === CheckStatus.FAILURE ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                onClick={() => { setFilterStatus(CheckStatus.FAILURE); setCurrentPage(1); }}
-                className="h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 min-w-0"
+                onClick={() => { 
+                  setFilterStatus("failure"); 
+                  setCurrentPage(1);
+                  // 确保按时间降序排序
+                  requestSort('execution_time');
+                }}
+                className={cn(
+                  "h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 min-w-0",
+                  filterStatus === "failure" && "ring-2 ring-red-500/50 ring-offset-2 ring-offset-background border-red-500/30 shadow-lg shadow-red-500/10"
+                )}
               >
                 <AlertCircle size={14} className="group-hover/filter:scale-110 transition-transform duration-200" /> 
                 <span className="truncate">{t('filterFailed')}</span> 
@@ -191,9 +222,9 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
           <Table>
             <TableHeader>
               <TableRow className="bg-gradient-to-r from-muted/40 to-muted/20 hover:from-muted/50 hover:to-muted/30 border-b-2 border-border/30">
-                <TableHead className="h-14 px-4 sm:px-6 font-semibold text-foreground">{t('tableStatus')}</TableHead>
+                <TableHead className="h-14 px-3 font-semibold text-foreground w-32">{t('tableStatus')}</TableHead>
                 <TableHead 
-                  className="cursor-pointer hover:bg-muted/30 transition-colors px-4 sm:px-6 font-semibold text-foreground group/sort"
+                  className="cursor-pointer hover:bg-muted/30 transition-colors px-3 font-semibold text-foreground group/sort w-56"
                   onClick={() => requestSort('script_name')}
                 >
                   <div className="flex items-center gap-2">
@@ -210,7 +241,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="hidden md:table-cell cursor-pointer hover:bg-muted/30 transition-colors px-4 sm:px-6 font-semibold text-foreground group/sort"
+                  className="hidden lg:table-cell cursor-pointer hover:bg-muted/30 transition-colors px-3 font-semibold text-foreground group/sort w-48"
                   onClick={() => requestSort('execution_time')}
                 >
                   <div className="flex items-center gap-2">
@@ -226,8 +257,8 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                     <ChevronUp className="h-3 w-3 opacity-30 group-hover/sort:opacity-60 transition-opacity duration-200" />
                   </div>
                 </TableHead>
-                <TableHead className="hidden sm:table-cell max-w-xs px-4 sm:px-6 font-semibold text-foreground">{t('tableFindings')}</TableHead>
-                <TableHead className="text-center px-4 sm:px-6 font-semibold text-foreground">{t('tableActions')}</TableHead>
+                <TableHead className="hidden md:table-cell px-3 font-semibold text-foreground">{t('tableFindings')}</TableHead>
+                <TableHead className="text-center px-3 font-semibold text-foreground w-40">{t('tableActions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -252,34 +283,34 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                     "transition-colors hover:bg-muted/20",
                     expandedCheckId === check._id ? "bg-muted/60" : ""
                   )}>
-                    <TableCell className="px-4 sm:px-6">
+                    <TableCell className="px-3">
                       {check.statusType === "attention_needed" ? (
-                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300 dark:bg-yellow-950 dark:text-yellow-400 dark:border-yellow-700">
-                          <AlertCircle className="h-3.5 w-3.5 mr-1 text-yellow-600 dark:text-yellow-500" />
+                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300 dark:bg-yellow-950 dark:text-yellow-400 dark:border-yellow-700 text-xs">
+                          <AlertCircle className="h-3 w-3 mr-1 text-yellow-600 dark:text-yellow-500" />
                           {t('needsAttention') || 'Attention Needed'}
                         </Badge>
-                      ) : check.status === CheckStatus.SUCCESS ? (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
-                          <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                      ) : check.status === "success" ? (
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800 text-xs">
+                          <CheckCircle className="h-3 w-3 mr-1" />
                           {t('filterSuccess')}
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800">
-                          <AlertCircle className="h-3.5 w-3.5 mr-1" />
+                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800 text-xs">
+                          <AlertCircle className="h-3 w-3 mr-1" />
                           {t('filterFailed')}
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="font-medium px-4 sm:px-6">
+                    <TableCell className="font-medium px-3 max-w-56 truncate" title={check.script_name}>
                       {check.script_name}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-muted-foreground px-4 sm:px-6">
+                    <TableCell className="hidden lg:table-cell text-muted-foreground px-3 max-w-48 truncate">
                       {formatDate(check.execution_time, language)}
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell max-w-xs truncate px-4 sm:px-6" title={check.findings || check.message || t('noData')}>
+                    <TableCell className="hidden md:table-cell px-3 truncate" title={check.findings || check.message || t('noData')}>
                       {check.findings || check.message || <span className="italic text-muted-foreground">{t('noData')}</span>}
                     </TableCell>
-                    <TableCell className="text-center px-4 sm:px-6">
+                    <TableCell className="text-center px-3">
                       <div className="flex justify-center gap-1.5">
                         <Button
                           variant={expandedCheckId === check._id ? "default" : "outline"}
@@ -295,37 +326,19 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                           )}
                         </Button>
                         
-                        <Sheet>
-                          <SheetTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7 shadow-sm transition-all duration-150 hover:shadow hover:bg-muted/70 focus:ring-1 focus:ring-primary/30"
-                              title={t('viewInSidebar')}
-                            >
+                        <Link href={`/view-execution-result/${check._id}`} passHref legacyBehavior>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7 shadow-sm transition-all duration-150 hover:shadow hover:bg-muted/70 focus:ring-1 focus:ring-primary/30"
+                            title={t('viewFullReportButton') || 'View Full Report'}
+                            asChild
+                          >
+                            <a>
                               <ExternalLink size={12} />
-                            </Button>
-                          </SheetTrigger>
-                          <SheetContent className="overflow-y-auto sm:max-w-md">
-                            <SheetHeader className="border-b pb-4">
-                              <SheetTitle>{t('checkDetailsTitle')} - {check.script_name}</SheetTitle>
-                              <SheetDescription>
-                                {t('checkDetailsDesc').replace('{scriptId}', check.script_id).replace('{executionTime}', formatDate(check.execution_time, language))}
-                              </SheetDescription>
-                            </SheetHeader>
-                            <CheckDetails check={check} t={t} mode="sheet" />
-                            <SheetFooter className="pt-4 mt-auto border-t">
-                                <Link href={`/view-execution-result/${check._id}`} passHref legacyBehavior>
-                                  <Button asChild variant="outline">
-                                    <a>
-                                      <FileText className="mr-2 h-4 w-4" />
-                                      {t('viewFullReportButton') || 'View Full Report'}
-                                    </a>
-                                  </Button>
-                                </Link>
-                            </SheetFooter>
-                          </SheetContent>
-                        </Sheet>
+                            </a>
+                          </Button>
+                        </Link>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -447,4 +460,4 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
       )}
     </Card>
   );
-}; 
+};
