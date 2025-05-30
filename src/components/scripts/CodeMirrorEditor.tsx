@@ -205,7 +205,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
           <Palette className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
         </div>
         <div className="text-xs text-blue-700 dark:text-blue-300">
-          <span className="font-medium">提示:</span> {t('editorHelpText')}
+          <span className="font-medium">{t('editorHelpTitle')}</span> {t('editorHelpText')}
         </div>
       </div>
     </div>

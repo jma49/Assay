@@ -200,6 +200,7 @@ export type DashboardTranslationKeys =
   | "formatErrorDesc"
   | "noCodeToFormat"
   | "sqlPlaceholder"
+  | "editorHelpTitle"
   // 新增的ScriptMetadataForm相关翻译键
   | "basicIdentityInfo"
   | "multiLanguageInfo"
@@ -494,6 +495,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     noCodeToFormat: "No code to format",
     sqlPlaceholder:
       "-- Enter your SQL query here\n-- Example: SELECT * FROM users WHERE active = true;",
+    editorHelpTitle: "Tips:",
     // 新增的ScriptMetadataForm相关翻译
     basicIdentityInfo: "Basic Identity Information",
     multiLanguageInfo: "Multi-language Information",
@@ -724,6 +726,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     noCodeToFormat: "没有代码需要格式化",
     sqlPlaceholder:
       "-- 在此输入您的 SQL 查询语句\n-- 例如：SELECT * FROM users WHERE active = true;",
+    editorHelpTitle: "提示:",
     // 新增的ScriptMetadataForm相关翻译
     basicIdentityInfo: "基础标识信息",
     multiLanguageInfo: "多语言信息",
