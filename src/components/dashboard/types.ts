@@ -211,7 +211,46 @@ export type DashboardTranslationKeys =
   | "editModeLabel"
   | "newModeLabel"
   | "scheduleEnabledDesc"
-  | "cronFormatHelp";
+  | "cronFormatHelp"
+  // 数据分析页面相关翻译键
+  | "timeRangeFilter"
+  | "scriptFilter"
+  | "allScripts"
+  | "last7Days"
+  | "last30Days"
+  | "last90Days"
+  | "allTime"
+  | "filterConditions"
+  | "totalExecutions"
+  | "overallSuccessRate"
+  | "successfulExecutions"
+  | "failedAttentionExecutions"
+  | "executionTrend"
+  | "scriptPerformanceAnalysis"
+  | "loadingAnalyticsData"
+  | "dataLoadFailed"
+  | "retryLoad"
+  | "noDataInTimeRange"
+  | "executionCount"
+  | "executionTime"
+  | "lastExecution"
+  | "excellentPerformance"
+  | "goodPerformance"
+  | "averagePerformance"
+  | "needsAttentionPerformance"
+  | "scriptsCount"
+  | "executionsLabel"
+  | "successLabel"
+  | "failedLabel"
+  | "attentionLabel"
+  | "recentExecution"
+  | "earlierExecution"
+  | "successRateLabel"
+  | "performanceExcellent"
+  | "performanceGood"
+  | "performanceAverage"
+  | "performanceNeedsAttention"
+  | "topRanking";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -509,6 +548,45 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
       "When enabled, the script will be executed automatically according to the specified schedule",
     cronFormatHelp:
       "Use Cron format: minute hour day month weekday (e.g., 0 9 * * 1-5 means weekdays at 9 AM)",
+    // 数据分析页面相关翻译
+    timeRangeFilter: "Time Range Filter",
+    scriptFilter: "Script Filter",
+    allScripts: "All Scripts",
+    last7Days: "Last 7 Days",
+    last30Days: "Last 30 Days",
+    last90Days: "Last 90 Days",
+    allTime: "All Time",
+    filterConditions: "Filter Conditions",
+    totalExecutions: "Total Executions",
+    overallSuccessRate: "Overall Success Rate",
+    successfulExecutions: "Successful Executions",
+    failedAttentionExecutions: "Failed/Attention Executions",
+    executionTrend: "Execution Trend",
+    scriptPerformanceAnalysis: "Script Performance Analysis",
+    loadingAnalyticsData: "Loading Analytics Data",
+    dataLoadFailed: "Data Load Failed",
+    retryLoad: "Retry Load",
+    noDataInTimeRange: "No Data in Time Range",
+    executionCount: "Execution Count",
+    executionTime: "Execution Time",
+    lastExecution: "Last Execution",
+    excellentPerformance: "Excellent Performance",
+    goodPerformance: "Good Performance",
+    averagePerformance: "Average Performance",
+    needsAttentionPerformance: "Needs Attention Performance",
+    scriptsCount: "Scripts Count",
+    executionsLabel: "Executions",
+    successLabel: "Success",
+    failedLabel: "Failed",
+    attentionLabel: "Attention",
+    recentExecution: "Recent Execution",
+    earlierExecution: "Earlier Execution",
+    successRateLabel: "Success Rate",
+    performanceExcellent: "Excellent Performance",
+    performanceGood: "Good Performance",
+    performanceAverage: "Average Performance",
+    performanceNeedsAttention: "Needs Attention Performance",
+    topRanking: "Top Ranking",
   },
   zh: {
     // General
@@ -739,5 +817,44 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     scheduleEnabledDesc: "启用后，脚本将按照指定的时间表自动执行",
     cronFormatHelp:
       "使用 Cron 格式: 分 时 日 月 周 (例如: 0 9 * * 1-5 表示工作日上午9点)",
+    // 数据分析页面相关翻译
+    timeRangeFilter: "时间范围过滤器",
+    scriptFilter: "脚本过滤器",
+    allScripts: "所有脚本",
+    last7Days: "最近7天",
+    last30Days: "最近30天",
+    last90Days: "最近90天",
+    allTime: "全部时间",
+    filterConditions: "过滤条件",
+    totalExecutions: "总执行次数",
+    overallSuccessRate: "总体成功率",
+    successfulExecutions: "成功执行次数",
+    failedAttentionExecutions: "失败/关注执行次数",
+    executionTrend: "执行趋势",
+    scriptPerformanceAnalysis: "脚本性能分析",
+    loadingAnalyticsData: "加载分析数据",
+    dataLoadFailed: "数据加载失败",
+    retryLoad: "重试加载",
+    noDataInTimeRange: "时间范围内无数据",
+    executionCount: "执行次数",
+    executionTime: "执行时间",
+    lastExecution: "上次执行",
+    excellentPerformance: "优秀性能",
+    goodPerformance: "良好性能",
+    averagePerformance: "平均性能",
+    needsAttentionPerformance: "需要关注性能",
+    scriptsCount: "脚本数量",
+    executionsLabel: "执行次数",
+    successLabel: "成功",
+    failedLabel: "失败",
+    attentionLabel: "关注",
+    recentExecution: "最近执行",
+    earlierExecution: "较早执行",
+    successRateLabel: "成功率",
+    performanceExcellent: "优秀性能",
+    performanceGood: "良好性能",
+    performanceAverage: "平均性能",
+    performanceNeedsAttention: "需要关注性能",
+    topRanking: "Top Ranking",
   },
 };
