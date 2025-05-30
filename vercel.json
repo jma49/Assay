@@ -1,10 +1,1 @@
-{
-  "_comment": "定时任务配置已在v0.1.8中禁用，将在v0.1.9中由本地执行器替代",
-  "_disabled_crons": [
-    {
-      "path": "/api/run-scheduled-scripts",
-      "schedule": "0 10 * * *",
-      "_note": "此配置已禁用，等待v0.1.9本地执行器实现"
-    }
-  ]
-}
+{}
