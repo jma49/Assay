@@ -275,11 +275,11 @@ const ManageScriptsPage = () => {
           {/* Header Section */}
           <header className="text-center lg:text-left">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-              <div className="space-y-2">
-                <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+              <div className="space-y-3">
+                <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent leading-tight py-1">
                   {t('manageScriptsPageTitle')}
                 </h1>
-                <p className="text-lg text-muted-foreground">
+                <p className="text-lg text-muted-foreground leading-relaxed">
                   {t('manageScriptsPageDescription')}
                 </p>
               </div>
@@ -320,11 +320,11 @@ const ManageScriptsPage = () => {
                 <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
                   <FileText className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
                 </div>
-                <div className="space-y-1">
-                  <CardTitle className="text-xl font-bold text-foreground">
+                <div className="space-y-2">
+                  <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
                     {filteredScripts.length > 0 ? `${filteredScripts.length} ${t('scripts')}` : t('manageScriptsPageTitle')}
                   </CardTitle>
-                  <CardDescription className="text-base text-muted-foreground">
+                  <CardDescription className="text-base text-muted-foreground leading-relaxed">
                     {filteredScripts.length === 0 && !isLoading && !error ? t('noScriptsYet') : ''}
                   </CardDescription>
                 </div>
@@ -367,31 +367,31 @@ const ManageScriptsPage = () => {
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-gradient-to-r from-primary/5 via-primary/3 to-primary/5 border-b-2 border-primary/20 backdrop-blur-sm">
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0">
+                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-blue-400/60"></div>
                               {t('fieldScriptId')}
                             </div>
                           </TableHead>
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0">
+                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-emerald-400/60"></div>
                               {t('fieldScriptNameEn')}
                             </div>
                           </TableHead>
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0">
+                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-amber-400/60"></div>
                               {t('fieldScriptAuthor')}
                             </div>
                           </TableHead>
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0">
+                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-purple-400/60"></div>
                               {t('fieldCreatedAt')}
                             </div>
                           </TableHead>
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 text-center">
+                          <TableHead className="h-16 px-4 font-bold text-foreground/90 text-center leading-relaxed">
                             <div className="flex items-center justify-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-pink-400/60"></div>
                               {t('tableActions')}
@@ -408,27 +408,27 @@ const ManageScriptsPage = () => {
                               index % 2 === 0 ? "bg-background" : "bg-muted/5"
                             )}
                           >
-                            <TableCell className="px-4 py-4 font-semibold max-w-48 group-hover/row:text-primary transition-colors duration-200" title={script.scriptId}>
+                            <TableCell className="px-4 py-5 font-semibold max-w-48 group-hover/row:text-primary transition-colors duration-200 leading-relaxed" title={script.scriptId}>
                               <div className="truncate">
                                 {script.scriptId}
                               </div>
                             </TableCell>
-                            <TableCell className="px-4 py-4 font-medium max-w-56" title={script.name}>
+                            <TableCell className="px-4 py-5 font-medium max-w-56 leading-relaxed" title={script.name}>
                               <div className="truncate">
                                 {script.name}
                               </div>
                             </TableCell>
-                            <TableCell className="px-4 py-4 text-muted-foreground max-w-32" title={script.author}>
+                            <TableCell className="px-4 py-5 text-muted-foreground max-w-32 leading-relaxed" title={script.author}>
                               <div className="truncate">
                                 {script.author}
                               </div>
                             </TableCell>
-                            <TableCell className="px-4 py-4 text-muted-foreground max-w-40 font-mono text-sm">
+                            <TableCell className="px-4 py-5 text-muted-foreground max-w-40 font-mono text-sm leading-relaxed">
                               <div className="truncate">
                                 {script.createdAt ? formatDate(script.createdAt instanceof Date ? script.createdAt.toISOString() : script.createdAt.toString(), language) : t('unknown')}
                               </div>
                             </TableCell>
-                            <TableCell className="px-4 py-4 text-center">
+                            <TableCell className="px-4 py-5 text-center">
                               <div className="flex justify-center gap-2">
                                 <Button
                                   variant="outline"
