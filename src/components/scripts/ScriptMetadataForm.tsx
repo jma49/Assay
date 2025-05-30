@@ -264,6 +264,29 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
               {t('scheduleConfig')}
             </div>
             
+            {/* 功能状态提示 */}
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-0.5">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    定时任务配置已保留，执行方式即将升级
+                  </h4>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                    当前版本 (v0.1.8) 已暂时禁用 Vercel 定时任务，但配置界面仍然可用。
+                    <br />
+                    下个版本 (v0.1.9) 将实现更安全的本地执行器架构，支持灵活的任务调度。
+                  </p>
+                  <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
+                    <span>📋</span>
+                    <span>配置将自动迁移到新架构</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <div className="p-4 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg border border-amber-200/60 dark:border-amber-800/60">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* 启用调度 */}

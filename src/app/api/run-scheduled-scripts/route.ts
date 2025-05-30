@@ -1,14 +1,86 @@
 import { NextRequest, NextResponse } from "next/server";
+
+/**
+ * 定时任务API - 已在v0.1.8中禁用
+ *
+ * 注意：此API的功能已暂时禁用，等待v0.1.9版本中的本地执行器架构实现。
+ * 原有的Vercel定时任务逻辑已移除，脚本的定时任务配置UI仍然保留，
+ * 但实际的定时执行将由本地执行器负责。
+ *
+ * 迁移计划：
+ * - v0.1.9: 实现本地执行器和任务调度器
+ * - 本地执行器将读取MongoDB中的脚本配置
+ * - 根据cronSchedule和isScheduled字段自动创建定时任务
+ */
+
+// 保留原有代码以便参考，但注释掉
+/*
 import mongoDbClient from "@/lib/mongodb";
 import { Collection, Document } from "mongodb";
 import { executeScriptAndNotify } from "@/lib/script-executor";
-import { SqlScript } from "@/components/dashboard/types"; // Using existing SqlScript type
-import { ExecutionResult } from "../../../../scripts/types"; // Corrected path
+import { SqlScript } from "@/components/dashboard/types";
+import { ExecutionResult } from "../../../../scripts/types";
 
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
   const db = await mongoDbClient.getDb();
   return db.collection("sql_scripts");
 }
+*/
+
+export async function GET(request: NextRequest) {
+  console.log("API: GET /api/run-scheduled-scripts - 功能已禁用的请求");
+
+  // 安全验证仍然保留
+  const authHeader = request.headers.get("Authorization");
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!cronSecret) {
+    return NextResponse.json(
+      { message: "Server configuration error." },
+      { status: 500 }
+    );
+  }
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return NextResponse.json(
+      { message: "Unauthorized: Missing or malformed Authorization header." },
+      { status: 401 }
+    );
+  }
+
+  const token = authHeader.substring(7);
+  if (token !== cronSecret) {
+    return NextResponse.json(
+      { message: "Unauthorized: Invalid token." },
+      { status: 401 }
+    );
+  }
+
+  // 返回功能已禁用的响应
+  return NextResponse.json(
+    {
+      message: "定时任务功能已在v0.1.8中暂时禁用",
+      reason: "等待v0.1.9版本中的本地执行器架构实现",
+      status: "disabled",
+      nextVersion: "v0.1.9",
+      migration: {
+        from: "Vercel Cron Jobs",
+        to: "本地执行器 + 任务调度器",
+        benefits: [
+          "安全访问生产数据库",
+          "灵活的任务调度",
+          "更好的错误处理和重试机制",
+          "实时任务状态监控",
+        ],
+      },
+      documentation: "请查看README.md中的v0.1.9开发计划",
+    },
+    { status: 200 }
+  );
+}
+
+/* 
+=== 原有实现代码（保留以便参考） ===
 
 export async function GET(request: NextRequest) {
   console.log("API: GET /api/run-scheduled-scripts - Request received");
@@ -21,8 +93,6 @@ export async function GET(request: NextRequest) {
     console.error(
       "CRON_SECRET is not set in environment variables. This is a server configuration issue."
     );
-    // For security, don't expose this specific detail to the client in a real production environment.
-    // A generic "Server configuration error" is better.
     return NextResponse.json(
       { message: "Server configuration error." },
       { status: 500 }
@@ -39,7 +109,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const token = authHeader.substring(7); // Remove "Bearer " prefix
+  const token = authHeader.substring(7);
   if (token !== cronSecret) {
     console.warn(
       "API: GET /api/run-scheduled-scripts - Unauthorized: Invalid CRON_SECRET token."
@@ -58,7 +128,7 @@ export async function GET(request: NextRequest) {
     const scriptsToRun = (await collection
       .find({
         isScheduled: true,
-        cronSchedule: { $exists: true, $ne: "" }, // Ensure cronSchedule is present and not empty
+        cronSchedule: { $exists: true, $ne: "" },
       })
       .toArray()) as unknown as SqlScript[];
 
@@ -77,7 +147,6 @@ export async function GET(request: NextRequest) {
     );
 
     // 3. Execute Scripts
-    // executeScriptAndNotify returns Promise<ExecutionResult>
     const results = await Promise.allSettled(
       scriptsToRun.map((script) => {
         console.log(
@@ -94,7 +163,7 @@ export async function GET(request: NextRequest) {
     const detailedExecutionResults = [];
 
     for (const [index, result] of results.entries()) {
-      const script = scriptsToRun[index]; // Get corresponding script for context
+      const script = scriptsToRun[index];
 
       if (result.status === "fulfilled") {
         const executionOutcome: ExecutionResult = result.value;
@@ -104,7 +173,6 @@ export async function GET(request: NextRequest) {
             `Script ${script.scriptId} (Name: ${script.name}) executed successfully. StatusType: ${executionOutcome.statusType}, Message: ${executionOutcome.message}`
           );
         } else {
-          // Script's own logic reported failure (e.g. SQL error, validation fail)
           failedExecutionCount++;
           console.error(
             `Script ${script.scriptId} (Name: ${script.name}) executed but reported failure. StatusType: ${executionOutcome.statusType}, Message: ${executionOutcome.message}`
@@ -113,15 +181,13 @@ export async function GET(request: NextRequest) {
         detailedExecutionResults.push({
           scriptId: script.scriptId,
           name: script.name,
-          status: "fulfilled", // Promise status
-          executionSuccess: executionOutcome.success, // Script's own success status
+          status: "fulfilled",
+          executionSuccess: executionOutcome.success,
           message: executionOutcome.message,
           findings: executionOutcome.findings,
           statusType: executionOutcome.statusType,
         });
       } else {
-        // result.status === 'rejected'
-        // executeScriptAndNotify itself threw an error or promise rejected
         failedExecutionCount++;
         const errorMessage =
           result.reason instanceof Error
@@ -133,11 +199,11 @@ export async function GET(request: NextRequest) {
         detailedExecutionResults.push({
           scriptId: script.scriptId,
           name: script.name,
-          status: "rejected", // Promise status
+          status: "rejected",
           executionSuccess: false,
           message: errorMessage,
-          findings: "Execution Engine Error", // General finding for promise rejection
-          statusType: "failure", // General status for promise rejection
+          findings: "Execution Engine Error",
+          statusType: "failure",
         });
       }
     }
@@ -146,7 +212,6 @@ export async function GET(request: NextRequest) {
       `API: GET /api/run-scheduled-scripts - Execution summary: Total Found: ${scriptsToRun.length}, Successfully reported by script: ${successfullyExecutedCount}, Failed (by script or execution): ${failedExecutionCount}`
     );
 
-    // 4. Logging & Response
     return NextResponse.json(
       {
         message: "Scheduled script execution process completed.",
@@ -172,3 +237,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+*/
