@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import ReactCodeMirror, { ReactCodeMirrorProps } from '@uiw/react-codemirror';
-import { sql } from '@codemirror/lang-sql';
+import { sql, PostgreSQL, SQLDialect } from '@codemirror/lang-sql';
 import { okaidia } from '@uiw/codemirror-theme-okaidia'; // Use @uiw dark theme
 import { githubLight } from '@uiw/codemirror-theme-github'; 
 import { useTheme } from 'next-themes';
-// 动态导入sql-formatter来避免webpack模块加载问题
 // import { format } from 'sql-formatter';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +39,27 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
     return currentTheme === 'dark' ? okaidia : githubLight;
   }, [currentTheme]);
 
+  // 创建支持PostgreSQL的扩展，包括对dollar-quoted字符串的更好支持
+  const postgresExtensions = React.useMemo(() => {
+    // 创建自定义PostgreSQL方言，禁用$$的字符串处理以改善DO块语法高亮
+    const customPostgres = SQLDialect.define({
+      ...PostgreSQL.spec,
+      doubleDollarQuotedStrings: false, // 禁用$$字符串处理以改善DO块语法高亮
+    });
+    
+    const postgresConfig = {
+      dialect: customPostgres,
+      upperCaseKeywords: false,
+      schema: {
+        // 添加一些常见的PostgreSQL函数和关键字以改善自动完成
+        pg_catalog: ['now', 'current_timestamp', 'current_date', 'current_time'],
+        functions: ['declare', 'begin', 'end', 'loop', 'if', 'then', 'else', 'elsif', 'raise', 'notice']
+      }
+    };
+    
+    return [sql(postgresConfig)];
+  }, []);
+
   const handleFormat = async () => {
     if (!value.trim()) {
       toast.warning(t('noCodeToFormat'));
@@ -48,10 +68,60 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
     setIsFormatting(true);
     try {
+      // 更强的$$语法检测 - 检测所有可能的dollar-quoted模式
+      const hasDollarQuoted = /\$[^$]*\$/.test(value); // 匹配 $tag$ 或 $$
+      const hasDoBlock = /\bdo\s*\$[^$]*\$/i.test(value); // 匹配 DO $...$ 或 DO $$
+      const hasSimpleDollar = /\$\$/.test(value); // 简单的 $$ 检测
+      const hasDollarFunction = /language\s+sql\s*$/i.test(value) && /\$[^$]*\$/.test(value); // 函数定义中的$$
+      
+      // 如果检测到任何$$相关语法，完全跳过sql-formatter
+      if (hasDollarQuoted || hasDoBlock || hasSimpleDollar || hasDollarFunction) {
+        console.log('PostgreSQL $$ syntax detected, skipping sql-formatter completely');
+        
+        try {
+          // 尝试动态导入pg-formatter，避免TypeScript类型检查
+          const moduleName = 'pg-formatter';
+          const pgFormatter = await import(/* webpackIgnore: true */ moduleName);
+          const pgFormat = pgFormatter.format || pgFormatter.default?.format || pgFormatter.default;
+          
+          if (typeof pgFormat === 'function') {
+            console.log('Using pg-formatter for PostgreSQL code');
+            const formatted = pgFormat(value, {
+              spaces: 2,
+              keywordCase: 'uppercase',
+              functionCase: 'uppercase',
+            });
+            onChange(formatted);
+            toast.success(t('formatSuccess'), {
+              description: t('postgresqlFormatSuccess') || 'Successfully formatted using PostgreSQL-specific formatter',
+              duration: 3000,
+            });
+            setIsFormatting(false);
+            return;
+          } else {
+            throw new Error('pg-formatter not properly exported');
+          }
+        } catch (pgError) {
+          console.warn('pg-formatter not available:', pgError);
+          // 如果pg-formatter不可用，直接跳过格式化，不给用户错误
+          toast.info(t('postgresqlFormatSkipped') || 'Formatting skipped for PostgreSQL DO blocks', {
+            description: t('postgresqlFormatSkippedDesc') || 'PostgreSQL $$ syntax detected. Code is valid and ready to execute.',
+            duration: 4000,
+          });
+          setIsFormatting(false);
+          return;
+        }
+      }
+      
+      // 只有在确认没有$$语法时才使用sql-formatter
+      console.log('No $$ syntax detected, using standard sql-formatter');
+      
       // 动态导入sql-formatter来避免webpack模块加载问题
       const { format } = await import('sql-formatter');
+      
+      // 对于普通SQL，使用PostgreSQL方言
       const formatted = format(value, {
-        language: 'sql',
+        language: 'postgresql',
         keywordCase: 'upper',
         dataTypeCase: 'upper',
         functionCase: 'upper',
@@ -63,6 +133,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         denseOperators: false,
         newlineBeforeSemicolon: false,
       });
+      
       onChange(formatted);
       toast.success(t('formatSuccess'), {
         description: t('formatSuccessDesc'),
@@ -70,10 +141,21 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       });
     } catch (error) {
       console.error('SQL formatting error:', error);
-      toast.error(t('formatError'), {
-        description: error instanceof Error ? error.message : t('formatErrorDesc'),
-        duration: 5000,
-      });
+      // 如果格式化失败，提供更友好的错误信息
+      const errorMessage = error instanceof Error ? error.message : t('formatErrorDesc');
+      
+      // 特别检查是否是dollar-quoted错误
+      if (errorMessage.includes('dollar') || errorMessage.includes('unterminated') || errorMessage.includes('$$')) {
+        toast.error(t('formatError'), {
+          description: t('postgresqlFormatError') || 'PostgreSQL $$ syntax cannot be formatted by standard formatter. Please try again or format manually.',
+          duration: 5000,
+        });
+      } else {
+        toast.error(t('formatError'), {
+          description: errorMessage,
+          duration: 5000,
+        });
+      }
     } finally {
       setIsFormatting(false);
     }
@@ -162,7 +244,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
             <ReactCodeMirror
               value={value}
               onChange={onChange}
-              extensions={[sql()]} 
+              extensions={postgresExtensions}
               theme={editorTheme}
               height="auto"
               minHeight={minHeight}
