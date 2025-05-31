@@ -646,12 +646,22 @@ export async function executeSqlScriptFromDb(
       );
     }
 
-    await sendSlackNotification(
-      scriptId,
-      successMessage,
-      statusType,
-      mongoResultId
-    );
+    // 只在需要关注或失败时发送通知，成功时不发送
+    if (statusType === "attention_needed" || statusType === "failure") {
+      await sendSlackNotification(
+        scriptId,
+        successMessage,
+        statusType,
+        mongoResultId
+      );
+      console.log(
+        `[EXEC ${executionTimestamp}] 发送通知 (${statusType}): ${scriptId}`
+      );
+    } else {
+      console.log(
+        `[EXEC ${executionTimestamp}] 跳过通知 (${statusType}): ${scriptId} - 执行成功无需通知`
+      );
+    }
 
     return {
       success: true,

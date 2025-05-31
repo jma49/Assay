@@ -1,12 +1,13 @@
 # SQL 脚本部署与监控系统
 
-[![Version](https://img.shields.io/badge/version-0.1.8-blue.svg)](./package.json)
+[![Version](https://img.shields.io/badge/version-0.1.9-blue.svg)](./package.json)
 [![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black.svg)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-6.15.0-green.svg)](https://www.mongodb.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-支持-336791.svg)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-缓存支持-red.svg)](https://redis.io/)
 
-一个基于 Next.js 构建的现代化 SQL 脚本管理与监控系统，提供可视化界面来管理、执行和监控 SQL 检查脚本。系统支持自动化执行、实时通知和详细的历史记录分析。
+一个基于 Next.js 构建的现代化 SQL 脚本管理与监控系统，提供可视化界面来管理、执行和监控 SQL 检查脚本。系统支持自动化执行、实时通知、详细的历史记录分析和高性能缓存层。
 
 ## ✨ 核心功能
 
@@ -23,11 +24,23 @@
 
 - **手动执行**: 从仪表盘快速选择并执行存储的脚本
 - **批量执行**: 支持执行所有脚本或仅执行启用定时任务的脚本
-- **🆕 完整 PostgreSQL 支持**: 专用解析器完美支持 DO 块、函数定义、dollar-quoted 字符串等复杂语法
+- **🆕 实时进度监控**: 全屏进度对话框，实时显示每个脚本的执行状态
+- **🆕 批量执行管理**: 支持取消、暂停和恢复批量执行任务
+- **完整 PostgreSQL 支持**: 专用解析器完美支持 DO 块、函数定义、dollar-quoted 字符串等复杂语法
 - **🆕 智能超时保护**: 自动识别复杂查询并设置分级超时机制(普通 30s/复杂 5min)
 - **🆕 语法预验证**: 执行前检测 PostgreSQL 语法错误，提升成功率
 - **GitHub Actions 集成**: 通过 GitHub Actions 实现自动化定时执行
 - **Vercel Cron Jobs**: 支持 Vercel 平台的定时任务配置
+
+### 🔄 Redis 缓存层 (新增)
+
+- **🆕 高性能缓存**: 使用 Redis 作为批量执行状态的缓存层
+- **🆕 分布式支持**: 支持多实例部署，解决单机内存限制
+- **🆕 原子性操作**: 使用 Lua 脚本确保状态更新的一致性
+- **🆕 智能过期**: 自动管理缓存过期时间，避免内存泄漏
+- **🆕 健康检查**: 专用 API 监控 Redis 连接状态和性能
+- **🆕 降级机制**: Redis 不可用时自动降级到内存存储
+- **🆕 缓存统计**: 实时监控缓存使用情况和性能指标
 
 ### 📊 监控与分析
 
@@ -43,13 +56,14 @@
 ### 🔔 通知系统
 
 - **Slack 集成**: 实时发送执行结果到 Slack 频道
+- **智能过滤**: 只在失败或需要关注时发送通知，减少噪音
 - **状态通知**: 区分成功、失败和需要关注的不同通知类型
 - **批量通知**: 汇总报告多个脚本的执行状态
 
 ### 🌐 国际化支持
 
 - **🆕 完整双语界面**: 中英文无缝切换，覆盖所有 UI 组件
-- **🆕 智能翻译系统**: 新增 33 个翻译键，支持编辑器和表单的完整本地化
+- **🆕 智能翻译系统**: 包含 Redis 缓存功能在内的完整本地化支持
 - **动态语言切换**: 无需刷新页面即可切换界面语言
 - **本地化日期时间**: 根据语言设置显示格式化的日期时间
 
@@ -59,6 +73,7 @@
 - **权限控制**: Cron Job 端点的访问令牌保护
 - **SSL 支持**: 支持生产环境的 SSL 数据库连接
 - **输入验证**: 全面的用户输入验证和安全检查
+- **Redis 安全**: 支持 Redis 密码认证和 SSL 连接
 
 ## 🏗️ 系统架构
 
@@ -70,9 +85,14 @@
          │                       │                       │
          │                       │                       │
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   MongoDB        │    │   PostgreSQL    │    │   通知服务       │
-│ (脚本+结果存储)  │    │  (目标数据库)   │    │  (Slack)        │
+│   MongoDB        │    │   PostgreSQL    │    │   Redis 缓存     │
+│ (脚本+结果存储)  │    │  (目标数据库)   │    │ (状态+会话)      │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                       │
+                                              ┌─────────────────┐
+                                              │   通知服务       │
+                                              │  (Slack)        │
+                                              └─────────────────┘
 ```
 
 ### 主要组件
@@ -83,6 +103,7 @@
    - 脚本管理页面 (`/manage-scripts`)
    - 数据分析入口 (`/data-analysis`)
    - 执行结果详情页面 (`/view-execution-result/[id]`)
+   - **🆕 批量执行进度监控界面**
 
 2. **API 服务层**
 
@@ -90,7 +111,11 @@
    - `/api/check-history` - 执行历史查询
    - `/api/run-check` - 手动执行触发
    - `/api/run-scheduled-scripts` - 定时执行 API
-   - `/api/execution-details/[id]` - 详细结果查询
+   - `/api/run-all-scripts` - 🆕 批量执行 API
+   - `/api/batch-execution-status` - 🆕 批量状态 API
+   - `/api/health/redis` - 🆕 Redis 健康检查
+   - `/api/maintenance/cleanup` - 🆕 缓存清理 API
+   - `/api/execution-details/[id]` - 详情查询 API
 
 3. **执行引擎**
 
@@ -102,8 +127,15 @@
 
    - **MongoDB**: 脚本定义、执行历史、元数据
    - **PostgreSQL**: 目标数据库（只读查询）
+   - **🆕 Redis**: 批量执行状态、会话缓存（可选）
 
-5. **自动化系统**
+5. **缓存层 (新增)**
+
+   - **Redis 客户端**: 统一连接管理和连接池
+   - **状态缓存**: 批量执行状态的实时缓存
+   - **健康监控**: 缓存性能和连接状态监控
+
+6. **自动化系统**
    - **GitHub Actions**: 定时和手动触发执行
    - **Vercel Cron Jobs**: 云端定时任务
 
@@ -120,6 +152,10 @@ sql_script_depoly/
 │   │   │   ├── check-history/       # 历史记录 API
 │   │   │   ├── run-check/           # 手动执行 API
 │   │   │   ├── run-scheduled-scripts/ # 定时执行 API
+│   │   │   ├── run-all-scripts/     # 🆕 批量执行 API
+│   │   │   ├── batch-execution-status/ # 🆕 批量状态 API
+│   │   │   ├── health/redis/        # 🆕 Redis健康检查
+│   │   │   ├── maintenance/cleanup/ # 🆕 缓存清理API
 │   │   │   └── execution-details/   # 详情查询 API
 │   │   ├── manage-scripts/          # 脚本管理页面
 │   │   ├── data-analysis/           # 数据分析页面
@@ -130,15 +166,19 @@ sql_script_depoly/
 │   │   │   ├── CheckHistory.tsx     # 历史记录组件
 │   │   │   ├── StatsCards.tsx       # 统计卡片
 │   │   │   ├── ManualTrigger.tsx    # 手动执行组件
+│   │   │   ├── BatchExecutionProgress.tsx # 🆕 批量执行进度
 │   │   │   └── types.ts             # 类型定义
 │   │   ├── scripts/                 # 脚本管理组件
 │   │   │   ├── ScriptMetadataForm.tsx # 元数据表单
 │   │   │   └── CodeMirrorEditor.tsx   # SQL 编辑器
 │   │   └── ui/                      # Shadcn/ui 基础组件
-│   └── lib/
-│       ├── db.ts                    # PostgreSQL 连接
-│       ├── mongodb.ts               # MongoDB 连接
-│       └── script-executor.ts       # 执行包装器
+│   ├── lib/
+│   │   ├── db.ts                    # PostgreSQL 连接
+│   │   ├── mongodb.ts               # MongoDB 连接
+│   │   ├── redis.ts                 # 🆕 Redis 连接管理
+│   │   └── script-executor.ts       # 执行包装器
+│   └── services/
+│       └── batch-execution-cache.ts # 🆕 批量执行缓存服务
 ├── scripts/
 │   ├── core/
 │   │   └── sql-executor.ts          # 核心执行引擎
@@ -160,6 +200,7 @@ sql_script_depoly/
 - Node.js >= 18.18.0
 - MongoDB 数据库
 - PostgreSQL 数据库（目标数据库）
+- **🆕 Redis 服务器（可选，用于高性能缓存）**
 - npm 或 yarn
 
 ### 安装步骤
@@ -187,6 +228,12 @@ sql_script_depoly/
 
    # MongoDB 应用数据库
    MONGODB_URI="mongodb://localhost:27017/sql_script_dashboard"
+
+   # Redis 缓存数据库 (可选)
+   REDIS_HOST="localhost"
+   REDIS_PORT="6379"
+   REDIS_PASSWORD=""
+   REDIS_DB="0"
 
    # Slack 通知 (可选)
    SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
@@ -218,11 +265,26 @@ sql_script_depoly/
 4. **设置元数据**: 填写中英文名称、描述、作者等信息
 5. **配置调度**: 可选择启用定时执行并设置 Cron 表达式
 
+### 批量执行监控 (新增)
+
+1. **选择执行模式**: 在手动触发面板选择"批量执行"
+2. **选择脚本范围**: 所有脚本 或 仅定时脚本
+3. **实时监控**: 全屏进度对话框显示每个脚本的执行状态
+4. **状态统计**: 实时查看总计、执行中、等待、成功、关注、失败数量
+5. **进度管理**: 支持最小化窗口、取消执行等操作
+
+### Redis 缓存管理 (新增)
+
+1. **健康检查**: 访问 `/api/health/redis` 检查 Redis 状态
+2. **缓存清理**: 使用 `/api/maintenance/cleanup` 清理过期数据
+3. **降级模式**: Redis 不可用时系统自动使用内存存储
+4. **性能监控**: 通过健康检查 API 监控缓存性能
+
 ### 执行监控
 
 1. **手动执行**: 在仪表盘选择脚本并点击"运行检查"
-2. **查看历史**: 🆕 使用改进的历史记录表格查看执行结果
-3. **🆕 状态筛选**: 使用"全部"、"成功"、"失败"、"需要关注"按钮筛选
+2. **查看历史**: 使用改进的历史记录表格查看执行结果
+3. **状态筛选**: 使用"全部"、"成功"、"失败"、"需要关注"按钮筛选
 4. **详情查看**: 点击"详情"按钮展开查看完整执行信息
 
 ### 国际化使用
@@ -232,6 +294,23 @@ sql_script_depoly/
 3. **双语输入**: 创建脚本时可同时输入中英文信息
 
 ## 🔧 高级配置
+
+### Redis 配置
+
+生产环境 Redis 配置：
+
+```env
+# 基础连接
+REDIS_HOST="your-redis-host"
+REDIS_PORT="6379"
+REDIS_PASSWORD="your-redis-password"
+REDIS_DB="0"
+
+# 性能调优
+REDIS_MAX_RETRIES="3"
+REDIS_CONNECT_TIMEOUT="10000"
+REDIS_COMMAND_TIMEOUT="5000"
+```
 
 ### GitHub Actions 自动化
 
@@ -295,6 +374,20 @@ CA_CERT_BLOB_URL="https://storage/ca-cert.pem"
 - **Attention Needed**: 执行成功但返回数据，需要人工确认
 - **Failure**: 执行失败，需要立即处理
 
+### 高性能批量执行
+
+- 支持并发执行多个脚本
+- 实时状态更新和进度追踪
+- 智能超时控制和错误处理
+- 可中断和恢复的执行流程
+
+### Redis 缓存优势
+
+- **高可用性**: 支持 Redis 集群和主从复制
+- **持久化**: 数据持久化到磁盘，防止丢失
+- **扩展性**: 支持分布式部署和水平扩展
+- **性能**: 亚毫秒级响应时间
+
 ### 高性能分页系统
 
 - 支持大量数据的高效分页
@@ -322,6 +415,13 @@ npm run test:db
 npm run test:mongodb
 ```
 
+### Redis 连接测试
+
+```bash
+# 通过健康检查API测试
+curl http://localhost:3000/api/health/redis
+```
+
 ### Slack 通知测试
 
 ```bash
@@ -336,7 +436,43 @@ npm run test:script
 
 ## 📈 版本历史
 
-### v0.1.8 (当前版本)
+### v0.1.9 (当前版本)
+
+- ✅ **Redis 缓存层架构**
+  - 新增 Redis 客户端连接管理 (`src/lib/redis.ts`)
+  - 实现批量执行状态缓存服务 (`src/services/batch-execution-cache.ts`)
+  - 支持原子性状态更新和智能过期管理
+  - 提供降级机制，Redis 不可用时自动使用内存存储
+- ✅ **批量执行 API 系统**
+  - 创建 `/api/run-all-scripts` 批量执行 API
+  - 创建 `/api/batch-execution-status` 状态管理 API
+  - 支持执行所有脚本或仅定时脚本两种模式
+  - 实现唯一执行 ID 生成和异步执行机制
+- ✅ **监控和运维工具**
+  - 新增 `/api/health/redis` Redis 健康检查 API
+  - 创建 `/api/maintenance/cleanup` 缓存清理 API
+  - 支持缓存统计信息和性能监控
+  - 提供数据一致性验证和操作测试
+- ✅ **批量执行进度 UI**
+  - 实现 `BatchExecutionProgress.tsx` 全屏进度对话框
+  - 支持实时状态更新和进度条显示
+  - 提供 6 种状态统计和脚本列表展示
+  - 支持最小化/展开、取消执行等交互功能
+- ✅ **通知系统优化**
+  - 修改通知逻辑，仅在失败或需要关注时发送
+  - 减少通知噪音，提升用户体验
+  - 支持批量执行完成通知和统计摘要
+- ✅ **完整双语支持**
+  - 新增 Redis 相关功能的中英文翻译键
+  - 支持批量执行界面的完整本地化
+  - 更新翻译系统，包含所有新功能
+- ✅ **代码质量提升**
+  - 所有注释去除 AI 痕迹，提升专业性
+  - 完善错误处理和类型安全
+  - 优化 Redis 连接管理和性能配置
+  - 统一代码风格和命名规范
+
+### v0.1.8
 
 - ✅ 修复 TypeScript 构建错误
   - 修复 `useRef<number>()` 类型错误，改为 `useRef<number | undefined>(undefined)`
@@ -410,14 +546,16 @@ npm run test:script      # 测试脚本执行
 
 - 使用 TypeScript 进行类型安全开发
 - 遵循 ESLint 配置的代码规范
-- 🆕 新增功能需要添加对应的中英文翻译
+- 新增功能需要添加对应的中英文翻译
 - 提交前确保 `npm run build` 无错误
+- Redis 相关功能需要考虑降级方案
 
 ### 翻译贡献
 
 - 翻译文件位于 `src/components/dashboard/types.ts`
 - 新增功能需同时添加英文和中文翻译键
 - 保持翻译的专业性和用户友好性
+- Redis 和缓存相关术语需要统一翻译规范
 
 ## 📝 许可证
 
@@ -425,162 +563,34 @@ npm run test:script      # 测试脚本执行
 
 ## 🔮 路线图
 
-### 🆕 v0.1.9 计划中 - 混合架构本地执行器
+### 📋 v0.2.0 计划中 - 企业级功能增强
 
-#### 核心功能：安全的生产数据库访问方案
+#### 多租户支持
 
-**背景**：为保证生产数据库安全，线上部署无法直接连接生产数据库，但共享的 MongoDB 可以被线上和本地访问。
+- 用户认证和权限管理系统
+- 基于角色的访问控制 (RBAC)
+- 脚本和数据的租户隔离
 
-**设计思路**：
+#### 高级监控
 
-```
-线上部署 (脚本管理) ←→ 共享MongoDB ←→ 本地执行器 (任务执行)
-```
+- 性能指标收集和分析
+- 告警规则配置和管理
+- 集成 Prometheus 和 Grafana
 
-##### 🏗️ 混合架构设计
+#### API 扩展
 
-- **线上 Web 应用**：负责脚本管理、任务创建、结果查看
-- **本地执行器**：轮询任务队列，连接生产数据库执行 SQL
-- **共享 MongoDB**：作为任务队列和结果存储中心
+- GraphQL API 支持
+- Webhook 通知集成
+- 第三方系统集成接口
 
-##### 🔧 技术实现
+#### 运维增强
 
-1. **任务队列系统**
+- 配置管理中心
+- 日志聚合和分析
+- 自动化部署和回滚
 
-   - 将直接执行改为创建任务到 MongoDB
-   - 任务状态：`pending → running → completed/failed`
-   - 支持优先级、重试机制、并发控制
-
-2. **本地执行器** (`scripts/local-executor.ts`)
-
-   - 轮询机制：每 10 秒检查待执行任务
-   - 并发控制：最多同时执行 5 个任务
-   - 故障恢复：自动重试失败任务
-   - 优雅关闭：信号处理和资源清理
-
-3. **任务调度器** (`scripts/task-scheduler.ts`)
-
-   - Cron 任务：根据脚本配置自动创建定时任务
-   - 动态更新：监听脚本变更，实时调整定时任务
-   - 批量执行：支持一键执行所有/已启用脚本
-
-4. **API 接口优化**
-
-   - 修改 `POST /api/run-check`：创建任务而非直接执行
-   - 新增 `GET /api/task-status/[taskId]`：查询任务执行状态
-   - 新增任务管理相关接口
-
-5. **前端体验升级**
-   - 任务状态实时显示：⏳ 排队中 → 🏃‍♂️ 执行中 → ✅ 完成
-   - 轮询任务状态，显示执行进度
-   - 任务管理界面和监控面板
-
-##### 📦 部署和运行
-
-```bash
-# 本地环境启动命令
-npm run local:start          # 一键启动调度器和执行器
-npm run local:scheduler      # 仅启动任务调度器
-npm run local:executor       # 仅启动任务执行器
-
-# 任务管理命令
-npm run local:schedule-all       # 调度所有脚本
-npm run local:schedule-enabled   # 调度已启用脚本
-```
-
-##### 🎯 实现优先级
-
-**Phase 1: 核心功能**
-
-- [ ] 修改手动执行 API（任务创建模式）
-- [ ] 实现本地执行器基础功能
-- [ ] 添加任务状态查询 API
-
-**Phase 2: 增强功能**
-
-- [ ] 任务调度器和 Cron 支持
-- [ ] 前端状态轮询和进度显示
-- [ ] 错误处理和重试机制
-
-**Phase 3: 优化功能**
-
-- [ ] 执行器监控和性能指标
-- [ ] 任务优先级和并发控制优化
-- [ ] 批量操作和管理界面
-
-### 即将推出的功能
-
-- [ ] 本地执行器架构（v0.1.9 重点）
-- [ ] 任务队列和状态管理系统
-- [ ] 实时任务执行状态监控
-- [ ] 更丰富的数据可视化图表
-- [ ] 脚本执行性能分析
-- [ ] 自定义通知规则
-- [ ] 用户权限管理系统
-- [ ] 执行历史数据导出功能
-
-## 📞 支持与反馈
-
-如果您在使用过程中遇到问题或有改进建议，请：
-
-- 提交 [Issue](issues)
-- 发送邮件至维护团队
-- 查看 [Wiki](wiki) 获取更多文档
+想要了解更多功能请求或建议，请提交 Issue 或 Pull Request！
 
 ---
 
-**SQL 脚本部署与监控系统** - 让数据库检查变得简单高效 🚀
-
-### 📱 用户体验
-
-- **🆕 统一设计语言**: 所有界面采用一致的现代化设计风格
-- **🆕 增强的表单体验**:
-  - 分组化的信息输入（基础信息、多语言信息、调度配置）
-  - 色彩区分的英文/中文输入区域
-  - 实时输入验证和提示
-- **响应式设计**: 适配桌面端和移动端设备
-- **深色模式支持**: 自动适配系统主题或手动切换
-- **🆕 版本信息显示**: 固定显示当前系统版本号
-
-## 🆕 v0.1.8 新增功能
-
-### 🎨 界面升级
-
-- **现代化脚本管理界面**: Add/Edit SQL Script 页面完全重新设计
-- **统一设计语言**: 与主界面 Check History 保持一致的视觉风格
-- **分组式表单布局**: 基础信息、多语言信息、调度配置清晰分组
-- **色彩区分输入区域**: 英文/中文输入区域用不同色彩主题区分
-
-### ⚡ SQL 编辑器增强
-
-- **集成 sql-formatter**: 支持专业级 SQL 代码格式化
-- **智能代码统计**: 实时显示代码行数和字符数
-- **预览/编辑切换**: 一键切换查看模式和编辑模式
-- **状态指示器**: 显示编辑器当前状态和就绪状态
-- **格式化配置**: 支持关键字大写、标准缩进、换行控制等格式化选项
-
-### 🌍 完整国际化
-
-- **新增 33 个翻译键**: 覆盖编辑器、表单、提示信息等所有新增 UI 元素
-- **中英文对照**: 提供专业和用户友好的双语界面
-- **动态翻译**: 无需刷新即可切换语言，包括新增的所有功能
-
-### 🎯 用户体验优化
-
-- **错误处理增强**: SQL 格式化失败时提供清晰的错误提示
-- **加载状态指示**: 格式化过程中显示加载动画
-- **成功反馈**: 操作完成后提供 Toast 通知
-- **键盘快捷键提示**: 编辑器底部显示常用快捷键说明
-
-### 前端技术
-
-- **Framework**: Next.js 15.2.4 (App Router)
-- **Language**: TypeScript 5.x
-- **Styling**: Tailwind CSS 3.x
-- **UI Components**: shadcn/ui (Radix UI)
-- **Code Editor**: CodeMirror 6 + SQL language support
-- **🆕 Code Formatting**: sql-formatter
-- **Icons**: Lucide React
-- **Notifications**: Sonner (Toast)
-
-**Made with ❤️ by Jincheng** | **v0.1.8** | **最后更新: 2025 年 5 月**
+**感谢使用 SQL 脚本部署与监控系统！** 🚀
