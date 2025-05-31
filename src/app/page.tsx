@@ -9,6 +9,24 @@ import UserHeader from '@/components/UserHeader';
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
+  // 在构建时或没有Clerk配置时，显示配置提示
+  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="text-center">
+            <h1 className="text-3xl font-extrabold text-gray-900">
+              配置中...
+            </h1>
+            <p className="mt-2 text-sm text-gray-600">
+              系统正在进行初始化配置，请稍后访问。
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // 服务端认证检查
   const { userId } = await auth();
   

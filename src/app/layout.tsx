@@ -17,6 +17,26 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // 在构建时，如果没有Clerk密钥，则不包装ClerkProvider
+  const hasClerkKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+  if (!hasClerkKey) {
+    return (
+      <html lang="en" suppressHydrationWarning>
+        <body className={inter.className}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
+        </body>
+      </html>
+    );
+  }
+
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
