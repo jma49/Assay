@@ -299,7 +299,10 @@ export type DashboardTranslationKeys =
   | "cancel"
   | "close"
   | "complete"
-  | "needsAttentionShort";
+  | "needsAttentionShort"
+  // UserHeader相关翻译键
+  | "systemTitle"
+  | "authorizedAccess";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -687,6 +690,9 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     close: "Close",
     complete: "Complete",
     needsAttentionShort: "Attention",
+    // UserHeader相关翻译键
+    systemTitle: "SQL Check System",
+    authorizedAccess: "Authorized Access",
   },
   zh: {
     // General
@@ -1006,5 +1012,8 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     close: "关闭",
     complete: "完成",
     needsAttentionShort: "关注",
+    // UserHeader相关翻译键
+    systemTitle: "SQL脚本管理系统",
+    authorizedAccess: "已授权访问",
   },
 };

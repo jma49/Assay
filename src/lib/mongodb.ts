@@ -14,7 +14,7 @@ const globalWithMongo = global as typeof globalThis & {
 class MongoDbClient {
   private client: MongoClient | null = null;
   private clientPromise: Promise<MongoClient>;
-  private dbName: string = "sql_check_history_db"; // 默认数据库名称。确保这个是您想要的，如果 MONGODB_URI 中没有指定。
+  private dbName: string = "sql_check_history_db"; 
   private uri: string;
   private isLoggedConnection: boolean = false;
   private static readonly shouldLog =

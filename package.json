@@ -1,6 +1,6 @@
 {
   "name": "sql_script_depoly",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "private": true,
   "engines": {
     "node": ">=18.18.0"
@@ -21,6 +21,7 @@
     "test:mongodb": "ts-node test/database/mongodb.test.ts"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.20.2",
     "@codemirror/lang-sql": "^6.8.0",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@radix-ui/react-alert-dialog": "^1.1.13",

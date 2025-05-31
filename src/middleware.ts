@@ -1,27 +1,37 @@
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const start = Date.now();
+// 定义公开路由（不需要认证）
+const isPublicRoute = createRouteMatcher([
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/unauthorized",
+]);
 
-  // 创建响应
-  const response = NextResponse.next();
-
-  // 添加性能监控头部
-  const duration = Date.now() - start;
-  response.headers.set("X-Response-Time", `${duration}ms`);
-  response.headers.set("X-Timestamp", new Date().toISOString());
-
-  // 记录慢查询（超过500ms）
-  if (duration > 500) {
-    console.warn(
-      `[SLOW API] ${request.method} ${request.url} took ${duration}ms`
-    );
+export default clerkMiddleware(async (auth, req) => {
+  // 如果是公开路由，直接通过
+  if (isPublicRoute(req)) {
+    return NextResponse.next();
   }
 
-  return response;
-}
+  // 检查用户是否已认证
+  const { userId } = await auth();
+
+  if (!userId) {
+    // 未认证用户重定向到登录页
+    const signInUrl = new URL("/sign-in", req.url);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  // 已认证用户直接通过，邮箱域名验证在页面级别进行
+  return NextResponse.next();
+});
 
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: [
+    // 跳过Next.js内部文件和静态文件
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // 总是运行在API路由上
+    "/(api|trpc)(.*)",
+  ],
 };
