@@ -68,94 +68,69 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
     setIsFormatting(true);
     try {
-      // 更强的$$语法检测 - 检测所有可能的dollar-quoted模式
-      const hasDollarQuoted = /\$[^$]*\$/.test(value); // 匹配 $tag$ 或 $$
-      const hasDoBlock = /\bdo\s*\$[^$]*\$/i.test(value); // 匹配 DO $...$ 或 DO $$
-      const hasSimpleDollar = /\$\$/.test(value); // 简单的 $$ 检测
-      const hasDollarFunction = /language\s+sql\s*$/i.test(value) && /\$[^$]*\$/.test(value); // 函数定义中的$$
+      console.log('正在检测SQL代码类型...');
       
-      // 如果检测到任何$$相关语法，完全跳过sql-formatter
-      if (hasDollarQuoted || hasDoBlock || hasSimpleDollar || hasDollarFunction) {
-        console.log('PostgreSQL $$ syntax detected, skipping sql-formatter completely');
+      // 检测DO$$块语法
+      const hasDoBlock = /\bdo\s*\$\$[\s\S]*?\$\$/i.test(value);
+      
+      if (hasDoBlock) {
+        console.log('检测到DO$$块，跳过自动格式化');
         
-        try {
-          // 尝试动态导入pg-formatter，避免TypeScript类型检查
-          const moduleName = 'pg-formatter';
-          const pgFormatter = await import(/* webpackIgnore: true */ moduleName);
-          const pgFormat = pgFormatter.format || pgFormatter.default?.format || pgFormatter.default;
-          
-          if (typeof pgFormat === 'function') {
-            console.log('Using pg-formatter for PostgreSQL code');
-            const formatted = pgFormat(value, {
-              spaces: 2,
-              keywordCase: 'uppercase',
-              functionCase: 'uppercase',
-            });
-            onChange(formatted);
-            toast.success(t('formatSuccess'), {
-              description: t('postgresqlFormatSuccess') || 'Successfully formatted using PostgreSQL-specific formatter',
-              duration: 3000,
-            });
-            setIsFormatting(false);
-            return;
-          } else {
-            throw new Error('pg-formatter not properly exported');
-          }
-        } catch (pgError) {
-          console.warn('pg-formatter not available:', pgError);
-          // 如果pg-formatter不可用，直接跳过格式化，不给用户错误
-          toast.info(t('postgresqlFormatSkipped') || 'Formatting skipped for PostgreSQL DO blocks', {
-            description: t('postgresqlFormatSkippedDesc') || 'PostgreSQL $$ syntax detected. Code is valid and ready to execute.',
-            duration: 4000,
-          });
-          setIsFormatting(false);
-          return;
-        }
+        // 对于DO$$块，提供友好的提示但不进行格式化
+        const title = t('doBlockDetected');
+        const description = t('doBlockDetectedDesc');
+        
+        toast.info(title, {
+          description: description,
+          duration: 5000,
+        });
+        
+        return;
       }
       
-      // 只有在确认没有$$语法时才使用sql-formatter
-      console.log('No $$ syntax detected, using standard sql-formatter');
+      // 对于普通SQL，使用sql-formatter进行格式化
+      console.log('普通SQL代码，使用sql-formatter格式化');
       
-      // 动态导入sql-formatter来避免webpack模块加载问题
       const { format } = await import('sql-formatter');
       
-      // 对于普通SQL，使用PostgreSQL方言
       const formatted = format(value, {
         language: 'postgresql',
         keywordCase: 'upper',
-        dataTypeCase: 'upper',
+        dataTypeCase: 'upper', 
         functionCase: 'upper',
         identifierCase: 'preserve',
         indentStyle: 'standard',
+        tabWidth: 2,
+        useTabs: false,
         logicalOperatorNewline: 'before',
-        expressionWidth: 50,
-        linesBetweenQueries: 2,
+        expressionWidth: 60,
+        linesBetweenQueries: 1,
         denseOperators: false,
-        newlineBeforeSemicolon: false,
+        newlineBeforeSemicolon: false
       });
       
       onChange(formatted);
-      toast.success(t('formatSuccess'), {
-        description: t('formatSuccessDesc'),
+      
+      // 双语成功通知
+      const successTitle = t('formatSuccess');
+      const successDesc = t('formatSuccessDesc');
+      
+      toast.success(successTitle, {
+        description: successDesc,
         duration: 3000,
       });
-    } catch (error) {
-      console.error('SQL formatting error:', error);
-      // 如果格式化失败，提供更友好的错误信息
-      const errorMessage = error instanceof Error ? error.message : t('formatErrorDesc');
       
-      // 特别检查是否是dollar-quoted错误
-      if (errorMessage.includes('dollar') || errorMessage.includes('unterminated') || errorMessage.includes('$$')) {
-        toast.error(t('formatError'), {
-          description: t('postgresqlFormatError') || 'PostgreSQL $$ syntax cannot be formatted by standard formatter. Please try again or format manually.',
-          duration: 5000,
-        });
-      } else {
-        toast.error(t('formatError'), {
-          description: errorMessage,
-          duration: 5000,
-        });
-      }
+    } catch (error) {
+      console.error('SQL格式化错误:', error);
+      
+      // 双语错误通知
+      const errorTitle = t('formatError');
+      const errorDesc = t('formatErrorDesc');
+      
+      toast.error(errorTitle, {
+        description: errorDesc,
+        duration: 5000,
+      });
     } finally {
       setIsFormatting(false);
     }
