@@ -9,6 +9,11 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  // 在构建时或没有Clerk配置时，直接通过
+  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    return NextResponse.next();
+  }
+
   // 如果是公开路由，直接通过
   if (isPublicRoute(req)) {
     return NextResponse.next();
