@@ -254,7 +254,52 @@ export type DashboardTranslationKeys =
   // DO$$相关翻译键
   | "doBlockDetected"
   | "doBlockDetectedDesc"
-  | "manualFormatSuggestion";
+  | "manualFormatSuggestion"
+  // 批量执行脚本相关翻译键
+  | "runAllScripts"
+  | "runningAllScripts"
+  | "runAllScriptsDesc"
+  | "runAllScriptsConfirm"
+  | "runAllScriptsConfirmDesc"
+  | "batchExecutionStarted"
+  | "batchExecutionStartedDesc"
+  | "batchExecutionFailed"
+  | "scriptsExecutionProgress"
+  | "executeSelectedScript"
+  | "executeAllScripts"
+  | "bulkExecution"
+  | "executionMode"
+  | "singleExecution"
+  | "selectExecutionMode"
+  // 新增补充的双语翻译键
+  | "searchScripts"
+  | "searchScriptsPlaceholder"
+  | "scheduledTask"
+  | "noMatchingScripts"
+  | "scriptsToExecute"
+  | "scheduledScripts"
+  | "executeAllScriptsOption"
+  | "executeAllScriptsDesc"
+  | "executeScheduledScriptsOption"
+  | "executeScheduledScriptsDesc"
+  | "batchExecutionConfirmMessage"
+  | "batchExecutionConfirmScheduledMessage"
+  | "cancelButton"
+  // Redis缓存和批量执行进度相关翻译键
+  | "batchExecutionProgress"
+  | "overallProgress"
+  | "total"
+  | "running"
+  | "pending"
+  | "success"
+  | "attention"
+  | "failed"
+  | "batchExecutionCompleted"
+  | "batchExecutionCompletedDesc"
+  | "cancel"
+  | "close"
+  | "complete"
+  | "needsAttentionShort";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -425,7 +470,6 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     fieldIsScheduled: "Enable Schedule",
     fieldCronSchedule: "Cron Schedule",
     saveScriptButton: "Save Script",
-    cancelButton: "Cancel",
     deleteScriptButton: "Delete Script",
     deleteButton: "Delete",
     confirmDeleteScriptTitle: "Confirm Deletion",
@@ -596,6 +640,53 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     doBlockDetectedDesc:
       "DO$$ blocks require manual formatting. Please format the code inside $$ blocks manually for better readability.",
     manualFormatSuggestion: "Manual formatting recommended for DO blocks",
+    // 批量执行脚本相关翻译键
+    runAllScripts: "Run All Scripts",
+    runningAllScripts: "Running All Scripts",
+    runAllScriptsDesc: "Run all scripts in the selected execution mode",
+    runAllScriptsConfirm: "Confirm Run All Scripts",
+    runAllScriptsConfirmDesc: "Are you sure you want to run all scripts?",
+    batchExecutionStarted: "Batch Execution Started",
+    batchExecutionStartedDesc: "Batch execution started successfully",
+    batchExecutionFailed: "Batch Execution Failed",
+    scriptsExecutionProgress: "Scripts Execution Progress",
+    executeSelectedScript: "Execute Selected Script",
+    executeAllScripts: "Execute All Scripts",
+    bulkExecution: "Bulk Execution",
+    executionMode: "Execution Mode",
+    singleExecution: "Single Execution",
+    selectExecutionMode: "Select Execution Mode",
+    // 新增补充的双语翻译键
+    searchScripts: "Search Scripts",
+    searchScriptsPlaceholder: "Search script name, description or ID...",
+    scheduledTask: "Scheduled Task",
+    noMatchingScripts: "No matching scripts found",
+    scriptsToExecute: "Scripts to Execute",
+    scheduledScripts: "Scheduled Scripts",
+    executeAllScriptsOption: "Execute All Scripts",
+    executeAllScriptsDesc:
+      "Execute all available scripts, including scheduled and manual scripts",
+    executeScheduledScriptsOption: "Execute Scheduled Scripts Only",
+    executeScheduledScriptsDesc: "Execute only scripts with scheduling enabled",
+    batchExecutionConfirmMessage: "将执行 {count} 个脚本。",
+    batchExecutionConfirmScheduledMessage: "将执行 {count} 个定时脚本。",
+    cancelButton: "Cancel",
+    // Redis缓存和批量执行进度相关翻译键
+    batchExecutionProgress: "Batch Execution Progress",
+    overallProgress: "Overall Progress",
+    total: "Total",
+    running: "Running",
+    pending: "Pending",
+    success: "Success",
+    attention: "Attention",
+    failed: "Failed",
+    batchExecutionCompleted: "Batch execution completed!",
+    batchExecutionCompletedDesc:
+      "Success: {success}, Attention: {attention}, Failed: {failed}",
+    cancel: "Cancel",
+    close: "Close",
+    complete: "Complete",
+    needsAttentionShort: "Attention",
   },
   zh: {
     // General
@@ -705,7 +796,6 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     fieldCreatedAt: "创建时间",
     fieldCronSchedule: "Cron 表达式",
     saveScriptButton: "保存脚本",
-    cancelButton: "取消",
     deleteScriptButton: "删除脚本",
     deleteButton: "删除",
     confirmDeleteScriptTitle: "确认删除",
@@ -870,5 +960,51 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     doBlockDetectedDesc:
       "DO$$块需要手动格式化。请手动整理$$块内部的代码以提高可读性。",
     manualFormatSuggestion: "建议手动格式化DO块",
+    // 批量执行脚本相关翻译键
+    runAllScripts: "运行所有脚本",
+    runningAllScripts: "运行所有脚本",
+    runAllScriptsDesc: "运行所有脚本在选定的执行模式下",
+    runAllScriptsConfirm: "确认运行所有脚本",
+    runAllScriptsConfirmDesc: "您确定要运行所有脚本吗？",
+    batchExecutionStarted: "批量执行开始",
+    batchExecutionStartedDesc: "批量执行成功开始",
+    batchExecutionFailed: "批量执行失败",
+    scriptsExecutionProgress: "脚本执行进度",
+    executeSelectedScript: "执行选定脚本",
+    executeAllScripts: "执行所有脚本",
+    bulkExecution: "批量执行",
+    executionMode: "执行模式",
+    singleExecution: "单次执行",
+    selectExecutionMode: "选择执行模式",
+    // 新增补充的双语翻译键
+    searchScripts: "搜索脚本",
+    searchScriptsPlaceholder: "搜索脚本名称、描述或ID...",
+    scheduledTask: "定时任务",
+    noMatchingScripts: "未找到匹配的脚本",
+    scriptsToExecute: "将要执行的脚本",
+    scheduledScripts: "定时任务脚本",
+    executeAllScriptsOption: "执行所有脚本",
+    executeAllScriptsDesc: "执行所有可用的脚本，包括定时和手动脚本",
+    executeScheduledScriptsOption: "仅执行定时脚本",
+    executeScheduledScriptsDesc: "仅执行启用了定时任务的脚本",
+    batchExecutionConfirmMessage: "将执行 {count} 个脚本。",
+    batchExecutionConfirmScheduledMessage: "将执行 {count} 个定时脚本。",
+    cancelButton: "取消",
+    // Redis缓存和批量执行进度相关翻译键
+    batchExecutionProgress: "批量执行进度",
+    overallProgress: "整体进度",
+    total: "总计",
+    running: "执行中",
+    pending: "等待",
+    success: "成功",
+    attention: "关注",
+    failed: "失败",
+    batchExecutionCompleted: "批量执行完成！",
+    batchExecutionCompletedDesc:
+      "成功: {success}, 需要关注: {attention}, 失败: {failed}",
+    cancel: "取消",
+    close: "关闭",
+    complete: "完成",
+    needsAttentionShort: "关注",
   },
 };
