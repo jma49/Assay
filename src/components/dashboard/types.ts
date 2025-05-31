@@ -250,7 +250,11 @@ export type DashboardTranslationKeys =
   | "performanceGood"
   | "performanceAverage"
   | "performanceNeedsAttention"
-  | "topRanking";
+  | "topRanking"
+  // DO$$相关翻译键
+  | "doBlockDetected"
+  | "doBlockDetectedDesc"
+  | "manualFormatSuggestion";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -587,6 +591,11 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     performanceAverage: "Average Performance",
     performanceNeedsAttention: "Needs Attention Performance",
     topRanking: "Top Ranking",
+    // DO$$相关翻译键
+    doBlockDetected: "PostgreSQL DO Block Detected",
+    doBlockDetectedDesc:
+      "DO$$ blocks require manual formatting. Please format the code inside $$ blocks manually for better readability.",
+    manualFormatSuggestion: "Manual formatting recommended for DO blocks",
   },
   zh: {
     // General
@@ -856,5 +865,10 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     performanceAverage: "平均性能",
     performanceNeedsAttention: "需要关注性能",
     topRanking: "Top Ranking",
+    // DO$$相关翻译键
+    doBlockDetected: "检测到PostgreSQL DO块",
+    doBlockDetectedDesc:
+      "DO$$块需要手动格式化。请手动整理$$块内部的代码以提高可读性。",
+    manualFormatSuggestion: "建议手动格式化DO块",
   },
 };
