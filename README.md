@@ -1,6 +1,6 @@
 # SQL 脚本部署与监控系统
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](./package.json)
+[![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](./package.json)
 [![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black.svg)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-6.15.0-green.svg)](https://www.mongodb.com/)
@@ -9,6 +9,59 @@
 [![Clerk](https://img.shields.io/badge/Clerk-认证系统-purple.svg)](https://clerk.com/)
 
 一个基于 Next.js 构建的现代化 SQL 脚本管理与监控系统，提供可视化界面来管理、执行和监控 SQL 检查脚本。系统支持自动化执行、实时通知、详细的历史记录分析、高性能缓存层和**企业级身份认证**。
+
+## 📋 版本更新日志
+
+### v0.2.1 (最新版本) - 界面优化与编辑历史功能
+
+#### 📊 编辑历史功能 (全新)
+
+- **完整编辑历史追踪**: 记录所有脚本的创建、更新、删除操作
+- **详细变更记录**: 逐字段记录修改前后的对比信息
+- **多维度过滤**: 支持按脚本名称、作者、操作类型、时间范围筛选
+- **操作历史可视化**: 美观的历史记录展示界面，支持查看详细变更内容
+- **权限安全**: 基于 Clerk 认证系统的访问控制
+
+#### 🛠️ 技术改进
+
+- **MongoDB ObjectId 类型支持**: 完善数据库类型定义，修复所有构建错误
+- **Clerk 客户端兼容性**: 解决模块加载问题，确保生产环境稳定运行
+- **翻译系统完善**: 新增编辑历史相关的中英文翻译键
+- **脚本删除功能修复**: 解决脚本删除 API 调用错误，确保功能正常
+
+#### 🗂️ 项目清理与优化 (新增)
+
+- **一次性脚本归档**: 将开发和测试完成的脚本移至 `scripts/archived/` 目录
+  - `test-clerk-user.ts` - Clerk 用户信息测试脚本
+  - `test-edit-history.ts` - 编辑历史功能测试脚本
+  - `setup-indexes.ts` - 数据库索引设置脚本
+- **package.json 清理**: 移除已归档脚本的 npm 脚本引用
+- **项目结构优化**: 添加归档脚本说明文档，便于后续维护
+
+#### 🔧 开发环境优化 (新增)
+
+- **CSS 404 错误处理**: 解决开发模式下频繁出现的 CSS 文件 404 错误
+  - 优化 Next.js 配置，减少热重载导致的文件路径变更
+  - 添加客户端错误处理脚本，友好处理 CSS 加载失败
+  - 更新中间件配置，改善静态文件请求处理
+- **开发服务器优化**:
+  - 优化页面缓存策略，提升开发体验
+  - 添加 CSS 渲染优化，防止 FOUC (Flash of Unstyled Content)
+- **错误处理增强**:
+  - 在 layout.tsx 中添加全局 CSS 错误边界
+  - 改善开发模式下的错误日志输出
+  - 优化静态文件请求的中间件处理
+- **构建配置简化**:
+  - 移除复杂的 webpack 缓存配置，避免配置冲突
+  - 保留基础的包导入优化和 TypeScript 配置
+  - 简化清理脚本：`npm run clean:cache`、`npm run dev:clean`
+
+### v0.2.0 - 身份认证系统
+
+- **🆕 Clerk 认证**: 集成现代化身份管理系统
+- **🆕 访问控制**: 邮箱域名限制和邀请制注册
+- **🆕 Redis 缓存层**: 高性能分布式缓存支持
+- **🆕 批量执行增强**: 实时进度监控和状态管理
 
 ## ✨ 核心功能
 
@@ -235,344 +288,3 @@ sql_script_depoly/
    ```bash
    npm install
    ```
-
-3. **环境配置**
-
-   创建 `.env.local` 文件：
-
-   ```env
-   # PostgreSQL 目标数据库
-   DATABASE_URL="postgresql://user:password@host:port/database"
-
-   # MongoDB 应用数据库
-   MONGODB_URI="mongodb://localhost:27017/sql_script_dashboard"
-
-   # Redis 缓存数据库 (可选)
-   REDIS_HOST="localhost"
-   REDIS_PORT="6379"
-   REDIS_PASSWORD=""
-   REDIS_DB="0"
-
-   # Slack 通知 (可选)
-   SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
-
-   # Cron Job 安全密钥
-   CRON_SECRET="your-secure-random-string"
-
-   # GitHub 仓库信息 (可选)
-   NEXT_PUBLIC_GITHUB_REPO="your-org/your-repo"
-   ```
-
-4. **启动开发服务器**
-
-   ```bash
-   npm run dev
-   ```
-
-5. **访问应用**
-
-   打开浏览器访问 `http://localhost:3000`
-
-## 💻 使用指南
-
-### 脚本管理
-
-1. **创建脚本**: 点击"添加新脚本"按钮
-2. **🆕 编写 SQL**: 使用增强的代码编辑器，支持语法高亮和格式化
-3. **🆕 格式化代码**: 点击工具栏的"格式化"按钮自动整理 SQL 代码
-4. **设置元数据**: 填写中英文名称、描述、作者等信息
-5. **配置调度**: 可选择启用定时执行并设置 Cron 表达式
-
-### 批量执行监控 (新增)
-
-1. **选择执行模式**: 在手动触发面板选择"批量执行"
-2. **选择脚本范围**: 所有脚本 或 仅定时脚本
-3. **实时监控**: 全屏进度对话框显示每个脚本的执行状态
-4. **状态统计**: 实时查看总计、执行中、等待、成功、关注、失败数量
-5. **进度管理**: 支持最小化窗口、取消执行等操作
-
-### Redis 缓存管理 (新增)
-
-1. **健康检查**: 访问 `/api/health/redis` 检查 Redis 状态
-2. **缓存清理**: 使用 `/api/maintenance/cleanup` 清理过期数据
-3. **降级模式**: Redis 不可用时系统自动使用内存存储
-4. **性能监控**: 通过健康检查 API 监控缓存性能
-
-### 执行监控
-
-1. **手动执行**: 在仪表盘选择脚本并点击"运行检查"
-2. **查看历史**: 使用改进的历史记录表格查看执行结果
-3. **状态筛选**: 使用"全部"、"成功"、"失败"、"需要关注"按钮筛选
-4. **详情查看**: 点击"详情"按钮展开查看完整执行信息
-
-### 国际化使用
-
-1. **语言切换**: 点击右上角的语言切换按钮
-2. **🆕 完整体验**: 所有界面元素都支持中英文切换
-3. **双语输入**: 创建脚本时可同时输入中英文信息
-
-## 🔧 高级配置
-
-### Redis 配置
-
-生产环境 Redis 配置：
-
-```env
-# 基础连接
-REDIS_HOST="your-redis-host"
-REDIS_PORT="6379"
-REDIS_PASSWORD="your-redis-password"
-REDIS_DB="0"
-
-# 性能调优
-REDIS_MAX_RETRIES="3"
-REDIS_CONNECT_TIMEOUT="10000"
-REDIS_COMMAND_TIMEOUT="5000"
-```
-
-### GitHub Actions 自动化
-
-配置文件：`.github/workflows/sql-check-cron.yml`
-
-```yaml
-name: SQL Script Cron Job
-on:
-  schedule:
-    - cron: "0 19 * * *" # 每天 UTC 19:00
-  workflow_dispatch:
-    inputs:
-      mode:
-        description: "Execution mode"
-        required: true
-        default: "scheduled"
-        type: choice
-        options:
-          - scheduled
-          - all
-```
-
-### Vercel 部署配置
-
-`vercel.json`:
-
-```json
-{
-  "crons": [
-    {
-      "path": "/api/run-scheduled-scripts",
-      "schedule": "0 19 * * *"
-    }
-  ]
-}
-```
-
-### SSL 数据库连接
-
-生产环境 PostgreSQL 配置：
-
-```env
-DATABASE_URL="postgresql://user:pass@host:port/db?sslmode=verify-full&sslrootcert=path/to/ca.pem"
-```
-
-或使用证书 URL：
-
-```env
-CLIENT_KEY_BLOB_URL="https://storage/client-key.pem"
-CLIENT_CERT_BLOB_URL="https://storage/client-cert.pem"
-CA_CERT_BLOB_URL="https://storage/ca-cert.pem"
-```
-
-## 📊 功能特性详解
-
-### 智能状态管理
-
-系统自动分类执行结果：
-
-- **Success**: 纯成功执行，无需关注
-- **Attention Needed**: 执行成功但返回数据，需要人工确认
-- **Failure**: 执行失败，需要立即处理
-
-### 高性能批量执行
-
-- 支持并发执行多个脚本
-- 实时状态更新和进度追踪
-- 智能超时控制和错误处理
-- 可中断和恢复的执行流程
-
-### Redis 缓存优势
-
-- **高可用性**: 支持 Redis 集群和主从复制
-- **持久化**: 数据持久化到磁盘，防止丢失
-- **扩展性**: 支持分布式部署和水平扩展
-- **性能**: 亚毫秒级响应时间
-
-### 高性能分页系统
-
-- 支持大量数据的高效分页
-- 智能跳转到指定页面
-- 过滤和搜索后的动态分页
-- 响应式设计，适配各种屏幕尺寸
-
-### 版本信息显示
-
-- 实时显示应用版本号
-- 固定位置的版本标识
-- 绿色脉动指示器显示系统活跃状态
-
-## 🧪 测试
-
-### 数据库连接测试
-
-```bash
-npm run test:db
-```
-
-### MongoDB 连接测试
-
-```bash
-npm run test:mongodb
-```
-
-### Redis 连接测试
-
-```bash
-# 通过健康检查API测试
-curl http://localhost:3000/api/health/redis
-```
-
-### Slack 通知测试
-
-```bash
-npm run test:notify
-```
-
-### 脚本执行测试
-
-```bash
-npm run test:script
-```
-
-## 📈 版本历史
-
-### v0.2.0 (当前版本) - 企业级认证系统
-
-- ✅ **Clerk 认证系统集成**
-  - 集成 Clerk 企业级认证服务，替换传统用户管理
-  - 实现 Restricted 模式，仅支持管理员邀请注册
-  - 严格限制 @example.com 邮箱域名访问，确保系统安全
-  - 支持现代化 OAuth、社交登录等多种认证方式
-- ✅ **中间件重构与安全增强**
-  - 修复中间件认证逻辑，解决 currentUser() 调用问题
-  - 实现分层认证架构：中间件基础验证 + 页面级邮箱验证
-  - 添加智能路由保护，未授权自动重定向到相应页面
-  - 强制动态渲染，避免静态预渲染绕过认证检查
-- ✅ **完整的认证页面体系**
-  - 创建现代化登录页面 (`/sign-in`) 支持中英文切换
-  - 创建现代化注册页面 (`/sign-up`) 支持中英文切换
-  - 创建未授权访问页面 (`/unauthorized`) 提供友好的错误提示
-  - 统一 UI 风格，响应式设计适配各种设备尺寸
-- ✅ **国际化认证体验**
-  - 认证相关页面完整支持中英文国际化
-  - 动态语言切换，无需刷新页面即可变更界面语言
-  - 本地化错误消息和状态提示，提升用户体验
-  - 翻译键完整覆盖所有认证流程文本
-- ✅ **用户界面现代化**
-  - Header 组件支持双语显示 (系统标题、授权状态)
-  - 用户信息展示 (姓名、邮箱、头像) 集成 Clerk 组件
-  - 新增翻译键管理系统，为新功能提供自动国际化支持
-  - 优化 loading 状态和用户反馈体验
-- ✅ **环境配置与文档**
-  - 创建详细的 Clerk 配置文档 (`docs/CLERK_SETUP.md`)
-  - 环境变量配置指南和故障排除手册
-  - 从开发到生产环境的完整部署流程
-  - 安全最佳实践和配置建议
-
-### v0.1.9
-
-- ✅ **Redis 缓存层架构**
-  - 新增 Redis 客户端连接管理 (`src/lib/redis.ts`)
-  - 实现批量执行状态缓存服务 (`src/services/batch-execution-cache.ts`)
-  - 支持原子性状态更新和智能过期管理
-  - 提供降级机制，Redis 不可用时自动使用内存存储
-
-## 🛠️ 开发脚本
-
-```bash
-# 开发环境
-npm run dev              # 启动开发服务器
-npm run build            # 构建生产版本
-npm run start            # 启动生产服务器
-npm run lint             # 代码检查
-
-# SQL 脚本执行
-npm run sql:run          # 执行指定脚本
-npm run sql:run-all      # 执行所有脚本
-npm run sql:run-scheduled # 执行定时脚本
-
-# 测试
-npm run test:db          # 测试数据库连接
-npm run test:mongodb     # 测试 MongoDB
-npm run test:notify      # 测试通知功能
-npm run test:script      # 测试脚本执行
-```
-
-## 📝 贡献指南
-
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
-3. 提交更改 (`git commit -m 'Add amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 创建 Pull Request
-
-### 开发规范
-
-- 使用 TypeScript 进行类型安全开发
-- 遵循 ESLint 配置的代码规范
-- 新增功能需要添加对应的中英文翻译
-- 提交前确保 `npm run build` 无错误
-- Redis 相关功能需要考虑降级方案
-
-### 翻译贡献
-
-- 翻译文件位于 `src/components/dashboard/types.ts`
-- 新增功能需同时添加英文和中文翻译键
-- 保持翻译的专业性和用户友好性
-- Redis 和缓存相关术语需要统一翻译规范
-
-## 📝 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
-
-## 🔮 路线图
-
-### 📋 v0.3.0 计划中 - 高级监控与分析
-
-#### 高级监控
-
-- 性能指标收集和分析
-- 告警规则配置和管理
-- 集成 Prometheus 和 Grafana
-
-#### API 扩展
-
-- GraphQL API 支持
-- Webhook 通知集成
-- 第三方系统集成接口
-
-#### 运维增强
-
-- 配置管理中心
-- 日志聚合和分析
-- 自动化部署和回滚
-
-#### 权限管理增强
-
-- 细粒度权限控制
-- 审计日志和操作追踪
-- 多租户数据隔离
-
-想要了解更多功能请求或建议，请提交 Issue 或 Pull Request！
-
----
-
-**感谢使用 SQL 脚本部署与监控系统！** 🚀

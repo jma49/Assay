@@ -8,7 +8,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { toast } from "sonner";
-import { useLanguage } from '@/components/ClientLayoutWrapper';
+import { useLanguage } from '@/components/LanguageProvider';
 import Link from 'next/link';
 
 // Import shadcn UI components
@@ -51,6 +51,9 @@ const Dashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // API调用去重：使用ref来跟踪是否正在调用
+  const isLoadingDataRef = React.useRef(false);
+
   // --- Context Hooks ---
   const { language } = useLanguage();
 
@@ -62,6 +65,13 @@ const Dashboard = () => {
 
   // --- Data Fetching ---
   const loadInitialData = useCallback(async () => {
+    // 去重检查：如果已经在调用中，直接返回
+    if (isLoadingDataRef.current) {
+      console.log('loadInitialData: 已有请求在进行中，跳过重复调用');
+      return;
+    }
+    
+    isLoadingDataRef.current = true;
     setLoading(true);
     setIsFetchingScripts(true);
     setIsRefreshing(true);
@@ -73,12 +83,12 @@ const Dashboard = () => {
     try {
       // 修改API调用：获取完整的历史数据（包含raw_results）和更大的数据集
       const historyPromise = fetch('/api/check-history?limit=400&include_results=true').then(res => {
-        if (!res.ok) throw new Error(`${t('errorInfo')}: ${res.status} ${res.statusText}`);
+        if (!res.ok) throw new Error(`API Error: ${res.status} ${res.statusText}`);
         return res.json();
       });
 
       const scriptsPromise = fetch('/api/list-scripts').then(res => {
-        if (!res.ok) throw new Error(`${t('errorInfo')} (Scripts): ${res.status} ${res.statusText}`);
+        if (!res.ok) throw new Error(`API Error (Scripts): ${res.status} ${res.statusText}`);
         const contentType = res.headers.get("content-type");
         if (contentType && contentType.indexOf("application/json") !== -1) {
             return res.json();
@@ -125,13 +135,14 @@ const Dashboard = () => {
 
     } catch (err) {
       console.error("Failed to fetch initial data:", err);
-      setError(err instanceof Error ? err.message : t('errorTitle'));
+      setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
       setLoading(false);
       setIsFetchingScripts(false);
       setIsRefreshing(false);
+      isLoadingDataRef.current = false; // 重置标志
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     loadInitialData();
@@ -158,7 +169,8 @@ const Dashboard = () => {
         document.head.removeChild(style);
       }
     };
-  }, [loadInitialData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 移除loadInitialData依赖，避免重复调用
 
   useEffect(() => {
     // Only set a default if no script is currently selected AND there are available scripts
@@ -187,21 +199,24 @@ const Dashboard = () => {
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.message || `${t('triggerFailed')}: ${response.status} ${response.statusText}`);
+        throw new Error(result.message || `Trigger failed: ${response.status} ${response.statusText}`);
       }
-      const successMessage = result.localizedMessage || result.message || t('checkTriggeredDesc');
+      const successMessage = result.localizedMessage || result.message || 'Check triggered successfully';
       setTriggerMessage(successMessage);
       setTriggerMessageType('success');
-      toast.success(t('checkTriggered'), {
+      toast.success('Check Triggered', {
         description: successMessage,
         duration: 5000,
       });
-      setTimeout(loadInitialData, 3000);
+      // 3秒后重新加载数据，直接调用loadInitialData而不是重复实现
+      setTimeout(() => {
+        loadInitialData();
+      }, 3000);
     } catch (err) {
       console.error("Failed to trigger check:", err);
       const errorMessage = err instanceof Error 
-        ? (err.message || t('triggerFailed')) 
-        : t('triggerFailed');
+        ? (err.message || 'Trigger failed') 
+        : 'Trigger failed';
       // 尝试提取本地化错误消息
       let localizedErrorMessage = errorMessage;
       try {
@@ -218,7 +233,7 @@ const Dashboard = () => {
       
       setTriggerMessage(localizedErrorMessage);
       setTriggerMessageType('error');
-      toast.error(t('triggerFailed'), {
+      toast.error('Trigger Failed', {
         description: localizedErrorMessage,
         duration: 8000,
       });
@@ -229,7 +244,7 @@ const Dashboard = () => {
         setTriggerMessageType(null);
       }, 8000);
     }
-  }, [selectedScriptId, t, isTriggering, language, loadInitialData]);
+  }, [selectedScriptId, isTriggering, language, loadInitialData]); // 重新添加loadInitialData依赖
 
   const requestSort = (key: keyof Check) => {
     if (sortConfig.key === key) {

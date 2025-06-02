@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { 
-  PlusCircle, Edit, Trash2, RefreshCw, Search, AlertTriangle, Save, Loader2, Home, FileText
+  PlusCircle, Edit, Trash2, RefreshCw, Search, AlertTriangle, Save, Loader2, Home, FileText, History
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,13 +24,16 @@ import {
   SqlScript, // ScriptInfo removed, using SqlScript for list too for consistency
   DashboardTranslationKeys, dashboardTranslations
 } from '@/components/dashboard/types';
-import { useLanguage } from '@/components/ClientLayoutWrapper';
+import { useLanguage } from '@/components/LanguageProvider';
 import { formatDate } from '@/components/dashboard/utils';
 import { containsHarmfulSql } from '@/lib/utils';
 import { ScriptMetadataForm, ScriptFormData } from '@/components/scripts/ScriptMetadataForm';
 import CodeMirrorEditor from '@/components/scripts/CodeMirrorEditor';
 import { generateSqlTemplateWithTranslation } from '@/components/dashboard/scriptTranslations';
 import { cn } from '@/lib/utils';
+import { EditHistoryDialog } from '@/components/scripts/EditHistoryDialog';
+import { recordEditHistory } from '@/lib/edit-history';
+import UserHeader from '@/components/UserHeader';
 
 // Helper type for the form state, combining metadata and SQL content
 type ManageScriptFormState = Partial<SqlScript>;
@@ -40,6 +43,9 @@ const ManageScriptsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // API调用去重：使用ref来跟踪是否正在调用
+  const isFetchingRef = useRef(false);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
@@ -52,6 +58,11 @@ const ManageScriptsPage = () => {
   const [scriptToDelete, setScriptToDelete] = useState<SqlScript | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
 
+  // 编辑历史相关状态
+  const [isEditHistoryOpen, setIsEditHistoryOpen] = useState(false);
+  const [selectedScriptForHistory, setSelectedScriptForHistory] = useState<string>('');
+  const [originalScriptData, setOriginalScriptData] = useState<SqlScript | null>(null);
+
   const { language } = useLanguage();
   const t = useCallback(
     (key: DashboardTranslationKeys | string): string => {
@@ -62,16 +73,22 @@ const ManageScriptsPage = () => {
   );
 
   const fetchScripts = useCallback(async () => {
+    // 去重检查：如果已经在调用中，直接返回
+    if (isFetchingRef.current) {
+      console.log('fetchScripts: 已有请求在进行中，跳过重复调用');
+      return;
+    }
+    
+    isFetchingRef.current = true;
     setIsLoading(true);
     setError(null);
     try {
       const response = await fetch('/api/scripts');
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: t('scriptLoadError') }));
-        throw new Error(errorData.message || `Failed to fetch scripts: ${response.status}`);
+        throw new Error(`Failed to fetch scripts: ${response.status}`);
       }
-      const data: SqlScript[] = await response.json();
-      setScripts(data.map(s => ({
+      const scriptsData: SqlScript[] = await response.json();
+      setScripts(scriptsData.map(s => ({
         ...s,
         createdAt: s.createdAt ? new Date(s.createdAt) : undefined,
         updatedAt: s.updatedAt ? new Date(s.updatedAt) : undefined,
@@ -82,8 +99,9 @@ const ManageScriptsPage = () => {
       setError(errorMsg);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false; // 重置标志
     }
-  }, [t]);
+  }, []); // 移除所有依赖，确保只在组件首次加载时调用
 
   useEffect(() => {
     fetchScripts();
@@ -104,6 +122,7 @@ const ManageScriptsPage = () => {
       setCurrentSqlContent(templateSql);
       setInitialSqlContentForEdit(templateSql);
       setScriptIdManuallyEdited(false);
+      setOriginalScriptData(null);
     } else if (scriptData) {
       setCurrentFormScript({
         ...scriptData,
@@ -113,6 +132,7 @@ const ManageScriptsPage = () => {
       setCurrentSqlContent(scriptData.sqlContent || '');
       setInitialSqlContentForEdit(scriptData.sqlContent || '');
       setScriptIdManuallyEdited(true);
+      setOriginalScriptData(scriptData);
     }
     setIsDialogOpen(true);
   };
@@ -203,6 +223,19 @@ const ManageScriptsPage = () => {
         throw new Error(errorData.message || `${t(errorMessageKey)}: ${response.status}`);
       }
 
+      // 记录编辑历史
+      if (currentFormScript.scriptId) {
+        await recordEditHistory({
+          scriptId: currentFormScript.scriptId,
+          operation: dialogMode === 'add' ? 'create' : 'update',
+          oldData: originalScriptData ? originalScriptData as unknown as Record<string, unknown> : undefined,
+          newData: {
+            ...currentFormScript,
+            sqlContent: currentSqlContent,
+          } as unknown as Record<string, unknown>,
+        });
+      }
+
       toast.success(successMessage);
       setIsDialogOpen(false);
       fetchScripts();
@@ -224,16 +257,21 @@ const ManageScriptsPage = () => {
     if (!scriptToDelete) return;
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/scripts/${scriptToDelete.scriptId}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(`/api/scripts/${scriptToDelete.scriptId}`, { method: 'DELETE' });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: t('scriptDeleteError') }));
         throw new Error(errorData.message || `Failed to delete script: ${response.status}`);
       }
-      toast.success(t('scriptDeletedSuccess'), {
-        description: `${t('fieldScriptId')}: ${scriptToDelete.scriptId}`,
+
+      // 记录删除历史
+      await recordEditHistory({
+        scriptId: scriptToDelete.scriptId,
+        operation: 'delete',
+        oldData: scriptToDelete as unknown as Record<string, unknown>,
+        // newData is not needed for delete
       });
+
+      toast.success(t('scriptDeletedSuccess'));
       fetchScripts();
     } catch (err) {
       console.error("Failed to delete script:", err);
@@ -244,6 +282,12 @@ const ManageScriptsPage = () => {
       setIsAlertOpen(false);
       setScriptToDelete(null);
     }
+  };
+
+  // 处理查看编辑历史
+  const handleViewEditHistory = (scriptId: string) => {
+    setSelectedScriptForHistory(scriptId);
+    setIsEditHistoryOpen(true);
   };
   
   const filteredScripts = scripts.filter(script =>
@@ -270,6 +314,7 @@ const ManageScriptsPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+      <UserHeader />
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-8 animate-fadeIn">
           {/* Header Section */}
@@ -286,47 +331,61 @@ const ManageScriptsPage = () => {
             </div>
           </header>
 
-          {/* Search and Actions */}
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground pointer-events-none" />
-              <Input
-                type="text"
-                placeholder={t('searchPlaceholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-11 text-sm border-2 border-border/50 bg-background/80 backdrop-blur-sm focus:border-primary/50 shadow-md transition-all duration-300"
-              />
-            </div>
-            <Button
-              onClick={fetchScripts}
-              disabled={isLoading}
-              variant="outline"
-              size="lg"
-              className="group shadow-md hover:shadow-lg transition-all duration-300"
-            >
-              <RefreshCw className={`mr-2 h-5 w-5 transition-transform ${isLoading ? 'animate-spin' : 'group-hover:rotate-45'}`} />
-              {isLoading ? t('loading') : t('refresh')}
-            </Button>
-          </div>
-
           {/* Scripts Table */}
           <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
             {/* 装饰性背景 */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
             
             <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
-                  <FileText className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
+                    <FileText className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
+                  </div>
+                  <div className="space-y-2">
+                    <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
+                      {filteredScripts.length > 0 ? `${filteredScripts.length} ${t('scripts')}` : t('manageScriptsPageTitle')}
+                    </CardTitle>
+                    <CardDescription className="text-base text-muted-foreground leading-relaxed">
+                      {filteredScripts.length === 0 && !isLoading && !error ? t('noScriptsYet') : ''}
+                    </CardDescription>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
-                    {filteredScripts.length > 0 ? `${filteredScripts.length} ${t('scripts')}` : t('manageScriptsPageTitle')}
-                  </CardTitle>
-                  <CardDescription className="text-base text-muted-foreground leading-relaxed">
-                    {filteredScripts.length === 0 && !isLoading && !error ? t('noScriptsYet') : ''}
-                  </CardDescription>
+                
+                {/* 搜索和操作按钮区域 */}
+                <div className="flex items-center gap-3">
+                  {/* 搜索框 */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <Input
+                      type="text"
+                      placeholder={t('searchPlaceholder')}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9 h-10 w-80 text-sm border-2 border-border/50 bg-background/80 backdrop-blur-sm focus:border-primary/50 shadow-sm transition-all duration-300"
+                    />
+                  </div>
+                  
+                  {/* 编辑历史按钮 */}
+                  <Link href="/manage-scripts/edit-history" passHref>
+                    <Button variant="outline" className="h-10 flex items-center gap-2 text-purple-700 border-purple-300 hover:bg-purple-50 hover:text-purple-600 dark:text-purple-400 dark:border-purple-600 dark:hover:bg-purple-900/30 dark:hover:text-purple-300">
+                      <History className="h-4 w-4" />
+                      {t('allScriptsHistory')}
+                    </Button>
+                  </Link>
+                  
+                  {/* 刷新按钮 */}
+                  <Button
+                    onClick={fetchScripts}
+                    disabled={isLoading}
+                    variant="outline"
+                    size="sm"
+                    className="group shadow-sm hover:shadow-md transition-all duration-300"
+                    title={t('refresh')}
+                  >
+                    <RefreshCw className={`mr-2 h-4 w-4 transition-transform ${isLoading ? 'animate-spin' : 'group-hover:rotate-45'}`} />
+                    {isLoading ? t('loading') : t('refresh')}
+                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -442,6 +501,15 @@ const ManageScriptsPage = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
+                                  onClick={() => handleViewEditHistory(script.scriptId)}
+                                  className="h-8 px-3 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 dark:hover:bg-purple-950/20 dark:hover:border-purple-700/50 dark:hover:text-purple-400 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800"
+                                  title="查看编辑历史"
+                                >
+                                  <History className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   onClick={() => handleDeleteClick(script)}
                                   className="h-8 px-3 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:bg-red-50 hover:border-red-300 hover:text-red-700 dark:hover:bg-red-950/20 dark:hover:border-red-700/50 dark:hover:text-red-400 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-800"
                                   title={t('deleteScriptButton')}
@@ -552,6 +620,16 @@ const ManageScriptsPage = () => {
           </span>
         </div>
       </div>
+
+      {/* 编辑历史对话框 */}
+      {isEditHistoryOpen && selectedScriptForHistory && (
+        <EditHistoryDialog
+          open={isEditHistoryOpen}
+          onOpenChange={setIsEditHistoryOpen}
+          scriptId={selectedScriptForHistory}
+          t={t}
+        />
+      )}
     </div>
   );
 };
