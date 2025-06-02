@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { isValidEmailDomain } from '@/lib/auth-utils';
 import Dashboard from '@/components/Dashboard';
 import UserHeader from '@/components/UserHeader';
+import { Toaster } from "@/components/ui/sonner";
 
 // 强制动态渲染，避免静态预渲染
 export const dynamic = 'force-dynamic';
@@ -12,13 +13,13 @@ export default async function Home() {
   // 在构建时或没有Clerk配置时，显示配置提示
   if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="text-center">
-            <h1 className="text-3xl font-extrabold text-gray-900">
+            <h1 className="text-3xl font-extrabold text-foreground">
               配置中...
             </h1>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-muted-foreground">
               系统正在进行初始化配置，请稍后访问。
             </p>
           </div>
@@ -59,11 +60,12 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <UserHeader />
       <div className="max-w-6xl mx-auto py-6">
         <Dashboard />
       </div>
+      <Toaster />
     </div>
   );
 }

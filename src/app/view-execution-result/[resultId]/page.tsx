@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useLanguage } from '@/components/ClientLayoutWrapper';
+import { useLanguage } from '@/components/LanguageProvider';
 import { Button } from '@/components/ui/button';
 import { Home, Clock, AlertCircle, CheckCircle, Database, Search, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';

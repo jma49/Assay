@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Home, BarChart2, Filter, RefreshCw, TrendingUp, Activity, Target, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
-import { useLanguage } from '@/components/ClientLayoutWrapper';
+import { useLanguage } from '@/components/LanguageProvider';
 import { dashboardTranslations, DashboardTranslationKeys } from '@/components/dashboard/types';
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatDate } from '@/components/dashboard/utils';
+import UserHeader from '@/components/UserHeader';
 
 // 添加进度条动画样式
 const progressAnimationStyle = `
@@ -365,6 +366,7 @@ export default function DataAnalysisPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <UserHeader />
       {/* 注入样式 */}
       <style dangerouslySetInnerHTML={{ __html: progressAnimationStyle }} />
       

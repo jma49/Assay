@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ScriptMetadataForm, ScriptFormData } from '@/components/scripts/ScriptMetadataForm';
-import { useLanguage } from '@/components/ClientLayoutWrapper'; // Assuming this provides language and t
+import { useLanguage } from '@/components/LanguageProvider'; // 使用新的语言provider
 import { dashboardTranslations, DashboardTranslationKeys } from '@/components/dashboard/types'; // For t function and keys
 import { toast } from 'sonner';
 // Import the new CodeMirror component

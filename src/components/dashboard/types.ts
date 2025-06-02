@@ -302,7 +302,65 @@ export type DashboardTranslationKeys =
   | "needsAttentionShort"
   // UserHeader相关翻译键
   | "systemTitle"
-  | "authorizedAccess";
+  | "authorizedAccess"
+  | "changeLanguage"
+  // 编辑历史相关翻译键
+  | "editHistory"
+  | "editHistoryTitle"
+  | "editHistoryDesc"
+  | "viewEditHistory"
+  | "allScriptsHistory"
+  | "scriptNameFilter"
+  | "authorFilter"
+  | "operationTypeFilter"
+  | "dateRangeFilter"
+  | "operationCreate"
+  | "operationUpdate"
+  | "operationDelete"
+  | "operationAll"
+  | "noEditHistory"
+  | "loadingEditHistory"
+  | "editHistoryError"
+  | "changesDetails"
+  | "originalValue"
+  | "newValue"
+  | "operationUser"
+  | "operationTime"
+  | "fieldChanges"
+  | "noChanges"
+  | "searchEditHistory"
+  | "filterEditHistory"
+  | "resetFilters"
+  | "scriptNameCn"
+  | "sortByTime"
+  | "sortByScript"
+  | "sortByAuthor"
+  | "ascending"
+  | "descending"
+  | "exportEditHistory"
+  | "totalChanges"
+  | "recentChanges"
+  | "editHistoryStats"
+  | "from"
+  | "to"
+  | "editHistoryDescGlobal"
+  | "searchHistoryWithFilters"
+  | "dateFrom"
+  | "dateTo"
+  | "errorUnauthorized"
+  | "editHistoryErrorUnknown"
+  | "noEditHistoryDetail"
+  | "unknownScript"
+  | "unknownUser"
+  | "fieldChangesCount"
+  | "editHistoryRecords"
+  | "editHistoryDetails"
+  | "scriptName"
+  | "operationType"
+  | "selectOperationPlaceholder"
+  | "pageInfoShort"
+  | "checkDetails"
+  | "tableActions";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -693,6 +751,64 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     // UserHeader相关翻译键
     systemTitle: "SQL Check System",
     authorizedAccess: "Authorized Access",
+    changeLanguage: "Change Language",
+    // 编辑历史相关翻译键
+    editHistory: "Edit History",
+    editHistoryTitle: "Edit History",
+    editHistoryDesc: "Showing edit history for the selected script",
+    viewEditHistory: "View Edit History",
+    allScriptsHistory: "All Scripts History",
+    scriptNameFilter: "Script Name Filter",
+    authorFilter: "Author Filter",
+    operationTypeFilter: "Operation Type Filter",
+    dateRangeFilter: "Date Range Filter",
+    operationCreate: "Create",
+    operationUpdate: "Update",
+    operationDelete: "Delete",
+    operationAll: "All",
+    noEditHistory: "No edit history found",
+    loadingEditHistory: "Loading edit history...",
+    editHistoryError: "Error loading edit history",
+    changesDetails: "Changes Details",
+    originalValue: "Original Value",
+    newValue: "New Value",
+    operationUser: "Operation User",
+    operationTime: "Operation Time",
+    fieldChanges: "Field Changes",
+    noChanges: "No changes",
+    searchEditHistory: "Search Edit History",
+    filterEditHistory: "Filter Edit History",
+    resetFilters: "Reset Filters",
+    scriptNameCn: "Script Name (CN)",
+    sortByTime: "Sort by Time",
+    sortByScript: "Sort by Script",
+    sortByAuthor: "Sort by Author",
+    ascending: "Ascending",
+    descending: "Descending",
+    exportEditHistory: "Export Edit History",
+    totalChanges: "Total Changes",
+    recentChanges: "Recent Changes",
+    editHistoryStats: "Edit History Stats",
+    from: "From",
+    to: "To",
+    editHistoryDescGlobal: "View and filter the edit history of all scripts.",
+    searchHistoryWithFilters: "Filter Script Edit History",
+    dateFrom: "Date From",
+    dateTo: "Date To",
+    errorUnauthorized: "Unauthorized. Please log in.",
+    editHistoryErrorUnknown:
+      "An unknown error occurred while fetching edit history.",
+    noEditHistoryDetail:
+      "Try adjusting your filters or perform some script operations to see history.",
+    unknownScript: "Unknown Script",
+    unknownUser: "Unknown User",
+    fieldChangesCount: "{count} changes",
+    editHistoryRecords: "edit history records",
+    editHistoryDetails: "Edit History Details",
+    scriptName: "Script Name",
+    operationType: "Operation Type",
+    selectOperationPlaceholder: "Select an operation type",
+    pageInfoShort: "Showing %s-%s of %s results (Page %s of %s)",
   },
   zh: {
     // General
@@ -1015,5 +1131,61 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     // UserHeader相关翻译键
     systemTitle: "SQL脚本管理系统",
     authorizedAccess: "已授权访问",
+    changeLanguage: "切换语言",
+    // 编辑历史相关翻译键
+    editHistory: "编辑历史",
+    editHistoryTitle: "编辑历史",
+    editHistoryDesc: "显示所选脚本的编辑历史",
+    viewEditHistory: "查看编辑历史",
+    allScriptsHistory: "所有脚本历史",
+    scriptNameFilter: "脚本名称过滤器",
+    authorFilter: "作者过滤器",
+    operationTypeFilter: "操作类型过滤器",
+    dateRangeFilter: "日期范围过滤器",
+    operationCreate: "创建",
+    operationUpdate: "更新",
+    operationDelete: "删除",
+    operationAll: "全部",
+    noEditHistory: "没有编辑历史",
+    loadingEditHistory: "加载编辑历史...",
+    editHistoryError: "加载编辑历史失败",
+    changesDetails: "更改详情",
+    originalValue: "原始值",
+    newValue: "新值",
+    operationUser: "操作用户",
+    operationTime: "操作时间",
+    fieldChanges: "字段更改",
+    noChanges: "没有更改",
+    searchEditHistory: "搜索编辑历史",
+    filterEditHistory: "过滤编辑历史",
+    resetFilters: "重置过滤器",
+    scriptNameCn: "脚本名称 (中文)",
+    sortByTime: "按时间排序",
+    sortByScript: "按脚本排序",
+    sortByAuthor: "按作者排序",
+    ascending: "升序",
+    descending: "降序",
+    exportEditHistory: "导出编辑历史",
+    totalChanges: "总变更数",
+    recentChanges: "最近变更",
+    editHistoryStats: "编辑历史统计",
+    from: "从",
+    to: "至",
+    editHistoryDescGlobal: "查看和筛选所有脚本的编辑历史。",
+    searchHistoryWithFilters: "筛选脚本编辑历史",
+    dateFrom: "起始日期",
+    dateTo: "结束日期",
+    errorUnauthorized: "未授权。请登录。",
+    editHistoryErrorUnknown: "获取编辑历史时发生未知错误。",
+    noEditHistoryDetail: "尝试调整筛选条件或执行一些脚本操作以查看历史记录。",
+    unknownScript: "未知脚本",
+    unknownUser: "未知用户",
+    fieldChangesCount: "{count} 项变更",
+    editHistoryRecords: "个编辑历史记录",
+    editHistoryDetails: "编辑历史详情",
+    scriptName: "脚本名称",
+    operationType: "操作类型",
+    selectOperationPlaceholder: "请选择操作类型",
+    pageInfoShort: "显示第 %s-%s 条，共 %s 条结果（第 %s 页/共 %s 页）",
   },
 };

@@ -3,6 +3,32 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* 开发模式优化 - 减少CSS热重载导致的404问题 */
+@layer base {
+  html {
+    /* 改善字体渲染 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* 减少重排和重绘 */
+    text-rendering: optimizeLegibility;
+  }
+  
+  * {
+    /* 减少CSS变化时的重新计算 */
+    box-sizing: border-box;
+  }
+  
+  /* 防止FOUC (Flash of Unstyled Content) */
+  body {
+    opacity: 1;
+    transition: opacity 0.2s ease-in-out;
+  }
+  
+  body.loading {
+    opacity: 0;
+  }
+}
+
 :root {
   --card-bg: #ffffff;
   --card-border: #e3e8ef;
