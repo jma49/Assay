@@ -3,7 +3,7 @@
 import React, { useCallback, useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -17,11 +17,15 @@ import {
   Clock,
   CheckCircle,
   AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import {
   dashboardTranslations,
   DashboardTranslationKeys,
+  ITEMS_PER_PAGE,
 } from "@/components/dashboard/types";
 import { Label } from "@/components/ui/label";
 import {
@@ -218,6 +222,8 @@ export default function DataAnalysisPage() {
   const [selectedTimeRange, setSelectedTimeRange] = useState("7d");
   const [selectedScript, setSelectedScript] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageInput, setPageInput] = useState("");
 
   const t = useCallback(
     (key: DashboardTranslationKeys | string): string => {
@@ -398,6 +404,47 @@ export default function DataAnalysisPage() {
     }
   }, [selectedTimeRange, selectedScript, processAnalyticsData]);
 
+  // 页面跳转相关函数
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageInput(e.target.value);
+  };
+
+  const handlePageInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const page = parseInt(pageInput, 10);
+    const totalPages = Math.ceil((analyticsData?.scriptAnalytics.length || 0) / ITEMS_PER_PAGE);
+    if (!isNaN(page) && page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      setPageInput(""); // 清空输入框
+    }
+  };
+
+  const handlePageInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handlePageInputSubmit(e);
+    }
+    // 限制只能输入数字
+    if (
+      !/[\d\b]/.test(e.key) &&
+      !["ArrowLeft", "ArrowRight", "Delete", "Backspace", "Tab"].includes(e.key)
+    ) {
+      e.preventDefault();
+    }
+  };
+
+  // 格式化分页信息
+  const formatPageInfo = (totalScripts: number) => {
+    const totalPages = Math.ceil(totalScripts / ITEMS_PER_PAGE);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+    const end = Math.min(currentPage * ITEMS_PER_PAGE, totalScripts);
+    return t("pageInfo")
+      .replace("%s", String(start))
+      .replace("%s", String(end))
+      .replace("%s", String(totalScripts))
+      .replace("%s", String(currentPage))
+      .replace("%s", String(totalPages));
+  };
+
   // 获取成功率的颜色和状态
   const getSuccessRateStatus = useCallback(
     (rate: number) => {
@@ -431,6 +478,11 @@ export default function DataAnalysisPage() {
   useEffect(() => {
     fetchAnalyticsData();
   }, [fetchAnalyticsData]);
+
+  // 当筛选条件变化时重置分页
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedTimeRange, selectedScript]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -472,8 +524,8 @@ export default function DataAnalysisPage() {
                       size="lg"
                       className="group shadow-md hover:shadow-lg transition-all duration-300"
                     >
-                      <Home className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                      {t("backToDashboardButton")}
+                        <Home className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                        {t("backToDashboardButton")}
                     </Button>
                   </Link>
                 </div>
@@ -844,6 +896,11 @@ export default function DataAnalysisPage() {
                     <div className="space-y-2">
                       <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
                         {t("scriptPerformanceAnalysis")}
+                        {analyticsData && analyticsData.scriptAnalytics.length > ITEMS_PER_PAGE && (
+                          <span className="text-base font-medium text-muted-foreground ml-3">
+                            ({formatPageInfo(analyticsData.scriptAnalytics.length)})
+                          </span>
+                        )}
                       </CardTitle>
                     </div>
                   </div>
@@ -859,7 +916,7 @@ export default function DataAnalysisPage() {
                         }
                         return b.successRate - a.successRate;
                       })
-                      .slice(0, 10)
+                      .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
                       .map((script, index) => {
                         const successRateStatus = getSuccessRateStatus(
                           script.successRate,
@@ -993,6 +1050,132 @@ export default function DataAnalysisPage() {
                       })}
                   </div>
                 </CardContent>
+
+                {/* 分页 - 与其他页面保持一致 */}
+                {analyticsData && analyticsData.scriptAnalytics.length > ITEMS_PER_PAGE && (
+                  <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t px-5 py-3 text-xs gap-2 relative z-10">
+                    <div className="text-muted-foreground text-center sm:text-left">
+                      {formatPageInfo(analyticsData.scriptAnalytics.length)}
+                    </div>
+                    <div className="flex items-center gap-2 relative z-20">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150 relative z-30"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5 mr-1" />
+                        <span className="hidden sm:inline">{t("previous")}</span>
+                      </Button>
+
+                      <div className="flex items-center gap-1.5 px-2 relative z-30">
+                        {(() => {
+                          const totalPages = Math.ceil(analyticsData.scriptAnalytics.length / ITEMS_PER_PAGE);
+                          return (
+                            <>
+                              <div className="hidden md:flex items-center gap-1">
+                                {currentPage > 1 && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(1)}
+                                    className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground relative z-40"
+                                    title={t("jumpToFirst")}
+                                  >
+                                    1
+                                  </Button>
+                                )}
+                                {currentPage > 3 && (
+                                  <span className="text-muted-foreground">...</span>
+                                )}
+                              </div>
+
+                              <span className="text-muted-foreground text-xs">
+                                {t("pageNumber")}
+                              </span>
+                              <span className="font-medium text-xs min-w-[1.5rem] text-center">
+                                {currentPage}
+                              </span>
+                              <span className="text-muted-foreground text-xs">
+                                {t("of")} {totalPages} {t("pages")}
+                              </span>
+
+                              <div className="hidden md:flex items-center gap-1">
+                                {currentPage < totalPages - 2 && (
+                                  <span className="text-muted-foreground">...</span>
+                                )}
+                                {currentPage < totalPages && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(totalPages)}
+                                    className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground relative z-40"
+                                    title={t("jumpToLast")}
+                                  >
+                                    {totalPages}
+                                  </Button>
+                                )}
+                              </div>
+
+                              {totalPages > 2 && (
+                                <div className="hidden lg:flex items-center gap-1 ml-2 relative z-40">
+                                  <MoreHorizontal className="h-3 w-3 text-muted-foreground" />
+                                  <form
+                                    onSubmit={handlePageInputSubmit}
+                                    className="flex items-center gap-1"
+                                  >
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      max={totalPages}
+                                      value={pageInput}
+                                      onChange={handlePageInputChange}
+                                      onKeyDown={handlePageInputKeyDown}
+                                      placeholder={t("jumpToPage")}
+                                      className="w-12 h-6 px-1 text-xs text-center border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
+                                      style={{ pointerEvents: "auto" }}
+                                    />
+                                    <Button
+                                      type="submit"
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={
+                                        !pageInput ||
+                                        isNaN(parseInt(pageInput, 10)) ||
+                                        parseInt(pageInput, 10) < 1 ||
+                                        parseInt(pageInput, 10) > totalPages
+                                      }
+                                      className="h-6 px-2 text-xs relative z-50"
+                                      title={t("pageJump")}
+                                      style={{ pointerEvents: "auto" }}
+                                    >
+                                      {t("pageJump")}
+                                    </Button>
+                                  </form>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const totalPages = Math.ceil(analyticsData.scriptAnalytics.length / ITEMS_PER_PAGE);
+                          setCurrentPage(Math.min(currentPage + 1, totalPages));
+                        }}
+                        disabled={currentPage === Math.ceil(analyticsData.scriptAnalytics.length / ITEMS_PER_PAGE)}
+                        className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150 relative z-30"
+                      >
+                        <span className="hidden sm:inline">{t("next")}</span>
+                        <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                      </Button>
+                    </div>
+                  </CardFooter>
+                )}
               </Card>
             )}
 

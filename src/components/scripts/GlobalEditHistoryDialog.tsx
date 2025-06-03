@@ -34,13 +34,19 @@ import {
   Filter,
   RotateCcw,
   Search,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
 } from "lucide-react";
 import { formatDate } from "@/components/dashboard/utils";
 import {
   EditHistoryRecord,
   EditHistoryFilter,
 } from "@/lib/edit-history-schema";
-import { DashboardTranslationKeys } from "@/components/dashboard/types";
+import { 
+  DashboardTranslationKeys,
+  ITEMS_PER_PAGE 
+} from "@/components/dashboard/types";
 
 interface GlobalEditHistoryDialogProps {
   open: boolean;
@@ -59,6 +65,7 @@ export function GlobalEditHistoryDialog({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [pageInput, setPageInput] = useState("");
 
   // UI筛选器状态
   const [scriptNameFilter, setScriptNameFilter] = useState("");
@@ -101,7 +108,7 @@ export function GlobalEditHistoryDialog({
         if (params.dateTo)
           searchParams.set("dateTo", params.dateTo.toISOString());
         searchParams.set("page", String(params.page || 1));
-        searchParams.set("limit", "20");
+        searchParams.set("limit", String(ITEMS_PER_PAGE)); // 使用ITEMS_PER_PAGE常量
         searchParams.set("sortBy", "operationTime");
         searchParams.set("sortOrder", "desc");
 
@@ -117,7 +124,9 @@ export function GlobalEditHistoryDialog({
         const data = await response.json();
         setHistories(data.histories || []);
         setTotalPages(data.pagination?.totalPages || 0);
-        setTotalRecords(data.pagination?.total || 0);
+        // 如果后端返回的总数超过我们的限制，显示限制数
+        const actualTotal = data.pagination?.total || 0;
+        setTotalRecords(actualTotal);
         setCurrentPage(data.pagination?.page || 1);
       } catch (err) {
         console.error("Failed to fetch edit history:", err);
@@ -149,6 +158,7 @@ export function GlobalEditHistoryDialog({
       setCurrentPage(1);
       setTotalPages(0);
       setTotalRecords(0);
+      setPageInput("");
     }
   }, [open, isInitialized, fetchHistories]);
 
@@ -205,6 +215,33 @@ export function GlobalEditHistoryDialog({
     ],
   );
 
+  // 页面跳转相关函数
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageInput(e.target.value);
+  };
+
+  const handlePageInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const page = parseInt(pageInput, 10);
+    if (!isNaN(page) && page >= 1 && page <= totalPages) {
+      handlePageChange(page);
+      setPageInput(""); // 清空输入框
+    }
+  };
+
+  const handlePageInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handlePageInputSubmit(e);
+    }
+    // 限制只能输入数字
+    if (
+      !/[\d\b]/.test(e.key) &&
+      !["ArrowLeft", "ArrowRight", "Delete", "Backspace", "Tab"].includes(e.key)
+    ) {
+      e.preventDefault();
+    }
+  };
+
   const getOperationIcon = (operation: string) => {
     switch (operation) {
       case "create":
@@ -258,9 +295,14 @@ export function GlobalEditHistoryDialog({
   };
 
   const formatPageInfo = () => {
-    const start = (currentPage - 1) * 20 + 1;
-    const end = Math.min(currentPage * 20, totalRecords);
-    return `显示第 ${start}-${end} 条，共 ${totalRecords} 条结果（第 ${currentPage} 页/共 ${totalPages} 页）`;
+    const start = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+    const end = Math.min(currentPage * ITEMS_PER_PAGE, totalRecords);
+    return t("pageInfo")
+      .replace("%s", String(start))
+      .replace("%s", String(end))
+      .replace("%s", String(totalRecords))
+      .replace("%s", String(currentPage))
+      .replace("%s", String(totalPages));
   };
 
   return (
@@ -273,6 +315,7 @@ export function GlobalEditHistoryDialog({
           </DialogTitle>
           <DialogDescription className="text-base text-gray-600 mt-2">
             {t("editHistoryDescGlobal")} - {t("totalChanges")}: {totalRecords}
+            {totalRecords >= 500 && ` (每页显示${ITEMS_PER_PAGE}条记录)`}
           </DialogDescription>
         </DialogHeader>
 
@@ -569,29 +612,117 @@ export function GlobalEditHistoryDialog({
           </ScrollArea>
         </div>
 
-        {/* 分页 */}
+        {/* 分页 - 和CheckHistory组件风格一致 */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 flex-shrink-0">
-            <div className="text-sm text-gray-600">{formatPageInfo()}</div>
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-4 border-t border-gray-200 flex-shrink-0 text-sm gap-2">
+            <div className="text-muted-foreground text-center sm:text-left">
+              {formatPageInfo()}
+            </div>
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage <= 1 || loading}
+                onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
+                disabled={currentPage === 1 || loading}
+                className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
               >
-                {t("previous")}
+                <ChevronLeft className="h-3.5 w-3.5 mr-1" />
+                <span className="hidden sm:inline">{t("previous")}</span>
               </Button>
-              <span className="text-sm text-gray-600 px-3">
-                {currentPage} / {totalPages}
-              </span>
+
+              <div className="flex items-center gap-1.5 px-2">
+                <div className="hidden md:flex items-center gap-1">
+                  {currentPage > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handlePageChange(1)}
+                      className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground"
+                      title={t("jumpToFirst")}
+                    >
+                      1
+                    </Button>
+                  )}
+                  {currentPage > 3 && (
+                    <span className="text-muted-foreground">...</span>
+                  )}
+                </div>
+
+                <span className="text-muted-foreground text-xs">
+                  {t("pageNumber")}
+                </span>
+                <span className="font-medium text-xs min-w-[1.5rem] text-center">
+                  {currentPage}
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  {t("of")} {totalPages} {t("pages")}
+                </span>
+
+                <div className="hidden md:flex items-center gap-1">
+                  {currentPage < totalPages - 2 && (
+                    <span className="text-muted-foreground">...</span>
+                  )}
+                  {currentPage < totalPages && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handlePageChange(totalPages)}
+                      className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground"
+                      title={t("jumpToLast")}
+                    >
+                      {totalPages}
+                    </Button>
+                  )}
+                </div>
+
+                {totalPages > 5 && (
+                  <div className="hidden lg:flex items-center gap-1 ml-2">
+                    <MoreHorizontal className="h-3 w-3 text-muted-foreground" />
+                    <form
+                      onSubmit={handlePageInputSubmit}
+                      className="flex items-center gap-1"
+                    >
+                      <input
+                        type="number"
+                        min="1"
+                        max={totalPages}
+                        value={pageInput}
+                        onChange={handlePageInputChange}
+                        onKeyDown={handlePageInputKeyDown}
+                        placeholder={t("jumpToPage")}
+                        className="w-12 h-6 px-1 text-xs text-center border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                      <Button
+                        type="submit"
+                        variant="outline"
+                        size="sm"
+                        disabled={
+                          !pageInput ||
+                          isNaN(parseInt(pageInput, 10)) ||
+                          parseInt(pageInput, 10) < 1 ||
+                          parseInt(pageInput, 10) > totalPages
+                        }
+                        className="h-6 px-2 text-xs"
+                        title={t("pageJump")}
+                      >
+                        {t("pageJump")}
+                      </Button>
+                    </form>
+                  </div>
+                )}
+              </div>
+
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage >= totalPages || loading}
+                onClick={() =>
+                  handlePageChange(Math.min(currentPage + 1, totalPages))
+                }
+                disabled={currentPage === totalPages || loading}
+                className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
               >
-                {t("next")}
+                <span className="hidden sm:inline">{t("next")}</span>
+                <ChevronRight className="h-3.5 w-3.5 ml-1" />
               </Button>
             </div>
           </div>

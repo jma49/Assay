@@ -441,10 +441,10 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                                 t("viewFullReportButton") || "View Full Report"
                               }
                             >
-                              <ExternalLink size={14} />
-                              <span className="hidden sm:inline">
-                                {t("viewFullReportButton") || "View Report"}
-                              </span>
+                                <ExternalLink size={14} />
+                                <span className="hidden sm:inline">
+                                  {t("viewFullReportButton") || "View Report"}
+                                </span>
                             </Button>
                           </Link>
                         </div>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +44,9 @@ import {
   ArrowLeft,
   FileText,
   Eye,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
 } from "lucide-react";
 import { formatDate } from "@/components/dashboard/utils";
 import {
@@ -53,6 +56,7 @@ import {
 import {
   DashboardTranslationKeys,
   dashboardTranslations,
+  ITEMS_PER_PAGE,
 } from "@/components/dashboard/types";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
@@ -75,6 +79,9 @@ export default function GlobalEditHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
+  
+  // 页面跳转相关状态
+  const [pageInput, setPageInput] = useState("");
 
   // Filter states
   const [scriptNameFilter, setScriptNameFilter] = useState("");
@@ -127,7 +134,7 @@ export default function GlobalEditHistoryPage() {
         if (params.dateTo)
           searchParams.set("dateTo", params.dateTo.toISOString());
         searchParams.set("page", String(params.page || 1));
-        searchParams.set("limit", "20");
+        searchParams.set("limit", String(ITEMS_PER_PAGE)); // 使用ITEMS_PER_PAGE常量
         searchParams.set("sortBy", "operationTime");
         searchParams.set("sortOrder", "desc");
 
@@ -215,6 +222,33 @@ export default function GlobalEditHistoryPage() {
     ],
   );
 
+  // 页面跳转相关函数
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageInput(e.target.value);
+  };
+
+  const handlePageInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const page = parseInt(pageInput, 10);
+    if (!isNaN(page) && page >= 1 && page <= totalPages) {
+      handlePageChange(page);
+      setPageInput(""); // 清空输入框
+    }
+  };
+
+  const handlePageInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handlePageInputSubmit(e);
+    }
+    // 限制只能输入数字
+    if (
+      !/[\d\b]/.test(e.key) &&
+      !["ArrowLeft", "ArrowRight", "Delete", "Backspace", "Tab"].includes(e.key)
+    ) {
+      e.preventDefault();
+    }
+  };
+
   const getOperationIcon = (operation: string) => {
     switch (operation) {
       case "create":
@@ -263,13 +297,14 @@ export default function GlobalEditHistoryPage() {
   };
 
   const formatPageInfo = () => {
-    const start = Math.min((currentPage - 1) * 20 + 1, totalRecords);
-    const end = Math.min(currentPage * 20, totalRecords);
+    const start = Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, totalRecords);
+    const end = Math.min(currentPage * ITEMS_PER_PAGE, totalRecords);
     if (totalRecords === 0) {
       return t("noResults");
     }
     return t("pageInfo")
-      .replace("%s-%s", `${start}-${end}`)
+      .replace("%s", String(start))
+      .replace("%s", String(end))
       .replace("%s", String(totalRecords))
       .replace("%s", String(currentPage))
       .replace("%s", String(totalPages));
@@ -487,10 +522,13 @@ export default function GlobalEditHistoryPage() {
                 </div>
                 <div className="space-y-2">
                   <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
-                    {histories.length > 0
-                      ? `${histories.length} ${t("editHistoryRecords")}`
+                    {totalRecords > 0
+                      ? `${totalRecords} ${t("editHistoryRecords")} ${totalPages > 1 ? `(${t("pageNumber")} ${currentPage}/${totalPages})` : ""}`
                       : t("editHistoryTitle")}
                   </CardTitle>
+                  <div className="text-sm text-muted-foreground">
+                    {totalPages > 1 ? formatPageInfo() : ""}
+                  </div>
                 </div>
               </div>
             </CardHeader>
@@ -673,49 +711,123 @@ export default function GlobalEditHistoryPage() {
                 </div>
               )}
             </CardContent>
-          </Card>
 
-          {/* Pagination */}
-          {totalPages > 1 && !loading && histories.length > 0 && (
-            <Card className="border-2 border-border/20 bg-gradient-to-r from-card to-card/80 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-muted-foreground font-medium bg-muted/30 px-4 py-2 rounded-lg">
-                    {formatPageInfo()}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage <= 1 || loading}
-                      className="group shadow-md hover:shadow-lg transition-all duration-300"
-                    >
-                      <ArrowLeft className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                      {t("previous")}
-                    </Button>
-                    <div className="text-sm text-muted-foreground font-mono bg-muted/30 px-4 py-2 rounded-lg">
-                      {t("pageNumber")}{" "}
-                      <span className="font-bold text-primary">
-                        {currentPage}
-                      </span>{" "}
-                      {t("of")} <span className="font-bold">{totalPages}</span>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage >= totalPages || loading}
-                      className="group shadow-md hover:shadow-lg transition-all duration-300"
-                    >
-                      {t("next")}
-                      <ArrowLeft className="w-4 h-4 ml-2 rotate-180 group-hover:scale-110 transition-transform" />
-                    </Button>
-                  </div>
+            {/* Pagination - 在Card内部添加CardFooter，与CheckHistory组件保持一致 */}
+            {totalPages > 1 && !loading && histories.length > 0 && (
+              <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t px-5 py-3 text-xs gap-2 relative z-10">
+                <div className="text-muted-foreground text-center sm:text-left">
+                  {formatPageInfo()}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                <div className="flex items-center gap-2 relative z-20">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
+                    disabled={currentPage === 1 || loading}
+                    className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150 relative z-30"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5 mr-1" />
+                    <span className="hidden sm:inline">{t("previous")}</span>
+                  </Button>
+
+                  <div className="flex items-center gap-1.5 px-2 relative z-30">
+                    <div className="hidden md:flex items-center gap-1">
+                      {currentPage > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handlePageChange(1)}
+                          className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground relative z-40"
+                          title={t("jumpToFirst")}
+                        >
+                          1
+                        </Button>
+                      )}
+                      {currentPage > 3 && (
+                        <span className="text-muted-foreground">...</span>
+                      )}
+                    </div>
+
+                    <span className="text-muted-foreground text-xs">
+                      {t("pageNumber")}
+                    </span>
+                    <span className="font-medium text-xs min-w-[1.5rem] text-center">
+                      {currentPage}
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      {t("of")} {totalPages} {t("pages")}
+                    </span>
+
+                    <div className="hidden md:flex items-center gap-1">
+                      {currentPage < totalPages - 2 && (
+                        <span className="text-muted-foreground">...</span>
+                      )}
+                      {currentPage < totalPages && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handlePageChange(totalPages)}
+                          className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground relative z-40"
+                          title={t("jumpToLast")}
+                        >
+                          {totalPages}
+                        </Button>
+                      )}
+                    </div>
+
+                    {totalPages > 2 && (
+                      <div className="hidden lg:flex items-center gap-1 ml-2 relative z-40">
+                        <MoreHorizontal className="h-3 w-3 text-muted-foreground" />
+                        <form
+                          onSubmit={handlePageInputSubmit}
+                          className="flex items-center gap-1"
+                        >
+                          <input
+                            type="number"
+                            min="1"
+                            max={totalPages}
+                            value={pageInput}
+                            onChange={handlePageInputChange}
+                            onKeyDown={handlePageInputKeyDown}
+                            placeholder={t("jumpToPage")}
+                            className="w-12 h-6 px-1 text-xs text-center border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
+                            style={{ pointerEvents: "auto" }}
+                          />
+                          <Button
+                            type="submit"
+                            variant="outline"
+                            size="sm"
+                            disabled={
+                              !pageInput ||
+                              isNaN(parseInt(pageInput, 10)) ||
+                              parseInt(pageInput, 10) < 1 ||
+                              parseInt(pageInput, 10) > totalPages
+                            }
+                            className="h-6 px-2 text-xs relative z-50"
+                            title={t("pageJump")}
+                            style={{ pointerEvents: "auto" }}
+                          >
+                            {t("pageJump")}
+                          </Button>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
+                    disabled={currentPage === totalPages || loading}
+                    className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150 relative z-30"
+                  >
+                    <span className="hidden sm:inline">{t("next")}</span>
+                    <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                </div>
+              </CardFooter>
+            )}
+          </Card>
         </div>
       </div>
 
