@@ -8,18 +8,14 @@ const messages = {
   en: {
     title: "Access Denied",
     subtitle: "Only invited users can access this system",
-    description: "Contact your administrator to get proper access permissions.",
-    backToHome: "Back to Home",
-    contactSupport: "Contact Support",
+    contactAdmin: "Please contact the administrator for access permissions",
     signOut: "Sign Out",
     tryAnother: "Sign in with another account",
   },
   zh: {
     title: "访问被拒绝",
     subtitle: "只有受邀用户才能访问此系统",
-    description: "请联系您的管理员获取适当的访问权限。",
-    backToHome: "返回首页",
-    contactSupport: "联系支持",
+    contactAdmin: "请联系管理员获取访问权限",
     signOut: "退出登录",
     tryAnother: "使用其他账户登录",
   },
@@ -75,7 +71,7 @@ export default function UnauthorizedPage() {
             {t.title}
           </h2>
           <p className="mt-2 text-sm text-gray-600">{t.subtitle}</p>
-          <p className="mt-2 text-sm text-gray-500">{t.description}</p>
+          <p className="mt-2 text-sm text-gray-500">{t.contactAdmin}</p>
         </div>
 
         <div className="space-y-4">

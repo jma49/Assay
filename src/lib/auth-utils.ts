@@ -2,7 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { User } from "@clerk/nextjs/server";
 
-// 认证相关的错误消息
+// 国际化文本
 export const authMessages = {
   en: {
     unauthorizedSignIn: "Unauthorized: Please sign in",
@@ -24,18 +24,31 @@ export const authMessages = {
   },
 };
 
-// 目前允许所有邮箱，主要靠 Clerk 的邀请制控制
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function isValidEmailDomain(_email: string): boolean {
-  return true;
+/**
+ * 验证邮箱域名是否为允许的域名
+ */
+export function isValidEmailDomain(email: string): boolean {
+  // 配置允许的域名列表，如果未配置则允许所有邮箱
+  const allowedDomains = process.env.ALLOWED_EMAIL_DOMAINS?.split(",") || [];
+
+  // 如果没有配置允许的域名，则允许所有（依赖 Clerk 邀请制控制）
+  if (allowedDomains.length === 0) {
+    return true;
+  }
+
+  // 检查邮箱是否属于允许的域名
+  return allowedDomains.some((domain) => email.endsWith(`@${domain.trim()}`));
 }
 
-// API 请求的认证检查
+/**
+ * 验证API请求的用户认证和邮箱域名
+ */
 export async function validateApiAuth(language: "en" | "zh" = "en") {
   try {
     const { userId } = await auth();
     const messages = authMessages[language];
 
+    // 检查用户是否已认证
     if (!userId) {
       return {
         isValid: false,
@@ -46,6 +59,7 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
       } as const;
     }
 
+    // 获取完整的用户信息
     const user = await currentUser();
 
     if (!user) {
@@ -58,6 +72,7 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
       } as const;
     }
 
+    // 获取用户邮箱
     const userEmail = user.emailAddresses?.[0]?.emailAddress;
 
     if (!userEmail) {
@@ -70,6 +85,7 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
       } as const;
     }
 
+    // 验证邮箱域名
     if (!isValidEmailDomain(userEmail)) {
       return {
         isValid: false,
@@ -98,7 +114,9 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
   }
 }
 
-// 提取用户基本信息，用于日志
+/**
+ * 获取当前用户信息（用于日志记录）
+ */
 export function getUserInfo(user: User, userEmail: string) {
   return {
     userId: user.id,
