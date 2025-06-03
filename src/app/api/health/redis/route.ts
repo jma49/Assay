@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import redisClient from "@/lib/redis";
-import { batchExecutionCache } from "@/services/batch-execution-cache";
+import batchExecutionCache from "@/services/batch-execution-cache";
 
 /**
  * GET - Redis健康检查接口
@@ -22,7 +22,7 @@ export async function GET() {
           responseTime,
           timestamp: new Date().toISOString(),
         },
-        { status: 503 },
+        { status: 503 }
       );
     }
 
@@ -55,7 +55,7 @@ export async function GET() {
         responseTime,
         timestamp: new Date().toISOString(),
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -119,7 +119,7 @@ export async function POST() {
         responseTime,
         timestamp: new Date().toISOString(),
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

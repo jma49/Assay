@@ -1,5 +1,6 @@
 import redisClient from "@/lib/redis";
 import { Redis } from "ioredis";
+import { RedisBackupManager } from "../../scripts/redis-backup-manager";
 
 /**
  * 开发环境日志辅助函数
@@ -101,7 +102,7 @@ export class BatchExecutionCache {
       throw new Error(
         `获取执行记录失败: ${
           error instanceof Error ? error.message : "未知错误"
-        }`,
+        }`
       );
     }
   }
@@ -116,9 +117,20 @@ export class BatchExecutionCache {
       scriptId: string;
       scriptName: string;
       isScheduled: boolean;
-    }>,
+    }>
   ): Promise<BatchExecutionState> {
     try {
+      // 🆕 批量执行开始前自动创建Redis备份
+      try {
+        const backupManager = new RedisBackupManager();
+        const backupCreated = backupManager.createBackup();
+        if (backupCreated) {
+          devLog("[BatchCache] ✅ Redis数据已自动备份");
+        }
+      } catch (error) {
+        devError("[BatchCache] ⚠️ Redis自动备份失败，但不影响执行:", error);
+      }
+
       const execution: BatchExecutionState = {
         executionId,
         scripts: scripts.map((script) => ({
@@ -143,7 +155,7 @@ export class BatchExecutionCache {
       throw new Error(
         `创建执行记录失败: ${
           error instanceof Error ? error.message : "未知错误"
-        }`,
+        }`
       );
     }
   }
@@ -154,7 +166,7 @@ export class BatchExecutionCache {
    */
   async updateScriptStatus(
     executionId: string,
-    update: ScriptStatusUpdate,
+    update: ScriptStatusUpdate
   ): Promise<BatchExecutionState | null> {
     try {
       const redis = await this.getRedis();
@@ -226,7 +238,7 @@ export class BatchExecutionCache {
         update.message || "",
         update.findings || "",
         update.mongoResultId || "",
-        new Date().toISOString(),
+        new Date().toISOString()
       )) as string | null;
 
       if (!result) {
@@ -247,7 +259,7 @@ export class BatchExecutionCache {
       throw new Error(
         `脚本状态更新失败: ${
           error instanceof Error ? error.message : "未知错误"
-        }`,
+        }`
       );
     }
   }
@@ -286,13 +298,13 @@ export class BatchExecutionCache {
         1,
         key,
         executionId,
-        new Date().toISOString(),
+        new Date().toISOString()
       );
       devLog(`[BatchCache] 执行完成: ${executionId}`);
     } catch (error) {
       devError("[BatchCache] 完成标记失败:", error);
       throw new Error(
-        `完成标记失败: ${error instanceof Error ? error.message : "未知错误"}`,
+        `完成标记失败: ${error instanceof Error ? error.message : "未知错误"}`
       );
     }
   }
@@ -312,7 +324,7 @@ export class BatchExecutionCache {
     } catch (error) {
       devError("[BatchCache] 删除记录失败:", error);
       throw new Error(
-        `删除记录失败: ${error instanceof Error ? error.message : "未知错误"}`,
+        `删除记录失败: ${error instanceof Error ? error.message : "未知错误"}`
       );
     }
   }
@@ -379,7 +391,51 @@ export class BatchExecutionCache {
       };
     }
   }
+
+  /**
+   * 获取Redis实例的活跃连接数统计
+   */
+  async getRedisStats(): Promise<{
+    activeConnections: number;
+    usedMemory: string;
+    keyCount: number;
+  }> {
+    try {
+      const redis = await this.getRedis();
+      const info = await redis.info("clients");
+      const memory = await redis.info("memory");
+      const dbInfo = await redis.info("keyspace");
+
+      // 解析连接数
+      const connectionsMatch = info.match(/connected_clients:(\d+)/);
+      const activeConnections = connectionsMatch
+        ? parseInt(connectionsMatch[1])
+        : 0;
+
+      // 解析内存使用
+      const memoryMatch = memory.match(/used_memory_human:([^\r\n]+)/);
+      const usedMemory = memoryMatch ? memoryMatch[1] : "N/A";
+
+      // 解析键数量
+      const keyMatch = dbInfo.match(/keys=(\d+)/);
+      const keyCount = keyMatch ? parseInt(keyMatch[1]) : 0;
+
+      return {
+        activeConnections,
+        usedMemory,
+        keyCount,
+      };
+    } catch (error) {
+      devError("[BatchCache] 获取Redis统计失败:", error);
+      return {
+        activeConnections: 0,
+        usedMemory: "N/A",
+        keyCount: 0,
+      };
+    }
+  }
 }
 
-// 导出单例服务实例
-export const batchExecutionCache = new BatchExecutionCache();
+// 单例模式导出
+const batchExecutionCache = new BatchExecutionCache();
+export default batchExecutionCache;

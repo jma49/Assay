@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  batchExecutionCache,
+import batchExecutionCache, {
   BatchExecutionState,
 } from "@/services/batch-execution-cache";
 
@@ -11,7 +10,7 @@ const memoryFallback = new Map<string, BatchExecutionState>();
  * 尝试从Redis获取数据，失败时使用内存存储
  */
 async function safeGetExecution(
-  executionId: string,
+  executionId: string
 ): Promise<BatchExecutionState | null> {
   try {
     const result = await batchExecutionCache.getExecution(executionId);
@@ -28,7 +27,7 @@ async function safeGetExecution(
  */
 async function safeSaveExecution(
   executionId: string,
-  execution: BatchExecutionState,
+  execution: BatchExecutionState
 ): Promise<void> {
   try {
     // 已经在缓存服务内部处理了保存逻辑
@@ -50,7 +49,7 @@ export async function GET(request: NextRequest) {
     if (!executionId) {
       return NextResponse.json(
         { success: false, message: "Missing executionId parameter" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -62,7 +61,7 @@ export async function GET(request: NextRequest) {
       if (!memoryData) {
         return NextResponse.json(
           { success: false, message: "Execution not found" },
-          { status: 404 },
+          { status: 404 }
         );
       }
 
@@ -82,7 +81,7 @@ export async function GET(request: NextRequest) {
     console.error("[批量执行状态API] 获取状态失败:", error);
     return NextResponse.json(
       { success: false, message: "Failed to get batch execution status" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -106,7 +105,7 @@ export async function POST(request: NextRequest) {
     if (!executionId) {
       return NextResponse.json(
         { success: false, message: "Missing executionId" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -117,7 +116,7 @@ export async function POST(request: NextRequest) {
         if (!scripts || !Array.isArray(scripts)) {
           return NextResponse.json(
             { success: false, message: "Missing scripts array" },
-            { status: 400 },
+            { status: 400 }
           );
         }
 
@@ -128,7 +127,7 @@ export async function POST(request: NextRequest) {
               scriptId: script.scriptId,
               scriptName: script.scriptName || script.scriptId,
               isScheduled: script.isScheduled || false,
-            })),
+            }))
           );
 
           await safeSaveExecution(executionId, newExecution);
@@ -171,7 +170,7 @@ export async function POST(request: NextRequest) {
         if (!scriptId || !status) {
           return NextResponse.json(
             { success: false, message: "Missing scriptId or status" },
-            { status: 400 },
+            { status: 400 }
           );
         }
 
@@ -184,7 +183,7 @@ export async function POST(request: NextRequest) {
               message,
               findings,
               mongoResultId,
-            },
+            }
           );
 
           if (!updatedExecution) {
@@ -193,18 +192,18 @@ export async function POST(request: NextRequest) {
             if (!memoryData) {
               return NextResponse.json(
                 { success: false, message: "Execution not found" },
-                { status: 404 },
+                { status: 404 }
               );
             }
 
             // 更新内存中的脚本状态
             const scriptIndex = memoryData.scripts.findIndex(
-              (s) => s.scriptId === scriptId,
+              (s) => s.scriptId === scriptId
             );
             if (scriptIndex === -1) {
               return NextResponse.json(
                 { success: false, message: "Script not found in execution" },
-                { status: 404 },
+                { status: 404 }
               );
             }
 
@@ -232,7 +231,7 @@ export async function POST(request: NextRequest) {
               (s) =>
                 s.status === "completed" ||
                 s.status === "failed" ||
-                s.status === "attention_needed",
+                s.status === "attention_needed"
             );
 
             if (allCompleted && memoryData.isActive) {
@@ -265,7 +264,7 @@ export async function POST(request: NextRequest) {
               success: false,
               message: `Failed to update script status: ${redisError}`,
             },
-            { status: 500 },
+            { status: 500 }
           );
         }
 
@@ -308,14 +307,14 @@ export async function POST(request: NextRequest) {
       default:
         return NextResponse.json(
           { success: false, message: "Invalid action" },
-          { status: 400 },
+          { status: 400 }
         );
     }
   } catch (error) {
     console.error("[批量执行状态API] 更新状态失败:", error);
     return NextResponse.json(
       { success: false, message: "Failed to update batch execution status" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -366,7 +365,7 @@ export async function DELETE(request: NextRequest) {
         success: true,
         message: `Cleaned up ${Math.max(
           cleanedCount,
-          toDelete.length,
+          toDelete.length
         )} completed executions`,
         redis_cleaned: cleanedCount,
         memory_cleaned: toDelete.length,
@@ -376,7 +375,7 @@ export async function DELETE(request: NextRequest) {
     console.error("[批量执行状态API] 删除状态失败:", error);
     return NextResponse.json(
       { success: false, message: "Failed to delete batch execution status" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
