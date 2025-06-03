@@ -615,17 +615,14 @@ const Dashboard = () => {
                 )}
               </div>
               <div className="flex items-center space-x-3">
-                <Link href="/data-analysis" passHref legacyBehavior>
+                <Link href="/data-analysis">
                   <Button
                     variant="outline"
                     size="lg"
                     className="group shadow-md hover:shadow-lg transition-all duration-300"
-                    asChild
                   >
-                    <a>
-                      <AreaChart className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                      {t("dataAnalysisButton")}
-                    </a>
+                    <AreaChart className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                    {t("dataAnalysisButton")}
                   </Button>
                 </Link>
                 <Button
@@ -686,17 +683,14 @@ const Dashboard = () => {
                   {t("checkHistoryTitle")}
                 </h2>
               </div>
-              <Link href="/manage-scripts" passHref legacyBehavior>
+              <Link href="/manage-scripts">
                 <Button
                   variant="outline"
                   size="lg"
                   className="group shadow-md hover:shadow-lg transition-all duration-300"
-                  asChild
                 >
-                  <a>
-                    <ListChecks className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                    {t("manageScriptsButton")}
-                  </a>
+                  <ListChecks className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                  {t("manageScriptsButton")}
                 </Button>
               </Link>
             </div>

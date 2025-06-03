@@ -466,17 +466,14 @@ export default function DataAnalysisPage() {
                     />
                     {isLoading ? t("loading") : t("refresh")}
                   </Button>
-                  <Link href="/" passHref legacyBehavior>
+                  <Link href="/">
                     <Button
                       variant="outline"
                       size="lg"
                       className="group shadow-md hover:shadow-lg transition-all duration-300"
-                      asChild
                     >
-                      <a>
-                        <Home className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                        {t("backToDashboardButton")}
-                      </a>
+                      <Home className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                      {t("backToDashboardButton")}
                     </Button>
                   </Link>
                 </div>

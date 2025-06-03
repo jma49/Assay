@@ -432,8 +432,6 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                         <div className="flex justify-center">
                           <Link
                             href={`/view-execution-result/${check._id}`}
-                            passHref
-                            legacyBehavior
                           >
                             <Button
                               variant="outline"
@@ -442,14 +440,11 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                               title={
                                 t("viewFullReportButton") || "View Full Report"
                               }
-                              asChild
                             >
-                              <a>
-                                <ExternalLink size={14} />
-                                <span className="hidden sm:inline">
-                                  {t("viewFullReportButton") || "View Report"}
-                                </span>
-                              </a>
+                              <ExternalLink size={14} />
+                              <span className="hidden sm:inline">
+                                {t("viewFullReportButton") || "View Report"}
+                              </span>
                             </Button>
                           </Link>
                         </div>

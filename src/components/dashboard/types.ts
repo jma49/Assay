@@ -359,6 +359,45 @@ export type DashboardTranslationKeys =
   | "operationType"
   | "selectOperationPlaceholder"
   | "pageInfoShort"
+  // 主题设置相关翻译键
+  | "themeSettings"
+  | "editorThemeSettings"
+  | "themeSelection"
+  | "fontFamily"
+  | "fontSize"
+  | "currentTheme"
+  | "currentMode"
+  | "currentFont"
+  | "selectTheme"
+  | "selectFont"
+  | "lightMode"
+  | "darkMode"
+  | "defaultFont"
+  | "fontSizeLabel"
+  | "themeApplied"
+  | "themeAppliedDesc"
+  | "fontApplied"
+  | "fontAppliedDesc"
+  | "resetToDefaults"
+  | "editorSettingsPanel"
+  | "themeAndFontConfig"
+  | "appearanceSettings"
+  | "editorAppearance"
+  | "codeDisplaySettings"
+  | "visualSettings"
+  | "themeInfo"
+  | "fontInfo"
+  | "settingsAppliedInstantly"
+  | "customizationOptions"
+  | "editorCustomization"
+  | "themeDescription"
+  | "fontDescription"
+  | "sizeDescription"
+  | "previewTheme"
+  | "recommendedSettings"
+  | "themeRecommendation"
+  | "fontRecommendation"
+  | "sizeRecommendation"
   | "checkDetails"
   | "tableActions";
 
@@ -810,6 +849,45 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     operationType: "Operation Type",
     selectOperationPlaceholder: "Select an operation type",
     pageInfoShort: "Showing %s-%s of %s results (Page %s of %s)",
+    // 主题设置相关翻译键
+    themeSettings: "Theme Settings",
+    editorThemeSettings: "Editor Theme Settings",
+    themeSelection: "Theme Selection",
+    fontFamily: "Font Family",
+    fontSize: "Font Size",
+    currentTheme: "Current Theme",
+    currentMode: "Current Mode",
+    currentFont: "Current Font",
+    selectTheme: "Select Theme",
+    selectFont: "Select Font",
+    lightMode: "Light Mode",
+    darkMode: "Dark Mode",
+    defaultFont: "Default Font",
+    fontSizeLabel: "Font Size",
+    themeApplied: "Theme Applied",
+    themeAppliedDesc: "Theme has been applied successfully",
+    fontApplied: "Font Applied",
+    fontAppliedDesc: "Font has been applied successfully",
+    resetToDefaults: "Reset to Defaults",
+    editorSettingsPanel: "Editor Settings Panel",
+    themeAndFontConfig: "Theme and Font Configuration",
+    appearanceSettings: "Appearance Settings",
+    editorAppearance: "Editor Appearance",
+    codeDisplaySettings: "Code Display Settings",
+    visualSettings: "Visual Settings",
+    themeInfo: "Theme Info",
+    fontInfo: "Font Info",
+    settingsAppliedInstantly: "Settings Applied Instantly",
+    customizationOptions: "Customization Options",
+    editorCustomization: "Editor Customization",
+    themeDescription: "Theme Description",
+    fontDescription: "Font Description",
+    sizeDescription: "Size Description",
+    previewTheme: "Preview Theme",
+    recommendedSettings: "Recommended Settings",
+    themeRecommendation: "Theme Recommendation",
+    fontRecommendation: "Font Recommendation",
+    sizeRecommendation: "Size Recommendation",
   },
   zh: {
     // General
@@ -1188,5 +1266,44 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     operationType: "操作类型",
     selectOperationPlaceholder: "请选择操作类型",
     pageInfoShort: "显示第 %s-%s 条，共 %s 条结果（第 %s 页/共 %s 页）",
+    // 主题设置相关翻译键
+    themeSettings: "主题设置",
+    editorThemeSettings: "编辑器主题设置",
+    themeSelection: "主题选择",
+    fontFamily: "字体",
+    fontSize: "字体大小",
+    currentTheme: "当前主题",
+    currentMode: "当前模式",
+    currentFont: "当前字体",
+    selectTheme: "选择主题",
+    selectFont: "选择字体",
+    lightMode: "浅色模式",
+    darkMode: "深色模式",
+    defaultFont: "默认字体",
+    fontSizeLabel: "字体大小",
+    themeApplied: "主题已应用",
+    themeAppliedDesc: "主题应用成功",
+    fontApplied: "字体已应用",
+    fontAppliedDesc: "字体应用成功",
+    resetToDefaults: "重置为默认值",
+    editorSettingsPanel: "编辑器设置面板",
+    themeAndFontConfig: "主题和字体配置",
+    appearanceSettings: "外观设置",
+    editorAppearance: "编辑器外观",
+    codeDisplaySettings: "代码显示设置",
+    visualSettings: "视觉设置",
+    themeInfo: "主题信息",
+    fontInfo: "字体信息",
+    settingsAppliedInstantly: "设置已立即应用",
+    customizationOptions: "自定义选项",
+    editorCustomization: "编辑器自定义",
+    themeDescription: "主题描述",
+    fontDescription: "字体描述",
+    sizeDescription: "大小描述",
+    previewTheme: "预览主题",
+    recommendedSettings: "推荐设置",
+    themeRecommendation: "主题推荐",
+    fontRecommendation: "字体推荐",
+    sizeRecommendation: "大小推荐",
   },
 };
