@@ -360,7 +360,29 @@ export type DashboardTranslationKeys =
   | "selectOperationPlaceholder"
   | "pageInfoShort"
   | "checkDetails"
-  | "tableActions";
+  | "tableActions"
+  // 新增主题设置相关翻译键
+  | "themeSettings"
+  | "editorThemeSettings"
+  | "settingsApplyImmediately"
+  | "editorTheme"
+  | "fontFamily"
+  | "fontSize"
+  | "currentSettings"
+  | "resetDefaults"
+  | "applySettings"
+  // 新增执行历史跳转相关翻译键
+  | "viewExecutionHistory"
+  | "executionHistory"
+  // 新增主题模式相关翻译键
+  | "lightMode"
+  | "darkMode"
+  | "lightTheme"
+  | "darkTheme"
+  | "themeHelpLight"
+  | "themeHelpDark"
+  | "fontLabel"
+  | "cancel";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -810,6 +832,29 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     operationType: "Operation Type",
     selectOperationPlaceholder: "Select an operation type",
     pageInfoShort: "Showing %s-%s of %s results (Page %s of %s)",
+    // 新增主题设置相关翻译键
+    themeSettings: "Theme Settings",
+    editorThemeSettings: "Editor Theme Settings",
+    settingsApplyImmediately: "Settings Apply Immediately",
+    editorTheme: "Editor Theme",
+    fontFamily: "Font Family",
+    fontSize: "Font Size",
+    currentSettings: "Current Settings",
+    resetDefaults: "Reset Defaults",
+    applySettings: "Apply Settings",
+    // 新增执行历史跳转相关翻译键
+    viewExecutionHistory: "View Execution History",
+    executionHistory: "Execution History",
+    // 新增主题模式相关翻译键
+    lightMode: "Light Mode",
+    darkMode: "Dark Mode",
+    lightTheme: "Light Theme",
+    darkTheme: "Dark Theme",
+    themeHelpLight:
+      "In light mode, you can choose light themes. Switch to dark mode to view dark themes",
+    themeHelpDark:
+      "In dark mode, you can choose dark themes. Switch to light mode to view light themes",
+    fontLabel: "Font",
   },
   zh: {
     // General
@@ -1188,5 +1233,26 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     operationType: "操作类型",
     selectOperationPlaceholder: "请选择操作类型",
     pageInfoShort: "显示第 %s-%s 条，共 %s 条结果（第 %s 页/共 %s 页）",
+    // 新增主题设置相关翻译键
+    themeSettings: "主题设置",
+    editorThemeSettings: "编辑器主题设置",
+    settingsApplyImmediately: "设置立即应用",
+    editorTheme: "编辑器主题",
+    fontFamily: "字体",
+    fontSize: "字体大小",
+    currentSettings: "当前设置",
+    resetDefaults: "重置默认值",
+    applySettings: "应用设置",
+    // 新增执行历史跳转相关翻译键
+    viewExecutionHistory: "查看执行历史",
+    executionHistory: "执行历史",
+    // 新增主题模式相关翻译键
+    lightMode: "浅色模式",
+    darkMode: "暗色模式",
+    lightTheme: "浅色主题",
+    darkTheme: "暗色主题",
+    themeHelpLight: "浅色模式下可选择浅色主题，切换到暗色模式可查看暗色主题",
+    themeHelpDark: "暗色模式下可选择暗色主题，切换到浅色模式可查看浅色主题",
+    fontLabel: "字体",
   },
 };

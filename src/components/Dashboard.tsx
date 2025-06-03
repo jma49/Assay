@@ -331,6 +331,24 @@ const Dashboard = () => {
   useEffect(() => {
     loadInitialData();
 
+    // 检查是否从管理页面跳转过来并需要过滤特定脚本
+    const filterScriptId = sessionStorage.getItem("filter-script-id");
+    if (filterScriptId) {
+      setSearchTerm(filterScriptId);
+      setFilterStatus(null); // 显示所有状态
+      setCurrentPage(1); // 重置到第一页
+      // 清除sessionStorage中的值，避免重复过滤
+      sessionStorage.removeItem("filter-script-id");
+      
+      // 滚动到执行历史部分
+      setTimeout(() => {
+        const historyElement = document.getElementById("execution-history");
+        if (historyElement) {
+          historyElement.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
+
     const now = new Date();
     const nextRun = new Date();
     // 设置下一个运行时间为 UTC 19:00
@@ -676,7 +694,7 @@ const Dashboard = () => {
           </section>
 
           {/* Check History Section */}
-          <section className="space-y-6">
+          <section id="execution-history" className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="space-y-1">
                 <h2 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">

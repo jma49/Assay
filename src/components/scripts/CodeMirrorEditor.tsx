@@ -1,8 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReactCodeMirror, { ReactCodeMirrorProps } from "@uiw/react-codemirror";
 import { sql, PostgreSQL, SQLDialect } from "@codemirror/lang-sql";
-import { okaidia } from "@uiw/codemirror-theme-okaidia"; // Use @uiw dark theme
+import { okaidia } from "@uiw/codemirror-theme-okaidia";
 import { githubLight } from "@uiw/codemirror-theme-github";
+import { dracula } from "@uiw/codemirror-theme-dracula";
+import { nord } from "@uiw/codemirror-theme-nord";
+import { materialLight, materialDark } from "@uiw/codemirror-theme-material";
+import { eclipse } from "@uiw/codemirror-theme-eclipse";
+import { tokyoNight } from "@uiw/codemirror-theme-tokyo-night";
+import { solarizedLight, solarizedDark } from "@uiw/codemirror-theme-solarized";
 import { useTheme } from "next-themes";
 // import { format } from 'sql-formatter';
 import { Button } from "@/components/ui/button";
@@ -10,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Code, Sparkles, Eye, FileCode, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardTranslationKeys } from "../dashboard/types";
+import EditorThemeSettings from "./EditorThemeSettings";
 
 interface CodeMirrorEditorProps
   extends Omit<
@@ -22,6 +29,23 @@ interface CodeMirrorEditorProps
   t?: (key: DashboardTranslationKeys | string) => string;
 }
 
+// 主题映射表 - 包含所有可用的主题
+const THEME_MAP = {
+  // 浅色主题
+  eclipse: eclipse,
+  githubLight: githubLight,
+  materialLight: materialLight,
+  nord: nord,
+  solarizedLight: solarizedLight,
+  
+  // 暗色主题
+  tokyoNight: tokyoNight,
+  okaidia: okaidia,
+  dracula: dracula,
+  materialDark: materialDark,
+  solarizedDark: solarizedDark,
+};
+
 const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   value,
   onChange,
@@ -29,13 +53,53 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   t = (key) => key.toString(),
   ...rest
 }) => {
-  const { theme: currentTheme } = useTheme();
+  const { theme: systemTheme } = useTheme();
   const [showPreview, setShowPreview] = useState(false);
   const [isFormatting, setIsFormatting] = useState(false);
+  const [editorTheme, setEditorTheme] = useState<string>("eclipse");
 
-  const editorTheme = React.useMemo(() => {
-    return currentTheme === "dark" ? okaidia : githubLight;
-  }, [currentTheme]);
+  // 获取当前应用的编辑器主题
+  const getCurrentEditorTheme = React.useMemo(() => {
+    // 根据主题名称获取主题对象
+    const themeObj = THEME_MAP[editorTheme as keyof typeof THEME_MAP];
+    
+    if (themeObj) {
+      return themeObj;
+    }
+    
+    // 如果主题不存在，根据系统主题返回默认主题
+    return systemTheme === "dark" ? tokyoNight : eclipse;
+  }, [editorTheme, systemTheme]);
+
+  // 从localStorage读取编辑器主题设置
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("editor-theme");
+    
+    if (savedTheme && THEME_MAP[savedTheme as keyof typeof THEME_MAP]) {
+      setEditorTheme(savedTheme);
+    } else {
+      // 如果没有保存的主题或主题不存在，使用默认主题
+      const defaultTheme = systemTheme === "dark" ? "tokyoNight" : "eclipse";
+      setEditorTheme(defaultTheme);
+      localStorage.setItem("editor-theme", defaultTheme);
+    }
+  }, [systemTheme]);
+
+  // 监听主题变更事件
+  useEffect(() => {
+    const handleThemeChange = (event: CustomEvent) => {
+      const newTheme = event.detail.theme;
+      if (THEME_MAP[newTheme as keyof typeof THEME_MAP]) {
+        setEditorTheme(newTheme);
+      }
+    };
+
+    window.addEventListener('editorThemeChange', handleThemeChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('editorThemeChange', handleThemeChange as EventListener);
+    };
+  }, []);
 
   // 创建支持PostgreSQL的扩展，包括对dollar-quoted字符串的更好支持
   const postgresExtensions = React.useMemo(() => {
@@ -158,8 +222,8 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       <div className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/40 to-muted/20 rounded-lg border border-border/40">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10 ring-2 ring-primary/20">
-              <FileCode className="h-4 w-4 text-primary" />
+            <div className="p-2.5 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 ring-2 ring-primary/20 shadow-sm">
+              <FileCode className="h-5 w-5 text-primary" />
             </div>
             <div>
               <h3 className="font-semibold text-sm text-foreground">
@@ -229,6 +293,9 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
               </>
             )}
           </Button>
+
+          {/* 主题设置按钮 */}
+          <EditorThemeSettings t={t} />
         </div>
       </div>
 
@@ -261,7 +328,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
               value={value}
               onChange={onChange}
               extensions={postgresExtensions}
-              theme={editorTheme}
+              theme={getCurrentEditorTheme}
               height="auto"
               minHeight={minHeight}
               basicSetup={{
@@ -282,6 +349,10 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
                 searchKeymap: true,
               }}
               className="text-sm leading-relaxed"
+              style={{
+                fontFamily: "var(--editor-font-family, 'Fira Code', monospace)",
+                fontSize: "var(--editor-font-size, 14px)",
+              }}
               placeholder={t("sqlPlaceholder")}
               {...rest}
             />
