@@ -5,27 +5,22 @@ import { useState } from "react";
 
 const messages = {
   en: {
-    title: "Create Invited Account",
-    subtitle: "🔒 This system uses invitation-only registration",
-    onlyInvited:
-      "Only users who received admin invitations can create accounts",
-    noInvitation:
-      "If you haven't received an invitation email, please contact the system administrator",
-    registrationNotice: "Registration Notice",
-    inviteOnly:
-      "System uses invitation-only registration to ensure access security",
-    emailOnly: "Please use @example.com enterprise email",
-    waitApproval: "Registration requires administrator approval",
+    title: "Create Account",
+    subtitle: "🔐 Invitation-Only System",
+    description: "Join our SQL script management platform",
+    contactAdmin: "Contact administrator for access",
+    systemInfo: "System Access Information",
+    inviteOnly: "• This system uses invitation-only access",
+    contactIT: "• Contact Jincheng for access",
   },
   zh: {
-    title: "受邀创建账户",
-    subtitle: "🔒 此系统采用邀请制注册",
-    onlyInvited: "只有收到管理员邀请的用户才能创建账户",
-    noInvitation: "如果您没有收到邀请邮件，请联系系统管理员",
-    registrationNotice: "注册须知",
-    inviteOnly: "系统采用邀请制，确保访问安全",
-    emailOnly: "请使用 @example.com 企业邮箱",
-    waitApproval: "注册后需等待管理员审核",
+    title: "创建账户",
+    subtitle: "🔐 邀请制系统",
+    description: "加入我们的SQL脚本管理平台",
+    contactAdmin: "请联系管理员申请访问权限",
+    systemInfo: "系统访问说明",
+    inviteOnly: "• 此系统采用邀请制访问",
+    contactIT: "• 如需访问权限，请联系Jincheng",
   },
 };
 
@@ -66,8 +61,7 @@ export default function Page() {
           </h2>
           <div className="mt-4 text-center space-y-2">
             <p className="text-sm text-blue-600 font-medium">{t.subtitle}</p>
-            <p className="text-sm text-gray-600">{t.onlyInvited}</p>
-            <p className="text-xs text-gray-500">{t.noInvitation}</p>
+            <p className="text-sm text-gray-600">{t.description}</p>
           </div>
         </div>
 
@@ -103,13 +97,12 @@ export default function Page() {
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-blue-800">
-                {t.registrationNotice}
+                {t.systemInfo}
               </h3>
               <div className="mt-2 text-sm text-blue-700">
                 <ul className="list-disc pl-5 space-y-1">
                   <li>{t.inviteOnly}</li>
-                  <li>{t.emailOnly}</li>
-                  <li>{t.waitApproval}</li>
+                  <li>{t.contactIT}</li>
                 </ul>
               </div>
             </div>

@@ -8,8 +8,7 @@ export const authMessages = {
     unauthorizedSignIn: "Unauthorized: Please sign in",
     unauthorizedUserNotFound: "Unauthorized: User not found",
     unauthorizedEmailNotFound: "Unauthorized: Email address not found",
-    unauthorizedInvalidDomain:
-      "Unauthorized: Only @example.com email addresses are allowed",
+    unauthorizedInvalidDomain: "Unauthorized: Only invited users are allowed",
     authenticationError: "Authentication error",
     restrictedAccess: "Access Restricted",
     contactAdmin: "Please contact administrator for access",
@@ -18,7 +17,7 @@ export const authMessages = {
     unauthorizedSignIn: "未授权：请先登录",
     unauthorizedUserNotFound: "未授权：找不到用户信息",
     unauthorizedEmailNotFound: "未授权：找不到邮箱地址",
-    unauthorizedInvalidDomain: "未授权：只允许 @example.com 邮箱访问",
+    unauthorizedInvalidDomain: "未授权：只允许受邀用户访问",
     authenticationError: "认证错误",
     restrictedAccess: "访问受限",
     contactAdmin: "请联系管理员申请访问权限",
@@ -29,7 +28,16 @@ export const authMessages = {
  * 验证邮箱域名是否为允许的域名
  */
 export function isValidEmailDomain(email: string): boolean {
-  return email.endsWith("@example.com");
+  // 配置允许的域名列表，如果未配置则允许所有邮箱
+  const allowedDomains = process.env.ALLOWED_EMAIL_DOMAINS?.split(",") || [];
+
+  // 如果没有配置允许的域名，则允许所有（依赖 Clerk 邀请制控制）
+  if (allowedDomains.length === 0) {
+    return true;
+  }
+
+  // 检查邮箱是否属于允许的域名
+  return allowedDomains.some((domain) => email.endsWith(`@${domain.trim()}`));
 }
 
 /**
@@ -46,7 +54,7 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
         isValid: false,
         response: NextResponse.json(
           { success: false, message: messages.unauthorizedSignIn },
-          { status: 401 },
+          { status: 401 }
         ),
       } as const;
     }
@@ -59,7 +67,7 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
         isValid: false,
         response: NextResponse.json(
           { success: false, message: messages.unauthorizedUserNotFound },
-          { status: 401 },
+          { status: 401 }
         ),
       } as const;
     }
@@ -72,7 +80,7 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
         isValid: false,
         response: NextResponse.json(
           { success: false, message: messages.unauthorizedEmailNotFound },
-          { status: 401 },
+          { status: 401 }
         ),
       } as const;
     }
@@ -83,7 +91,7 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
         isValid: false,
         response: NextResponse.json(
           { success: false, message: messages.unauthorizedInvalidDomain },
-          { status: 403 },
+          { status: 403 }
         ),
       } as const;
     }
@@ -100,7 +108,7 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
       isValid: false,
       response: NextResponse.json(
         { success: false, message: messages.authenticationError },
-        { status: 500 },
+        { status: 500 }
       ),
     } as const;
   }
