@@ -297,7 +297,7 @@ export default function GlobalEditHistoryPage() {
           <header className="text-center lg:text-left">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
               <div className="flex items-center gap-4">
-                <Link href="/manage-scripts" passHref>
+                <Link href="/manage-scripts">
                   <Button
                     variant="outline"
                     size="icon"

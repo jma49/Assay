@@ -473,7 +473,7 @@ const ManageScriptsPage = () => {
                   </div>
 
                   {/* 编辑历史按钮 */}
-                  <Link href="/manage-scripts/edit-history" passHref>
+                  <Link href="/manage-scripts/edit-history">
                     <Button
                       variant="outline"
                       className="h-10 flex items-center gap-2 text-purple-700 border-purple-300 hover:bg-purple-50 hover:text-purple-600 dark:text-purple-400 dark:border-purple-600 dark:hover:bg-purple-900/30 dark:hover:text-purple-300"
@@ -679,17 +679,14 @@ const ManageScriptsPage = () => {
                 <PlusCircle className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
                 {t("addNewScriptButton")}
               </Button>
-              <Link href="/" passHref legacyBehavior>
+              <Link href="/">
                 <Button
                   variant="outline"
                   size="lg"
                   className="group shadow-md hover:shadow-lg transition-all duration-300"
-                  asChild
                 >
-                  <a>
-                    <Home className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                    {t("backToDashboardButton")}
-                  </a>
+                  <Home className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                  {t("backToDashboardButton")}
                 </Button>
               </Link>
             </div>
