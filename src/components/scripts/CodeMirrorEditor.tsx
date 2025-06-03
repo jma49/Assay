@@ -1,69 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReactCodeMirror, { ReactCodeMirrorProps } from "@uiw/react-codemirror";
 import { sql, PostgreSQL, SQLDialect } from "@codemirror/lang-sql";
-// 导入多个主题
 import { okaidia } from "@uiw/codemirror-theme-okaidia";
 import { githubLight } from "@uiw/codemirror-theme-github";
 import { dracula } from "@uiw/codemirror-theme-dracula";
-import { monokai } from "@uiw/codemirror-theme-monokai";
 import { nord } from "@uiw/codemirror-theme-nord";
-import { tokyoNight } from "@uiw/codemirror-theme-tokyo-night";
-import { vscodeDark } from "@uiw/codemirror-theme-vscode";
-import { solarizedLight, solarizedDark } from "@uiw/codemirror-theme-solarized";
+import { materialLight, materialDark } from "@uiw/codemirror-theme-material";
 import { eclipse } from "@uiw/codemirror-theme-eclipse";
-import { whiteLight } from "@uiw/codemirror-theme-white";
-import { basicLight, basicDark } from "@uiw/codemirror-theme-basic";
+import { tokyoNight } from "@uiw/codemirror-theme-tokyo-night";
+import { solarizedLight, solarizedDark } from "@uiw/codemirror-theme-solarized";
 import { useTheme } from "next-themes";
-// 导入 CodeMirror 扩展相关
-import { EditorView } from "@codemirror/view";
-import { Extension } from "@codemirror/state";
 // import { format } from 'sql-formatter';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Code, Sparkles, Eye, FileCode, Palette, Settings } from "lucide-react";
+import { Code, Sparkles, Eye, FileCode, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardTranslationKeys } from "../dashboard/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-
-// 主题配置
-const THEMES = {
-  light: {
-    github: { theme: githubLight, name: "GitHub Light" },
-    solarizedLight: { theme: solarizedLight, name: "Solarized Light" },
-    eclipse: { theme: eclipse, name: "Eclipse" },
-    white: { theme: whiteLight, name: "Pure White" },
-    basicLight: { theme: basicLight, name: "Basic Light" },
-  },
-  dark: {
-    okaidia: { theme: okaidia, name: "Okaidia" },
-    dracula: { theme: dracula, name: "Dracula" },
-    monokai: { theme: monokai, name: "Monokai" },
-    nord: { theme: nord, name: "Nord" },
-    tokyoNight: { theme: tokyoNight, name: "Tokyo Night" },
-    vscode: { theme: vscodeDark, name: "VS Code Dark" },
-    solarizedDark: { theme: solarizedDark, name: "Solarized Dark" },
-    basicDark: { theme: basicDark, name: "Basic Dark" },
-  },
-};
-
-// 字体选项
-const FONT_OPTIONS = [
-  { value: "default", name: "默认等宽字体" },
-  { value: "'Fira Code', monospace", name: "Fira Code" },
-  { value: "'JetBrains Mono', monospace", name: "JetBrains Mono" },
-  { value: "'Source Code Pro', monospace", name: "Source Code Pro" },
-  { value: "'Monaco', monospace", name: "Monaco" },
-  { value: "'Consolas', monospace", name: "Consolas" },
-  { value: "'Ubuntu Mono', monospace", name: "Ubuntu Mono" },
-  { value: "'Cascadia Code', monospace", name: "Cascadia Code" },
-];
+import EditorThemeSettings from "./EditorThemeSettings";
 
 interface CodeMirrorEditorProps
   extends Omit<
@@ -76,6 +29,23 @@ interface CodeMirrorEditorProps
   t?: (key: DashboardTranslationKeys | string) => string;
 }
 
+// 主题映射表 - 包含所有可用的主题
+const THEME_MAP = {
+  // 浅色主题
+  eclipse: eclipse,
+  githubLight: githubLight,
+  materialLight: materialLight,
+  nord: nord,
+  solarizedLight: solarizedLight,
+  
+  // 暗色主题
+  tokyoNight: tokyoNight,
+  okaidia: okaidia,
+  dracula: dracula,
+  materialDark: materialDark,
+  solarizedDark: solarizedDark,
+};
+
 const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   value,
   onChange,
@@ -83,77 +53,53 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   t = (key) => key.toString(),
   ...rest
 }) => {
-  const { theme: currentTheme } = useTheme();
+  const { theme: systemTheme } = useTheme();
   const [showPreview, setShowPreview] = useState(false);
   const [isFormatting, setIsFormatting] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  
-  // 主题和字体状态
-  const [selectedTheme, setSelectedTheme] = useState<string>(
-    currentTheme === "dark" ? "tokyoNight" : "eclipse"
-  );
-  const [selectedFont, setSelectedFont] = useState("'Fira Code', monospace");
-  const [fontSize, setFontSize] = useState(14);
+  const [editorTheme, setEditorTheme] = useState<string>("eclipse");
 
-  // 创建字体样式扩展
-  const fontStyleExtension = React.useMemo((): Extension => {
-    return EditorView.theme({
-      "&": {
-        fontFamily: selectedFont === "default" ? "monospace" : selectedFont,
-        fontSize: `${fontSize}px`,
-      },
-      ".cm-content": {
-        fontFamily: selectedFont === "default" ? "monospace" : selectedFont,
-        fontSize: `${fontSize}px`,
-        lineHeight: "1.6",
-      },
-      ".cm-editor": {
-        fontFamily: selectedFont === "default" ? "monospace" : selectedFont,
-        fontSize: `${fontSize}px`,
-      },
-    });
-  }, [selectedFont, fontSize]);
+  // 获取当前应用的编辑器主题
+  const getCurrentEditorTheme = React.useMemo(() => {
+    // 根据主题名称获取主题对象
+    const themeObj = THEME_MAP[editorTheme as keyof typeof THEME_MAP];
+    
+    if (themeObj) {
+      return themeObj;
+    }
+    
+    // 如果主题不存在，根据系统主题返回默认主题
+    return systemTheme === "dark" ? tokyoNight : eclipse;
+  }, [editorTheme, systemTheme]);
 
-  // 获取当前主题
-  const editorTheme = React.useMemo(() => {
-    if (currentTheme === "dark") {
-      const darkThemes = THEMES.dark;
-      switch (selectedTheme) {
-        case "okaidia": return darkThemes.okaidia.theme;
-        case "dracula": return darkThemes.dracula.theme;
-        case "monokai": return darkThemes.monokai.theme;
-        case "nord": return darkThemes.nord.theme;
-        case "tokyoNight": return darkThemes.tokyoNight.theme;
-        case "vscode": return darkThemes.vscode.theme;
-        case "solarizedDark": return darkThemes.solarizedDark.theme;
-        case "basicDark": return darkThemes.basicDark.theme;
-        default: return tokyoNight;
-      }
+  // 从localStorage读取编辑器主题设置
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("editor-theme");
+    
+    if (savedTheme && THEME_MAP[savedTheme as keyof typeof THEME_MAP]) {
+      setEditorTheme(savedTheme);
     } else {
-      const lightThemes = THEMES.light;
-      switch (selectedTheme) {
-        case "github": return lightThemes.github.theme;
-        case "solarizedLight": return lightThemes.solarizedLight.theme;
-        case "eclipse": return lightThemes.eclipse.theme;
-        case "white": return lightThemes.white.theme;
-        case "basicLight": return lightThemes.basicLight.theme;
-        default: return eclipse;
+      // 如果没有保存的主题或主题不存在，使用默认主题
+      const defaultTheme = systemTheme === "dark" ? "tokyoNight" : "eclipse";
+      setEditorTheme(defaultTheme);
+      localStorage.setItem("editor-theme", defaultTheme);
+    }
+  }, [systemTheme]);
+
+  // 监听主题变更事件
+  useEffect(() => {
+    const handleThemeChange = (event: CustomEvent) => {
+      const newTheme = event.detail.theme;
+      if (THEME_MAP[newTheme as keyof typeof THEME_MAP]) {
+        setEditorTheme(newTheme);
       }
-    }
-  }, [currentTheme, selectedTheme]);
+    };
 
-  // 获取当前可用主题选项
-  const availableThemes = React.useMemo(() => {
-    return currentTheme === "dark" ? THEMES.dark : THEMES.light;
-  }, [currentTheme]);
-
-  // 更新主题时自动切换
-  React.useEffect(() => {
-    const defaultTheme = currentTheme === "dark" ? "tokyoNight" : "eclipse";
-    if (!availableThemes[selectedTheme as keyof typeof availableThemes]) {
-      setSelectedTheme(defaultTheme);
-    }
-  }, [currentTheme, selectedTheme, availableThemes]);
+    window.addEventListener('editorThemeChange', handleThemeChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('editorThemeChange', handleThemeChange as EventListener);
+    };
+  }, []);
 
   // 创建支持PostgreSQL的扩展，包括对dollar-quoted字符串的更好支持
   const postgresExtensions = React.useMemo(() => {
@@ -189,8 +135,8 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       },
     };
 
-    return [sql(postgresConfig), fontStyleExtension];
-  }, [fontStyleExtension]);
+    return [sql(postgresConfig)];
+  }, []);
 
   const handleFormat = async () => {
     if (!value.trim()) {
@@ -276,8 +222,8 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       <div className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/40 to-muted/20 rounded-lg border border-border/40">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10 ring-2 ring-primary/20">
-              <FileCode className="h-4 w-4 text-primary" />
+            <div className="p-2.5 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 ring-2 ring-primary/20 shadow-sm">
+              <FileCode className="h-5 w-5 text-primary" />
             </div>
             <div>
               <h3 className="font-semibold text-sm text-foreground">
@@ -348,165 +294,10 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
             )}
           </Button>
 
-          {/* 设置按钮 */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowSettings(!showSettings)}
-            className="h-8 px-3 text-xs shadow-sm transition-all duration-200 hover:shadow-md hover:bg-primary/10 hover:border-primary/50 hover:text-primary focus:ring-2 focus:ring-primary/20"
-          >
-            <Settings className="h-3.5 w-3.5 mr-1.5" />
-            {t("themeSettings")}
-          </Button>
+          {/* 主题设置按钮 */}
+          <EditorThemeSettings t={t} />
         </div>
       </div>
-
-      {/* 设置面板 */}
-      {showSettings && (
-        <div className="p-6 bg-gradient-to-br from-muted/20 via-muted/10 to-background/80 rounded-xl border border-border/40 shadow-lg space-y-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10 ring-2 ring-primary/20">
-                <Palette className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-base text-foreground">
-                  {t("editorThemeSettings")}
-                </h4>
-                <p className="text-xs text-muted-foreground">
-                  {t("settingsAppliedInstantly")}
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSelectedTheme(currentTheme === "dark" ? "tokyoNight" : "eclipse");
-                setSelectedFont("'Fira Code', monospace");
-                setFontSize(14);
-                toast.success(t("themeApplied"), {
-                  description: t("resetToDefaults"),
-                });
-              }}
-              className="text-xs"
-            >
-              {t("resetToDefaults")}
-            </Button>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* 主题选择 */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Palette className="h-4 w-4 text-primary" />
-                <Label className="text-sm font-medium text-foreground">
-                  {t("themeSelection")}
-                </Label>
-              </div>
-              <Select value={selectedTheme} onValueChange={setSelectedTheme}>
-                <SelectTrigger className="h-10 text-sm border-border/60 hover:border-border focus:border-primary">
-                  <SelectValue placeholder={t("selectTheme")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(availableThemes).map(([key, themeInfo]) => (
-                    <SelectItem key={key} value={key} className="text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-gradient-to-r from-primary/50 to-primary border border-primary/30"></div>
-                        {themeInfo.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* 字体选择 */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <FileCode className="h-4 w-4 text-primary" />
-                <Label className="text-sm font-medium text-foreground">
-                  {t("fontFamily")}
-                </Label>
-              </div>
-              <Select value={selectedFont} onValueChange={setSelectedFont}>
-                <SelectTrigger className="h-10 text-sm border-border/60 hover:border-border focus:border-primary">
-                  <SelectValue placeholder={t("selectFont")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {FONT_OPTIONS.map((font) => (
-                    <SelectItem key={font.value} value={font.value} className="text-sm">
-                      <div className="flex items-center gap-2">
-                        <span style={{ fontFamily: font.value === "default" ? "monospace" : font.value }}>
-                          Aa
-                        </span>
-                        {font.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* 字体大小 */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Settings className="h-4 w-4 text-primary" />
-                <Label className="text-sm font-medium text-foreground">
-                  {t("fontSizeLabel")}: {fontSize}px
-                </Label>
-              </div>
-              <div className="space-y-3">
-                <input
-                  type="range"
-                  min="10"
-                  max="20"
-                  value={fontSize}
-                  onChange={(e) => setFontSize(Number(e.target.value))}
-                  className="w-full h-2 bg-gradient-to-r from-muted to-muted/50 rounded-lg appearance-none cursor-pointer slider"
-                  style={{
-                    background: `linear-gradient(to right, rgb(var(--primary)) 0%, rgb(var(--primary)) ${
-                      ((fontSize - 10) / 10) * 100
-                    }%, rgb(var(--muted)) ${((fontSize - 10) / 10) * 100}%, rgb(var(--muted)) 100%)`
-                  }}
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>10px</span>
-                  <span>15px</span>
-                  <span>20px</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 当前设置信息 */}
-          <div className="flex flex-wrap items-center gap-3 p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border border-primary/20">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs border-primary/30 bg-primary/5 text-primary">
-                {t("currentTheme")}: {(() => {
-                  if (currentTheme === "dark") {
-                    const darkTheme = THEMES.dark[selectedTheme as keyof typeof THEMES.dark];
-                    return darkTheme?.name || t("unknownScript");
-                  } else {
-                    const lightTheme = THEMES.light[selectedTheme as keyof typeof THEMES.light];
-                    return lightTheme?.name || t("unknownScript");
-                  }
-                })()}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs border-blue-300 bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-700">
-                {t("currentMode")}: {currentTheme === "dark" ? t("darkMode") : t("lightMode")}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-700">
-                {t("currentFont")}: {FONT_OPTIONS.find(f => f.value === selectedFont)?.name}
-              </Badge>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 编辑器容器 */}
       <div className="relative overflow-hidden rounded-lg border-2 border-border/40 bg-gradient-to-br from-background via-background to-muted/5 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-border/60">
@@ -537,7 +328,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
               value={value}
               onChange={onChange}
               extensions={postgresExtensions}
-              theme={editorTheme}
+              theme={getCurrentEditorTheme}
               height="auto"
               minHeight={minHeight}
               basicSetup={{
@@ -558,6 +349,10 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
                 searchKeymap: true,
               }}
               className="text-sm leading-relaxed"
+              style={{
+                fontFamily: "var(--editor-font-family, 'Fira Code', monospace)",
+                fontSize: "var(--editor-font-size, 14px)",
+              }}
               placeholder={t("sqlPlaceholder")}
               {...rest}
             />
