@@ -59,7 +59,7 @@ async function main(): Promise<void> {
     const collection = await getSqlScriptsCollection();
     const scriptDocument = await collection.findOne(
       { scriptId },
-      { projection: { sqlContent: 1 } }
+      { projection: { sqlContent: 1 } },
     );
 
     if (!scriptDocument) {

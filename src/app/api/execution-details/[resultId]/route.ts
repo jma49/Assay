@@ -7,7 +7,7 @@ const SQL_SCRIPTS_COLLECTION_NAME = "sql_scripts"; // 假设 sql_scripts 集合�
 
 export const GET = async (
   request: NextRequest,
-  { params }: { params: Promise<{ resultId: string }> } // <--- 注意这里的 Promise
+  { params }: { params: Promise<{ resultId: string }> }, // <--- 注意这里的 Promise
 ) => {
   const awaitedParams = await params; // <--- await params
   const resultId = awaitedParams.resultId;
@@ -42,13 +42,13 @@ export const GET = async (
     console.log(
       `找到脚本 ${scriptIdFromExecution} 的执行结果，包含 ${
         Array.isArray(findingsData) ? findingsData.length : 0
-      } 条记录`
+      } 条记录`,
     );
 
     let scriptMetadata = {};
     if (scriptIdFromExecution) {
       console.log(
-        `正在从集合 ${SQL_SCRIPTS_COLLECTION_NAME} 中查询脚本元数据: ${scriptIdFromExecution}`
+        `正在从集合 ${SQL_SCRIPTS_COLLECTION_NAME} 中查询脚本元数据: ${scriptIdFromExecution}`,
       );
       const scriptDoc = await scriptsCollection.findOne({
         scriptId: scriptIdFromExecution,
@@ -66,7 +66,7 @@ export const GET = async (
         };
       } else {
         console.warn(
-          `未在 ${SQL_SCRIPTS_COLLECTION_NAME} 中找到脚本 ${scriptIdFromExecution} 的元数据。`
+          `未在 ${SQL_SCRIPTS_COLLECTION_NAME} 中找到脚本 ${scriptIdFromExecution} 的元数据。`,
         );
       }
     }
@@ -88,7 +88,7 @@ export const GET = async (
         message: "服务器内部错误",
         error: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 };

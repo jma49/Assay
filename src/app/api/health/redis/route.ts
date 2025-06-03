@@ -22,11 +22,11 @@ export async function GET() {
           responseTime,
           timestamp: new Date().toISOString(),
         },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
-    const stats = await batchExecutionCache.getCacheStats();
+    const stats = await batchExecutionCache.getExecutionStats();
     const connectionStatus = redisClient.getConnectionStatus();
 
     return NextResponse.json({
@@ -36,10 +36,10 @@ export async function GET() {
       responseTime,
       connectionStatus,
       stats: {
-        activeExecutions: stats.activeExecutions,
-        totalKeys: stats.totalKeys,
-        memoryUsage: stats.memoryUsage,
-        memoryUsageFormatted: formatBytes(stats.memoryUsage),
+        activeExecutions: stats.activeCount,
+        totalKeys: stats.totalExecutions,
+        memoryUsage: 0, // getExecutionStats不返回内存使用情况
+        memoryUsageFormatted: "N/A",
       },
       timestamp: new Date().toISOString(),
     });
@@ -55,7 +55,7 @@ export async function GET() {
         responseTime,
         timestamp: new Date().toISOString(),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -119,20 +119,7 @@ export async function POST() {
         responseTime,
         timestamp: new Date().toISOString(),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
-}
-
-/**
- * 格式化字节数为可读格式
- */
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return "0 Bytes";
-
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }

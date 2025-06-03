@@ -46,14 +46,14 @@ function containsHarmfulSql(sqlContent: string): boolean {
     (keyword) =>
       upperSql.includes(keyword + " ") ||
       upperSql.includes(keyword + ";") ||
-      upperSql.includes(keyword + "\n")
+      upperSql.includes(keyword + "\n"),
   );
 }
 
 // GET a single script by scriptId
 export async function GET(
   request: NextRequest,
-  { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
+  { params: paramsPromise }: { params: Promise<{ scriptId: string }> },
 ) {
   try {
     const params = await paramsPromise; // Await the promise
@@ -62,7 +62,7 @@ export async function GET(
     if (!scriptId) {
       return NextResponse.json(
         { message: "scriptId parameter is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -72,7 +72,7 @@ export async function GET(
     if (!scriptDocument) {
       return NextResponse.json(
         { message: `Script with ID '${scriptId}' not found` },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -91,7 +91,7 @@ export async function GET(
       error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
       { message: "Internal server error", error: errorMessage },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -99,7 +99,7 @@ export async function GET(
 // PUT (update) a script by scriptId
 export async function PUT(
   request: NextRequest,
-  { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
+  { params: paramsPromise }: { params: Promise<{ scriptId: string }> },
 ) {
   try {
     const params = await paramsPromise; // Await the promise
@@ -121,7 +121,7 @@ export async function PUT(
     if (!scriptId) {
       return NextResponse.json(
         { message: "scriptId parameter is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -129,7 +129,7 @@ export async function PUT(
     if (Object.keys(body).length === 0) {
       return NextResponse.json(
         { message: "Request body cannot be empty for update" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -144,7 +144,7 @@ export async function PUT(
           message:
             "SQL content rejected due to potentially harmful DDL/DML commands.",
         },
-        { status: 403 } // 403 Forbidden
+        { status: 403 }, // 403 Forbidden
       );
     }
 
@@ -170,7 +170,7 @@ export async function PUT(
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
         { message: "No valid fields provided for update" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -178,13 +178,13 @@ export async function PUT(
 
     const result = await collection.updateOne(
       { scriptId }, // Filter by scriptId
-      { $set: updateData } // Update specified fields
+      { $set: updateData }, // Update specified fields
     );
 
     if (result.matchedCount === 0) {
       return NextResponse.json(
         { message: `Script with ID '${scriptId}' not found` },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -196,13 +196,13 @@ export async function PUT(
             "Script data is identical to the existing data, no update performed.",
           scriptId,
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
     return NextResponse.json(
       { message: `Script '${scriptId}' updated successfully` },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     // It's tricky to get paramsPromise reliably here if the above await failed.
@@ -211,20 +211,20 @@ export async function PUT(
     // For now, we'll assume params.scriptId might not be available if the promise itself rejects.
     console.error(
       `Error updating script (ID might be unavailable if promise rejected):`,
-      error
+      error,
     );
     if (error instanceof SyntaxError) {
       // JSON parsing error
       return NextResponse.json(
         { message: "Invalid JSON in request body" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
       { message: "Internal server error", error: errorMessage },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -232,7 +232,7 @@ export async function PUT(
 // DELETE a script by scriptId
 export async function DELETE(
   request: NextRequest,
-  { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
+  { params: paramsPromise }: { params: Promise<{ scriptId: string }> },
 ) {
   try {
     const params = await paramsPromise; // Await the promise
@@ -241,7 +241,7 @@ export async function DELETE(
     if (!scriptId) {
       return NextResponse.json(
         { message: "scriptId parameter is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -254,25 +254,25 @@ export async function DELETE(
         {
           message: `Script with ID '${scriptId}' not found, or already deleted`,
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     return NextResponse.json(
       { message: `Script '${scriptId}' deleted successfully` },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     // Similar to PUT, params.scriptId might be unavailable if paramsPromise rejected.
     console.error(
       `Error deleting script (ID might be unavailable if promise rejected):`,
-      error
+      error,
     );
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
       { message: "Internal server error", error: errorMessage },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

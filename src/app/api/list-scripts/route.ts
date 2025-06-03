@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       // 应用客户端过滤
       if (includeScheduledOnly) {
         filteredData = filteredData.filter(
-          (script) => script.isScheduled === true
+          (script) => script.isScheduled === true,
         );
       }
 
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
 
     const queryTime = Date.now() - startTime;
     console.log(
-      `API: MongoDB query completed in ${queryTime}ms, found ${scriptsFromDb.length} scripts`
+      `API: MongoDB query completed in ${queryTime}ms, found ${scriptsFromDb.length} scripts`,
     );
 
     const scriptsForFrontend: ScriptInfo[] = scriptsFromDb.map((doc) => ({
@@ -171,7 +171,7 @@ export async function GET(request: NextRequest) {
         message: "无法从数据库获取脚本列表",
         error: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

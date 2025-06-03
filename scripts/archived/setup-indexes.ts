@@ -14,7 +14,7 @@ async function createIndexSafely(
   collection: any,
   indexSpec: any,
   options: any,
-  description: string
+  description: string,
 ) {
   try {
     await collection.createIndex(indexSpec, options);
@@ -50,7 +50,7 @@ async function setupIndexes() {
       resultCollection,
       { execution_time: -1 },
       { name: "execution_time_desc" },
-      "result.execution_time 降序索引"
+      "result.execution_time 降序索引",
     );
 
     // 在 script_name 字段上创建索引（用于按脚本名筛选）
@@ -58,7 +58,7 @@ async function setupIndexes() {
       resultCollection,
       { script_name: 1 },
       { name: "script_name_asc" },
-      "result.script_name 索引"
+      "result.script_name 索引",
     );
 
     // 在 status 字段上创建索引（用于按状态筛选）
@@ -66,7 +66,7 @@ async function setupIndexes() {
       resultCollection,
       { status: 1 },
       { name: "status_asc" },
-      "result.status 索引"
+      "result.status 索引",
     );
 
     // 复合索引：script_name + execution_time（用于特定脚本的历史查询）
@@ -74,7 +74,7 @@ async function setupIndexes() {
       resultCollection,
       { script_name: 1, execution_time: -1 },
       { name: "script_execution_time" },
-      "result 复合索引 (script_name + execution_time)"
+      "result 复合索引 (script_name + execution_time)",
     );
 
     // 2. 为 sql_scripts 集合创建索引（用于 list-scripts API）
@@ -85,7 +85,7 @@ async function setupIndexes() {
       scriptsCollection,
       { name: 1 },
       { name: "name_asc" },
-      "sql_scripts.name 索引"
+      "sql_scripts.name 索引",
     );
 
     // 在 scriptId 字段上创建索引（确保快速查询）
@@ -94,7 +94,7 @@ async function setupIndexes() {
       scriptsCollection,
       { scriptId: 1 },
       { name: "scriptId_asc" },
-      "sql_scripts.scriptId 索引"
+      "sql_scripts.scriptId 索引",
     );
 
     // 在 isScheduled 字段上创建索引（用于定时任务查询）
@@ -102,7 +102,7 @@ async function setupIndexes() {
       scriptsCollection,
       { isScheduled: 1 },
       { name: "isScheduled_asc" },
-      "sql_scripts.isScheduled 索引"
+      "sql_scripts.isScheduled 索引",
     );
 
     // 在 createdAt 字段上创建索引（用于按创建时间排序）
@@ -110,7 +110,7 @@ async function setupIndexes() {
       scriptsCollection,
       { createdAt: -1 },
       { name: "createdAt_desc" },
-      "sql_scripts.createdAt 索引"
+      "sql_scripts.createdAt 索引",
     );
 
     // 3. 显示当前所有索引

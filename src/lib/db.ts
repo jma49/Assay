@@ -24,8 +24,8 @@ const downloadFile = (url: string): Promise<Buffer> => {
           new Error(
             `Failed to read local file ${localFilePath}: ${
               error instanceof Error ? error.message : String(error)
-            }`
-          )
+            }`,
+          ),
         );
       }
       return;
@@ -39,8 +39,8 @@ const downloadFile = (url: string): Promise<Buffer> => {
             new Error(
               `Failed to download file from ${url}. Status: ${
                 response.statusCode
-              } ${response.statusMessage || ""}`
-            )
+              } ${response.statusMessage || ""}`,
+            ),
           );
           response.resume(); // 消耗响应数据以释放内存
           return;
@@ -56,16 +56,16 @@ const downloadFile = (url: string): Promise<Buffer> => {
         response.on("error", (error) => {
           reject(
             new Error(
-              `Error during HTTPS response from ${url}: ${error.message}`
-            )
+              `Error during HTTPS response from ${url}: ${error.message}`,
+            ),
           );
         });
       })
       .on("error", (error) => {
         reject(
           new Error(
-            `Error initiating HTTPS request to ${url}: ${error.message}`
-          )
+            `Error initiating HTTPS request to ${url}: ${error.message}`,
+          ),
         );
       });
   });
@@ -81,12 +81,12 @@ const prepareSSLFiles = async () => {
     } catch (error) {
       console.error(
         `[prepareSSLFiles] Failed to create directory ${tmpDir}:`,
-        error
+        error,
       );
       throw new Error(
         `[prepareSSLFiles] Critical setup failure: unable to create directory ${tmpDir}. ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }
@@ -97,7 +97,7 @@ const prepareSSLFiles = async () => {
 
   if (!clientKeyUrl || !clientCertUrl || !caCertUrl) {
     console.warn(
-      "[prepareSSLFiles] SSL certificate URLs (CLIENT_KEY_BLOB_URL, CLIENT_CERT_BLOB_URL, CA_CERT_BLOB_URL) are not fully provided. SSL connection will likely fail if required."
+      "[prepareSSLFiles] SSL certificate URLs (CLIENT_KEY_BLOB_URL, CLIENT_CERT_BLOB_URL, CA_CERT_BLOB_URL) are not fully provided. SSL connection will likely fail if required.",
     );
     return null;
   }
@@ -105,7 +105,7 @@ const prepareSSLFiles = async () => {
   let caCertBuffer: Buffer;
   try {
     console.log(
-      "[prepareSSLFiles] Starting download of SSL files (Key, Cert, CA)..."
+      "[prepareSSLFiles] Starting download of SSL files (Key, Cert, CA)...",
     );
     const [clientKey, clientCert, downloadedCaCert] = await Promise.all([
       downloadFile(clientKeyUrl),
@@ -117,46 +117,46 @@ const prepareSSLFiles = async () => {
 
     // ---- 更详细的 CA 证书内容检查 ----
     console.log(
-      `[prepareSSLFiles] CA Cert Buffer downloaded. Byte length: ${caCertBuffer.length}`
+      `[prepareSSLFiles] CA Cert Buffer downloaded. Byte length: ${caCertBuffer.length}`,
     );
     const caCertString = caCertBuffer.toString("utf-8");
     console.log(
-      `[prepareSSLFiles] CA Cert converted to string. String length: ${caCertString.length}`
+      `[prepareSSLFiles] CA Cert converted to string. String length: ${caCertString.length}`,
     );
 
     const startsWithPemHeader = caCertString.startsWith(
-      "-----BEGIN CERTIFICATE-----"
+      "-----BEGIN CERTIFICATE-----",
     );
     // 检查时去除可能的尾部空白和换行符
     const endsWithPemFooter = caCertString
       .trimEnd()
       .endsWith("-----END CERTIFICATE-----");
     console.log(
-      `[prepareSSLFiles] CA Cert string starts with '-----BEGIN CERTIFICATE-----': ${startsWithPemHeader}`
+      `[prepareSSLFiles] CA Cert string starts with '-----BEGIN CERTIFICATE-----': ${startsWithPemHeader}`,
     );
     console.log(
-      `[prepareSSLFiles] CA Cert string (trimmed) ends with '-----END CERTIFICATE-----': ${endsWithPemFooter}`
+      `[prepareSSLFiles] CA Cert string (trimmed) ends with '-----END CERTIFICATE-----': ${endsWithPemFooter}`,
     );
 
     if (!startsWithPemHeader || !endsWithPemFooter) {
       console.error(
-        "[prepareSSLFiles] CRITICAL DIAGNOSTIC: Downloaded CA certificate content does NOT appear to have correct PEM start/end markers."
+        "[prepareSSLFiles] CRITICAL DIAGNOSTIC: Downloaded CA certificate content does NOT appear to have correct PEM start/end markers.",
       );
       // 记录部分内容帮助分析
       console.log(
         `[prepareSSLFiles] CA Cert Content (first 200 chars): ${caCertString
           .substring(0, 200)
-          .replace(/\n/g, "\\n")}...`
+          .replace(/\n/g, "\\n")}...`,
       );
       console.log(
         `[prepareSSLFiles] CA Cert Content (last 200 chars): ...${caCertString
           .substring(Math.max(0, caCertString.length - 200))
-          .replace(/\n/g, "\\n")}`
+          .replace(/\n/g, "\\n")}`,
       );
       // 即使标记不正确，也继续尝试，但这个日志非常重要
     } else {
       console.log(
-        "[prepareSSLFiles] Downloaded CA certificate content appears to have correct PEM start/end markers."
+        "[prepareSSLFiles] Downloaded CA certificate content appears to have correct PEM start/end markers.",
       );
       // 记录完整内容到日志 - Vercel可能会截断，但尽力而为
       // console.log("[prepareSSLFiles] Full CA Cert String (may be truncated by logger):\n", caCertString);
@@ -170,7 +170,7 @@ const prepareSSLFiles = async () => {
     fs.writeFileSync(clientCertPath, clientCert);
     fs.writeFileSync(caCertPath, caCertBuffer);
     console.log(
-      `[prepareSSLFiles] SSL files written to /tmp for debugging: ${clientKeyPath}, ${clientCertPath}, ${caCertPath}`
+      `[prepareSSLFiles] SSL files written to /tmp for debugging: ${clientKeyPath}, ${clientCertPath}, ${caCertPath}`,
     );
 
     return {
@@ -181,12 +181,12 @@ const prepareSSLFiles = async () => {
   } catch (error) {
     console.error(
       "[prepareSSLFiles] Failed to prepare SSL files (download, content check, or write):",
-      error
+      error,
     );
     throw new Error(
       `[prepareSSLFiles] Failed to prepare SSL files: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 };
@@ -206,32 +206,32 @@ const createPool = async () => {
     sslPreparationAttempted = true;
     try {
       console.log(
-        "[createPool] Attempting to prepare SSL files from BLOB URLs..."
+        "[createPool] Attempting to prepare SSL files from BLOB URLs...",
       );
       sslFiles = await prepareSSLFiles();
       if (!sslFiles) {
         // This case should ideally be handled within prepareSSLFiles by throwing an error if URLs are present but download fails.
         // However, if prepareSSLFiles returns null despite URLs being present, we log it.
         console.warn(
-          "[createPool] prepareSSLFiles returned null despite SSL URLs being provided. This might indicate an issue in prepareSSLFiles logic or file content."
+          "[createPool] prepareSSLFiles returned null despite SSL URLs being provided. This might indicate an issue in prepareSSLFiles logic or file content.",
         );
         // We will proceed without these sslFiles, allowing pg to use connection string params.
       } else {
         console.log(
-          "[createPool] SSL files successfully prepared from BLOB URLs."
+          "[createPool] SSL files successfully prepared from BLOB URLs.",
         );
       }
     } catch (error) {
       sslPreparationError = error;
       console.error(
         "[createPool] Error during SSL file preparation from BLOB URLs:",
-        error
+        error,
       );
       // Do not throw here, let it fallback to connection string if possible
     }
   } else {
     console.log(
-      "[createPool] SSL BLOB URLs not fully provided. Will rely on DATABASE_URL parameters for SSL if required."
+      "[createPool] SSL BLOB URLs not fully provided. Will rely on DATABASE_URL parameters for SSL if required.",
     );
   }
 
@@ -255,7 +255,7 @@ const createPool = async () => {
     };
     poolConfig.ssl = sslOptions;
     console.log(
-      "[createPool] SSL configuration applied from downloaded certs (key, cert, ca Buffers)."
+      "[createPool] SSL configuration applied from downloaded certs (key, cert, ca Buffers).",
     );
   } else if (sslPreparationAttempted && sslPreparationError) {
     // If preparation was attempted from URLs but failed, and SSL is required by URL params,
@@ -267,14 +267,14 @@ const createPool = async () => {
           ? sslPreparationError.message
           : String(sslPreparationError)
       }. ` +
-        "Proceeding to let pg library attempt connection using DATABASE_URL parameters."
+        "Proceeding to let pg library attempt connection using DATABASE_URL parameters.",
     );
     // No explicit poolConfig.ssl is set here, pg will use connection string.
   } else if (!sslPreparationAttempted && sslRequiredByUrlParams) {
     // If SSL URLs were not provided, but DATABASE_URL indicates SSL is needed (e.g. sslmode=verify-full and sslrootcert is present)
     // Log that we are relying on pg to handle SSL via connection string.
     console.log(
-      "[createPool] SSL BLOB URLs not provided. Relying on pg library to handle SSL based on DATABASE_URL parameters (e.g., sslmode, sslrootcert)."
+      "[createPool] SSL BLOB URLs not provided. Relying on pg library to handle SSL based on DATABASE_URL parameters (e.g., sslmode, sslrootcert).",
     );
     // No explicit poolConfig.ssl is set here, pg will use connection string.
   } else if (!sslRequiredByUrlParams && !sslFiles) {
@@ -282,7 +282,7 @@ const createPool = async () => {
     // This could be a non-SSL connection or SSL configured entirely by connection string without explicit sslmode=require/verify-*
     console.log(
       "[createPool] Attempting database connection. SSL not explicitly required by sslmode in DATABASE_URL and no SSL files prepared via BLOB URLs. " +
-        "If SSL is needed, it must be fully specified in DATABASE_URL."
+        "If SSL is needed, it must be fully specified in DATABASE_URL.",
     );
   }
 
@@ -299,26 +299,26 @@ const createPool = async () => {
                   typeof v === "boolean"
                     ? v
                     : `Buffer(length:${(v as Buffer).length})`,
-                ])
+                ]),
               ),
             }
           : undefined,
       },
       null,
-      2
-    )
+      2,
+    ),
   );
 
   try {
     const pool = new Pool(poolConfig);
     console.log(
-      "[createPool] Database pool configured and new Pool() called. Attempting to connect..."
+      "[createPool] Database pool configured and new Pool() called. Attempting to connect...",
     );
     return pool;
   } catch (poolError) {
     console.error(
       "[createPool] Failed to create database pool (new Pool(poolConfig) threw error):",
-      poolError
+      poolError,
     );
     throw poolError;
   }
@@ -352,7 +352,7 @@ export const testConnection = async () => {
 // Execute SQL query
 export const query = async (
   text: string,
-  params?: unknown[]
+  params?: unknown[],
 ): Promise<QueryResult> => {
   try {
     const pool = await getPool();

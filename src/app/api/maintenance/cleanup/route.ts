@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
-    const stats = await batchExecutionCache.getCacheStats();
+    const stats = await batchExecutionCache.getExecutionStats();
     const activeExecutions = await batchExecutionCache.getActiveExecutions();
 
     // 获取Redis内存使用信息
@@ -165,8 +165,8 @@ export async function GET() {
       success: true,
       stats: {
         batchExecutions: {
-          active: stats.activeExecutions,
-          total: stats.totalKeys,
+          active: stats.activeCount,
+          total: stats.totalExecutions,
           activeIds: activeExecutions.length,
         },
         redis: {
@@ -179,11 +179,18 @@ export async function GET() {
         },
         connectionStatus: redisClient.getConnectionStatus(),
       },
-      recommendations: generateCleanupRecommendations(stats, {
-        memoryUsed: parseInt(memoryUsed || "0"),
-        totalKeys,
-        activeExecutions: stats.activeExecutions,
-      }),
+      recommendations: generateCleanupRecommendations(
+        {
+          activeExecutions: stats.activeCount,
+          totalKeys: stats.totalExecutions,
+          memoryUsage: parseInt(memoryUsed || "0"),
+        },
+        {
+          memoryUsed: parseInt(memoryUsed || "0"),
+          totalKeys,
+          activeExecutions: stats.activeCount,
+        },
+      ),
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -196,7 +203,7 @@ export async function GET() {
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -222,7 +229,7 @@ function generateCleanupRecommendations(
     memoryUsed: number;
     totalKeys: number;
     activeExecutions: number;
-  }
+  },
 ): string[] {
   const recommendations: string[] = [];
 

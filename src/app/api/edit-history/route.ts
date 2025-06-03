@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     if (!scriptId || !operation) {
       return NextResponse.json(
         { error: "缺少必要参数：scriptId 和 operation" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
             fieldDisplayName: displayNames.en,
             fieldDisplayNameCn: displayNames.cn,
           };
-        }
+        },
       ) || [];
 
     // 生成默认描述（双语）
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     const collection = await getEditHistoryCollection();
     const result = await collection.insertOne(
-      editHistory as Omit<EditHistoryRecord, "_id">
+      editHistory as Omit<EditHistoryRecord, "_id">,
     );
 
     return NextResponse.json({

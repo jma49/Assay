@@ -1,18 +1,38 @@
 "use client"; // Assuming client-side interactions might be added later
 
-import React, { useCallback, useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import React, { useCallback, useState, useEffect } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Home, BarChart2, Filter, RefreshCw, TrendingUp, Activity, Target, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
-import { useLanguage } from '@/components/LanguageProvider';
-import { dashboardTranslations, DashboardTranslationKeys } from '@/components/dashboard/types';
+import {
+  Home,
+  BarChart2,
+  Filter,
+  RefreshCw,
+  TrendingUp,
+  Activity,
+  Target,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+} from "lucide-react";
+import { useLanguage } from "@/components/LanguageProvider";
+import {
+  dashboardTranslations,
+  DashboardTranslationKeys,
+} from "@/components/dashboard/types";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatDate } from '@/components/dashboard/utils';
-import UserHeader from '@/components/UserHeader';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { formatDate } from "@/components/dashboard/utils";
+import UserHeader from "@/components/UserHeader";
 
 // 添加进度条动画样式
 const progressAnimationStyle = `
@@ -144,7 +164,7 @@ const progressAnimationStyle = `
 interface ExecutionRecord {
   _id: string;
   scriptId: string;
-  statusType: 'success' | 'failed' | 'attention_needed';
+  statusType: "success" | "failed" | "attention_needed";
   executionMessage: string;
   findings: string;
   createdAt: string;
@@ -183,158 +203,185 @@ interface AnalyticsData {
 
 // 时间范围选项
 const TIME_RANGES = {
-  '7d': { label: 'last7Days', days: 7 },
-  '30d': { label: 'last30Days', days: 30 },
-  '90d': { label: 'last90Days', days: 90 },
-  'all': { label: 'allTime', days: null }
+  "7d": { label: "last7Days", days: 7 },
+  "30d": { label: "last30Days", days: 30 },
+  "90d": { label: "last90Days", days: 90 },
+  all: { label: "allTime", days: null },
 };
 
 export default function DataAnalysisPage() {
   const { language } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
-  const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
-  const [selectedScript, setSelectedScript] = useState<string>('all');
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
+    null,
+  );
+  const [selectedTimeRange, setSelectedTimeRange] = useState("7d");
+  const [selectedScript, setSelectedScript] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
 
   const t = useCallback(
     (key: DashboardTranslationKeys | string): string => {
-      const langTranslations = dashboardTranslations[language] || dashboardTranslations.en;
+      const langTranslations =
+        dashboardTranslations[language] || dashboardTranslations.en;
       return (langTranslations as Record<string, string>)[key] || key;
     },
-    [language]
+    [language],
   );
 
   // 生成日趋势数据
   const generateDailyTrend = useCallback((executions: ExecutionRecord[]) => {
     const dailyMap = new Map();
-    
-    executions.forEach(execution => {
-      const date = new Date(execution.createdAt).toISOString().split('T')[0];
+
+    executions.forEach((execution) => {
+      const date = new Date(execution.createdAt).toISOString().split("T")[0];
       if (!dailyMap.has(date)) {
         dailyMap.set(date, { date, executions: 0, successes: 0, failures: 0 });
       }
-      
+
       const day = dailyMap.get(date);
       day.executions++;
-      if (execution.statusType === 'success') {
+      if (execution.statusType === "success") {
         day.successes++;
       } else {
         day.failures++;
       }
     });
 
-    return Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+    return Array.from(dailyMap.values()).sort((a, b) =>
+      a.date.localeCompare(b.date),
+    );
   }, []);
 
   // 生成脚本分析数据
-  const generateScriptAnalytics = useCallback((executions: ExecutionRecord[], scripts: Record<string, unknown>[]): ScriptAnalytics[] => {
-    const scriptMap = new Map();
+  const generateScriptAnalytics = useCallback(
+    (
+      executions: ExecutionRecord[],
+      scripts: Record<string, unknown>[],
+    ): ScriptAnalytics[] => {
+      const scriptMap = new Map();
 
-    scripts.forEach((script: Record<string, unknown>) => {
-      const scriptId = script.scriptId as string;
-      const scriptName = script.name as string;
-      scriptMap.set(scriptId, {
-        scriptId,
-        scriptName: scriptName || scriptId,
-        totalExecutions: 0,
-        successCount: 0,
-        failedCount: 0,
-        attentionCount: 0,
-        successRate: 0,
-        avgExecutionTime: 0,
-        lastExecution: ''
+      scripts.forEach((script: Record<string, unknown>) => {
+        const scriptId = script.scriptId as string;
+        const scriptName = script.name as string;
+        scriptMap.set(scriptId, {
+          scriptId,
+          scriptName: scriptName || scriptId,
+          totalExecutions: 0,
+          successCount: 0,
+          failedCount: 0,
+          attentionCount: 0,
+          successRate: 0,
+          avgExecutionTime: 0,
+          lastExecution: "",
+        });
       });
-    });
 
-    executions.forEach(execution => {
-      if (scriptMap.has(execution.scriptId)) {
-        const analytics = scriptMap.get(execution.scriptId);
-        analytics.totalExecutions++;
-        
-        switch (execution.statusType) {
-          case 'success':
-            analytics.successCount++;
-            break;
-          case 'failed':
-            analytics.failedCount++;
-            break;
-          case 'attention_needed':
-            analytics.attentionCount++;
-            break;
+      executions.forEach((execution) => {
+        if (scriptMap.has(execution.scriptId)) {
+          const analytics = scriptMap.get(execution.scriptId);
+          analytics.totalExecutions++;
+
+          switch (execution.statusType) {
+            case "success":
+              analytics.successCount++;
+              break;
+            case "failed":
+              analytics.failedCount++;
+              break;
+            case "attention_needed":
+              analytics.attentionCount++;
+              break;
+          }
+
+          if (
+            !analytics.lastExecution ||
+            execution.createdAt > analytics.lastExecution
+          ) {
+            analytics.lastExecution = execution.createdAt;
+          }
         }
+      });
 
-        if (!analytics.lastExecution || execution.createdAt > analytics.lastExecution) {
-          analytics.lastExecution = execution.createdAt;
-        }
-      }
-    });
-
-    return Array.from(scriptMap.values())
-      .map(analytics => ({
-        ...analytics,
-        successRate: analytics.totalExecutions > 0 ? (analytics.successCount / analytics.totalExecutions) * 100 : 0
-      }))
-      .sort((a, b) => b.totalExecutions - a.totalExecutions);
-  }, []);
+      return Array.from(scriptMap.values())
+        .map((analytics) => ({
+          ...analytics,
+          successRate:
+            analytics.totalExecutions > 0
+              ? (analytics.successCount / analytics.totalExecutions) * 100
+              : 0,
+        }))
+        .sort((a, b) => b.totalExecutions - a.totalExecutions);
+    },
+    [],
+  );
 
   // 数据处理函数
-  const processAnalyticsData = useCallback((executions: ExecutionRecord[], scripts: Record<string, unknown>[]): AnalyticsData => {
-    // 状态分布统计
-    const statusDistribution = {
-      success: executions.filter(e => e.statusType === 'success').length,
-      failed: executions.filter(e => e.statusType === 'failed').length,
-      attention_needed: executions.filter(e => e.statusType === 'attention_needed').length
-    };
+  const processAnalyticsData = useCallback(
+    (
+      executions: ExecutionRecord[],
+      scripts: Record<string, unknown>[],
+    ): AnalyticsData => {
+      // 状态分布统计
+      const statusDistribution = {
+        success: executions.filter((e) => e.statusType === "success").length,
+        failed: executions.filter((e) => e.statusType === "failed").length,
+        attention_needed: executions.filter(
+          (e) => e.statusType === "attention_needed",
+        ).length,
+      };
 
-    // 按日期分组的趋势数据
-    const dailyTrend = generateDailyTrend(executions);
+      // 按日期分组的趋势数据
+      const dailyTrend = generateDailyTrend(executions);
 
-    // 脚本分析数据
-    const scriptAnalytics = generateScriptAnalytics(executions, scripts);
+      // 脚本分析数据
+      const scriptAnalytics = generateScriptAnalytics(executions, scripts);
 
-    const totalExecutions = executions.length;
-    const successCount = statusDistribution.success;
-    const overallSuccessRate = totalExecutions > 0 ? (successCount / totalExecutions) * 100 : 0;
+      const totalExecutions = executions.length;
+      const successCount = statusDistribution.success;
+      const overallSuccessRate =
+        totalExecutions > 0 ? (successCount / totalExecutions) * 100 : 0;
 
-    return {
-      totalExecutions,
-      totalScripts: scripts.length,
-      overallSuccessRate,
-      dailyTrend,
-      scriptAnalytics,
-      statusDistribution
-    };
-  }, [generateDailyTrend, generateScriptAnalytics]);
+      return {
+        totalExecutions,
+        totalScripts: scripts.length,
+        overallSuccessRate,
+        dailyTrend,
+        scriptAnalytics,
+        statusDistribution,
+      };
+    },
+    [generateDailyTrend, generateScriptAnalytics],
+  );
 
   // 获取分析数据
   const fetchAnalyticsData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const timeRange = TIME_RANGES[selectedTimeRange as keyof typeof TIME_RANGES];
+      const timeRange =
+        TIME_RANGES[selectedTimeRange as keyof typeof TIME_RANGES];
       const params = new URLSearchParams();
-      
+
       if (timeRange.days) {
         const endDate = new Date();
         const startDate = new Date();
         startDate.setDate(endDate.getDate() - timeRange.days);
-        params.append('startDate', startDate.toISOString());
-        params.append('endDate', endDate.toISOString());
+        params.append("startDate", startDate.toISOString());
+        params.append("endDate", endDate.toISOString());
       }
-      
-      if (selectedScript !== 'all') {
-        params.append('scriptId', selectedScript);
+
+      if (selectedScript !== "all") {
+        params.append("scriptId", selectedScript);
       }
 
       const [executionsResponse, scriptsResponse] = await Promise.all([
         fetch(`/api/execution-history?${params.toString()}`),
-        fetch('/api/scripts')
+        fetch("/api/scripts"),
       ]);
 
       if (!executionsResponse.ok || !scriptsResponse.ok) {
-        throw new Error('Failed to fetch data');
+        throw new Error("Failed to fetch data");
       }
 
       const executions: ExecutionRecord[] = await executionsResponse.json();
@@ -343,22 +390,43 @@ export default function DataAnalysisPage() {
       // 处理数据分析
       const analytics = processAnalyticsData(executions, scripts);
       setAnalyticsData(analytics);
-
     } catch (err) {
-      console.error('Failed to fetch analytics data:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      console.error("Failed to fetch analytics data:", err);
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsLoading(false);
     }
   }, [selectedTimeRange, selectedScript, processAnalyticsData]);
 
   // 获取成功率的颜色和状态
-  const getSuccessRateStatus = useCallback((rate: number) => {
-    if (rate >= 95) return { color: 'bg-green-500', text: 'text-green-700', label: t('performanceExcellent') };
-    if (rate >= 85) return { color: 'bg-blue-500', text: 'text-blue-700', label: t('performanceGood') };
-    if (rate >= 70) return { color: 'bg-yellow-500', text: 'text-yellow-700', label: t('performanceAverage') };
-    return { color: 'bg-red-500', text: 'text-red-700', label: t('performanceNeedsAttention') };
-  }, [t]);
+  const getSuccessRateStatus = useCallback(
+    (rate: number) => {
+      if (rate >= 95)
+        return {
+          color: "bg-green-500",
+          text: "text-green-700",
+          label: t("performanceExcellent"),
+        };
+      if (rate >= 85)
+        return {
+          color: "bg-blue-500",
+          text: "text-blue-700",
+          label: t("performanceGood"),
+        };
+      if (rate >= 70)
+        return {
+          color: "bg-yellow-500",
+          text: "text-yellow-700",
+          label: t("performanceAverage"),
+        };
+      return {
+        color: "bg-red-500",
+        text: "text-red-700",
+        label: t("performanceNeedsAttention"),
+      };
+    },
+    [t],
+  );
 
   useEffect(() => {
     fetchAnalyticsData();
@@ -369,7 +437,7 @@ export default function DataAnalysisPage() {
       <UserHeader />
       {/* 注入样式 */}
       <style dangerouslySetInnerHTML={{ __html: progressAnimationStyle }} />
-      
+
       <div className="relative z-10 max-w-7xl mx-auto">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
           <div className="space-y-8">
@@ -378,13 +446,13 @@ export default function DataAnalysisPage() {
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                 <div className="space-y-3">
                   <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent leading-tight py-1">
-                    {t('dataAnalysisTitle')}
+                    {t("dataAnalysisTitle")}
                   </h1>
                   <p className="text-lg text-muted-foreground leading-relaxed">
-                    {t('dataAnalysisSubTitle')}
+                    {t("dataAnalysisSubTitle")}
                   </p>
                 </div>
-                
+
                 <div className="flex gap-3">
                   <Button
                     onClick={fetchAnalyticsData}
@@ -393,14 +461,21 @@ export default function DataAnalysisPage() {
                     size="lg"
                     className="group shadow-md hover:shadow-lg transition-all duration-300"
                   >
-                    <RefreshCw className={`mr-2 h-5 w-5 transition-transform ${isLoading ? 'animate-spin' : 'group-hover:rotate-180'}`} />
-                    {isLoading ? t('loading') : t('refresh')}
+                    <RefreshCw
+                      className={`mr-2 h-5 w-5 transition-transform ${isLoading ? "animate-spin" : "group-hover:rotate-180"}`}
+                    />
+                    {isLoading ? t("loading") : t("refresh")}
                   </Button>
                   <Link href="/" passHref legacyBehavior>
-                    <Button variant="outline" size="lg" className="group shadow-md hover:shadow-lg transition-all duration-300" asChild>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="group shadow-md hover:shadow-lg transition-all duration-300"
+                      asChild
+                    >
                       <a>
                         <Home className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                        {t('backToDashboardButton')}
+                        {t("backToDashboardButton")}
                       </a>
                     </Button>
                   </Link>
@@ -411,7 +486,7 @@ export default function DataAnalysisPage() {
             {/* 筛选控制 - 简化设计 */}
             <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-              
+
               <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
                 <div className="flex items-center gap-4">
                   <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
@@ -419,43 +494,60 @@ export default function DataAnalysisPage() {
                   </div>
                   <div className="space-y-2">
                     <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
-                      {t('filterConditions')}
+                      {t("filterConditions")}
                     </CardTitle>
                   </div>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="relative px-6 py-6">
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2">
                   <div className="space-y-3">
-                    <Label htmlFor="time-range" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Label
+                      htmlFor="time-range"
+                      className="text-sm font-semibold text-foreground flex items-center gap-2"
+                    >
                       <BarChart2 className="h-4 w-4 text-primary" />
-                      {t('timeRangeFilter')}
+                      {t("timeRangeFilter")}
                     </Label>
-                    <Select value={selectedTimeRange} onValueChange={setSelectedTimeRange}>
+                    <Select
+                      value={selectedTimeRange}
+                      onValueChange={setSelectedTimeRange}
+                    >
                       <SelectTrigger className="h-12 text-base border-2 border-border/50 bg-background/50">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {Object.entries(TIME_RANGES).map(([key, range]) => (
-                          <SelectItem key={key} value={key}>{t(range.label)}</SelectItem>
+                          <SelectItem key={key} value={key}>
+                            {t(range.label)}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-3">
-                    <Label htmlFor="script-filter" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Label
+                      htmlFor="script-filter"
+                      className="text-sm font-semibold text-foreground flex items-center gap-2"
+                    >
                       <Target className="h-4 w-4 text-primary" />
-                      {t('scriptFilter')}
+                      {t("scriptFilter")}
                     </Label>
-                    <Select value={selectedScript} onValueChange={setSelectedScript}>
+                    <Select
+                      value={selectedScript}
+                      onValueChange={setSelectedScript}
+                    >
                       <SelectTrigger className="h-12 text-base border-2 border-border/50 bg-background/50">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">{t('allScripts')}</SelectItem>
-                        {analyticsData?.scriptAnalytics.map(script => (
-                          <SelectItem key={script.scriptId} value={script.scriptId}>
+                        <SelectItem value="all">{t("allScripts")}</SelectItem>
+                        {analyticsData?.scriptAnalytics.map((script) => (
+                          <SelectItem
+                            key={script.scriptId}
+                            value={script.scriptId}
+                          >
                             {script.scriptName}
                           </SelectItem>
                         ))}
@@ -474,14 +566,21 @@ export default function DataAnalysisPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400">{t('totalExecutions')}</p>
-                        <p className="text-3xl font-bold text-blue-800 dark:text-blue-200">{analyticsData.totalExecutions.toLocaleString()}</p>
+                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                          {t("totalExecutions")}
+                        </p>
+                        <p className="text-3xl font-bold text-blue-800 dark:text-blue-200">
+                          {analyticsData.totalExecutions.toLocaleString()}
+                        </p>
                       </div>
                       <Activity className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="mt-4">
-                      <Badge variant="secondary" className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200">
-                        {analyticsData.totalScripts} {t('scriptsCount')}
+                      <Badge
+                        variant="secondary"
+                        className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200"
+                      >
+                        {analyticsData.totalScripts} {t("scriptsCount")}
                       </Badge>
                     </div>
                   </CardContent>
@@ -492,7 +591,9 @@ export default function DataAnalysisPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-green-600 dark:text-green-400">{t('overallSuccessRate')}</p>
+                        <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                          {t("overallSuccessRate")}
+                        </p>
                         <p className="text-3xl font-bold text-green-800 dark:text-green-200">
                           {analyticsData.overallSuccessRate.toFixed(1)}%
                         </p>
@@ -500,12 +601,15 @@ export default function DataAnalysisPage() {
                       <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
                     </div>
                     <div className="mt-4 space-y-2">
-                      <Progress 
-                        value={analyticsData.overallSuccessRate} 
+                      <Progress
+                        value={analyticsData.overallSuccessRate}
                         className="h-2"
                       />
                       <p className="text-xs text-green-600 dark:text-green-400">
-                        {getSuccessRateStatus(analyticsData.overallSuccessRate).label}
+                        {
+                          getSuccessRateStatus(analyticsData.overallSuccessRate)
+                            .label
+                        }
                       </p>
                     </div>
                   </CardContent>
@@ -516,7 +620,9 @@ export default function DataAnalysisPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{t('successfulExecutions')}</p>
+                        <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                          {t("successfulExecutions")}
+                        </p>
                         <p className="text-3xl font-bold text-emerald-800 dark:text-emerald-200">
                           {analyticsData.statusDistribution.success.toLocaleString()}
                         </p>
@@ -525,7 +631,12 @@ export default function DataAnalysisPage() {
                     </div>
                     <div className="mt-4">
                       <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                        {((analyticsData.statusDistribution.success / analyticsData.totalExecutions) * 100).toFixed(1)}% {t('of')} {t('totalExecutions')}
+                        {(
+                          (analyticsData.statusDistribution.success /
+                            analyticsData.totalExecutions) *
+                          100
+                        ).toFixed(1)}
+                        % {t("of")} {t("totalExecutions")}
                       </p>
                     </div>
                   </CardContent>
@@ -536,19 +647,29 @@ export default function DataAnalysisPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-red-600 dark:text-red-400">{t('failedAttentionExecutions')}</p>
+                        <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                          {t("failedAttentionExecutions")}
+                        </p>
                         <p className="text-3xl font-bold text-red-800 dark:text-red-200">
-                          {(analyticsData.statusDistribution.failed + analyticsData.statusDistribution.attention_needed).toLocaleString()}
+                          {(
+                            analyticsData.statusDistribution.failed +
+                            analyticsData.statusDistribution.attention_needed
+                          ).toLocaleString()}
                         </p>
                       </div>
                       <AlertTriangle className="h-8 w-8 text-red-600 dark:text-red-400" />
                     </div>
                     <div className="mt-4 flex gap-2">
                       <Badge variant="destructive" className="text-xs">
-                        {analyticsData.statusDistribution.failed} {t('failedLabel')}
+                        {analyticsData.statusDistribution.failed}{" "}
+                        {t("failedLabel")}
                       </Badge>
-                      <Badge variant="outline" className="text-xs text-orange-600 border-orange-300">
-                        {analyticsData.statusDistribution.attention_needed} {t('attentionLabel')}
+                      <Badge
+                        variant="outline"
+                        className="text-xs text-orange-600 border-orange-300"
+                      >
+                        {analyticsData.statusDistribution.attention_needed}{" "}
+                        {t("attentionLabel")}
                       </Badge>
                     </div>
                   </CardContent>
@@ -560,7 +681,7 @@ export default function DataAnalysisPage() {
             {analyticsData && analyticsData.dailyTrend.length > 0 && (
               <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-                
+
                 <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
                   <div className="flex items-center gap-4">
                     <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
@@ -568,122 +689,146 @@ export default function DataAnalysisPage() {
                     </div>
                     <div className="space-y-2">
                       <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
-                        {t('executionTrend')}
+                        {t("executionTrend")}
                       </CardTitle>
                     </div>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="relative px-6 py-6">
                   <div className="space-y-3">
-                    {analyticsData.dailyTrend.slice(-14).reverse().map((day, index) => {
-                      const successRate = day.executions > 0 ? (day.successes / day.executions) * 100 : 0;
-                      
-                      return (
-                        <div 
-                          key={day.date} 
-                          className="trend-item group/item relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:scale-[1.01] border border-border/30 bg-gradient-to-r from-background/60 to-background/90 hover:from-background/80 hover:to-background/95 hover:border-border/50 shadow-sm hover:shadow-md"
-                          style={{ animationDelay: `${index * 0.1}s` }}
-                        >
-                          {/* 装饰性渐变背景 */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity duration-500" />
-                          
-                          <div className="relative flex items-center gap-4">
-                            {/* 日期卡片 - 统一样式 */}
-                            <div className="flex-none">
-                              <div className="w-16 h-14 rounded-xl flex flex-col items-center justify-center text-xs font-medium transition-all duration-300 shadow-sm group-hover/item:shadow-md bg-gradient-to-br from-muted/80 to-muted/60 text-muted-foreground border border-border/40 hover:border-border/60">
-                                <div className="font-mono font-bold text-sm">
-                                  {formatDate(day.date, language).split(' ')[0].split('-')[2] || formatDate(day.date, language).split(' ')[0].split('/')[1]}
-                                </div>
-                                <div className="text-[10px] opacity-80 font-medium">
-                                  {formatDate(day.date, language).split(' ')[0].split('-')[1] || formatDate(day.date, language).split(' ')[0].split('/')[0]}月
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {/* 主要内容区域 */}
-                            <div className="flex-1 min-w-0 space-y-3">
-                              {/* 顶部信息行 */}
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <span className="text-sm font-semibold text-foreground">
-                                    {day.executions} {t('executionsLabel')}
-                                  </span>
-                                  {day.executions > 0 && (
-                                    <Badge 
-                                      variant="outline" 
-                                      className={`text-xs font-medium px-3 py-1 transition-all duration-300 shadow-sm ${
-                                        successRate >= 95 ? 'border-emerald-300 text-emerald-700 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:border-emerald-600 dark:text-emerald-300 dark:from-emerald-950/40 dark:to-emerald-950/20' :
-                                        successRate >= 85 ? 'border-blue-300 text-blue-700 bg-gradient-to-r from-blue-50 to-blue-100 dark:border-blue-600 dark:text-blue-300 dark:from-blue-950/40 dark:to-blue-950/20' :
-                                        successRate >= 70 ? 'border-amber-300 text-amber-700 bg-gradient-to-r from-amber-50 to-amber-100 dark:border-amber-600 dark:text-amber-300 dark:from-amber-950/40 dark:to-amber-950/20' :
-                                        'border-red-300 text-red-700 bg-gradient-to-r from-red-50 to-red-100 dark:border-red-600 dark:text-red-300 dark:from-red-950/40 dark:to-red-950/20'
-                                      }`}
-                                    >
-                                      {successRate.toFixed(1)}%
-                                    </Badge>
-                                  )}
-                                </div>
-                                
-                                {/* 统计数字 */}
-                                <div className="flex items-center gap-3 text-xs font-medium">
-                                  <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 transition-colors">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm"></div>
-                                    <span className="text-emerald-700 dark:text-emerald-300 font-semibold">{day.successes}</span>
+                    {analyticsData.dailyTrend
+                      .slice(-14)
+                      .reverse()
+                      .map((day, index) => {
+                        const successRate =
+                          day.executions > 0
+                            ? (day.successes / day.executions) * 100
+                            : 0;
+
+                        return (
+                          <div
+                            key={day.date}
+                            className="trend-item group/item relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:scale-[1.01] border border-border/30 bg-gradient-to-r from-background/60 to-background/90 hover:from-background/80 hover:to-background/95 hover:border-border/50 shadow-sm hover:shadow-md"
+                            style={{ animationDelay: `${index * 0.1}s` }}
+                          >
+                            {/* 装饰性渐变背景 */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity duration-500" />
+
+                            <div className="relative flex items-center gap-4">
+                              {/* 日期卡片 - 统一样式 */}
+                              <div className="flex-none">
+                                <div className="w-16 h-14 rounded-xl flex flex-col items-center justify-center text-xs font-medium transition-all duration-300 shadow-sm group-hover/item:shadow-md bg-gradient-to-br from-muted/80 to-muted/60 text-muted-foreground border border-border/40 hover:border-border/60">
+                                  <div className="font-mono font-bold text-sm">
+                                    {formatDate(day.date, language)
+                                      .split(" ")[0]
+                                      .split("-")[2] ||
+                                      formatDate(day.date, language)
+                                        .split(" ")[0]
+                                        .split("/")[1]}
                                   </div>
-                                  {day.failures > 0 && (
-                                    <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-red-50 dark:bg-red-950/30 transition-colors">
-                                      <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-sm"></div>
-                                      <span className="text-red-700 dark:text-red-300 font-semibold">{day.failures}</span>
-                                    </div>
-                                  )}
+                                  <div className="text-[10px] opacity-80 font-medium">
+                                    {formatDate(day.date, language)
+                                      .split(" ")[0]
+                                      .split("-")[1] ||
+                                      formatDate(day.date, language)
+                                        .split(" ")[0]
+                                        .split("/")[0]}
+                                    月
+                                  </div>
                                 </div>
                               </div>
-                              
-                              {/* 进度条 */}
-                              <div className="relative">
-                                <div className="h-4 rounded-full bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 overflow-hidden shadow-inner border border-gray-200/50 dark:border-gray-600/50">
-                                  {day.executions > 0 && (
-                                    <>
-                                      {/* 成功部分 */}
-                                      <div 
-                                        className="absolute left-0 top-0 h-full bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 shadow-sm transition-all duration-700 ease-out relative overflow-hidden"
-                                        style={{ 
-                                          width: `${(day.successes / day.executions) * 100}%`,
-                                          animation: `progressFill 1s ease-out ${index * 0.1}s both`
-                                        }}
+
+                              {/* 主要内容区域 */}
+                              <div className="flex-1 min-w-0 space-y-3">
+                                {/* 顶部信息行 */}
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-sm font-semibold text-foreground">
+                                      {day.executions} {t("executionsLabel")}
+                                    </span>
+                                    {day.executions > 0 && (
+                                      <Badge
+                                        variant="outline"
+                                        className={`text-xs font-medium px-3 py-1 transition-all duration-300 shadow-sm ${
+                                          successRate >= 95
+                                            ? "border-emerald-300 text-emerald-700 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:border-emerald-600 dark:text-emerald-300 dark:from-emerald-950/40 dark:to-emerald-950/20"
+                                            : successRate >= 85
+                                              ? "border-blue-300 text-blue-700 bg-gradient-to-r from-blue-50 to-blue-100 dark:border-blue-600 dark:text-blue-300 dark:from-blue-950/40 dark:to-blue-950/20"
+                                              : successRate >= 70
+                                                ? "border-amber-300 text-amber-700 bg-gradient-to-r from-amber-50 to-amber-100 dark:border-amber-600 dark:text-amber-300 dark:from-amber-950/40 dark:to-amber-950/20"
+                                                : "border-red-300 text-red-700 bg-gradient-to-r from-red-50 to-red-100 dark:border-red-600 dark:text-red-300 dark:from-red-950/40 dark:to-red-950/20"
+                                        }`}
                                       >
-                                        {/* 内部光效 */}
-                                        <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-white/20 to-transparent"></div>
+                                        {successRate.toFixed(1)}%
+                                      </Badge>
+                                    )}
+                                  </div>
+
+                                  {/* 统计数字 */}
+                                  <div className="flex items-center gap-3 text-xs font-medium">
+                                    <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 transition-colors">
+                                      <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm"></div>
+                                      <span className="text-emerald-700 dark:text-emerald-300 font-semibold">
+                                        {day.successes}
+                                      </span>
+                                    </div>
+                                    {day.failures > 0 && (
+                                      <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-red-50 dark:bg-red-950/30 transition-colors">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-sm"></div>
+                                        <span className="text-red-700 dark:text-red-300 font-semibold">
+                                          {day.failures}
+                                        </span>
                                       </div>
-                                      {/* 失败部分 */}
-                                      {day.failures > 0 && (
-                                        <div 
-                                          className="absolute top-0 h-full bg-gradient-to-r from-red-400 via-red-500 to-red-600 shadow-sm transition-all duration-700 ease-out relative overflow-hidden"
-                                          style={{ 
-                                            left: `${(day.successes / day.executions) * 100}%`,
-                                            width: `${(day.failures / day.executions) * 100}%`,
-                                            animation: `progressFill 1s ease-out ${index * 0.1 + 0.3}s both`
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* 进度条 */}
+                                <div className="relative">
+                                  <div className="h-4 rounded-full bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 overflow-hidden shadow-inner border border-gray-200/50 dark:border-gray-600/50">
+                                    {day.executions > 0 && (
+                                      <>
+                                        {/* 成功部分 */}
+                                        <div
+                                          className="absolute left-0 top-0 h-full bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 shadow-sm transition-all duration-700 ease-out relative overflow-hidden"
+                                          style={{
+                                            width: `${(day.successes / day.executions) * 100}%`,
+                                            animation: `progressFill 1s ease-out ${index * 0.1}s both`,
                                           }}
                                         >
                                           {/* 内部光效 */}
                                           <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-white/20 to-transparent"></div>
                                         </div>
-                                      )}
-                                      
-                                      {/* 顶部发光效果 */}
-                                      <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-white/10 to-white/30 opacity-0 group-hover/item:opacity-100 transition-opacity duration-500"></div>
-                                    </>
-                                  )}
+                                        {/* 失败部分 */}
+                                        {day.failures > 0 && (
+                                          <div
+                                            className="absolute top-0 h-full bg-gradient-to-r from-red-400 via-red-500 to-red-600 shadow-sm transition-all duration-700 ease-out relative overflow-hidden"
+                                            style={{
+                                              left: `${(day.successes / day.executions) * 100}%`,
+                                              width: `${(day.failures / day.executions) * 100}%`,
+                                              animation: `progressFill 1s ease-out ${index * 0.1 + 0.3}s both`,
+                                            }}
+                                          >
+                                            {/* 内部光效 */}
+                                            <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-white/20 to-transparent"></div>
+                                          </div>
+                                        )}
+
+                                        {/* 顶部发光效果 */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-white/10 to-white/30 opacity-0 group-hover/item:opacity-100 transition-opacity duration-500"></div>
+                                      </>
+                                    )}
+                                  </div>
+
+                                  {/* 动态光线扫过效果 */}
+                                  <div className="absolute inset-0 h-4 rounded-full bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-0 group-hover/item:opacity-100 transition-all duration-700 transform -skew-x-12 group-hover/item:animate-pulse"></div>
                                 </div>
-                                
-                                {/* 动态光线扫过效果 */}
-                                <div className="absolute inset-0 h-4 rounded-full bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-0 group-hover/item:opacity-100 transition-all duration-700 transform -skew-x-12 group-hover/item:animate-pulse"></div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 </CardContent>
               </Card>
@@ -693,7 +838,7 @@ export default function DataAnalysisPage() {
             {analyticsData && analyticsData.scriptAnalytics.length > 0 && (
               <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-                
+
                 <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
                   <div className="flex items-center gap-4">
                     <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
@@ -701,12 +846,12 @@ export default function DataAnalysisPage() {
                     </div>
                     <div className="space-y-2">
                       <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
-                        {t('scriptPerformanceAnalysis')}
+                        {t("scriptPerformanceAnalysis")}
                       </CardTitle>
                     </div>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="relative px-6 py-6">
                   <div className="space-y-6">
                     {analyticsData.scriptAnalytics
@@ -719,94 +864,136 @@ export default function DataAnalysisPage() {
                       })
                       .slice(0, 10)
                       .map((script, index) => {
-                      const successRateStatus = getSuccessRateStatus(script.successRate);
-                      
-                      return (
-                        <div key={script.scriptId} className="group/script p-4 rounded-lg border border-border/20 bg-background/30 hover:bg-background/50 transition-all duration-300 hover:shadow-md hover:border-border/40">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h4 className="font-semibold text-foreground truncate group-hover/script:text-primary transition-colors" title={script.scriptName}>
-                                  {script.scriptName}
-                                </h4>
-                                <Badge className={`font-medium px-3 py-1 transition-all duration-300 ${successRateStatus.color} text-white`}>
-                                  {script.successRate.toFixed(1)}%
-                                </Badge>
-                                {index < 3 && (
-                                  <Badge variant="outline" className="text-xs bg-yellow-50 border-yellow-200 text-yellow-700 dark:bg-yellow-950/30 dark:border-yellow-800 dark:text-yellow-300">
-                                    {t('topRanking')} {index + 1}
+                        const successRateStatus = getSuccessRateStatus(
+                          script.successRate,
+                        );
+
+                        return (
+                          <div
+                            key={script.scriptId}
+                            className="group/script p-4 rounded-lg border border-border/20 bg-background/30 hover:bg-background/50 transition-all duration-300 hover:shadow-md hover:border-border/40"
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <h4
+                                    className="font-semibold text-foreground truncate group-hover/script:text-primary transition-colors"
+                                    title={script.scriptName}
+                                  >
+                                    {script.scriptName}
+                                  </h4>
+                                  <Badge
+                                    className={`font-medium px-3 py-1 transition-all duration-300 ${successRateStatus.color} text-white`}
+                                  >
+                                    {script.successRate.toFixed(1)}%
                                   </Badge>
-                                )}
+                                  {index < 3 && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs bg-yellow-50 border-yellow-200 text-yellow-700 dark:bg-yellow-950/30 dark:border-yellow-800 dark:text-yellow-300"
+                                    >
+                                      {t("topRanking")} {index + 1}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground font-mono">
+                                  {script.scriptId}
+                                </p>
                               </div>
-                              <p className="text-sm text-muted-foreground font-mono">{script.scriptId}</p>
                             </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
-                            <div className="text-center p-3 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors">
-                              <div className="flex items-center justify-center gap-2 mb-1">
-                                <Activity className="h-4 w-4 text-primary" />
-                                <p className="text-xs font-medium text-muted-foreground">{t('executionsLabel')}</p>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
+                              <div className="text-center p-3 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors">
+                                <div className="flex items-center justify-center gap-2 mb-1">
+                                  <Activity className="h-4 w-4 text-primary" />
+                                  <p className="text-xs font-medium text-muted-foreground">
+                                    {t("executionsLabel")}
+                                  </p>
+                                </div>
+                                <p className="font-bold text-lg text-foreground">
+                                  {script.totalExecutions}
+                                </p>
                               </div>
-                              <p className="font-bold text-lg text-foreground">{script.totalExecutions}</p>
-                            </div>
-                            <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-950/20 hover:bg-green-100 dark:hover:bg-green-950/30 transition-colors">
-                              <div className="flex items-center justify-center gap-2 mb-1">
-                                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                <p className="text-xs font-medium text-green-600 dark:text-green-400">{t('successLabel')}</p>
+                              <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-950/20 hover:bg-green-100 dark:hover:bg-green-950/30 transition-colors">
+                                <div className="flex items-center justify-center gap-2 mb-1">
+                                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                  <p className="text-xs font-medium text-green-600 dark:text-green-400">
+                                    {t("successLabel")}
+                                  </p>
+                                </div>
+                                <p className="font-bold text-lg text-green-600">
+                                  {script.successCount}
+                                </p>
                               </div>
-                              <p className="font-bold text-lg text-green-600">{script.successCount}</p>
-                            </div>
-                            <div className="text-center p-3 rounded-lg bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/30 transition-colors">
-                              <div className="flex items-center justify-center gap-2 mb-1">
-                                <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                                <p className="text-xs font-medium text-red-600 dark:text-red-400">{t('failedLabel')}</p>
+                              <div className="text-center p-3 rounded-lg bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/30 transition-colors">
+                                <div className="flex items-center justify-center gap-2 mb-1">
+                                  <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                  <p className="text-xs font-medium text-red-600 dark:text-red-400">
+                                    {t("failedLabel")}
+                                  </p>
+                                </div>
+                                <p className="font-bold text-lg text-red-600">
+                                  {script.failedCount}
+                                </p>
                               </div>
-                              <p className="font-bold text-lg text-red-600">{script.failedCount}</p>
-                            </div>
-                            <div className="text-center p-3 rounded-lg bg-orange-50 dark:bg-orange-950/20 hover:bg-orange-100 dark:hover:bg-orange-950/30 transition-colors">
-                              <div className="flex items-center justify-center gap-2 mb-1">
-                                <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                                <p className="text-xs font-medium text-orange-600 dark:text-orange-400">{t('attentionLabel')}</p>
+                              <div className="text-center p-3 rounded-lg bg-orange-50 dark:bg-orange-950/20 hover:bg-orange-100 dark:hover:bg-orange-950/30 transition-colors">
+                                <div className="flex items-center justify-center gap-2 mb-1">
+                                  <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                                  <p className="text-xs font-medium text-orange-600 dark:text-orange-400">
+                                    {t("attentionLabel")}
+                                  </p>
+                                </div>
+                                <p className="font-bold text-lg text-orange-600">
+                                  {script.attentionCount}
+                                </p>
                               </div>
-                              <p className="font-bold text-lg text-orange-600">{script.attentionCount}</p>
                             </div>
-                          </div>
-                          
-                          {script.lastExecution && (
-                            <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground bg-muted/20 px-3 py-2 rounded-lg">
-                              <Clock className="h-3 w-3" />
-                              <span className="font-medium">{t('lastExecution')}:</span>
-                              <span className="font-mono">{formatDate(script.lastExecution, language)}</span>
-                              <div className="ml-auto flex items-center gap-2">
-                                <div className={`w-2 h-2 rounded-full ${
-                                  new Date(script.lastExecution) > new Date(Date.now() - 24 * 60 * 60 * 1000) 
-                                    ? 'bg-green-500 animate-pulse' 
-                                    : 'bg-gray-400'
-                                }`}></div>
-                                <span className="text-xs">
-                                  {new Date(script.lastExecution) > new Date(Date.now() - 24 * 60 * 60 * 1000) 
-                                    ? t('recentExecution')
-                                    : t('earlierExecution')
-                                  }
+
+                            {script.lastExecution && (
+                              <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground bg-muted/20 px-3 py-2 rounded-lg">
+                                <Clock className="h-3 w-3" />
+                                <span className="font-medium">
+                                  {t("lastExecution")}:
+                                </span>
+                                <span className="font-mono">
+                                  {formatDate(script.lastExecution, language)}
+                                </span>
+                                <div className="ml-auto flex items-center gap-2">
+                                  <div
+                                    className={`w-2 h-2 rounded-full ${
+                                      new Date(script.lastExecution) >
+                                      new Date(Date.now() - 24 * 60 * 60 * 1000)
+                                        ? "bg-green-500 animate-pulse"
+                                        : "bg-gray-400"
+                                    }`}
+                                  ></div>
+                                  <span className="text-xs">
+                                    {new Date(script.lastExecution) >
+                                    new Date(Date.now() - 24 * 60 * 60 * 1000)
+                                      ? t("recentExecution")
+                                      : t("earlierExecution")}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="relative">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                  {t("successRateLabel")}
+                                </span>
+                                <span className="text-sm font-bold text-foreground">
+                                  {successRateStatus.label}
                                 </span>
                               </div>
+                              <Progress
+                                value={script.successRate}
+                                className="h-3 transition-all duration-500 hover:h-4"
+                              />
                             </div>
-                          )}
-                          
-                          <div className="relative">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-muted-foreground">{t('successRateLabel')}</span>
-                              <span className="text-sm font-bold text-foreground">{successRateStatus.label}</span>
-                            </div>
-                            <Progress 
-                              value={script.successRate} 
-                              className="h-3 transition-all duration-500 hover:h-4"
-                            />
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 </CardContent>
               </Card>
@@ -817,7 +1004,9 @@ export default function DataAnalysisPage() {
               <Card className="border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90">
                 <CardContent className="p-12 text-center">
                   <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-                  <p className="text-lg font-medium text-muted-foreground">{t('loadingAnalyticsData')}</p>
+                  <p className="text-lg font-medium text-muted-foreground">
+                    {t("loadingAnalyticsData")}
+                  </p>
                 </CardContent>
               </Card>
             )}
@@ -827,26 +1016,41 @@ export default function DataAnalysisPage() {
               <Card className="border-2 border-red-200/50 dark:border-red-800/50 bg-red-50 dark:bg-red-950/20">
                 <CardContent className="p-8 text-center">
                   <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
-                  <p className="text-lg font-medium text-red-700 dark:text-red-400 mb-2">{t('dataLoadFailed')}</p>
-                  <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error}</p>
-                  <Button onClick={fetchAnalyticsData} variant="outline" className="border-red-300 text-red-700 hover:bg-red-100">
+                  <p className="text-lg font-medium text-red-700 dark:text-red-400 mb-2">
+                    {t("dataLoadFailed")}
+                  </p>
+                  <p className="text-sm text-red-600 dark:text-red-400 mb-4">
+                    {error}
+                  </p>
+                  <Button
+                    onClick={fetchAnalyticsData}
+                    variant="outline"
+                    className="border-red-300 text-red-700 hover:bg-red-100"
+                  >
                     <RefreshCw className="mr-2 h-4 w-4" />
-                    {t('retryLoad')}
+                    {t("retryLoad")}
                   </Button>
                 </CardContent>
               </Card>
             )}
 
             {/* 无数据状态 */}
-            {!isLoading && !error && analyticsData && analyticsData.totalExecutions === 0 && (
-              <Card className="border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90">
-                <CardContent className="p-12 text-center">
-                  <BarChart2 className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-lg font-medium text-muted-foreground mb-2">{t('noData')}</p>
-                  <p className="text-sm text-muted-foreground">{t('noDataInTimeRange')}</p>
-                </CardContent>
-              </Card>
-            )}
+            {!isLoading &&
+              !error &&
+              analyticsData &&
+              analyticsData.totalExecutions === 0 && (
+                <Card className="border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90">
+                  <CardContent className="p-12 text-center">
+                    <BarChart2 className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+                    <p className="text-lg font-medium text-muted-foreground mb-2">
+                      {t("noData")}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {t("noDataInTimeRange")}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
           </div>
         </div>
       </div>
@@ -856,10 +1060,10 @@ export default function DataAnalysisPage() {
         <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 shadow-lg hover:shadow-xl transition-all duration-300">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
           <span className="font-mono text-xs text-muted-foreground font-medium">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || '0.1.9'}
+            v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.9"}
           </span>
         </div>
       </div>
     </div>
   );
-} 
+}

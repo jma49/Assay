@@ -20,7 +20,7 @@ export interface RecordEditHistoryParams {
  */
 export function getObjectChanges(
   oldObj: Record<string, unknown> | null | undefined,
-  newObj: Record<string, unknown> | null | undefined
+  newObj: Record<string, unknown> | null | undefined,
 ): ChangeDetail[] {
   const changes: ChangeDetail[] = [];
 
@@ -81,7 +81,7 @@ function normalizeValue(value: unknown): string {
  * 创建脚本快照
  */
 function createScriptSnapshot(
-  scriptData: Record<string, unknown>
+  scriptData: Record<string, unknown>,
 ): ScriptSnapshot {
   return {
     scriptId: String(scriptData.scriptId || ""),
@@ -159,7 +159,7 @@ export async function recordEditHistory({
     }
 
     console.log(
-      `Edit history recorded for ${operation} operation on script ${scriptId}`
+      `Edit history recorded for ${operation} operation on script ${scriptId}`,
     );
     return true;
   } catch (error) {

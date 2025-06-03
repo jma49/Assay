@@ -12,18 +12,18 @@
     /* 减少重排和重绘 */
     text-rendering: optimizeLegibility;
   }
-  
+
   * {
     /* 减少CSS变化时的重新计算 */
     box-sizing: border-box;
   }
-  
+
   /* 防止FOUC (Flash of Unstyled Content) */
   body {
     opacity: 1;
     transition: opacity 0.2s ease-in-out;
   }
-  
+
   body.loading {
     opacity: 0;
   }
@@ -67,10 +67,12 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  
+
   /* 新增特色化设计变量 */
-  --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
-  --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --card-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+  --card-shadow-hover:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   --card-3d-effect: rotateX(0deg) rotateY(0deg);
   --texture-opacity: 0.03;
   --gradient-angle: 135deg;
@@ -218,11 +220,13 @@ body {
   --sidebar-accent-foreground: #181926; /* Crust */
   --sidebar-border: #494d64; /* Surface1 */
   --sidebar-ring: #89b4fa; /* Blue */
-  
+
   /* 深色模式下的特色化设计变量 - 保留原样或根据新主题调整 */
   /* 以下变量暂时保留原样，您可以根据 Catppuccin 风格进一步调整这些阴影和效果 */
-  --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-  --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.6);
+  --card-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --card-shadow-hover:
+    0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.6);
   --texture-opacity: 0.05; /* Catppuccin 通常比较扁平，可以考虑减小或移除纹理 */
   --gradient-angle: 135deg;
 }
@@ -256,13 +260,21 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: var(--radius);
-  background: linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--primary) / 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.1) 0%,
+    hsl(var(--primary) / 0.05) 100%
+  );
   border: 1px solid hsl(var(--primary) / 0.1);
   transition: all 0.3s ease;
 }
 
 .icon-container:hover {
-  background: linear-gradient(135deg, hsl(var(--primary) / 0.15) 0%, hsl(var(--primary) / 0.08) 100%);
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.15) 0%,
+    hsl(var(--primary) / 0.08) 100%
+  );
   border-color: hsl(var(--primary) / 0.2);
   transform: scale(1.05);
 }
@@ -325,13 +337,18 @@ body {
   }
 }
 
-@keyframes fadeIn { 
-  from { opacity: 0; } 
-  to { opacity: 1; } 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -344,19 +361,25 @@ body {
   animation: slideUp 0.6s ease-out forwards;
 }
 
-.animate-fadeIn { 
-  animation: fadeIn 0.5s ease-in-out; 
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in-out;
 }
 
 /* 改进的渐变和阴影效果 */
 .gradient-border {
-  background: linear-gradient(45deg, transparent, hsl(var(--primary) / 0.1), transparent);
+  background: linear-gradient(
+    45deg,
+    transparent,
+    hsl(var(--primary) / 0.1),
+    transparent
+  );
   background-size: 200% 200%;
   animation: gradientShift 3s ease infinite;
 }
 
 @keyframes gradientShift {
-  0%, 100% {
+  0%,
+  100% {
     background-position: 0% 50%;
   }
   50% {
@@ -367,12 +390,16 @@ body {
 /* 改进的卡片效果 */
 .card-hover-effect {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.95) 100%);
+  background: linear-gradient(
+    135deg,
+    hsl(var(--card)) 0%,
+    hsl(var(--card) / 0.95) 100%
+  );
 }
 
 .card-hover-effect:hover {
   transform: translateY(-2px) scale(1.01);
-  box-shadow: 
+  box-shadow:
     0 10px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04),
     0 0 0 1px hsl(var(--primary) / 0.1);
@@ -380,7 +407,12 @@ body {
 
 /* 改进的文本渐变 */
 .text-gradient {
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.8) 50%, hsl(var(--primary) / 0.6) 100%);
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--primary) / 0.8) 50%,
+    hsl(var(--primary) / 0.6) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -397,7 +429,7 @@ body {
 .input-enhanced:focus {
   border-color: hsl(var(--primary) / 0.5);
   background: hsl(var(--background) / 0.95);
-  box-shadow: 
+  box-shadow:
     0 0 0 3px hsl(var(--primary) / 0.1),
     0 4px 12px -2px hsl(var(--primary) / 0.1);
 }
@@ -405,20 +437,29 @@ body {
 /* 改进的按钮样式 */
 .button-enhanced {
   position: relative;
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.9) 100%);
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--primary) / 0.9) 100%
+  );
   border: 1px solid hsl(var(--primary) / 0.2);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
 .button-enhanced::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
   transition: left 0.5s;
 }
 
@@ -428,7 +469,7 @@ body {
 
 .button-enhanced:hover {
   transform: translateY(-1px);
-  box-shadow: 
+  box-shadow:
     0 10px 25px -5px hsl(var(--primary) / 0.3),
     0 10px 10px -5px hsl(var(--primary) / 0.1);
 }
@@ -465,13 +506,21 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, hsl(var(--primary) / 0.6), hsl(var(--primary) / 0.4));
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.6),
+    hsl(var(--primary) / 0.4)
+  );
   border-radius: 6px;
   border: 2px solid hsl(var(--background));
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, hsl(var(--primary) / 0.8), hsl(var(--primary) / 0.6));
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.8),
+    hsl(var(--primary) / 0.6)
+  );
 }
 
 .dark ::-webkit-scrollbar-track {
@@ -479,10 +528,18 @@ body {
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, hsl(var(--primary) / 0.5), hsl(var(--primary) / 0.3));
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.5),
+    hsl(var(--primary) / 0.3)
+  );
   border-color: hsl(var(--background));
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, hsl(var(--primary) / 0.7), hsl(var(--primary) / 0.5));
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.7),
+    hsl(var(--primary) / 0.5)
+  );
 }

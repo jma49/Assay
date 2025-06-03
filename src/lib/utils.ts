@@ -24,6 +24,6 @@ export function containsHarmfulSql(sqlContent: string): boolean {
       upperSql.includes(keyword + " ") ||
       upperSql.includes(keyword + ";") ||
       upperSql.includes(keyword + "\n") ||
-      upperSql.endsWith(keyword)
+      upperSql.endsWith(keyword),
   );
 }

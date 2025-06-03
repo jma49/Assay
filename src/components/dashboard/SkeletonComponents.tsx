@@ -1,7 +1,7 @@
-import React from 'react';
+import React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ITEMS_PER_PAGE } from './types';
+import { ITEMS_PER_PAGE } from "./types";
 
 export const SkeletonCard = () => (
   <Card>
@@ -28,9 +28,11 @@ export const SkeletonTable = () => (
       <Skeleton className="h-4 w-2/5" />
     </CardHeader>
     <CardContent className="space-y-4">
-      {Array(ITEMS_PER_PAGE).fill(0).map((_, i) => (
-        <Skeleton key={i} className="h-10 w-full" />
-      ))}
+      {Array(ITEMS_PER_PAGE)
+        .fill(0)
+        .map((_, i) => (
+          <Skeleton key={i} className="h-10 w-full" />
+        ))}
     </CardContent>
   </Card>
-); 
+);

@@ -18,7 +18,7 @@ async function testClerkUser() {
       console.log("- ID:", userData.id);
       console.log(
         "- 邮箱地址:",
-        userData.emailAddresses.map((e) => e.emailAddress)
+        userData.emailAddresses.map((e) => e.emailAddress),
       );
       console.log("- 名字:", userData.firstName);
       console.log("- 姓氏:", userData.lastName);
