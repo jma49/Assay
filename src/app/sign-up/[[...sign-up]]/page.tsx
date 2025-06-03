@@ -11,8 +11,7 @@ const messages = {
     contactAdmin: "Contact administrator for access",
     systemInfo: "System Access Information",
     inviteOnly: "• This system uses invitation-only access",
-    emailOnly: "Please use your invited email",
-    contactIT: "• Contact IT department for access",
+    contactIT: "• Contact Jincheng for access",
   },
   zh: {
     title: "创建账户",
@@ -21,8 +20,7 @@ const messages = {
     contactAdmin: "请联系管理员申请访问权限",
     systemInfo: "系统访问说明",
     inviteOnly: "• 此系统采用邀请制访问",
-    emailOnly: "请使用受邀邮箱",
-    contactIT: "• 如需访问权限，请联系IT部门",
+    contactIT: "• 如需访问权限，请联系Jincheng",
   },
 };
 
@@ -104,7 +102,6 @@ export default function Page() {
               <div className="mt-2 text-sm text-blue-700">
                 <ul className="list-disc pl-5 space-y-1">
                   <li>{t.inviteOnly}</li>
-                  <li>{t.emailOnly}</li>
                   <li>{t.contactIT}</li>
                 </ul>
               </div>
