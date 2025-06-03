@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   PlusCircle,
   Edit,
@@ -14,6 +15,7 @@ import {
   Home,
   FileText,
   History,
+  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -75,6 +77,7 @@ import UserHeader from "@/components/UserHeader";
 type ManageScriptFormState = Partial<SqlScript>;
 
 const ManageScriptsPage = () => {
+  const router = useRouter();
   const [scripts, setScripts] = useState<SqlScript[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -385,6 +388,14 @@ const ManageScriptsPage = () => {
     setIsEditHistoryOpen(true);
   };
 
+  // 跳转到主页的执行历史并过滤特定脚本
+  const handleViewExecutionHistory = (scriptId: string) => {
+    // 将脚本ID存储到sessionStorage，以便主页读取
+    sessionStorage.setItem("filter-script-id", scriptId);
+    // 跳转到主页
+    router.push("/#execution-history");
+  };
+
   const filteredScripts = scripts.filter(
     (script) =>
       script.scriptId.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -643,9 +654,20 @@ const ManageScriptsPage = () => {
                                     handleViewEditHistory(script.scriptId)
                                   }
                                   className="h-8 px-3 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 dark:hover:bg-purple-950/20 dark:hover:border-purple-700/50 dark:hover:text-purple-400 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800"
-                                  title="查看编辑历史"
+                                  title={t("viewEditHistory")}
                                 >
                                   <History className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleViewExecutionHistory(script.scriptId)
+                                  }
+                                  className="h-8 px-3 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 dark:hover:bg-orange-950/20 dark:hover:border-orange-700/50 dark:hover:text-orange-400 focus:ring-2 focus:ring-orange-200 dark:focus:ring-orange-800"
+                                  title={t("viewExecutionHistory")}
+                                >
+                                  <Activity className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
                                   variant="outline"
