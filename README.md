@@ -288,3 +288,241 @@ sql_script_depoly/
    ```bash
    npm install
    ```
+
+3. **环境配置**
+
+   在项目根目录创建 `.env.local` 文件：
+
+   ```bash
+   # 数据库配置
+   POSTGRES_URL="postgresql://username:password@host:port/database"
+   MONGODB_URI="mongodb://username:password@host:port/database"
+
+   # Redis 配置（可选，用于高性能缓存）
+   REDIS_HOST="localhost"
+   REDIS_PORT="6379"
+   REDIS_PASSWORD=""  # 如果 Redis 设置了密码
+   REDIS_DB="0"
+
+   # Clerk 认证配置
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_xxxxx"
+   CLERK_SECRET_KEY="sk_test_xxxxx"
+   NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
+   NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
+   NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL="/"
+   NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL="/"
+
+   # Slack 通知配置（可选）
+   SLACK_BOT_TOKEN="xoxb-xxxxx"
+   SLACK_CHANNEL="#sql-alerts"
+
+   # 应用配置
+   NEXT_PUBLIC_APP_VERSION="0.2.1"
+   NEXTAUTH_URL="http://localhost:3000"
+
+   # API 安全
+   CRON_SECRET_TOKEN="your-secret-token"  # 用于保护定时任务端点
+   ```
+
+4. **数据库初始化**
+
+   确保 MongoDB 和 PostgreSQL 数据库已创建并可连接。
+
+   **MongoDB 集合**：
+
+   - `scripts` - 存储 SQL 脚本定义
+   - `result` - 存储执行历史记录
+   - `edit_history` - 存储编辑历史记录（v0.2.1+）
+
+   **PostgreSQL**：
+
+   - 确保目标数据库可读访问
+   - 建议使用只读用户连接以确保安全
+
+5. **启动开发服务器**
+
+   ```bash
+   npm run dev
+   ```
+
+   访问 http://localhost:3000 查看应用
+
+6. **首次使用配置**
+
+   - 访问系统后，使用 @example.com 邮箱注册账户
+   - 在 `/manage-scripts` 页面创建第一个 SQL 脚本
+   - 在主仪表盘测试手动执行功能
+
+### 🔧 开发工具命令
+
+```bash
+# 开发相关
+npm run dev                    # 启动开发服务器
+npm run build                  # 构建生产版本
+npm run start                  # 启动生产服务器
+npm run lint                   # 代码检查
+
+# 数据库相关
+npm run test:db               # 测试数据库连接
+npm run test:mongodb          # 测试 MongoDB 连接
+npm run init:edit-history     # 初始化编辑历史索引
+
+# SQL 执行相关
+npm run sql:run-all           # 执行所有脚本
+npm run sql:run-scheduled     # 执行定时脚本
+npm run sql:run <script-id>   # 执行指定脚本
+
+# 清理和维护
+npm run clean                 # 清理构建文件
+npm run clean:cache          # 清理缓存
+npm run dev:clean            # 清理后启动开发服务器
+```
+
+### 📋 使用指南
+
+#### 1. 创建 SQL 脚本
+
+1. 访问 `/manage-scripts` 页面
+2. 点击 "添加新脚本" 按钮
+3. 填写脚本元数据：
+   - **脚本 ID**: 唯一标识符（只能包含字母、数字、下划线、连字符）
+   - **脚本名称**: 中英文名称
+   - **描述**: 脚本功能说明
+   - **作用范围**: 脚本影响的数据范围
+   - **作者**: 脚本创建者
+4. 在 SQL 编辑器中编写查询语句
+5. 可选：启用定时执行并设置 Cron 表达式
+6. 保存脚本
+
+#### 2. 执行脚本
+
+**手动执行**：
+
+- 在主仪表盘选择脚本并点击 "执行脚本"
+- 或在脚本管理页面点击单个脚本的执行按钮
+
+**批量执行**：
+
+- 主仪表盘点击 "执行所有脚本" 按钮
+- 实时监控执行进度和状态
+
+**定时执行**：
+
+- 通过 GitHub Actions 定时触发
+- 或使用 Vercel Cron Jobs（生产环境）
+
+#### 3. 查看结果
+
+1. **仪表盘概览**: 实时统计和趋势分析
+2. **历史记录**: 详细的执行历史和结果数据
+3. **结果详情**: 点击历史记录查看完整执行报告
+4. **编辑历史**: 查看脚本的修改记录和变更详情
+
+#### 4. 监控和维护
+
+- **Redis 健康检查**: `/api/health/redis`
+- **缓存清理**: `/api/maintenance/cleanup`
+- **数据分析**: `/data-analysis` 页面查看深度分析
+- **日志监控**: 查看应用和执行日志
+
+### 🚀 部署指南
+
+#### Vercel 部署（推荐）
+
+1. **连接仓库**
+
+   ```bash
+   # 推送代码到 GitHub
+   git push origin main
+   ```
+
+2. **配置环境变量**
+
+   在 Vercel 仪表盘中设置以下环境变量：
+
+   - 所有 `.env.local` 中的变量
+   - `NEXTAUTH_URL` 设置为实际域名
+
+3. **配置 Vercel Cron Jobs**
+
+   `vercel.json` 已配置定时任务：
+
+   ```json
+   {
+     "crons": [
+       {
+         "path": "/api/run-scheduled-scripts",
+         "schedule": "0 19 * * *"
+       }
+     ]
+   }
+   ```
+
+4. **部署**
+   ```bash
+   vercel --prod
+   ```
+
+#### 自托管部署
+
+1. **构建应用**
+
+   ```bash
+   npm run build
+   ```
+
+2. **配置 PM2**
+
+   ```bash
+   npm install -g pm2
+   pm2 start npm --name "sql-monitor" -- start
+   ```
+
+3. **设置反向代理（Nginx）**
+
+   ```nginx
+   server {
+       listen 80;
+       server_name your-domain.com;
+
+       location / {
+           proxy_pass http://localhost:3000;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+       }
+   }
+   ```
+
+### 🔒 安全配置
+
+1. **数据库安全**
+
+   - 使用只读数据库用户
+   - 启用 SSL 连接
+   - 限制网络访问
+
+2. **认证安全**
+
+   - 配置 Clerk 域名限制
+   - 设置强密码策略
+   - 启用多因素认证
+
+3. **API 安全**
+
+   - 设置强随机的 `CRON_SECRET_TOKEN`
+   - 启用 HTTPS
+   - 配置 CORS 策略
+
+4. **Redis 安全**
+   - 设置密码认证
+   - 限制网络访问
+   - 启用 SSL/TLS
+
+### ⚠️ 注意事项
+
+1. **数据库权限**: 确保 PostgreSQL 用户只有读取权限
+2. **脚本安全**: 系统会自动检测并阻止 DDL/DML 操作
+3. **资源限制**: 设置合理的查询超时时间
+4. **监控告警**: 配置 Slack 通知以便及时发现问题
+5. **备份策略**: 定期备份 MongoDB 数据
+6. **性能优化**: 生产环境建议启用 Redis 缓存
