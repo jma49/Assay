@@ -385,6 +385,7 @@ export interface Check {
   findings: string;
   raw_results: Record<string, unknown>[];
   github_run_id?: string | number;
+  createdAt?: Date | string;
 }
 
 export interface ScriptInfo {
@@ -396,7 +397,7 @@ export interface ScriptInfo {
   scope?: string;
   cnScope?: string;
   author?: string;
-  createdAt?: Date;
+  createdAt?: Date | string;
   isScheduled?: boolean;
   cronSchedule?: string;
   sqlContent?: string;

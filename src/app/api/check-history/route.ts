@@ -17,7 +17,7 @@ interface CheckHistoryApiResponse extends Omit<WithId<Document>, "_id"> {
 }
 
 const COLLECTION_NAME = "result";
-const DEFAULT_LIMIT = 100; // 返回最近100条记录供前端分页
+const DEFAULT_LIMIT = 500; // 返回最近500条记录供前端分页
 const MAX_LIMIT = 500; // 增加最大限制以支持更多数据
 
 export async function GET(request: NextRequest) {
@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
       MAX_LIMIT,
       Math.max(
         1,
-        parseInt(searchParams.get("limit") || DEFAULT_LIMIT.toString())
-      )
+        parseInt(searchParams.get("limit") || DEFAULT_LIMIT.toString()),
+      ),
     );
     const scriptName = searchParams.get("script_name");
     const status = searchParams.get("status");
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     console.log(
-      `API: Found ${historyDocs.length} records out of ${totalCount} total.`
+      `API: Found ${historyDocs.length} records out of ${totalCount} total.`,
     );
 
     // 转换数据格式
@@ -113,13 +113,13 @@ export async function GET(request: NextRequest) {
           include_results: includeResults,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("API Error fetching check history:", error);
     return NextResponse.json(
       { message: "Internal Server Error fetching check history" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

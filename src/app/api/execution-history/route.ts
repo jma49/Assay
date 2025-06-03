@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
     console.error("API Error fetching execution history:", error);
     return NextResponse.json(
       { message: "Internal Server Error fetching execution history" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
 // 状态类型映射函数
 function mapStatusType(
   status: string,
-  statusType?: string
+  statusType?: string,
 ): "success" | "failed" | "attention_needed" {
   // 如果已有 statusType，直接使用
   if (

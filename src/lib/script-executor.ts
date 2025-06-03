@@ -19,10 +19,10 @@ async function getSqlScriptsCollection(): Promise<Collection<Document>> {
  * @returns A Promise that resolves to an ExecutionResult object.
  */
 export async function executeScriptAndNotify(
-  scriptId: string
+  scriptId: string,
 ): Promise<ExecutionResult> {
   console.log(
-    `[Script Executor] Received script execution request, ID: ${scriptId}`
+    `[Script Executor] Received script execution request, ID: ${scriptId}`,
   );
 
   try {
@@ -50,7 +50,7 @@ export async function executeScriptAndNotify(
       sqlContent.trim() === ""
     ) {
       console.error(
-        `[Script Executor] SQL content is missing or empty for script: ${scriptId}`
+        `[Script Executor] SQL content is missing or empty for script: ${scriptId}`,
       );
       // This scenario should ideally be prevented by validation when saving scripts.
       // However, good to have a check here.
@@ -63,7 +63,7 @@ export async function executeScriptAndNotify(
     }
 
     console.log(
-      `[Script Executor] Found script '${scriptId}' in DB, proceeding with execution.`
+      `[Script Executor] Found script '${scriptId}' in DB, proceeding with execution.`,
     );
 
     // Call the refactored core execution function with scriptId and sqlContent
@@ -72,14 +72,14 @@ export async function executeScriptAndNotify(
     console.log(
       `[Script Executor] Script ${scriptId} execution completed, status: ${
         result.success ? "Success" : "Failure"
-      }`
+      }`,
     );
     return result;
   } catch (error) {
     // This catch block handles unexpected errors during DB fetch or if executeSqlScriptFromDb itself throws an unhandled error.
     console.error(
       `[Script Executor] Unexpected error occurred while preparing or executing script ${scriptId}:`,
-      error
+      error,
     );
     const errorMsg = `Execution script '${scriptId}' unexpectedly failed: ${
       error instanceof Error ? error.message : String(error)

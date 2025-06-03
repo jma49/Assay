@@ -25,7 +25,7 @@ async function testEditHistory() {
         console.log(
           `${index + 1}. 操作: ${record.operation}, 脚本: ${
             record.scriptSnapshot?.scriptId || "Unknown"
-          }, 时间: ${record.operationTime}`
+          }, 时间: ${record.operationTime}`,
         );
       });
     } else {

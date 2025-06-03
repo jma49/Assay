@@ -46,7 +46,7 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
         isValid: false,
         response: NextResponse.json(
           { success: false, message: messages.unauthorizedSignIn },
-          { status: 401 }
+          { status: 401 },
         ),
       } as const;
     }
@@ -59,7 +59,7 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
         isValid: false,
         response: NextResponse.json(
           { success: false, message: messages.unauthorizedUserNotFound },
-          { status: 401 }
+          { status: 401 },
         ),
       } as const;
     }
@@ -72,7 +72,7 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
         isValid: false,
         response: NextResponse.json(
           { success: false, message: messages.unauthorizedEmailNotFound },
-          { status: 401 }
+          { status: 401 },
         ),
       } as const;
     }
@@ -83,7 +83,7 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
         isValid: false,
         response: NextResponse.json(
           { success: false, message: messages.unauthorizedInvalidDomain },
-          { status: 403 }
+          { status: 403 },
         ),
       } as const;
     }
@@ -100,7 +100,7 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
       isValid: false,
       response: NextResponse.json(
         { success: false, message: messages.authenticationError },
-        { status: 500 }
+        { status: 500 },
       ),
     } as const;
   }

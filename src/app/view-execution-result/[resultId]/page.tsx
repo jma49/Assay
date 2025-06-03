@@ -1,11 +1,20 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useLanguage } from '@/components/LanguageProvider';
-import { Button } from '@/components/ui/button';
-import { Home, Clock, AlertCircle, CheckCircle, Database, Search, Download } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useLanguage } from "@/components/LanguageProvider";
+import { Button } from "@/components/ui/button";
+import {
+  Home,
+  Clock,
+  AlertCircle,
+  CheckCircle,
+  Database,
+  Search,
+  Download,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import UserHeader from "@/components/UserHeader";
 
 // 基于SQL脚本实际输出的精确类型定义
 interface OrderDuplicateDetail {
@@ -19,7 +28,10 @@ interface OrderSyncDetail {
 }
 
 // 通用类型，覆盖所有可能的结果类型
-type FindingDetail = OrderDuplicateDetail | OrderSyncDetail | Record<string, string | number | boolean | null>;
+type FindingDetail =
+  | OrderDuplicateDetail
+  | OrderSyncDetail
+  | Record<string, string | number | boolean | null>;
 
 interface ExecutionResult {
   scriptId: string;
@@ -41,87 +53,87 @@ interface ExecutionResult {
 // 语言翻译对象
 const viewResultTranslations = {
   en: {
-    loading: 'Loading...',
-    loadingFailed: 'Loading Failed',
-    retry: 'Retry',
-    back: 'Back to Dashboard',
-    notFound: 'Result Not Found',
-    noResultFound: 'Could not find execution result with ID',
-    executionDetails: 'Execution Result Details',
-    scriptId: 'Script ID',
-    name: 'Name',
-    cnName: 'Name (CN)',
-    description: 'Description',
-    cnDescription: 'Description (CN)',
-    scope: 'Scope',
-    cnScope: 'Scope (CN)',
-    author: 'Author',
-    scriptMetadata: 'Script Metadata',
-    executionTime: 'Execution Time',
-    status: 'Status',
-    message: 'Message',
-    resultId: 'Result ID',
-    queryFindings: 'Query Findings',
-    createdAt: 'Created At', 
-    noData: 'No Data Found',
-    noDataDesc: 'This script execution did not return any data',
-    exportCsv: 'Export CSV',
-    exportCsvDesc: 'Download findings as CSV file',
-    noDataToExport: 'No data available for export',
+    loading: "Loading...",
+    loadingFailed: "Loading Failed",
+    retry: "Retry",
+    back: "Back to Dashboard",
+    notFound: "Result Not Found",
+    noResultFound: "Could not find execution result with ID",
+    executionDetails: "Execution Result Details",
+    scriptId: "Script ID",
+    name: "Name",
+    cnName: "Name (CN)",
+    description: "Description",
+    cnDescription: "Description (CN)",
+    scope: "Scope",
+    cnScope: "Scope (CN)",
+    author: "Author",
+    scriptMetadata: "Script Metadata",
+    executionTime: "Execution Time",
+    status: "Status",
+    message: "Message",
+    resultId: "Result ID",
+    queryFindings: "Query Findings",
+    createdAt: "Created At",
+    noData: "No Data Found",
+    noDataDesc: "This script execution did not return any data",
+    exportCsv: "Export CSV",
+    exportCsvDesc: "Download findings as CSV file",
+    noDataToExport: "No data available for export",
     scriptTypes: {
-      check: 'Check',
-      validate: 'Validate',
-      monitor: 'Monitor',
-      report: 'Report',
-      other: 'Other'
+      check: "Check",
+      validate: "Validate",
+      monitor: "Monitor",
+      report: "Report",
+      other: "Other",
     },
     statusTexts: {
-      success: 'Success',
-      attentionNeeded: 'Attention Needed',
-      failure: 'Failed'
-    }
+      success: "Success",
+      attentionNeeded: "Attention Needed",
+      failure: "Failed",
+    },
   },
   zh: {
-    loading: '加载中...',
-    loadingFailed: '加载失败',
-    retry: '重试',
-    back: '返回仪表盘',
-    notFound: '未找到结果',
-    noResultFound: '无法找到ID为',
-    executionDetails: '执行结果详情',
-    scriptId: '脚本 ID',
-    name: '名称',
-    cnName: '中文名称',
-    description: '描述',
-    cnDescription: '中文描述',
-    scope: '范围',
-    cnScope: '中文范围',
-    author: '作者',
-    scriptMetadata: '脚本元数据',
-    executionTime: '执行时间',
-    status: '状态',
-    message: '消息',
-    resultId: '结果 ID',
-    queryFindings: '查询发现',
-    createdAt: '创建时间',
-    noData: '无数据发现',
-    noDataDesc: '此脚本执行未返回任何数据结果',
-    exportCsv: '导出 CSV',
-    exportCsvDesc: '下载发现结果为 CSV 文件',
-    noDataToExport: '无可导出的数据',
+    loading: "加载中...",
+    loadingFailed: "加载失败",
+    retry: "重试",
+    back: "返回仪表盘",
+    notFound: "未找到结果",
+    noResultFound: "无法找到ID为",
+    executionDetails: "执行结果详情",
+    scriptId: "脚本 ID",
+    name: "名称",
+    cnName: "中文名称",
+    description: "描述",
+    cnDescription: "中文描述",
+    scope: "范围",
+    cnScope: "中文范围",
+    author: "作者",
+    scriptMetadata: "脚本元数据",
+    executionTime: "执行时间",
+    status: "状态",
+    message: "消息",
+    resultId: "结果 ID",
+    queryFindings: "查询发现",
+    createdAt: "创建时间",
+    noData: "无数据发现",
+    noDataDesc: "此脚本执行未返回任何数据结果",
+    exportCsv: "导出 CSV",
+    exportCsvDesc: "下载发现结果为 CSV 文件",
+    noDataToExport: "无可导出的数据",
     scriptTypes: {
-      check: '检查',
-      validate: '验证',
-      monitor: '监控',
-      report: '报告',
-      other: '其他'
+      check: "检查",
+      validate: "验证",
+      monitor: "监控",
+      report: "报告",
+      other: "其他",
     },
     statusTexts: {
-      success: '成功',
-      attentionNeeded: '需要关注',
-      failure: '失败'
-    }
-  }
+      success: "成功",
+      attentionNeeded: "需要关注",
+      failure: "失败",
+    },
+  },
 };
 
 export default function ViewExecutionResultPage() {
@@ -132,17 +144,21 @@ export default function ViewExecutionResultPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState<number>(0);
-  
+
   // 可拖动滚动条状态
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollBarRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showScrollBar, setShowScrollBar] = useState(false);
   const animationFrameRef = useRef<number | undefined>(undefined);
-  const dragStartRef = useRef<{ startX: number; startScrollLeft: number; startScrollBarLeft: number }>({
+  const dragStartRef = useRef<{
+    startX: number;
+    startScrollLeft: number;
+    startScrollBarLeft: number;
+  }>({
     startX: 0,
     startScrollLeft: 0,
-    startScrollBarLeft: 0
+    startScrollBarLeft: 0,
   });
 
   // 使用全局语言系统
@@ -151,33 +167,46 @@ export default function ViewExecutionResultPage() {
 
   // CSV导出功能
   const exportToCSV = () => {
-    if (!result || !Array.isArray(result.findings) || result.findings.length === 0) {
+    if (
+      !result ||
+      !Array.isArray(result.findings) ||
+      result.findings.length === 0
+    ) {
       return; // 无数据时不执行
     }
 
     const headers = Object.keys(result.findings[0]);
     const csvContent = [
-      headers.join(','),
-      ...result.findings.map(row => 
-        headers.map(header => {
-          const value = row[header as keyof typeof row];
-          if (value === null || value === undefined) return '';
-          const stringValue = String(value);
-          if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-            return `"${stringValue.replace(/"/g, '""')}"`;
-          }
-          return stringValue;
-        }).join(',')
-      )
-    ].join('\n');
+      headers.join(","),
+      ...result.findings.map((row) =>
+        headers
+          .map((header) => {
+            const value = row[header as keyof typeof row];
+            if (value === null || value === undefined) return "";
+            const stringValue = String(value);
+            if (
+              stringValue.includes(",") ||
+              stringValue.includes('"') ||
+              stringValue.includes("\n")
+            ) {
+              return `"${stringValue.replace(/"/g, '""')}"`;
+            }
+            return stringValue;
+          })
+          .join(","),
+      ),
+    ].join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `${result.scriptId}_findings_${new Date().toISOString().slice(0, 10)}.csv`);
-      link.style.visibility = 'hidden';
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `${result.scriptId}_findings_${new Date().toISOString().slice(0, 10)}.csv`,
+      );
+      link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -190,11 +219,13 @@ export default function ViewExecutionResultPage() {
     const scrollBar = scrollBarRef.current;
     if (!container || !scrollBar || isDragging) return;
 
-    const scrollRatio = container.scrollLeft / Math.max(1, container.scrollWidth - container.clientWidth);
+    const scrollRatio =
+      container.scrollLeft /
+      Math.max(1, container.scrollWidth - container.clientWidth);
     const scrollBarTrackWidth = scrollBar.parentElement!.clientWidth;
     const scrollBarWidth = scrollBar.clientWidth;
     const maxScrollBarLeft = Math.max(0, scrollBarTrackWidth - scrollBarWidth);
-    
+
     const newLeft = scrollRatio * maxScrollBarLeft;
     scrollBar.style.transform = `translateX(${newLeft}px)`;
   }, [isDragging]);
@@ -206,7 +237,7 @@ export default function ViewExecutionResultPage() {
         const { scrollWidth, clientWidth } = scrollContainerRef.current;
         const needsScrollBar = scrollWidth > clientWidth + 1; // 添加1px容差
         setShowScrollBar(needsScrollBar);
-        
+
         if (needsScrollBar) {
           // 初始化滚动条位置
           requestAnimationFrame(updateScrollBarPosition);
@@ -218,10 +249,10 @@ export default function ViewExecutionResultPage() {
     const handleResize = () => {
       requestAnimationFrame(checkScrollBar);
     };
-    
-    window.addEventListener('resize', handleResize);
+
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
@@ -243,26 +274,28 @@ export default function ViewExecutionResultPage() {
     e.preventDefault();
     e.stopPropagation(); // 防止事件冒泡到轨道
     setIsDragging(true);
-    
+
     const container = scrollContainerRef.current;
     const scrollBar = scrollBarRef.current;
     if (!container || !scrollBar) return;
 
     // 记录拖动开始时的状态
     const currentTransform = scrollBar.style.transform;
-    const currentLeft = parseFloat(currentTransform.replace('translateX(', '').replace('px)', '') || '0');
-    
+    const currentLeft = parseFloat(
+      currentTransform.replace("translateX(", "").replace("px)", "") || "0",
+    );
+
     dragStartRef.current = {
       startX: e.clientX,
       startScrollLeft: container.scrollLeft,
-      startScrollBarLeft: currentLeft
+      startScrollBarLeft: currentLeft,
     };
 
     const handleMouseMove = (e: MouseEvent) => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      
+
       animationFrameRef.current = requestAnimationFrame(() => {
         const container = scrollContainerRef.current;
         const scrollBar = scrollBarRef.current;
@@ -273,15 +306,25 @@ export default function ViewExecutionResultPage() {
         const trackWidth = scrollBar.parentElement!.clientWidth;
         const scrollBarWidth = scrollBar.clientWidth;
         const maxScrollBarLeft = Math.max(0, trackWidth - scrollBarWidth);
-        
+
         // 计算新的滚动条位置（基于相对位移）
-        const newScrollBarLeft = Math.max(0, Math.min(maxScrollBarLeft, dragStartRef.current.startScrollBarLeft + deltaX));
-        
+        const newScrollBarLeft = Math.max(
+          0,
+          Math.min(
+            maxScrollBarLeft,
+            dragStartRef.current.startScrollBarLeft + deltaX,
+          ),
+        );
+
         // 计算对应的容器滚动位置
-        const scrollRatio = maxScrollBarLeft > 0 ? newScrollBarLeft / maxScrollBarLeft : 0;
-        const maxScrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
+        const scrollRatio =
+          maxScrollBarLeft > 0 ? newScrollBarLeft / maxScrollBarLeft : 0;
+        const maxScrollLeft = Math.max(
+          0,
+          container.scrollWidth - container.clientWidth,
+        );
         const newScrollLeft = scrollRatio * maxScrollLeft;
-        
+
         // 更新位置
         container.scrollLeft = newScrollLeft;
         scrollBar.style.transform = `translateX(${newScrollBarLeft}px)`;
@@ -293,22 +336,22 @@ export default function ViewExecutionResultPage() {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
   };
 
   // 优化的容器滚动处理
   const handleContainerScroll = () => {
     if (isDragging) return;
-    
+
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
-    
+
     animationFrameRef.current = requestAnimationFrame(updateScrollBarPosition);
   };
 
@@ -325,12 +368,12 @@ export default function ViewExecutionResultPage() {
         .then((data: ExecutionResult) => {
           // 特定脚本状态调整
           if (
-            data.scriptId === 'orders-sync-daily' &&
-            data.status === 'success' &&
+            data.scriptId === "orders-sync-daily" &&
+            data.status === "success" &&
             Array.isArray(data.findings) &&
             data.findings.length > 0
           ) {
-            data.statusType = 'attention_needed';
+            data.statusType = "attention_needed";
           }
           setResult(data);
           setLoading(false);
@@ -349,53 +392,96 @@ export default function ViewExecutionResultPage() {
   // 用于格式化日期的工具函数，处理可能的无效日期
   const formatDate = (dateString: string): string => {
     try {
-      return new Date(dateString).toLocaleString(language === 'en' ? 'en-US' : 'zh-CN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: language === 'en'
-      });
+      return new Date(dateString).toLocaleString(
+        language === "en" ? "en-US" : "zh-CN",
+        {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: language === "en",
+        },
+      );
     } catch {
-      return dateString || (language === 'en' ? 'Unknown time' : '未知时间');
+      return dateString || (language === "en" ? "Unknown time" : "未知时间");
     }
   };
 
   const handleRetry = () => {
     setLoading(true);
     setError(null);
-    setRetryCount(prev => prev + 1);
+    setRetryCount((prev) => prev + 1);
   };
 
   const handleGoToDashboard = () => {
     // 直接导航到仪表盘
-    router.push('/');
+    router.push("/");
   };
 
   if (loading) {
     return (
-      <div className="container mx-auto p-8 text-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 dark:border-[#89b4fa] border-r-transparent"></div>
-        <p className="mt-4 text-lg text-gray-700 dark:text-[#a5adce]">{t.loading}</p>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+        <UserHeader />
+        <div className="container mx-auto p-8 text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 dark:border-[#89b4fa] border-r-transparent"></div>
+          <p className="mt-4 text-lg text-gray-700 dark:text-[#a5adce]">
+            {t.loading}
+          </p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto p-8 bg-red-50 dark:bg-[#f38ba8]/30 rounded-lg text-center">
-        <h2 className="text-2xl font-bold text-red-700 dark:text-[#f38ba8] mb-4">{t.loadingFailed}</h2>
-        <p className="text-lg text-red-600 dark:text-[#f38ba8] mb-6">{error}</p>
-        <div className="flex justify-center gap-4">
-          <button
-            onClick={handleRetry}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-[var(--primary)] dark:text-[var(--primary-foreground)] dark:hover:brightness-90 transition"
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+        <UserHeader />
+        <div className="container mx-auto p-8 bg-red-50 dark:bg-[#f38ba8]/30 rounded-lg text-center">
+          <h2 className="text-2xl font-bold text-red-700 dark:text-[#f38ba8] mb-4">
+            {t.loadingFailed}
+          </h2>
+          <p className="text-lg text-red-600 dark:text-[#f38ba8] mb-6">
+            {error}
+          </p>
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={handleRetry}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-[var(--primary)] dark:text-[var(--primary-foreground)] dark:hover:brightness-90 transition"
+            >
+              {t.retry}
+            </button>
+            <Button
+              onClick={handleGoToDashboard}
+              variant="outline"
+              className="dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10"
+            >
+              <Home className="h-4 w-4 mr-2" />
+              {t.back}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!result) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+        <UserHeader />
+        <div className="container mx-auto p-8 bg-yellow-50 dark:bg-[#f9e2af]/30 rounded-lg text-center">
+          <h2 className="text-2xl font-bold text-yellow-700 dark:text-[#f9e2af]">
+            {t.notFound}
+          </h2>
+          <p className="mt-4 text-gray-700 dark:text-[#a5adce]">
+            {t.noResultFound} {resultId} 的执行结果。
+          </p>
+          <Button
+            onClick={handleGoToDashboard}
+            className="mt-6 dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10"
+            variant="outline"
           >
-            {t.retry}
-          </button>
-          <Button onClick={handleGoToDashboard} variant="outline" className="dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10">
             <Home className="h-4 w-4 mr-2" />
             {t.back}
           </Button>
@@ -404,29 +490,17 @@ export default function ViewExecutionResultPage() {
     );
   }
 
-  if (!result) {
-    return (
-      <div className="container mx-auto p-8 bg-yellow-50 dark:bg-[#f9e2af]/30 rounded-lg text-center">
-        <h2 className="text-2xl font-bold text-yellow-700 dark:text-[#f9e2af]">{t.notFound}</h2>
-        <p className="mt-4 text-gray-700 dark:text-[#a5adce]">{t.noResultFound} {resultId} 的执行结果。</p>
-        <Button onClick={handleGoToDashboard} className="mt-6 dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10" variant="outline">
-          <Home className="h-4 w-4 mr-2" />
-          {t.back}
-        </Button>
-      </div>
-    );
-  }
-
   // 格式化 findings
   let findingsContent;
-  const hasTableData = Array.isArray(result.findings) && result.findings.length > 0;
-  
+  const hasTableData =
+    Array.isArray(result.findings) && result.findings.length > 0;
+
   if (hasTableData && Array.isArray(result.findings)) {
     // 设置表格标题和数据
     const headers = Object.keys(result.findings[0]);
     findingsContent = (
       <div className="space-y-4">
-        <div 
+        <div
           ref={scrollContainerRef}
           onScroll={handleContainerScroll}
           className="overflow-x-auto"
@@ -435,27 +509,42 @@ export default function ViewExecutionResultPage() {
             <thead>
               <tr className="bg-gradient-to-r from-muted/40 to-muted/20 border-b-2 border-border/30">
                 {headers.map((header) => (
-                  <th key={header} scope="col" className="px-4 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider whitespace-nowrap">
-                    {header.replace(/_/g, ' ')}
+                  <th
+                    key={header}
+                    scope="col"
+                    className="px-4 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider whitespace-nowrap"
+                  >
+                    {header.replace(/_/g, " ")}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-border/20">
               {result.findings.map((row, rowIndex) => (
-                <tr key={rowIndex} className={cn(
-                  "transition-colors hover:bg-muted/20",
-                  rowIndex % 2 === 0 ? 'bg-card' : 'bg-muted/10'
-                )}>
+                <tr
+                  key={rowIndex}
+                  className={cn(
+                    "transition-colors hover:bg-muted/20",
+                    rowIndex % 2 === 0 ? "bg-card" : "bg-muted/10",
+                  )}
+                >
                   {headers.map((header) => {
                     const value = row[header as keyof typeof row];
                     return (
-                      <td key={`${rowIndex}-${header}`} className="px-4 py-3 text-sm text-foreground whitespace-nowrap" title={String(value)}>
-                        {value === null ?
-                          <span className="text-muted-foreground italic">NULL</span> :
-                          typeof value === 'object' ?
-                            JSON.stringify(value) :
-                            String(value)}
+                      <td
+                        key={`${rowIndex}-${header}`}
+                        className="px-4 py-3 text-sm text-foreground whitespace-nowrap"
+                        title={String(value)}
+                      >
+                        {value === null ? (
+                          <span className="text-muted-foreground italic">
+                            NULL
+                          </span>
+                        ) : typeof value === "object" ? (
+                          JSON.stringify(value)
+                        ) : (
+                          String(value)
+                        )}
                       </td>
                     );
                   })}
@@ -464,7 +553,7 @@ export default function ViewExecutionResultPage() {
             </tbody>
           </table>
         </div>
-        
+
         {/* 自定义滚动条 */}
         {showScrollBar && (
           <div className="relative h-3 bg-muted/20 rounded-full border border-border/20 shadow-inner">
@@ -472,12 +561,16 @@ export default function ViewExecutionResultPage() {
               ref={scrollBarRef}
               className={cn(
                 "absolute top-0 h-full bg-gradient-to-r from-primary/60 to-primary/80 rounded-full shadow-sm cursor-grab transition-colors duration-200 border border-primary/20",
-                isDragging ? "cursor-grabbing bg-primary/90 from-primary/80 to-primary/90" : "hover:from-primary/70 hover:to-primary/90 hover:shadow-md"
+                isDragging
+                  ? "cursor-grabbing bg-primary/90 from-primary/80 to-primary/90"
+                  : "hover:from-primary/70 hover:to-primary/90 hover:shadow-md",
               )}
               style={{
-                width: `${Math.max(20, (scrollContainerRef.current?.clientWidth || 0) / (scrollContainerRef.current?.scrollWidth || 1) * 100)}%`,
-                transform: 'translateX(0px)',
-                transition: isDragging ? 'none' : 'transform 0.1s ease-out, box-shadow 0.2s ease-out'
+                width: `${Math.max(20, ((scrollContainerRef.current?.clientWidth || 0) / (scrollContainerRef.current?.scrollWidth || 1)) * 100)}%`,
+                transform: "translateX(0px)",
+                transition: isDragging
+                  ? "none"
+                  : "transform 0.1s ease-out, box-shadow 0.2s ease-out",
               }}
               onMouseDown={handleScrollBarMouseDown}
               title="拖动以横向滚动表格"
@@ -486,10 +579,12 @@ export default function ViewExecutionResultPage() {
         )}
       </div>
     );
-  } else if (typeof result.findings === 'string') {
+  } else if (typeof result.findings === "string") {
     findingsContent = (
       <div className="p-6 bg-muted/10 rounded-lg border border-border/20">
-        <p className="text-foreground whitespace-pre-wrap leading-relaxed">{result.findings}</p>
+        <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+          {result.findings}
+        </p>
       </div>
     );
   } else {
@@ -510,14 +605,16 @@ export default function ViewExecutionResultPage() {
 
   // 状态显示逻辑
   // Catppuccin Mocha theme colors: Yellow (#f9e2af), Green (#a6e3a1), Red (#f38ba8)
-  const statusText = result.statusType === 'attention_needed'
-    ? t.statusTexts.attentionNeeded
-    : result.status === 'success'
-      ? t.statusTexts.success
-      : t.statusTexts.failure;
+  const statusText =
+    result.statusType === "attention_needed"
+      ? t.statusTexts.attentionNeeded
+      : result.status === "success"
+        ? t.statusTexts.success
+        : t.statusTexts.failure;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+      <UserHeader />
       <div className="container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-8 animate-fadeIn">
           {/* Header Section */}
@@ -527,10 +624,12 @@ export default function ViewExecutionResultPage() {
                 <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
                   {t.executionDetails}
                 </h1>
-                <p className="text-lg text-muted-foreground">{result.scriptId}</p>
+                <p className="text-lg text-muted-foreground">
+                  {result.scriptId}
+                </p>
               </div>
-              <Button 
-                onClick={handleGoToDashboard} 
+              <Button
+                onClick={handleGoToDashboard}
                 variant="outline"
                 size="lg"
                 className="group shadow-md hover:shadow-lg transition-all duration-300"
@@ -551,8 +650,12 @@ export default function ViewExecutionResultPage() {
                     <Clock className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground">{t.executionTime}</h3>
-                    <p className="text-sm text-muted-foreground">{formatDate(result.executedAt)}</p>
+                    <h3 className="font-semibold text-foreground">
+                      {t.executionTime}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {formatDate(result.executedAt)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -562,30 +665,36 @@ export default function ViewExecutionResultPage() {
               <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
               <div className="relative p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className={`p-3 rounded-xl ${
-                    result.statusType === 'attention_needed' 
-                      ? 'bg-amber-100 dark:bg-amber-950/20 ring-2 ring-amber-200 dark:ring-amber-800/50'
-                      : result.status === 'success'
-                        ? 'bg-green-100 dark:bg-green-950/20 ring-2 ring-green-200 dark:ring-green-800/50'
-                        : 'bg-red-100 dark:bg-red-950/20 ring-2 ring-red-200 dark:ring-red-800/50'
-                  }`}>
-                    {result.statusType === 'attention_needed' ? (
+                  <div
+                    className={`p-3 rounded-xl ${
+                      result.statusType === "attention_needed"
+                        ? "bg-amber-100 dark:bg-amber-950/20 ring-2 ring-amber-200 dark:ring-amber-800/50"
+                        : result.status === "success"
+                          ? "bg-green-100 dark:bg-green-950/20 ring-2 ring-green-200 dark:ring-green-800/50"
+                          : "bg-red-100 dark:bg-red-950/20 ring-2 ring-red-200 dark:ring-red-800/50"
+                    }`}
+                  >
+                    {result.statusType === "attention_needed" ? (
                       <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                    ) : result.status === 'success' ? (
+                    ) : result.status === "success" ? (
                       <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
                     ) : (
                       <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
                     )}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground">{t.status}</h3>
-                    <p className={`text-sm font-medium ${
-                      result.statusType === 'attention_needed' 
-                        ? 'text-amber-600 dark:text-amber-400'
-                        : result.status === 'success'
-                          ? 'text-green-600 dark:text-green-400'
-                          : 'text-red-600 dark:text-red-400'
-                    }`}>
+                    <h3 className="font-semibold text-foreground">
+                      {t.status}
+                    </h3>
+                    <p
+                      className={`text-sm font-medium ${
+                        result.statusType === "attention_needed"
+                          ? "text-amber-600 dark:text-amber-400"
+                          : result.status === "success"
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-red-600 dark:text-red-400"
+                      }`}
+                    >
                       {statusText}
                     </p>
                   </div>
@@ -598,7 +707,9 @@ export default function ViewExecutionResultPage() {
               <div className="relative p-6">
                 <div className="space-y-3">
                   <h3 className="font-semibold text-foreground">{t.message}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed break-words">{result.message}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed break-words">
+                    {result.message}
+                  </p>
                 </div>
               </div>
             </div>
@@ -613,58 +724,88 @@ export default function ViewExecutionResultPage() {
                   <Database className="h-6 w-6 text-primary" />
                 </div>
                 <h2 className="text-2xl font-bold text-foreground">
-                  {t.scriptMetadata || (language === 'en' ? 'Script Metadata' : '脚本元数据')}
+                  {t.scriptMetadata ||
+                    (language === "en" ? "Script Metadata" : "脚本元数据")}
                 </h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* 脚本ID - 总是显示 */}
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t.scriptId}</p>
+                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                    {t.scriptId}
+                  </p>
                   <p className="text-base text-foreground bg-muted/20 rounded-lg p-3 font-mono">
                     {result.scriptId}
                   </p>
                 </div>
-                
+
                 {/* 结果ID - 总是显示 */}
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t.resultId}</p>
-                  <p className="text-xs text-muted-foreground bg-muted/20 rounded-lg p-3 font-mono break-all">{result._id}</p>
+                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                    {t.resultId}
+                  </p>
+                  <p className="text-xs text-muted-foreground bg-muted/20 rounded-lg p-3 font-mono break-all">
+                    {result._id}
+                  </p>
                 </div>
 
                 {/* 脚本名称 - 如果存在则显示 */}
-                {(language === 'en' ? result.name : result.cnName || result.name) && (
+                {(language === "en"
+                  ? result.name
+                  : result.cnName || result.name) && (
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t.name || (language === 'en' ? 'Name' : '名称')}</p>
+                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                      {t.name || (language === "en" ? "Name" : "名称")}
+                    </p>
                     <p className="text-base text-foreground bg-muted/20 rounded-lg p-3">
-                      {language === 'en' ? result.name : result.cnName || result.name}
+                      {language === "en"
+                        ? result.name
+                        : result.cnName || result.name}
                     </p>
                   </div>
                 )}
-                
+
                 {/* 作者 - 如果存在则显示 */}
                 {result.author && (
                   <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t.author || (language === 'en' ? 'Author' : '作者')}</p>
-                    <p className="text-base text-foreground bg-muted/20 rounded-lg p-3">{result.author}</p>
-                  </div>
-                )}
-                
-                {/* 描述 - 如果存在则显示 */}
-                {(language === 'en' ? result.description : result.cnDescription || result.description) && (
-                  <div className="md:col-span-2 space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t.description || (language === 'en' ? 'Description' : '描述')}</p>
-                    <p className="text-base text-foreground bg-muted/20 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
-                      {language === 'en' ? result.description : result.cnDescription || result.description}
+                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                      {t.author || (language === "en" ? "Author" : "作者")}
+                    </p>
+                    <p className="text-base text-foreground bg-muted/20 rounded-lg p-3">
+                      {result.author}
                     </p>
                   </div>
                 )}
-                
-                {/* 范围 - 如果存在则显示 */}
-                {(language === 'en' ? result.scope : result.cnScope || result.scope) && (
+
+                {/* 描述 - 如果存在则显示 */}
+                {(language === "en"
+                  ? result.description
+                  : result.cnDescription || result.description) && (
                   <div className="md:col-span-2 space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{t.scope || (language === 'en' ? 'Scope' : '范围')}</p>
+                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                      {t.description ||
+                        (language === "en" ? "Description" : "描述")}
+                    </p>
                     <p className="text-base text-foreground bg-muted/20 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
-                      {language === 'en' ? result.scope : result.cnScope || result.scope}
+                      {language === "en"
+                        ? result.description
+                        : result.cnDescription || result.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* 范围 - 如果存在则显示 */}
+                {(language === "en"
+                  ? result.scope
+                  : result.cnScope || result.scope) && (
+                  <div className="md:col-span-2 space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                      {t.scope || (language === "en" ? "Scope" : "范围")}
+                    </p>
+                    <p className="text-base text-foreground bg-muted/20 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
+                      {language === "en"
+                        ? result.scope
+                        : result.cnScope || result.scope}
                     </p>
                   </div>
                 )}
@@ -681,9 +822,11 @@ export default function ViewExecutionResultPage() {
                   <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20">
                     <Search className="h-6 w-6 text-primary" />
                   </div>
-                  <h2 className="text-2xl font-bold text-foreground">{t.queryFindings}</h2>
+                  <h2 className="text-2xl font-bold text-foreground">
+                    {t.queryFindings}
+                  </h2>
                 </div>
-                
+
                 {/* CSV 导出按钮 */}
                 {hasTableData && (
                   <Button
@@ -711,7 +854,7 @@ export default function ViewExecutionResultPage() {
         <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 shadow-lg hover:shadow-xl transition-all duration-300">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
           <span className="font-mono text-xs text-muted-foreground font-medium">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || '0.1.7'}
+            v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.7"}
           </span>
         </div>
       </div>

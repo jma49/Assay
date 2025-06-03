@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       script_id:
-        description: 'The ID of the SQL script to run (from manifest.json)'
+        description: "The ID of the SQL script to run (from manifest.json)"
         required: true
         type: string
 
@@ -45,10 +45,10 @@ jobs:
           echo "--- .env.local content (for manual trigger) ---"
           cat .env.local || echo ".env.local not found or empty"
           echo "--- .env.local content end ---"
-        
+
       - name: Run SQL Check Script
         env:
-          DOTENV_CONFIG_PATH: .env.local 
+          DOTENV_CONFIG_PATH: .env.local
         run: |
           echo "Current working directory: $(pwd)"
           echo "Using .env file: ${DOTENV_CONFIG_PATH}"
@@ -56,4 +56,4 @@ jobs:
           echo "About to execute ts-node..."
           # Use ts-node with -r to preload dotenv/config
           npx ts-node -r dotenv/config scripts/run-sql.ts check-order-duplicates
-        continue-on-error: false # Fail the workflow if the script fails 
+        continue-on-error: false # Fail the workflow if the script fails

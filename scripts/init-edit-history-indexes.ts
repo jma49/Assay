@@ -21,7 +21,7 @@ async function initEditHistoryIndexes() {
         {
           background: true,
           name: "edit_history_operationTime_desc",
-        }
+        },
       );
       console.log("✅ 索引 1 创建成功: operationTime 降序");
     } catch (error) {
@@ -35,7 +35,7 @@ async function initEditHistoryIndexes() {
         {
           background: true,
           name: "edit_history_scriptId_operationTime",
-        }
+        },
       );
       console.log("✅ 索引 2 创建成功: scriptId + operationTime");
     } catch (error) {
@@ -49,7 +49,7 @@ async function initEditHistoryIndexes() {
         {
           background: true,
           name: "edit_history_author_operationTime",
-        }
+        },
       );
       console.log("✅ 索引 3 创建成功: searchableAuthor + operationTime");
     } catch (error) {
@@ -63,7 +63,7 @@ async function initEditHistoryIndexes() {
         {
           background: true,
           name: "edit_history_scriptName_operationTime",
-        }
+        },
       );
       console.log("✅ 索引 4 创建成功: searchableScriptName + operationTime");
     } catch (error) {
@@ -77,7 +77,7 @@ async function initEditHistoryIndexes() {
         {
           background: true,
           name: "edit_history_scriptNameCn_operationTime",
-        }
+        },
       );
       console.log("✅ 索引 5 创建成功: searchableScriptNameCn + operationTime");
     } catch (error) {
@@ -91,7 +91,7 @@ async function initEditHistoryIndexes() {
         {
           background: true,
           name: "edit_history_operationType_operationTime",
-        }
+        },
       );
       console.log("✅ 索引 6 创建成功: operationType + operationTime");
     } catch (error) {
@@ -105,7 +105,7 @@ async function initEditHistoryIndexes() {
         {
           background: true,
           name: "edit_history_userId_operationTime",
-        }
+        },
       );
       console.log("✅ 索引 7 创建成功: userId + operationTime");
     } catch (error) {
@@ -123,10 +123,10 @@ async function initEditHistoryIndexes() {
         {
           background: true,
           name: "edit_history_type_author_time",
-        }
+        },
       );
       console.log(
-        "✅ 索引 8 创建成功: operationType + searchableAuthor + operationTime"
+        "✅ 索引 8 创建成功: operationType + searchableAuthor + operationTime",
       );
     } catch (error) {
       console.warn("⚠️  索引 8 创建失败（可能已存在）:", error);

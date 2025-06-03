@@ -1,23 +1,21 @@
-import React, { useState } from 'react';
-import ReactCodeMirror, { ReactCodeMirrorProps } from '@uiw/react-codemirror';
-import { sql, PostgreSQL, SQLDialect } from '@codemirror/lang-sql';
-import { okaidia } from '@uiw/codemirror-theme-okaidia'; // Use @uiw dark theme
-import { githubLight } from '@uiw/codemirror-theme-github'; 
-import { useTheme } from 'next-themes';
+import React, { useState } from "react";
+import ReactCodeMirror, { ReactCodeMirrorProps } from "@uiw/react-codemirror";
+import { sql, PostgreSQL, SQLDialect } from "@codemirror/lang-sql";
+import { okaidia } from "@uiw/codemirror-theme-okaidia"; // Use @uiw dark theme
+import { githubLight } from "@uiw/codemirror-theme-github";
+import { useTheme } from "next-themes";
 // import { format } from 'sql-formatter';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Code, 
-  Sparkles, 
-  Eye, 
-  FileCode,
-  Palette
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { DashboardTranslationKeys } from '../dashboard/types';
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Code, Sparkles, Eye, FileCode, Palette } from "lucide-react";
+import { toast } from "sonner";
+import { DashboardTranslationKeys } from "../dashboard/types";
 
-interface CodeMirrorEditorProps extends Omit<ReactCodeMirrorProps, 'value' | 'onChange' | 'extensions' | 'theme'> {
+interface CodeMirrorEditorProps
+  extends Omit<
+    ReactCodeMirrorProps,
+    "value" | "onChange" | "extensions" | "theme"
+  > {
   value: string;
   onChange: (value: string) => void;
   minHeight?: string;
@@ -27,7 +25,7 @@ interface CodeMirrorEditorProps extends Omit<ReactCodeMirrorProps, 'value' | 'on
 const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   value,
   onChange,
-  minHeight = '300px',
+  minHeight = "300px",
   t = (key) => key.toString(),
   ...rest
 }) => {
@@ -36,7 +34,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   const [isFormatting, setIsFormatting] = useState(false);
 
   const editorTheme = React.useMemo(() => {
-    return currentTheme === 'dark' ? okaidia : githubLight;
+    return currentTheme === "dark" ? okaidia : githubLight;
   }, [currentTheme]);
 
   // 创建支持PostgreSQL的扩展，包括对dollar-quoted字符串的更好支持
@@ -46,87 +44,102 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       ...PostgreSQL.spec,
       doubleDollarQuotedStrings: false, // 禁用$$字符串处理以改善DO块语法高亮
     });
-    
+
     const postgresConfig = {
       dialect: customPostgres,
       upperCaseKeywords: false,
       schema: {
         // 添加一些常见的PostgreSQL函数和关键字以改善自动完成
-        pg_catalog: ['now', 'current_timestamp', 'current_date', 'current_time'],
-        functions: ['declare', 'begin', 'end', 'loop', 'if', 'then', 'else', 'elsif', 'raise', 'notice']
-      }
+        pg_catalog: [
+          "now",
+          "current_timestamp",
+          "current_date",
+          "current_time",
+        ],
+        functions: [
+          "declare",
+          "begin",
+          "end",
+          "loop",
+          "if",
+          "then",
+          "else",
+          "elsif",
+          "raise",
+          "notice",
+        ],
+      },
     };
-    
+
     return [sql(postgresConfig)];
   }, []);
 
   const handleFormat = async () => {
     if (!value.trim()) {
-      toast.warning(t('noCodeToFormat'));
+      toast.warning(t("noCodeToFormat"));
       return;
     }
 
     setIsFormatting(true);
     try {
-      console.log('正在检测SQL代码类型...');
-      
+      console.log("正在检测SQL代码类型...");
+
       // 检测DO$$块语法
       const hasDoBlock = /\bdo\s*\$\$[\s\S]*?\$\$/i.test(value);
-      
+
       if (hasDoBlock) {
-        console.log('检测到DO$$块，跳过自动格式化');
-        
+        console.log("检测到DO$$块，跳过自动格式化");
+
         // 对于DO$$块，提供友好的提示但不进行格式化
-        const title = t('doBlockDetected');
-        const description = t('doBlockDetectedDesc');
-        
+        const title = t("doBlockDetected");
+        const description = t("doBlockDetectedDesc");
+
         toast.info(title, {
           description: description,
           duration: 5000,
         });
-        
+
         return;
       }
-      
+
       // 对于普通SQL，使用sql-formatter进行格式化
-      console.log('普通SQL代码，使用sql-formatter格式化');
-      
-      const { format } = await import('sql-formatter');
-      
+      console.log("普通SQL代码，使用sql-formatter格式化");
+
+      const { format } = await import("sql-formatter");
+
       const formatted = format(value, {
-        language: 'postgresql',
-        keywordCase: 'upper',
-        dataTypeCase: 'upper', 
-        functionCase: 'upper',
-        identifierCase: 'preserve',
-        indentStyle: 'standard',
+        language: "postgresql",
+        keywordCase: "upper",
+        dataTypeCase: "upper",
+        functionCase: "upper",
+        identifierCase: "preserve",
+        indentStyle: "standard",
         tabWidth: 2,
         useTabs: false,
-        logicalOperatorNewline: 'before',
+        logicalOperatorNewline: "before",
         expressionWidth: 60,
         linesBetweenQueries: 1,
         denseOperators: false,
-        newlineBeforeSemicolon: false
+        newlineBeforeSemicolon: false,
       });
-      
+
       onChange(formatted);
-      
+
       // 双语成功通知
-      const successTitle = t('formatSuccess');
-      const successDesc = t('formatSuccessDesc');
-      
+      const successTitle = t("formatSuccess");
+      const successDesc = t("formatSuccessDesc");
+
       toast.success(successTitle, {
         description: successDesc,
         duration: 3000,
       });
-      
     } catch (error) {
-      console.error('SQL格式化错误:', error);
-      
+      console.error("SQL格式化错误:", error);
+
       // 双语错误通知
-      const errorTitle = t('formatError');
-      const errorDesc = t('formatErrorDesc');
-      
+      const errorTitle = t("formatError");
+      const errorDesc = t("formatErrorDesc");
+
       toast.error(errorTitle, {
         description: errorDesc,
         duration: 5000,
@@ -136,7 +149,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
     }
   };
 
-  const getLineCount = (text: string) => text.split('\n').length;
+  const getLineCount = (text: string) => text.split("\n").length;
   const getCharCount = (text: string) => text.length;
 
   return (
@@ -149,20 +162,30 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
               <FileCode className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-sm text-foreground">{t('sqlEditorTitle')}</h3>
-              <p className="text-xs text-muted-foreground">{t('sqlEditorDescription')}</p>
+              <h3 className="font-semibold text-sm text-foreground">
+                {t("sqlEditorTitle")}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                {t("sqlEditorDescription")}
+              </p>
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {/* 代码统计 */}
           <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-background/60 border border-border/40">
-            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-700">
-              {getLineCount(value)} {t('codeStatisticsLines')}
+            <Badge
+              variant="outline"
+              className="text-xs bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-700"
+            >
+              {getLineCount(value)} {t("codeStatisticsLines")}
             </Badge>
-            <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-700">
-              {getCharCount(value)} {t('codeStatisticsChars')}
+            <Badge
+              variant="outline"
+              className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-700"
+            >
+              {getCharCount(value)} {t("codeStatisticsChars")}
             </Badge>
           </div>
 
@@ -174,9 +197,15 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
             className="h-8 px-3 text-xs"
           >
             {showPreview ? (
-              <><Code className="h-3.5 w-3.5 mr-1.5" />{t('editMode')}</>
+              <>
+                <Code className="h-3.5 w-3.5 mr-1.5" />
+                {t("editMode")}
+              </>
             ) : (
-              <><Eye className="h-3.5 w-3.5 mr-1.5" />{t('previewMode')}</>
+              <>
+                <Eye className="h-3.5 w-3.5 mr-1.5" />
+                {t("previewMode")}
+              </>
             )}
           </Button>
 
@@ -189,9 +218,15 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
             className="h-8 px-3 text-xs shadow-sm transition-all duration-200 hover:shadow-md hover:bg-primary/10 hover:border-primary/50 hover:text-primary focus:ring-2 focus:ring-primary/20"
           >
             {isFormatting ? (
-              <><div className="animate-spin h-3.5 w-3.5 mr-1.5 border-2 border-current border-t-transparent rounded-full" />{t('formatting')}</>
+              <>
+                <div className="animate-spin h-3.5 w-3.5 mr-1.5 border-2 border-current border-t-transparent rounded-full" />
+                {t("formatting")}
+              </>
             ) : (
-              <><Sparkles className="h-3.5 w-3.5 mr-1.5" />{t('formatCode')}</>
+              <>
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                {t("formatCode")}
+              </>
             )}
           </Button>
         </div>
@@ -201,16 +236,22 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       <div className="relative overflow-hidden rounded-lg border-2 border-border/40 bg-gradient-to-br from-background via-background to-muted/5 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-border/60">
         {/* 装饰性顶部条 */}
         <div className="h-1 bg-gradient-to-r from-primary/60 via-primary/40 to-primary/60"></div>
-        
+
         {showPreview ? (
           // 预览模式
           <div className="p-6 bg-gradient-to-br from-muted/10 to-muted/5">
             <div className="flex items-center gap-2 mb-4">
               <Eye className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-muted-foreground">{t('sqlPreviewLabel')}</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                {t("sqlPreviewLabel")}
+              </span>
             </div>
             <pre className="whitespace-pre-wrap text-sm font-mono bg-background/80 border border-border/40 rounded-md p-4 max-h-96 overflow-auto">
-              {value || <span className="italic text-muted-foreground">{t('noCodeContent')}</span>}
+              {value || (
+                <span className="italic text-muted-foreground">
+                  {t("noCodeContent")}
+                </span>
+              )}
             </pre>
           </div>
         ) : (
@@ -241,15 +282,17 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
                 searchKeymap: true,
               }}
               className="text-sm leading-relaxed"
-              placeholder={t('sqlPlaceholder')}
+              placeholder={t("sqlPlaceholder")}
               {...rest}
             />
-            
+
             {/* 编辑器状态指示器 */}
             <div className="absolute bottom-2 right-2">
               <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-background/90 backdrop-blur-sm border border-border/40 shadow-sm">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs text-muted-foreground font-mono">{t('editorStatusReady')}</span>
+                <span className="text-xs text-muted-foreground font-mono">
+                  {t("editorStatusReady")}
+                </span>
               </div>
             </div>
           </div>
@@ -262,11 +305,12 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
           <Palette className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
         </div>
         <div className="text-xs text-blue-700 dark:text-blue-300">
-          <span className="font-medium">{t('editorHelpTitle')}</span> {t('editorHelpText')}
+          <span className="font-medium">{t("editorHelpTitle")}</span>{" "}
+          {t("editorHelpText")}
         </div>
       </div>
     </div>
   );
 };
 
-export default CodeMirrorEditor; 
+export default CodeMirrorEditor;

@@ -22,13 +22,13 @@ export async function POST(request: NextRequest) {
     const { scriptId } = body;
 
     console.log(
-      `[API] 用户 ${userInfo.name} (${userInfo.email}) 手动执行脚本: ${scriptId}`
+      `[API] 用户 ${userInfo.name} (${userInfo.email}) 手动执行脚本: ${scriptId}`,
     );
 
     if (!scriptId) {
       return NextResponse.json(
         { success: false, message: "Missing scriptId" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     console.log(
       `[API] 脚本 ${scriptId} 执行完成，状态: ${
         result.success ? "成功" : "失败"
-      }`
+      }`,
     );
 
     // 在结果中包含操作用户信息
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     console.error(`[API] 用户 ${userInfo.name} 执行脚本失败:`, error);
     return NextResponse.json(
       { success: false, message: "Failed to execute script" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -37,14 +37,14 @@ export async function GET(request: NextRequest) {
   if (!cronSecret) {
     return NextResponse.json(
       { message: "Server configuration error." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return NextResponse.json(
       { message: "Unauthorized: Missing or malformed Authorization header." },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
   if (token !== cronSecret) {
     return NextResponse.json(
       { message: "Unauthorized: Invalid token." },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       },
       documentation: "请查看README.md中的v0.1.9开发计划",
     },
-    { status: 200 }
+    { status: 200 },
   );
 }
 

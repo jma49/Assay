@@ -13,7 +13,7 @@ export async function sendSlackNotification(
   scriptId: string,
   message: string,
   statusType: ExecutionStatusType,
-  resultMongoId?: string
+  resultMongoId?: string,
 ): Promise<void> {
   try {
     const webhookUrl = process.env.SLACK_WEBHOOK_URL;
@@ -144,7 +144,7 @@ export async function sendSlackNotification(
 
     console.log(
       `发送 Slack 通知 (${scriptId}):`, // 截断长消息
-      JSON.stringify(payload).substring(0, 200) + "..."
+      JSON.stringify(payload).substring(0, 200) + "...",
     );
 
     await axios.post(webhookUrl, payload, {
@@ -160,12 +160,12 @@ export async function sendSlackNotification(
         `发送 Slack 通知 (${scriptId}) 失败 (Axios Error ${
           axiosError.code || "N/A"
         }):`,
-        axiosError.response?.data || axiosError.message
+        axiosError.response?.data || axiosError.message,
       );
     } else {
       console.error(
         `发送 Slack 通知 (${scriptId}) 失败 (非 Axios 错误):`,
-        error
+        error,
       );
     }
   }

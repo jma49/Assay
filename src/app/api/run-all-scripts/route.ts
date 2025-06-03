@@ -1,55 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoDbClient from "@/lib/mongodb";
-import { Collection, Document } from "mongodb";
+import { validateApiAuth } from "@/lib/auth-utils";
+import getMongoDbClient from "@/lib/mongodb";
 import { executeScriptAndNotify } from "@/lib/script-executor";
+import { batchExecutionCache } from "@/services/batch-execution-cache";
+import { Collection, Document } from "mongodb";
+import { v4 as uuidv4 } from "uuid";
+
+// 开发环境日志辅助函数
+const devLog = (message: string, ...args: unknown[]) => {
+  if (process.env.NODE_ENV === "development") {
+    console.log(message, ...args);
+  }
+};
+
+const devError = (message: string, ...args: unknown[]) => {
+  if (process.env.NODE_ENV === "development") {
+    console.error(message, ...args);
+  }
+};
+
+const devWarn = (message: string, ...args: unknown[]) => {
+  if (process.env.NODE_ENV === "development") {
+    console.warn(message, ...args);
+  }
+};
 
 // Helper function to get the MongoDB collection for sql_scripts
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
-  const db = await mongoDbClient.getDb();
+  const db = await getMongoDbClient.getDb();
   return db.collection("sql_scripts");
-}
-
-// 生成唯一的执行ID
-function generateExecutionId(): string {
-  return `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
-
-// 更新批量执行状态的辅助函数
-async function updateBatchExecutionStatus(
-  executionId: string,
-  action: string,
-  scriptId?: string,
-  status?: string,
-  message?: string,
-  findings?: string,
-  mongoResultId?: string
-) {
-  try {
-    const response = await fetch(
-      `${
-        process.env.NEXTAUTH_URL || "http://localhost:3000"
-      }/api/batch-execution-status`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          executionId,
-          action,
-          scriptId,
-          status,
-          message,
-          findings,
-          mongoResultId,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      console.warn(`[批量执行] 更新状态失败: ${response.statusText}`);
-    }
-  } catch (error) {
-    console.warn("[批量执行] 无法更新执行状态:", error);
-  }
 }
 
 /**
@@ -58,133 +37,104 @@ async function updateBatchExecutionStatus(
  */
 export async function POST(request: NextRequest) {
   try {
-    // 解析请求体，期望包含可选的 mode
+    // 统一的认证检查
+    const authResult = await validateApiAuth("en");
+    if (!authResult.isValid) {
+      return authResult.response;
+    }
+
+    const { userEmail } = authResult;
+
     const body = await request.json();
     const { mode = "all" } = body; // 默认模式为all
 
-    console.log(`[API 路由 /run-all-scripts] 开始批量执行脚本 (模式: ${mode})`);
+    devLog(
+      `[API 路由 /run-all-scripts] 用户 ${userEmail} 开始批量执行脚本 (模式: ${mode})`,
+    );
 
     // 获取脚本集合
     const collection = await getSqlScriptsCollection();
 
-    // 根据模式设置过滤条件
-    let filter = {};
+    let query = {};
     let modeDescription = "";
 
-    switch (mode) {
-      case "scheduled":
-        filter = { isScheduled: true };
-        modeDescription = "启用定时任务的";
-        break;
-      case "enabled":
-        filter = { isScheduled: true };
-        modeDescription = "已启用的";
-        break;
-      case "all":
-      default:
-        filter = {}; // 获取所有脚本
-        modeDescription = "所有";
-        break;
+    if (mode === "scheduled") {
+      query = { isScheduled: true };
+      modeDescription = "定时";
+    } else {
+      modeDescription = "所有";
     }
 
-    // 获取脚本
-    const allScripts = await collection
-      .find(filter)
-      .sort({ createdAt: 1 }) // 按创建时间排序
-      .toArray();
+    const allScripts = await collection.find(query).toArray();
 
     if (allScripts.length === 0) {
-      const message = `未找到${modeDescription}脚本`;
-
-      return NextResponse.json(
-        {
-          success: false,
-          message: message,
-          localizedMessage: message,
-          totalScripts: 0,
-        },
-        { status: 404 }
-      );
+      return NextResponse.json({
+        success: false,
+        message: `没有找到${modeDescription}脚本`,
+        localizedMessage: `没有找到${modeDescription}脚本`,
+      });
     }
 
-    console.log(
-      `[API 路由 /run-all-scripts] 找到 ${allScripts.length} 个${modeDescription}脚本`
+    devLog(
+      `[API 路由 /run-all-scripts] 找到 ${allScripts.length} 个${modeDescription}脚本`,
     );
 
-    // 生成唯一的执行ID
-    const executionId = generateExecutionId();
+    // 生成执行ID
+    const executionId = uuidv4();
 
     // 创建批量执行状态
-    await updateBatchExecutionStatus(
-      executionId,
-      "create",
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined
-    );
+    try {
+      await batchExecutionCache.createExecution(
+        executionId,
+        allScripts.map((script) => ({
+          scriptId: script.scriptId as string,
+          scriptName: script.name as string,
+          isScheduled: (script.isScheduled as boolean) || false,
+        })),
+      );
+    } catch (cacheError) {
+      devError("[API 路由 /run-all-scripts] 创建执行状态失败:", cacheError);
+      // 如果Redis失败，仍然允许执行，但没有状态跟踪
+    }
 
-    // 同时发送脚本信息到状态API
-    await fetch(
-      `${
-        process.env.NEXTAUTH_URL || "http://localhost:3000"
-      }/api/batch-execution-status`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          executionId,
-          action: "create",
-          scripts: allScripts.map((script) => ({
-            scriptId: script.scriptId,
-            scriptName: script.name,
-            isScheduled: script.isScheduled || false,
-          })),
-        }),
-      }
-    );
-
-    // 启动批量执行（异步执行，不等待完成）
+    // 启动异步执行（不等待完成）
     const executionPromise = executeBatchScripts(allScripts, executionId);
-
-    // 不等待执行完成，立即返回成功响应
-    const successMessage = `批量执行已开始，共 ${allScripts.length} 个脚本`;
 
     // 启动异步执行
     executionPromise.catch((error) => {
-      console.error(
-        "[API 路由 /run-all-scripts] 批量执行过程中发生错误:",
-        error
-      );
+      devError("[API 路由 /run-all-scripts] 批量执行过程中发生错误:", error);
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: successMessage,
-        localizedMessage: successMessage,
-        totalScripts: allScripts.length,
-        mode: mode,
-        executionStarted: true,
-        executionId: executionId, // 返回执行ID给前端
-      },
-      { status: 200 }
-    );
+    // 立即返回响应，不等待执行完成
+    return NextResponse.json({
+      success: true,
+      message: `开始批量执行 ${allScripts.length} 个${modeDescription}脚本`,
+      localizedMessage: `批量执行已启动，共 ${allScripts.length} 个${modeDescription}脚本`,
+      executionId,
+      scriptCount: allScripts.length,
+      mode,
+    });
   } catch (error) {
-    console.error("[API 路由 /run-all-scripts] API异常:", error);
+    devError("[API 路由 /run-all-scripts] API异常:", error);
 
     const errorMessage =
-      error instanceof Error ? error.message : "批量执行请求处理失败";
+      error instanceof Error ? error.message : "批量执行脚本时发生未知错误";
 
     return NextResponse.json(
       {
         success: false,
         message: errorMessage,
-        localizedMessage: errorMessage,
+        localizedMessage: `批量执行失败: ${errorMessage}`,
       },
-      { status: 500 }
+      { status: 500 },
     );
+  } finally {
+    // 确保数据库连接被关闭
+    try {
+      await getMongoDbClient.closeConnection();
+    } catch (closeError) {
+      devError("[API 路由 /run-all-scripts] 关闭数据库连接失败:", closeError);
+    }
   }
 }
 
@@ -196,98 +146,130 @@ async function executeBatchScripts(scripts: Document[], executionId: string) {
   let failCount = 0;
   let skippedCount = 0;
 
-  console.log(
-    `[批量执行] 开始执行 ${scripts.length} 个脚本 (执行ID: ${executionId})`
+  devLog(
+    `[批量执行] 开始执行 ${scripts.length} 个脚本 (执行ID: ${executionId})`,
   );
 
-  // 依次执行每个脚本
-  for (const script of scripts) {
-    const scriptId = script.scriptId as string;
-    const scriptName = script.name as string;
-    const sqlContent = script.sqlContent as string;
-    const isScheduled = script.isScheduled as boolean;
+  try {
+    // 依次执行每个脚本
+    for (const script of scripts) {
+      const scriptId = script.scriptId as string;
+      const scriptName = script.name as string;
+      const sqlContent = script.sqlContent as string;
+      const isScheduled = script.isScheduled as boolean;
 
-    if (!scriptId || !sqlContent) {
-      console.warn(
-        `[批量执行] 跳过无效脚本: ID=${scriptId}, 内容为空=${!sqlContent}`
-      );
-      skippedCount++;
-      continue;
-    }
-
-    console.log(
-      `[批量执行] 开始执行脚本: ${scriptId} (${scriptName})${
-        isScheduled ? " [定时任务]" : ""
-      }`
-    );
-
-    // 更新状态为运行中
-    await updateBatchExecutionStatus(
-      executionId,
-      "update",
-      scriptId,
-      "running"
-    );
-
-    try {
-      const result = await executeScriptAndNotify(scriptId);
-
-      let finalStatus: string;
-      if (result.success) {
-        if (result.statusType === "attention_needed") {
-          finalStatus = "attention_needed";
-        } else {
-          finalStatus = "completed";
-        }
-        successCount++;
-        console.log(
-          `[批量执行] ✅ 脚本 ${scriptId} 执行成功 - ${result.statusType}`
+      if (!scriptId || !sqlContent) {
+        devWarn(
+          `[批量执行] 跳过无效脚本: ID=${scriptId}, 内容为空=${!sqlContent}`,
         );
-      } else {
-        finalStatus = "failed";
-        failCount++;
-        console.log(
-          `[批量执行] ❌ 脚本 ${scriptId} 执行失败: ${result.message}`
-        );
+        skippedCount++;
+        continue;
       }
 
-      // 更新脚本执行状态
-      await updateBatchExecutionStatus(
-        executionId,
-        "update",
-        scriptId,
-        finalStatus,
-        result.message,
-        result.findings,
-        result.mongoResultId
+      devLog(
+        `[批量执行] 开始执行脚本: ${scriptId} (${scriptName})${
+          isScheduled ? " [定时任务]" : ""
+        }`,
       );
-    } catch (error) {
-      failCount++;
-      const errorMsg = error instanceof Error ? error.message : "未知错误";
-      console.error(`[批量执行] ❌ 脚本 ${scriptId} 执行异常: ${errorMsg}`);
 
-      // 更新为失败状态
-      await updateBatchExecutionStatus(
-        executionId,
-        "update",
-        scriptId,
-        "failed",
-        errorMsg
-      );
+      // 更新状态为运行中
+      try {
+        await batchExecutionCache.updateScriptStatus(executionId, {
+          scriptId,
+          status: "running",
+        });
+      } catch (updateError) {
+        devWarn(`[批量执行] 无法更新脚本状态为运行中: ${updateError}`);
+      }
+
+      try {
+        const result = await executeScriptAndNotify(scriptId);
+
+        let finalStatus: "completed" | "failed" | "attention_needed";
+        if (result.success) {
+          if (result.statusType === "attention_needed") {
+            finalStatus = "attention_needed";
+          } else {
+            finalStatus = "completed";
+          }
+          successCount++;
+          devLog(
+            `[批量执行] ✅ 脚本 ${scriptId} 执行成功 - ${result.statusType}`,
+          );
+        } else {
+          finalStatus = "failed";
+          failCount++;
+          devLog(`[批量执行] ❌ 脚本 ${scriptId} 执行失败: ${result.message}`);
+        }
+
+        // 更新脚本执行状态
+        try {
+          await batchExecutionCache.updateScriptStatus(executionId, {
+            scriptId,
+            status: finalStatus,
+            message: result.message,
+            findings: result.findings,
+            mongoResultId: result.mongoResultId,
+          });
+        } catch (updateError) {
+          devWarn(`[批量执行] 无法更新脚本执行结果: ${updateError}`);
+        }
+      } catch (error) {
+        failCount++;
+        const errorMsg = error instanceof Error ? error.message : "未知错误";
+        devError(`[批量执行] ❌ 脚本 ${scriptId} 执行异常: ${errorMsg}`);
+
+        // 更新为失败状态
+        try {
+          await batchExecutionCache.updateScriptStatus(executionId, {
+            scriptId,
+            status: "failed",
+            message: errorMsg,
+          });
+        } catch (updateError) {
+          devWarn(`[批量执行] 无法更新脚本失败状态: ${updateError}`);
+        }
+      }
+
+      // 添加短暂延迟，避免数据库压力过大
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    // 添加短暂延迟，避免数据库压力过大
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // 标记批量执行完成
+    try {
+      await batchExecutionCache.completeExecution(executionId);
+    } catch (completeError) {
+      devWarn(`[批量执行] 无法标记执行完成: ${completeError}`);
+    }
+
+    // 输出执行总结
+    const summary = `批量执行完成: 总计 ${
+      scripts.length
+    } 个脚本, 成功 ${successCount} 个, 失败 ${failCount} 个${
+      skippedCount > 0 ? `, 跳过 ${skippedCount} 个` : ""
+    }`;
+    devLog(`[批量执行] ${summary}`);
+
+    return {
+      success: true,
+      summary,
+      stats: {
+        total: scripts.length,
+        success: successCount,
+        failed: failCount,
+        skipped: skippedCount,
+      },
+    };
+  } catch (error) {
+    devError("[批量执行] 执行过程中发生致命错误:", error);
+
+    // 尝试标记执行完成，即使发生错误
+    try {
+      await batchExecutionCache.completeExecution(executionId);
+    } catch (completeError) {
+      devError("[批量执行] 无法标记执行完成:", completeError);
+    }
+
+    throw error;
   }
-
-  // 标记批量执行完成
-  await updateBatchExecutionStatus(executionId, "complete");
-
-  // 输出执行总结
-  const summary = `批量执行完成: 总计 ${
-    scripts.length
-  } 个脚本, 成功 ${successCount} 个, 失败 ${failCount} 个${
-    skippedCount > 0 ? `, 跳过 ${skippedCount} 个` : ""
-  }`;
-  console.log(`[批量执行] ${summary}`);
 }

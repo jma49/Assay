@@ -20,7 +20,7 @@ export async function saveResultToMongo(
   statusType: ExecutionStatusType, // 新增参数
   message: string,
   findings: string,
-  results?: QueryResult[]
+  results?: QueryResult[],
 ): Promise<{ success: boolean; insertedId?: any }> {
   try {
     const db = await mongoDbClient.getDb();
@@ -44,7 +44,7 @@ export async function saveResultToMongo(
 
     const result = await collection.insertOne(historyDoc);
     console.log(
-      `结果 (${scriptId}) 已保存到 MongoDB (status: ${status}, statusType: ${statusType}), ID: ${result.insertedId}`
+      `结果 (${scriptId}) 已保存到 MongoDB (status: ${status}, statusType: ${statusType}), ID: ${result.insertedId}`,
     );
 
     // 返回包含 insertedId 的结果

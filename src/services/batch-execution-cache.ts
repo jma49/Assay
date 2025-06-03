@@ -2,6 +2,21 @@ import redisClient from "@/lib/redis";
 import { Redis } from "ioredis";
 
 /**
+ * 开发环境日志辅助函数
+ */
+const devLog = (message: string, ...args: unknown[]) => {
+  if (process.env.NODE_ENV === "development") {
+    console.log(message, ...args);
+  }
+};
+
+const devError = (message: string, ...args: unknown[]) => {
+  if (process.env.NODE_ENV === "development") {
+    console.error(message, ...args);
+  }
+};
+
+/**
  * 批量执行状态数据结构
  * 用于跟踪脚本执行进度和结果
  */
@@ -68,6 +83,30 @@ export class BatchExecutionCache {
   }
 
   /**
+   * 获取执行状态
+   */
+  async getExecution(executionId: string): Promise<BatchExecutionState | null> {
+    try {
+      const redis = await this.getRedis();
+      const key = this.getExecutionKey(executionId);
+      const data = await redis.get(key);
+
+      if (!data) {
+        return null;
+      }
+
+      return JSON.parse(data) as BatchExecutionState;
+    } catch (error) {
+      devError("[BatchCache] 获取执行记录失败:", error);
+      throw new Error(
+        `获取执行记录失败: ${
+          error instanceof Error ? error.message : "未知错误"
+        }`,
+      );
+    }
+  }
+
+  /**
    * 创建新的批量执行状态记录
    * 使用Redis Pipeline确保原子性操作
    */
@@ -77,17 +116,13 @@ export class BatchExecutionCache {
       scriptId: string;
       scriptName: string;
       isScheduled: boolean;
-    }>
+    }>,
   ): Promise<BatchExecutionState> {
     try {
-      const redis = await this.getRedis();
-
       const execution: BatchExecutionState = {
         executionId,
         scripts: scripts.map((script) => ({
-          scriptId: script.scriptId,
-          scriptName: script.scriptName,
-          isScheduled: script.isScheduled,
+          ...script,
           status: "pending",
         })),
         startedAt: new Date().toISOString(),
@@ -95,53 +130,21 @@ export class BatchExecutionCache {
         isActive: true,
       };
 
-      const key = this.getExecutionKey(executionId);
-
-      // 使用Pipeline确保数据一致性
-      const pipeline = redis.pipeline();
-      pipeline.setex(key, this.DEFAULT_TTL, JSON.stringify(execution));
-      pipeline.sadd(this.ACTIVE_EXECUTIONS_SET, executionId);
-
-      await pipeline.exec();
-
-      console.log(`[BatchCache] 创建执行记录: ${executionId}`);
-      return execution;
-    } catch (error) {
-      console.error("[BatchCache] 创建执行记录失败:", error);
-      throw new Error(
-        `批量执行创建失败: ${
-          error instanceof Error ? error.message : "未知错误"
-        }`
-      );
-    }
-  }
-
-  /**
-   * 获取批量执行状态
-   * 自动维护TTL时间，防止数据过期
-   */
-  async getExecution(executionId: string): Promise<BatchExecutionState | null> {
-    try {
       const redis = await this.getRedis();
       const key = this.getExecutionKey(executionId);
 
-      const data = await redis.get(key);
-      if (!data) {
-        return null;
-      }
+      await redis.setex(key, this.DEFAULT_TTL, JSON.stringify(execution));
+      await redis.sadd(this.ACTIVE_EXECUTIONS_SET, executionId);
 
-      const execution = JSON.parse(data) as BatchExecutionState;
-
-      // 智能TTL延期：当剩余时间少于一半时自动续期
-      const ttl = await redis.ttl(key);
-      if (ttl > 0 && ttl < this.DEFAULT_TTL / 2) {
-        await redis.expire(key, this.DEFAULT_TTL);
-      }
-
+      devLog(`[BatchCache] 创建执行记录: ${executionId}`);
       return execution;
     } catch (error) {
-      console.error("[BatchCache] 获取执行记录失败:", error);
-      return null;
+      devError("[BatchCache] 创建执行记录失败:", error);
+      throw new Error(
+        `创建执行记录失败: ${
+          error instanceof Error ? error.message : "未知错误"
+        }`,
+      );
     }
   }
 
@@ -151,7 +154,7 @@ export class BatchExecutionCache {
    */
   async updateScriptStatus(
     executionId: string,
-    update: ScriptStatusUpdate
+    update: ScriptStatusUpdate,
   ): Promise<BatchExecutionState | null> {
     try {
       const redis = await this.getRedis();
@@ -223,7 +226,7 @@ export class BatchExecutionCache {
         update.message || "",
         update.findings || "",
         update.mongoResultId || "",
-        new Date().toISOString()
+        new Date().toISOString(),
       )) as string | null;
 
       if (!result) {
@@ -237,162 +240,142 @@ export class BatchExecutionCache {
         await redis.srem(this.ACTIVE_EXECUTIONS_SET, executionId);
       }
 
-      console.log(
-        `[BatchCache] 更新脚本 ${update.scriptId} 状态: ${update.status}`
-      );
+      devLog(`[BatchCache] 更新脚本 ${update.scriptId} 状态: ${update.status}`);
       return execution;
     } catch (error) {
-      console.error("[BatchCache] 状态更新失败:", error);
+      devError("[BatchCache] 状态更新失败:", error);
       throw new Error(
         `脚本状态更新失败: ${
           error instanceof Error ? error.message : "未知错误"
-        }`
+        }`,
       );
     }
   }
 
   /**
-   * 标记批量执行为完成状态
+   * 完成批量执行
    */
-  async completeExecution(executionId: string): Promise<boolean> {
+  async completeExecution(executionId: string): Promise<void> {
     try {
       const redis = await this.getRedis();
       const key = this.getExecutionKey(executionId);
 
       const luaScript = `
         local key = KEYS[1]
-        local executionData = redis.call('GET', key)
+        local executionId = ARGV[1]
+        local now = ARGV[2]
+        local activeSet = "${this.ACTIVE_EXECUTIONS_SET}"
         
-        if not executionData then
-          return 0
+        local execution = redis.call('GET', key)
+        if not execution then
+          return nil
         end
         
-        local execution = cjson.decode(executionData)
-        execution.isActive = false
-        execution.completedAt = ARGV[1]
+        local data = cjson.decode(execution)
+        data.isActive = false
+        data.completedAt = now
         
-        redis.call('SETEX', key, ${this.DEFAULT_TTL}, cjson.encode(execution))
-        return 1
+        redis.call('SETEX', key, ${this.DEFAULT_TTL}, cjson.encode(data))
+        redis.call('SREM', activeSet, executionId)
+        
+        return 'OK'
       `;
 
-      const result = (await redis.eval(
+      await redis.eval(
         luaScript,
         1,
         key,
-        new Date().toISOString()
-      )) as number;
-
-      if (result === 1) {
-        await redis.srem(this.ACTIVE_EXECUTIONS_SET, executionId);
-        console.log(`[BatchCache] 执行完成: ${executionId}`);
-        return true;
-      }
-
-      return false;
+        executionId,
+        new Date().toISOString(),
+      );
+      devLog(`[BatchCache] 执行完成: ${executionId}`);
     } catch (error) {
-      console.error("[BatchCache] 完成标记失败:", error);
-      return false;
+      devError("[BatchCache] 完成标记失败:", error);
+      throw new Error(
+        `完成标记失败: ${error instanceof Error ? error.message : "未知错误"}`,
+      );
     }
   }
 
   /**
    * 删除执行记录
-   * 从缓存和活跃集合中彻底移除
    */
-  async deleteExecution(executionId: string): Promise<boolean> {
+  async deleteExecution(executionId: string): Promise<void> {
     try {
       const redis = await this.getRedis();
       const key = this.getExecutionKey(executionId);
 
-      const pipeline = redis.pipeline();
-      pipeline.del(key);
-      pipeline.srem(this.ACTIVE_EXECUTIONS_SET, executionId);
+      await redis.del(key);
+      await redis.srem(this.ACTIVE_EXECUTIONS_SET, executionId);
 
-      const results = await pipeline.exec();
-      const deleted = results?.[0]?.[1] as number;
-
-      console.log(`[BatchCache] 删除执行记录: ${executionId}`);
-      return deleted > 0;
+      devLog(`[BatchCache] 删除执行记录: ${executionId}`);
     } catch (error) {
-      console.error("[BatchCache] 删除记录失败:", error);
-      return false;
+      devError("[BatchCache] 删除记录失败:", error);
+      throw new Error(
+        `删除记录失败: ${error instanceof Error ? error.message : "未知错误"}`,
+      );
     }
   }
 
   /**
-   * 获取所有活跃执行的ID列表
+   * 获取活跃的执行ID列表
    */
   async getActiveExecutions(): Promise<string[]> {
     try {
       const redis = await this.getRedis();
       return await redis.smembers(this.ACTIVE_EXECUTIONS_SET);
     } catch (error) {
-      console.error("[BatchCache] 获取活跃执行失败:", error);
+      devError("[BatchCache] 获取活跃执行失败:", error);
       return [];
     }
   }
 
   /**
-   * 清理非活跃的执行状态
-   * 维护数据一致性，移除僵尸记录
+   * 清理非活跃的执行记录
    */
   async cleanupInactiveExecutions(): Promise<number> {
     try {
-      const redis = await this.getRedis();
-      const activeIds = await redis.smembers(this.ACTIVE_EXECUTIONS_SET);
-
-      if (activeIds.length === 0) {
-        return 0;
-      }
-
+      const activeIds = await this.getActiveExecutions();
       let cleanedCount = 0;
 
       for (const executionId of activeIds) {
         const execution = await this.getExecution(executionId);
         if (!execution || !execution.isActive) {
-          await redis.srem(this.ACTIVE_EXECUTIONS_SET, executionId);
+          await this.deleteExecution(executionId);
           cleanedCount++;
         }
       }
 
-      console.log(`[BatchCache] 清理非活跃记录: ${cleanedCount} 条`);
+      devLog(`[BatchCache] 清理非活跃记录: ${cleanedCount} 条`);
       return cleanedCount;
     } catch (error) {
-      console.error("[BatchCache] 清理操作失败:", error);
+      devError("[BatchCache] 清理操作失败:", error);
       return 0;
     }
   }
 
   /**
-   * 获取缓存统计信息
-   * 用于监控和性能分析
+   * 获取执行统计信息
    */
-  async getCacheStats(): Promise<{
-    activeExecutions: number;
-    totalKeys: number;
-    memoryUsage: number;
+  async getExecutionStats(): Promise<{
+    activeCount: number;
+    totalExecutions: number;
   }> {
     try {
       const redis = await this.getRedis();
-
-      const activeExecutions = await redis.scard(this.ACTIVE_EXECUTIONS_SET);
-      const keys = await redis.keys(`${this.KEY_PREFIX}*`);
-      const info = await redis.info("memory");
-
-      const memoryMatch = info.match(/used_memory:(\d+)/);
-      const memoryUsage = memoryMatch ? parseInt(memoryMatch[1]) : 0;
+      const activeIds = await redis.smembers(this.ACTIVE_EXECUTIONS_SET);
+      const pattern = `${this.KEY_PREFIX}*`;
+      const keys = await redis.keys(pattern);
 
       return {
-        activeExecutions,
-        totalKeys: keys.length,
-        memoryUsage,
+        activeCount: activeIds.length,
+        totalExecutions: keys.length,
       };
     } catch (error) {
-      console.error("[BatchCache] 获取统计信息失败:", error);
+      devError("[BatchCache] 获取统计信息失败:", error);
       return {
-        activeExecutions: 0,
-        totalKeys: 0,
-        memoryUsage: 0,
+        activeCount: 0,
+        totalExecutions: 0,
       };
     }
   }

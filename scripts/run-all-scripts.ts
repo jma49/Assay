@@ -73,7 +73,7 @@ async function main(): Promise<void> {
     }
 
     console.log(
-      `[批量执行] 从MongoDB获取到 ${allScripts.length} 个${modeDescription}SQL脚本`
+      `[批量执行] 从MongoDB获取到 ${allScripts.length} 个${modeDescription}SQL脚本`,
     );
 
     let successCount = 0;
@@ -90,7 +90,7 @@ async function main(): Promise<void> {
 
       if (!scriptId || !sqlContent) {
         console.warn(
-          `[批量执行] 跳过无效脚本: ID=${scriptId}, 内容为空=${!sqlContent}`
+          `[批量执行] 跳过无效脚本: ID=${scriptId}, 内容为空=${!sqlContent}`,
         );
         skippedCount++;
         continue;
@@ -99,7 +99,7 @@ async function main(): Promise<void> {
       console.log(
         `[批量执行] 开始执行脚本: ${scriptId} (${scriptName})${
           isScheduled ? " [定时任务]" : ""
-        }`
+        }`,
       );
 
       try {
@@ -110,12 +110,12 @@ async function main(): Promise<void> {
         if (result.success) {
           successCount++;
           console.log(
-            `[批量执行] ✅ 脚本 ${scriptId} 执行成功 - ${result.statusType}`
+            `[批量执行] ✅ 脚本 ${scriptId} 执行成功 - ${result.statusType}`,
           );
         } else {
           failCount++;
           console.log(
-            `[批量执行] ❌ 脚本 ${scriptId} 执行失败: ${result.message}`
+            `[批量执行] ❌ 脚本 ${scriptId} 执行失败: ${result.message}`,
           );
         }
 
@@ -167,12 +167,12 @@ async function main(): Promise<void> {
       console.log(
         `  - ${result.scriptId} (${result.scriptName}) ${scheduledFlag}: ${
           result.success ? "✅" : "❌"
-        } ${result.statusType} - ${result.findings}`
+        } ${result.statusType} - ${result.findings}`,
       );
     });
 
     console.log(
-      `[批量执行] 所有脚本执行完成，共发送了 ${allScripts.length} 个单独的Slack通知`
+      `[批量执行] 所有脚本执行完成，共发送了 ${allScripts.length} 个单独的Slack通知`,
     );
   } catch (error) {
     const errorMsg =
