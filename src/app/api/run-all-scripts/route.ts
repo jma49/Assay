@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateApiAuth } from "@/lib/auth-utils";
 import getMongoDbClient from "@/lib/mongodb";
 import { executeScriptAndNotify } from "@/lib/script-executor";
-import { batchExecutionCache } from "@/services/batch-execution-cache";
+import batchExecutionCache from "@/services/batch-execution-cache";
 import { Collection, Document } from "mongodb";
 import { v4 as uuidv4 } from "uuid";
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const { mode = "all" } = body; // 默认模式为all
 
     devLog(
-      `[API 路由 /run-all-scripts] 用户 ${userEmail} 开始批量执行脚本 (模式: ${mode})`,
+      `[API 路由 /run-all-scripts] 用户 ${userEmail} 开始批量执行脚本 (模式: ${mode})`
     );
 
     // 获取脚本集合
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     devLog(
-      `[API 路由 /run-all-scripts] 找到 ${allScripts.length} 个${modeDescription}脚本`,
+      `[API 路由 /run-all-scripts] 找到 ${allScripts.length} 个${modeDescription}脚本`
     );
 
     // 生成执行ID
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
           scriptId: script.scriptId as string,
           scriptName: script.name as string,
           isScheduled: (script.isScheduled as boolean) || false,
-        })),
+        }))
       );
     } catch (cacheError) {
       devError("[API 路由 /run-all-scripts] 创建执行状态失败:", cacheError);
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
         message: errorMessage,
         localizedMessage: `批量执行失败: ${errorMessage}`,
       },
-      { status: 500 },
+      { status: 500 }
     );
   } finally {
     // 确保数据库连接被关闭
@@ -147,7 +147,7 @@ async function executeBatchScripts(scripts: Document[], executionId: string) {
   let skippedCount = 0;
 
   devLog(
-    `[批量执行] 开始执行 ${scripts.length} 个脚本 (执行ID: ${executionId})`,
+    `[批量执行] 开始执行 ${scripts.length} 个脚本 (执行ID: ${executionId})`
   );
 
   try {
@@ -160,7 +160,7 @@ async function executeBatchScripts(scripts: Document[], executionId: string) {
 
       if (!scriptId || !sqlContent) {
         devWarn(
-          `[批量执行] 跳过无效脚本: ID=${scriptId}, 内容为空=${!sqlContent}`,
+          `[批量执行] 跳过无效脚本: ID=${scriptId}, 内容为空=${!sqlContent}`
         );
         skippedCount++;
         continue;
@@ -169,7 +169,7 @@ async function executeBatchScripts(scripts: Document[], executionId: string) {
       devLog(
         `[批量执行] 开始执行脚本: ${scriptId} (${scriptName})${
           isScheduled ? " [定时任务]" : ""
-        }`,
+        }`
       );
 
       // 更新状态为运行中
@@ -194,7 +194,7 @@ async function executeBatchScripts(scripts: Document[], executionId: string) {
           }
           successCount++;
           devLog(
-            `[批量执行] ✅ 脚本 ${scriptId} 执行成功 - ${result.statusType}`,
+            `[批量执行] ✅ 脚本 ${scriptId} 执行成功 - ${result.statusType}`
           );
         } else {
           finalStatus = "failed";

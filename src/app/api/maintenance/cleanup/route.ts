@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { batchExecutionCache } from "@/services/batch-execution-cache";
+import batchExecutionCache from "@/services/batch-execution-cache";
 import redisClient from "@/lib/redis";
 
 /**
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -189,7 +189,7 @@ export async function GET() {
           memoryUsed: parseInt(memoryUsed || "0"),
           totalKeys,
           activeExecutions: stats.activeCount,
-        },
+        }
       ),
       timestamp: new Date().toISOString(),
     });
@@ -203,7 +203,7 @@ export async function GET() {
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -229,7 +229,7 @@ function generateCleanupRecommendations(
     memoryUsed: number;
     totalKeys: number;
     activeExecutions: number;
-  },
+  }
 ): string[] {
   const recommendations: string[] = [];
 

@@ -22,7 +22,14 @@
     "test:db": "NODE_OPTIONS='--import=ts-node/register --loader=ts-node/esm' node --no-warnings test/database/connection.test.ts",
     "test:notify": "ts-node test/notifications/slack.test.ts",
     "test:mongodb": "ts-node test/database/mongodb.test.ts",
-    "init:edit-history": "ts-node -r dotenv/config scripts/init-edit-history-indexes.ts"
+    "init:edit-history": "ts-node -r dotenv/config scripts/init-edit-history-indexes.ts",
+    "redis:backup": "ts-node scripts/redis-backup-manager.ts backup",
+    "redis:list": "ts-node scripts/redis-backup-manager.ts list",
+    "redis:restore": "ts-node scripts/redis-backup-manager.ts restore",
+    "redis:start": "./scripts/redis-server.sh",
+    "redis:stop": "redis-cli -p 6379 shutdown",
+    "redis:status": "redis-cli -p 6379 ping",
+    "redis:restart": "npm run redis:stop && sleep 2 && npm run redis:start"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.20.2",
