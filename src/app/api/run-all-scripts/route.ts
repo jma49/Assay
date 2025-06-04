@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     if (filteredExecution && scriptIds.length > 0) {
       const foundScriptIds = scriptsToExecute.map((s) => s.scriptId);
       const missingScriptIds = scriptIds.filter(
-        (id) => !foundScriptIds.includes(id)
+        (id: string) => !foundScriptIds.includes(id)
       );
 
       if (missingScriptIds.length > 0) {
