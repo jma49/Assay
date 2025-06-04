@@ -1,4 +1,3 @@
-import mongoDbClient from "@/lib/mongodb";
 import { Collection, Document } from "mongodb"; // For type hinting
 // Changed import to the new function name
 import { executeSqlScriptFromDb } from "../../scripts/core/sql-executor";

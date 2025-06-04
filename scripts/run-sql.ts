@@ -53,7 +53,7 @@ async function main(): Promise<void> {
 
   try {
     // Get MongoDB collection
-    const collection = await mongoDbClient.getSqlScriptsCollection();
+    const collection = await getSqlScriptsCollection();
 
     // Find the script by scriptId
     const scriptDoc = await collection.findOne({ scriptId: scriptId });
