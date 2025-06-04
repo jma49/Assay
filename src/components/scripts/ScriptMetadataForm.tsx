@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { HashtagInput } from "@/components/ui/hashtag-input";
 import { DashboardTranslationKeys } from "@/components/dashboard/types"; // For t function type
 import {
   Clock,
@@ -33,6 +34,7 @@ export interface ScriptFormData {
   author: string;
   scope: string;
   cnScope: string;
+  hashtags: string[];  // 新增：hashtag数组
   isScheduled: boolean;
   cronSchedule: string;
   // sqlContent will be handled separately by the CodeMirror editor
@@ -42,7 +44,7 @@ interface ScriptMetadataFormProps {
   formData: ScriptFormData;
   onFormChange: (
     fieldName: keyof ScriptFormData,
-    value: string | boolean,
+    value: string | boolean | string[], // 支持字符串数组
   ) => void;
   t: (key: DashboardTranslationKeys | string) => string; // Allow string for new keys initially
   isEditMode?: boolean; // To disable scriptId field in edit mode
@@ -64,6 +66,10 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
     if (typeof checked === "boolean") {
       onFormChange("isScheduled", checked);
     }
+  };
+
+  const handleHashtagsChange = (hashtags: string[]) => {
+    onFormChange("hashtags", hashtags);
   };
 
   return (
@@ -156,6 +162,19 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
                   className="focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all duration-200"
                 />
               </div>
+            </div>
+
+            {/* Hashtags */}
+            <div className="col-span-full">
+              <HashtagInput
+                hashtags={formData.hashtags || []}
+                onHashtagsChange={handleHashtagsChange}
+                label={t("hashtagsLabel") || "标签"}
+                placeholder={t("hashtagPlaceholder") || "输入标签..."}
+                helperText={t("hashtagsHelp") || "输入多个标签，用逗号分隔"}
+                maxTags={8}
+                className="w-full"
+              />
             </div>
           </div>
 

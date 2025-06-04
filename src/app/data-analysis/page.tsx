@@ -1,6 +1,6 @@
 "use client"; // Assuming client-side interactions might be added later
 
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { formatDate } from "@/components/dashboard/utils";
 import UserHeader from "@/components/UserHeader";
+import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
 
 // 添加进度条动画样式
 const progressAnimationStyle = `
@@ -221,9 +222,11 @@ export default function DataAnalysisPage() {
   );
   const [selectedTimeRange, setSelectedTimeRange] = useState("7d");
   const [selectedScript, setSelectedScript] = useState<string>("all");
+  const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageInput, setPageInput] = useState("");
+  const [availableScripts, setAvailableScripts] = useState<{ scriptId: string; hashtags?: string[] }[]>([]);
 
   const t = useCallback(
     (key: DashboardTranslationKeys | string): string => {
@@ -392,9 +395,23 @@ export default function DataAnalysisPage() {
 
       const executions: ExecutionRecord[] = await executionsResponse.json();
       const scripts = await scriptsResponse.json();
+      
+      // 保存脚本数据供hashtag筛选使用
+      setAvailableScripts(scripts);
+
+      // 根据hashtag筛选执行记录
+      let filteredExecutions = executions;
+      if (selectedHashtags.length > 0) {
+        filteredExecutions = executions.filter((execution) => {
+          const script = scripts.find((s: { scriptId: string; hashtags?: string[] }) => s.scriptId === execution.scriptId);
+          if (!script || !script.hashtags || script.hashtags.length === 0) return false;
+          // 检查脚本是否包含所有选中的hashtag
+          return selectedHashtags.every((tag: string) => script.hashtags?.includes(tag));
+        });
+      }
 
       // 处理数据分析
-      const analytics = processAnalyticsData(executions, scripts);
+      const analytics = processAnalyticsData(filteredExecutions, scripts);
       setAnalyticsData(analytics);
     } catch (err) {
       console.error("Failed to fetch analytics data:", err);
@@ -402,7 +419,7 @@ export default function DataAnalysisPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedTimeRange, selectedScript, processAnalyticsData]);
+  }, [selectedTimeRange, selectedScript, selectedHashtags, processAnalyticsData]);
 
   // 页面跳转相关函数
   const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -482,7 +499,18 @@ export default function DataAnalysisPage() {
   // 当筛选条件变化时重置分页
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedTimeRange, selectedScript]);
+  }, [selectedTimeRange, selectedScript, selectedHashtags]);
+
+  // 计算可用的hashtag（从脚本列表中提取）
+  const availableHashtags = useMemo(() => {
+    const hashtagSet = new Set<string>();
+    availableScripts.forEach((script) => {
+      if (script.hashtags && Array.isArray(script.hashtags)) {
+        script.hashtags.forEach((tag: string) => hashtagSet.add(tag));
+      }
+    });
+    return Array.from(hashtagSet).sort();
+  }, [availableScripts]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -550,7 +578,7 @@ export default function DataAnalysisPage() {
               </CardHeader>
 
               <CardContent className="relative px-6 py-6">
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2">
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   <div className="space-y-3">
                     <Label
                       htmlFor="time-range"
@@ -603,6 +631,27 @@ export default function DataAnalysisPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  {/* Hashtag筛选器 */}
+                  {availableHashtags.length > 0 && (
+                    <div className="space-y-3">
+                      <Label
+                        htmlFor="tag-filter"
+                        className="text-sm font-semibold text-foreground flex items-center gap-2"
+                      >
+                        <Filter className="h-4 w-4 text-primary" />
+                        {t("tagFilter")}
+                      </Label>
+                      <CompactHashtagFilter
+                        availableHashtags={availableHashtags}
+                        selectedHashtags={selectedHashtags}
+                        onHashtagsChange={(hashtags) => {
+                          setSelectedHashtags(hashtags);
+                          setCurrentPage(1); // 重置分页
+                        }}
+                        className="w-full h-12"
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

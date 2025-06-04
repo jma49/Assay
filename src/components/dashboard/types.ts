@@ -382,7 +382,32 @@ export type DashboardTranslationKeys =
   | "themeHelpLight"
   | "themeHelpDark"
   | "fontLabel"
-  | "cancel";
+  // Hashtag相关翻译键
+  | "hashtags"
+  | "addHashtag"
+  | "hashtagsLabel"
+  | "hashtagPlaceholder"
+  | "removeHashtag"
+  | "filterByHashtag"
+  | "allHashtags"
+  | "noHashtags"
+  | "hashtagsFilter"
+  | "hashtagFilter"
+  | "availableHashtags"
+  | "selectHashtags"
+  | "hashtagsHelp"
+  | "hashtagFormat"
+  // 新增的UI组件相关翻译键
+  | "noTagsAvailable"
+  | "showAllTags"
+  | "allTagsCount"
+  | "tagFilterButton"
+  | "clearAllTags"
+  | "searchTagsPlaceholder"
+  | "selectedTagsCount"
+  | "availableTagsCount"
+  | "noMatchingTags"
+  | "noAvailableTags";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -423,6 +448,7 @@ export interface ScriptInfo {
   isScheduled?: boolean;
   cronSchedule?: string;
   sqlContent?: string;
+  hashtags?: string[]; // 新增：hashtag数组
 }
 
 export interface SqlScript {
@@ -436,6 +462,7 @@ export interface SqlScript {
   cnScope?: string;
   author: string;
   sqlContent: string;
+  hashtags?: string[]; // 新增：hashtag数组
   isScheduled?: boolean;
   cronSchedule?: string;
   createdAt?: Date | string; // Allow string for API response, Date for client state
@@ -485,7 +512,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     // History Table
     historyTitle: "Check History",
     historyDesc: "Showing results for the last %s checks",
-    searchPlaceholder: "Search script name or message...",
+    searchPlaceholder: "Search script name, message, or use #tag...",
     clearSearch: "Clear",
     filterAll: "All",
     filterSuccess: "Success",
@@ -780,7 +807,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     editHistoryTitle: "Edit History",
     editHistoryDesc: "Showing edit history for the selected script",
     viewEditHistory: "View Edit History",
-    allScriptsHistory: "All Scripts History",
+    allScriptsHistory: "All Scripts Edit History",
     scriptNameFilter: "Script Name Filter",
     authorFilter: "Author Filter",
     operationTypeFilter: "Operation Type Filter",
@@ -851,10 +878,36 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     lightTheme: "Light Theme",
     darkTheme: "Dark Theme",
     themeHelpLight:
-      "In light mode, you can choose light themes. Switch to dark mode to view dark themes",
+      "Light themes are available in light mode, switch to dark mode to view dark themes",
     themeHelpDark:
-      "In dark mode, you can choose dark themes. Switch to light mode to view light themes",
+      "Dark themes are available in dark mode, switch to light mode to view light themes",
     fontLabel: "Font",
+    // Hashtag相关翻译键
+    hashtags: "Tags",
+    addHashtag: "Add Tag",
+    hashtagsLabel: "Tags",
+    hashtagPlaceholder: "Enter tags...",
+    removeHashtag: "Remove Tag",
+    filterByHashtag: "Filter by Tag",
+    allHashtags: "All Tags",
+    noHashtags: "No Tags",
+    hashtagsFilter: "Tag Filter",
+    hashtagFilter: "Tag Filter",
+    availableHashtags: "Available Tags",
+    selectHashtags: "Select Tags",
+    hashtagsHelp: "Enter multiple tags, separated by commas",
+    hashtagFormat: "Tag Format",
+    // 新增的UI组件相关翻译键
+    noTagsAvailable: "No tags",
+    showAllTags: "Show all tags",
+    allTagsCount: "All tags ({count})",
+    tagFilterButton: "Tag Filter",
+    clearAllTags: "Clear All",
+    searchTagsPlaceholder: "Search tags...",
+    selectedTagsCount: "Selected ({count})",
+    availableTagsCount: "Available tags ({count})",
+    noMatchingTags: "No matching tags found",
+    noAvailableTags: "No available tags",
   },
   zh: {
     // General
@@ -896,7 +949,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     // History Table
     historyTitle: "历史检查记录",
     historyDesc: "显示最近 %s 次检查的详细结果",
-    searchPlaceholder: "搜索脚本名称或消息...",
+    searchPlaceholder: "搜索脚本名称、消息或使用 #标签...",
     clearSearch: "清除",
     filterAll: "全部",
     filterSuccess: "成功",
@@ -1254,5 +1307,31 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     themeHelpLight: "浅色模式下可选择浅色主题，切换到暗色模式可查看暗色主题",
     themeHelpDark: "暗色模式下可选择暗色主题，切换到浅色模式可查看浅色主题",
     fontLabel: "字体",
+    // Hashtag相关翻译键
+    hashtags: "标签",
+    addHashtag: "添加标签",
+    hashtagsLabel: "标签",
+    hashtagPlaceholder: "输入标签",
+    removeHashtag: "移除标签",
+    filterByHashtag: "按标签过滤",
+    allHashtags: "所有标签",
+    noHashtags: "无标签",
+    hashtagsFilter: "标签过滤器",
+    hashtagFilter: "标签过滤器",
+    availableHashtags: "可用标签",
+    selectHashtags: "选择标签",
+    hashtagsHelp: "输入多个标签，用逗号分隔",
+    hashtagFormat: "标签格式",
+    // 新增的UI组件相关翻译键
+    noTagsAvailable: "无标签",
+    showAllTags: "显示所有标签",
+    allTagsCount: "所有标签 ({count})",
+    tagFilterButton: "标签筛选",
+    clearAllTags: "清除全部",
+    searchTagsPlaceholder: "搜索标签...",
+    selectedTagsCount: "已选择 ({count})",
+    availableTagsCount: "可选标签 ({count})",
+    noMatchingTags: "未找到匹配的标签",
+    noAvailableTags: "暂无可用标签",
   },
 };

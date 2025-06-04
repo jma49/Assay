@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -36,6 +36,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Check, DashboardTranslationKeys } from "./types";
 import { formatDate } from "./utils";
+import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
 
 interface CheckHistoryProps {
   paginatedChecks: Check[];
@@ -45,6 +46,7 @@ interface CheckHistoryProps {
   currentPage: number;
   filterStatus: string | null;
   searchTerm: string;
+  selectedHashtags?: string[];
   sortConfig: {
     key: keyof Check | "";
     direction: "ascending" | "descending";
@@ -56,10 +58,12 @@ interface CheckHistoryProps {
   t: (key: DashboardTranslationKeys) => string;
   setFilterStatus: (status: string | null) => void;
   setSearchTerm: (term: string) => void;
+  setSelectedHashtags?: (hashtags: string[]) => void;
   setCurrentPage: (page: number) => void;
   requestSort: (key: keyof Check) => void;
   startIndex: number;
   endIndex: number;
+  availableScripts?: { scriptId: string; hashtags?: string[] }[];
 }
 
 export const CheckHistory: React.FC<CheckHistoryProps> = ({
@@ -70,6 +74,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
   currentPage,
   filterStatus,
   searchTerm,
+  selectedHashtags = [],
   sortConfig,
   successCount,
   failureCount,
@@ -78,12 +83,24 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
   t,
   setFilterStatus,
   setSearchTerm,
+  setSelectedHashtags,
   setCurrentPage,
   requestSort,
   startIndex,
   endIndex,
+  availableScripts = [],
 }) => {
   const [pageInput, setPageInput] = useState("");
+
+  const availableHashtags = useMemo(() => {
+    const hashtagSet = new Set<string>();
+    availableScripts.forEach(script => {
+      if (script.hashtags && Array.isArray(script.hashtags)) {
+        script.hashtags.forEach(tag => hashtagSet.add(tag));
+      }
+    });
+    return Array.from(hashtagSet).sort();
+  }, [availableScripts]);
 
   const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPageInput(e.target.value);
@@ -94,7 +111,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
     const page = parseInt(pageInput, 10);
     if (!isNaN(page) && page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      setPageInput(""); // 清空输入框
+      setPageInput("");
     }
   };
 
@@ -102,7 +119,6 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
     if (e.key === "Enter") {
       handlePageInputSubmit(e);
     }
-    // 限制只能输入数字
     if (
       !/[\d\b]/.test(e.key) &&
       !["ArrowLeft", "ArrowRight", "Delete", "Backspace", "Tab"].includes(e.key)
@@ -113,7 +129,6 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
 
   return (
     <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
-      {/* 装饰性背景 */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
 
       <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
@@ -130,146 +145,155 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               {t("viewAndManageAllRecords")}
             </CardDescription>
           </div>
+        </div>
 
-          <div className="w-full sm:w-auto space-y-4">
-            {/* 第一行：All筛选器和搜索栏 */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setFilterStatus(null);
-                  setCurrentPage(1);
-                  // 点击All时设置按执行时间降序排序（最新的在前）
-                  requestSort("execution_time");
-                }}
-                className={cn(
-                  "h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 sm:flex-initial sm:min-w-[120px]",
-                  filterStatus === null &&
-                    "ring-2 ring-primary/50 ring-offset-2 ring-offset-background border-primary/30 shadow-lg shadow-primary/10",
-                )}
+        <div className="pt-4 space-y-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setFilterStatus(null);
+                setCurrentPage(1);
+                requestSort("execution_time");
+              }}
+              className={cn(
+                "h-10 px-3 gap-2 text-sm transition-all duration-300 shadow-sm hover:shadow-md group/filter",
+                filterStatus === null &&
+                  "ring-2 ring-primary/50 ring-offset-1 border-primary/30 bg-primary/5 text-primary shadow-lg shadow-primary/10",
+              )}
+            >
+              <Filter
+                size={14}
+                className="group-hover/filter:rotate-12 transition-transform duration-200"
+              />
+              <span className="font-medium">{t("filterAll")}</span>
+              <Badge
+                variant="secondary"
+                className="ml-1 h-4 text-xs px-1.5 bg-primary/10 text-primary border-primary/20"
               >
-                <Filter
-                  size={14}
-                  className="group-hover/filter:rotate-12 transition-transform duration-200"
-                />
-                {t("filterAll")}
-                <Badge
-                  variant="secondary"
-                  className="ml-0.5 h-5 text-xs px-2 bg-primary/10 text-primary border-primary/20"
-                >
-                  {totalUnfilteredCount}
-                </Badge>
-              </Button>
+                {totalUnfilteredCount}
+              </Badge>
+            </Button>
 
-              {/* 搜索栏 */}
-              <div className="relative flex-1 sm:w-80">
-                <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder={t("searchPlaceholder")}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full h-11 pl-10 pr-10 text-sm rounded-lg border-2 border-border/50 bg-background/80 backdrop-blur-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus:ring-offset-2 focus:border-primary/50 shadow-md transition-all duration-300 placeholder:text-muted-foreground/60"
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setFilterStatus("success");
+                setCurrentPage(1);
+                requestSort("execution_time");
+              }}
+              className={cn(
+                "h-10 px-3 gap-2 text-sm transition-all duration-300 shadow-sm hover:shadow-md group/filter",
+                filterStatus === "success" &&
+                  "ring-2 ring-green-500/50 ring-offset-1 border-green-500/30 bg-green-50 text-green-700 dark:bg-green-950/20 dark:text-green-400 shadow-lg shadow-green-500/10",
+              )}
+            >
+              <CheckCircle
+                size={14}
+                className="group-hover/filter:scale-110 transition-transform duration-200"
+              />
+              <span className="font-medium">{t("filterSuccess")}</span>
+              <Badge
+                variant="secondary"
+                className="ml-1 h-4 text-xs px-1.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800"
+              >
+                {successCount}
+              </Badge>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setFilterStatus("attention_needed");
+                setCurrentPage(1);
+                requestSort("execution_time");
+              }}
+              className={cn(
+                "h-10 px-3 gap-2 text-sm transition-all duration-300 shadow-sm hover:shadow-md group/filter",
+                filterStatus === "attention_needed" &&
+                  "ring-2 ring-amber-500/50 ring-offset-1 border-amber-500/30 bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 shadow-lg shadow-amber-500/10",
+              )}
+            >
+              <AlertCircle
+                size={14}
+                className="group-hover/filter:scale-110 transition-transform duration-200"
+              />
+              <span className="font-medium">{t("needsAttention")}</span>
+              <Badge
+                variant="secondary"
+                className="ml-1 h-4 text-xs px-1.5 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800"
+              >
+                {needsAttentionCount}
+              </Badge>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setFilterStatus("failure");
+                setCurrentPage(1);
+                requestSort("execution_time");
+              }}
+              className={cn(
+                "h-10 px-3 gap-2 text-sm transition-all duration-300 shadow-sm hover:shadow-md group/filter",
+                filterStatus === "failure" &&
+                  "ring-2 ring-red-500/50 ring-offset-1 border-red-500/30 bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400 shadow-lg shadow-red-500/10",
+              )}
+            >
+              <AlertCircle
+                size={14}
+                className="group-hover/filter:scale-110 transition-transform duration-200"
+              />
+              <span className="font-medium">{t("filterFailed")}</span>
+              <Badge
+                variant="secondary"
+                className="ml-1 h-4 text-xs px-1.5 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800"
+              >
+                {failureCount}
+              </Badge>
+            </Button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                placeholder={t("searchPlaceholder")}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full h-10 pl-9 pr-9 text-sm rounded-lg border-2 border-border/50 bg-background/80 backdrop-blur-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus:ring-offset-1 focus:border-primary/50 shadow-sm transition-all duration-300 placeholder:text-muted-foreground/60"
+              />
+              {searchTerm && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1 h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-all duration-200"
+                  onClick={() => setSearchTerm("")}
+                >
+                  <span className="sr-only">{t("clearSearch")}</span>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+
+            {availableHashtags.length > 0 && setSelectedHashtags && (
+              <div className="w-full sm:w-[200px]">
+                <CompactHashtagFilter
+                  availableHashtags={availableHashtags}
+                  selectedHashtags={selectedHashtags}
+                  onHashtagsChange={(hashtags) => {
+                    setSelectedHashtags(hashtags);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full h-10"
                 />
-                {searchTerm && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1 h-9 w-9 p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-all duration-200"
-                    onClick={() => setSearchTerm("")}
-                  >
-                    <span className="sr-only">{t("clearSearch")}</span>
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
               </div>
-            </div>
-
-            {/* 第二行：Success、Attention、Failure筛选器 */}
-            <div className="flex items-center gap-3 w-full">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setFilterStatus("success");
-                  setCurrentPage(1);
-                  // 确保按时间降序排序
-                  requestSort("execution_time");
-                }}
-                className={cn(
-                  "h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 min-w-0",
-                  filterStatus === "success" &&
-                    "ring-2 ring-green-500/50 ring-offset-2 ring-offset-background border-green-500/30 shadow-lg shadow-green-500/10",
-                )}
-              >
-                <CheckCircle
-                  size={14}
-                  className="group-hover/filter:scale-110 transition-transform duration-200"
-                />
-                <span className="truncate">{t("filterSuccess")}</span>
-                <Badge
-                  variant="secondary"
-                  className="ml-0.5 h-5 text-xs px-2 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800"
-                >
-                  {successCount}
-                </Badge>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setFilterStatus("attention_needed");
-                  setCurrentPage(1);
-                  // 确保按时间降序排序
-                  requestSort("execution_time");
-                }}
-                className={cn(
-                  "h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 min-w-0",
-                  filterStatus === "attention_needed" &&
-                    "ring-2 ring-amber-500/50 ring-offset-2 ring-offset-background border-amber-500/30 shadow-lg shadow-amber-500/10",
-                )}
-              >
-                <AlertCircle
-                  size={14}
-                  className="group-hover/filter:scale-110 transition-transform duration-200"
-                />
-                <span className="truncate">{t("needsAttention")}</span>
-                <Badge
-                  variant="secondary"
-                  className="ml-0.5 h-5 text-xs px-2 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800"
-                >
-                  {needsAttentionCount}
-                </Badge>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setFilterStatus("failure");
-                  setCurrentPage(1);
-                  // 确保按时间降序排序
-                  requestSort("execution_time");
-                }}
-                className={cn(
-                  "h-11 px-4 gap-2 text-sm transition-all duration-300 shadow-md hover:shadow-lg group/filter flex-1 min-w-0",
-                  filterStatus === "failure" &&
-                    "ring-2 ring-red-500/50 ring-offset-2 ring-offset-background border-red-500/30 shadow-lg shadow-red-500/10",
-                )}
-              >
-                <AlertCircle
-                  size={14}
-                  className="group-hover/filter:scale-110 transition-transform duration-200"
-                />
-                <span className="truncate">{t("filterFailed")}</span>
-                <Badge
-                  variant="secondary"
-                  className="ml-0.5 h-5 text-xs px-2 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800"
-                >
-                  {failureCount}
-                </Badge>
-              </Button>
-            </div>
+            )}
           </div>
         </div>
       </CardHeader>

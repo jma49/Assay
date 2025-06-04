@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   Database,
   List,
@@ -15,6 +15,9 @@ import {
   Search,
   CheckCircle2,
   AlertCircle,
+  Hash,
+  Check,
+  CornerDownLeft,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -100,10 +103,171 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
     ScriptExecutionStatus[]
   >([]);
   const [showProgressDialog, setShowProgressDialog] = useState(false);
+  const [showHashtagDropdown, setShowHashtagDropdown] = useState(false);
 
   // AbortController refs for cancelling requests
   const batchExecutionAbortRef = useRef<AbortController | null>(null);
   const statusPollAbortRef = useRef<AbortController | null>(null);
+
+  // 使用ref来存储之前的值，避免依赖问题
+  const isInitializedRef = useRef<boolean>(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // 稳定的状态更新函数，避免重新渲染时创建新的函数引用
+  const stableSetExecutionMode = useCallback((mode: "single" | "bulk") => {
+    setExecutionMode(mode);
+  }, []);
+
+  const stableSetBulkMode = useCallback((mode: "all" | "scheduled") => {
+    setBulkMode(mode);
+  }, []);
+
+  // 稳定的筛选函数
+  const getFilteredScripts = useCallback((scripts: ScriptInfo[], term: string) => {
+    if (!Array.isArray(scripts) || scripts.length === 0) {
+      return [];
+    }
+
+    let filtered = scripts;
+    const trimmedTerm = term.trim();
+    
+    if (trimmedTerm) {
+      const searchTerm = trimmedTerm.toLowerCase();
+      
+      // 检查是否包含hashtag搜索（#tag格式）
+      const hashtagMatches = searchTerm.match(/#(\w+)/g);
+      const extractedHashtags = hashtagMatches ? hashtagMatches.map(tag => tag.substring(1)) : [];
+      
+      // 移除hashtag部分，保留普通搜索文本
+      const textSearchTerm = searchTerm.replace(/#\w+/g, '').trim();
+      
+      filtered = filtered.filter(script => {
+        let matches = true;
+        
+        // 普通文本搜索
+        if (textSearchTerm) {
+          matches = matches && (
+            script.scriptId.toLowerCase().includes(textSearchTerm) ||
+            script.name.toLowerCase().includes(textSearchTerm) ||
+            (script.cnName || "").toLowerCase().includes(textSearchTerm) ||
+            (script.description || "").toLowerCase().includes(textSearchTerm) ||
+            (script.cnDescription || "").toLowerCase().includes(textSearchTerm)
+          );
+        }
+        
+        // Hashtag搜索
+        if (extractedHashtags.length > 0) {
+          const hasAllHashtags = script.hashtags && 
+            extractedHashtags.every(tag => 
+              script.hashtags?.some(scriptTag => 
+                scriptTag.toLowerCase().includes(tag.toLowerCase())
+              )
+            );
+          matches = matches && Boolean(hasAllHashtags);
+        }
+        
+        return matches;
+      });
+    }
+
+    return filtered;
+  }, []);
+
+  // 新增：获取所有可用的hashtag
+  const availableHashtags = useMemo(() => {
+    const hashtagSet = new Set<string>();
+    if (Array.isArray(availableScripts)) {
+      availableScripts.forEach(script => {
+        if (script.hashtags && Array.isArray(script.hashtags)) {
+          script.hashtags.forEach(tag => hashtagSet.add(tag));
+        }
+      });
+    }
+    return Array.from(hashtagSet).sort();
+  }, [availableScripts]);
+
+  // 计算筛选后的脚本 - 简化版本，避免复杂的缓存逻辑
+  const filteredScripts = useMemo(() => {
+    return getFilteredScripts(availableScripts, searchTerm);
+  }, [availableScripts, searchTerm, getFilteredScripts]);
+
+  // 处理hashtag输入变化
+  const handleHashtagInput = useCallback((value: string) => {
+    const prevSearchTerm = searchTerm;
+    setSearchTerm(value);
+    
+    // 检查是否正在输入hashtag
+    const isHashtagInput = value.includes('#');
+    setShowHashtagDropdown(isHashtagInput && availableHashtags.length > 0);
+    
+    // 当搜索词变化且不是在显示hashtag下拉框时，显示搜索结果提示
+    if (value.trim() && value !== prevSearchTerm && !isHashtagInput) {
+      const filtered = getFilteredScripts(availableScripts, value);
+      if (filtered.length !== availableScripts.length) {
+        toast.info(
+          language === "zh"
+            ? `找到 ${filtered.length} 个匹配的脚本`
+            : `Found ${filtered.length} matching scripts`,
+          {
+            duration: 2000,
+            position: "bottom-right",
+          }
+        );
+      }
+    }
+  }, [availableHashtags.length, searchTerm, getFilteredScripts, availableScripts, language]);
+
+  // 处理hashtag选择
+  const handleHashtagSelect = useCallback((tag: string) => {
+    // 移除搜索词中最后一个不完整的hashtag
+    const currentSearch = searchTerm.replace(/#\w*$/, '');
+    const newSearchTerm = `${currentSearch}#${tag}`.trim();
+    setSearchTerm(newSearchTerm);
+    setShowHashtagDropdown(false);
+    
+    // 延迟聚焦，确保下拉框先关闭
+    setTimeout(() => {
+      if (searchInputRef.current) {
+        searchInputRef.current.focus();
+      }
+    }, 100);
+  }, [searchTerm]);
+
+  // 处理hashtag确认
+  const handleHashtagConfirm = useCallback(() => {
+    setShowHashtagDropdown(false);
+    // 让输入框失去焦点，显示筛选结果
+    if (searchInputRef.current) {
+      searchInputRef.current.blur();
+    }
+  }, []);
+
+  // 处理键盘事件
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && showHashtagDropdown) {
+      e.preventDefault();
+      handleHashtagConfirm();
+    } else if (e.key === 'Escape') {
+      setShowHashtagDropdown(false);
+    }
+  }, [showHashtagDropdown, handleHashtagConfirm]);
+
+  // 监听点击外部关闭下拉框
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showHashtagDropdown && searchInputRef.current && !searchInputRef.current.contains(event.target as Node)) {
+        const dropdown = document.querySelector('[data-hashtag-dropdown]');
+        if (dropdown && !dropdown.contains(event.target as Node)) {
+          setShowHashtagDropdown(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showHashtagDropdown]);
 
   // 获取显示的描述文本（根据语言）
   const getLocalizedField = (
@@ -133,41 +297,28 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
     ? getLocalizedField(selectedScript.scope, selectedScript.cnScope)
     : "-";
 
-  // 调试用的脚本选择日志
+  // 简化的脚本选择逻辑 - 只在必要时更新，避免循环
   useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.log("ManualTrigger 状态更新:");
-      console.log(
-        "  - availableScripts:",
-        Array.isArray(availableScripts) ? availableScripts.length : "not array",
-        availableScripts,
-      );
-      console.log("  - isFetchingScripts:", isFetchingScripts);
-      console.log("  - selectedScriptId:", selectedScriptId);
-      console.log("  - selectedScript:", selectedScript);
-
-      if (selectedScript) {
-        console.log(
-          "选中的脚本完整数据:",
-          JSON.stringify(selectedScript, null, 2),
-        );
-      }
-    }
-  }, [availableScripts, isFetchingScripts, selectedScriptId, selectedScript]);
-
-  // 自动选择第一个脚本
-  useEffect(() => {
+    // 只在初始加载时自动选择第一个脚本
     if (
-      !selectedScriptId &&
-      Array.isArray(availableScripts) &&
+      !isInitializedRef.current &&
+      !selectedScriptId && 
+      Array.isArray(availableScripts) && 
       availableScripts.length > 0
     ) {
-      if (process.env.NODE_ENV === "development") {
-        console.log("自动选择第一个脚本:", availableScripts[0].scriptId);
-      }
-      setSelectedScriptId(availableScripts[0].scriptId);
+      // 延迟选择，避免渲染期间状态更新
+      setTimeout(() => {
+        setSelectedScriptId(availableScripts[0].scriptId);
+      }, 0);
+      isInitializedRef.current = true;
     }
-  }, [availableScripts, selectedScriptId, setSelectedScriptId]);
+    
+    // 重置初始化状态当脚本列表为空时
+    if (availableScripts.length === 0) {
+      isInitializedRef.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableScripts.length]); // 仅依赖脚本数量，不依赖其他可变状态避免循环
 
   // 轮询批量执行状态
   useEffect(() => {
@@ -299,25 +450,16 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
     };
   }, [currentExecutionId, isRunningBatch, language]);
 
-  // 过滤脚本列表（用于搜索）
-  const filteredScripts = Array.isArray(availableScripts)
-    ? availableScripts.filter((script) => {
-        if (!searchTerm) return true;
-        const searchLower = searchTerm.toLowerCase();
-        const name = (
-          language === "zh" && script.cnName ? script.cnName : script.name
-        ).toLowerCase();
-        const description = getLocalizedField(
-          script.description,
-          script.cnDescription,
-        ).toLowerCase();
-        return (
-          name.includes(searchLower) ||
-          description.includes(searchLower) ||
-          script.scriptId.toLowerCase().includes(searchLower)
-        );
-      })
-    : [];
+  // 获取批量执行的脚本列表
+  const getBatchScripts = useCallback(() => {
+    let scriptsToExecute = filteredScripts;
+
+    if (bulkMode === "scheduled") {
+      scriptsToExecute = scriptsToExecute.filter((script) => script.isScheduled);
+    }
+    
+    return scriptsToExecute;
+  }, [filteredScripts, bulkMode]);
 
   // 批量执行处理函数
   const handleBatchExecution = useCallback(async () => {
@@ -333,11 +475,17 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
     setShowBatchDialog(false);
 
     try {
+      // 获取要执行的脚本列表（已筛选）
+      const scriptsToExecute = getBatchScripts();
+      const scriptIds = scriptsToExecute.map(script => script.scriptId);
+
       const response = await fetch("/api/run-all-scripts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: bulkMode,
+          scriptIds: scriptIds, // 发送筛选后的脚本ID列表
+          filteredExecution: searchTerm.trim().length > 0, // 标识是否为筛选执行
         }),
         signal: batchExecutionAbortRef.current.signal,
       });
@@ -353,16 +501,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
         setCurrentExecutionId(result.executionId);
         setShowProgressDialog(true);
 
-        // 初始化脚本状态
-        const scriptsToExecute =
-          bulkMode === "scheduled"
-            ? Array.isArray(availableScripts)
-              ? availableScripts.filter((script) => script.isScheduled)
-              : []
-            : Array.isArray(availableScripts)
-              ? availableScripts
-              : [];
-
+        // 初始化脚本状态（使用筛选后的脚本）
         setExecutionScripts(
           scriptsToExecute.map((script) => ({
             scriptId: script.scriptId,
@@ -402,7 +541,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
 
       setIsRunningBatch(false);
     }
-  }, [bulkMode, availableScripts, t]);
+  }, [bulkMode, getBatchScripts, searchTerm, t]);
 
   // 关闭进度对话框
   const handleCloseProgressDialog = useCallback(() => {
@@ -441,12 +580,14 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
 
   // 获取批量执行脚本数量
   const getBatchScriptCount = () => {
-    if (!Array.isArray(availableScripts)) return 0;
+    // 使用筛选后的脚本列表
+    let scriptsToCount = filteredScripts;
 
     if (bulkMode === "scheduled") {
-      return availableScripts.filter((script) => script.isScheduled).length;
+      scriptsToCount = scriptsToCount.filter((script) => script.isScheduled);
     }
-    return availableScripts.length;
+    
+    return scriptsToCount.length;
   };
 
   return (
@@ -500,7 +641,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                 <RadioGroup
                   value={executionMode}
                   onValueChange={(value) =>
-                    setExecutionMode(value as "single" | "bulk")
+                    stableSetExecutionMode(value as "single" | "bulk")
                   }
                   className="flex space-x-6"
                 >
@@ -537,12 +678,55 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                       <Search className="h-3.5 w-3.5" />
                       {t("searchScripts")}
                     </Label>
-                    <Input
-                      placeholder={t("searchScriptsPlaceholder")}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="h-10"
-                    />
+                    <div className="relative">
+                      <Input
+                        ref={searchInputRef}
+                        placeholder={language === "zh" ? "搜索脚本名称或使用 #标签 筛选..." : "Search scripts or use #tag to filter..."}
+                        value={searchTerm}
+                        onChange={(e) => handleHashtagInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="h-10"
+                      />
+                      {/* Hashtag建议 */}
+                      {showHashtagDropdown && availableHashtags.length > 0 && (
+                        <div 
+                          data-hashtag-dropdown
+                          className="absolute top-full left-0 right-0 mt-1 bg-card border-2 border-border/30 rounded-lg shadow-lg z-50 max-h-48 overflow-hidden"
+                        >
+                          <div className="px-3 py-2 text-xs font-medium text-muted-foreground border-b border-border/20 bg-muted/20 flex items-center justify-between">
+                            <span>{language === "zh" ? "点击选择标签筛选脚本：" : "Click to filter scripts by tag:"}</span>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground/80">
+                              <CornerDownLeft className="h-3 w-3" />
+                              <span>{language === "zh" ? "回车确认" : "Enter to confirm"}</span>
+                            </div>
+                          </div>
+                          <div className="max-h-32 overflow-y-auto">
+                            <div className="p-2 space-y-1">
+                              {availableHashtags.map((tag) => (
+                                <button
+                                  key={tag}
+                                  className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2 transition-all duration-200 group"
+                                  onClick={() => handleHashtagSelect(tag)}
+                                >
+                                  <Hash className="h-4 w-4 text-primary" />
+                                  <span className="font-medium">{tag}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="border-t border-border/20 p-2">
+                            <Button
+                              size="sm"
+                              onClick={handleHashtagConfirm}
+                              className="w-full h-8 text-xs font-medium bg-primary hover:bg-primary/90 flex items-center gap-2"
+                            >
+                              <Check className="h-3 w-3" />
+                              {language === "zh" ? "确认选择" : "Confirm Selection"}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Script Selection */}
@@ -718,6 +902,85 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                 </>
               ) : (
                 <>
+                  {/* 批量执行筛选 */}
+                  <div className="space-y-4">
+                    {/* 脚本搜索 */}
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <Search className="h-3.5 w-3.5" />
+                        {t("searchScripts")}
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          ref={searchInputRef}
+                          placeholder={language === "zh" ? "搜索脚本名称或使用 #标签 筛选..." : "Search scripts or use #tag to filter..."}
+                          value={searchTerm}
+                          onChange={(e) => handleHashtagInput(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          className="h-10"
+                        />
+                        {/* Hashtag建议 */}
+                        {showHashtagDropdown && availableHashtags.length > 0 && (
+                          <div 
+                            data-hashtag-dropdown
+                            className="absolute top-full left-0 right-0 mt-1 bg-card border-2 border-border/30 rounded-lg shadow-lg z-50 max-h-48 overflow-hidden"
+                          >
+                            <div className="px-3 py-2 text-xs font-medium text-muted-foreground border-b border-border/20 bg-muted/20 flex items-center justify-between">
+                              <span>{language === "zh" ? "点击选择标签筛选脚本：" : "Click to filter scripts by tag:"}</span>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground/80">
+                                <CornerDownLeft className="h-3 w-3" />
+                                <span>{language === "zh" ? "回车确认" : "Enter to confirm"}</span>
+                              </div>
+                            </div>
+                            <div className="max-h-32 overflow-y-auto">
+                              <div className="p-2 space-y-1">
+                                {availableHashtags.map((tag) => (
+                                  <button
+                                    key={tag}
+                                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2 transition-all duration-200 group"
+                                    onClick={() => handleHashtagSelect(tag)}
+                                  >
+                                    <Hash className="h-4 w-4 text-primary" />
+                                    <span className="font-medium">{tag}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="border-t border-border/20 p-2">
+                              <Button
+                                size="sm"
+                                onClick={handleHashtagConfirm}
+                                className="w-full h-8 text-xs font-medium bg-primary hover:bg-primary/90 flex items-center gap-2"
+                              >
+                                <Check className="h-3 w-3" />
+                                {language === "zh" ? "确认选择" : "Confirm Selection"}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 筛选结果统计 */}
+                    {searchTerm.trim().length > 0 && (
+                      <div className="bg-blue-50/50 dark:bg-blue-950/20 rounded-lg border border-blue-200/60 dark:border-blue-800/60 p-3">
+                        <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-400">
+                          <Database className="h-4 w-4" />
+                          <span>
+                            筛选结果: {filteredScripts.length} / {availableScripts.length} 个脚本
+                          </span>
+                          {searchTerm.includes('#') && (
+                            <Badge variant="outline" className="text-xs ml-2">
+                              包含标签搜索
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator />
+
                   {/* 批量执行模式选择 */}
                   <div className="space-y-4">
                     <Label className="text-base font-semibold text-foreground flex items-center gap-2">
@@ -728,7 +991,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                       <RadioGroup
                         value={bulkMode}
                         onValueChange={(value) =>
-                          setBulkMode(value as "all" | "scheduled")
+                          stableSetBulkMode(value as "all" | "scheduled")
                         }
                         className="space-y-3"
                       >
@@ -746,9 +1009,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                               <CheckCircle2 className="h-4 w-4 text-green-600" />
                               {t("executeAllScriptsOption")}
                               <Badge variant="outline" className="text-xs">
-                                {Array.isArray(availableScripts)
-                                  ? availableScripts.length
-                                  : 0}
+                                {filteredScripts.length}
                               </Badge>
                             </Label>
                             <p className="text-xs text-muted-foreground mt-1">
@@ -770,11 +1031,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                               <Calendar className="h-4 w-4 text-blue-600" />
                               {t("executeScheduledScriptsOption")}
                               <Badge variant="outline" className="text-xs">
-                                {Array.isArray(availableScripts)
-                                  ? availableScripts.filter(
-                                      (script) => script.isScheduled,
-                                    ).length
-                                  : 0}
+                                {filteredScripts.filter(script => script.isScheduled).length}
                               </Badge>
                             </Label>
                             <p className="text-xs text-muted-foreground mt-1">

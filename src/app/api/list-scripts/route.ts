@@ -13,9 +13,10 @@ interface ScriptInfo {
   cnDescription?: string;
   cnScope?: string;
   isScheduled?: boolean;
+  hashtags?: string[];
 }
 
-// 简单的内存缓存（生产环境建议使用 Redis）
+// 简单的内存缓存
 interface CacheItem {
   data: ScriptInfo[];
   timestamp: number;
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
       // 应用客户端过滤
       if (includeScheduledOnly) {
         filteredData = filteredData.filter(
-          (script) => script.isScheduled === true,
+          (script) => script.isScheduled === true
         );
       }
 
@@ -115,6 +116,7 @@ export async function GET(request: NextRequest) {
       cnDescription: 1,
       cnScope: 1,
       isScheduled: 1,
+      hashtags: 1,
       _id: 0, // _id是特殊字段，可以在包含投影中排除
       // 注意：不包含sqlContent字段，这样就不会返回大字段
     };
@@ -128,7 +130,7 @@ export async function GET(request: NextRequest) {
 
     const queryTime = Date.now() - startTime;
     console.log(
-      `API: MongoDB query completed in ${queryTime}ms, found ${scriptsFromDb.length} scripts`,
+      `API: MongoDB query completed in ${queryTime}ms, found ${scriptsFromDb.length} scripts`
     );
 
     const scriptsForFrontend: ScriptInfo[] = scriptsFromDb.map((doc) => ({
@@ -142,6 +144,7 @@ export async function GET(request: NextRequest) {
       cnDescription: doc.cnDescription as string | undefined,
       cnScope: doc.cnScope as string | undefined,
       isScheduled: doc.isScheduled as boolean | undefined,
+      hashtags: doc.hashtags as string[] | undefined,
     }));
 
     // 更新缓存（只在获取所有脚本时缓存）
@@ -171,7 +174,7 @@ export async function GET(request: NextRequest) {
         message: "无法从数据库获取脚本列表",
         error: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

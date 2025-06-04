@@ -27,7 +27,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
   CardFooter,
 } from "@/components/ui/card";
 import {
@@ -78,6 +77,8 @@ import { cn } from "@/lib/utils";
 import { EditHistoryDialog } from "@/components/scripts/EditHistoryDialog";
 import { recordEditHistory } from "@/lib/edit-history";
 import UserHeader from "@/components/UserHeader";
+import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
+import { StackedTags } from "@/components/ui/stacked-tags";
 
 // Helper type for the form state, combining metadata and SQL content
 type ManageScriptFormState = Partial<SqlScript>;
@@ -92,6 +93,9 @@ const ManageScriptsPage = () => {
   // 分页相关状态
   const [currentPage, setCurrentPage] = useState(1);
   const [pageInput, setPageInput] = useState("");
+
+  // Hashtag筛选相关状态
+  const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
 
   // API调用去重：使用ref来跟踪是否正在调用
   const isFetchingRef = useRef(false);
@@ -183,6 +187,7 @@ const ManageScriptsPage = () => {
         scope: "",
         cnScope: "",
         author: "",
+        hashtags: [],
         isScheduled: false,
         cronSchedule: "",
       });
@@ -209,7 +214,7 @@ const ManageScriptsPage = () => {
 
   const handleMetadataChange = (
     fieldName: keyof ScriptFormData,
-    value: string | boolean,
+    value: string | boolean | string[],
   ) => {
     setCurrentFormScript((prev: ManageScriptFormState) => ({
       ...prev,
@@ -288,6 +293,7 @@ const ManageScriptsPage = () => {
           scope: currentPayload.scope,
           cnScope: currentPayload.cnScope,
           author: currentPayload.author,
+          hashtags: currentPayload.hashtags,
           isScheduled: currentPayload.isScheduled,
           cronSchedule: currentPayload.cronSchedule,
         };
@@ -406,13 +412,20 @@ const ManageScriptsPage = () => {
     router.push("/#execution-history");
   };
 
-  const filteredScripts = scripts.filter(
-    (script) =>
+  const filteredScripts = scripts.filter((script) => {
+    // 文本搜索筛选
+    const matchesSearch = 
       script.scriptId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       script.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (script.cnName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (script.author || "").toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+      (script.author || "").toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Hashtag筛选
+    const matchesHashtags = selectedHashtags.length === 0 || 
+      (script.hashtags && selectedHashtags.every(tag => script.hashtags?.includes(tag)));
+
+    return matchesSearch && matchesHashtags;
+  });
 
   // 分页逻辑
   const totalScripts = filteredScripts.length;
@@ -420,6 +433,11 @@ const ManageScriptsPage = () => {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedScripts = filteredScripts.slice(startIndex, endIndex);
+
+  // 获取所有可用的hashtag
+  const availableHashtags = Array.from(
+    new Set(scripts.flatMap(script => script.hashtags || []))
+  ).sort();
 
   // 页面跳转相关函数
   const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -454,6 +472,12 @@ const ManageScriptsPage = () => {
     setCurrentPage(1);
   };
 
+  // Hashtag筛选变化时重置到第一页
+  const handleHashtagFilterChange = (hashtags: string[]) => {
+    setSelectedHashtags(hashtags);
+    setCurrentPage(1);
+  };
+
   // 格式化分页信息
   const formatPageInfo = () => {
     const start = startIndex + 1;
@@ -480,6 +504,7 @@ const ManageScriptsPage = () => {
     author: currentFormScript.author || "",
     scope: currentFormScript.scope || "",
     cnScope: currentFormScript.cnScope || "",
+    hashtags: currentFormScript.hashtags || [],
     isScheduled:
       typeof currentFormScript.isScheduled === "boolean"
         ? currentFormScript.isScheduled
@@ -518,16 +543,11 @@ const ManageScriptsPage = () => {
                     <FileText className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
                   </div>
                   <div className="space-y-2">
-                    <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
+                    <CardTitle className="text-2xl font-bold text-foreground leading-relaxed">
                       {totalScripts > 0
-                        ? `${totalScripts} ${t("scripts")} ${totalPages > 1 ? `(${t("pageNumber")} ${currentPage}/${totalPages})` : ""}`
+                        ? `${totalScripts} ${t("scripts")}`
                         : t("manageScriptsPageTitle")}
                     </CardTitle>
-                    <CardDescription className="text-base text-muted-foreground leading-relaxed">
-                      {totalScripts === 0 && !isLoading && !error
-                        ? t("noScriptsYet")
-                        : totalPages > 1 ? formatPageInfo() : ""}
-                    </CardDescription>
                   </div>
                 </div>
 
@@ -556,6 +576,16 @@ const ManageScriptsPage = () => {
                     )}
                   </div>
 
+                  {/* Hashtag筛选器 */}
+                  {availableHashtags.length > 0 && (
+                    <CompactHashtagFilter
+                      availableHashtags={availableHashtags}
+                      selectedHashtags={selectedHashtags}
+                      onHashtagsChange={handleHashtagFilterChange}
+                      className="h-10"
+                    />
+                  )}
+
                   {/* 编辑历史按钮 */}
                   <Link href="/manage-scripts/edit-history">
                     <Button
@@ -573,7 +603,7 @@ const ManageScriptsPage = () => {
                     disabled={isLoading}
                     variant="outline"
                     size="sm"
-                    className="group shadow-sm hover:shadow-md transition-all duration-300"
+                    className="h-10 group shadow-sm hover:shadow-md transition-all duration-300"
                     title={t("refresh")}
                   >
                     <RefreshCw
@@ -656,6 +686,12 @@ const ManageScriptsPage = () => {
                           </TableHead>
                           <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
                             <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-teal-400/60"></div>
+                              {t("hashtags") || "标签"}
+                            </div>
+                          </TableHead>
+                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                            <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-purple-400/60"></div>
                               {t("fieldCreatedAt")}
                             </div>
@@ -694,6 +730,12 @@ const ManageScriptsPage = () => {
                               title={script.author}
                             >
                               <div className="truncate">{script.author}</div>
+                            </TableCell>
+                            <TableCell
+                              className="px-4 py-5 max-w-48 leading-relaxed"
+                              title={script.hashtags?.join(", ") || ""}
+                            >
+                              <StackedTags tags={script.hashtags || []} visibleCount={1} />
                             </TableCell>
                             <TableCell className="px-4 py-5 text-muted-foreground max-w-40 font-mono text-sm leading-relaxed">
                               <div className="truncate">
