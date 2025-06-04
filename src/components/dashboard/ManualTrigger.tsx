@@ -461,6 +461,15 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
     return scriptsToExecute;
   }, [filteredScripts, bulkMode]);
 
+  // 检查是否为筛选执行
+  const isFilteredExecution = useCallback(() => {
+    // 如果有搜索词（包括hashtag搜索），或者筛选后的脚本数量小于总脚本数量，则认为是筛选执行
+    const hasSearchTerm = searchTerm.trim().length > 0;
+    const isFiltered = filteredScripts.length < availableScripts.length;
+    
+    return hasSearchTerm || isFiltered;
+  }, [searchTerm, filteredScripts.length, availableScripts.length]);
+
   // 批量执行处理函数
   const handleBatchExecution = useCallback(async () => {
     // 取消之前的批量执行请求
@@ -478,6 +487,19 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
       // 获取要执行的脚本列表（已筛选）
       const scriptsToExecute = getBatchScripts();
       const scriptIds = scriptsToExecute.map(script => script.scriptId);
+      const isFiltered = isFilteredExecution();
+
+      if (process.env.NODE_ENV === "development") {
+        console.log('🔍 批量执行调试信息:', {
+          searchTerm: searchTerm,
+          totalAvailableScripts: availableScripts.length,
+          filteredScriptsCount: filteredScripts.length,
+          scriptsToExecuteCount: scriptsToExecute.length,
+          isFiltered: isFiltered,
+          bulkMode: bulkMode,
+          scriptIds: scriptIds
+        });
+      }
 
       const response = await fetch("/api/run-all-scripts", {
         method: "POST",
@@ -485,12 +507,16 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
         body: JSON.stringify({
           mode: bulkMode,
           scriptIds: scriptIds, // 发送筛选后的脚本ID列表
-          filteredExecution: searchTerm.trim().length > 0, // 标识是否为筛选执行
+          filteredExecution: isFiltered, // 使用更准确的筛选判断
         }),
         signal: batchExecutionAbortRef.current.signal,
       });
 
       const result = await response.json();
+
+      if (process.env.NODE_ENV === "development") {
+        console.log('📡 API响应结果:', result);
+      }
 
       if (!response.ok) {
         throw new Error(result.message || t("batchExecutionFailed"));
@@ -541,7 +567,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
 
       setIsRunningBatch(false);
     }
-  }, [bulkMode, getBatchScripts, searchTerm, t]);
+  }, [bulkMode, getBatchScripts, isFilteredExecution, searchTerm, availableScripts.length, filteredScripts.length, t]);
 
   // 关闭进度对话框
   const handleCloseProgressDialog = useCallback(() => {

@@ -46,10 +46,10 @@ export async function POST(request: NextRequest) {
     const { userEmail } = authResult;
 
     const body = await request.json();
-    const { mode = "all" } = body; // 默认模式为all
+    const { mode = "all", scriptIds = [], filteredExecution = false } = body;
 
     devLog(
-      `[API 路由 /run-all-scripts] 用户 ${userEmail} 开始批量执行脚本 (模式: ${mode})`
+      `[API 路由 /run-all-scripts] 用户 ${userEmail} 开始批量执行脚本 (模式: ${mode}, 筛选执行: ${filteredExecution})`
     );
 
     // 获取脚本集合
@@ -57,26 +57,62 @@ export async function POST(request: NextRequest) {
 
     let query = {};
     let modeDescription = "";
+    let scriptsToExecute: Document[] = [];
 
-    if (mode === "scheduled") {
+    if (filteredExecution && scriptIds.length > 0) {
+      // 筛选执行：使用前端传递的scriptIds
+      query = { scriptId: { $in: scriptIds } };
+      modeDescription = "筛选的";
+
+      devLog(`[API 路由 /run-all-scripts] 筛选执行，脚本ID列表:`, scriptIds);
+    } else if (mode === "scheduled") {
+      // 定时任务模式
       query = { isScheduled: true };
       modeDescription = "定时";
     } else {
+      // 全部执行模式
       modeDescription = "所有";
     }
 
-    const allScripts = await collection.find(query).toArray();
+    scriptsToExecute = await collection.find(query).toArray();
 
-    if (allScripts.length === 0) {
+    if (scriptsToExecute.length === 0) {
+      const message = filteredExecution
+        ? `没有找到匹配的脚本 (传入了 ${scriptIds.length} 个ID)`
+        : `没有找到${modeDescription}脚本`;
+
       return NextResponse.json({
         success: false,
-        message: `没有找到${modeDescription}脚本`,
-        localizedMessage: `没有找到${modeDescription}脚本`,
+        message,
+        localizedMessage: message,
+      });
+    }
+
+    // 验证筛选执行的脚本数量
+    if (filteredExecution && scriptIds.length > 0) {
+      const foundScriptIds = scriptsToExecute.map((s) => s.scriptId);
+      const missingScriptIds = scriptIds.filter(
+        (id) => !foundScriptIds.includes(id)
+      );
+
+      if (missingScriptIds.length > 0) {
+        devWarn(
+          `[API 路由 /run-all-scripts] 部分脚本未找到:`,
+          missingScriptIds
+        );
+      }
+
+      devLog(`[API 路由 /run-all-scripts] 筛选执行验证:`, {
+        requestedScripts: scriptIds.length,
+        foundScripts: scriptsToExecute.length,
+        missingScripts: missingScriptIds.length,
+        foundScriptIds,
+        missingScriptIds,
       });
     }
 
     devLog(
-      `[API 路由 /run-all-scripts] 找到 ${allScripts.length} 个${modeDescription}脚本`
+      `[API 路由 /run-all-scripts] 找到 ${scriptsToExecute.length} 个${modeDescription}脚本`
     );
 
     // 生成执行ID
@@ -86,7 +122,7 @@ export async function POST(request: NextRequest) {
     try {
       await batchExecutionCache.createExecution(
         executionId,
-        allScripts.map((script) => ({
+        scriptsToExecute.map((script) => ({
           scriptId: script.scriptId as string,
           scriptName: script.name as string,
           isScheduled: (script.isScheduled as boolean) || false,
@@ -98,21 +134,33 @@ export async function POST(request: NextRequest) {
     }
 
     // 启动异步执行（不等待完成）
-    const executionPromise = executeBatchScripts(allScripts, executionId);
+    const executionPromise = executeBatchScripts(scriptsToExecute, executionId);
 
     // 启动异步执行
     executionPromise.catch((error) => {
       devError("[API 路由 /run-all-scripts] 批量执行过程中发生错误:", error);
     });
 
+    // 构建成功响应消息
+    let successMessage = `开始批量执行 ${scriptsToExecute.length} 个${modeDescription}脚本`;
+    let localizedMessage = `批量执行已启动，共 ${scriptsToExecute.length} 个${modeDescription}脚本`;
+
+    if (filteredExecution) {
+      successMessage = `开始执行筛选的 ${scriptsToExecute.length} 个脚本`;
+      localizedMessage = `批量执行已启动，共 ${scriptsToExecute.length} 个筛选脚本`;
+    }
+
     // 立即返回响应，不等待执行完成
     return NextResponse.json({
       success: true,
-      message: `开始批量执行 ${allScripts.length} 个${modeDescription}脚本`,
-      localizedMessage: `批量执行已启动，共 ${allScripts.length} 个${modeDescription}脚本`,
+      message: successMessage,
+      localizedMessage,
       executionId,
-      scriptCount: allScripts.length,
+      scriptCount: scriptsToExecute.length,
       mode,
+      filteredExecution,
+      requestedScriptIds: filteredExecution ? scriptIds : undefined,
+      actualScriptIds: scriptsToExecute.map((s) => s.scriptId),
     });
   } catch (error) {
     devError("[API 路由 /run-all-scripts] API异常:", error);
@@ -157,6 +205,7 @@ async function executeBatchScripts(scripts: Document[], executionId: string) {
       const scriptName = script.name as string;
       const sqlContent = script.sqlContent as string;
       const isScheduled = script.isScheduled as boolean;
+      const scriptHashtags = script.hashtags as string[] | undefined; // 获取hashtags信息
 
       if (!scriptId || !sqlContent) {
         devWarn(
@@ -169,7 +218,7 @@ async function executeBatchScripts(scripts: Document[], executionId: string) {
       devLog(
         `[批量执行] 开始执行脚本: ${scriptId} (${scriptName})${
           isScheduled ? " [定时任务]" : ""
-        }`
+        }${scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""}`
       );
 
       // 更新状态为运行中
@@ -194,12 +243,18 @@ async function executeBatchScripts(scripts: Document[], executionId: string) {
           }
           successCount++;
           devLog(
-            `[批量执行] ✅ 脚本 ${scriptId} 执行成功 - ${result.statusType}`
+            `[批量执行] ✅ 脚本 ${scriptId} 执行成功 - ${result.statusType}${
+              scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""
+            }`
           );
         } else {
           finalStatus = "failed";
           failCount++;
-          devLog(`[批量执行] ❌ 脚本 ${scriptId} 执行失败: ${result.message}`);
+          devLog(
+            `[批量执行] ❌ 脚本 ${scriptId} 执行失败: ${result.message}${
+              scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""
+            }`
+          );
         }
 
         // 更新脚本执行状态
@@ -217,7 +272,11 @@ async function executeBatchScripts(scripts: Document[], executionId: string) {
       } catch (error) {
         failCount++;
         const errorMsg = error instanceof Error ? error.message : "未知错误";
-        devError(`[批量执行] ❌ 脚本 ${scriptId} 执行异常: ${errorMsg}`);
+        devError(
+          `[批量执行] ❌ 脚本 ${scriptId} 执行异常: ${errorMsg}${
+            scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""
+          }`
+        );
 
         // 更新为失败状态
         try {

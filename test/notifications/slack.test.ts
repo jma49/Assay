@@ -10,7 +10,7 @@ async function testNotifications() {
   // Check environment variables
   if (!process.env.SLACK_WEBHOOK_URL) {
     console.warn(
-      "Warning: SLACK_WEBHOOK_URL environment variable is not set, tests may fail",
+      "Warning: SLACK_WEBHOOK_URL environment variable is not set, tests may fail"
     );
   } else {
     // Check webhook URL format
@@ -19,7 +19,7 @@ async function testNotifications() {
       "Webhook URL type check:",
       webhookUrl.includes("hooks.slack.com")
         ? "Slack Webhook"
-        : "Unknown Webhook type",
+        : "Unknown Webhook type"
     );
   }
 
@@ -29,7 +29,7 @@ async function testNotifications() {
     await sendSlackNotification(
       "Test Success Notification",
       "This is a test success message.",
-      "success",
+      "success"
     );
     console.log("✅ Success notification sent successfully");
 
@@ -38,7 +38,7 @@ async function testNotifications() {
     await sendSlackNotification(
       "Test Failure Notification",
       "Simulated failure occurred.",
-      "failure",
+      "failure"
     );
     console.log("✅ Failure notification sent successfully");
 
@@ -47,13 +47,13 @@ async function testNotifications() {
     await sendSlackNotification(
       "Test Attention Notification",
       "This is a test attention_needed message (e.g., duplicates found).",
-      "attention_needed",
+      "attention_needed"
     );
     console.log("✅ Attention_needed notification sent successfully");
 
     // Test notification with formatted message (as success)
     console.log(
-      "Test Case 4: Sending success notification with formatted table",
+      "Test Case 4: Sending success notification with formatted table"
     );
     const formattedMessage = `
 *SQL Query Results*: (This is part of the main message)
@@ -67,7 +67,7 @@ ID | Name | Status
     await sendSlackNotification(
       "Formatted Success Message Test",
       formattedMessage,
-      "success",
+      "success"
     );
     console.log("✅ Formatted success message notification sent successfully");
 
