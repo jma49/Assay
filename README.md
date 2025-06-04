@@ -1,6 +1,6 @@
 # SQL 脚本部署与监控系统
 
-[![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](./package.json)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](./package.json)
 [![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black.svg)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-6.15.0-green.svg)](https://www.mongodb.com/)
@@ -12,7 +12,19 @@
 
 ## 📋 版本更新日志
 
-### v0.2.1 (最新版本) - 界面优化与编辑历史功能
+### v0.3.0 (最新版本) - 性能优化与 Tag 筛选系统
+
+#### 🔧 性能优化
+
+- **API 响应优化**: 执行历史 API limit 从 1000 降至 500，提升查询性能
+- **筛选器 UI 统一**: 统一所有页面的 hashtag 筛选器设计风格
+
+#### 🏷️ Tag 筛选系统增强
+
+- **Data Analysis 页面**: 为 hashtag 筛选器添加独立标签和图标，与其他筛选器风格一致
+- **Check History 页面**: 优化 tag 筛选器布局，与搜索框并排显示，响应式设计
+
+### v0.2.1 - 界面优化与编辑历史功能
 
 #### 📊 编辑历史功能 (全新)
 

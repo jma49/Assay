@@ -12,6 +12,7 @@ interface NewScriptData {
   scope?: string;
   cnScope?: string;
   author?: string;
+  hashtags?: string[];
   sqlContent: string;
   // isScheduled and cronSchedule will be handled separately or have defaults
 }
@@ -40,7 +41,7 @@ function containsHarmfulSql(sqlContent: string): boolean {
     (keyword) =>
       upperSql.includes(keyword + " ") ||
       upperSql.includes(keyword + ";") ||
-      upperSql.includes(keyword + "\n"),
+      upperSql.includes(keyword + "\n")
   );
 }
 
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
       scope,
       cnScope,
       author,
+      hashtags,
       sqlContent,
     } = body as NewScriptData;
 
@@ -70,7 +72,7 @@ export async function POST(request: Request) {
     if (!scriptId) {
       return NextResponse.json(
         { message: "scriptId is required" },
-        { status: 400 },
+        { status: 400 }
       );
     }
     if (!isValidScriptId(scriptId)) {
@@ -79,19 +81,19 @@ export async function POST(request: Request) {
           message:
             "Invalid scriptId format. Use lowercase letters, numbers, and hyphens.",
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
     if (!name || typeof name !== "string") {
       return NextResponse.json(
         { message: "name is required and must be a string" },
-        { status: 400 },
+        { status: 400 }
       );
     }
     if (!sqlContent || typeof sqlContent !== "string") {
       return NextResponse.json(
         { message: "sqlContent is required and must be a string" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -102,7 +104,7 @@ export async function POST(request: Request) {
     if (existingScript) {
       return NextResponse.json(
         { message: `Script with ID '${scriptId}' already exists` },
-        { status: 409 },
+        { status: 409 }
       ); // 409 Conflict
     }
 
@@ -113,7 +115,7 @@ export async function POST(request: Request) {
           message:
             "SQL content rejected due to potentially harmful DDL/DML commands.",
         },
-        { status: 403 },
+        { status: 403 }
       ); // 403 Forbidden
     }
 
@@ -127,6 +129,7 @@ export async function POST(request: Request) {
       scope: scope || "",
       cnScope: cnScope || "",
       author: author || "",
+      hashtags: hashtags || [],
       sqlContent,
       isScheduled: false, // 默认不启用定时任务
       cronSchedule: "", // 默认 Cron 表达式为空
@@ -144,12 +147,12 @@ export async function POST(request: Request) {
           scriptId: newScriptDocument.scriptId,
           mongoId: result.insertedId,
         },
-        { status: 201 },
+        { status: 201 }
       );
     } else {
       return NextResponse.json(
         { message: "Failed to create script" },
-        { status: 500 },
+        { status: 500 }
       );
     }
   } catch (error) {
@@ -158,14 +161,14 @@ export async function POST(request: Request) {
       // JSON 解析错误
       return NextResponse.json(
         { message: "Invalid JSON in request body" },
-        { status: 400 },
+        { status: 400 }
       );
     }
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
       { message: "Internal server error", error: errorMessage },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -183,7 +186,7 @@ export async function GET(_request: Request) {
       .toArray();
 
     console.log(
-      `API: GET /api/scripts - 从数据库中找到 ${scriptsFromDb.length} 个脚本`,
+      `API: GET /api/scripts - 从数据库中找到 ${scriptsFromDb.length} 个脚本`
     );
 
     // 明确定义从数据库获取的文档类型
@@ -197,6 +200,7 @@ export async function GET(_request: Request) {
       scope?: string;
       cnScope?: string;
       author: string;
+      hashtags?: string[];
       sqlContent: string;
       isScheduled?: boolean;
       cronSchedule?: string;
@@ -218,6 +222,7 @@ export async function GET(_request: Request) {
         scope: doc.scope || "",
         cnScope: doc.cnScope || "",
         author: doc.author,
+        hashtags: doc.hashtags || [],
         sqlContent: doc.sqlContent,
         isScheduled: doc.isScheduled || false,
         cronSchedule: doc.cronSchedule || "",
@@ -241,7 +246,7 @@ export async function GET(_request: Request) {
 
     return NextResponse.json(
       { message: `获取脚本列表失败: ${errorMessage}`, error: String(error) },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

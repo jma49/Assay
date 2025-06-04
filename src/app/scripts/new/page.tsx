@@ -28,6 +28,7 @@ const initialFormData: ScriptFormData = {
   author: "",
   scope: "",
   cnScope: "",
+  hashtags: [],
   isScheduled: false,
   cronSchedule: "",
 };
@@ -80,7 +81,7 @@ export default function NewScriptPage() {
 
   const handleFormChange = (
     fieldName: keyof ScriptFormData,
-    value: string | boolean,
+    value: string | boolean | string[],
   ) => {
     let newScriptId = formData.scriptId;
     let isManuallyEditingScriptId = scriptIdManuallyEdited;
@@ -96,7 +97,7 @@ export default function NewScriptPage() {
     ) {
       newScriptId = generateScriptIdFromName(value);
     } else {
-      // For other fields or if value is boolean, scriptId logic doesn't apply directly here
+      // For other fields or if value is boolean or string[], scriptId logic doesn't apply directly here
     }
 
     setFormData((prev) => ({

@@ -1,0 +1,101 @@
+import React from "react";
+import { X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+interface PriorityBadgeProps {
+  hashtag: string;
+  className?: string;
+  showRemove?: boolean;
+  onRemove?: () => void;
+}
+
+// 优先级标签颜色映射
+const getPriorityColor = (tag: string) => {
+  const lowerTag = tag.toLowerCase();
+  
+  switch (lowerTag) {
+    case 'p0':
+      return {
+        bg: "bg-red-100 dark:bg-red-950/30",
+        text: "text-red-700 dark:text-red-400",
+        border: "border-red-300 dark:border-red-700",
+        hover: "hover:bg-red-200 dark:hover:bg-red-950/50"
+      };
+    case 'p1':
+      return {
+        bg: "bg-orange-100 dark:bg-orange-950/30",
+        text: "text-orange-700 dark:text-orange-400",
+        border: "border-orange-300 dark:border-orange-700",
+        hover: "hover:bg-orange-200 dark:hover:bg-orange-950/50"
+      };
+    case 'p2':
+      return {
+        bg: "bg-yellow-100 dark:bg-yellow-950/30",
+        text: "text-yellow-700 dark:text-yellow-400",
+        border: "border-yellow-300 dark:border-yellow-700",
+        hover: "hover:bg-yellow-200 dark:hover:bg-yellow-950/50"
+      };
+    case 'p3':
+      return {
+        bg: "bg-blue-100 dark:bg-blue-950/30",
+        text: "text-blue-700 dark:text-blue-400",
+        border: "border-blue-300 dark:border-blue-700",
+        hover: "hover:bg-blue-200 dark:hover:bg-blue-950/50"
+      };
+    case 'p4':
+      return {
+        bg: "bg-green-100 dark:bg-green-950/30",
+        text: "text-green-700 dark:text-green-400",
+        border: "border-green-300 dark:border-green-700",
+        hover: "hover:bg-green-200 dark:hover:bg-green-950/50"
+      };
+    default:
+      return {
+        bg: "bg-gray-100 dark:bg-gray-800/30",
+        text: "text-gray-700 dark:text-gray-400",
+        border: "border-gray-300 dark:border-gray-600",
+        hover: "hover:bg-gray-200 dark:hover:bg-gray-800/50"
+      };
+  }
+};
+
+export function PriorityBadge({ 
+  hashtag, 
+  className, 
+  showRemove = false, 
+  onRemove 
+}: PriorityBadgeProps) {
+  const colors = getPriorityColor(hashtag);
+  
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "inline-flex items-center gap-1 px-2 py-1 text-xs font-medium transition-all duration-200",
+        colors.bg,
+        colors.text,
+        colors.border,
+        showRemove && colors.hover,
+        showRemove && "group pr-1",
+        className
+      )}
+    >
+      <span className="truncate">{hashtag}</span>
+      {showRemove && onRemove && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-auto w-auto p-0.5 ml-0.5 opacity-60 group-hover:opacity-100 hover:bg-current/20 transition-all duration-200"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      )}
+    </Badge>
+  );
+} 

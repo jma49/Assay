@@ -36,6 +36,7 @@ const Dashboard = () => {
   const [nextScheduled, setNextScheduled] = useState<Date | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Check | "";
     direction: "ascending" | "descending";
@@ -69,6 +70,11 @@ const Dashboard = () => {
   // --- Context Hooks ---
   const { language } = useLanguage();
 
+  // 稳定的setSelectedScriptId包装函数，避免无限循环
+  const stableSetSelectedScriptId = useCallback((scriptId: string) => {
+    setSelectedScriptId(scriptId);
+  }, []);
+
   // --- Translation Helper ---
   const t = useCallback(
     (key: DashboardTranslationKeys): string => {
@@ -80,40 +86,45 @@ const Dashboard = () => {
   );
 
   const loadInitialData = useCallback(async () => {
-    // 防止重复调用
+    // 防止重复调用 - 使用更强的防护机制
     if (isLoadingRef.current) {
+      console.log("🚫 防止重复调用：loadInitialData已在执行中");
       return;
     }
 
+    // 设置防护标志
+    isLoadingRef.current = true;
     setLoading(true);
     setIsFetchingScripts(true);
-    isLoadingRef.current = true;
+
+    // 添加唯一的请求ID
+    const requestId = Math.random().toString(36).substr(2, 9);
+    console.log(`🚀 开始数据加载请求 ${requestId}`);
 
     try {
-      // 并行获取脚本列表、检查历史显示数据和统计数据
-      const [scriptsResult, checksResult, statsResult] = await Promise.all([
+      const [scriptsResult, checksResult] = await Promise.all([
         // 获取脚本列表
         fetch("/api/list-scripts", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            "X-Request-ID": requestId, // 添加请求标识
           },
         }),
-        // 获取检查历史显示数据（恢复原有的500条限制，支持前端分页）
+        // 获取检查历史数据（获取更多数据，用于显示和统计）
         fetch("/api/check-history?limit=500&includeResults=false", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-          },
-        }),
-        // 获取统计数据（所有记录，仅用于统计计算）
-        fetch("/api/check-history?limit=1000&includeResults=false", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
+            "X-Request-ID": requestId, // 添加请求标识
           },
         }),
       ]);
+
+      console.log(`✅ API响应完成 ${requestId}:`, {
+        scriptsOk: scriptsResult.ok,
+        checksOk: checksResult.ok
+      });
 
       // 处理脚本列表响应
       if (scriptsResult.ok) {
@@ -166,6 +177,17 @@ const Dashboard = () => {
         setAvailableScripts(scriptsData);
         setIsFetchingScripts(false);
 
+        if (process.env.NODE_ENV === "development") {
+          console.log("📋 脚本数据加载完成:", {
+            count: scriptsData.length,
+            scripts: scriptsData.map(s => ({
+              scriptId: s.scriptId,
+              name: s.name,
+              hashtags: s.hashtags
+            }))
+          });
+        }
+
         // 验证状态更新
         setTimeout(() => {
           // 状态验证已完成
@@ -176,7 +198,7 @@ const Dashboard = () => {
         );
       }
 
-      // 处理检查历史显示数据响应
+      // 处理检查历史数据响应
       if (checksResult.ok) {
         const checksResponseData = await checksResult.json();
         let checksData: Check[] = [];
@@ -237,6 +259,40 @@ const Dashboard = () => {
 
         setChecks(processedChecks);
 
+        // 统一计算整体统计数据（使用同一份数据）
+        const overallSuccessCount = processedChecks.filter(
+          (c) => c.status === "success" && c.statusType !== "attention_needed",
+        ).length;
+        const overallFailureCount = processedChecks.filter(
+          (c) => c.status === "failure",
+        ).length;
+        const overallNeedsAttentionCount = processedChecks.filter(
+          (c) => c.statusType === "attention_needed",
+        ).length;
+        const overallTotalCount = processedChecks.length;
+
+        setOverallStats({
+          totalCount: overallTotalCount,
+          successCount: overallSuccessCount,
+          failureCount: overallFailureCount,
+          needsAttentionCount: overallNeedsAttentionCount,
+        });
+
+        if (process.env.NODE_ENV === "development") {
+          console.log("📊 检查数据和统计加载完成:", {
+            totalChecks: overallTotalCount,
+            successCount: overallSuccessCount,
+            failureCount: overallFailureCount,
+            needsAttentionCount: overallNeedsAttentionCount,
+            sampleChecks: processedChecks.slice(0, 3).map(c => ({
+              script_name: c.script_name,
+              script_id: c.script_id,
+              status: c.status,
+              statusType: c.statusType
+            }))
+          });
+        }
+
         // 验证状态更新
         setTimeout(() => {
           // 状态验证已完成
@@ -247,79 +303,6 @@ const Dashboard = () => {
         );
       }
 
-      // 处理统计数据响应
-      if (statsResult.ok) {
-        const statsResponseData = await statsResult.json();
-        let statsData: Check[] = [];
-
-        // 处理不同的API响应格式
-        if (statsResponseData && typeof statsResponseData === "object") {
-          if (Array.isArray(statsResponseData)) {
-            statsData = statsResponseData;
-          } else if (
-            statsResponseData.data &&
-            Array.isArray(statsResponseData.data)
-          ) {
-            statsData = statsResponseData.data;
-          } else if (
-            statsResponseData.checks &&
-            Array.isArray(statsResponseData.checks)
-          ) {
-            statsData = statsResponseData.checks;
-          } else if (
-            statsResponseData.success &&
-            Array.isArray(statsResponseData.data)
-          ) {
-            statsData = statsResponseData.data;
-          } else {
-            const possibleArrayFields = ["items", "results", "list", "records"];
-            for (const field of possibleArrayFields) {
-              if (
-                statsResponseData[field] &&
-                Array.isArray(statsResponseData[field])
-              ) {
-                statsData = statsResponseData[field];
-                break;
-              }
-            }
-          }
-        }
-
-        // 确保数据是数组格式
-        if (!Array.isArray(statsData)) {
-          statsData = [];
-        }
-
-        // 计算整体统计数据
-        const overallSuccessCount = statsData.filter(
-          (c) => c.status === "success" && c.statusType !== "attention_needed",
-        ).length;
-        const overallFailureCount = statsData.filter(
-          (c) => c.status === "failure",
-        ).length;
-        const overallNeedsAttentionCount = statsData.filter(
-          (c) => c.statusType === "attention_needed",
-        ).length;
-        const overallTotalCount = statsData.length;
-
-        setOverallStats({
-          totalCount: overallTotalCount,
-          successCount: overallSuccessCount,
-          failureCount: overallFailureCount,
-          needsAttentionCount: overallNeedsAttentionCount,
-        });
-
-        console.log("📊 统计数据更新:", {
-          totalCount: overallTotalCount,
-          successCount: overallSuccessCount,
-          failureCount: overallFailureCount,
-          needsAttentionCount: overallNeedsAttentionCount,
-        });
-      } else {
-        throw new Error(
-          `统计数据获取失败: ${statsResult.status} ${statsResult.statusText}`,
-        );
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "数据加载失败");
     } finally {
@@ -381,16 +364,16 @@ const Dashboard = () => {
       Array.isArray(availableScripts) &&
       availableScripts.length > 0
     ) {
-      setSelectedScriptId(availableScripts[0].scriptId);
+      stableSetSelectedScriptId(availableScripts[0].scriptId);
     }
     // If scripts become unavailable AND a script was previously selected, clear the selection
     else if (
       selectedScriptId &&
       (!Array.isArray(availableScripts) || availableScripts.length === 0)
     ) {
-      setSelectedScriptId("");
+      stableSetSelectedScriptId("");
     }
-  }, [availableScripts, selectedScriptId]);
+  }, [availableScripts, selectedScriptId, stableSetSelectedScriptId]);
 
   // 调试：监控状态变化
   useEffect(() => {
@@ -509,6 +492,27 @@ const Dashboard = () => {
   const filteredAndSortedChecks = React.useMemo(() => {
     let filtered = checks;
 
+    // 添加数据结构调试信息
+    if (process.env.NODE_ENV === "development") {
+      console.log('🔍 搜索调试信息:', {
+        searchTerm: searchTerm,
+        selectedHashtags: selectedHashtags,
+        totalChecks: checks.length,
+        availableScriptsCount: availableScripts.length,
+        sampleCheck: checks[0] ? {
+          script_name: checks[0].script_name,
+          script_id: checks[0].script_id,
+          status: checks[0].status
+        } : null,
+        sampleScript: availableScripts[0] ? {
+          scriptId: availableScripts[0].scriptId,
+          name: availableScripts[0].name,
+          cnName: availableScripts[0].cnName,
+          hashtags: availableScripts[0].hashtags
+        } : null
+      });
+    }
+
     // 根据不同的筛选状态进行过滤
     if (filterStatus === "success") {
       filtered = filtered.filter(
@@ -524,15 +528,136 @@ const Dashboard = () => {
     }
     // filterStatus === null 时显示所有记录
 
+    // 文本搜索筛选 - 支持hashtag搜索
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (check) =>
-          check.script_name.toLowerCase().includes(term) ||
-          (check.message && check.message.toLowerCase().includes(term)) ||
-          (check.findings && check.findings.toLowerCase().includes(term)),
-      );
+      
+      // 检查是否是hashtag搜索（以#开头）
+      if (term.startsWith('#')) {
+        const hashtagToSearch = term.substring(1); // 移除#符号
+        console.log('🔍 Hashtag搜索开始:', {
+          originalTerm: searchTerm,
+          hashtagToSearch: hashtagToSearch,
+          availableScriptsWithHashtags: availableScripts.filter(s => s.hashtags && s.hashtags.length > 0).map(s => ({
+            scriptId: s.scriptId,
+            name: s.name,
+            cnName: s.cnName,
+            hashtags: s.hashtags
+          }))
+        });
+        
+        filtered = filtered.filter((check) => {
+          // 尝试多种方式找到对应的脚本
+          const script = availableScripts.find(s => 
+            s.scriptId === check.script_name || 
+            s.name === check.script_name ||
+            s.cnName === check.script_name ||
+            s.scriptId === check.script_id ||
+            s.name === check.script_id ||
+            s.cnName === check.script_id ||
+            // 尝试部分匹配
+            check.script_name.includes(s.scriptId) ||
+            s.scriptId.includes(check.script_name) ||
+            (s.name && check.script_name.includes(s.name)) ||
+            (s.name && s.name.includes(check.script_name)) ||
+            (s.cnName && check.script_name.includes(s.cnName)) ||
+            (s.cnName && s.cnName.includes(check.script_name))
+          );
+          
+          if (process.env.NODE_ENV === "development") {
+            console.log('🔍 脚本匹配尝试:', {
+              checkScriptName: check.script_name,
+              checkScriptId: check.script_id,
+              foundScript: script ? {
+                scriptId: script.scriptId,
+                name: script.name,
+                cnName: script.cnName,
+                hashtags: script.hashtags
+              } : null
+            });
+          }
+          
+          if (!script) {
+            if (process.env.NODE_ENV === "development") {
+              console.log('❌ 未找到脚本匹配:', {
+                checkScriptName: check.script_name,
+                checkScriptId: check.script_id,
+                availableScriptIds: availableScripts.map(s => s.scriptId),
+                availableScriptNames: availableScripts.map(s => s.name),
+                availableScriptCnNames: availableScripts.map(s => s.cnName)
+              });
+            }
+            return false;
+          }
+          
+          if (!script.hashtags || script.hashtags.length === 0) {
+            if (process.env.NODE_ENV === "development") {
+              console.log('❌ 脚本无标签:', {
+                scriptId: script.scriptId,
+                hashtags: script.hashtags
+              });
+            }
+            return false;
+          }
+          
+          // 检查脚本的hashtag是否包含搜索词
+          const hasMatchingTag = script.hashtags.some(tag => 
+            tag.toLowerCase().includes(hashtagToSearch) ||
+            hashtagToSearch.includes(tag.toLowerCase())
+          );
+          
+          if (process.env.NODE_ENV === "development") {
+            console.log('🎯 标签匹配检查:', {
+              searchTerm: hashtagToSearch,
+              scriptTags: script.hashtags,
+              scriptName: script.name,
+              hasMatchingTag: hasMatchingTag,
+              tagMatches: script.hashtags.map(tag => ({
+                tag: tag,
+                lowerTag: tag.toLowerCase(),
+                includes: tag.toLowerCase().includes(hashtagToSearch),
+                reverseIncludes: hashtagToSearch.includes(tag.toLowerCase())
+              }))
+            });
+          }
+          
+          return hasMatchingTag;
+        });
+        
+        console.log('📊 Hashtag搜索结果:', {
+          searchTerm: hashtagToSearch,
+          totalChecks: checks.length,
+          beforeFilter: checks.length,
+          afterFilter: filtered.length,
+          filteredChecks: filtered.map(c => ({
+            script_name: c.script_name,
+            script_id: c.script_id,
+            status: c.status
+          }))
+        });
+      } else {
+        // 普通文本搜索
+        filtered = filtered.filter(
+          (check) =>
+            check.script_name.toLowerCase().includes(term) ||
+            (check.message && check.message.toLowerCase().includes(term)) ||
+            (check.findings && check.findings.toLowerCase().includes(term)),
+        );
+      }
     }
+
+    // Hashtag筛选 - 根据脚本的hashtag进行筛选
+    if (selectedHashtags.length > 0) {
+      filtered = filtered.filter((check) => {
+        // 找到对应的脚本
+        const script = availableScripts.find(s => s.scriptId === check.script_name || s.name === check.script_name);
+        if (!script || !script.hashtags || script.hashtags.length === 0) return false;
+        // 检查脚本是否包含所有选中的hashtag
+        return selectedHashtags.every(tag => script.hashtags?.includes(tag));
+      });
+    }
+
+    // 排序
     if (sortConfig.key !== "") {
       filtered = [...filtered].sort((a, b) => {
         const key = sortConfig.key as keyof Check;
@@ -552,7 +677,7 @@ const Dashboard = () => {
       });
     }
     return filtered;
-  }, [checks, filterStatus, searchTerm, sortConfig]);
+  }, [checks, filterStatus, searchTerm, selectedHashtags, sortConfig, availableScripts]);
 
   const totalChecks = filteredAndSortedChecks.length;
   const totalPages = Math.ceil(totalChecks / ITEMS_PER_PAGE);
@@ -685,7 +810,7 @@ const Dashboard = () => {
               triggerMessageType={triggerMessageType}
               language={language}
               t={t}
-              setSelectedScriptId={setSelectedScriptId}
+              setSelectedScriptId={stableSetSelectedScriptId}
               handleTriggerCheck={handleTriggerCheck}
             />
           </section>
@@ -721,6 +846,7 @@ const Dashboard = () => {
               currentPage={currentPage}
               filterStatus={filterStatus}
               searchTerm={searchTerm}
+              selectedHashtags={selectedHashtags}
               sortConfig={sortConfig}
               successCount={successCount}
               failureCount={failureCount}
@@ -729,10 +855,12 @@ const Dashboard = () => {
               t={t}
               setFilterStatus={setFilterStatus}
               setSearchTerm={setSearchTerm}
+              setSelectedHashtags={setSelectedHashtags}
               setCurrentPage={setCurrentPage}
               requestSort={requestSort}
               startIndex={startIndex}
               endIndex={endIndex}
+              availableScripts={availableScripts}
             />
           </section>
 
