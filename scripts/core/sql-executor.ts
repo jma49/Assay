@@ -123,7 +123,7 @@ class PostgreSQLParser {
    */
   private findDollarTag(
     content: string,
-    start: number,
+    start: number
   ): { tag: string } | null {
     if (content[start] !== "$") return null;
 
@@ -284,7 +284,7 @@ class PostgreSQLParser {
 
     const isMultiStatement =
       multiStatementKeywords.some((keyword) =>
-        trimmedQuery.includes(keyword),
+        trimmedQuery.includes(keyword)
       ) || isInPlpgsqlBlock;
 
     if (isMultiStatement) {
@@ -358,7 +358,7 @@ function parsePostgreSQLStatements(sqlContent: string): string[] {
 function determineStatusType(
   scriptId: string,
   findings: string,
-  results?: QueryResult[],
+  results?: QueryResult[]
 ): ExecutionStatusType {
   // 如果是检查类脚本且发现了问题，则标记为需要关注
   // 移除 isCheckOrValidateScript(scriptId) &&
@@ -380,16 +380,20 @@ function determineStatusType(
  *
  * @param scriptId 脚本的唯一标识符。
  * @param sqlContent SQL 脚本的完整内容。
+ * @param scriptHashtags 脚本的标签信息（可选）。
  * @returns 返回一个包含执行结果的 Promise 对象。
  */
 export async function executeSqlScriptFromDb(
   scriptId: string,
   sqlContent: string, // Changed from filePath
+  scriptHashtags?: string[] // 新增：脚本标签信息
 ): Promise<ExecutionResult> {
   const executionTimestamp = Date.now();
   console.log(
     // Updated log message
-    `[EXEC ${executionTimestamp}] Starting script execution: ${scriptId} (from DB content)`,
+    `[EXEC ${executionTimestamp}] Starting script execution: ${scriptId} (from DB content)${
+      scriptHashtags ? ` [tags: ${scriptHashtags.join(", ")}]` : ""
+    }`
   );
 
   let results: QueryResult[] | undefined = undefined;
@@ -398,6 +402,14 @@ export async function executeSqlScriptFromDb(
   let findings = "Execution incomplete";
   let statusType: ExecutionStatusType = "failure"; // 默认失败
   let mongoResultId: string | undefined = undefined;
+
+  // 格式化标签用于Slack通知
+  const formatTagsForSlack = (tags?: string[]): string | undefined => {
+    if (!tags || tags.length === 0) return undefined;
+    return tags.join(", ");
+  };
+
+  const slackTag = formatTagsForSlack(scriptHashtags);
 
   try {
     // Removed: if (!fs.existsSync(filePath)) { ... }
@@ -416,7 +428,7 @@ export async function executeSqlScriptFromDb(
       statusType = "success"; // Or perhaps a specific status like 'no_content'
       results = [];
       console.warn(
-        `[EXEC ${executionTimestamp}] ${scriptId}: ${successMessage}`,
+        `[EXEC ${executionTimestamp}] ${scriptId}: ${successMessage}`
       );
       const mongoSaveResult = await saveResultToMongo(
         scriptId,
@@ -424,7 +436,7 @@ export async function executeSqlScriptFromDb(
         statusType,
         successMessage,
         findings,
-        results,
+        results
       );
       if (mongoSaveResult && mongoSaveResult.insertedId) {
         mongoResultId = mongoSaveResult.insertedId.toString();
@@ -434,6 +446,7 @@ export async function executeSqlScriptFromDb(
         `${successMessage} (${findings})`,
         statusType,
         mongoResultId,
+        slackTag // 传递标签信息
       );
       return {
         success: true, // Technically not a failure, but script didn't run SQL
@@ -450,7 +463,7 @@ export async function executeSqlScriptFromDb(
       .filter((q) => q.length > 0);
 
     console.log(
-      `[EXEC ${executionTimestamp}] Parsed ${queries.length} PostgreSQL statements with full syntax support`,
+      `[EXEC ${executionTimestamp}] Parsed ${queries.length} PostgreSQL statements with full syntax support`
     );
 
     // 打印解析的查询用于调试（仅在开发环境）
@@ -458,7 +471,7 @@ export async function executeSqlScriptFromDb(
       queries.forEach((query, index) => {
         console.log(
           `[EXEC ${executionTimestamp}] Query ${index + 1}:`,
-          query.substring(0, 100) + (query.length > 100 ? "..." : ""),
+          query.substring(0, 100) + (query.length > 100 ? "..." : "")
         );
       });
     }
@@ -468,7 +481,7 @@ export async function executeSqlScriptFromDb(
     if (!validation.isValid) {
       console.warn(
         `[EXEC ${executionTimestamp}] PostgreSQL syntax validation warnings:`,
-        validation.errors,
+        validation.errors
       );
       // 注意：这里我们只警告，不阻止执行，因为验证器可能不完美
     }
@@ -481,7 +494,7 @@ export async function executeSqlScriptFromDb(
       results = [];
       // ... (rest of the block for no queries is the same as original)
       console.warn(
-        `[EXEC ${executionTimestamp}] ${scriptId}: ${successMessage}`,
+        `[EXEC ${executionTimestamp}] ${scriptId}: ${successMessage}`
       );
       const mongoSaveResult = await saveResultToMongo(
         scriptId,
@@ -489,12 +502,12 @@ export async function executeSqlScriptFromDb(
         statusType,
         successMessage,
         findings,
-        results,
+        results
       );
       if (mongoSaveResult && mongoSaveResult.insertedId) {
         mongoResultId = mongoSaveResult.insertedId.toString();
         console.log(
-          `[EXEC ${executionTimestamp}] 保存结果到MongoDB，ID: ${mongoResultId}`,
+          `[EXEC ${executionTimestamp}] 保存结果到MongoDB，ID: ${mongoResultId}`
         );
       }
       await sendSlackNotification(
@@ -502,6 +515,7 @@ export async function executeSqlScriptFromDb(
         `${successMessage} (${findings})`,
         statusType,
         mongoResultId,
+        slackTag // 传递标签信息
       );
       return {
         success: true,
@@ -518,14 +532,14 @@ export async function executeSqlScriptFromDb(
       console.log(
         `[EXEC ${executionTimestamp}] Executing query ${i + 1}/${
           queries.length
-        }`,
+        }`
       );
 
       // 检查是否是可能长时间运行的查询
       const isLongRunning = isLongRunningQuery(queryText);
       if (isLongRunning) {
         console.log(
-          `[EXEC ${executionTimestamp}] Detected potentially long-running query, setting extended timeout`,
+          `[EXEC ${executionTimestamp}] Detected potentially long-running query, setting extended timeout`
         );
       }
 
@@ -541,8 +555,8 @@ export async function executeSqlScriptFromDb(
               new Error(
                 `Query timeout after ${
                   timeout / 1000
-                } seconds. Query may be too complex or processing large amounts of data.`,
-              ),
+                } seconds. Query may be too complex or processing large amounts of data.`
+              )
             );
           }, timeout);
         });
@@ -550,7 +564,7 @@ export async function executeSqlScriptFromDb(
         console.log(
           `[EXEC ${executionTimestamp}] Query ${
             i + 1
-          } started, timeout set to ${timeout / 1000} seconds`,
+          } started, timeout set to ${timeout / 1000} seconds`
         );
 
         // 添加额外的调试信息
@@ -570,12 +584,12 @@ export async function executeSqlScriptFromDb(
         console.log(
           `[EXEC ${executionTimestamp}] Query ${
             i + 1
-          } completed successfully, affected rows: ${result.rowCount || 0}`,
+          } completed successfully, affected rows: ${result.rowCount || 0}`
         );
       } catch (queryError) {
         console.error(
           `[EXEC ${executionTimestamp}] Query ${i + 1} failed:`,
-          queryError,
+          queryError
         );
 
         // 检查是否是超时错误
@@ -586,10 +600,10 @@ export async function executeSqlScriptFromDb(
           console.error(
             `[EXEC ${executionTimestamp}] Query ${
               i + 1
-            } timed out. Consider optimizing the query or breaking it into smaller parts.`,
+            } timed out. Consider optimizing the query or breaking it into smaller parts.`
           );
           throw new Error(
-            `Query execution timed out. The query may be processing too much data or contain inefficient logic. Original error: ${queryError.message}`,
+            `Query execution timed out. The query may be processing too much data or contain inefficient logic. Original error: ${queryError.message}`
           );
         }
 
@@ -605,7 +619,7 @@ export async function executeSqlScriptFromDb(
             console.log(
               `[EXEC ${executionTimestamp}] Query ${
                 i + 1
-              } generated notice/info, continuing...`,
+              } generated notice/info, continuing...`
             );
             // 创建一个假的成功结果
             results.push({
@@ -636,13 +650,13 @@ export async function executeSqlScriptFromDb(
       statusType,
       successMessage,
       findings,
-      results,
+      results
     );
 
     if (mongoSaveResultOnSuccess && mongoSaveResultOnSuccess.insertedId) {
       mongoResultId = mongoSaveResultOnSuccess.insertedId.toString();
       console.log(
-        `[EXEC ${executionTimestamp}] 保存结果到MongoDB，ID: ${mongoResultId}`,
+        `[EXEC ${executionTimestamp}] 保存结果到MongoDB，ID: ${mongoResultId}`
       );
     }
 
@@ -653,13 +667,16 @@ export async function executeSqlScriptFromDb(
         successMessage,
         statusType,
         mongoResultId,
+        slackTag // 传递标签信息
       );
       console.log(
-        `[EXEC ${executionTimestamp}] 发送通知 (${statusType}): ${scriptId}`,
+        `[EXEC ${executionTimestamp}] 发送通知 (${statusType}): ${scriptId}${
+          slackTag ? ` [标签: ${slackTag}]` : ""
+        }`
       );
     } else {
       console.log(
-        `[EXEC ${executionTimestamp}] 跳过通知 (${statusType}): ${scriptId} - 执行成功无需通知`,
+        `[EXEC ${executionTimestamp}] 跳过通知 (${statusType}): ${scriptId} - 执行成功无需通知`
       );
     }
 
@@ -676,7 +693,7 @@ export async function executeSqlScriptFromDb(
       error instanceof Error ? error.message : "Unknown error occurred";
     console.error(
       `[EXEC ${executionTimestamp}] Script ${scriptId} execution failed: ${errorMessage}`,
-      error,
+      error
     );
     findings = "Execution failed";
     statusType = "failure";
@@ -688,18 +705,18 @@ export async function executeSqlScriptFromDb(
         statusType,
         errorMessage,
         findings,
-        results,
+        results
       );
       if (mongoSaveResultOnError && mongoSaveResultOnError.insertedId) {
         mongoResultId = mongoSaveResultOnError.insertedId.toString();
         console.log(
-          `[EXEC ${executionTimestamp}] 保存错误结果到MongoDB，ID: ${mongoResultId}`,
+          `[EXEC ${executionTimestamp}] 保存错误结果到MongoDB，ID: ${mongoResultId}`
         );
       }
     } catch (mongoError) {
       console.error(
         `[EXEC ${executionTimestamp}] Failed to save error result to MongoDB for ${scriptId}:`,
-        mongoError,
+        mongoError
       );
     }
 
@@ -708,6 +725,7 @@ export async function executeSqlScriptFromDb(
       `Execution failed: ${errorMessage}`,
       statusType,
       mongoResultId,
+      slackTag // 传递标签信息
     );
 
     return {
@@ -761,7 +779,7 @@ class PostgreSQLValidator {
    */
   private static checkSyntaxBalance(
     query: string,
-    queryNumber: number,
+    queryNumber: number
   ): string[] {
     const errors: string[] = [];
 
@@ -807,7 +825,7 @@ class PostgreSQLValidator {
       errors.push(
         `Query ${queryNumber}: Unbalanced parentheses (${
           parenCount > 0 ? "missing closing" : "extra closing"
-        } parentheses)`,
+        } parentheses)`
       );
     }
 
@@ -817,7 +835,7 @@ class PostgreSQLValidator {
 
     if (inDollarQuoted) {
       errors.push(
-        `Query ${queryNumber}: Unterminated dollar-quoted string (missing ${dollarTag})`,
+        `Query ${queryNumber}: Unterminated dollar-quoted string (missing ${dollarTag})`
       );
     }
 
@@ -829,7 +847,7 @@ class PostgreSQLValidator {
    */
   private static checkPostgreSQLSyntax(
     query: string,
-    queryNumber: number,
+    queryNumber: number
   ): string[] {
     const errors: string[] = [];
     const lowerQuery = query.toLowerCase();
@@ -841,7 +859,7 @@ class PostgreSQLValidator {
         !lowerQuery.match(/\$[a-zA-Z0-9_]*\$/)
       ) {
         errors.push(
-          `Query ${queryNumber}: DO block missing proper dollar-quoted string termination`,
+          `Query ${queryNumber}: DO block missing proper dollar-quoted string termination`
         );
       }
     }
@@ -853,12 +871,12 @@ class PostgreSQLValidator {
     ) {
       if (!lowerQuery.includes("returns") && !lowerQuery.includes("return")) {
         errors.push(
-          `Query ${queryNumber}: Function definition missing RETURNS clause`,
+          `Query ${queryNumber}: Function definition missing RETURNS clause`
         );
       }
       if (!lowerQuery.includes("language")) {
         errors.push(
-          `Query ${queryNumber}: Function definition missing LANGUAGE clause`,
+          `Query ${queryNumber}: Function definition missing LANGUAGE clause`
         );
       }
     }
@@ -932,7 +950,7 @@ function isLongRunningQuery(queryText: string): boolean {
  * 估算查询复杂度
  */
 function estimateQueryComplexity(
-  queryText: string,
+  queryText: string
 ): "low" | "medium" | "high" | "very_high" {
   const lower = queryText.toLowerCase();
   let score = 0;

@@ -51,39 +51,57 @@ async function main(): Promise<void> {
   const scriptId = args[0];
   console.log(`[CLI] 请求执行脚本 ID: ${scriptId}`);
 
-  let sqlContent: string | undefined = undefined;
-
   try {
-    // Fetch script content from MongoDB
-    console.log(`[CLI] 从 MongoDB 获取脚本内容: ${scriptId}`);
-    const collection = await getSqlScriptsCollection();
-    const scriptDocument = await collection.findOne(
-      { scriptId },
-      { projection: { sqlContent: 1 } },
+    // Get MongoDB collection
+    const collection = await mongoDbClient.getSqlScriptsCollection();
+
+    // Find the script by scriptId
+    const scriptDoc = await collection.findOne({ scriptId: scriptId });
+
+    if (!scriptDoc) {
+      console.error(`脚本 '${scriptId}' 在数据库中未找到。`);
+      await sendSlackNotification(
+        scriptId,
+        `脚本未找到: ${scriptId}`,
+        "failure"
+      );
+      process.exit(1);
+    }
+
+    // Extract SQL content and hashtags from the document
+    const sqlContent = scriptDoc.sqlContent as string;
+    const scriptHashtags = scriptDoc.hashtags as string[] | undefined; // 获取hashtags信息
+
+    if (!sqlContent || sqlContent.trim() === "") {
+      console.warn(`脚本 '${scriptId}' 没有SQL内容。`);
+      await sendSlackNotification(
+        scriptId,
+        `脚本没有SQL内容: ${scriptId}`,
+        "failure",
+        undefined,
+        scriptHashtags?.join(", ") // 传递标签信息
+      );
+      process.exit(1);
+    }
+
+    console.log(
+      `找到脚本 '${scriptId}'，开始执行...${
+        scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""
+      }`
     );
 
-    if (!scriptDocument) {
-      throw new Error(`脚本 ID '${scriptId}' 在数据库中未找到。`);
-    }
-
-    sqlContent = scriptDocument.sqlContent as string | undefined;
-    if (
-      !sqlContent ||
-      typeof sqlContent !== "string" ||
-      sqlContent.trim() === ""
-    ) {
-      throw new Error(`脚本 ID '${scriptId}' 的 SQL 内容为空或无效。`);
-    }
-
-    console.log(`[CLI] 获取到脚本内容，开始执行...`);
-    // Call the refactored core execution function
-    const result = await executeSqlScriptFromDb(scriptId, sqlContent);
+    // Use executeSqlScriptFromDb with scriptId, sqlContent, and hashtags
+    const result = await executeSqlScriptFromDb(
+      scriptId,
+      sqlContent,
+      scriptHashtags
+    );
 
     if (result.success) {
-      console.log(`[CLI] 脚本 ${scriptId} 执行完成。状态: 成功`);
+      console.log(`脚本 ${scriptId} 执行成功！状态: ${result.statusType}`);
     } else {
-      console.warn(`[CLI] 脚本 ${scriptId} 执行完成。状态: 失败`);
-      // Detailed failure message is logged within executeSqlScriptFromDb
+      console.error(`脚本 ${scriptId} 执行失败: ${result.message}`);
+      process.exit(1);
     }
   } catch (error) {
     // Catch errors from DB fetch or execution

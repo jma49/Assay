@@ -8,12 +8,14 @@ import { ExecutionStatusType } from "../types";
  * @param message 要发送的消息内容，此消息应已包含 findings。
  * @param statusType 执行的状态类型。
  * @param resultMongoId 可选参数，MongoDB中存储的详细执行结果的ID。
+ * @param tag 可选参数，脚本的标签信息。
  */
 export async function sendSlackNotification(
   scriptId: string,
   message: string,
   statusType: ExecutionStatusType,
   resultMongoId?: string,
+  tag?: string
 ): Promise<void> {
   try {
     const webhookUrl = process.env.SLACK_WEBHOOK_URL;
@@ -91,15 +93,26 @@ export async function sendSlackNotification(
       sourceText += resultUrl ? ` • <${resultUrl}|🔍 查看详细结果>` : "";
     }
 
+    // 构建基础字段数组
+    const fields = [
+      { type: "mrkdwn", text: `*脚本名称:*\n${scriptId}` },
+      { type: "mrkdwn", text: `*状态:*\n${icon} ${statusText}` },
+      { type: "mrkdwn", text: `*执行时间:*\n${timestamp}` },
+      { type: "mrkdwn", text: sourceText },
+    ];
+
+    // 如果有tag信息，添加到字段中
+    if (tag && tag.trim()) {
+      fields.push({
+        type: "mrkdwn",
+        text: `*标签:*\n\`${tag}\``,
+      });
+    }
+
     const blocks = [
       {
         type: "section",
-        fields: [
-          { type: "mrkdwn", text: `*脚本名称:*\n${scriptId}` },
-          { type: "mrkdwn", text: `*状态:*\n${icon} ${statusText}` },
-          { type: "mrkdwn", text: `*执行时间:*\n${timestamp}` },
-          { type: "mrkdwn", text: sourceText },
-        ],
+        fields: fields,
       },
       {
         type: "section",
@@ -135,6 +148,9 @@ export async function sendSlackNotification(
       execution_time: timestamp,
       github_log_url: githubLogUrl || sourceDisplayText,
       message: message,
+      tag: tag || "", // 确保tag不是undefined，用于Workflow Builder
+      tag_display: tag ? `\`${tag}\`` : "", // 格式化的tag用于显示
+      has_tag: tag && tag.trim() ? true : false, // 布尔值，方便条件显示
       // 更友好的结果URL变量
       result_url: resultUrl, // 纯URL，可以在Workflow中格式化
       has_result_url: resultUrl ? true : false, // 布尔值，方便条件显示
@@ -144,13 +160,15 @@ export async function sendSlackNotification(
 
     console.log(
       `发送 Slack 通知 (${scriptId}):`, // 截断长消息
-      JSON.stringify(payload).substring(0, 200) + "...",
+      JSON.stringify(payload).substring(0, 200) + "..."
     );
 
     await axios.post(webhookUrl, payload, {
       headers: { "Content-Type": "application/json" },
     });
-    console.log(`Slack 通知 (${scriptId}) 已发送`);
+    console.log(
+      `Slack 通知 (${scriptId}) 已发送${tag ? ` [标签: ${tag}]` : ""}`
+    );
   } catch (error: unknown) {
     // 更健壮的 Axios 错误处理
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -160,12 +178,12 @@ export async function sendSlackNotification(
         `发送 Slack 通知 (${scriptId}) 失败 (Axios Error ${
           axiosError.code || "N/A"
         }):`,
-        axiosError.response?.data || axiosError.message,
+        axiosError.response?.data || axiosError.message
       );
     } else {
       console.error(
         `发送 Slack 通知 (${scriptId}) 失败 (非 Axios 错误):`,
-        error,
+        error
       );
     }
   }

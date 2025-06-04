@@ -73,7 +73,7 @@ async function main(): Promise<void> {
     }
 
     console.log(
-      `[批量执行] 从MongoDB获取到 ${allScripts.length} 个${modeDescription}SQL脚本`,
+      `[批量执行] 从MongoDB获取到 ${allScripts.length} 个${modeDescription}SQL脚本`
     );
 
     let successCount = 0;
@@ -87,10 +87,11 @@ async function main(): Promise<void> {
       const scriptName = script.name as string;
       const sqlContent = script.sqlContent as string;
       const isScheduled = script.isScheduled as boolean;
+      const scriptHashtags = script.hashtags as string[] | undefined; // 获取hashtags信息
 
       if (!scriptId || !sqlContent) {
         console.warn(
-          `[批量执行] 跳过无效脚本: ID=${scriptId}, 内容为空=${!sqlContent}`,
+          `[批量执行] 跳过无效脚本: ID=${scriptId}, 内容为空=${!sqlContent}`
         );
         skippedCount++;
         continue;
@@ -99,23 +100,31 @@ async function main(): Promise<void> {
       console.log(
         `[批量执行] 开始执行脚本: ${scriptId} (${scriptName})${
           isScheduled ? " [定时任务]" : ""
-        }`,
+        }${scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""}`
       );
 
       try {
         // 注意：executeSqlScriptFromDb 已经包含了Slack通知的发送逻辑
         // 所以每个脚本执行完成后会自动发送单独的通知
-        const result = await executeSqlScriptFromDb(scriptId, sqlContent);
+        const result = await executeSqlScriptFromDb(
+          scriptId,
+          sqlContent,
+          scriptHashtags
+        );
 
         if (result.success) {
           successCount++;
           console.log(
-            `[批量执行] ✅ 脚本 ${scriptId} 执行成功 - ${result.statusType}`,
+            `[批量执行] ✅ 脚本 ${scriptId} 执行成功 - ${result.statusType}${
+              scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""
+            }`
           );
         } else {
           failCount++;
           console.log(
-            `[批量执行] ❌ 脚本 ${scriptId} 执行失败: ${result.message}`,
+            `[批量执行] ❌ 脚本 ${scriptId} 执行失败: ${result.message}${
+              scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""
+            }`
           );
         }
 
@@ -131,7 +140,11 @@ async function main(): Promise<void> {
       } catch (error) {
         failCount++;
         const errorMsg = error instanceof Error ? error.message : "未知错误";
-        console.error(`[批量执行] ❌ 脚本 ${scriptId} 执行异常: ${errorMsg}`);
+        console.error(
+          `[批量执行] ❌ 脚本 ${scriptId} 执行异常: ${errorMsg}${
+            scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""
+          }`
+        );
 
         // 这种情况下手动发送通知，因为executeSqlScriptFromDb可能没有机会发送
         // 但实际上executeSqlScriptFromDb内部有try-catch，应该会发送通知
@@ -167,12 +180,12 @@ async function main(): Promise<void> {
       console.log(
         `  - ${result.scriptId} (${result.scriptName}) ${scheduledFlag}: ${
           result.success ? "✅" : "❌"
-        } ${result.statusType} - ${result.findings}`,
+        } ${result.statusType} - ${result.findings}`
       );
     });
 
     console.log(
-      `[批量执行] 所有脚本执行完成，共发送了 ${allScripts.length} 个单独的Slack通知`,
+      `[批量执行] 所有脚本执行完成，共发送了 ${allScripts.length} 个单独的Slack通知`
     );
   } catch (error) {
     const errorMsg =
