@@ -11,6 +11,7 @@ interface StatsCardsProps {
   successRate: number;
   language: string;
   t: (key: DashboardTranslationKeys) => string;
+  isVerticalLayout?: boolean;
 }
 
 interface StatItem {
@@ -56,11 +57,15 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
   needsAttentionCount,
   successRate,
   t,
+  isVerticalLayout = false,
 }) => {
   const needsAttentionRate =
     allChecksCount > 0
       ? Math.round((needsAttentionCount / allChecksCount) * 100)
       : 0;
+
+  const failedCount = allChecksCount - successCount - needsAttentionCount;
+  const failureRate = allChecksCount > 0 ? Math.round((failedCount / allChecksCount) * 100) : 0;
 
   const stats: StatItem[] = [
     {
@@ -102,38 +107,56 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
             : t("needsProcessingTrend"),
       color: needsAttentionCount > 0 ? "warning" : "success",
     },
+    // 新增第四个统计卡片
+    {
+      title: t("dailyAverage"),
+      value: allChecksCount > 0 ? Math.round(allChecksCount / 30) : 0,
+      unit: "/day",
+      icon: <TrendingUp className="h-6 w-6" />,
+      description: failedCount > 0 
+        ? `${t("failureRate")} ${failureRate}%`
+        : t("noFailureRecords"),
+      trend: allChecksCount > 50 
+        ? t("activeSystem") 
+        : allChecksCount > 20 
+          ? t("moderateActivity") 
+          : t("lowActivity"),
+      color: "info",
+    },
   ];
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className={isVerticalLayout ? "grid gap-4 grid-cols-1 h-auto" : "grid gap-6 sm:grid-cols-2 lg:grid-cols-3"}>
       {stats.map((stat, i) => {
         const colors = colorClasses[stat.color];
         return (
           <Card
             key={i}
-            className={`group relative overflow-hidden border-2 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl ${colors.border} ${colors.bg}`}
+            className={`group relative overflow-hidden border-2 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl ${colors.border} ${colors.bg} ${isVerticalLayout ? "min-h-[140px] flex flex-col" : ""}`}
             style={{
               animationDelay: `${i * 150}ms`,
               animation: "slideUp 0.6s ease-out forwards",
             }}
           >
-            <CardContent className="p-6">
+            <CardContent className={isVerticalLayout ? "p-4 flex-1" : "p-6"}>
               <div className="flex items-start justify-between">
                 <div className="space-y-3 flex-1">
-                  <div className="flex items-center gap-3">
+                  <div className={`flex items-center ${isVerticalLayout ? "gap-2" : "gap-3"}`}>
                     <div
-                      className={`p-3 rounded-xl ${colors.bg} ring-2 ring-white/20 dark:ring-black/20`}
+                      className={`${isVerticalLayout ? "p-2" : "p-3"} rounded-xl ${colors.bg} ring-2 ring-white/20 dark:ring-black/20`}
                     >
-                      <div className={colors.icon}>{stat.icon}</div>
+                      <div className={`${colors.icon} ${isVerticalLayout ? "[&>svg]:h-4 [&>svg]:w-4" : "[&>svg]:h-6 [&>svg]:w-6"}`}>
+                        {stat.icon}
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground/80">
+                    <div className="flex-1">
+                      <p className={`${isVerticalLayout ? "text-xs" : "text-sm"} font-medium text-muted-foreground/80`}>
                         {stat.title}
                       </p>
                       {stat.trend && (
                         <div className="flex items-center gap-1 mt-1">
-                          <TrendingUp className="h-3 w-3 text-green-500" />
-                          <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                          <TrendingUp className={`${isVerticalLayout ? "h-2.5 w-2.5" : "h-3 w-3"} text-green-500`} />
+                          <span className={`${isVerticalLayout ? "text-xs" : "text-xs"} text-green-600 dark:text-green-400 font-medium`}>
                             {stat.trend}
                           </span>
                         </div>
@@ -141,19 +164,19 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className={`space-y-2 ${isVerticalLayout ? "space-y-1" : ""}`}>
                     <div className="flex items-baseline gap-2">
-                      <h4 className={`text-3xl font-bold ${colors.text}`}>
+                      <h4 className={`${isVerticalLayout ? "text-2xl" : "text-3xl"} font-bold ${colors.text}`}>
                         {stat.value}
                         {stat.unit && (
-                          <span className="ml-1 text-lg text-muted-foreground font-normal">
+                          <span className={`ml-1 ${isVerticalLayout ? "text-sm" : "text-lg"} text-muted-foreground font-normal`}>
                             {stat.unit}
                           </span>
                         )}
                       </h4>
                     </div>
                     {stat.description && (
-                      <p className="text-sm text-muted-foreground/70 leading-relaxed">
+                      <p className={`${isVerticalLayout ? "text-xs" : "text-sm"} text-muted-foreground/70 leading-relaxed`}>
                         {stat.description}
                       </p>
                     )}

@@ -495,7 +495,15 @@ export type DashboardTranslationKeys =
   | "breadcrumbHome"
   | "breadcrumbScripts"
   | "breadcrumbAnalysis"
-  | "breadcrumbResults";
+  | "breadcrumbResults"
+  | "quickExecution"
+  | "mode"
+  | "selectScript"
+  | "dailyAverage"
+  | "failureRate"
+  | "activeSystem"
+  | "moderateActivity"
+  | "lowActivity";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -1037,6 +1045,15 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     invalidHashtagFormat: "Invalid hashtag format",
     hashtagExists: "Hashtag already exists",
     filterStatus: "Filter Status",
+    // 紧凑模式相关翻译
+    quickExecution: "Quick Execution",
+    mode: "Mode",
+    selectScript: "Select Script",
+    dailyAverage: "Daily Average",
+    failureRate: "Failure Rate",
+    activeSystem: "Active System",
+    moderateActivity: "Moderate Activity",
+    lowActivity: "Low Activity",
   },
   zh: {
     // General
@@ -1503,5 +1520,14 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     invalidHashtagFormat: "标签格式无效",
     hashtagExists: "标签已存在",
     filterStatus: "过滤状态",
+    // 紧凑模式相关翻译
+    quickExecution: "快速执行",
+    mode: "模式",
+    selectScript: "选择脚本",
+    dailyAverage: "日均执行",
+    failureRate: "失败率",
+    activeSystem: "系统活跃",
+    moderateActivity: "适度活跃",
+    lowActivity: "活跃度低",
   },
 };

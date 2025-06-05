@@ -616,13 +616,14 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
     return scriptsToCount.length;
   };
 
+
   return (
     <>
-      <Card className="group relative overflow-hidden border-2 border-primary/10 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/20">
+      <Card className="group relative overflow-hidden border-2 border-primary/10 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-primary/20 h-full flex flex-col">
         {/* 装饰性背景 */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
 
-        <CardHeader className="relative px-6 py-5 border-b border-border/30">
+        <CardHeader className="relative px-6 py-4 border-b border-border/30">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
               <List className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
@@ -650,16 +651,16 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
           </div>
         </CardHeader>
 
-        <CardContent className="relative px-6 py-6 space-y-6">
+        <CardContent className="relative px-6 py-4 space-y-4 flex-1 overflow-y-auto">
           {isFetchingScripts ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground space-x-3">
               <Loader2 className="animate-spin h-6 w-6 text-primary" />
               <span className="text-lg font-medium">{t("loadingScripts")}</span>
             </div>
           ) : Array.isArray(availableScripts) && availableScripts.length > 0 ? (
-            <div className="space-y-6">
+            <div className="space-y-3">
               {/* 执行模式选择 */}
-              <div className="space-y-4">
+              <div className="space-y-2">
                 <Label className="text-base font-semibold text-foreground flex items-center gap-2">
                   <Settings2 className="h-4 w-4 text-primary" />
                   {t("executionMode")}
@@ -669,7 +670,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                   onValueChange={(value) =>
                     stableSetExecutionMode(value as "single" | "bulk")
                   }
-                  className="flex space-x-6"
+                  className="flex space-x-4"
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="single" id="single" />
@@ -694,12 +695,10 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                 </RadioGroup>
               </div>
 
-              <Separator />
-
               {executionMode === "single" ? (
                 <>
                   {/* 脚本搜索 */}
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                       <Search className="h-3.5 w-3.5" />
                       {t("searchScripts")}
@@ -756,7 +755,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                   </div>
 
                   {/* Script Selection */}
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <Label
                       htmlFor="script-select"
                       className="text-base font-semibold text-foreground flex items-center gap-2"
@@ -832,8 +831,8 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                   </div>
 
                   {/* Script Details */}
-                  {selectedScript && (
-                    <div className="bg-gradient-to-r from-background/80 to-background/60 rounded-xl border-2 border-border/30 shadow-md overflow-hidden">
+                  {selectedScript ? (
+                    <div className="bg-gradient-to-r from-background/80 to-background/60 rounded-xl border-2 border-border/30 shadow-md overflow-hidden h-[280px] flex flex-col">
                       <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-5 py-3 border-b border-border/20">
                         <h4 className="font-semibold text-foreground flex items-center gap-2">
                           <FileText className="h-4 w-4 text-primary" />
@@ -849,8 +848,8 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                           )}
                         </h4>
                       </div>
-                      <div className="p-5 space-y-4">
-                        <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="p-4 space-y-3 flex-1 overflow-y-auto">
+                        <div className="grid gap-3 sm:grid-cols-2">
                           <div className="space-y-2">
                             <h5 className="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                               <Book className="h-3.5 w-3.5" />
@@ -872,7 +871,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                           </div>
                         </div>
 
-                        <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid gap-3 sm:grid-cols-2">
                           <div className="space-y-2">
                             <h5 className="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
                               <User className="h-3.5 w-3.5" />
@@ -902,10 +901,27 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                         </div>
                       </div>
                     </div>
+                  ) : (
+                    <div className="bg-gradient-to-r from-background/80 to-background/60 rounded-xl border-2 border-border/30 shadow-md overflow-hidden h-[280px] flex flex-col">
+                      <div className="bg-gradient-to-r from-muted/30 to-muted/20 px-5 py-3 border-b border-border/20">
+                        <h4 className="font-semibold text-muted-foreground flex items-center gap-2">
+                          <FileText className="h-4 w-4" />
+                          {t("scriptDetails")}
+                        </h4>
+                      </div>
+                      <div className="p-4 flex-1 flex items-center justify-center">
+                        <div className="text-center text-muted-foreground">
+                          <Database className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                          <p className="text-sm">
+                            {language === "zh" ? "请先选择一个脚本查看详情" : "Please select a script to view details"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
                   {/* Single Execution Button */}
-                  <div className="pt-2">
+                  <div className="pt-1">
                     <Button
                       onClick={handleTriggerCheck}
                       disabled={!selectedScriptId || isTriggering || loading}
@@ -1008,12 +1024,12 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                   <Separator />
 
                   {/* 批量执行模式选择 */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <Label className="text-base font-semibold text-foreground flex items-center gap-2">
                       <Zap className="h-4 w-4 text-orange-500" />
                       {t("bulkExecution")}
                     </Label>
-                    <div className="bg-gradient-to-r from-orange-50/50 to-yellow-50/50 dark:from-orange-950/20 dark:to-yellow-950/20 rounded-lg border border-orange-200/60 dark:border-orange-800/60 p-4">
+                    <div className="bg-gradient-to-r from-orange-50/50 to-yellow-50/50 dark:from-orange-950/20 dark:to-yellow-950/20 rounded-lg border border-orange-200/60 dark:border-orange-800/60 p-3">
                       <RadioGroup
                         value={bulkMode}
                         onValueChange={(value) =>
@@ -1070,12 +1086,12 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                   </div>
 
                   {/* 批量执行统计 */}
-                  <div className="bg-gradient-to-r from-background/80 to-background/60 rounded-xl border-2 border-border/30 shadow-md p-5">
-                    <h4 className="font-semibold text-foreground flex items-center gap-2 mb-4">
+                  <div className="bg-gradient-to-r from-background/80 to-background/60 rounded-xl border-2 border-border/30 shadow-md p-4">
+                    <h4 className="font-semibold text-foreground flex items-center gap-2 mb-3">
                       <Database className="h-4 w-4 text-primary" />
                       {t("scriptsExecutionProgress")}
                     </h4>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="text-center p-3 bg-muted/20 rounded-lg">
                         <div className="text-2xl font-bold text-primary">
                           {getBatchScriptCount()}
@@ -1100,7 +1116,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                   </div>
 
                   {/* Batch Execution Button */}
-                  <div className="pt-2">
+                  <div className="pt-1">
                     <AlertDialog
                       open={showBatchDialog}
                       onOpenChange={setShowBatchDialog}
