@@ -181,7 +181,6 @@ export type DashboardTranslationKeys =
   | "viewAndManageAllRecords"
   | "needsAttentionRatePercentage"
   | "noAttentionRecords"
-  // 新增的CodeMirror编辑器相关翻译键
   | "sqlEditorTitle"
   | "sqlEditorDescription"
   | "codeStatisticsLines"
@@ -201,7 +200,6 @@ export type DashboardTranslationKeys =
   | "noCodeToFormat"
   | "sqlPlaceholder"
   | "editorHelpTitle"
-  // 新增的ScriptMetadataForm相关翻译键
   | "basicIdentityInfo"
   | "multiLanguageInfo"
   | "englishSection"
@@ -212,7 +210,6 @@ export type DashboardTranslationKeys =
   | "newModeLabel"
   | "scheduleEnabledDesc"
   | "cronFormatHelp"
-  // 数据分析页面相关翻译键
   | "timeRangeFilter"
   | "scriptFilter"
   | "allScripts"
@@ -251,11 +248,9 @@ export type DashboardTranslationKeys =
   | "performanceAverage"
   | "performanceNeedsAttention"
   | "topRanking"
-  // DO$$相关翻译键
   | "doBlockDetected"
   | "doBlockDetectedDesc"
   | "manualFormatSuggestion"
-  // 批量执行脚本相关翻译键
   | "runAllScripts"
   | "runningAllScripts"
   | "runAllScriptsDesc"
@@ -271,7 +266,6 @@ export type DashboardTranslationKeys =
   | "executionMode"
   | "singleExecution"
   | "selectExecutionMode"
-  // 新增补充的双语翻译键
   | "searchScripts"
   | "searchScriptsPlaceholder"
   | "scheduledTask"
@@ -285,7 +279,6 @@ export type DashboardTranslationKeys =
   | "batchExecutionConfirmMessage"
   | "batchExecutionConfirmScheduledMessage"
   | "cancelButton"
-  // Redis缓存和批量执行进度相关翻译键
   | "batchExecutionProgress"
   | "overallProgress"
   | "total"
@@ -300,11 +293,9 @@ export type DashboardTranslationKeys =
   | "close"
   | "complete"
   | "needsAttentionShort"
-  // UserHeader相关翻译键
   | "systemTitle"
   | "authorizedAccess"
   | "changeLanguage"
-  // 编辑历史相关翻译键
   | "editHistory"
   | "editHistoryTitle"
   | "editHistoryDesc"
@@ -361,7 +352,6 @@ export type DashboardTranslationKeys =
   | "pageInfoShort"
   | "checkDetails"
   | "tableActions"
-  // 新增主题设置相关翻译键
   | "themeSettings"
   | "editorThemeSettings"
   | "settingsApplyImmediately"
@@ -371,10 +361,8 @@ export type DashboardTranslationKeys =
   | "currentSettings"
   | "resetDefaults"
   | "applySettings"
-  // 新增执行历史跳转相关翻译键
   | "viewExecutionHistory"
   | "executionHistory"
-  // 新增主题模式相关翻译键
   | "lightMode"
   | "darkMode"
   | "lightTheme"
@@ -382,7 +370,6 @@ export type DashboardTranslationKeys =
   | "themeHelpLight"
   | "themeHelpDark"
   | "fontLabel"
-  // Hashtag相关翻译键
   | "hashtags"
   | "addHashtag"
   | "hashtagsLabel"
@@ -397,7 +384,6 @@ export type DashboardTranslationKeys =
   | "selectHashtags"
   | "hashtagsHelp"
   | "hashtagFormat"
-  // 新增的UI组件相关翻译键
   | "noTagsAvailable"
   | "showAllTags"
   | "allTagsCount"
@@ -407,7 +393,109 @@ export type DashboardTranslationKeys =
   | "selectedTagsCount"
   | "availableTagsCount"
   | "noMatchingTags"
-  | "noAvailableTags";
+  | "noAvailableTags"
+  | "dataSourceTitle"
+  | "dataSourceDescription"
+  | "databaseConnectionError"
+  | "checkInProgress"
+  | "checkScheduled"
+  | "nextScheduledCheck"
+  | "successRate"
+  | "manualTriggerTitle"
+  | "manualTriggerDescription"
+  | "selectScriptToRun"
+  | "runSelectedScript"
+  | "checkHistoryTitle"
+  | "checkHistoryDescription"
+  | "noChecksYet"
+  | "scriptColumn"
+  | "statusColumn"
+  | "timestampColumn"
+  | "messageColumn"
+  | "actionColumn"
+  | "viewDetails"
+  | "success"
+  | "failed"
+  | "attention_needed"
+  | "needsAttention"
+  | "loading"
+  | "error"
+  | "refresh"
+  | "refreshDataButton"
+  | "refreshingStatusText"
+  | "unknownScript"
+  | "noDataAvailable"
+  | "changeLanguage"
+  | "backToDashboardButton"
+  | "viewFullReportButton"
+  | "dataAnalysisButton"
+  | "dataAnalysisTitle"
+  | "backToList"
+  | "manageScriptsPageTitle"
+  | "manageScriptsPageDescription"
+  | "addScriptDialogTitle"
+  | "editScriptDialogTitle"
+  | "fieldUpdatedAt"
+  | "confirmAction"
+  | "noScriptsYet"
+  | "manageScriptsButton"
+  | "checkDetailsTitle"
+  | "checkDetailsDesc"
+  | "dataAnalysisSubTitle"
+  | "selectAnalysisParamsTitle"
+  | "selectAnalysisParamsDesc"
+  | "dateRangeLabel"
+  | "scriptTypeLabel"
+  | "analysisPeriodLabel"
+  | "generateReportButton"
+  | "analysisResultsTitle"
+  | "analysisResultsDesc"
+  | "chartPlaceholderTitle"
+  | "summaryTablePlaceholderTitle"
+  | "noDataForAnalysis"
+  | "comingSoonMessage"
+  | "selectScriptPlaceholder"
+  | "jumpToPage"
+  | "pageJump"
+  | "jumpToFirst"
+  | "jumpToLast"
+  | "pageNumber"
+  | "of"
+  | "pages"
+  | "totalChecksExecuted"
+  | "successRatePercentage"
+  | "noSuccessRecords"
+  | "excellentTrend"
+  | "goodTrend"
+  | "averageTrend"
+  | "poorTrend"
+  | "criticalTrend"
+  | "scriptPerformanceAnalysis"
+  | "overallSystemAnalysis"
+  | "dailyTrendAnalysis"
+  | "statusDistributionAnalysis"
+  | "filterByHashtag"
+  | "filterStatus"
+  | "searchScripts"
+  | "clearSearch"
+  | "allStatuses"
+  | "scheduleEnabled"
+  | "scheduleDisabled"
+  | "hashtagsLabel"
+  | "addHashtag"
+  | "removeHashtag"
+  | "hashtagPlaceholder"
+  | "maxHashtagsReached"
+  | "invalidHashtagFormat"
+  | "hashtagExists"
+  | "navigationDashboard"
+  | "navigationScripts"
+  | "navigationAnalysis"
+  | "navigationResults"
+  | "breadcrumbHome"
+  | "breadcrumbScripts"
+  | "breadcrumbAnalysis"
+  | "breadcrumbResults";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -908,6 +996,47 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     availableTagsCount: "Available tags ({count})",
     noMatchingTags: "No matching tags found",
     noAvailableTags: "No available tags",
+    navigationDashboard: "Dashboard",
+    navigationScripts: "Scripts",
+    navigationAnalysis: "Analysis",
+    navigationResults: "Results",
+    breadcrumbHome: "Home",
+    breadcrumbScripts: "Scripts",
+    breadcrumbAnalysis: "Analysis",
+    breadcrumbResults: "Results",
+    // 缺失的基础字段
+    error: "Error",
+    attention_needed: "Attention Needed",
+    dataSourceTitle: "Data Source",
+    dataSourceDescription: "Database connection and data source information",
+    databaseConnectionError: "Database Connection Error",
+    checkInProgress: "Check in Progress",
+    checkScheduled: "Check Scheduled",
+    manualTriggerTitle: "Manual Trigger",
+    manualTriggerDescription: "Manually trigger script execution",
+    selectScriptToRun: "Select Script to Run",
+    runSelectedScript: "Run Selected Script",
+    checkHistoryDescription: "View history of all check executions",
+    noChecksYet: "No checks performed yet",
+    scriptColumn: "Script",
+    statusColumn: "Status",
+    timestampColumn: "Timestamp",
+    messageColumn: "Message",
+    actionColumn: "Action",
+    viewDetails: "View Details",
+    noDataAvailable: "No Data Available",
+    poorTrend: "Poor Trend",
+    criticalTrend: "Critical Trend",
+    overallSystemAnalysis: "Overall System Analysis",
+    dailyTrendAnalysis: "Daily Trend Analysis",
+    statusDistributionAnalysis: "Status Distribution Analysis",
+    allStatuses: "All Statuses",
+    scheduleEnabled: "Schedule Enabled",
+    scheduleDisabled: "Schedule Disabled",
+    maxHashtagsReached: "Maximum hashtags reached",
+    invalidHashtagFormat: "Invalid hashtag format",
+    hashtagExists: "Hashtag already exists",
+    filterStatus: "Filter Status",
   },
   zh: {
     // General
@@ -1333,5 +1462,46 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     availableTagsCount: "可选标签 ({count})",
     noMatchingTags: "未找到匹配的标签",
     noAvailableTags: "暂无可用标签",
+    navigationDashboard: "仪表盘",
+    navigationScripts: "脚本",
+    navigationAnalysis: "分析",
+    navigationResults: "结果",
+    breadcrumbHome: "首页",
+    breadcrumbScripts: "脚本",
+    breadcrumbAnalysis: "分析",
+    breadcrumbResults: "结果",
+    // 缺失的基础字段 - 中文版本
+    error: "错误",
+    attention_needed: "需要关注",
+    dataSourceTitle: "数据源",
+    dataSourceDescription: "数据库连接和数据源信息",
+    databaseConnectionError: "数据库连接错误",
+    checkInProgress: "检查进行中",
+    checkScheduled: "检查已计划",
+    manualTriggerTitle: "手动触发",
+    manualTriggerDescription: "手动触发脚本执行",
+    selectScriptToRun: "选择要运行的脚本",
+    runSelectedScript: "运行选定的脚本",
+    checkHistoryDescription: "查看所有检查执行的历史记录",
+    noChecksYet: "还没有执行过检查",
+    scriptColumn: "脚本",
+    statusColumn: "状态",
+    timestampColumn: "时间戳",
+    messageColumn: "消息",
+    actionColumn: "操作",
+    viewDetails: "查看详情",
+    noDataAvailable: "无可用数据",
+    poorTrend: "不良趋势",
+    criticalTrend: "严重趋势",
+    overallSystemAnalysis: "整体系统分析",
+    dailyTrendAnalysis: "日趋势分析",
+    statusDistributionAnalysis: "状态分布分析",
+    allStatuses: "所有状态",
+    scheduleEnabled: "定时任务启用",
+    scheduleDisabled: "定时任务禁用",
+    maxHashtagsReached: "已达到最大标签数量",
+    invalidHashtagFormat: "标签格式无效",
+    hashtagExists: "标签已存在",
+    filterStatus: "过滤状态",
   },
 };

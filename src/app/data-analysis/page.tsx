@@ -1,13 +1,11 @@
 "use client"; // Assuming client-side interactions might be added later
 
 import React, { useCallback, useState, useEffect, useMemo } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  Home,
   BarChart2,
   Filter,
   RefreshCw,
@@ -546,16 +544,7 @@ export default function DataAnalysisPage() {
                     />
                     {isLoading ? t("loading") : t("refresh")}
                   </Button>
-                  <Link href="/">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="group shadow-md hover:shadow-lg transition-all duration-300"
-                    >
-                        <Home className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                        {t("backToDashboardButton")}
-                    </Button>
-                  </Link>
+
                 </div>
               </div>
             </header>

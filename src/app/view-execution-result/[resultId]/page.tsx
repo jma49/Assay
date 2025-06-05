@@ -424,7 +424,7 @@ export default function ViewExecutionResultPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
         <UserHeader />
-        <div className="container mx-auto p-8 text-center">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 dark:border-[#89b4fa] border-r-transparent"></div>
           <p className="mt-4 text-lg text-gray-700 dark:text-[#a5adce]">
             {t.loading}
@@ -438,28 +438,30 @@ export default function ViewExecutionResultPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
         <UserHeader />
-        <div className="container mx-auto p-8 bg-red-50 dark:bg-[#f38ba8]/30 rounded-lg text-center">
-          <h2 className="text-2xl font-bold text-red-700 dark:text-[#f38ba8] mb-4">
-            {t.loadingFailed}
-          </h2>
-          <p className="text-lg text-red-600 dark:text-[#f38ba8] mb-6">
-            {error}
-          </p>
-          <div className="flex justify-center gap-4">
-            <button
-              onClick={handleRetry}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-[var(--primary)] dark:text-[var(--primary-foreground)] dark:hover:brightness-90 transition"
-            >
-              {t.retry}
-            </button>
-            <Button
-              onClick={handleGoToDashboard}
-              variant="outline"
-              className="dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10"
-            >
-              <Home className="h-4 w-4 mr-2" />
-              {t.back}
-            </Button>
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-red-50 dark:bg-[#f38ba8]/30 rounded-lg text-center p-8">
+            <h2 className="text-2xl font-bold text-red-700 dark:text-[#f38ba8] mb-4">
+              {t.loadingFailed}
+            </h2>
+            <p className="text-lg text-red-600 dark:text-[#f38ba8] mb-6">
+              {error}
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={handleRetry}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-[var(--primary)] dark:text-[var(--primary-foreground)] dark:hover:brightness-90 transition"
+              >
+                {t.retry}
+              </button>
+              <Button
+                onClick={handleGoToDashboard}
+                variant="outline"
+                className="dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10"
+              >
+                <Home className="h-4 w-4 mr-2" />
+                {t.back}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -470,21 +472,23 @@ export default function ViewExecutionResultPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
         <UserHeader />
-        <div className="container mx-auto p-8 bg-yellow-50 dark:bg-[#f9e2af]/30 rounded-lg text-center">
-          <h2 className="text-2xl font-bold text-yellow-700 dark:text-[#f9e2af]">
-            {t.notFound}
-          </h2>
-          <p className="mt-4 text-gray-700 dark:text-[#a5adce]">
-            {t.noResultFound} {resultId} 的执行结果。
-          </p>
-          <Button
-            onClick={handleGoToDashboard}
-            className="mt-6 dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10"
-            variant="outline"
-          >
-            <Home className="h-4 w-4 mr-2" />
-            {t.back}
-          </Button>
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-yellow-50 dark:bg-[#f9e2af]/30 rounded-lg text-center p-8">
+            <h2 className="text-2xl font-bold text-yellow-700 dark:text-[#f9e2af]">
+              {t.notFound}
+            </h2>
+            <p className="mt-4 text-gray-700 dark:text-[#a5adce]">
+              {t.noResultFound} {resultId} 的执行结果。
+            </p>
+            <Button
+              onClick={handleGoToDashboard}
+              className="mt-6 dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10"
+              variant="outline"
+            >
+              <Home className="h-4 w-4 mr-2" />
+              {t.back}
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -615,7 +619,7 @@ export default function ViewExecutionResultPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
       <UserHeader />
-      <div className="container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-8 animate-fadeIn">
           {/* Header Section */}
           <header className="text-center lg:text-left">
