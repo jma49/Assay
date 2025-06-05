@@ -503,7 +503,11 @@ export type DashboardTranslationKeys =
   | "failureRate"
   | "activeSystem"
   | "moderateActivity"
-  | "lowActivity";
+  | "lowActivity"
+  | "todayExecution"
+  | "executionDistribution"
+  | "noExecutionToday"
+  | "total";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -881,7 +885,6 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     // Redis缓存和批量执行进度相关翻译键
     batchExecutionProgress: "Batch Execution Progress",
     overallProgress: "Overall Progress",
-    total: "Total",
     running: "Running",
     pending: "Pending",
     success: "Success",
@@ -1054,6 +1057,10 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     activeSystem: "Active System",
     moderateActivity: "Moderate Activity",
     lowActivity: "Low Activity",
+    todayExecution: "Today's Execution",
+    executionDistribution: "Execution Distribution",
+    noExecutionToday: "No executions today",
+    total: "Total",
   },
   zh: {
     // General
@@ -1360,7 +1367,6 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     // Redis缓存和批量执行进度相关翻译键
     batchExecutionProgress: "批量执行进度",
     overallProgress: "整体进度",
-    total: "总计",
     running: "执行中",
     pending: "等待",
     success: "成功",
@@ -1529,5 +1535,9 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     activeSystem: "系统活跃",
     moderateActivity: "适度活跃",
     lowActivity: "活跃度低",
+    todayExecution: "今日执行",
+    executionDistribution: "执行分布",
+    noExecutionToday: "今日暂无执行",
+    total: "总计",
   },
 };

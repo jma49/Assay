@@ -7,7 +7,7 @@ import {
   PlusCircle,
   Edit,
   Trash2,
-  RefreshCw,
+
   Search,
   AlertTriangle,
   Save,
@@ -597,20 +597,7 @@ const ManageScriptsPage = () => {
                     </Button>
                   </Link>
 
-                  {/* 刷新按钮 */}
-                  <Button
-                    onClick={fetchScripts}
-                    disabled={isLoading}
-                    variant="outline"
-                    size="sm"
-                    className="h-10 group shadow-sm hover:shadow-md transition-all duration-300"
-                    title={t("refresh")}
-                  >
-                    <RefreshCw
-                      className={`mr-2 h-4 w-4 transition-transform ${isLoading ? "animate-spin" : "group-hover:rotate-45"}`}
-                    />
-                    {isLoading ? t("loading") : t("refresh")}
-                  </Button>
+
                 </div>
               </div>
             </CardHeader>
@@ -632,14 +619,7 @@ const ManageScriptsPage = () => {
                       {error}
                     </p>
                   </div>
-                  <Button
-                    onClick={fetchScripts}
-                    variant="outline"
-                    className="mt-4"
-                  >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    {t("retry")}
-                  </Button>
+
                 </div>
               ) : totalScripts === 0 ? (
                 <div className="p-8 text-center space-y-4">

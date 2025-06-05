@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { RefreshCw, ListChecks, Clock } from "lucide-react";
+import { ListChecks, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/LanguageProvider";
 
 // Import shadcn UI components
-import { Button } from "@/components/ui/button";
+
 
 // Import subcomponents and types from dashboard folder
 import {
@@ -754,20 +754,7 @@ const Dashboard = () => {
                   </p>
                 )}
               </div>
-              <div className="flex items-center space-x-3">
-                <Button
-                  onClick={loadInitialData}
-                  disabled={loading}
-                  variant="outline"
-                  size="lg"
-                  className="group shadow-md hover:shadow-lg transition-all duration-300"
-                >
-                  <RefreshCw
-                    className={`mr-2 h-5 w-5 transition-transform ${loading ? "animate-spin" : "group-hover:rotate-45"}`}
-                  />
-                  {loading ? t("refreshingStatusText") : t("refreshDataButton")}
-                </Button>
-              </div>
+
             </div>
           </header>
 
