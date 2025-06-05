@@ -9,6 +9,7 @@ import {
 } from "@/components/dashboard/types";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Button } from "@/components/ui/button";
+import MainNavigation, { Breadcrumb } from "@/components/ui/main-navigation";
 
 export default function UserHeader() {
   const { user, isLoaded } = useUser();
@@ -33,8 +34,8 @@ export default function UserHeader() {
 
   if (!isLoaded) {
     return (
-      <div className="bg-white shadow-sm border-b dark:bg-gray-900 dark:border-gray-700">
-        <div className="max-w-6xl mx-auto px-4 py-3">
+      <div className="bg-white shadow-sm border-b dark:bg-gray-900 dark:border-gray-700 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex justify-between items-center">
             <div className="h-8 w-48 bg-gray-200 animate-pulse rounded dark:bg-gray-700"></div>
             <div className="flex items-center gap-4">
@@ -55,33 +56,20 @@ export default function UserHeader() {
   }
 
   return (
-    <div className="bg-white shadow-sm border-b dark:bg-gray-900 dark:border-gray-700">
-      <div className="max-w-6xl mx-auto px-4 py-3">
+    <div className="bg-white/95 backdrop-blur-sm shadow-sm border-b dark:bg-gray-900/95 dark:border-gray-700 sticky top-0 z-40">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2">
-              <svg
-                className="h-6 w-6 text-blue-600 dark:text-blue-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 7v10c0 2.21 1.79 4 4 4h8c2.21 0 4-1.79 4-4V7M4 7l8-4 8 4M4 7h16M9 7v10M15 7v10"
-                />
-              </svg>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                {t("systemTitle")}
-              </h1>
-            </div>
+          {/* 左侧：主导航 */}
+          <div className="flex items-center space-x-6">
+            <MainNavigation />
+            {/* 面包屑导航 - 在中等屏幕及以上显示 */}
+            <Breadcrumb className="hidden md:flex" />
           </div>
 
+          {/* 右侧：用户控件 */}
           <div className="flex items-center space-x-4">
             {/* 用户信息 */}
-            <div className="hidden sm:block text-right">
+            <div className="hidden lg:block text-right">
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {user.fullName ||
                   user.emailAddresses[0]?.emailAddress?.split("@")[0]}

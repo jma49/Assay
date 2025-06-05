@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { RefreshCw, AreaChart, ListChecks, Clock } from "lucide-react";
+import { RefreshCw, ListChecks, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/LanguageProvider";
-import Link from "next/link";
 
 // Import shadcn UI components
 import { Button } from "@/components/ui/button";
@@ -736,9 +735,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-8 animate-fadeIn">
           {/* Header Section */}
           <header className="text-center lg:text-left">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
@@ -758,16 +755,6 @@ const Dashboard = () => {
                 )}
               </div>
               <div className="flex items-center space-x-3">
-                <Link href="/data-analysis">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="group shadow-md hover:shadow-lg transition-all duration-300"
-                  >
-                    <AreaChart className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                    {t("dataAnalysisButton")}
-                  </Button>
-                </Link>
                 <Button
                   onClick={loadInitialData}
                   disabled={loading}
@@ -826,16 +813,7 @@ const Dashboard = () => {
                   {t("checkHistoryTitle")}
                 </h2>
               </div>
-              <Link href="/manage-scripts">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="group shadow-md hover:shadow-lg transition-all duration-300"
-                >
-                  <ListChecks className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                  {t("manageScriptsButton")}
-                </Button>
-              </Link>
+
             </div>
 
             <CheckHistory
@@ -868,18 +846,6 @@ const Dashboard = () => {
           <section className="pt-8 border-t border-border/20">
             <DashboardFooter t={t} />
           </section>
-        </div>
-      </div>
-
-      {/* 版本号显示 - 固定在左下角 */}
-      <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 shadow-lg hover:shadow-xl transition-all duration-300">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="font-mono text-xs text-muted-foreground font-medium">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || "0.2.1"}
-          </span>
-        </div>
-      </div>
     </div>
   );
 };
