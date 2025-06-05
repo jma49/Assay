@@ -10,6 +10,7 @@ import {
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Button } from "@/components/ui/button";
 import MainNavigation, { Breadcrumb } from "@/components/ui/main-navigation";
+import { RefreshCw } from "lucide-react";
 
 export default function UserHeader() {
   const { user, isLoaded } = useUser();
@@ -31,6 +32,12 @@ export default function UserHeader() {
     console.log("切换语言:", language, "->", newLanguage);
     setLanguage(newLanguage);
   }, [language, setLanguage]);
+
+  // 全局刷新函数
+  const handleGlobalRefresh = useCallback(() => {
+    // 触发页面刷新
+    window.location.reload();
+  }, []);
 
   if (!isLoaded) {
     return (
@@ -111,9 +118,19 @@ export default function UserHeader() {
             </Button>
 
             {/* 主题切换按钮 */}
-            <div className="flex items-center">
-              <ThemeToggle />
-            </div>
+            <ThemeToggle />
+
+            {/* 全局刷新按钮 */}
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full"
+              onClick={handleGlobalRefresh}
+              title={language === "zh" ? "刷新数据" : "Refresh Data"}
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span className="sr-only">{language === "zh" ? "刷新数据" : "Refresh Data"}</span>
+            </Button>
           </div>
         </div>
       </div>

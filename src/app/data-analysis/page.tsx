@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   BarChart2,
   Filter,
-  RefreshCw,
+
   TrendingUp,
   Activity,
   Target,
@@ -531,21 +531,7 @@ export default function DataAnalysisPage() {
                   </p>
                 </div>
 
-                <div className="flex gap-3">
-                  <Button
-                    onClick={fetchAnalyticsData}
-                    disabled={isLoading}
-                    variant="outline"
-                    size="lg"
-                    className="group shadow-md hover:shadow-lg transition-all duration-300"
-                  >
-                    <RefreshCw
-                      className={`mr-2 h-5 w-5 transition-transform ${isLoading ? "animate-spin" : "group-hover:rotate-180"}`}
-                    />
-                    {isLoading ? t("loading") : t("refresh")}
-                  </Button>
 
-                </div>
               </div>
             </header>
 
@@ -1221,7 +1207,7 @@ export default function DataAnalysisPage() {
             {isLoading && (
               <Card className="border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90">
                 <CardContent className="p-12 text-center">
-                  <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+                  <div className="h-8 w-8 mx-auto mb-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                   <p className="text-lg font-medium text-muted-foreground">
                     {t("loadingAnalyticsData")}
                   </p>
@@ -1240,14 +1226,7 @@ export default function DataAnalysisPage() {
                   <p className="text-sm text-red-600 dark:text-red-400 mb-4">
                     {error}
                   </p>
-                  <Button
-                    onClick={fetchAnalyticsData}
-                    variant="outline"
-                    className="border-red-300 text-red-700 hover:bg-red-100"
-                  >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    {t("retryLoad")}
-                  </Button>
+
                 </CardContent>
               </Card>
             )}

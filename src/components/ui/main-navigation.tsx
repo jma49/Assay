@@ -11,6 +11,8 @@ import {
   History,
   Menu,
   ChevronRight,
+  Search,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +22,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useLanguage } from "@/components/LanguageProvider";
 import {
   dashboardTranslations,
@@ -47,10 +55,11 @@ const navigationItems = [
     description: "查看数据分析和趋势",
   },
   {
-    href: "/view-execution-result",
+    href: "results-dialog",
     icon: History,
     labelKey: "navigationResults" as DashboardTranslationKeys,
     description: "查看详细执行结果",
+    isDialog: true,
   },
 ];
 
@@ -127,6 +136,7 @@ export default function MainNavigation({ className }: NavigationProps) {
   const pathname = usePathname();
   const { language } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [resultsDialogOpen, setResultsDialogOpen] = React.useState(false);
 
   const t = useCallback(
     (key: DashboardTranslationKeys): string => {
@@ -147,7 +157,7 @@ export default function MainNavigation({ className }: NavigationProps) {
   };
 
   // 导航项组件
-  const NavigationItem = ({ item, isMobile = false }: { item: typeof navigationItems[0], isMobile?: boolean }) => {
+  const NavigationItem = ({ item, isMobile = false }: { item: typeof navigationItems[0] & { isDialog?: boolean }, isMobile?: boolean }) => {
     const isActive = isActivePath(item.href);
     const Icon = item.icon;
 
@@ -168,6 +178,33 @@ export default function MainNavigation({ className }: NavigationProps) {
         )}
       </>
     );
+
+    // 如果是Results弹窗项
+    if (item.isDialog) {
+      if (isMobile) {
+        return (
+          <button
+            className={cn(baseClasses, activeClasses)}
+            onClick={() => {
+              setResultsDialogOpen(true);
+              setMobileMenuOpen(false);
+            }}
+          >
+            {content}
+          </button>
+        );
+      }
+
+      return (
+        <button
+          className={cn("relative", baseClasses, activeClasses)}
+          title={item.description}
+          onClick={() => setResultsDialogOpen(true)}
+        >
+          {content}
+        </button>
+      );
+    }
 
     if (isMobile) {
       return (
@@ -222,6 +259,58 @@ export default function MainNavigation({ className }: NavigationProps) {
           </SheetContent>
         </Sheet>
       </div>
+
+      {/* Results弹窗 */}
+      <Dialog open={resultsDialogOpen} onOpenChange={setResultsDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Search className="h-5 w-5 text-primary" />
+              {language === "zh" ? "查看执行结果" : "View Execution Results"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-muted/30 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                  <History className="h-4 w-4 text-primary" />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-foreground">
+                    {language === "zh" ? "执行历史记录" : "Execution History"}
+                  </h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {language === "zh" 
+                      ? "所有的脚本执行结果都已整合到主页的Check History中，您可以在那里查看详细的执行记录、筛选状态和搜索特定脚本。" 
+                      : "All script execution results have been integrated into the Check History section on the main page. You can view detailed execution records, filter by status, and search for specific scripts there."}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => {
+                    setResultsDialogOpen(false);
+                    window.location.href = "/#execution-history";
+                  }}
+                  className="group"
+                >
+                  {language === "zh" ? "前往 Check History" : "Go to Check History"}
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={() => setResultsDialogOpen(false)}
+              >
+                {language === "zh" ? "关闭" : "Close"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 } 
