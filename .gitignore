@@ -77,3 +77,6 @@ next-env.d.ts
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# redis dump
+*.rdb
