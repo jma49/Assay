@@ -771,35 +771,41 @@ const Dashboard = () => {
             </div>
           </header>
 
-          {/* Stats Cards Section */}
-          <section className="space-y-4">
-            <StatsCards
-              nextScheduled={nextScheduled}
-              successCount={successCount}
-              allChecksCount={allChecksCount}
-              needsAttentionCount={needsAttentionCount}
-              successRate={successRate}
-              language={language}
-              t={t}
-            />
-          </section>
-
-          {/* Manual Trigger Section */}
-          <section className="space-y-4">
-            <ManualTrigger
-              availableScripts={availableScripts}
-              selectedScriptId={selectedScriptId}
-              selectedScript={selectedScript}
-              isTriggering={isTriggering}
-              isFetchingScripts={isFetchingScripts}
-              loading={loading && isFetchingScripts}
-              triggerMessage={triggerMessage}
-              triggerMessageType={triggerMessageType}
-              language={language}
-              t={t}
-              setSelectedScriptId={stableSetSelectedScriptId}
-              handleTriggerCheck={handleTriggerCheck}
-            />
+          {/* Manual Trigger & Stats Combined Section */}
+          <section className="space-y-6">
+            <div className="flex gap-6 lg:flex-row flex-col lg:items-stretch items-start">
+              {/* Manual Trigger - Left Side (2/3) */}
+              <div className="flex-1 lg:flex-[2] w-full">
+                <ManualTrigger
+                  availableScripts={availableScripts}
+                  selectedScriptId={selectedScriptId}
+                  selectedScript={selectedScript}
+                  isTriggering={isTriggering}
+                  isFetchingScripts={isFetchingScripts}
+                  loading={loading && isFetchingScripts}
+                  triggerMessage={triggerMessage}
+                  triggerMessageType={triggerMessageType}
+                  language={language}
+                  t={t}
+                  setSelectedScriptId={stableSetSelectedScriptId}
+                  handleTriggerCheck={handleTriggerCheck}
+                />
+              </div>
+              
+              {/* Stats Cards - Right Side (1/3) Vertical Layout */}
+              <div className="flex-1 w-full lg:w-auto">
+                <StatsCards
+                  nextScheduled={nextScheduled}
+                  successCount={successCount}
+                  allChecksCount={allChecksCount}
+                  needsAttentionCount={needsAttentionCount}
+                  successRate={successRate}
+                  language={language}
+                  t={t}
+                  isVerticalLayout={true}
+                />
+              </div>
+            </div>
           </section>
 
           {/* Check History Section */}
