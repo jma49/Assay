@@ -1,7 +1,6 @@
 import React from "react";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface PriorityBadgeProps {
@@ -73,28 +72,36 @@ export function PriorityBadge({
     <Badge
       variant="outline"
       className={cn(
-        "inline-flex items-center gap-1 px-2 py-1 text-xs font-medium transition-all duration-200",
+        "inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all duration-200",
         colors.bg,
         colors.text,
         colors.border,
         showRemove && colors.hover,
-        showRemove && "group pr-1",
+        showRemove && "group pr-1.5 cursor-pointer",
         className
       )}
     >
-      <span className="truncate">{hashtag}</span>
+      <span className="truncate font-semibold">{hashtag}</span>
       {showRemove && onRemove && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-auto w-auto p-0.5 ml-0.5 opacity-60 group-hover:opacity-100 hover:bg-current/20 transition-all duration-200"
+        <span
+          role="button"
+          tabIndex={0}
+          className="inline-flex items-center justify-center w-4 h-4 ml-0.5 opacity-60 group-hover:opacity-100 hover:bg-current/20 rounded-sm transition-all duration-200 cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
             onRemove();
           }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.stopPropagation();
+              e.preventDefault();
+              onRemove();
+            }
+          }}
+          title="移除标签"
         >
           <X className="h-3 w-3" />
-        </Button>
+        </span>
       )}
     </Badge>
   );
