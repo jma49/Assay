@@ -64,8 +64,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
       ? Math.round((needsAttentionCount / allChecksCount) * 100)
       : 0;
 
-  const failedCount = allChecksCount - successCount - needsAttentionCount;
-  const failureRate = allChecksCount > 0 ? Math.round((failedCount / allChecksCount) * 100) : 0;
+
 
   const stats: StatItem[] = [
     {
@@ -107,21 +106,23 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
             : t("needsProcessingTrend"),
       color: needsAttentionCount > 0 ? "warning" : "success",
     },
-    // 新增第四个统计卡片
+    // 今日成功率统计卡片
     {
-      title: t("dailyAverage"),
-      value: allChecksCount > 0 ? Math.round(allChecksCount / 30) : 0,
-      unit: "/day",
+      title: t("successRate"),
+      value: successRate,
+      unit: "%",
       icon: <TrendingUp className="h-6 w-6" />,
-      description: failedCount > 0 
-        ? `${t("failureRate")} ${failureRate}%`
-        : t("noFailureRecords"),
-      trend: allChecksCount > 50 
-        ? t("activeSystem") 
-        : allChecksCount > 20 
-          ? t("moderateActivity") 
-          : t("lowActivity"),
-      color: "info",
+      description: allChecksCount > 0 
+        ? `${t("totalChecks")} ${allChecksCount}`
+        : t("noSuccessRecords"),
+      trend: successRate >= 90 
+        ? t("excellentPerformance")
+        : successRate >= 70 
+          ? t("goodPerformance") 
+          : successRate >= 50
+            ? t("averagePerformance")
+            : t("needsAttentionTrend"),
+      color: successRate >= 80 ? "success" : successRate >= 60 ? "info" : "warning",
     },
   ];
 
