@@ -5,7 +5,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "next-themes";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import CSSErrorHandler from "@/components/CSSErrorHandler";
-import ParticleBackground from "@/components/effects/ParticleBackground";
+import SimpleParticleBackground from "@/components/effects/SimpleParticleBackground";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,7 +33,7 @@ export default function RootLayout({
         <CSSErrorHandler />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <LanguageProvider>
-            <ParticleBackground />
+            <SimpleParticleBackground />
             {children}
           </LanguageProvider>
         </ThemeProvider>
