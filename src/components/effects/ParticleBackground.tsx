@@ -32,6 +32,16 @@ function ParticleSystem() {
   const linesRef = useRef<THREE.LineSegments>(null);
   const mousePosition = useRef(new THREE.Vector3(0, 0, 10));
   const [particles, setParticles] = useState<Particle[]>([]);
+  
+  // Pre-allocate fixed-size buffer for line connections
+  const maxConnections = useMemo(() => {
+    // Maximum possible connections between all particles
+    return (CONFIG.particleCount * (CONFIG.particleCount - 1)) / 2;
+  }, []);
+  
+  const linePositions = useMemo(() => {
+    return new Float32Array(maxConnections * 6); // 6 values per line (2 points * 3 coordinates)
+  }, [maxConnections]);
 
   // Initialize particles
   useEffect(() => {
@@ -54,6 +64,19 @@ function ParticleSystem() {
     });
     setParticles(newParticles);
   }, []);
+
+  // Initialize line geometry once
+  useEffect(() => {
+    if (linesRef.current && linePositions) {
+      const lineGeometry = new THREE.BufferGeometry();
+      lineGeometry.setAttribute(
+        'position', 
+        new THREE.BufferAttribute(linePositions, 3)
+      );
+      lineGeometry.setDrawRange(0, 0); // Initially draw no lines
+      linesRef.current.geometry = lineGeometry;
+    }
+  }, [linePositions]);
 
   // Track mouse position for interaction
   useEffect(() => {
@@ -78,37 +101,37 @@ function ParticleSystem() {
   const updateConnections = () => {
     if (!linesRef.current || particles.length === 0) return;
     
-    const lines: number[] = [];
+    let lineIndex = 0;
     
     // Check pairs of particles for connections
     for (let i = 0; i < particles.length; i++) {
       for (let j = i + 1; j < particles.length; j++) {
         const distance = particles[i].position.distanceTo(particles[j].position);
         
-        if (distance < CONFIG.connectionThreshold) {
-          // Calculate opacity based on distance - closer particles have more opaque connections
-          const opacity = 1 - (distance / CONFIG.connectionThreshold);
+        if (distance < CONFIG.connectionThreshold && lineIndex < maxConnections) {
+          const baseIndex = lineIndex * 6;
           
-          lines.push(
-            particles[i].position.x, particles[i].position.y, particles[i].position.z,
-            particles[j].position.x, particles[j].position.y, particles[j].position.z
-          );
+          // Add line vertices to the pre-allocated buffer
+          linePositions[baseIndex] = particles[i].position.x;
+          linePositions[baseIndex + 1] = particles[i].position.y;
+          linePositions[baseIndex + 2] = particles[i].position.z;
+          linePositions[baseIndex + 3] = particles[j].position.x;
+          linePositions[baseIndex + 4] = particles[j].position.y;
+          linePositions[baseIndex + 5] = particles[j].position.z;
+          
+          lineIndex++;
         }
       }
     }
     
-    // Update line geometry
-    const lineGeometry = new THREE.BufferGeometry();
-    if (lines.length > 0) {
-      lineGeometry.setAttribute(
-        'position', 
-        new THREE.Float32BufferAttribute(lines, 3)
-      );
-      
-      if (linesRef.current.geometry) {
-        linesRef.current.geometry.dispose();
+    // Update the geometry's draw range to only render the active lines
+    const geometry = linesRef.current.geometry as THREE.BufferGeometry;
+    if (geometry) {
+      geometry.setDrawRange(0, lineIndex * 2); // 2 vertices per line
+      const positionAttribute = geometry.getAttribute('position') as THREE.BufferAttribute;
+      if (positionAttribute) {
+        positionAttribute.needsUpdate = true;
       }
-      linesRef.current.geometry = lineGeometry;
     }
   };
 
