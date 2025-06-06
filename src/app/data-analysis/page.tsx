@@ -535,6 +535,23 @@ export default function DataAnalysisPage() {
     [t],
   );
 
+  // 计算当前激活的筛选条件数量
+  const getActiveFiltersCount = useCallback(() => {
+    let count = 0;
+    if (selectedTimeRange !== '7d') count++; // 默认是7天，如果不是7天就算作筛选
+    if (selectedScript !== 'all') count++;
+    if (selectedHashtags.length > 0) count++;
+    return count;
+  }, [selectedTimeRange, selectedScript, selectedHashtags]);
+
+  // 重置所有筛选条件
+  const resetFilters = useCallback(() => {
+    setSelectedTimeRange('7d');
+    setSelectedScript('all');
+    setSelectedHashtags([]);
+    setCurrentPage(1);
+  }, []);
+
   useEffect(() => {
     fetchAnalyticsData();
   }, [fetchAnalyticsData]);
@@ -580,86 +597,147 @@ export default function DataAnalysisPage() {
               </div>
             </header>
 
-            {/* 筛选控制 - 简化设计 */}
+            {/* 筛选控制 - 优化展示逻辑 */}
             <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
 
               <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
-                    <Filter className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
+                      <Filter className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
+                    </div>
+                    <div className="space-y-1">
+                      <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
+                        {t("filterConditions")}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        {getActiveFiltersCount() > 0 
+                          ? `已应用 ${getActiveFiltersCount()} 个筛选条件`
+                          : "请选择筛选条件以过滤数据"
+                        }
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
-                      {t("filterConditions")}
-                    </CardTitle>
-                  </div>
+                  
+                  {/* 快速重置按钮 */}
+                  {getActiveFiltersCount() > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={resetFilters}
+                      className="text-xs opacity-70 hover:opacity-100 transition-opacity"
+                    >
+                      <div className="flex items-center gap-1">
+                        <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        重置筛选
+                      </div>
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
 
               <CardContent className="relative px-6 py-6">
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  <div className="space-y-3">
+                {/* 响应式网格布局 - 根据内容自适应 */}
+                <div className="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                  {/* 时间范围筛选器 */}
+                  <div className="space-y-3 min-w-0">
                     <Label
                       htmlFor="time-range"
                       className="text-sm font-semibold text-foreground flex items-center gap-2"
                     >
-                      <BarChart2 className="h-4 w-4 text-primary" />
-                      {t("timeRangeFilter")}
+                      <BarChart2 className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="truncate">{t("timeRangeFilter")}</span>
+                      {selectedTimeRange !== '7d' && (
+                        <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                          已设置
+                        </Badge>
+                      )}
                     </Label>
                     <Select
                       value={selectedTimeRange}
                       onValueChange={setSelectedTimeRange}
                     >
-                      <SelectTrigger className="h-12 text-base border-2 border-border/50 bg-background/50">
+                      <SelectTrigger className="h-12 text-base border-2 border-border/50 bg-background/50 hover:border-primary/30 transition-colors">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {Object.entries(TIME_RANGES).map(([key, range]) => (
                           <SelectItem key={key} value={key}>
-                            {t(range.label)}
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              {t(range.label)}
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-3">
+
+                  {/* 脚本筛选器 */}
+                  <div className="space-y-3 min-w-0">
                     <Label
                       htmlFor="script-filter"
                       className="text-sm font-semibold text-foreground flex items-center gap-2"
                     >
-                      <Target className="h-4 w-4 text-primary" />
-                      {t("scriptFilter")}
+                      <Target className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="truncate">{t("scriptFilter")}</span>
+                      {selectedScript !== 'all' && (
+                        <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                          已选择
+                        </Badge>
+                      )}
                     </Label>
                     <Select
                       value={selectedScript}
                       onValueChange={setSelectedScript}
                     >
-                      <SelectTrigger className="h-12 text-base border-2 border-border/50 bg-background/50">
+                      <SelectTrigger className="h-12 text-base border-2 border-border/50 bg-background/50 hover:border-primary/30 transition-colors">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">{t("allScripts")}</SelectItem>
+                        <SelectItem value="all">
+                          <div className="flex items-center gap-2">
+                            <div className="h-4 w-4 rounded border-2 border-muted-foreground"></div>
+                            {t("allScripts")}
+                          </div>
+                        </SelectItem>
                         {analyticsData?.scriptAnalytics.map((script) => (
                           <SelectItem
                             key={script.scriptId}
                             value={script.scriptId}
                           >
-                            {script.scriptName}
+                            <div className="flex items-center gap-2">
+                              <div className="h-4 w-4 rounded bg-primary/20 flex items-center justify-center">
+                                <div className="h-2 w-2 rounded bg-primary"></div>
+                              </div>
+                              <span className="truncate">{script.scriptName}</span>
+                              <Badge variant="outline" className="text-xs ml-auto">
+                                {script.totalExecutions}
+                              </Badge>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  {/* Hashtag筛选器 */}
-                  {availableHashtags.length > 0 && (
-                    <div className="space-y-3">
+
+                  {/* 标签筛选器 - 更智能的显示逻辑 */}
+                  {availableHashtags.length > 0 ? (
+                    <div className="space-y-3 min-w-0 md:col-span-2 xl:col-span-1">
                       <Label
                         htmlFor="tag-filter"
                         className="text-sm font-semibold text-foreground flex items-center gap-2"
                       >
-                        <Filter className="h-4 w-4 text-primary" />
-                        {t("tagFilterButton")}
+                        <Filter className="h-4 w-4 text-primary flex-shrink-0" />
+                        <span className="truncate">{t("tagFilterButton")}</span>
+                        {selectedHashtags.length > 0 && (
+                          <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                            {selectedHashtags.length} 个标签
+                          </Badge>
+                        )}
                       </Label>
                       <CompactHashtagFilter
                         availableHashtags={availableHashtags}
@@ -671,8 +749,46 @@ export default function DataAnalysisPage() {
                         className="w-full h-12"
                       />
                     </div>
+                  ) : (
+                    // 如果没有hashtag，显示占位符或其他内容
+                    <div className="space-y-3 min-w-0 md:col-span-2 xl:col-span-1">
+                      <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <Filter className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">标签筛选</span>
+                      </Label>
+                      <div className="h-12 border-2 border-dashed border-border/30 rounded-md flex items-center justify-center text-sm text-muted-foreground bg-muted/10">
+                        暂无可用标签
+                      </div>
+                    </div>
                   )}
                 </div>
+
+                {/* 当前筛选状态指示器 */}
+                {getActiveFiltersCount() > 0 && (
+                  <div className="mt-6 pt-4 border-t border-border/20">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-medium text-muted-foreground">当前筛选:</span>
+                      
+                      {selectedTimeRange !== 'last7days' && (
+                        <Badge variant="outline" className="text-xs">
+                          时间: {t(TIME_RANGES[selectedTimeRange as keyof typeof TIME_RANGES].label)}
+                        </Badge>
+                      )}
+                      
+                      {selectedScript !== 'all' && (
+                        <Badge variant="outline" className="text-xs">
+                          脚本: {analyticsData?.scriptAnalytics.find(s => s.scriptId === selectedScript)?.scriptName || selectedScript}
+                        </Badge>
+                      )}
+                      
+                      {selectedHashtags.map(tag => (
+                        <Badge key={tag} variant="outline" className="text-xs">
+                          #{tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

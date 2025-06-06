@@ -544,6 +544,94 @@ body {
   );
 }
 
+/* 粒子背景特效样式 */
+.particle-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  background: transparent;
+}
+
+.particle-background canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* 确保内容层级正确 */
+body > div:not(.particle-background) {
+  position: relative;
+  z-index: 1;
+}
+
+/* 优化性能 - 减少重绘 */
+.particle-background {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* 深色模式下的粒子背景调整 */
+@media (prefers-color-scheme: dark) {
+  .particle-background {
+    opacity: 0.6;
+  }
+}
+
+.dark .particle-background {
+  opacity: 0.6;
+}
+
+/* 粒子背景特效样式 */
+.particle-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  background: transparent;
+}
+
+.particle-background canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* 确保内容层级正确 */
+body > div:not(.particle-background) {
+  position: relative;
+  z-index: 1;
+}
+
+/* 优化性能 - 减少重绘 */
+.particle-background {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* 深色模式下的粒子背景调整 */
+@media (prefers-color-scheme: dark) {
+  .particle-background {
+    opacity: 0.6;
+  }
+}
+
+.dark .particle-background {
+  opacity: 0.6;
+}
+
 /* Particle background styling */
 .particle-background {
   position: fixed;

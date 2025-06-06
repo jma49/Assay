@@ -1,269 +1,189 @@
 'use client';
 
-import React, { useRef, useMemo, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Points, PointMaterial } from '@react-three/drei';
+import React, { useRef, useMemo, useCallback } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
-// Configuration parameters
-const CONFIG = {
-  particleCount: 120,
-  particleSize: 0.06,
-  boundarySize: 5,
-  connectionThreshold: 1.8,
-  connectionOpacity: 0.15,
-  mouseRepulsionRadius: 1.2,
-  mouseRepulsionStrength: 0.05,
-  particleColor: '#89b4fa', // Matches your primary blue color
-  lineColor: '#89b4fa',
-  velocityFactor: 0.01,
-  particleAlpha: 0.7
-};
-
-// Particle type definition
-interface Particle {
-  position: THREE.Vector3;
-  velocity: THREE.Vector3;
-  originalVelocity: THREE.Vector3;
-}
-
+// 粒子系统组件
 function ParticleSystem() {
-  const pointsRef = useRef<THREE.Points>(null);
+  const meshRef = useRef<THREE.InstancedMesh>(null);
   const linesRef = useRef<THREE.LineSegments>(null);
-  const mousePosition = useRef(new THREE.Vector3(0, 0, 10));
-  const particlesData = useRef<Particle[]>([]);
+  const { size, mouse } = useThree();
   
-  // Pre-allocate fixed-size buffer for line connections
-  const maxConnections = useMemo(() => {
-    // Maximum possible connections between all particles
-    return (CONFIG.particleCount * (CONFIG.particleCount - 1)) / 2;
-  }, []);
+  // 粒子配置
+  const particleCount = 150;
+  const connectionDistance = 100;
+  const mouseInfluenceRadius = 80;
+  const mouseRepulsionStrength = 30;
   
-  const linePositions = useMemo(() => {
-    return new Float32Array(maxConnections * 6); // 6 values per line (2 points * 3 coordinates)
-  }, [maxConnections]);
-
-  // Create stable positions array with fixed size
-  const positionsArray = useMemo(() => {
-    return new Float32Array(CONFIG.particleCount * 3);
-  }, []);
-
-  // Initialize particles once
-  useEffect(() => {
-    const newParticles = Array(CONFIG.particleCount).fill(0).map(() => {
-      const velocity = new THREE.Vector3(
-        (Math.random() - 0.5) * CONFIG.velocityFactor,
-        (Math.random() - 0.5) * CONFIG.velocityFactor,
-        (Math.random() - 0.5) * CONFIG.velocityFactor
-      );
-      
-      return {
-        position: new THREE.Vector3(
-          (Math.random() - 0.5) * CONFIG.boundarySize * 2,
-          (Math.random() - 0.5) * CONFIG.boundarySize * 2,
-          (Math.random() - 0.5) * CONFIG.boundarySize * 2
-        ),
-        velocity: velocity.clone(),
-        originalVelocity: velocity.clone()
-      };
+  // 初始化粒子数据
+  const particles = useMemo(() => {
+    const particleArray = [];
+    
+    for (let i = 0; i < particleCount; i++) {
+      particleArray.push({
+                 position: new THREE.Vector3(
+           (Math.random() - 0.5) * size.width * 0.8,
+           (Math.random() - 0.5) * size.height * 0.8,
+           (Math.random() - 0.5) * 200
+         ),
+         velocity: new THREE.Vector3(
+           (Math.random() - 0.5) * 0.5,
+           (Math.random() - 0.5) * 0.5,
+           (Math.random() - 0.5) * 0.5
+         ),
+         originalPosition: new THREE.Vector3(),
+        id: i
+      });
+    }
+    
+    // 保存原始位置
+    particleArray.forEach(particle => {
+      particle.originalPosition.copy(particle.position);
     });
     
-    particlesData.current = newParticles;
-    
-    // Initialize positions array
-    newParticles.forEach((particle, i) => {
-      const idx = i * 3;
-      positionsArray[idx] = particle.position.x;
-      positionsArray[idx + 1] = particle.position.y;
-      positionsArray[idx + 2] = particle.position.z;
-    });
-  }, [positionsArray]);
+    return particleArray;
+  }, [size.width, size.height]);
 
-  // Initialize line geometry once
-  useEffect(() => {
-    if (linesRef.current && linePositions) {
-      const lineGeometry = new THREE.BufferGeometry();
-      lineGeometry.setAttribute(
-        'position', 
-        new THREE.BufferAttribute(linePositions, 3)
-      );
-      lineGeometry.setDrawRange(0, 0); // Initially draw no lines
-      linesRef.current.geometry = lineGeometry;
-    }
-  }, [linePositions]);
+  // 更新粒子位置的函数
+  const updateParticles = useCallback(() => {
+    if (!meshRef.current) return;
 
-  // Track mouse position for interaction
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      // Convert screen coordinates to normalized device coordinates (-1 to 1)
-      mousePosition.current.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mousePosition.current.y = -((event.clientY / window.innerHeight) * 2 - 1);
-      mousePosition.current.z = 0; // Keep on camera plane
-    };
+    // 鼠标位置转换为3D坐标
+    const mouseX = (mouse.x * size.width) / 2;
+    const mouseY = -(mouse.y * size.height) / 2;
+         const mousePos = new THREE.Vector3(mouseX, mouseY, 0);
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
-  // Calculate lines between particles
-  const updateConnections = () => {
-    if (!linesRef.current || particlesData.current.length === 0) return;
-    
-    let lineIndex = 0;
-    
-    // Check pairs of particles for connections
-    for (let i = 0; i < particlesData.current.length; i++) {
-      for (let j = i + 1; j < particlesData.current.length; j++) {
-        const distance = particlesData.current[i].position.distanceTo(particlesData.current[j].position);
-        
-        if (distance < CONFIG.connectionThreshold && lineIndex < maxConnections) {
-          const baseIndex = lineIndex * 6;
-          
-          // Add line vertices to the pre-allocated buffer
-          linePositions[baseIndex] = particlesData.current[i].position.x;
-          linePositions[baseIndex + 1] = particlesData.current[i].position.y;
-          linePositions[baseIndex + 2] = particlesData.current[i].position.z;
-          linePositions[baseIndex + 3] = particlesData.current[j].position.x;
-          linePositions[baseIndex + 4] = particlesData.current[j].position.y;
-          linePositions[baseIndex + 5] = particlesData.current[j].position.z;
-          
-          lineIndex++;
-        }
-      }
-    }
-    
-    // Update the geometry's draw range to only render the active lines
-    const geometry = linesRef.current.geometry as THREE.BufferGeometry;
-    if (geometry) {
-      geometry.setDrawRange(0, lineIndex * 2); // 2 vertices per line
-      const positionAttribute = geometry.getAttribute('position') as THREE.BufferAttribute;
-      if (positionAttribute) {
-        positionAttribute.needsUpdate = true;
-      }
-    }
-  };
-
-  // Animation loop
-  useFrame(({ camera }) => {
-    if (!pointsRef.current || particlesData.current.length === 0) return;
-    
-    // Convert 2D mouse position to 3D world position
-    const vector = new THREE.Vector3(
-      mousePosition.current.x, 
-      mousePosition.current.y, 
-      0.5
-    );
-    vector.unproject(camera);
-    const dir = vector.sub(camera.position).normalize();
-    const distance = -camera.position.z / dir.z;
-    const pos = camera.position.clone().add(dir.multiplyScalar(distance));
-    
-    // Update particle positions
-    particlesData.current.forEach((particle, i) => {
-      // Calculate distance to mouse position
-      const distanceToMouse = particle.position.distanceTo(pos);
+    particles.forEach((particle, i) => {
+      // 计算与鼠标的距离
+      const distanceToMouse = particle.position.distanceTo(mousePos);
       
-      // Apply mouse repulsion
-      if (distanceToMouse < CONFIG.mouseRepulsionRadius) {
-        const repulsionVector = new THREE.Vector3().subVectors(
-          particle.position, 
-          pos
-        ).normalize();
-        
-        const repulsionStrength = CONFIG.mouseRepulsionStrength * 
-          (1 - (distanceToMouse / CONFIG.mouseRepulsionRadius));
-        
-        // Move away from mouse
-        particle.position.add(
-          repulsionVector.multiplyScalar(repulsionStrength)
-        );
-        
-        // Gradually return to original velocity
-        particle.velocity.lerp(particle.originalVelocity, 0.02);
+      if (distanceToMouse < mouseInfluenceRadius) {
+        // 鼠标排斥效果
+        const repulsionDirection = particle.position.clone().sub(mousePos).normalize();
+        const repulsionForce = (mouseInfluenceRadius - distanceToMouse) / mouseInfluenceRadius;
+        particle.velocity.add(repulsionDirection.multiplyScalar(repulsionForce * mouseRepulsionStrength * 0.01));
+      } else {
+        // 缓慢回归原始轨迹
+        const returnDirection = particle.originalPosition.clone().sub(particle.position);
+        particle.velocity.add(returnDirection.multiplyScalar(0.001));
       }
       
-      // Update position based on velocity
+      // 应用速度
       particle.position.add(particle.velocity);
       
-      // Apply boundary wrapping
-      ['x', 'y', 'z'].forEach(axis => {
-        if (particle.position[axis] < -CONFIG.boundarySize) {
-          particle.position[axis] = CONFIG.boundarySize;
-        } else if (particle.position[axis] > CONFIG.boundarySize) {
-          particle.position[axis] = -CONFIG.boundarySize;
-        }
-      });
+      // 速度阻尼
+      particle.velocity.multiplyScalar(0.98);
       
-      // Update geometry positions
-      const idx = i * 3;
-      positionsArray[idx] = particle.position.x;
-      positionsArray[idx + 1] = particle.position.y;
-      positionsArray[idx + 2] = particle.position.z;
+      // 边界检测 - 循环边界
+      const halfWidth = size.width * 0.5;
+      const halfHeight = size.height * 0.5;
+      
+      if (particle.position.x > halfWidth) {
+        particle.position.x = -halfWidth;
+        particle.originalPosition.x = -halfWidth;
+      } else if (particle.position.x < -halfWidth) {
+        particle.position.x = halfWidth;
+        particle.originalPosition.x = halfWidth;
+      }
+      
+      if (particle.position.y > halfHeight) {
+        particle.position.y = -halfHeight;
+        particle.originalPosition.y = -halfHeight;
+      } else if (particle.position.y < -halfHeight) {
+        particle.position.y = halfHeight;
+        particle.originalPosition.y = halfHeight;
+      }
+      
+      if (particle.position.z > 100) {
+        particle.position.z = -100;
+      } else if (particle.position.z < -100) {
+        particle.position.z = 100;
+      }
+
+      // 更新实例化网格的位置
+      const matrix = new THREE.Matrix4();
+      matrix.setPosition(particle.position);
+      meshRef.current?.setMatrixAt(i, matrix);
     });
+
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [particles, mouse, size]);
+
+  // 生成连线
+  const generateConnections = useCallback(() => {
+    if (!linesRef.current) return;
+
+    const positions = [];
+    const colors = [];
     
-    // Flag geometry for update
-    pointsRef.current.geometry.attributes.position.needsUpdate = true;
-    
-    // Update connections
-    updateConnections();
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const distance = particles[i].position.distanceTo(particles[j].position);
+        
+        if (distance < connectionDistance) {
+          // 添加线条
+          positions.push(
+            particles[i].position.x, particles[i].position.y, particles[i].position.z,
+            particles[j].position.x, particles[j].position.y, particles[j].position.z
+          );
+          
+          // 根据距离计算透明度
+          const opacity = Math.max(0, 1 - distance / connectionDistance) * 0.4;
+          colors.push(0.3, 0.6, 1, opacity); // 蓝色
+          colors.push(0.3, 0.6, 1, opacity);
+        }
+      }
+    }
+
+    const geometry = linesRef.current.geometry;
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 4));
+    geometry.attributes.position.needsUpdate = true;
+    geometry.attributes.color.needsUpdate = true;
+  }, [particles]);
+
+  // 动画循环
+  useFrame(() => {
+    updateParticles();
+    generateConnections();
   });
-  
+
   return (
     <>
-      <Points ref={pointsRef} limit={CONFIG.particleCount}>
-        <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            count={CONFIG.particleCount}
-            array={positionsArray}
-            itemSize={3}
-          />
-        </bufferGeometry>
-        <PointMaterial
-          size={CONFIG.particleSize}
-          color={CONFIG.particleColor}
-          sizeAttenuation
-          transparent
-          depthWrite={false}
-          opacity={CONFIG.particleAlpha}
-        />
-      </Points>
+      {/* 粒子点 */}
+      <instancedMesh ref={meshRef} args={[undefined, undefined, particleCount]}>
+        <sphereGeometry args={[1, 8, 8]} />
+        <meshBasicMaterial color="#4f8ff0" transparent opacity={0.8} />
+      </instancedMesh>
       
-      {/* Lines connecting nearby particles */}
+      {/* 连接线 */}
       <lineSegments ref={linesRef}>
         <bufferGeometry />
-        <lineBasicMaterial
-          color={CONFIG.lineColor}
-          transparent
-          opacity={CONFIG.connectionOpacity}
-          depthWrite={false}
-        />
+        <lineBasicMaterial transparent vertexColors />
       </lineSegments>
     </>
   );
 }
 
+// 主要的粒子背景组件
 export default function ParticleBackground() {
-  // Automatically adjust camera position based on screen size
-  const [cameraPosition, setCameraPosition] = React.useState([0, 0, 8]);
-  
-  useEffect(() => {
-    const handleResize = () => {
-      // Move camera further back on larger screens for better perspective
-      const distance = Math.max(8, Math.min(12, window.innerWidth / 250));
-      setCameraPosition([0, 0, distance]);
-    };
-    
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   return (
     <div className="particle-background">
-      <Canvas camera={{ position: cameraPosition, fov: 60 }}>
-        <color attach="background" args={['transparent']} />
-        <fog attach="fog" args={['#000', 5, 20]} />
+      <Canvas
+        camera={{ 
+          position: [0, 0, 300], 
+          fov: 75,
+          near: 1,
+          far: 1000
+        }}
+        gl={{ 
+          alpha: true, 
+          antialias: true,
+          powerPreference: "high-performance"
+        }}
+      >
+        <ambientLight intensity={0.5} />
         <ParticleSystem />
       </Canvas>
     </div>
