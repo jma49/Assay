@@ -474,6 +474,11 @@ export type DashboardTranslationKeys =
   | "overallSystemAnalysis"
   | "dailyTrendAnalysis"
   | "statusDistributionAnalysis"
+  | "statusDistribution"
+  | "executionResultsStats"
+  | "recent14DaysTrend"
+  | "date"
+  | "failedExecutions"
   | "filterByHashtag"
   | "filterStatus"
   | "searchScripts"
@@ -1041,6 +1046,11 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     overallSystemAnalysis: "Overall System Analysis",
     dailyTrendAnalysis: "Daily Trend Analysis",
     statusDistributionAnalysis: "Status Distribution Analysis",
+    statusDistribution: "Status Distribution",
+    executionResultsStats: "Execution Results Statistics",
+    recent14DaysTrend: "Recent 14 Days Trend",
+    date: "Date",
+    failedExecutions: "Failed Executions",
     allStatuses: "All Statuses",
     scheduleEnabled: "Schedule Enabled",
     scheduleDisabled: "Schedule Disabled",
@@ -1519,6 +1529,11 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     overallSystemAnalysis: "整体系统分析",
     dailyTrendAnalysis: "日趋势分析",
     statusDistributionAnalysis: "状态分布分析",
+    statusDistribution: "状态分布",
+    executionResultsStats: "执行结果统计",
+    recent14DaysTrend: "最近14天趋势",
+    date: "日期",
+    failedExecutions: "失败执行",
     allStatuses: "所有状态",
     scheduleEnabled: "定时任务启用",
     scheduleDisabled: "定时任务禁用",
