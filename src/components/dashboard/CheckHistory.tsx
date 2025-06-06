@@ -258,8 +258,8 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
             </Button>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 relative">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div className="relative sm:col-span-3">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
@@ -282,7 +282,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
             </div>
 
             {availableHashtags.length > 0 && setSelectedHashtags && (
-              <div className="w-full sm:w-[200px]">
+              <div className="sm:col-span-1">
                 <CompactHashtagFilter
                   availableHashtags={availableHashtags}
                   selectedHashtags={selectedHashtags}
