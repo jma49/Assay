@@ -22,17 +22,17 @@ function ParticleSystem() {
     
     for (let i = 0; i < particleCount; i++) {
       particleArray.push({
-                 position: new THREE.Vector3(
-           (Math.random() - 0.5) * size.width * 0.8,
-           (Math.random() - 0.5) * size.height * 0.8,
-           (Math.random() - 0.5) * 200
-         ),
-         velocity: new THREE.Vector3(
-           (Math.random() - 0.5) * 0.5,
-           (Math.random() - 0.5) * 0.5,
-           (Math.random() - 0.5) * 0.5
-         ),
-         originalPosition: new THREE.Vector3(),
+        position: new THREE.Vector3(
+          (Math.random() - 0.5) * size.width * 0.8,
+          (Math.random() - 0.5) * size.height * 0.8,
+          (Math.random() - 0.5) * 200
+        ),
+        velocity: new THREE.Vector3(
+          (Math.random() - 0.5) * 0.5,
+          (Math.random() - 0.5) * 0.5,
+          (Math.random() - 0.5) * 0.5
+        ),
+        originalPosition: new THREE.Vector3(),
         id: i
       });
     }
@@ -42,8 +42,26 @@ function ParticleSystem() {
       particle.originalPosition.copy(particle.position);
     });
     
+    console.log(`🎨 初始化了 ${particleCount} 个粒子`, {
+      sampleParticle: particleArray[0],
+      canvasSize: size
+    });
+    
     return particleArray;
   }, [size.width, size.height]);
+
+  // 初始化实例化矩阵
+  React.useEffect(() => {
+    if (meshRef.current) {
+      particles.forEach((particle, i) => {
+        const matrix = new THREE.Matrix4();
+        matrix.setPosition(particle.position);
+        meshRef.current?.setMatrixAt(i, matrix);
+      });
+      meshRef.current.instanceMatrix.needsUpdate = true;
+      console.log('🎨 粒子实例化矩阵已初始化');
+    }
+  }, [particles]);
 
   // 更新粒子位置的函数
   const updateParticles = useCallback(() => {
