@@ -8,7 +8,6 @@ import { Progress } from "@/components/ui/progress";
 import {
   BarChart2,
   Filter,
-
   TrendingUp,
   Activity,
   Target,
@@ -18,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
+  PieChart,
 } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import {
@@ -36,6 +36,21 @@ import {
 import { formatDate } from "@/components/dashboard/utils";
 import UserHeader from "@/components/UserHeader";
 import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
+
+import {
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+
+} from "recharts";
 
 // 添加进度条动画样式
 const progressAnimationStyle = `
@@ -162,6 +177,33 @@ const progressAnimationStyle = `
     }
   }
 `;
+
+// 图表颜色配置 - 基于提供的颜色图示优化
+const CHART_COLORS = {
+  success: "#22c55e",        // 绿色 #22c55e - 成功 (鲜绿色)
+  failed: "#ef4444",         // 红色 #ef4444 - 失败 (明亮红色)
+  attention_needed: "#f59e0b", // 橙色 #f59e0b - 需要注意 (琥珀色)
+  primary: "#3b82f6",        // 蓝色 #3b82f6 - 主色调 (明亮蓝色)
+  secondary: "#8b5cf6",      // 紫色 #8b5cf6 - 辅助色 (深紫色)
+  accent: "#06b6d4",         // 青色 #06b6d4 - 强调色 (天蓝色)
+  muted: "hsl(var(--muted-foreground))", // 静音色
+  border: "hsl(var(--border))",      // 边框色
+  background: "hsl(var(--background))", // 背景色
+  
+  // 新增细分颜色
+  lightBlue: "#dbeafe",      // 浅蓝色背景
+  lightGreen: "#dcfce7",     // 浅绿色背景  
+  lightRed: "#fee2e2",       // 浅红色背景
+  lightPurple: "#f3e8ff",    // 浅紫色背景
+  lightGray: "#f8fafc",      // 浅灰色背景
+  
+  // 图表专用色彩
+  chartBlue: "#1e40af",      // 深蓝色 - 图表主色
+  chartGreen: "#059669",     // 深绿色 - 成功数据  
+  chartRed: "#dc2626",       // 深红色 - 错误数据
+  chartPurple: "#7c3aed",    // 深紫色 - 特殊数据
+  chartOrange: "#ea580c",    // 深橙色 - 警告数据
+};
 
 // 数据接口定义
 interface ExecutionRecord {
@@ -409,11 +451,14 @@ export default function DataAnalysisPage() {
       }
 
       // 处理数据分析
-      const analytics = processAnalyticsData(filteredExecutions, scripts);
-      setAnalyticsData(analytics);
+      const processedAnalytics = processAnalyticsData(filteredExecutions, scripts);
+      setAnalyticsData(processedAnalytics);
+      
     } catch (err) {
       console.error("Failed to fetch analytics data:", err);
-      setError(err instanceof Error ? err.message : "Unknown error");
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
+      
     } finally {
       setIsLoading(false);
     }
@@ -614,7 +659,7 @@ export default function DataAnalysisPage() {
                         className="text-sm font-semibold text-foreground flex items-center gap-2"
                       >
                         <Filter className="h-4 w-4 text-primary" />
-                        {t("tagFilter")}
+                        {t("tagFilterButton")}
                       </Label>
                       <CompactHashtagFilter
                         availableHashtags={availableHashtags}
@@ -635,23 +680,34 @@ export default function DataAnalysisPage() {
             {analyticsData && (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 {/* 总执行次数 */}
-                <Card className="group relative overflow-hidden border-2 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl border-blue-200/50 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-950/20">
+                <Card className="group relative overflow-hidden border-2 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl"
+                      style={{ 
+                        borderColor: `${CHART_COLORS.chartBlue}40`,
+                        backgroundColor: CHART_COLORS.lightBlue
+                      }}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                        <p className="text-sm font-medium"
+                           style={{ color: CHART_COLORS.chartBlue }}>
                           {t("totalExecutions")}
                         </p>
-                        <p className="text-3xl font-bold text-blue-800 dark:text-blue-200">
+                        <p className="text-3xl font-bold"
+                           style={{ color: CHART_COLORS.chartBlue }}>
                           {analyticsData.totalExecutions.toLocaleString()}
                         </p>
                       </div>
-                      <Activity className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                      <Activity className="h-8 w-8"
+                                style={{ color: CHART_COLORS.chartBlue }} />
                     </div>
                     <div className="mt-4">
                       <Badge
                         variant="secondary"
-                        className="bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200"
+                        className="font-medium"
+                        style={{ 
+                          backgroundColor: `${CHART_COLORS.chartBlue}20`,
+                          color: CHART_COLORS.chartBlue
+                        }}
                       >
                         {analyticsData.totalScripts} {t("scriptsCount")}
                       </Badge>
@@ -660,25 +716,33 @@ export default function DataAnalysisPage() {
                 </Card>
 
                 {/* 整体成功率 */}
-                <Card className="group relative overflow-hidden border-2 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl border-green-200/50 dark:border-green-800/50 bg-green-50 dark:bg-green-950/20">
+                <Card className="group relative overflow-hidden border-2 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl"
+                      style={{ 
+                        borderColor: `${CHART_COLORS.chartGreen}40`,
+                        backgroundColor: CHART_COLORS.lightGreen
+                      }}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                        <p className="text-sm font-medium"
+                           style={{ color: CHART_COLORS.chartGreen }}>
                           {t("overallSuccessRate")}
                         </p>
-                        <p className="text-3xl font-bold text-green-800 dark:text-green-200">
+                        <p className="text-3xl font-bold"
+                           style={{ color: CHART_COLORS.chartGreen }}>
                           {analyticsData.overallSuccessRate.toFixed(1)}%
                         </p>
                       </div>
-                      <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+                      <CheckCircle className="h-8 w-8"
+                                   style={{ color: CHART_COLORS.chartGreen }} />
                     </div>
                     <div className="mt-4 space-y-2">
                       <Progress
                         value={analyticsData.overallSuccessRate}
                         className="h-2"
                       />
-                      <p className="text-xs text-green-600 dark:text-green-400">
+                      <p className="text-xs"
+                         style={{ color: CHART_COLORS.chartGreen }}>
                         {
                           getSuccessRateStatus(analyticsData.overallSuccessRate)
                             .label
@@ -689,21 +753,29 @@ export default function DataAnalysisPage() {
                 </Card>
 
                 {/* 成功执行 */}
-                <Card className="group relative overflow-hidden border-2 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl border-emerald-200/50 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/20">
+                <Card className="group relative overflow-hidden border-2 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl"
+                      style={{ 
+                        borderColor: `${CHART_COLORS.chartPurple}40`,
+                        backgroundColor: CHART_COLORS.lightPurple
+                      }}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                        <p className="text-sm font-medium"
+                           style={{ color: CHART_COLORS.chartBlue }}>
                           {t("successfulExecutions")}
                         </p>
-                        <p className="text-3xl font-bold text-emerald-800 dark:text-emerald-200">
+                        <p className="text-3xl font-bold"
+                           style={{ color: CHART_COLORS.chartPurple }}>
                           {analyticsData.statusDistribution.success.toLocaleString()}
                         </p>
                       </div>
-                      <TrendingUp className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+                      <TrendingUp className="h-8 w-8"
+                                  style={{ color: CHART_COLORS.chartPurple }} />
                     </div>
                     <div className="mt-4">
-                      <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                      <p className="text-xs"
+                         style={{ color: CHART_COLORS.chartBlue }}>
                         {(
                           (analyticsData.statusDistribution.success /
                             analyticsData.totalExecutions) *
@@ -716,30 +788,45 @@ export default function DataAnalysisPage() {
                 </Card>
 
                 {/* 失败/需关注 */}
-                <Card className="group relative overflow-hidden border-2 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl border-red-200/50 dark:border-red-800/50 bg-red-50 dark:bg-red-950/20">
+                <Card className="group relative overflow-hidden border-2 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl"
+                      style={{ 
+                        borderColor: `${CHART_COLORS.chartRed}40`,
+                        backgroundColor: CHART_COLORS.lightRed
+                      }}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                        <p className="text-sm font-medium"
+                           style={{ color: CHART_COLORS.chartRed }}>
                           {t("failedAttentionExecutions")}
                         </p>
-                        <p className="text-3xl font-bold text-red-800 dark:text-red-200">
+                        <p className="text-3xl font-bold"
+                           style={{ color: CHART_COLORS.chartRed }}>
                           {(
                             analyticsData.statusDistribution.failed +
                             analyticsData.statusDistribution.attention_needed
                           ).toLocaleString()}
                         </p>
                       </div>
-                      <AlertTriangle className="h-8 w-8 text-red-600 dark:text-red-400" />
+                      <AlertTriangle className="h-8 w-8"
+                                     style={{ color: CHART_COLORS.chartRed }} />
                     </div>
                     <div className="mt-4 flex gap-2">
-                      <Badge variant="destructive" className="text-xs">
+                      <Badge variant="destructive" className="text-xs font-medium"
+                             style={{ 
+                               backgroundColor: CHART_COLORS.chartRed,
+                               color: 'white'
+                             }}>
                         {analyticsData.statusDistribution.failed}{" "}
                         {t("failedLabel")}
                       </Badge>
                       <Badge
                         variant="outline"
-                        className="text-xs text-orange-600 border-orange-300"
+                        className="text-xs font-medium"
+                        style={{ 
+                          color: CHART_COLORS.chartOrange,
+                          borderColor: CHART_COLORS.chartOrange
+                        }}
                       >
                         {analyticsData.statusDistribution.attention_needed}{" "}
                         {t("attentionLabel")}
@@ -749,6 +836,248 @@ export default function DataAnalysisPage() {
                 </Card>
               </div>
             )}
+
+            {/* 可视化图表区域 */}
+            {analyticsData && (
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* 状态分布饼状图 */}
+                <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                  
+                  <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
+                        <PieChart className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                      <div className="space-y-2">
+                        <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
+                          {t('statusDistribution')}
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">{t('executionResultsStats')}</p>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                                    <CardContent className="relative px-6 py-6">
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RechartsPieChart>
+                          <Pie
+                            data={[
+                              { 
+                                name: t('successLabel'), 
+                                value: analyticsData.statusDistribution.success, 
+                                color: CHART_COLORS.chartGreen,
+                                percentage: ((analyticsData.statusDistribution.success / analyticsData.totalExecutions) * 100).toFixed(1)
+                              },
+                              { 
+                                name: t('failedLabel'), 
+                                value: analyticsData.statusDistribution.failed, 
+                                color: CHART_COLORS.chartRed,
+                                percentage: ((analyticsData.statusDistribution.failed / analyticsData.totalExecutions) * 100).toFixed(1)
+                              },
+                              { 
+                                name: t('attentionLabel'), 
+                                value: analyticsData.statusDistribution.attention_needed, 
+                                color: CHART_COLORS.chartOrange,
+                                percentage: ((analyticsData.statusDistribution.attention_needed / analyticsData.totalExecutions) * 100).toFixed(1)
+                              }
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={70}
+                            outerRadius={120}
+                            paddingAngle={2}
+                            dataKey="value"
+                            stroke="hsl(var(--background))"
+                            strokeWidth={2}
+                          >
+                            {[
+                              { name: t('successLabel'), value: analyticsData.statusDistribution.success, color: CHART_COLORS.chartGreen },
+                              { name: t('failedLabel'), value: analyticsData.statusDistribution.failed, color: CHART_COLORS.chartRed },
+                              { name: t('attentionLabel'), value: analyticsData.statusDistribution.attention_needed, color: CHART_COLORS.chartOrange }
+                            ].map((entry, index) => (
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={entry.color}
+                                className="hover:opacity-80 transition-opacity duration-200 cursor-pointer"
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            formatter={(value: number, name: string, props: { payload?: { percentage: string } }) => [
+                              `${value} 次 (${props.payload?.percentage}%)`, 
+                              name
+                            ]}
+                            contentStyle={{
+                              backgroundColor: CHART_COLORS.background,
+                              borderColor: CHART_COLORS.border,
+                              borderRadius: '12px',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                              border: '1px solid'
+                            }}
+                            labelStyle={{
+                              color: 'hsl(var(--foreground))',
+                              fontWeight: '600'
+                            }}
+                          />
+                          <Legend 
+                            wrapperStyle={{
+                              paddingTop: '20px',
+                              fontSize: '14px',
+                              fontWeight: '500'
+                            }}
+                          />
+                        </RechartsPieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* 趋势折线图 */}
+                <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                  
+                  <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
+                        <TrendingUp className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
+                      </div>
+                      <div className="space-y-2">
+                        <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
+                          {t('executionTrend')}
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">{t('recent14DaysTrend')}</p>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="relative px-6 py-6">
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart 
+                          data={analyticsData.dailyTrend.slice(-14)}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid 
+                            strokeDasharray="2 2" 
+                            stroke={CHART_COLORS.border}
+                            strokeOpacity={0.3}
+                          />
+                          <XAxis 
+                            dataKey="date" 
+                            tickFormatter={(value) => {
+                              const date = new Date(value);
+                              return `${date.getMonth() + 1}/${date.getDate()}`;
+                            }}
+                            stroke={CHART_COLORS.muted}
+                            fontSize={12}
+                            tickMargin={10}
+                          />
+                          <YAxis 
+                            stroke={CHART_COLORS.muted}
+                            fontSize={12}
+                            tickMargin={10}
+                          />
+                          <Tooltip 
+                            labelFormatter={(value) => {
+                              const date = new Date(value);
+                              return `${t('date')}: ${date.toLocaleDateString()}`;
+                            }}
+                            formatter={(value: number, name: string) => [
+                              value,
+                              name
+                            ]}
+                            contentStyle={{
+                              backgroundColor: CHART_COLORS.background,
+                              borderColor: CHART_COLORS.border,
+                              borderRadius: '12px',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                              border: '1px solid'
+                            }}
+                            labelStyle={{
+                              color: 'hsl(var(--foreground))',
+                              fontWeight: '600',
+                              marginBottom: '8px'
+                            }}
+                          />
+                          <Legend 
+                            wrapperStyle={{
+                              paddingTop: '20px',
+                              fontSize: '14px',
+                              fontWeight: '500'
+                            }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="executions" 
+                            stroke={CHART_COLORS.chartBlue} 
+                            strokeWidth={4}
+                            name={t('totalExecutions')}
+                            dot={{ 
+                              fill: CHART_COLORS.chartBlue, 
+                              strokeWidth: 3, 
+                              r: 6,
+                              className: "hover:r-8 transition-all duration-200"
+                            }}
+                            activeDot={{ 
+                              r: 10, 
+                              stroke: CHART_COLORS.chartBlue,
+                              strokeWidth: 3,
+                              fill: CHART_COLORS.background
+                            }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="successes" 
+                            stroke={CHART_COLORS.chartGreen} 
+                            strokeWidth={4}
+                            name={t('successfulExecutions')}
+                            dot={{ 
+                              fill: CHART_COLORS.chartGreen, 
+                              strokeWidth: 3, 
+                              r: 6,
+                              className: "hover:r-8 transition-all duration-200"
+                            }}
+                            activeDot={{ 
+                              r: 10, 
+                              stroke: CHART_COLORS.chartGreen,
+                              strokeWidth: 3,
+                              fill: CHART_COLORS.background
+                            }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="failures" 
+                            stroke={CHART_COLORS.chartRed} 
+                            strokeWidth={4}
+                            name={t('failedExecutions')}
+                            dot={{ 
+                              fill: CHART_COLORS.chartRed, 
+                              strokeWidth: 3, 
+                              r: 6,
+                              className: "hover:r-8 transition-all duration-200"
+                            }}
+                            activeDot={{ 
+                              r: 10, 
+                              stroke: CHART_COLORS.chartRed,
+                              strokeWidth: 3,
+                              fill: CHART_COLORS.background
+                            }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+
 
             {/* 趋势图表 */}
             {analyticsData && analyticsData.dailyTrend.length > 0 && (
@@ -840,20 +1169,26 @@ export default function DataAnalysisPage() {
 
                                   {/* 统计数字 */}
                                   <div className="flex items-center gap-3 text-xs font-medium">
-                                    <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 transition-colors">
-                                      <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-sm"></div>
-                                      <span className="text-emerald-700 dark:text-emerald-300 font-semibold">
-                                        {day.successes}
-                                      </span>
-                                    </div>
-                                    {day.failures > 0 && (
-                                      <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-red-50 dark:bg-red-950/30 transition-colors">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-red-400 to-red-600 shadow-sm"></div>
-                                        <span className="text-red-700 dark:text-red-300 font-semibold">
-                                          {day.failures}
+                                                                          <div className="flex items-center gap-2 px-2 py-1 rounded-lg transition-colors"
+                                           style={{ backgroundColor: CHART_COLORS.lightGreen }}>
+                                        <div className="w-2.5 h-2.5 rounded-full shadow-sm"
+                                             style={{ background: `linear-gradient(to bottom right, ${CHART_COLORS.chartGreen}, ${CHART_COLORS.success})` }}></div>
+                                        <span className="font-semibold"
+                                              style={{ color: CHART_COLORS.chartGreen }}>
+                                          {day.successes}
                                         </span>
                                       </div>
-                                    )}
+                                      {day.failures > 0 && (
+                                        <div className="flex items-center gap-2 px-2 py-1 rounded-lg transition-colors"
+                                             style={{ backgroundColor: CHART_COLORS.lightRed }}>
+                                          <div className="w-2.5 h-2.5 rounded-full shadow-sm"
+                                               style={{ background: `linear-gradient(to bottom right, ${CHART_COLORS.chartRed}, ${CHART_COLORS.failed})` }}></div>
+                                          <span className="font-semibold"
+                                                style={{ color: CHART_COLORS.chartRed }}>
+                                            {day.failures}
+                                          </span>
+                                        </div>
+                                      )}
                                   </div>
                                 </div>
 
@@ -864,8 +1199,9 @@ export default function DataAnalysisPage() {
                                       <>
                                         {/* 成功部分 */}
                                         <div
-                                          className="absolute left-0 top-0 h-full bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 shadow-sm transition-all duration-700 ease-out relative overflow-hidden"
+                                          className="absolute left-0 top-0 h-full shadow-sm transition-all duration-700 ease-out relative overflow-hidden"
                                           style={{
+                                            background: `linear-gradient(to right, ${CHART_COLORS.chartGreen}, ${CHART_COLORS.success})`,
                                             width: `${(day.successes / day.executions) * 100}%`,
                                             animation: `progressFill 1s ease-out ${index * 0.1}s both`,
                                           }}
@@ -876,8 +1212,9 @@ export default function DataAnalysisPage() {
                                         {/* 失败部分 */}
                                         {day.failures > 0 && (
                                           <div
-                                            className="absolute top-0 h-full bg-gradient-to-r from-red-400 via-red-500 to-red-600 shadow-sm transition-all duration-700 ease-out relative overflow-hidden"
+                                            className="absolute top-0 h-full shadow-sm transition-all duration-700 ease-out relative overflow-hidden"
                                             style={{
+                                              background: `linear-gradient(to right, ${CHART_COLORS.chartRed}, ${CHART_COLORS.failed})`,
                                               left: `${(day.successes / day.executions) * 100}%`,
                                               width: `${(day.failures / day.executions) * 100}%`,
                                               animation: `progressFill 1s ease-out ${index * 0.1 + 0.3}s both`,
