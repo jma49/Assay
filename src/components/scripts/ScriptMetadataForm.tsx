@@ -324,15 +324,14 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
                     定时任务配置已保留，执行方式即将升级
                   </h4>
                   <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                    当前版本 (v0.1.8) 已暂时禁用 Vercel
+                    当前版本 (v0.3.1) 已暂时禁用 Vercel
                     定时任务，但配置界面仍然可用。
                     <br />
-                    下个版本 (v0.1.9)
-                    将实现更安全的本地执行器架构，支持灵活的任务调度。
+                    将在后续版本 (v0.4.0) 中实现定时任务部署
                   </p>
                   <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
                     <span>📋</span>
-                    <span>配置将自动迁移到新架构</span>
+                    <span>配置将自动迁移到新架构/或许</span>
                   </div>
                 </div>
               </div>
