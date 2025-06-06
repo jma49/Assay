@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useMemo, useEffect } from 'react';
+import React, { useRef, useMemo, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Points, PointMaterial } from '@react-three/drei';
 import * as THREE from 'three';
@@ -31,7 +31,7 @@ function ParticleSystem() {
   const pointsRef = useRef<THREE.Points>(null);
   const linesRef = useRef<THREE.LineSegments>(null);
   const mousePosition = useRef(new THREE.Vector3(0, 0, 10));
-  const [particles, setParticles] = useState<Particle[]>([]);
+  const particlesData = useRef<Particle[]>([]);
   
   // Pre-allocate fixed-size buffer for line connections
   const maxConnections = useMemo(() => {
@@ -43,7 +43,12 @@ function ParticleSystem() {
     return new Float32Array(maxConnections * 6); // 6 values per line (2 points * 3 coordinates)
   }, [maxConnections]);
 
-  // Initialize particles
+  // Create stable positions array with fixed size
+  const positionsArray = useMemo(() => {
+    return new Float32Array(CONFIG.particleCount * 3);
+  }, []);
+
+  // Initialize particles once
   useEffect(() => {
     const newParticles = Array(CONFIG.particleCount).fill(0).map(() => {
       const velocity = new THREE.Vector3(
@@ -62,8 +67,17 @@ function ParticleSystem() {
         originalVelocity: velocity.clone()
       };
     });
-    setParticles(newParticles);
-  }, []);
+    
+    particlesData.current = newParticles;
+    
+    // Initialize positions array
+    newParticles.forEach((particle, i) => {
+      const idx = i * 3;
+      positionsArray[idx] = particle.position.x;
+      positionsArray[idx + 1] = particle.position.y;
+      positionsArray[idx + 2] = particle.position.z;
+    });
+  }, [positionsArray]);
 
   // Initialize line geometry once
   useEffect(() => {
@@ -91,33 +105,27 @@ function ParticleSystem() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Positions for the Points component
-  const positions = useMemo(() => {
-    return new Float32Array(particles.map(p => 
-      [p.position.x, p.position.y, p.position.z]).flat());
-  }, [particles]);
-
   // Calculate lines between particles
   const updateConnections = () => {
-    if (!linesRef.current || particles.length === 0) return;
+    if (!linesRef.current || particlesData.current.length === 0) return;
     
     let lineIndex = 0;
     
     // Check pairs of particles for connections
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const distance = particles[i].position.distanceTo(particles[j].position);
+    for (let i = 0; i < particlesData.current.length; i++) {
+      for (let j = i + 1; j < particlesData.current.length; j++) {
+        const distance = particlesData.current[i].position.distanceTo(particlesData.current[j].position);
         
         if (distance < CONFIG.connectionThreshold && lineIndex < maxConnections) {
           const baseIndex = lineIndex * 6;
           
           // Add line vertices to the pre-allocated buffer
-          linePositions[baseIndex] = particles[i].position.x;
-          linePositions[baseIndex + 1] = particles[i].position.y;
-          linePositions[baseIndex + 2] = particles[i].position.z;
-          linePositions[baseIndex + 3] = particles[j].position.x;
-          linePositions[baseIndex + 4] = particles[j].position.y;
-          linePositions[baseIndex + 5] = particles[j].position.z;
+          linePositions[baseIndex] = particlesData.current[i].position.x;
+          linePositions[baseIndex + 1] = particlesData.current[i].position.y;
+          linePositions[baseIndex + 2] = particlesData.current[i].position.z;
+          linePositions[baseIndex + 3] = particlesData.current[j].position.x;
+          linePositions[baseIndex + 4] = particlesData.current[j].position.y;
+          linePositions[baseIndex + 5] = particlesData.current[j].position.z;
           
           lineIndex++;
         }
@@ -137,7 +145,7 @@ function ParticleSystem() {
 
   // Animation loop
   useFrame(({ camera }) => {
-    if (!pointsRef.current || particles.length === 0) return;
+    if (!pointsRef.current || particlesData.current.length === 0) return;
     
     // Convert 2D mouse position to 3D world position
     const vector = new THREE.Vector3(
@@ -151,9 +159,7 @@ function ParticleSystem() {
     const pos = camera.position.clone().add(dir.multiplyScalar(distance));
     
     // Update particle positions
-    const positions = pointsRef.current.geometry.attributes.position.array as Float32Array;
-    
-    particles.forEach((particle, i) => {
+    particlesData.current.forEach((particle, i) => {
       // Calculate distance to mouse position
       const distanceToMouse = particle.position.distanceTo(pos);
       
@@ -190,9 +196,9 @@ function ParticleSystem() {
       
       // Update geometry positions
       const idx = i * 3;
-      positions[idx] = particle.position.x;
-      positions[idx + 1] = particle.position.y;
-      positions[idx + 2] = particle.position.z;
+      positionsArray[idx] = particle.position.x;
+      positionsArray[idx + 1] = particle.position.y;
+      positionsArray[idx + 2] = particle.position.z;
     });
     
     // Flag geometry for update
@@ -208,8 +214,8 @@ function ParticleSystem() {
         <bufferGeometry>
           <bufferAttribute
             attach="attributes-position"
-            count={positions.length / 3}
-            array={positions}
+            count={CONFIG.particleCount}
+            array={positionsArray}
             itemSize={3}
           />
         </bufferGeometry>
@@ -239,7 +245,7 @@ function ParticleSystem() {
 
 export default function ParticleBackground() {
   // Automatically adjust camera position based on screen size
-  const [cameraPosition, setCameraPosition] = useState([0, 0, 8]);
+  const [cameraPosition, setCameraPosition] = React.useState([0, 0, 8]);
   
   useEffect(() => {
     const handleResize = () => {
