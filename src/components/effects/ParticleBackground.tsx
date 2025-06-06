@@ -129,9 +129,9 @@ function ParticleSystem() {
           );
           
           // 根据距离计算透明度
-          const opacity = Math.max(0, 1 - distance / connectionDistance) * 0.4;
-          colors.push(0.3, 0.6, 1, opacity); // 蓝色
-          colors.push(0.3, 0.6, 1, opacity);
+          const opacity = Math.max(0, 1 - distance / connectionDistance) * 0.6;
+          colors.push(0.2, 0.5, 1, opacity); // 更明显的蓝色
+          colors.push(0.2, 0.5, 1, opacity);
         }
       }
     }
@@ -153,8 +153,8 @@ function ParticleSystem() {
     <>
       {/* 粒子点 */}
       <instancedMesh ref={meshRef} args={[undefined, undefined, particleCount]}>
-        <sphereGeometry args={[1, 8, 8]} />
-        <meshBasicMaterial color="#4f8ff0" transparent opacity={0.8} />
+        <sphereGeometry args={[1.5, 8, 8]} />
+        <meshBasicMaterial color="#3b82f6" transparent opacity={0.9} />
       </instancedMesh>
       
       {/* 连接线 */}
@@ -168,6 +168,13 @@ function ParticleSystem() {
 
 // 主要的粒子背景组件
 export default function ParticleBackground() {
+  // 添加调试信息
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('🎨 粒子背景组件已挂载');
+    }
+  }, []);
+
   return (
     <div className="particle-background">
       <Canvas
@@ -181,6 +188,10 @@ export default function ParticleBackground() {
           alpha: true, 
           antialias: true,
           powerPreference: "high-performance"
+        }}
+        onCreated={(state) => {
+          console.log('🎨 Three.js Canvas 已创建:', state.gl.domElement);
+          console.log('🎨 Canvas尺寸:', state.size);
         }}
       >
         <ambientLight intensity={0.5} />

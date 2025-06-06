@@ -695,9 +695,20 @@ export default function DataAnalysisPage() {
                       onValueChange={setSelectedScript}
                     >
                       <SelectTrigger className="h-12 text-base border-2 border-border/50 bg-background/50 hover:border-primary/30 transition-colors">
-                        <SelectValue />
+                        <SelectValue className="truncate">
+                          {selectedScript === 'all' 
+                            ? t("allScripts")
+                            : (() => {
+                                const script = analyticsData?.scriptAnalytics.find(s => s.scriptId === selectedScript);
+                                const displayName = script?.scriptName || selectedScript;
+                                return displayName.length > 30 
+                                  ? `${displayName.substring(0, 30)}...`
+                                  : displayName;
+                              })()
+                          }
+                        </SelectValue>
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="max-w-[400px]">
                         <SelectItem value="all">
                           <div className="flex items-center gap-2">
                             <div className="h-4 w-4 rounded border-2 border-muted-foreground"></div>
@@ -709,12 +720,18 @@ export default function DataAnalysisPage() {
                             key={script.scriptId}
                             value={script.scriptId}
                           >
-                            <div className="flex items-center gap-2">
-                              <div className="h-4 w-4 rounded bg-primary/20 flex items-center justify-center">
+                            <div className="flex items-center gap-2 w-full">
+                              <div className="h-4 w-4 rounded bg-primary/20 flex items-center justify-center flex-shrink-0">
                                 <div className="h-2 w-2 rounded bg-primary"></div>
                               </div>
-                              <span className="truncate">{script.scriptName}</span>
-                              <Badge variant="outline" className="text-xs ml-auto">
+                              <span 
+                                className="truncate flex-1 text-left" 
+                                title={script.scriptName}
+                                style={{ maxWidth: '280px' }}
+                              >
+                                {script.scriptName}
+                              </span>
+                              <Badge variant="outline" className="text-xs ml-auto flex-shrink-0">
                                 {script.totalExecutions}
                               </Badge>
                             </div>
