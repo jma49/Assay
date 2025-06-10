@@ -16,22 +16,47 @@ interface CheckHistoryApiResponse extends Omit<WithId<Document>, "_id"> {
   github_run_id?: string | number;
 }
 
+// 分页响应接口
+interface PaginatedResponse {
+  data: CheckHistoryApiResponse[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+  query_info: {
+    script_name?: string;
+    status?: string;
+    include_results: boolean;
+  };
+}
+
 const COLLECTION_NAME = "result";
-const DEFAULT_LIMIT = 500; // 返回最近500条记录供前端分页
-const MAX_LIMIT = 500; // 增加最大限制以支持更多数据
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 50;
+const MAX_LIMIT = 500; // 最大限制
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
 
-    // 为了保持前端兼容性，我们仍接受分页参数，但主要用于限制数据量
+    // 获取分页参数
+    const page = Math.max(
+      1,
+      parseInt(searchParams.get("page") || DEFAULT_PAGE.toString())
+    );
     const limit = Math.min(
       MAX_LIMIT,
       Math.max(
         1,
-        parseInt(searchParams.get("limit") || DEFAULT_LIMIT.toString()),
-      ),
+        parseInt(searchParams.get("limit") || DEFAULT_LIMIT.toString())
+      )
     );
+
+    // 获取其他查询参数
     const scriptName = searchParams.get("script_name");
     const status = searchParams.get("status");
     const includeResults = searchParams.get("include_results") === "true";
@@ -63,24 +88,31 @@ export async function GET(request: NextRequest) {
       projection.raw_results = 1;
     }
 
-    console.log(`API: Fetching recent ${limit} records with query:`, {
-      query,
-      limit,
-      includeResults,
-    });
+    // 计算跳过的记录数
+    const skip = (page - 1) * limit;
 
-    // 获取最近的记录，不分页（供前端客户端分页）
+    console.log(
+      `[API] 分页查询历史记录 - 页码: ${page}, 每页: ${limit}, 跳过: ${skip}`
+    );
+
+    // 并行执行查询和计数
     const [historyDocs, totalCount] = await Promise.all([
       collection
         .find(query, { projection })
         .sort({ execution_time: -1 })
-        .limit(limit) // 只限制总数量，不分页
+        .skip(skip)
+        .limit(limit)
         .toArray(),
       collection.countDocuments(query),
     ]);
 
+    // 计算分页信息
+    const totalPages = Math.ceil(totalCount / limit);
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
+
     console.log(
-      `API: Found ${historyDocs.length} records out of ${totalCount} total.`,
+      `[API] 分页查询完成 - 返回 ${historyDocs.length} 条记录，总计 ${totalCount} 条，共 ${totalPages} 页`
     );
 
     // 转换数据格式
@@ -97,29 +129,30 @@ export async function GET(request: NextRequest) {
       github_run_id: doc.github_run_id,
     })) as CheckHistoryApiResponse[];
 
-    // 简化返回格式，提供元数据但让前端处理分页
-    return NextResponse.json(
-      {
-        data: responseData,
-        meta: {
-          returned_count: historyDocs.length,
-          total_count: totalCount,
-          limit_applied: limit,
-          client_pagination: true, // 指示前端这是供客户端分页的数据
-        },
-        query_info: {
-          script_name: scriptName,
-          status,
-          include_results: includeResults,
-        },
+    // 返回分页响应
+    const response: PaginatedResponse = {
+      data: responseData,
+      pagination: {
+        page,
+        limit,
+        total: totalCount,
+        totalPages,
+        hasNext,
+        hasPrev,
       },
-      { status: 200 },
-    );
+      query_info: {
+        script_name: scriptName || undefined,
+        status: status || undefined,
+        include_results: includeResults,
+      },
+    };
+
+    return NextResponse.json(response, { status: 200 });
   } catch (error) {
-    console.error("API Error fetching check history:", error);
+    console.error("[API] 获取执行历史失败:", error);
     return NextResponse.json(
-      { message: "Internal Server Error fetching check history" },
-      { status: 500 },
+      { message: "获取执行历史时发生内部服务器错误" },
+      { status: 500 }
     );
   }
 }

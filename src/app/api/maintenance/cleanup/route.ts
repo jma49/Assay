@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import batchExecutionCache from "@/services/batch-execution-cache";
-import redisClient from "@/lib/redis";
+import redis from "@/lib/redis";
 
 /**
  * POST - 执行缓存清理任务
@@ -50,8 +50,6 @@ export async function POST(request: NextRequest) {
 
     // 2. 清理过期的Redis键
     try {
-      const redis = await redisClient.getClient();
-
       // 获取所有批量执行相关的键
       const pattern = "batch_execution:*";
       const keys = await redis.keys(pattern);
@@ -91,11 +89,9 @@ export async function POST(request: NextRequest) {
     // 3. 内存优化（仅在强制模式下）
     if (force && !dryRun) {
       try {
-        const redis = await redisClient.getClient();
-
-        // 执行内存优化命令
-        await redis.call("MEMORY", "PURGE");
-        console.log("[维护任务] 执行了内存优化");
+        // 注意：Upstash Redis 不支持 MEMORY PURGE 命令
+        // 这个操作会被跳过
+        console.log("[维护任务] Upstash Redis 不支持内存优化命令，跳过此步骤");
       } catch (error) {
         const errorMsg = `内存优化失败: ${
           error instanceof Error ? error.message : "Unknown error"
@@ -145,21 +141,17 @@ export async function GET() {
     const stats = await batchExecutionCache.getExecutionStats();
     const activeExecutions = await batchExecutionCache.getActiveExecutions();
 
-    // 获取Redis内存使用信息
-    const redis = await redisClient.getClient();
-    const info = await redis.info("memory");
-    const keyspace = await redis.info("keyspace");
+    // 注意：Upstash Redis 不支持 INFO 命令
+    // 使用简化的统计信息
+    const totalKeys = await redis.dbsize();
+    console.log("[维护任务] 从 Upstash Redis 获取简化统计信息");
 
-    // 解析内存信息
-    const memoryUsed = extractInfoValue(info, "used_memory");
-    const memoryPeak = extractInfoValue(info, "used_memory_peak");
-    const memoryRss = extractInfoValue(info, "used_memory_rss");
-
-    // 解析键空间信息
-    const dbInfo = keyspace.match(/db0:keys=(\d+),expires=(\d+),avg_ttl=(\d+)/);
-    const totalKeys = dbInfo ? parseInt(dbInfo[1]) : 0;
-    const keysWithExpiry = dbInfo ? parseInt(dbInfo[2]) : 0;
-    const avgTtl = dbInfo ? parseInt(dbInfo[3]) : 0;
+    // Upstash Redis 简化统计信息
+    const memoryUsed = 0; // Upstash 不提供内存统计
+    const memoryPeak = 0;
+    const memoryRss = 0;
+    const keysWithExpiry = 0; // 无法获取带过期时间的键数量
+    const avgTtl = 0;
 
     return NextResponse.json({
       success: true,
@@ -170,14 +162,14 @@ export async function GET() {
           activeIds: activeExecutions.length,
         },
         redis: {
-          memoryUsed: parseInt(memoryUsed || "0"),
-          memoryPeak: parseInt(memoryPeak || "0"),
-          memoryRss: parseInt(memoryRss || "0"),
+          memoryUsed,
+          memoryPeak,
+          memoryRss,
           totalKeys,
           keysWithExpiry,
-          avgTtl: avgTtl > 0 ? avgTtl / 1000 : 0, // 转换为秒
+          avgTtl,
         },
-        connectionStatus: redisClient.getConnectionStatus(),
+        connectionStatus: true, // Upstash Redis 总是连接状态
       },
       recommendations: generateCleanupRecommendations(
         {
@@ -206,14 +198,6 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
-
-/**
- * 从Redis info字符串中提取值
- */
-function extractInfoValue(info: string, key: string): string | null {
-  const match = info.match(new RegExp(`${key}:(\\d+)`));
-  return match ? match[1] : null;
 }
 
 /**

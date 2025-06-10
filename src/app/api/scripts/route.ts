@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import mongoDbClient from "@/lib/mongodb"; // 假设 mongodb.ts 位于 src/lib/
 import { Collection, Document, ObjectId } from "mongodb";
+import { clearScriptsCache } from "@/app/api/list-scripts/route";
+import { validateApiAuth } from "@/lib/auth-utils";
+import { Permission, requirePermission, getUserRole } from "@/lib/rbac";
+import { createApprovalRequest, ApprovalStatus } from "@/lib/approval-workflow";
 
 // 定义脚本数据的接口
 interface NewScriptData {
@@ -54,6 +58,26 @@ async function getSqlScriptsCollection(): Promise<Collection<Document>> {
 
 export async function POST(request: Request) {
   try {
+    // 验证用户认证
+    const authResult = await validateApiAuth("zh");
+    if (!authResult.isValid) {
+      return authResult.response!;
+    }
+
+    const { user, userEmail } = authResult;
+
+    // 检查权限：需要 SCRIPT_CREATE 权限
+    const permissionCheck = await requirePermission(
+      user.id,
+      Permission.SCRIPT_CREATE
+    );
+    if (!permissionCheck.authorized) {
+      return NextResponse.json(
+        { success: false, message: "权限不足：无法创建脚本" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const {
       scriptId,
@@ -128,30 +152,62 @@ export async function POST(request: Request) {
       cnDescription: cnDescription || "",
       scope: scope || "",
       cnScope: cnScope || "",
-      author: author || "",
+      author: author || userEmail.split("@")[0], // 如果没有提供作者，使用当前用户
       hashtags: hashtags || [],
       sqlContent,
       isScheduled: false, // 默认不启用定时任务
       cronSchedule: "", // 默认 Cron 表达式为空
       createdAt: new Date(),
       updatedAt: new Date(),
+      approvalStatus: ApprovalStatus.DRAFT, // 初始状态为草稿
+      approvalRequestId: null, // 审批请求ID，稍后创建
     };
 
     // 5. 插入数据到 MongoDB
     const result = await collection.insertOne(newScriptDocument);
 
     if (result.insertedId) {
+      // 6. 创建审批请求
+      const userRole = await getUserRole(user.id);
+      if (userRole) {
+        const requestId = await createApprovalRequest(
+          scriptId,
+          user.id,
+          userEmail,
+          userRole,
+          sqlContent,
+          name,
+          description || "",
+          "medium" // 默认优先级
+        );
+
+        if (requestId) {
+          // 更新脚本文档，添加审批请求ID
+          await collection.updateOne(
+            { scriptId },
+            { $set: { approvalRequestId: requestId } }
+          );
+
+          console.log(`[Script] 脚本创建成功，审批请求ID: ${requestId}`);
+        }
+      }
+
+      // 清除 Redis 缓存
+      await clearScriptsCache();
+
       return NextResponse.json(
         {
-          message: "Script created successfully",
+          success: true,
+          message: "脚本创建成功，已提交审批",
           scriptId: newScriptDocument.scriptId,
           mongoId: result.insertedId,
+          approvalStatus: newScriptDocument.approvalStatus,
         },
         { status: 201 }
       );
     } else {
       return NextResponse.json(
-        { message: "Failed to create script" },
+        { success: false, message: "创建脚本失败" },
         { status: 500 }
       );
     }

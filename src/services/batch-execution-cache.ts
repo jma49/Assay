@@ -1,5 +1,5 @@
-import redisClient from "@/lib/redis";
-import { Redis } from "ioredis";
+import redis from "@/lib/redis";
+import type { Redis } from "@upstash/redis";
 import { RedisBackupManager } from "../../scripts/redis-backup-manager";
 
 /**
@@ -56,8 +56,6 @@ export interface ScriptStatusUpdate {
  * 提供Redis缓存的CRUD操作，支持原子性更新和状态管理
  */
 export class BatchExecutionCache {
-  private redis: Redis | null = null;
-
   // Redis键命名规范
   private readonly KEY_PREFIX = "batch_execution:";
   private readonly ACTIVE_EXECUTIONS_SET = "active_batch_executions";
@@ -67,13 +65,10 @@ export class BatchExecutionCache {
 
   /**
    * 获取Redis客户端实例
-   * 延迟初始化模式，只在需要时创建连接
+   * Upstash Redis 是无状态的，直接返回客户端
    */
-  private async getRedis(): Promise<Redis> {
-    if (!this.redis) {
-      this.redis = await redisClient.getClient();
-    }
-    return this.redis;
+  private getRedis(): Redis {
+    return redis;
   }
 
   /**
@@ -88,15 +83,15 @@ export class BatchExecutionCache {
    */
   async getExecution(executionId: string): Promise<BatchExecutionState | null> {
     try {
-      const redis = await this.getRedis();
+      const redisClient = this.getRedis();
       const key = this.getExecutionKey(executionId);
-      const data = await redis.get(key);
+      const data = await redisClient.get(key);
 
       if (!data) {
         return null;
       }
 
-      return JSON.parse(data) as BatchExecutionState;
+      return JSON.parse(data as string) as BatchExecutionState;
     } catch (error) {
       devError("[BatchCache] 获取执行记录失败:", error);
       throw new Error(
@@ -142,11 +137,11 @@ export class BatchExecutionCache {
         isActive: true,
       };
 
-      const redis = await this.getRedis();
+      const redisClient = this.getRedis();
       const key = this.getExecutionKey(executionId);
 
-      await redis.setex(key, this.DEFAULT_TTL, JSON.stringify(execution));
-      await redis.sadd(this.ACTIVE_EXECUTIONS_SET, executionId);
+      await redisClient.setex(key, this.DEFAULT_TTL, JSON.stringify(execution));
+      await redisClient.sadd(this.ACTIVE_EXECUTIONS_SET, executionId);
 
       devLog(`[BatchCache] 创建执行记录: ${executionId}`);
       return execution;
@@ -169,7 +164,7 @@ export class BatchExecutionCache {
     update: ScriptStatusUpdate
   ): Promise<BatchExecutionState | null> {
     try {
-      const redis = await this.getRedis();
+      const redisClient = this.getRedis();
       const key = this.getExecutionKey(executionId);
 
       // Lua脚本实现原子性状态更新
@@ -229,16 +224,17 @@ export class BatchExecutionCache {
         return cjson.encode(execution)
       `;
 
-      const result = (await redis.eval(
+      const result = (await redisClient.eval(
         luaScript,
-        1,
-        key,
-        update.scriptId,
-        update.status,
-        update.message || "",
-        update.findings || "",
-        update.mongoResultId || "",
-        new Date().toISOString()
+        [key],
+        [
+          update.scriptId,
+          update.status,
+          update.message || "",
+          update.findings || "",
+          update.mongoResultId || "",
+          new Date().toISOString(),
+        ]
       )) as string | null;
 
       if (!result) {
@@ -249,7 +245,7 @@ export class BatchExecutionCache {
 
       // 清理已完成的执行记录
       if (!execution.isActive) {
-        await redis.srem(this.ACTIVE_EXECUTIONS_SET, executionId);
+        await redisClient.srem(this.ACTIVE_EXECUTIONS_SET, executionId);
       }
 
       devLog(`[BatchCache] 更新脚本 ${update.scriptId} 状态: ${update.status}`);
@@ -269,7 +265,7 @@ export class BatchExecutionCache {
    */
   async completeExecution(executionId: string): Promise<void> {
     try {
-      const redis = await this.getRedis();
+      const redisClient = this.getRedis();
       const key = this.getExecutionKey(executionId);
 
       const luaScript = `
@@ -293,12 +289,10 @@ export class BatchExecutionCache {
         return 'OK'
       `;
 
-      await redis.eval(
+      await redisClient.eval(
         luaScript,
-        1,
-        key,
-        executionId,
-        new Date().toISOString()
+        [key],
+        [executionId, new Date().toISOString()]
       );
       devLog(`[BatchCache] 执行完成: ${executionId}`);
     } catch (error) {
@@ -314,11 +308,11 @@ export class BatchExecutionCache {
    */
   async deleteExecution(executionId: string): Promise<void> {
     try {
-      const redis = await this.getRedis();
+      const redisClient = this.getRedis();
       const key = this.getExecutionKey(executionId);
 
-      await redis.del(key);
-      await redis.srem(this.ACTIVE_EXECUTIONS_SET, executionId);
+      await redisClient.del(key);
+      await redisClient.srem(this.ACTIVE_EXECUTIONS_SET, executionId);
 
       devLog(`[BatchCache] 删除执行记录: ${executionId}`);
     } catch (error) {
@@ -334,8 +328,8 @@ export class BatchExecutionCache {
    */
   async getActiveExecutions(): Promise<string[]> {
     try {
-      const redis = await this.getRedis();
-      return await redis.smembers(this.ACTIVE_EXECUTIONS_SET);
+      const redisClient = this.getRedis();
+      return (await redisClient.smembers(this.ACTIVE_EXECUTIONS_SET)) || [];
     } catch (error) {
       devError("[BatchCache] 获取活跃执行失败:", error);
       return [];
@@ -374,14 +368,14 @@ export class BatchExecutionCache {
     totalExecutions: number;
   }> {
     try {
-      const redis = await this.getRedis();
-      const activeIds = await redis.smembers(this.ACTIVE_EXECUTIONS_SET);
+      const redisClient = this.getRedis();
+      const activeIds = await redisClient.smembers(this.ACTIVE_EXECUTIONS_SET);
       const pattern = `${this.KEY_PREFIX}*`;
-      const keys = await redis.keys(pattern);
+      const keys = await redisClient.keys(pattern);
 
       return {
-        activeCount: activeIds.length,
-        totalExecutions: keys.length,
+        activeCount: (activeIds || []).length,
+        totalExecutions: (keys || []).length,
       };
     } catch (error) {
       devError("[BatchCache] 获取统计信息失败:", error);
@@ -401,29 +395,15 @@ export class BatchExecutionCache {
     keyCount: number;
   }> {
     try {
-      const redis = await this.getRedis();
-      const info = await redis.info("clients");
-      const memory = await redis.info("memory");
-      const dbInfo = await redis.info("keyspace");
-
-      // 解析连接数
-      const connectionsMatch = info.match(/connected_clients:(\d+)/);
-      const activeConnections = connectionsMatch
-        ? parseInt(connectionsMatch[1])
-        : 0;
-
-      // 解析内存使用
-      const memoryMatch = memory.match(/used_memory_human:([^\r\n]+)/);
-      const usedMemory = memoryMatch ? memoryMatch[1] : "N/A";
-
-      // 解析键数量
-      const keyMatch = dbInfo.match(/keys=(\d+)/);
-      const keyCount = keyMatch ? parseInt(keyMatch[1]) : 0;
+      const redisClient = this.getRedis();
+      // 注意：Upstash Redis 不支持 INFO 命令
+      // 使用简化的统计信息
+      const keyCount = await redisClient.dbsize();
 
       return {
-        activeConnections,
-        usedMemory,
-        keyCount,
+        activeConnections: 1, // Upstash 是无连接的 HTTP 服务
+        usedMemory: "N/A", // Upstash 不提供内存统计
+        keyCount: keyCount || 0,
       };
     } catch (error) {
       devError("[BatchCache] 获取Redis统计失败:", error);
