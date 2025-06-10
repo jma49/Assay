@@ -66,27 +66,193 @@ async function getDatabaseSchema(): Promise<TableInfo[]> {
 }
 
 /**
- * 格式化表结构为AI友好的文本格式
+ * 格式化表结构为AI友好的文本格式（精简版）
  */
 function formatSchemaForAI(tables: TableInfo[]): string {
-  let schemaText = "数据库表结构信息：\n\n";
+  let schemaText = "数据库表:\n";
 
   tables.forEach((table) => {
-    schemaText += `表名: ${table.table_name}\n`;
-    schemaText += "列信息:\n";
+    schemaText += `${table.table_name}: `;
 
-    table.columns.forEach((column) => {
-      const nullable = column.is_nullable === "YES" ? "可空" : "非空";
-      const defaultValue = column.column_default
-        ? ` (默认值: ${column.column_default})`
-        : "";
-      schemaText += `  - ${column.column_name}: ${column.data_type} (${nullable})${defaultValue}\n`;
-    });
+    // 只包含关键列信息，去掉冗余的类型和默认值信息
+    const keyColumns = table.columns
+      .filter(
+        (col) =>
+          col.column_name.includes("id") ||
+          col.column_name.includes("name") ||
+          col.column_name.includes("title") ||
+          col.column_name.includes("status") ||
+          col.column_name.includes("time") ||
+          col.column_name.includes("date") ||
+          col.column_name.includes("count") ||
+          col.column_name.includes("amount") ||
+          (!col.column_name.includes("created") &&
+            !col.column_name.includes("updated"))
+      )
+      .slice(0, 6) // 最多显示6个关键列
+      .map((col) => `${col.column_name}(${col.data_type})`)
+      .join(", ");
 
-    schemaText += "\n";
+    schemaText += keyColumns + "\n";
   });
 
   return schemaText;
+}
+
+/**
+ * 推断表的业务含义
+ */
+function inferBusinessContext(
+  tableName: string,
+  columns: TableColumn[]
+): string {
+  const name = tableName.toLowerCase();
+  const columnNames = columns.map((col) => col.column_name.toLowerCase());
+
+  // 用户相关表
+  if (
+    name.includes("user") ||
+    name.includes("account") ||
+    name.includes("member")
+  ) {
+    return "用户账户管理";
+  }
+
+  // 订单相关表
+  if (
+    name.includes("order") ||
+    name.includes("purchase") ||
+    name.includes("transaction")
+  ) {
+    return "订单交易管理";
+  }
+
+  // 产品相关表
+  if (
+    name.includes("product") ||
+    name.includes("item") ||
+    name.includes("goods")
+  ) {
+    return "产品商品管理";
+  }
+
+  // 日志相关表
+  if (
+    name.includes("log") ||
+    name.includes("history") ||
+    name.includes("audit")
+  ) {
+    return "日志记录系统";
+  }
+
+  // 配置相关表
+  if (
+    name.includes("config") ||
+    name.includes("setting") ||
+    name.includes("param")
+  ) {
+    return "系统配置管理";
+  }
+
+  // 执行结果相关
+  if (
+    name.includes("execution") ||
+    name.includes("result") ||
+    name.includes("check")
+  ) {
+    return "SQL执行结果记录";
+  }
+
+  // 脚本相关
+  if (name.includes("script") || name.includes("sql")) {
+    return "SQL脚本管理";
+  }
+
+  // 根据列名推断
+  if (
+    columnNames.some((col) => col.includes("email") || col.includes("phone"))
+  ) {
+    return "联系信息管理";
+  }
+
+  if (
+    columnNames.some(
+      (col) =>
+        col.includes("price") || col.includes("amount") || col.includes("total")
+    )
+  ) {
+    return "财务金额相关";
+  }
+
+  return "";
+}
+
+/**
+ * 推断列的业务含义
+ */
+function inferColumnContext(columnName: string, dataType: string): string {
+  const name = columnName.toLowerCase();
+
+  // 时间相关
+  if (
+    name.includes("created") ||
+    name.includes("updated") ||
+    name.includes("time") ||
+    name.includes("date")
+  ) {
+    return "时间戳字段";
+  }
+
+  // ID相关
+  if (name.includes("id") && dataType.includes("uuid")) {
+    return "UUID主键";
+  }
+
+  if (
+    name.includes("id") &&
+    (dataType.includes("int") || dataType.includes("serial"))
+  ) {
+    return "数字ID";
+  }
+
+  // 状态相关
+  if (name.includes("status") || name.includes("state")) {
+    return "状态字段";
+  }
+
+  // 名称相关
+  if (name.includes("name") || name.includes("title")) {
+    return "名称字段";
+  }
+
+  // 描述相关
+  if (
+    name.includes("desc") ||
+    name.includes("comment") ||
+    name.includes("note")
+  ) {
+    return "描述说明";
+  }
+
+  // 计数相关
+  if (
+    name.includes("count") ||
+    name.includes("num") ||
+    name.includes("total")
+  ) {
+    return "计数统计";
+  }
+
+  // 金额相关
+  if (
+    name.includes("price") ||
+    name.includes("amount") ||
+    name.includes("cost")
+  ) {
+    return "金额价格";
+  }
+
+  return "";
 }
 
 /**

@@ -171,3 +171,33 @@ export function getAIErrorMessage(error: unknown): string {
 
   return `AI服务暂时不可用: ${aiError.message || "未知错误"}`;
 }
+
+/**
+ * 简单的token估算函数
+ * 英文: ~4个字符=1token, 中文: ~1.5个字符=1token
+ */
+export function estimateTokens(text: string): number {
+  const chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+  const englishChars = text.length - chineseChars;
+  return Math.ceil(chineseChars / 1.5 + englishChars / 4);
+}
+
+/**
+ * 记录token使用情况
+ */
+export function logTokenUsage(
+  prompt: string,
+  response: string,
+  operation: string
+) {
+  const promptTokens = estimateTokens(prompt);
+  const responseTokens = estimateTokens(response);
+  const totalTokens = promptTokens + responseTokens;
+
+  console.log(`🔢 [${operation}] Token使用量:`, {
+    input: promptTokens,
+    output: responseTokens,
+    total: totalTokens,
+    prompt_preview: prompt.slice(0, 100) + "...",
+  });
+}

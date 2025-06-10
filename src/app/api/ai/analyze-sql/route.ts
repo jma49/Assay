@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedSchema } from "@/lib/db-schema";
-import { generateContentWithRetry, getAIErrorMessage } from "@/lib/ai-utils";
+import {
+  generateContentWithRetry,
+  getAIErrorMessage,
+  logTokenUsage,
+} from "@/lib/ai-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,47 +30,38 @@ export async function POST(request: NextRequest) {
     let aiPrompt = "";
 
     if (analysisType === "explain") {
-      aiPrompt = `你是一个PostgreSQL专家。请分析并解释以下SQL查询语句。
+      aiPrompt = `解释SQL查询 (表结构: ${schema})
 
-数据库表结构信息:
-${schema}
-
-SQL语句:
 \`\`\`sql
 ${sql}
 \`\`\`
 
-请从以下几个方面进行详细解释:
-1. **查询目的**: 这个SQL查询要实现什么功能？
-2. **执行逻辑**: 逐步解释查询的执行过程
-3. **涉及的表和字段**: 说明用到了哪些表和字段
-4. **关键语法**: 解释重要的SQL语法和函数
-5. **性能考虑**: 分析可能的性能影响因素
+简要说明:
+1. 查询目的
+2. 执行逻辑
+3. 性能考虑
 
-请用Markdown格式回复，使用中文，语言通俗易懂。`;
+用Markdown格式，中文回复。`;
     } else if (analysisType === "optimize") {
-      aiPrompt = `你是一个PostgreSQL性能优化专家。请分析以下SQL查询并提供优化建议。
+      aiPrompt = `优化SQL查询 (表结构: ${schema})
 
-数据库表结构信息:
-${schema}
-
-SQL语句:
 \`\`\`sql
 ${sql}
 \`\`\`
 
-请从以下几个方面提供优化建议:
-1. **性能分析**: 识别可能的性能瓶颈
-2. **索引建议**: 推荐应该创建的索引
-3. **查询重写**: 提供更高效的SQL写法（如有）
-4. **最佳实践**: 指出符合或违反的SQL最佳实践
-5. **优化后的SQL**: 如果有改进空间，提供优化后的SQL语句
+提供:
+1. 性能瓶颈
+2. 索引建议
+3. 优化后SQL (如需要)
 
-请用Markdown格式回复，使用中文，并提供具体可行的建议。`;
+用Markdown格式，中文回复。`;
     }
 
     // 调用AI服务分析内容，带重试机制
     const analysis = await generateContentWithRetry(aiPrompt);
+
+    // 记录token使用量
+    logTokenUsage(aiPrompt, analysis, `分析SQL-${analysisType}`);
 
     return NextResponse.json({
       analysis,
