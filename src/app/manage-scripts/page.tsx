@@ -66,7 +66,7 @@ import {
 } from "@/components/dashboard/types";
 import { useLanguage } from "@/components/LanguageProvider";
 import { formatDate } from "@/components/dashboard/utils";
-import { containsHarmfulSql } from "@/lib/utils";
+import { isReadOnlyQuery } from "@/lib/utils";
 import {
   ScriptMetadataForm,
   ScriptFormData,
@@ -252,12 +252,14 @@ const ManageScriptsPage = () => {
       toast.error(t("fillRequiredFieldsError"));
       return;
     }
-    if (containsHarmfulSql(currentSqlContent)) {
-      toast.error(
-        t(
-          "SQL content rejected due to potentially harmful DDL/DML commands.",
-        ) || "Harmful SQL detected!",
-      );
+    
+    // 严格的安全检查 - 只允许查询操作
+    const securityCheck = isReadOnlyQuery(currentSqlContent);
+    if (!securityCheck.isValid) {
+      toast.error("SQL内容安全检查失败", {
+        description: securityCheck.reason || "SQL内容包含不安全的操作",
+        duration: 8000,
+      });
       return;
     }
 
@@ -323,9 +325,32 @@ const ManageScriptsPage = () => {
         const errorData = await response
           .json()
           .catch(() => ({ message: t(errorMessageKey) }));
+        
+        // 检查是否是需要审批的情况
+        if (errorData.requiresApproval) {
+          toast.success("申请已提交", {
+            description: errorData.message,
+            duration: 6000,
+          });
+          setIsDialogOpen(false);
+          return; // 不需要重新加载，因为没有实际修改脚本
+        }
+        
         throw new Error(
-          errorData.message || `${t(errorMessageKey)}: ${response.status}`,
+          errorData.message || `Failed to ${dialogMode} script: ${response.status}`,
         );
+      }
+
+      const responseData = await response.json();
+      
+      // 检查响应中是否有审批相关信息
+      if (responseData.requiresApproval) {
+        toast.success("申请已提交", {
+          description: responseData.message,
+          duration: 6000,
+        });
+        setIsDialogOpen(false);
+        return; // 不需要重新加载和记录历史
       }
 
       // 记录编辑历史
@@ -369,6 +394,7 @@ const ManageScriptsPage = () => {
       const response = await fetch(`/api/scripts/${scriptToDelete.scriptId}`, {
         method: "DELETE",
       });
+      
       if (!response.ok) {
         const errorData = await response
           .json()
@@ -378,6 +404,20 @@ const ManageScriptsPage = () => {
         );
       }
 
+      const responseData = await response.json();
+      
+      // 检查是否需要审批
+      if (responseData.requiresApproval) {
+        toast.success("删除申请已提交", {
+          description: responseData.message,
+          duration: 6000,
+        });
+        setIsAlertOpen(false);
+        setScriptToDelete(null);
+        return; // 不需要重新加载，因为脚本还没有被实际删除
+      }
+
+      // 如果是直接删除成功（不太可能，因为现在都需要审批）
       // 记录删除历史
       await recordEditHistory({
         scriptId: scriptToDelete.scriptId,

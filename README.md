@@ -158,6 +158,41 @@
 - **🆕 用户状态显示**: Header 显示当前用户信息和授权状态
 - **🆕 主题一致性**: 认证页面与主系统 UI 风格完全统一
 
+## 🔐 审批策略
+
+系统采用简化的审批策略，确保安全性和效率：
+
+### 审批规则
+
+1. **新建脚本** - ✅ **无需审批**
+
+   - 任何用户都可以直接创建新的查询脚本
+   - 脚本创建后立即可用，无需等待审批
+
+2. **修改别人的脚本** - 🔍 **需要管理员审批**
+
+   - 如果修改的脚本不是自己创建的，需要提交审批申请
+   - 系统会自动检测作者信息并提示相关策略
+
+3. **删除任意脚本** - 🗑️ **需要管理员审批**
+   - 删除脚本操作风险较高，所有删除请求都需要管理员审批
+   - 设置为高优先级审批项目
+
+### 安全策略
+
+- **严格的 SQL 检查**：系统只允许安全的查询操作（SELECT、WITH、EXPLAIN）
+- **禁止危险操作**：完全禁止 INSERT、UPDATE、DELETE、CREATE、DROP 等数据修改和结构变更操作
+- **作者识别**：系统通过邮箱前缀识别脚本作者，确保权限控制准确性
+
+### 审批流程
+
+1. 提交审批申请后，管理员会在审批页面看到待处理的请求
+2. 管理员可以批准或拒绝申请，并添加评论
+3. 申请状态会实时更新，用户可以在审批历史页面查看进度
+4. 批准后的操作会自动执行
+
+这种策略既保证了系统的安全性，又提高了日常使用的效率。
+
 ## 🏗️ 系统架构
 
 ```
@@ -232,48 +267,48 @@ sql_script_depoly/
 │   ├── app/                         # Next.js App Router
 │   │   ├── api/                     # API 路由
 │   │   │   ├── scripts/             # 脚本 CRUD API
-│   │   │   ├── check-history/       # 历史记录 API
-│   │   │   ├── run-check/           # 手动执行 API
-│   │   │   ├── run-scheduled-scripts/ # 定时执行 API
-│   │   │   ├── run-all-scripts/     # 🆕 批量执行 API
-│   │   │   ├── batch-execution-status/ # 🆕 批量状态 API
-│   │   │   ├── health/redis/        # 🆕 Redis健康检查
-│   │   │   ├── maintenance/cleanup/ # 🆕 缓存清理API
-│   │   │   └── execution-details/   # 详情查询 API
-│   │   ├── manage-scripts/          # 脚本管理页面
-│   │   ├── data-analysis/           # 数据分析页面
-│   │   ├── view-execution-result/   # 结果详情页面
-│   │   └── page.tsx                 # 主仪表盘
-│   ├── components/
-│   │   ├── dashboard/               # 仪表盘组件
-│   │   │   ├── CheckHistory.tsx     # 历史记录组件
-│   │   │   ├── StatsCards.tsx       # 统计卡片
-│   │   │   ├── ManualTrigger.tsx    # 手动执行组件
-│   │   │   ├── BatchExecutionProgress.tsx # 🆕 批量执行进度
-│   │   │   └── types.ts             # 类型定义
-│   │   ├── scripts/                 # 脚本管理组件
-│   │   │   ├── ScriptMetadataForm.tsx # 元数据表单
-│   │   │   └── CodeMirrorEditor.tsx   # SQL 编辑器
-│   │   └── ui/                      # Shadcn/ui 基础组件
-│   ├── lib/
-│   │   ├── db.ts                    # PostgreSQL 连接
-│   │   ├── mongodb.ts               # MongoDB 连接
-│   │   ├── redis.ts                 # 🆕 Redis 连接管理
-│   │   └── script-executor.ts       # 执行包装器
-│   └── services/
-│       └── batch-execution-cache.ts # 🆕 批量执行缓存服务
-├── scripts/
-│   ├── core/
-│   │   └── sql-executor.ts          # 核心执行引擎
-│   ├── services/
-│   │   ├── slack-service.ts         # Slack 通知服务
-│   │   └── mongo-service.ts         # MongoDB 服务
-│   ├── run-sql.ts                   # 单脚本执行工具
-│   ├── run-all-scripts.ts           # 批量执行工具
-│   └── types.ts                     # 类型定义
-├── package.json                     # 项目配置
-├── next.config.js                   # Next.js 配置
-└── vercel.json                      # Vercel 部署配置
+│   │   │   │   ├── scripts/             # 脚本 CRUD API
+│   │   │   │   ├── check-history/       # 历史记录 API
+│   │   │   │   ├── run-check/           # 手动执行 API
+│   │   │   │   ├── run-scheduled-scripts/ # 定时执行 API
+│   │   │   │   ├── run-all-scripts/     # 🆕 批量执行 API
+│   │   │   │   ├── batch-execution-status/ # 🆕 批量状态 API
+│   │   │   │   ├── health/redis/        # 🆕 Redis健康检查
+│   │   │   │   └── execution-details/   # 详情查询 API
+│   │   │   ├── manage-scripts/          # 脚本管理页面
+│   │   │   ├── data-analysis/           # 数据分析页面
+│   │   │   ├── view-execution-result/   # 结果详情页面
+│   │   │   └── page.tsx                 # 主仪表盘
+│   │   ├── components/
+│   │   │   ├── dashboard/               # 仪表盘组件
+│   │   │   │   ├── CheckHistory.tsx     # 历史记录组件
+│   │   │   │   ├── StatsCards.tsx       # 统计卡片
+│   │   │   │   ├── ManualTrigger.tsx    # 手动执行组件
+│   │   │   │   ├── BatchExecutionProgress.tsx # 🆕 批量执行进度
+│   │   │   │   └── types.ts             # 类型定义
+│   │   │   ├── scripts/                 # 脚本管理组件
+│   │   │   │   ├── ScriptMetadataForm.tsx # 元数据表单
+│   │   │   │   └── CodeMirrorEditor.tsx   # SQL 编辑器
+│   │   │   └── ui/                      # Shadcn/ui 基础组件
+│   │   ├── lib/
+│   │   │   ├── db.ts                    # PostgreSQL 连接
+│   │   │   ├── mongodb.ts               # MongoDB 连接
+│   │   │   ├── redis.ts                 # 🆕 Redis 连接管理
+│   │   │   └── script-executor.ts       # 执行包装器
+│   │   └── services/
+│   │       └── batch-execution-cache.ts # 🆕 批量执行缓存服务
+│   ├── scripts/
+│   │   ├── core/
+│   │   │   └── sql-executor.ts          # 核心执行引擎
+│   │   ├── services/
+│   │   │   ├── slack-service.ts         # Slack 通知服务
+│   │   │   └── mongo-service.ts         # MongoDB 服务
+│   │   ├── run-sql.ts                   # 单脚本执行工具
+│   │   ├── run-all-scripts.ts           # 批量执行工具
+│   │   └── types.ts                     # 类型定义
+│   ├── package.json                     # 项目配置
+│   ├── next.config.js                   # Next.js 配置
+│   └── vercel.json                      # Vercel 部署配置
 ```
 
 ## 🚀 快速开始

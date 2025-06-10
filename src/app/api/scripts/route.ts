@@ -3,8 +3,8 @@ import mongoDbClient from "@/lib/mongodb"; // 假设 mongodb.ts 位于 src/lib/
 import { Collection, Document, ObjectId } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache-utils";
 import { validateApiAuth } from "@/lib/auth-utils";
-import { Permission, requirePermission, getUserRole } from "@/lib/rbac";
-import { createApprovalRequest, ApprovalStatus } from "@/lib/approval-workflow";
+import { Permission, requirePermission } from "@/lib/rbac";
+import { ApprovalStatus } from "@/lib/approval-workflow";
 
 // 定义脚本数据的接口
 interface NewScriptData {
@@ -26,27 +26,104 @@ function isValidScriptId(scriptId: string): boolean {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(scriptId);
 }
 
-// 帮助函数：检查 SQL 内容的安全性 (基础 DDL/DML 检查)
-function containsHarmfulSql(sqlContent: string): boolean {
-  const harmfulKeywords = [
+// 帮助函数：严格检查SQL内容，只允许安全的查询操作
+function isReadOnlyQuery(sqlContent: string): {
+  isValid: boolean;
+  reason?: string;
+} {
+  const upperSql = sqlContent.toUpperCase().trim();
+
+  // 完全禁止的危险关键词（DDL/DML操作）
+  const forbiddenKeywords = [
+    // 数据修改操作
     "INSERT",
     "UPDATE",
     "DELETE",
-    "DROP",
-    "CREATE",
-    "ALTER",
     "TRUNCATE",
+    "MERGE",
+    "UPSERT",
+    // 结构修改操作
+    "CREATE",
+    "DROP",
+    "ALTER",
+    "RENAME",
+    // 权限和用户管理
     "GRANT",
     "REVOKE",
-    // 注意：这个列表可能需要根据实际情况调整，并且这只是一个基础检查
+    "DENY",
+    // 事务控制（可能被滥用）
+    "COMMIT",
+    "ROLLBACK",
+    "SAVEPOINT",
+    // 存储过程和函数
+    "EXEC",
+    "EXECUTE",
+    "CALL",
+    "PROCEDURE",
+    "FUNCTION",
+    // 数据库管理
+    "BACKUP",
+    "RESTORE",
+    "LOAD",
+    "BULK",
+    // 系统命令
+    "SHUTDOWN",
+    "KILL",
+    "xp_",
+    "sp_",
   ];
-  const upperSql = sqlContent.toUpperCase();
-  return harmfulKeywords.some(
-    (keyword) =>
+
+  // 检查是否包含禁止的关键词
+  for (const keyword of forbiddenKeywords) {
+    if (
       upperSql.includes(keyword + " ") ||
       upperSql.includes(keyword + ";") ||
-      upperSql.includes(keyword + "\n")
-  );
+      upperSql.includes(keyword + "\n") ||
+      upperSql.includes(keyword + "\t") ||
+      upperSql.includes(keyword + "(") ||
+      upperSql.endsWith(keyword)
+    ) {
+      return {
+        isValid: false,
+        reason: `禁止使用关键词 "${keyword}"。系统仅允许查询操作（SELECT）。`,
+      };
+    }
+  }
+
+  // 移除注释和字符串，简化检查
+  const cleanSql = upperSql
+    .replace(/--.*$/gm, "") // 移除行注释
+    .replace(/\/\*[\s\S]*?\*\//g, "") // 移除块注释
+    .replace(/'[^']*'/g, "'STRING'") // 替换字符串字面量
+    .replace(/"[^"]*"/g, '"STRING"') // 替换双引号字符串
+    .replace(/\s+/g, " ") // 标准化空白字符
+    .trim();
+
+  // 检查是否以SELECT开头（最基本的要求）
+  if (
+    !cleanSql.startsWith("SELECT") &&
+    !cleanSql.startsWith("WITH") &&
+    !cleanSql.startsWith("EXPLAIN")
+  ) {
+    return {
+      isValid: false,
+      reason:
+        "SQL语句必须以 SELECT、WITH 或 EXPLAIN 开头。系统仅允许查询操作。",
+    };
+  }
+
+  // 额外的安全检查：检查是否有可疑的函数调用
+  const suspiciousFunctions = ["EXEC", "EVAL", "SYSTEM", "CMD", "SHELL"];
+  for (const func of suspiciousFunctions) {
+    if (cleanSql.includes(func + "(")) {
+      return {
+        isValid: false,
+        reason: `禁止使用函数 "${func}"。可能存在安全风险。`,
+      };
+    }
+  }
+
+  return { isValid: true };
 }
 
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
@@ -132,12 +209,16 @@ export async function POST(request: Request) {
       ); // 409 Conflict
     }
 
-    // 3. 安全检查 SQL 内容
-    if (containsHarmfulSql(sqlContent)) {
+    // 3. 严格的安全检查 - 只允许查询操作
+    const securityCheck = isReadOnlyQuery(sqlContent);
+    if (!securityCheck.isValid) {
       return NextResponse.json(
         {
-          message:
-            "SQL content rejected due to potentially harmful DDL/DML commands.",
+          success: false,
+          message: "SQL内容安全检查失败",
+          reason: securityCheck.reason,
+          policy:
+            "本系统严格限制只允许查询操作（SELECT语句）。禁止所有数据修改（INSERT/UPDATE/DELETE）和结构修改（CREATE/ALTER/DROP）操作。",
         },
         { status: 403 }
       ); // 403 Forbidden
@@ -159,38 +240,16 @@ export async function POST(request: Request) {
       cronSchedule: "", // 默认 Cron 表达式为空
       createdAt: new Date(),
       updatedAt: new Date(),
-      approvalStatus: ApprovalStatus.DRAFT, // 初始状态为草稿
-      approvalRequestId: null, // 审批请求ID，稍后创建
+      approvalStatus: ApprovalStatus.APPROVED, // 新建脚本直接批准
+      approvalRequestId: null, // 不需要审批请求
     };
 
     // 5. 插入数据到 MongoDB
     const result = await collection.insertOne(newScriptDocument);
 
     if (result.insertedId) {
-      // 6. 创建审批请求
-      const userRole = await getUserRole(user.id);
-      if (userRole) {
-        const requestId = await createApprovalRequest(
-          scriptId,
-          user.id,
-          userEmail,
-          userRole,
-          sqlContent,
-          name,
-          description || "",
-          "medium" // 默认优先级
-        );
-
-        if (requestId) {
-          // 更新脚本文档，添加审批请求ID
-          await collection.updateOne(
-            { scriptId },
-            { $set: { approvalRequestId: requestId } }
-          );
-
-          console.log(`[Script] 脚本创建成功，审批请求ID: ${requestId}`);
-        }
-      }
+      // 根据新的审批策略：新建脚本不需要审批，直接创建
+      console.log(`[Script] 新建脚本创建成功，无需审批: ${scriptId}`);
 
       // 清除 Redis 缓存
       await clearScriptsCache();
@@ -198,10 +257,12 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: true,
-          message: "脚本创建成功，已提交审批",
+          message: "查询脚本创建成功",
           scriptId: newScriptDocument.scriptId,
           mongoId: result.insertedId,
           approvalStatus: newScriptDocument.approvalStatus,
+          securityPolicy: "系统已确认这是安全的查询操作",
+          policy: "根据新的审批策略，新建脚本无需审批，可以直接使用",
         },
         { status: 201 }
       );

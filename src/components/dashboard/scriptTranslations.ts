@@ -37,7 +37,7 @@ export const zhScriptTranslations: ScriptTranslationsMap = {
  */
 export const getScriptTranslation = (
   scriptId: string,
-  language: string,
+  language: string
 ): ScriptTranslation | null => {
   if (language === "zh") {
     return zhScriptTranslations[scriptId] || null;
@@ -59,7 +59,7 @@ export const generateSqlTemplateWithTranslation = (
   name: string,
   description: string,
   scope: string = "",
-  author: string = "",
+  author: string = ""
 ): string => {
   // 获取中文翻译（如果有）
   const translation = getScriptTranslation(scriptId, "zh");
