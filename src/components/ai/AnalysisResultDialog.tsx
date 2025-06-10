@@ -75,61 +75,180 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
   };
 
   const formatTextContent = (text: string) => {
-    // 处理列表项
     const lines = text.split('\n');
-    return lines.map((line, index) => {
+    const result: React.ReactNode[] = [];
+    let currentListItems: React.ReactNode[] = [];
+    let currentListType: 'ul' | 'ol' | null = null;
+    let keyCounter = 0;
+    
+    const getNextKey = () => `item-${++keyCounter}`;
+    
+    const finishCurrentList = () => {
+      if (currentListItems.length > 0) {
+        if (currentListType === 'ul') {
+          result.push(
+            <ul key={getNextKey()} className="space-y-2 my-4 ml-4">
+              {currentListItems}
+            </ul>
+          );
+        } else {
+          result.push(
+            <ol key={getNextKey()} className="space-y-2 my-4 ml-4 list-decimal">
+              {currentListItems}
+            </ol>
+          );
+        }
+        currentListItems = [];
+        currentListType = null;
+      }
+    };
+
+    lines.forEach((line) => {
       const trimmedLine = line.trim();
+      
+      // 空行处理
+      if (!trimmedLine) {
+        finishCurrentList();
+        return;
+      }
       
       // 检查是否是标题（以#开头）
       if (trimmedLine.startsWith('#')) {
+        finishCurrentList();
         const level = trimmedLine.match(/^#{1,6}/)?.[0].length || 1;
         const content = trimmedLine.replace(/^#{1,6}\s*/, '');
         const sizes = ['text-2xl', 'text-xl', 'text-lg', 'text-base', 'text-sm', 'text-xs'];
         const sizeClass = sizes[Math.min(level - 1, sizes.length - 1)];
         
-        return (
-          <h3 key={index} className={`${sizeClass} font-bold mt-4 mb-2 text-foreground`}>
-            {content}
+        result.push(
+          <h3 key={getNextKey()} className={`${sizeClass} font-bold mt-6 mb-3 text-foreground`}>
+            {formatInlineText(content)}
           </h3>
         );
+        return;
       }
       
-      // 检查是否是列表项
-      if (trimmedLine.match(/^[-*]\s+/)) {
-        const content = trimmedLine.replace(/^[-*]\s+/, '');
-        return (
-          <div key={index} className="flex items-start gap-2 my-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-            <span className="text-muted-foreground leading-relaxed">{content}</span>
-          </div>
+      // 检查是否是无序列表项
+      if (trimmedLine.match(/^[-*+]\s+/)) {
+        if (currentListType !== 'ul') {
+          finishCurrentList();
+          currentListType = 'ul';
+        }
+        const content = trimmedLine.replace(/^[-*+]\s+/, '');
+        currentListItems.push(
+          <li key={getNextKey()} className="flex items-start gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2.5 flex-shrink-0" />
+            <span className="text-muted-foreground leading-relaxed">
+              {formatInlineText(content)}
+            </span>
+          </li>
         );
+        return;
       }
       
-      // 检查是否是数字列表
+      // 检查是否是有序列表项
       if (trimmedLine.match(/^\d+\.\s+/)) {
+        if (currentListType !== 'ol') {
+          finishCurrentList();
+          currentListType = 'ol';
+        }
         const match = trimmedLine.match(/^(\d+)\.\s+(.+)$/);
         if (match) {
-          return (
-            <div key={index} className="flex items-start gap-2 my-1">
-              <span className="text-primary font-medium mt-0.5 flex-shrink-0">{match[1]}.</span>
-              <span className="text-muted-foreground leading-relaxed">{match[2]}</span>
-            </div>
+          currentListItems.push(
+            <li key={getNextKey()} className="flex items-start gap-3">
+              <span className="text-primary font-medium mt-0.5 flex-shrink-0 min-w-[1.5rem]">
+                {match[1]}.
+              </span>
+              <span className="text-muted-foreground leading-relaxed">
+                {formatInlineText(match[2])}
+              </span>
+            </li>
+          );
+        }
+        return;
+      }
+      
+      // 普通段落
+      finishCurrentList();
+      if (trimmedLine) {
+        result.push(
+          <p key={getNextKey()} className="text-muted-foreground leading-relaxed my-3">
+            {formatInlineText(trimmedLine)}
+          </p>
+        );
+      }
+    });
+    
+    // 处理最后的列表
+    finishCurrentList();
+    
+    return result;
+  };
+
+  // 处理行内格式化（粗体、斜体、代码等）
+  const formatInlineText = (text: string): React.ReactNode => {
+    // 处理行内代码 `code`
+    const codeRegex = /`([^`]+)`/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+    let codeCounter = 0;
+
+    while ((match = codeRegex.exec(text)) !== null) {
+      // 添加代码前的文本
+      if (match.index > lastIndex) {
+        const beforeCode = text.slice(lastIndex, match.index);
+        const beforeCodeFormatted = formatTextStyles(beforeCode);
+        if (beforeCodeFormatted) {
+          parts.push(
+            <span key={`before-code-${codeCounter}`}>
+              {beforeCodeFormatted}
+            </span>
           );
         }
       }
       
-      // 处理粗体文本
-      const formattedText = trimmedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      // 添加行内代码
+      parts.push(
+        <code key={`code-${++codeCounter}`} className="px-1.5 py-0.5 bg-muted/60 text-foreground rounded text-sm font-mono border">
+          {match[1]}
+        </code>
+      );
       
-      if (trimmedLine) {
-        return (
-          <p key={index} className="text-muted-foreground leading-relaxed my-2" 
-             dangerouslySetInnerHTML={{ __html: formattedText }} />
+      lastIndex = match.index + match[0].length;
+    }
+    
+    // 添加剩余文本
+    if (lastIndex < text.length) {
+      const remainingText = formatTextStyles(text.slice(lastIndex));
+      if (remainingText) {
+        parts.push(
+          <span key={`remaining-${codeCounter}`}>
+            {remainingText}
+          </span>
         );
       }
-      
-      return null;
-    }).filter(Boolean);
+    }
+    
+    return parts.length > 1 ? <>{parts}</> : (parts.length === 1 ? parts[0] : formatTextStyles(text));
+  };
+
+  // 处理文本样式（粗体、斜体）
+  const formatTextStyles = (text: string): React.ReactNode => {
+    if (!text) return null;
+    
+    // 处理粗体和斜体的组合
+    const formatted = text
+      .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>') // 粗斜体
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-foreground">$1</strong>') // 粗体
+      .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>') // 斜体
+      .replace(/~~(.*?)~~/g, '<del class="line-through opacity-75">$1</del>'); // 删除线
+
+    if (formatted !== text) {
+      return <span dangerouslySetInnerHTML={{ __html: formatted }} />;
+    }
+    
+    return text;
   };
 
   if (!result) return null;
