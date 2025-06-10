@@ -70,72 +70,74 @@ export default function UserHeader() {
           <Breadcrumb className="hidden lg:flex" />
         </div>
         
-        {/* 主要内容区域 - 保持页面宽度限制 */}
-        <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex justify-between items-center">
-            {/* 左侧：主导航 */}
-            <div className="flex items-center">
-              <MainNavigation />
-            </div>
-
-            {/* 右侧：用户控件 */}
-            <div className="flex items-center space-x-4">
-              {/* 用户信息 */}
-              <div className="hidden lg:block text-right">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {user.fullName ||
-                    user.emailAddresses[0]?.emailAddress?.split("@")[0]}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {user.emailAddresses[0]?.emailAddress}
-                </p>
+        {/* 主要内容区域 - 与页面内容完全对齐 */}
+        <div className="flex-1">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex justify-between items-center">
+              {/* 左侧：主导航 - 与Dashboard内容左对齐 */}
+              <div className="flex items-center">
+                <MainNavigation />
               </div>
 
-              {/* 用户头像 */}
-              <UserButton
-                appearance={{
-                  elements: {
-                    avatarBox: "h-8 w-8",
-                    userButtonPopoverCard: "shadow-lg border",
-                    userButtonPopoverActionButton:
-                      "hover:bg-gray-50 dark:hover:bg-gray-800",
-                  },
-                }}
-                afterSignOutUrl="/sign-in"
-                showName={false}
-              />
+              {/* 右侧：用户控件 - 与Dashboard内容右对齐 */}
+              <div className="flex items-center space-x-4">
+                {/* 用户信息 */}
+                <div className="hidden lg:block text-right">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {user.fullName ||
+                      user.emailAddresses[0]?.emailAddress?.split("@")[0]}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {user.emailAddresses[0]?.emailAddress}
+                  </p>
+                </div>
 
-              {/* 分割线 */}
-              <div className="h-8 w-px bg-gray-300 dark:bg-gray-600"></div>
+                {/* 用户头像 */}
+                <UserButton
+                  appearance={{
+                    elements: {
+                      avatarBox: "h-8 w-8",
+                      userButtonPopoverCard: "shadow-lg border",
+                      userButtonPopoverActionButton:
+                        "hover:bg-gray-50 dark:hover:bg-gray-800",
+                    },
+                  }}
+                  afterSignOutUrl="/sign-in"
+                  showName={false}
+                />
 
-              {/* 语言切换按钮 */}
-              <Button
-                variant="outline"
-                size="icon"
-                className="rounded-full"
-                onClick={toggleLanguage}
-                title={language === "zh" ? "Switch to English" : "切换到中文"}
-              >
-                <span className="text-xs font-bold">
-                  {language === "zh" ? "EN" : "中"}
-                </span>
-                <span className="sr-only">{t("changeLanguage")}</span>
-              </Button>
+                {/* 分割线 */}
+                <div className="h-8 w-px bg-gray-300 dark:bg-gray-600"></div>
 
-              {/* 主题切换按钮 */}
-              <ThemeToggle />
+                {/* 语言切换按钮 */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full"
+                  onClick={toggleLanguage}
+                  title={language === "zh" ? "Switch to English" : "切换到中文"}
+                >
+                  <span className="text-xs font-bold">
+                    {language === "zh" ? "EN" : "中"}
+                  </span>
+                  <span className="sr-only">{t("changeLanguage")}</span>
+                </Button>
 
-              {/* 全局刷新按钮 */}
-              <Button
-                variant="outline"
-                size="icon"
-                className="rounded-full"
-                onClick={handleGlobalRefresh}
-                title={language === "zh" ? "刷新数据" : "Refresh Data"}
-              >
-                <RefreshCw className="h-4 w-4" />
-                <span className="sr-only">{language === "zh" ? "刷新数据" : "Refresh Data"}</span>
-              </Button>
+                {/* 主题切换按钮 */}
+                <ThemeToggle />
+
+                {/* 全局刷新按钮 */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="rounded-full"
+                  onClick={handleGlobalRefresh}
+                  title={language === "zh" ? "刷新数据" : "Refresh Data"}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  <span className="sr-only">{language === "zh" ? "刷新数据" : "Refresh Data"}</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
