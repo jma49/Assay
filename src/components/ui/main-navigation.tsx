@@ -10,7 +10,6 @@ import {
   BarChart3,
   History,
   Menu,
-  ChevronRight,
   Search,
   ArrowRight,
   Users,
