@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import mongoDbClient from "@/lib/mongodb";
 import { Collection, Document } from "mongodb";
-import { clearScriptsCache } from "@/app/api/list-scripts/route";
+import { clearScriptsCache } from "@/lib/cache-utils";
 import { validateApiAuth } from "@/lib/auth-utils";
 import { Permission, requirePermission, getUserRole } from "@/lib/rbac";
 import { createScriptVersion } from "@/lib/version-control";

@@ -1,6 +1,6 @@
 import mongoDbClient from "./mongodb";
 import { Collection, Document } from "mongodb";
-import { clearScriptsCache } from "@/app/api/list-scripts/route";
+import { clearScriptsCache } from "@/lib/cache-utils";
 
 // 版本状态枚举
 export enum VersionStatus {

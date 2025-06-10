@@ -496,6 +496,8 @@ export type DashboardTranslationKeys =
   | "navigationDashboard"
   | "navigationScripts"
   | "navigationAnalysis"
+  | "navigationApprovals"
+  | "navigationUsers"
   | "navigationResults"
   | "breadcrumbHome"
   | "breadcrumbScripts"
@@ -512,7 +514,71 @@ export type DashboardTranslationKeys =
   | "todayExecution"
   | "executionDistribution"
   | "noExecutionToday"
-  | "total";
+  | "total"
+  | "approvalsTitle"
+  | "approvalsDescription"
+  | "pendingApprovals"
+  | "approvalHistory"
+  | "pendingScripts"
+  | "pendingScriptsDesc"
+  | "historyScripts"
+  | "historyScriptsDesc"
+  | "noPendingApprovals"
+  | "noApprovalHistory"
+  | "requestor"
+  | "createdAt"
+  | "scriptId"
+  | "requestReason"
+  | "approvalRecord"
+  | "approved"
+  | "rejected"
+  | "requiredRoles"
+  | "progress"
+  | "approvalComplete"
+  | "pendingApproval"
+  | "approve"
+  | "reject"
+  | "approveScript"
+  | "rejectScript"
+  | "approvalReason"
+  | "approvalReasonPlaceholder"
+  | "rejectReasonPlaceholder"
+  | "cancel"
+  | "scriptType"
+  | "loading"
+  | "pending"
+  | "withdrawn"
+  | "draft"
+  | "readOnlyQuery"
+  | "dataModification"
+  | "structureChange"
+  | "systemAdmin"
+  | "readOnlyDesc"
+  | "dataModificationDesc"
+  | "structureChangeDesc"
+  | "systemAdminDesc"
+  | "userManagementTitle"
+  | "userManagementDesc"
+  | "roleStats"
+  | "userList"
+  | "addUserRole"
+  | "userEmail"
+  | "userIdField"
+  | "selectRole"
+  | "assignRole"
+  | "removeRole"
+  | "modifyRole"
+  | "adminRole"
+  | "managerRole"
+  | "developerRole"
+  | "viewerRole"
+  | "adminDesc"
+  | "managerDesc"
+  | "developerDesc"
+  | "viewerDesc"
+  | "assignedBy"
+  | "assignedAt"
+  | "totalUsers";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -1015,6 +1081,8 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     navigationDashboard: "Dashboard",
     navigationScripts: "Scripts",
     navigationAnalysis: "Analysis",
+    navigationApprovals: "Approvals",
+    navigationUsers: "User Management",
     navigationResults: "Results",
     breadcrumbHome: "Home",
     breadcrumbScripts: "Scripts",
@@ -1071,6 +1139,69 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     executionDistribution: "Execution Distribution",
     noExecutionToday: "No executions today",
     total: "Total",
+    // Approvals page translations
+    approvalsTitle: "Approval Management",
+    approvalsDescription:
+      "Manage script approval workflows and view approval history",
+    pendingApprovals: "Pending Approvals",
+    approvalHistory: "Approval History",
+    pendingScripts: "Pending Scripts",
+    pendingScriptsDesc: "Scripts that require your approval",
+    historyScripts: "Approval History",
+    historyScriptsDesc: "Completed approval records",
+    noPendingApprovals: "No pending approvals",
+    noApprovalHistory: "No approval history",
+    requestor: "Requestor",
+    scriptId: "Script ID",
+    requestReason: "Request Reason",
+    approvalRecord: "Approval Record",
+    approved: "Approved",
+    rejected: "Rejected",
+    requiredRoles: "Required Roles",
+    progress: "Progress",
+    approvalComplete: "Approval Complete",
+    pendingApproval: "Pending Approval",
+    approve: "Approve",
+    reject: "Reject",
+    approveScript: "Approve Script",
+    rejectScript: "Reject Script",
+    approvalReason: "Approval Reason (Optional)",
+    approvalReasonPlaceholder: "Please enter the reason for approval...",
+    rejectReasonPlaceholder: "Please enter the reason for rejection...",
+    scriptType: "Script Type",
+    withdrawn: "Withdrawn",
+    draft: "Draft",
+    readOnlyQuery: "Read-Only Query",
+    dataModification: "Data Modification",
+    structureChange: "Structure Change",
+    systemAdmin: "System Admin",
+    readOnlyDesc: "Read-only queries, no modifications",
+    dataModificationDesc: "Modify data in tables",
+    structureChangeDesc: "Modify table structure or indexes",
+    systemAdminDesc: "System-level administrative operations",
+    // User management page translations
+    userManagementTitle: "User Management",
+    userManagementDesc: "Manage user roles and permissions",
+    roleStats: "Role Statistics",
+    userList: "User List",
+    addUserRole: "Add User Role",
+    userEmail: "User Email",
+    userIdField: "User ID",
+    selectRole: "Select Role",
+    assignRole: "Assign Role",
+    removeRole: "Remove Role",
+    modifyRole: "Modify Role",
+    adminRole: "System Administrator",
+    managerRole: "Project Manager",
+    developerRole: "Developer",
+    viewerRole: "Viewer",
+    adminDesc: "Full system access, user and system management",
+    managerDesc: "Script management, approval operations, role assignment",
+    developerDesc: "Create, edit, and execute scripts",
+    viewerDesc: "Read-only access to scripts and execution history",
+    assignedBy: "Assigned By",
+    assignedAt: "Assigned At",
+    totalUsers: "Total Users",
   },
   zh: {
     // General
@@ -1498,6 +1629,8 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     navigationDashboard: "仪表盘",
     navigationScripts: "脚本",
     navigationAnalysis: "分析",
+    navigationApprovals: "审批管理",
+    navigationUsers: "用户管理",
     navigationResults: "结果",
     breadcrumbHome: "首页",
     breadcrumbScripts: "脚本",
@@ -1554,5 +1687,67 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     executionDistribution: "执行分布",
     noExecutionToday: "今日暂无执行",
     total: "总计",
+    // 审批页面翻译
+    approvalsTitle: "审批管理",
+    approvalsDescription: "管理脚本审批流程和查看审批历史",
+    pendingApprovals: "待审批",
+    approvalHistory: "审批历史",
+    pendingScripts: "待审批脚本",
+    pendingScriptsDesc: "需要您审批的脚本列表",
+    historyScripts: "审批历史",
+    historyScriptsDesc: "已完成的审批记录",
+    noPendingApprovals: "暂无待审批脚本",
+    noApprovalHistory: "暂无审批历史",
+    requestor: "申请人",
+    scriptId: "脚本ID",
+    requestReason: "申请理由",
+    approvalRecord: "审批记录",
+    approved: "已批准",
+    rejected: "已拒绝",
+    requiredRoles: "需要审批角色",
+    progress: "进度",
+    approvalComplete: "审批完成",
+    pendingApproval: "待审批",
+    approve: "批准",
+    reject: "拒绝",
+    approveScript: "批准脚本",
+    rejectScript: "拒绝脚本",
+    approvalReason: "批准理由（可选）",
+    approvalReasonPlaceholder: "请输入批准的理由...",
+    rejectReasonPlaceholder: "请输入拒绝的理由...",
+    scriptType: "脚本类型",
+    withdrawn: "已撤回",
+    draft: "草稿",
+    readOnlyQuery: "只读查询",
+    dataModification: "数据修改",
+    structureChange: "结构变更",
+    systemAdmin: "系统管理",
+    readOnlyDesc: "仅读取数据，不进行修改",
+    dataModificationDesc: "修改表中的数据",
+    structureChangeDesc: "修改表结构或索引",
+    systemAdminDesc: "系统级别的管理操作",
+    // 用户管理页面翻译
+    userManagementTitle: "用户管理",
+    userManagementDesc: "管理用户角色和权限",
+    roleStats: "角色统计",
+    userList: "用户列表",
+    addUserRole: "添加用户角色",
+    userEmail: "用户邮箱",
+    userIdField: "用户ID",
+    selectRole: "选择角色",
+    assignRole: "分配角色",
+    removeRole: "删除角色",
+    modifyRole: "修改角色",
+    adminRole: "系统管理员",
+    managerRole: "项目经理",
+    developerRole: "开发者",
+    viewerRole: "查看者",
+    adminDesc: "拥有所有权限，可管理用户、系统设置",
+    managerDesc: "可管理脚本、审批操作、分配角色",
+    developerDesc: "可创建、编辑、执行脚本",
+    viewerDesc: "只能查看脚本和执行历史",
+    assignedBy: "分配者",
+    assignedAt: "分配时间",
+    totalUsers: "用户总数",
   },
 };

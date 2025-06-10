@@ -13,6 +13,8 @@ import {
   ChevronRight,
   Search,
   ArrowRight,
+  Users,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,6 +57,20 @@ const navigationItems = [
     description: "查看数据分析和趋势",
   },
   {
+    href: "/manage-scripts/approvals",
+    icon: Shield,
+    labelKey: "navigationApprovals" as DashboardTranslationKeys,
+    description: "管理脚本审批流程",
+    requiresRole: ["admin", "manager"],
+  },
+  {
+    href: "/admin/users",
+    icon: Users,
+    labelKey: "navigationUsers" as DashboardTranslationKeys,
+    description: "管理用户角色和权限",
+    requiresRole: ["admin"],
+  },
+  {
     href: "results-dialog",
     icon: History,
     labelKey: "navigationResults" as DashboardTranslationKeys,
@@ -95,8 +111,13 @@ export function Breadcrumb({ className }: BreadcrumbProps) {
 
     if (pathname === "/manage-scripts") {
       items.push({ href: "/manage-scripts", label: t("breadcrumbScripts") });
+    } else if (pathname === "/manage-scripts/approvals") {
+      items.push({ href: "/manage-scripts", label: t("breadcrumbScripts") });
+      items.push({ href: "/manage-scripts/approvals", label: t("navigationApprovals") });
     } else if (pathname === "/data-analysis") {
       items.push({ href: "/data-analysis", label: t("breadcrumbAnalysis") });
+    } else if (pathname === "/admin/users") {
+      items.push({ href: "/admin/users", label: t("navigationUsers") });
     } else if (pathname.startsWith("/view-execution-result")) {
       items.push({ href: "/view-execution-result", label: t("breadcrumbResults") });
     }

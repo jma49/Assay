@@ -35,14 +35,63 @@ async function getCachedScripts(): Promise<ScriptInfo[] | null> {
   try {
     const cachedData = await redis.get(SCRIPTS_CACHE_KEY);
 
-    if (cachedData) {
-      console.log("[API] 从 Redis 缓存获取脚本列表");
-      return JSON.parse(String(cachedData));
+    if (!cachedData) {
+      return null;
     }
 
-    return null;
+    console.log("[API] 从 Redis 缓存获取脚本列表");
+
+    // 检查数据类型和内容
+    let dataToParseString = "";
+
+    if (typeof cachedData === "string") {
+      dataToParseString = cachedData;
+    } else if (typeof cachedData === "object") {
+      // 如果Redis返回的是对象，尝试序列化它
+      dataToParseString = JSON.stringify(cachedData);
+    } else {
+      // 其他类型转换为字符串
+      dataToParseString = String(cachedData);
+    }
+
+    // 验证字符串是否像JSON
+    if (
+      !dataToParseString.startsWith("[") &&
+      !dataToParseString.startsWith("{")
+    ) {
+      console.warn(
+        "[API] Redis 缓存数据格式无效，清除缓存:",
+        dataToParseString.substring(0, 100)
+      );
+      await redis.del(SCRIPTS_CACHE_KEY);
+      return null;
+    }
+
+    try {
+      const parsedData = JSON.parse(dataToParseString);
+
+      // 验证解析的数据是否为数组
+      if (!Array.isArray(parsedData)) {
+        console.warn("[API] Redis 缓存数据不是数组格式，清除缓存");
+        await redis.del(SCRIPTS_CACHE_KEY);
+        return null;
+      }
+
+      return parsedData as ScriptInfo[];
+    } catch (parseError) {
+      console.error("[API] JSON 解析失败，清除无效缓存:", parseError);
+      await redis.del(SCRIPTS_CACHE_KEY);
+      return null;
+    }
   } catch (error) {
     console.error("[API] Redis 缓存读取失败:", error);
+    // 尝试清除可能损坏的缓存
+    try {
+      await redis.del(SCRIPTS_CACHE_KEY);
+      console.log("[API] 已清除可能损坏的缓存");
+    } catch (deleteError) {
+      console.error("[API] 清除缓存失败:", deleteError);
+    }
     return null;
   }
 }
@@ -52,23 +101,29 @@ async function getCachedScripts(): Promise<ScriptInfo[] | null> {
  */
 async function setCachedScripts(scripts: ScriptInfo[]): Promise<void> {
   try {
-    await redis.setex(SCRIPTS_CACHE_KEY, CACHE_TTL, JSON.stringify(scripts));
-    console.log("[API] 脚本列表已缓存到 Redis，TTL: 5分钟");
+    // 验证输入数据
+    if (!Array.isArray(scripts)) {
+      console.error("[API] 尝试缓存非数组数据，跳过缓存");
+      return;
+    }
+
+    // 序列化数据
+    const dataToCache = JSON.stringify(scripts);
+
+    // 验证序列化结果
+    if (!dataToCache || dataToCache === "undefined" || dataToCache === "null") {
+      console.error("[API] 数据序列化失败，跳过缓存");
+      return;
+    }
+
+    // 存储到Redis
+    await redis.setex(SCRIPTS_CACHE_KEY, CACHE_TTL, dataToCache);
+    console.log(
+      `[API] 脚本列表已缓存到 Redis，数量: ${scripts.length}，TTL: ${CACHE_TTL}秒`
+    );
   } catch (error) {
     console.error("[API] Redis 缓存写入失败:", error);
-  }
-}
-
-/**
- * 清除脚本列表的 Redis 缓存
- * 供其他 API 路由调用，当脚本被创建、更新或删除时
- */
-export async function clearScriptsCache(): Promise<void> {
-  try {
-    await redis.del(SCRIPTS_CACHE_KEY);
-    console.log("[API] 脚本列表缓存已清除");
-  } catch (error) {
-    console.error("[API] 清除 Redis 缓存失败:", error);
+    // 不抛出错误，允许系统继续运行
   }
 }
 

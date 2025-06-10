@@ -5,7 +5,7 @@ import {
   getPendingApprovals,
   approveScript,
   rejectScript,
-  getApprovalHistory,
+  getCompletedApprovals,
 } from "@/lib/approval-workflow";
 
 /**
@@ -42,17 +42,55 @@ export async function GET(request: NextRequest) {
     const action = searchParams.get("action") || "pending"; // pending, history
 
     if (action === "history") {
-      // 获取审批历史
-      const scriptId = searchParams.get("scriptId") || undefined;
-      const requestId = searchParams.get("requestId") || undefined;
+      // 获取审批历史 - 返回已完成的审批请求列表
+      const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+      const limit = Math.min(
+        100,
+        Math.max(1, parseInt(searchParams.get("limit") || "20"))
+      );
 
-      const history = await getApprovalHistory(scriptId, requestId);
+      // 获取已完成的审批请求（非待审批状态）
+      const result = await getCompletedApprovals(page, limit);
+
+      // 转换数据格式以匹配前端期望的结构
+      const transformedHistoryData = result.data.map((request) => ({
+        id: request.requestId,
+        scriptId: request.scriptId,
+        scriptName: request.title || `脚本 ${request.scriptId}`,
+        scriptType: request.scriptType,
+        status: request.status,
+        requesterEmail: request.requesterEmail,
+        requesterId: request.requesterId,
+        createdAt: request.requestedAt.toISOString(),
+        updatedAt: request.updatedAt.toISOString(),
+        requiredApprovers: request.requiredApprovers,
+        currentApprovers: request.reviewedBy
+          ? [
+              {
+                userId: request.reviewedBy,
+                email: request.reviewerEmail || "unknown",
+                role: "reviewer",
+                decision:
+                  request.status === "approved"
+                    ? ("approved" as const)
+                    : ("rejected" as const),
+                comment: request.reviewComment,
+                timestamp:
+                  request.reviewedAt?.toISOString() || new Date().toISOString(),
+              },
+            ]
+          : [],
+        isComplete: true,
+        comment: request.reviewComment,
+        reason: request.description,
+      }));
 
       return NextResponse.json({
         success: true,
         action: "history",
-        data: history,
-        count: history.length,
+        data: transformedHistoryData,
+        pagination: result.pagination,
+        count: transformedHistoryData.length,
       });
     } else {
       // 获取待审批列表
@@ -64,10 +102,39 @@ export async function GET(request: NextRequest) {
 
       const result = await getPendingApprovals(user.id, page, limit);
 
+      // 转换数据格式以匹配前端期望的结构
+      const transformedData = result.data.map((request) => ({
+        id: request.requestId,
+        scriptId: request.scriptId,
+        scriptName: request.title || `脚本 ${request.scriptId}`,
+        scriptType: request.scriptType,
+        status: request.status,
+        requesterEmail: request.requesterEmail,
+        requesterId: request.requesterId,
+        createdAt: request.requestedAt.toISOString(),
+        updatedAt: request.updatedAt.toISOString(),
+        requiredApprovers: request.requiredApprovers,
+        currentApprovers: (request.currentApprovers || []).map((approver) => ({
+          userId: request.reviewedBy || approver,
+          email: request.reviewerEmail || "unknown",
+          role: "reviewer",
+          decision:
+            request.status === "approved"
+              ? ("approved" as const)
+              : ("rejected" as const),
+          comment: request.reviewComment,
+          timestamp:
+            request.reviewedAt?.toISOString() || new Date().toISOString(),
+        })),
+        isComplete: request.status !== "pending",
+        comment: request.reviewComment,
+        reason: request.description,
+      }));
+
       return NextResponse.json({
         success: true,
         action: "pending",
-        data: result.data,
+        data: transformedData,
         pagination: result.pagination,
         user_info: {
           userId: user.id,
