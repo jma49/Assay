@@ -101,9 +101,9 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
     try {
       const existingRole = await getUserRole(user.id);
       if (!existingRole) {
-        // 为新用户分配默认角色（DEVELOPER）
+        // 为新用户分配默认角色（VIEWER）
         console.log(`[Auth] 为新用户分配默认角色: ${userEmail}`);
-        await setUserRole(user.id, userEmail, UserRole.DEVELOPER, "system");
+        await setUserRole(user.id, userEmail, UserRole.VIEWER, "system");
       }
     } catch (error) {
       console.error("[Auth] 分配默认角色失败:", error);

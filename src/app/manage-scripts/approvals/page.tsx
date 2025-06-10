@@ -80,7 +80,7 @@ export default function ApprovalsPage() {
   const { language } = useLanguage();
   const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
   const [approvalHistory, setApprovalHistory] = useState<ApprovalRequest[]>([]);
-  const [loading, setLoading] = useState(true);
+
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedApproval, setSelectedApproval] = useState<ApprovalRequest | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -147,13 +147,10 @@ export default function ApprovalsPage() {
   // 加载数据
   const loadData = useCallback(async () => {
     try {
-      setLoading(true);
       await Promise.all([loadPendingApprovals(), loadApprovalHistory()]);
       setError(null);
     } catch (error) {
       console.error('加载数据失败:', error);
-    } finally {
-      setLoading(false);
     }
   }, [loadPendingApprovals, loadApprovalHistory]);
 
@@ -214,7 +211,7 @@ export default function ApprovalsPage() {
     setIsDialogOpen(true);
   };
 
-  if (!isLoaded || loading) {
+  if (!isLoaded) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -366,14 +363,8 @@ export default function ApprovalsPage() {
             </Alert>
           )}
 
-          {/* Loading State */}
-          {loading ? (
-            <div className="flex items-center justify-center py-12 text-muted-foreground space-x-3">
-              <Loader2 className="animate-spin h-6 w-6 text-primary" />
-              <span className="text-lg font-medium">{t("loading")}</span>
-            </div>
-          ) : (
-            /* Main Content */
+          {/* Main Content */}
+          {(
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
               <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-2">
                 <TabsTrigger value="pending" className="flex items-center space-x-2">

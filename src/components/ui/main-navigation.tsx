@@ -104,10 +104,10 @@ export function Breadcrumb({ className }: BreadcrumbProps) {
   // 根据路径生成面包屑
   const getBreadcrumbItems = () => {
     const items = [
-      { href: "/", label: t("breadcrumbHome") },
+      { href: "/", label: "Dashboard" }, // 固定使用Dashboard，不使用翻译
     ];
 
-    if (!pathname) return items;
+    if (!pathname || pathname === "/") return items;
 
     if (pathname === "/manage-scripts") {
       items.push({ href: "/manage-scripts", label: t("breadcrumbScripts") });
@@ -127,21 +127,18 @@ export function Breadcrumb({ className }: BreadcrumbProps) {
 
   const breadcrumbItems = getBreadcrumbItems();
 
-  if (breadcrumbItems.length <= 1) {
-    return null;
-  }
-
+  // 总是显示面包屑，即使只有Dashboard
   return (
-    <nav className={cn("flex items-center space-x-1 text-sm text-muted-foreground", className)}>
+    <nav className={cn("flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400", className)}>
       {breadcrumbItems.map((item, index) => (
         <React.Fragment key={item.href}>
-          {index > 0 && <ChevronRight className="h-4 w-4" />}
+          {index > 0 && <span className="mx-1 text-gray-400 dark:text-gray-500">/</span>}
           {index === breadcrumbItems.length - 1 ? (
-            <span className="font-medium text-foreground">{item.label}</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">{item.label}</span>
           ) : (
             <Link
               href={item.href}
-              className="hover:text-foreground transition-colors duration-200"
+              className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200"
             >
               {item.label}
             </Link>
@@ -174,6 +171,10 @@ export default function MainNavigation({ className }: NavigationProps) {
     if (href === "/") {
       return pathname === "/";
     }
+    // 精确匹配，避免approvals页面选中scripts
+    if (href === "/manage-scripts") {
+      return pathname === "/manage-scripts";
+    }
     return pathname.startsWith(href);
   };
 
@@ -184,18 +185,18 @@ export default function MainNavigation({ className }: NavigationProps) {
 
     const baseClasses = isMobile
       ? "flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 w-full text-left"
-      : "flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium";
+      : "relative flex items-center space-x-2 px-3 py-2 transition-all duration-200 text-sm font-medium";
 
     const activeClasses = isActive
-      ? "bg-primary text-primary-foreground shadow-md"
-      : "text-muted-foreground hover:text-foreground hover:bg-muted/50";
+      ? "text-gray-900 dark:text-gray-100"
+      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100";
 
     const content = (
       <>
-        <Icon className={cn("h-5 w-5", isMobile && "flex-shrink-0")} />
+        <Icon className={cn("h-4 w-4", isMobile && "flex-shrink-0")} />
         <span>{t(item.labelKey)}</span>
         {isActive && !isMobile && (
-          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
+          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gray-900 dark:bg-gray-100" />
         )}
       </>
     );
