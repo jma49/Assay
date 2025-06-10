@@ -1,6 +1,5 @@
 import redis from "@/lib/redis";
 import type { Redis } from "@upstash/redis";
-import { RedisBackupManager } from "../../scripts/redis-backup-manager";
 
 /**
  * 开发环境日志辅助函数
@@ -115,16 +114,8 @@ export class BatchExecutionCache {
     }>
   ): Promise<BatchExecutionState> {
     try {
-      // 🆕 批量执行开始前自动创建Redis备份
-      try {
-        const backupManager = new RedisBackupManager();
-        const backupCreated = backupManager.createBackup();
-        if (backupCreated) {
-          devLog("[BatchCache] ✅ Redis数据已自动备份");
-        }
-      } catch (error) {
-        devError("[BatchCache] ⚠️ Redis自动备份失败，但不影响执行:", error);
-      }
+      // 注意：Upstash Redis 是托管服务，自动提供备份功能
+      devLog("[BatchCache] 使用Upstash Redis托管备份服务");
 
       const execution: BatchExecutionState = {
         executionId,

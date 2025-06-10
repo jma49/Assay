@@ -1,5 +1,5 @@
 // 测试编辑历史功能的脚本
-import mongoDbClient from "../src/lib/mongodb";
+import mongoDbClient from "../../src/lib/mongodb";
 
 async function testEditHistory() {
   try {
@@ -25,7 +25,7 @@ async function testEditHistory() {
         console.log(
           `${index + 1}. 操作: ${record.operation}, 脚本: ${
             record.scriptSnapshot?.scriptId || "Unknown"
-          }, 时间: ${record.operationTime}`,
+          }, 时间: ${record.operationTime}`
         );
       });
     } else {

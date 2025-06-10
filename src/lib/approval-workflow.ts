@@ -560,3 +560,84 @@ export async function getApprovalHistory(
     return [];
   }
 }
+
+/**
+ * 获取已完成的审批请求列表
+ */
+export async function getCompletedApprovals(
+  page: number = 1,
+  limit: number = 20
+): Promise<{
+  data: ApprovalRequest[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}> {
+  try {
+    const collection = await getApprovalRequestsCollection();
+
+    const query: Record<string, unknown> = {
+      status: {
+        $in: [
+          ApprovalStatus.APPROVED,
+          ApprovalStatus.REJECTED,
+          ApprovalStatus.WITHDRAWN,
+        ],
+      },
+    };
+
+    const skip = (page - 1) * limit;
+
+    const [requests, total] = await Promise.all([
+      collection
+        .find(query)
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray(),
+      collection.countDocuments(query),
+    ]);
+
+    const data = requests.map((doc) => ({
+      requestId: doc.requestId,
+      scriptId: doc.scriptId,
+      requesterId: doc.requesterId,
+      requesterEmail: doc.requesterEmail,
+      scriptType: doc.scriptType,
+      status: doc.status,
+      priority: doc.priority,
+      title: doc.title,
+      description: doc.description,
+      changesSummary: doc.changesSummary,
+      requestedAt: doc.requestedAt,
+      submittedAt: doc.submittedAt,
+      reviewedAt: doc.reviewedAt,
+      reviewedBy: doc.reviewedBy,
+      reviewerEmail: doc.reviewerEmail,
+      reviewComment: doc.reviewComment,
+      updatedAt: doc.updatedAt,
+      autoApprovalEligible: doc.autoApprovalEligible,
+      requiredApprovers: doc.requiredApprovers,
+      currentApprovers: doc.currentApprovers,
+    })) as ApprovalRequest[];
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  } catch (error) {
+    console.error("[Approval] 获取已完成审批列表失败:", error);
+    return {
+      data: [],
+      pagination: { page, limit, total: 0, totalPages: 0 },
+    };
+  }
+}

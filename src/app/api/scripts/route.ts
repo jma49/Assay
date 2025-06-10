@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import mongoDbClient from "@/lib/mongodb"; // 假设 mongodb.ts 位于 src/lib/
 import { Collection, Document, ObjectId } from "mongodb";
-import { clearScriptsCache } from "@/app/api/list-scripts/route";
+import { clearScriptsCache } from "@/lib/cache-utils";
 import { validateApiAuth } from "@/lib/auth-utils";
 import { Permission, requirePermission, getUserRole } from "@/lib/rbac";
 import { createApprovalRequest, ApprovalStatus } from "@/lib/approval-workflow";
