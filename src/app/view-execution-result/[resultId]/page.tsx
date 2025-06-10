@@ -16,8 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import UserHeader from "@/components/UserHeader";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import ReactMarkdown from "react-markdown";
+import AnalysisResultDialog from '@/components/ai/AnalysisResultDialog';
 
 // 基于SQL脚本实际输出的精确类型定义
 interface OrderDuplicateDetail {
@@ -150,7 +149,7 @@ export default function ViewExecutionResultPage() {
   
   // AI错误分析相关状态
   const [isAnalyzingError, setIsAnalyzingError] = useState(false);
-  const [errorAnalysis, setErrorAnalysis] = useState("");
+  const [errorAnalysis, setErrorAnalysis] = useState<string | null>(null);
   const [isErrorAnalysisDialogOpen, setIsErrorAnalysisDialogOpen] = useState(false);
 
   // 可拖动滚动条状态
@@ -934,23 +933,13 @@ export default function ViewExecutionResultPage() {
       </div>
 
       {/* AI错误分析结果弹窗 */}
-      <Dialog open={isErrorAnalysisDialogOpen} onOpenChange={setIsErrorAnalysisDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-red-600" />
-              AI错误分析结果
-            </DialogTitle>
-          </DialogHeader>
-          <div className="mt-4">
-            {errorAnalysis && (
-              <div className="prose dark:prose-invert max-w-none">
-                <ReactMarkdown>{errorAnalysis}</ReactMarkdown>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AnalysisResultDialog
+        isOpen={isErrorAnalysisDialogOpen}
+        onOpenChange={setIsErrorAnalysisDialogOpen}
+        result={errorAnalysis}
+        type="explain"
+        title="AI 错误分析结果"
+      />
     </div>
   );
 }
