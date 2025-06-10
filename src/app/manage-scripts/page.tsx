@@ -79,6 +79,7 @@ import { recordEditHistory } from "@/lib/edit-history";
 import UserHeader from "@/components/UserHeader";
 import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
 import { StackedTags } from "@/components/ui/stacked-tags";
+import { LoadingOverlay } from "@/components/ui/loading";
 
 // Helper type for the form state, combining metadata and SQL content
 type ManageScriptFormState = Partial<SqlScript>;
@@ -603,12 +604,8 @@ const ManageScriptsPage = () => {
             </CardHeader>
 
             <CardContent className="relative p-0">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-12 text-muted-foreground space-x-3">
-                  <Loader2 className="animate-spin h-6 w-6 text-primary" />
-                  <span className="text-lg font-medium">{t("loading")}</span>
-                </div>
-              ) : error ? (
+              <LoadingOverlay isLoading={isLoading} text={t("loading")} spinnerSize="lg">
+                {error ? (
                 <div className="p-6 text-center space-y-4">
                   <div className="p-6 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-dashed border-muted-foreground/20 max-w-md mx-auto">
                     <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -782,6 +779,7 @@ const ManageScriptsPage = () => {
                   </div>
                 </div>
               )}
+                </LoadingOverlay>
             </CardContent>
 
             {/* 分页 - 和CheckHistory组件风格一致 */}

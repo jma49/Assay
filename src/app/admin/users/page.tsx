@@ -61,7 +61,7 @@ export default function AdminUsersPage() {
   const router = useRouter();
   const { language } = useLanguage();
   const [userRoles, setUserRoles] = useState<UserRoleInfo[]>([]);
-  const [loading, setLoading] = useState(true);
+
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
@@ -97,7 +97,6 @@ export default function AdminUsersPage() {
   // 加载用户角色列表
   const loadUserRoles = async () => {
     try {
-      setLoading(true);
       const response = await fetch('/api/users/roles');
       
       if (!response.ok) {
@@ -115,8 +114,6 @@ export default function AdminUsersPage() {
       console.error('加载用户角色失败:', error);
       setError(error instanceof Error ? error.message : '加载失败');
       toast.error('加载用户角色列表失败');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -227,19 +224,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
-        <UserHeader />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-          <div className="flex items-center justify-center py-12 text-muted-foreground space-x-3">
-            <Loader2 className="animate-spin h-6 w-6 text-primary" />
-            <span className="text-lg font-medium">{t("loading")}</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // 移除loading页面动画，保持与其他页面一致的过渡效果
 
   if (error) {
     return (
@@ -280,57 +265,124 @@ export default function AdminUsersPage() {
                     {t('assignRole') || '分配角色'}
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle>{t('addUserRole')}</DialogTitle>
+                    <DialogTitle className="flex items-center gap-2">
+                      <UserPlus className="h-5 w-5 text-primary" />
+                      {t('addUserRole')}
+                    </DialogTitle>
                     <DialogDescription>
-                      {t('userManagementDesc')}
+                      为新用户分配角色权限。新用户默认分配查看者（Viewer）角色。
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="userId">{t('userIdField') || '用户ID'}</Label>
-                      <Input
-                        id="userId"
-                        value={newUserId}
-                        onChange={(e) => setNewUserId(e.target.value)}
-                        placeholder="例如: user_2xxHZleOgAOksfDrizwQ1W1xJnA"
-                      />
+                  <div className="space-y-6">
+                    {/* 用户信息区域 */}
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="userId" className="text-sm font-medium">
+                          {t('userIdField') || '用户ID'}
+                        </Label>
+                        <Input
+                          id="userId"
+                          value={newUserId}
+                          onChange={(e) => setNewUserId(e.target.value)}
+                          placeholder="例如: user_2xxHZleOgAOksfDrizwQ1W1xJnA"
+                          className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          可在用户的Clerk个人资料中找到用户ID
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="email" className="text-sm font-medium">
+                          {t('userEmail')}
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={newUserEmail}
+                          onChange={(e) => setNewUserEmail(e.target.value)}
+                          placeholder="例如: user@example.com"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          必须是 @example.com 域名的邮箱地址
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="email">{t('userEmail')}</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={newUserEmail}
-                        onChange={(e) => setNewUserEmail(e.target.value)}
-                        placeholder="例如: user@example.com"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="role">{t('selectRole') || '角色'}</Label>
+
+                    {/* 角色选择区域 */}
+                    <div className="space-y-3">
+                      <Label htmlFor="role" className="text-sm font-medium">
+                        {t('selectRole') || '选择角色'}
+                      </Label>
                       <Select value={selectedRole} onValueChange={(value) => setSelectedRole(value as UserRole)}>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {Object.entries(ROLE_INFO).map(([role, info]) => (
                             <SelectItem key={role} value={role}>
-                              <div className="flex items-center space-x-2">
-                                <info.icon className="h-4 w-4" />
-                                <span>{info.label}</span>
+                              <div className="flex items-center justify-between w-full py-2">
+                                <div className="flex items-center space-x-3">
+                                  <div className={`p-1.5 rounded-md ${info.color}`}>
+                                    <info.icon className="h-4 w-4" />
+                                  </div>
+                                  <div>
+                                    <div className="font-medium">{info.label}</div>
+                                    <div className="text-xs text-muted-foreground">{info.description}</div>
+                                  </div>
+                                </div>
                               </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                      
+                      {/* 角色说明 */}
+                      <div className="p-3 bg-muted/50 rounded-lg border border-border/40">
+                        <div className="flex items-start gap-2">
+                          <div className={`p-1.5 rounded-md ${ROLE_INFO[selectedRole].color} mt-0.5`}>
+                            {(() => {
+                              const Icon = ROLE_INFO[selectedRole].icon;
+                              return <Icon className="h-4 w-4" />;
+                            })()}
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            <h4 className="text-sm font-medium">{ROLE_INFO[selectedRole].label}</h4>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              {ROLE_INFO[selectedRole].description}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 提示信息 */}
+                    <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                        <Shield className="h-4 w-4" />
+                        <span className="text-sm font-medium">权限提醒</span>
+                      </div>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 leading-relaxed">
+                        分配角色后，用户需要重新登录才能获得新的权限。建议先为用户分配基础角色，后续根据需要调整。
+                      </p>
                     </div>
                   </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  
+                  <DialogFooter className="flex gap-2 sm:gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsDialogOpen(false)}
+                      className="flex-1"
+                    >
                       {t('cancel')}
                     </Button>
-                    <Button onClick={assignRole} disabled={actionLoading === 'assign'}>
+                    <Button 
+                      onClick={assignRole} 
+                      disabled={actionLoading === 'assign' || !newUserId || !newUserEmail}
+                      className="flex-1"
+                    >
                       {actionLoading === 'assign' && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                       {t('assignRole')}
                     </Button>
