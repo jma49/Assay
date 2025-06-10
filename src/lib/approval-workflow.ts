@@ -89,10 +89,13 @@ function generateHistoryId(): string {
 }
 
 /**
- * 确定脚本类型（基于SQL内容分析）
+ * 确定脚本类型（基于SQL内容分析）- 更严格的版本
  */
 export function analyzeScriptType(sqlContent: string): ScriptType {
-  const upperSql = sqlContent.toUpperCase();
+  const upperSql = sqlContent.toUpperCase().trim();
+
+  // 在新的安全策略下，系统只允许查询操作
+  // 但我们仍然保留分类逻辑以备将来使用
 
   // 系统管理类脚本关键词
   const systemAdminKeywords = [
@@ -101,6 +104,10 @@ export function analyzeScriptType(sqlContent: string): ScriptType {
     "CREATE USER",
     "DROP USER",
     "ALTER USER",
+    "BACKUP",
+    "RESTORE",
+    "SHUTDOWN",
+    "KILL",
   ];
   if (systemAdminKeywords.some((keyword) => upperSql.includes(keyword))) {
     return ScriptType.SYSTEM_ADMIN;
@@ -113,69 +120,75 @@ export function analyzeScriptType(sqlContent: string): ScriptType {
     "ALTER TABLE",
     "CREATE INDEX",
     "DROP INDEX",
+    "CREATE DATABASE",
+    "DROP DATABASE",
   ];
   if (structureChangeKeywords.some((keyword) => upperSql.includes(keyword))) {
     return ScriptType.STRUCTURE_CHANGE;
   }
 
   // 数据修改类脚本关键词
-  const dataModificationKeywords = ["INSERT", "UPDATE", "DELETE", "TRUNCATE"];
+  const dataModificationKeywords = [
+    "INSERT",
+    "UPDATE",
+    "DELETE",
+    "TRUNCATE",
+    "MERGE",
+  ];
   if (dataModificationKeywords.some((keyword) => upperSql.includes(keyword))) {
     return ScriptType.DATA_MODIFICATION;
   }
 
-  // 默认为只读查询
+  // 在严格安全策略下，所有脚本都应该是只读查询
   return ScriptType.READ_ONLY;
 }
 
 /**
- * 确定是否符合自动审批条件
+ * 确定是否符合自动审批条件 - 简化的审批策略
  */
 export function isAutoApprovalEligible(
   scriptType: ScriptType,
-  requesterRole: UserRole
+  requesterRole: UserRole,
+  operationType: "create" | "update" | "delete" = "create"
 ): boolean {
-  // 管理员的只读脚本可以自动审批
-  if (requesterRole === UserRole.ADMIN && scriptType === ScriptType.READ_ONLY) {
+  // 新的审批策略：
+  // 1. 新建脚本 - 不需要审批（自动通过）
+  // 2. 修改别人的脚本 - 需要管理员审批
+  // 3. 删除任意脚本 - 需要管理员审批
+
+  // 新建脚本总是自动通过
+  if (operationType === "create") {
     return true;
   }
 
-  // 项目经理的只读脚本可以自动审批
-  if (
-    requesterRole === UserRole.MANAGER &&
-    scriptType === ScriptType.READ_ONLY
-  ) {
-    return true;
+  // 删除和修改操作：只有管理员可以自动通过
+  if (operationType === "delete" || operationType === "update") {
+    return requesterRole === UserRole.ADMIN;
   }
 
-  // 开发者的只读脚本在某些条件下可以自动审批
-  if (
-    requesterRole === UserRole.DEVELOPER &&
-    scriptType === ScriptType.READ_ONLY
-  ) {
-    // 可以根据更细致的规则来决定，这里暂时返回 false
-    return false;
-  }
-
+  // 默认不自动通过
   return false;
 }
 
 /**
- * 获取所需的审批人角色
+ * 获取所需的审批人角色 - 简化的审批策略
  */
-export function getRequiredApprovers(scriptType: ScriptType): string[] {
-  switch (scriptType) {
-    case ScriptType.READ_ONLY:
-      return [UserRole.MANAGER]; // 只读脚本需要项目经理审批
-    case ScriptType.DATA_MODIFICATION:
-      return [UserRole.MANAGER]; // 数据修改脚本需要项目经理审批
-    case ScriptType.STRUCTURE_CHANGE:
-      return [UserRole.MANAGER, UserRole.ADMIN]; // 结构变更需要项目经理和管理员双重审批
-    case ScriptType.SYSTEM_ADMIN:
-      return [UserRole.ADMIN]; // 系统管理脚本只有管理员可以审批
-    default:
-      return [UserRole.MANAGER];
+export function getRequiredApprovers(
+  scriptType: ScriptType,
+  operationType: "create" | "update" | "delete" = "create"
+): string[] {
+  // 新建脚本不需要审批
+  if (operationType === "create") {
+    return [];
   }
+
+  // 修改和删除操作都需要管理员审批
+  if (operationType === "update" || operationType === "delete") {
+    return [UserRole.ADMIN];
+  }
+
+  // 默认需要管理员审批
+  return [UserRole.ADMIN];
 }
 
 /**
@@ -189,7 +202,8 @@ export async function createApprovalRequest(
   sqlContent: string,
   title: string,
   description: string,
-  priority: "low" | "medium" | "high" | "urgent" = "medium"
+  priority: "low" | "medium" | "high" | "urgent" = "medium",
+  operationType: "create" | "update" | "delete" = "create"
 ): Promise<string | null> {
   try {
     const collection = await getApprovalRequestsCollection();
@@ -197,9 +211,10 @@ export async function createApprovalRequest(
     const scriptType = analyzeScriptType(sqlContent);
     const autoApprovalEligible = isAutoApprovalEligible(
       scriptType,
-      requesterRole
+      requesterRole,
+      operationType
     );
-    const requiredApprovers = getRequiredApprovers(scriptType);
+    const requiredApprovers = getRequiredApprovers(scriptType, operationType);
 
     const requestId = generateRequestId();
     const now = new Date();
@@ -244,7 +259,7 @@ export async function createApprovalRequest(
       );
 
       console.log(
-        `[Approval] 审批请求已创建: ${requestId}, 状态: ${approvalRequest.status}`
+        `[Approval] 审批请求已创建: ${requestId}, 状态: ${approvalRequest.status}, 操作类型: ${operationType}`
       );
       return requestId;
     }

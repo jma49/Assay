@@ -5,6 +5,7 @@ import { clearScriptsCache } from "@/lib/cache-utils";
 import { validateApiAuth } from "@/lib/auth-utils";
 import { Permission, requirePermission, getUserRole } from "@/lib/rbac";
 import { createScriptVersion } from "@/lib/version-control";
+import { createApprovalRequest } from "@/lib/approval-workflow";
 
 // Helper function to get the MongoDB collection
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
@@ -33,26 +34,104 @@ interface UpdateScriptData {
   // scriptId is from URL param, not body for update
 }
 
-// Helper function: 检查 SQL 内容的安全性 (基础 DDL/DML 检查) - Copied from POST route for consistency
-function containsHarmfulSql(sqlContent: string): boolean {
-  const harmfulKeywords = [
+// 严格检查SQL内容，只允许安全的查询操作
+function isReadOnlyQuery(sqlContent: string): {
+  isValid: boolean;
+  reason?: string;
+} {
+  const upperSql = sqlContent.toUpperCase().trim();
+
+  // 完全禁止的危险关键词（DDL/DML操作）
+  const forbiddenKeywords = [
+    // 数据修改操作
     "INSERT",
     "UPDATE",
     "DELETE",
-    "DROP",
-    "CREATE",
-    "ALTER",
     "TRUNCATE",
+    "MERGE",
+    "UPSERT",
+    // 结构修改操作
+    "CREATE",
+    "DROP",
+    "ALTER",
+    "RENAME",
+    // 权限和用户管理
     "GRANT",
     "REVOKE",
+    "DENY",
+    // 事务控制（可能被滥用）
+    "COMMIT",
+    "ROLLBACK",
+    "SAVEPOINT",
+    // 存储过程和函数
+    "EXEC",
+    "EXECUTE",
+    "CALL",
+    "PROCEDURE",
+    "FUNCTION",
+    // 数据库管理
+    "BACKUP",
+    "RESTORE",
+    "LOAD",
+    "BULK",
+    // 系统命令
+    "SHUTDOWN",
+    "KILL",
+    "xp_",
+    "sp_",
   ];
-  const upperSql = sqlContent.toUpperCase();
-  return harmfulKeywords.some(
-    (keyword) =>
+
+  // 检查是否包含禁止的关键词
+  for (const keyword of forbiddenKeywords) {
+    if (
       upperSql.includes(keyword + " ") ||
       upperSql.includes(keyword + ";") ||
-      upperSql.includes(keyword + "\n")
-  );
+      upperSql.includes(keyword + "\n") ||
+      upperSql.includes(keyword + "\t") ||
+      upperSql.includes(keyword + "(") ||
+      upperSql.endsWith(keyword)
+    ) {
+      return {
+        isValid: false,
+        reason: `禁止使用关键词 "${keyword}"。系统仅允许查询操作（SELECT）。`,
+      };
+    }
+  }
+
+  // 移除注释和字符串，简化检查
+  const cleanSql = upperSql
+    .replace(/--.*$/gm, "") // 移除行注释
+    .replace(/\/\*[\s\S]*?\*\//g, "") // 移除块注释
+    .replace(/'[^']*'/g, "'STRING'") // 替换字符串字面量
+    .replace(/"[^"]*"/g, '"STRING"') // 替换双引号字符串
+    .replace(/\s+/g, " ") // 标准化空白字符
+    .trim();
+
+  // 检查是否以SELECT开头（最基本的要求）
+  if (
+    !cleanSql.startsWith("SELECT") &&
+    !cleanSql.startsWith("WITH") &&
+    !cleanSql.startsWith("EXPLAIN")
+  ) {
+    return {
+      isValid: false,
+      reason:
+        "SQL语句必须以 SELECT、WITH 或 EXPLAIN 开头。系统仅允许查询操作。",
+    };
+  }
+
+  // 额外的安全检查：检查是否有可疑的函数调用
+  const suspiciousFunctions = ["EXEC", "EVAL", "SYSTEM", "CMD", "SHELL"];
+  for (const func of suspiciousFunctions) {
+    if (cleanSql.includes(func + "(")) {
+      return {
+        isValid: false,
+        reason: `禁止使用函数 "${func}"。可能存在安全风险。`,
+      };
+    }
+  }
+
+  return { isValid: true };
 }
 
 // GET a single script by scriptId
@@ -179,23 +258,80 @@ export async function PUT(
       );
     }
 
-    // Security check for sqlContent if it is provided
-    if (
-      sqlContent &&
-      typeof sqlContent === "string" &&
-      containsHarmfulSql(sqlContent)
-    ) {
-      return NextResponse.json(
-        {
-          message:
-            "SQL content rejected due to potentially harmful DDL/DML commands.",
-        },
-        { status: 403 } // 403 Forbidden
-      );
+    // 严格的安全检查 - 只允许查询操作
+    if (sqlContent && typeof sqlContent === "string") {
+      const securityCheck = isReadOnlyQuery(sqlContent);
+      if (!securityCheck.isValid) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "SQL内容安全检查失败",
+            reason: securityCheck.reason,
+            policy:
+              "本系统严格限制只允许查询操作（SELECT语句）。禁止所有数据修改（INSERT/UPDATE/DELETE）和结构修改（CREATE/ALTER/DROP）操作。",
+          },
+          { status: 403 } // 403 Forbidden
+        );
+      }
     }
 
     const collection = await getSqlScriptsCollection();
 
+    // 检查脚本是否存在并获取原作者信息
+    const existingScript = await collection.findOne({ scriptId });
+    if (!existingScript) {
+      return NextResponse.json(
+        { message: `Script with ID '${scriptId}' not found` },
+        { status: 404 }
+      );
+    }
+
+    // 检查是否是修改别人的脚本
+    const currentUserEmail = userEmail.split("@")[0]; // 提取用户名部分
+    const scriptAuthor = existingScript.author;
+    const isModifyingOthersScript =
+      scriptAuthor && scriptAuthor !== currentUserEmail;
+
+    // 如果修改别人的脚本，需要提交审批申请
+    if (isModifyingOthersScript) {
+      const userRole = await getUserRole(user.id);
+      if (userRole) {
+        const requestId = await createApprovalRequest(
+          scriptId,
+          user.id,
+          userEmail,
+          userRole,
+          `修改脚本: ${existingScript.name}`,
+          `修改脚本 ${scriptId}`,
+          `用户 ${userEmail} 申请修改脚本 "${existingScript.name}" (原作者: ${scriptAuthor})`,
+          "medium",
+          "update"
+        );
+
+        if (requestId) {
+          console.log(`[Script] 修改脚本审批请求已创建: ${requestId}`);
+
+          return NextResponse.json(
+            {
+              success: true,
+              message: "修改脚本申请已提交，等待管理员审批",
+              approvalRequestId: requestId,
+              requiresApproval: true,
+              policy: "根据安全策略，修改别人创建的脚本需要管理员审批",
+              scriptAuthor: scriptAuthor,
+            },
+            { status: 200 }
+          );
+        } else {
+          return NextResponse.json(
+            { success: false, message: "创建修改审批请求失败" },
+            { status: 500 }
+          );
+        }
+      }
+    }
+
+    // 如果是修改自己的脚本，直接进行更新
     const updateData: Partial<UpdateScriptData> & { updatedAt?: Date } = {};
     // Build the update object with provided fields
     if (name !== undefined) updateData.name = name;
@@ -320,7 +456,7 @@ export async function DELETE(
       return authResult.response!;
     }
 
-    const { user } = authResult;
+    const { user, userEmail } = authResult;
 
     // 检查权限：需要 SCRIPT_DELETE 权限
     const permissionCheck = await requirePermission(
@@ -334,7 +470,7 @@ export async function DELETE(
       );
     }
 
-    const params = await paramsPromise; // Await the promise
+    const params = await paramsPromise;
     const { scriptId } = params;
 
     if (!scriptId) {
@@ -346,30 +482,54 @@ export async function DELETE(
 
     const collection = await getSqlScriptsCollection();
 
-    const result = await collection.deleteOne({ scriptId });
-
-    if (result.deletedCount === 0) {
+    // 检查脚本是否存在
+    const existingScript = await collection.findOne({ scriptId });
+    if (!existingScript) {
       return NextResponse.json(
-        {
-          message: `Script with ID '${scriptId}' not found, or already deleted`,
-        },
+        { message: `Script with ID '${scriptId}' not found` },
         { status: 404 }
       );
     }
 
-    // 清除 Redis 缓存
-    await clearScriptsCache();
+    // 根据新的审批策略：删除任意脚本需要提交申请给管理员
+    const userRole = await getUserRole(user.id);
+    if (userRole) {
+      // 创建删除审批请求
+      const requestId = await createApprovalRequest(
+        scriptId,
+        user.id,
+        userEmail,
+        userRole,
+        `删除脚本: ${existingScript.name}`,
+        `删除脚本 ${scriptId}`,
+        `用户 ${userEmail} 申请删除脚本 "${existingScript.name}"`,
+        "high", // 删除操作设为高优先级
+        "delete"
+      );
 
+      if (requestId) {
+        console.log(`[Script] 删除脚本审批请求已创建: ${requestId}`);
+
+        return NextResponse.json(
+          {
+            success: true,
+            message: "删除脚本申请已提交，等待管理员审批",
+            approvalRequestId: requestId,
+            requiresApproval: true,
+            policy: "根据安全策略，删除脚本需要管理员审批",
+          },
+          { status: 200 }
+        );
+      }
+    }
+
+    // 如果无法创建审批请求，返回错误
     return NextResponse.json(
-      { message: `Script '${scriptId}' deleted successfully` },
-      { status: 200 }
+      { success: false, message: "创建删除审批请求失败" },
+      { status: 500 }
     );
   } catch (error) {
-    // Similar to PUT, params.scriptId might be unavailable if paramsPromise rejected.
-    console.error(
-      `Error deleting script (ID might be unavailable if promise rejected):`,
-      error
-    );
+    console.error("Error deleting script:", error);
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
