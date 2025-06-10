@@ -12,9 +12,12 @@ import {
   Database,
   Search,
   Download,
+  Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import UserHeader from "@/components/UserHeader";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import ReactMarkdown from "react-markdown";
 
 // 基于SQL脚本实际输出的精确类型定义
 interface OrderDuplicateDetail {
@@ -144,6 +147,11 @@ export default function ViewExecutionResultPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState<number>(0);
+  
+  // AI错误分析相关状态
+  const [isAnalyzingError, setIsAnalyzingError] = useState(false);
+  const [errorAnalysis, setErrorAnalysis] = useState("");
+  const [isErrorAnalysisDialogOpen, setIsErrorAnalysisDialogOpen] = useState(false);
 
   // 可拖动滚动条状态
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -420,6 +428,46 @@ export default function ViewExecutionResultPage() {
     router.push("/");
   };
 
+  // AI分析错误函数
+  const handleAnalyzeError = async () => {
+    if (!result) {
+      return;
+    }
+
+    setIsAnalyzingError(true);
+    try {
+      const response = await fetch('/api/ai/analyze-error', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          sql: `-- Script ID: ${result.scriptId}\n-- 执行时间: ${result.executedAt}\n-- 脚本相关信息不可用`,
+          errorMessage: result.message 
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'AI分析错误失败');
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.analysis) {
+        setErrorAnalysis(data.analysis);
+        setIsErrorAnalysisDialogOpen(true);
+      } else {
+        throw new Error('AI返回数据格式错误');
+      }
+    } catch (error) {
+      console.error('AI分析错误失败:', error);
+      // 可以在这里显示错误提示，但为了简化暂时忽略
+    } finally {
+      setIsAnalyzingError(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
@@ -686,7 +734,7 @@ export default function ViewExecutionResultPage() {
                       <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
                     )}
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-semibold text-foreground">
                       {t.status}
                     </h3>
@@ -702,6 +750,28 @@ export default function ViewExecutionResultPage() {
                       {statusText}
                     </p>
                   </div>
+                  
+                  {/* AI错误分析按钮 - 仅在失败状态下显示 */}
+                  {(result.status === "failed" || (result.statusType !== "attention_needed" && result.status !== "success")) && (
+                    <Button
+                      onClick={handleAnalyzeError}
+                      disabled={isAnalyzingError}
+                      size="sm"
+                      className="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white"
+                    >
+                      {isAnalyzingError ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+                          分析中...
+                        </>
+                      ) : (
+                        <>
+                          <Brain className="h-4 w-4 mr-2" />
+                          AI分析错误
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -862,6 +932,25 @@ export default function ViewExecutionResultPage() {
           </span>
         </div>
       </div>
+
+      {/* AI错误分析结果弹窗 */}
+      <Dialog open={isErrorAnalysisDialogOpen} onOpenChange={setIsErrorAnalysisDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-red-600" />
+              AI错误分析结果
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            {errorAnalysis && (
+              <div className="prose dark:prose-invert max-w-none">
+                <ReactMarkdown>{errorAnalysis}</ReactMarkdown>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

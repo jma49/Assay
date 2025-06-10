@@ -13,10 +13,13 @@ import { useTheme } from "next-themes";
 // import { format } from 'sql-formatter';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Code, Sparkles, Eye, FileCode, Palette } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Code, Sparkles, Eye, FileCode, Palette, Wand2, Lightbulb, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardTranslationKeys } from "../dashboard/types";
 import EditorThemeSettings from "./EditorThemeSettings";
+import ReactMarkdown from "react-markdown";
 
 interface CodeMirrorEditorProps
   extends Omit<
@@ -57,6 +60,13 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   const [showPreview, setShowPreview] = useState(false);
   const [isFormatting, setIsFormatting] = useState(false);
   const [editorTheme, setEditorTheme] = useState<string>("eclipse");
+  
+  // AI功能相关状态
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isAnalysisDialogOpen, setIsAnalysisDialogOpen] = useState(false);
 
   // 获取当前应用的编辑器主题
   const getCurrentEditorTheme = React.useMemo(() => {
@@ -216,6 +226,99 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   const getLineCount = (text: string) => text.split("\n").length;
   const getCharCount = (text: string) => text.length;
 
+  // AI生成SQL函数
+  const handleGenerateSql = async () => {
+    if (!aiPrompt.trim()) {
+      toast.warning("请输入SQL生成描述");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const response = await fetch('/api/ai/generate-sql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: aiPrompt }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'AI生成SQL失败');
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.sql) {
+        onChange(data.sql);
+        setAiPrompt(""); // 清空输入
+        toast.success("AI已成功生成SQL语句", {
+          description: "SQL已插入到编辑器中",
+          duration: 3000,
+        });
+      } else {
+        throw new Error('AI返回数据格式错误');
+      }
+    } catch (error) {
+      console.error('AI生成SQL错误:', error);
+      toast.error("AI生成SQL失败", {
+        description: error instanceof Error ? error.message : '未知错误',
+        duration: 5000,
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // AI分析SQL函数
+  const handleAnalyzeSql = async (analysisType: 'explain' | 'optimize') => {
+    if (!value.trim()) {
+      toast.warning("请先输入SQL语句");
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      const response = await fetch('/api/ai/analyze-sql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          sql: value, 
+          analysisType 
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'AI分析SQL失败');
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.analysis) {
+        setAnalysisResult(data.analysis);
+        setIsAnalysisDialogOpen(true);
+        toast.success(analysisType === 'explain' ? "AI解释已生成" : "AI优化建议已生成", {
+          description: "点击查看详细分析结果",
+          duration: 3000,
+        });
+      } else {
+        throw new Error('AI返回数据格式错误');
+      }
+    } catch (error) {
+      console.error('AI分析SQL错误:', error);
+      toast.error("AI分析SQL失败", {
+        description: error instanceof Error ? error.message : '未知错误',
+        duration: 5000,
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* 编辑器工具栏 */}
@@ -369,6 +472,112 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
           </div>
         )}
       </div>
+
+      {/* AI功能区域 */}
+      <div className="space-y-4">
+        {/* AI生成SQL */}
+        <div className="p-4 bg-gradient-to-r from-purple-50/50 to-indigo-50/50 dark:from-purple-950/20 dark:to-indigo-950/20 rounded-lg border border-purple-200/60 dark:border-purple-800/60">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-1.5 rounded-md bg-purple-100 dark:bg-purple-900/40">
+              <Wand2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            </div>
+            <span className="font-medium text-sm text-purple-700 dark:text-purple-300">
+              AI辅助生成SQL
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="描述你需要的SQL查询，例如：查询所有用户的订单信息"
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleGenerateSql();
+                }
+              }}
+              className="flex-1"
+              disabled={isGenerating}
+            />
+            <Button
+              onClick={handleGenerateSql}
+              disabled={isGenerating || !aiPrompt.trim()}
+              className="px-4 bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600"
+            >
+              {isGenerating ? (
+                <>
+                  <div className="animate-spin h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  生成SQL
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* AI分析SQL */}
+        <div className="p-4 bg-gradient-to-r from-emerald-50/50 to-teal-50/50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-lg border border-emerald-200/60 dark:border-emerald-800/60">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-1.5 rounded-md bg-emerald-100 dark:bg-emerald-900/40">
+              <Lightbulb className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <span className="font-medium text-sm text-emerald-700 dark:text-emerald-300">
+              AI智能分析
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => handleAnalyzeSql('explain')}
+              disabled={isAnalyzing || !value.trim()}
+              variant="outline"
+              className="flex-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-300 dark:hover:bg-emerald-950/20"
+            >
+              {isAnalyzing ? (
+                <div className="animate-spin h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+              ) : (
+                <Lightbulb className="h-4 w-4 mr-2" />
+              )}
+              解释SQL
+            </Button>
+            <Button
+              onClick={() => handleAnalyzeSql('optimize')}
+              disabled={isAnalyzing || !value.trim()}
+              variant="outline"
+              className="flex-1 border-orange-300 text-orange-700 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-300 dark:hover:bg-orange-950/20"
+            >
+              {isAnalyzing ? (
+                <div className="animate-spin h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
+              ) : (
+                <Rocket className="h-4 w-4 mr-2" />
+              )}
+              优化建议
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* AI分析结果弹窗 */}
+      <Dialog open={isAnalysisDialogOpen} onOpenChange={setIsAnalysisDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-emerald-600" />
+              AI分析结果
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            {analysisResult && (
+              <div className="prose dark:prose-invert max-w-none">
+                <ReactMarkdown>{analysisResult}</ReactMarkdown>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* 编辑器提示信息 */}
       <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-lg border border-blue-200/60 dark:border-blue-800/60">
