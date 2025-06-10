@@ -1,6 +1,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { User } from "@clerk/nextjs/server";
+import { getUserRole, setUserRole, UserRole } from "@/lib/rbac";
 
 // 国际化文本
 export const authMessages = {
@@ -94,6 +95,19 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
           { status: 403 }
         ),
       } as const;
+    }
+
+    // 检查用户是否有角色，如果没有则分配默认角色
+    try {
+      const existingRole = await getUserRole(user.id);
+      if (!existingRole) {
+        // 为新用户分配默认角色（DEVELOPER）
+        console.log(`[Auth] 为新用户分配默认角色: ${userEmail}`);
+        await setUserRole(user.id, userEmail, UserRole.DEVELOPER, "system");
+      }
+    } catch (error) {
+      console.error("[Auth] 分配默认角色失败:", error);
+      // 不阻断认证流程，但记录错误
     }
 
     return {

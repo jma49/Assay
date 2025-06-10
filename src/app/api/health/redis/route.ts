@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import redisClient from "@/lib/redis";
+import redis, { testRedisConnection } from "@/lib/redis";
 import batchExecutionCache from "@/services/batch-execution-cache";
 
 /**
@@ -10,7 +10,7 @@ export async function GET() {
   const startTime = Date.now();
 
   try {
-    const isConnected = await redisClient.testConnection();
+    const isConnected = await testRedisConnection();
     const responseTime = Date.now() - startTime;
 
     if (!isConnected) {
@@ -27,14 +27,13 @@ export async function GET() {
     }
 
     const stats = await batchExecutionCache.getExecutionStats();
-    const connectionStatus = redisClient.getConnectionStatus();
 
     return NextResponse.json({
       success: true,
       status: "connected",
       message: "Redis服务正常",
       responseTime,
-      connectionStatus,
+      connectionStatus: true, // Upstash Redis 总是连接状态
       stats: {
         activeExecutions: stats.activeCount,
         totalKeys: stats.totalExecutions,
@@ -71,17 +70,18 @@ export async function POST() {
     const testKey = `health_check_${Date.now()}`;
     const testValue = { test: true, timestamp: new Date().toISOString() };
 
-    const client = await redisClient.getClient();
-
     // 写入测试
-    await client.setex(testKey, 60, JSON.stringify(testValue));
+    await redis.setex(testKey, 60, JSON.stringify(testValue));
 
     // 读取测试
-    const retrieved = await client.get(testKey);
-    const parsedValue = JSON.parse(retrieved || "{}");
+    const retrieved = await redis.get(testKey);
+    if (!retrieved) {
+      throw new Error("读取测试失败：数据为空");
+    }
+    const parsedValue = JSON.parse(String(retrieved));
 
     // 删除测试
-    await client.del(testKey);
+    await redis.del(testKey);
 
     const responseTime = Date.now() - startTime;
 

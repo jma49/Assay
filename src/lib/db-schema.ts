@@ -1,4 +1,4 @@
-import redisClient from "./redis";
+import redis from "./redis";
 import { query } from "./db";
 
 /**
@@ -109,12 +109,11 @@ export async function getCachedSchema(): Promise<string> {
 
   try {
     // 尝试从缓存获取
-    const redis = await redisClient.getClient();
     const cachedSchema = await redis.get(cacheKey);
 
     if (cachedSchema) {
       console.log("[DB Schema] 从缓存获取表结构");
-      return cachedSchema;
+      return String(cachedSchema);
     }
 
     // 缓存不存在，从数据库查询
@@ -139,7 +138,6 @@ export async function getCachedSchema(): Promise<string> {
  */
 export async function clearSchemaCache(): Promise<void> {
   try {
-    const redis = await redisClient.getClient();
     await redis.del("db_schema_cache");
     console.log("[DB Schema] 表结构缓存已清除");
   } catch (error) {

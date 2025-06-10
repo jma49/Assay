@@ -1,6 +1,10 @@
 import { NextResponse, NextRequest } from "next/server";
 import mongoDbClient from "@/lib/mongodb";
 import { Collection, Document } from "mongodb";
+import { clearScriptsCache } from "@/app/api/list-scripts/route";
+import { validateApiAuth } from "@/lib/auth-utils";
+import { Permission, requirePermission, getUserRole } from "@/lib/rbac";
+import { createScriptVersion } from "@/lib/version-control";
 
 // Helper function to get the MongoDB collection
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
@@ -57,6 +61,26 @@ export async function GET(
   { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
 ) {
   try {
+    // 验证用户认证
+    const authResult = await validateApiAuth("zh");
+    if (!authResult.isValid) {
+      return authResult.response!;
+    }
+
+    const { user } = authResult;
+
+    // 检查权限：需要 SCRIPT_READ 权限
+    const permissionCheck = await requirePermission(
+      user.id,
+      Permission.SCRIPT_READ
+    );
+    if (!permissionCheck.authorized) {
+      return NextResponse.json(
+        { success: false, message: "权限不足：无法查看脚本" },
+        { status: 403 }
+      );
+    }
+
     const params = await paramsPromise; // Await the promise
     const { scriptId } = params;
 
@@ -103,6 +127,26 @@ export async function PUT(
   { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
 ) {
   try {
+    // 验证用户认证
+    const authResult = await validateApiAuth("zh");
+    if (!authResult.isValid) {
+      return authResult.response!;
+    }
+
+    const { user, userEmail } = authResult;
+
+    // 检查权限：需要 SCRIPT_UPDATE 权限
+    const permissionCheck = await requirePermission(
+      user.id,
+      Permission.SCRIPT_UPDATE
+    );
+    if (!permissionCheck.authorized) {
+      return NextResponse.json(
+        { success: false, message: "权限不足：无法更新脚本" },
+        { status: 403 }
+      );
+    }
+
     const params = await paramsPromise; // Await the promise
     const { scriptId } = params;
     const body = await request.json();
@@ -205,8 +249,38 @@ export async function PUT(
       );
     }
 
+    // 获取更新后的脚本数据，创建新版本
+    const updatedScript = await collection.findOne({ scriptId });
+    if (updatedScript) {
+      const userRole = await getUserRole(user.id);
+      if (userRole) {
+        await createScriptVersion(
+          scriptId,
+          {
+            name: updatedScript.name,
+            cnName: updatedScript.cnName,
+            description: updatedScript.description,
+            cnDescription: updatedScript.cnDescription,
+            scope: updatedScript.scope,
+            cnScope: updatedScript.cnScope,
+            author: updatedScript.author,
+            hashtags: updatedScript.hashtags,
+            sqlContent: updatedScript.sqlContent,
+          },
+          user.id,
+          userEmail,
+          "update",
+          "脚本更新",
+          "patch"
+        );
+      }
+    }
+
+    // 清除 Redis 缓存
+    await clearScriptsCache();
+
     return NextResponse.json(
-      { message: `Script '${scriptId}' updated successfully` },
+      { success: true, message: `脚本 '${scriptId}' 更新成功，已创建新版本` },
       { status: 200 }
     );
   } catch (error) {
@@ -240,6 +314,26 @@ export async function DELETE(
   { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
 ) {
   try {
+    // 验证用户认证
+    const authResult = await validateApiAuth("zh");
+    if (!authResult.isValid) {
+      return authResult.response!;
+    }
+
+    const { user } = authResult;
+
+    // 检查权限：需要 SCRIPT_DELETE 权限
+    const permissionCheck = await requirePermission(
+      user.id,
+      Permission.SCRIPT_DELETE
+    );
+    if (!permissionCheck.authorized) {
+      return NextResponse.json(
+        { success: false, message: "权限不足：无法删除脚本" },
+        { status: 403 }
+      );
+    }
+
     const params = await paramsPromise; // Await the promise
     const { scriptId } = params;
 
@@ -262,6 +356,9 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    // 清除 Redis 缓存
+    await clearScriptsCache();
 
     return NextResponse.json(
       { message: `Script '${scriptId}' deleted successfully` },

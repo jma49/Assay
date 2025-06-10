@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import mongoDbClient from "@/lib/mongodb";
+import redis from "@/lib/redis";
 import { Collection, Document } from "mongodb";
+import { validateApiAuth } from "@/lib/auth-utils";
+import { Permission, requirePermission } from "@/lib/rbac";
 
 interface ScriptInfo {
   scriptId: string;
@@ -16,22 +19,81 @@ interface ScriptInfo {
   hashtags?: string[];
 }
 
-// 简单的内存缓存
-interface CacheItem {
-  data: ScriptInfo[];
-  timestamp: number;
-}
-
-let scriptsCache: CacheItem | null = null;
-const CACHE_TTL = 5 * 60 * 1000; // 5分钟缓存
+// Redis 缓存键和TTL常量
+const SCRIPTS_CACHE_KEY = "scripts:list";
+const CACHE_TTL = 5 * 60; // 5分钟缓存（秒）
 
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
   const db = await mongoDbClient.getDb();
   return db.collection("sql_scripts");
 }
 
+/**
+ * 从 Redis 获取缓存的脚本列表
+ */
+async function getCachedScripts(): Promise<ScriptInfo[] | null> {
+  try {
+    const cachedData = await redis.get(SCRIPTS_CACHE_KEY);
+
+    if (cachedData) {
+      console.log("[API] 从 Redis 缓存获取脚本列表");
+      return JSON.parse(String(cachedData));
+    }
+
+    return null;
+  } catch (error) {
+    console.error("[API] Redis 缓存读取失败:", error);
+    return null;
+  }
+}
+
+/**
+ * 将脚本列表存储到 Redis 缓存
+ */
+async function setCachedScripts(scripts: ScriptInfo[]): Promise<void> {
+  try {
+    await redis.setex(SCRIPTS_CACHE_KEY, CACHE_TTL, JSON.stringify(scripts));
+    console.log("[API] 脚本列表已缓存到 Redis，TTL: 5分钟");
+  } catch (error) {
+    console.error("[API] Redis 缓存写入失败:", error);
+  }
+}
+
+/**
+ * 清除脚本列表的 Redis 缓存
+ * 供其他 API 路由调用，当脚本被创建、更新或删除时
+ */
+export async function clearScriptsCache(): Promise<void> {
+  try {
+    await redis.del(SCRIPTS_CACHE_KEY);
+    console.log("[API] 脚本列表缓存已清除");
+  } catch (error) {
+    console.error("[API] 清除 Redis 缓存失败:", error);
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
+    // 验证用户认证
+    const authResult = await validateApiAuth("zh");
+    if (!authResult.isValid) {
+      return authResult.response!;
+    }
+
+    const { user } = authResult;
+
+    // 检查权限：需要 SCRIPT_READ 权限
+    const permissionCheck = await requirePermission(
+      user.id,
+      Permission.SCRIPT_READ
+    );
+    if (!permissionCheck.authorized) {
+      return NextResponse.json(
+        { success: false, message: "权限不足：无法查看脚本列表" },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
 
     // 获取查询参数
@@ -40,53 +102,51 @@ export async function GET(request: NextRequest) {
     const includeScheduledOnly = searchParams.get("scheduled_only") === "true";
     const forceRefresh = searchParams.get("force_refresh") === "true";
 
-    // 检查缓存
-    const now = Date.now();
-    if (
-      !forceRefresh &&
-      scriptsCache &&
-      now - scriptsCache.timestamp < CACHE_TTL
-    ) {
-      console.log("API: Returning cached scripts data");
-      let filteredData = scriptsCache.data;
+    // 检查 Redis 缓存
+    if (!forceRefresh) {
+      const cachedScripts = await getCachedScripts();
+      if (cachedScripts) {
+        let filteredData = cachedScripts;
 
-      // 应用客户端过滤
-      if (includeScheduledOnly) {
-        filteredData = filteredData.filter(
-          (script) => script.isScheduled === true
-        );
+        // 应用客户端过滤
+        if (includeScheduledOnly) {
+          filteredData = filteredData.filter(
+            (script) => script.isScheduled === true
+          );
+        }
+
+        // 应用客户端排序
+        filteredData.sort((a, b) => {
+          let aVal, bVal;
+
+          if (sortBy === "createdAt") {
+            aVal = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            bVal = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          } else {
+            aVal = (a.name || "").toLowerCase();
+            bVal = (b.name || "").toLowerCase();
+          }
+
+          if (sortOrder === "desc") {
+            return aVal < bVal ? 1 : -1;
+          }
+          return aVal > bVal ? 1 : -1;
+        });
+
+        return NextResponse.json({
+          data: filteredData,
+          cached: true,
+          cache_source: "redis",
+          query_info: {
+            sort_by: sortBy,
+            sort_order: sortOrder,
+            scheduled_only: includeScheduledOnly,
+          },
+        });
       }
-
-      // 应用客户端排序
-      filteredData.sort((a, b) => {
-        let aVal, bVal;
-
-        if (sortBy === "createdAt") {
-          aVal = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          bVal = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        } else {
-          aVal = (a.name || "").toLowerCase();
-          bVal = (b.name || "").toLowerCase();
-        }
-
-        if (sortOrder === "desc") {
-          return aVal < bVal ? 1 : -1;
-        }
-        return aVal > bVal ? 1 : -1;
-      });
-
-      return NextResponse.json({
-        data: filteredData,
-        cached: true,
-        query_info: {
-          sort_by: sortBy,
-          sort_order: sortOrder,
-          scheduled_only: includeScheduledOnly,
-        },
-      });
     }
 
-    console.log("API: Fetching fresh scripts data from MongoDB");
+    console.log("[API] 从 MongoDB 获取最新脚本数据");
 
     const collection = await getSqlScriptsCollection();
 
@@ -130,7 +190,7 @@ export async function GET(request: NextRequest) {
 
     const queryTime = Date.now() - startTime;
     console.log(
-      `API: MongoDB query completed in ${queryTime}ms, found ${scriptsFromDb.length} scripts`
+      `[API] MongoDB 查询完成，耗时 ${queryTime}ms，找到 ${scriptsFromDb.length} 个脚本`
     );
 
     const scriptsForFrontend: ScriptInfo[] = scriptsFromDb.map((doc) => ({
@@ -147,18 +207,15 @@ export async function GET(request: NextRequest) {
       hashtags: doc.hashtags as string[] | undefined,
     }));
 
-    // 更新缓存（只在获取所有脚本时缓存）
+    // 将数据缓存到 Redis（只在获取所有脚本时缓存）
     if (!includeScheduledOnly) {
-      scriptsCache = {
-        data: scriptsForFrontend,
-        timestamp: now,
-      };
-      console.log("API: Scripts data cached");
+      await setCachedScripts(scriptsForFrontend);
     }
 
     return NextResponse.json({
       data: scriptsForFrontend,
       cached: false,
+      cache_source: "mongodb",
       query_time_ms: queryTime,
       query_info: {
         sort_by: sortBy,
@@ -167,7 +224,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error fetching script list from MongoDB:", error);
+    console.error("[API] 获取脚本列表失败:", error);
 
     return NextResponse.json(
       {
