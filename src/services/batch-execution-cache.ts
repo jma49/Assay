@@ -90,7 +90,10 @@ export class BatchExecutionCache {
         return null;
       }
 
-      return JSON.parse(data as string) as BatchExecutionState;
+      // 处理 Upstash Redis 自动反序列化的情况
+      return (
+        typeof data === "string" ? JSON.parse(data) : data
+      ) as BatchExecutionState;
     } catch (error) {
       devError("[BatchCache] 获取执行记录失败:", error);
       throw new Error(
@@ -232,7 +235,12 @@ export class BatchExecutionCache {
         return null;
       }
 
-      const execution = JSON.parse(result) as BatchExecutionState;
+      // 处理 Upstash Redis 自动反序列化的情况
+      // 如果 result 已经是对象（Upstash自动反序列化），直接使用
+      // 如果 result 是字符串，则需要解析
+      const execution = (
+        typeof result === "string" ? JSON.parse(result) : result
+      ) as BatchExecutionState;
 
       // 清理已完成的执行记录
       if (!execution.isActive) {

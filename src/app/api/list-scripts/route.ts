@@ -41,6 +41,12 @@ async function getCachedScripts(): Promise<ScriptInfo[] | null> {
 
     console.log("[API] 从 Redis 缓存获取脚本列表");
 
+    // 处理 Upstash Redis 自动反序列化的情况
+    if (typeof cachedData === "object" && Array.isArray(cachedData)) {
+      // 如果已经是数组对象，直接返回（Upstash 自动反序列化）
+      return cachedData as ScriptInfo[];
+    }
+
     // 检查数据类型和内容
     let dataToParseString = "";
 
