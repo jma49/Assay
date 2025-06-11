@@ -5,7 +5,12 @@ import { clearScriptsCache } from "@/lib/cache-utils";
 import { validateApiAuth } from "@/lib/auth-utils";
 import { Permission, requirePermission, getUserRole } from "@/lib/rbac";
 import { createScriptVersion } from "@/lib/version-control";
-import { createApprovalRequest } from "@/lib/approval-workflow";
+import {
+  createApprovalRequest,
+  isAutoApprovalEligible,
+  analyzeScriptType,
+} from "@/lib/approval-workflow";
+import { recordEditHistory } from "@/lib/edit-history";
 
 // Helper function to get the MongoDB collection
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
@@ -296,31 +301,72 @@ export async function PUT(
     if (isModifyingOthersScript) {
       const userRole = await getUserRole(user.id);
       if (userRole) {
+        // 检查是否符合自动审批条件
+        const autoApprovalEligible = isAutoApprovalEligible(
+          analyzeScriptType(sqlContent || "SELECT 1"), // 使用现有SQL或默认查询
+          userRole,
+          "update"
+        );
+
         const requestId = await createApprovalRequest(
           scriptId,
           user.id,
           userEmail,
           userRole,
+          sqlContent || "",
           `修改脚本: ${existingScript.name}`,
-          `修改脚本 ${scriptId}`,
           `用户 ${userEmail} 申请修改脚本 "${existingScript.name}" (原作者: ${scriptAuthor})`,
           "medium",
-          "update"
+          "update",
+          {
+            name: name || existingScript.name,
+            cnName: cnName !== undefined ? cnName : existingScript.cnName,
+            description:
+              description !== undefined
+                ? description
+                : existingScript.description,
+            cnDescription:
+              cnDescription !== undefined
+                ? cnDescription
+                : existingScript.cnDescription,
+            scope: scope !== undefined ? scope : existingScript.scope,
+            cnScope: cnScope !== undefined ? cnScope : existingScript.cnScope,
+            author: author !== undefined ? author : existingScript.author,
+            hashtags:
+              hashtags !== undefined ? hashtags : existingScript.hashtags,
+            sqlContent:
+              sqlContent !== undefined ? sqlContent : existingScript.sqlContent,
+            isScheduled:
+              isScheduled !== undefined
+                ? isScheduled
+                : existingScript.isScheduled,
+            cronSchedule:
+              cronSchedule !== undefined
+                ? cronSchedule
+                : existingScript.cronSchedule,
+          }
         );
 
         if (requestId) {
           console.log(`[Script] 修改脚本审批请求已创建: ${requestId}`);
 
-          return NextResponse.json(
-            {
-              success: true,
-              message: "修改脚本申请已提交，等待管理员审批",
-              approvalRequestId: requestId,
-              requiresApproval: true,
-              policy: "根据安全策略，修改别人创建的脚本需要管理员审批",
-              scriptAuthor: scriptAuthor,
-            },
-            { status: 200 }
+          // 如果不符合自动审批条件，返回等待审批的响应
+          if (!autoApprovalEligible) {
+            return NextResponse.json(
+              {
+                success: true,
+                message: "修改脚本申请已提交，等待管理员审批",
+                approvalRequestId: requestId,
+                requiresApproval: true,
+                policy: "根据安全策略，修改别人创建的脚本需要管理员审批",
+                scriptAuthor: scriptAuthor,
+              },
+              { status: 200 }
+            );
+          }
+          // 如果符合自动审批条件（管理员），则继续执行下面的更新逻辑
+          console.log(
+            `[Script] 管理员修改脚本，自动审批通过，继续执行更新: ${scriptId}`
           );
         } else {
           return NextResponse.json(
@@ -415,10 +461,12 @@ export async function PUT(
     // 清除 Redis 缓存
     await clearScriptsCache();
 
-    return NextResponse.json(
-      { success: true, message: `脚本 '${scriptId}' 更新成功，已创建新版本` },
-      { status: 200 }
-    );
+    // 根据是否是修改别人脚本的自动审批来调整返回消息
+    const message = isModifyingOthersScript
+      ? `脚本 '${scriptId}' 更新成功（管理员自动审批通过），已创建新版本`
+      : `脚本 '${scriptId}' 更新成功，已创建新版本`;
+
+    return NextResponse.json({ success: true, message }, { status: 200 });
   } catch (error) {
     // It's tricky to get paramsPromise reliably here if the above await failed.
     // For logging, it might be better to extract it from the request URL if possible or log a generic message.
@@ -494,40 +542,89 @@ export async function DELETE(
     // 根据新的审批策略：删除任意脚本需要提交申请给管理员
     const userRole = await getUserRole(user.id);
     if (userRole) {
+      // 检查是否符合自动审批条件
+      const autoApprovalEligible = isAutoApprovalEligible(
+        analyzeScriptType(existingScript.sqlContent || "SELECT 1"),
+        userRole,
+        "delete"
+      );
+
       // 创建删除审批请求
       const requestId = await createApprovalRequest(
         scriptId,
         user.id,
         userEmail,
         userRole,
+        existingScript.sqlContent || "SELECT 1", // SQL内容参数
         `删除脚本: ${existingScript.name}`,
-        `删除脚本 ${scriptId}`,
         `用户 ${userEmail} 申请删除脚本 "${existingScript.name}"`,
         "high", // 删除操作设为高优先级
-        "delete"
+        "delete",
+        existingScript as unknown as Record<string, unknown> // 传递原始脚本数据
       );
 
       if (requestId) {
         console.log(`[Script] 删除脚本审批请求已创建: ${requestId}`);
 
+        // 如果不符合自动审批条件，返回等待审批的响应
+        if (!autoApprovalEligible) {
+          return NextResponse.json(
+            {
+              success: true,
+              message: "删除脚本申请已提交，等待管理员审批",
+              approvalRequestId: requestId,
+              requiresApproval: true,
+              policy: "根据安全策略，删除脚本需要管理员审批",
+            },
+            { status: 200 }
+          );
+        }
+        // 如果符合自动审批条件（管理员），则继续执行下面的删除逻辑
+        console.log(
+          `[Script] 管理员删除脚本，自动审批通过，继续执行删除: ${scriptId}`
+        );
+      } else {
         return NextResponse.json(
-          {
-            success: true,
-            message: "删除脚本申请已提交，等待管理员审批",
-            approvalRequestId: requestId,
-            requiresApproval: true,
-            policy: "根据安全策略，删除脚本需要管理员审批",
-          },
-          { status: 200 }
+          { success: false, message: "创建删除审批请求失败" },
+          { status: 500 }
         );
       }
     }
 
-    // 如果无法创建审批请求，返回错误
-    return NextResponse.json(
-      { success: false, message: "创建删除审批请求失败" },
-      { status: 500 }
-    );
+    // 执行实际的删除操作
+    const deleteResult = await collection.deleteOne({ scriptId });
+
+    if (deleteResult.deletedCount === 0) {
+      return NextResponse.json(
+        {
+          message: `Script with ID '${scriptId}' not found or already deleted`,
+        },
+        { status: 404 }
+      );
+    }
+
+    // 记录删除历史
+    await recordEditHistory({
+      scriptId,
+      operation: "delete",
+      oldData: existingScript as unknown as Record<string, unknown>,
+      // newData is not needed for delete
+    });
+
+    // 清除 Redis 缓存
+    await clearScriptsCache();
+
+    const message =
+      userRole &&
+      isAutoApprovalEligible(
+        analyzeScriptType(existingScript.sqlContent || "SELECT 1"),
+        userRole,
+        "delete"
+      )
+        ? `脚本 '${scriptId}' 删除成功（管理员自动审批通过）`
+        : `脚本 '${scriptId}' 删除成功`;
+
+    return NextResponse.json({ success: true, message }, { status: 200 });
   } catch (error) {
     console.error("Error deleting script:", error);
     const errorMessage =

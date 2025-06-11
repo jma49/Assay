@@ -3,19 +3,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CheckCircle, XCircle, Clock, AlertTriangle, FileText, User, Calendar } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Clock, AlertTriangle, FileText, User, Calendar, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { ApprovalStatus, ScriptType, ApprovalRequestDto } from '@/lib/types/approval';
 import { useLanguage } from '@/components/LanguageProvider';
-import { dashboardTranslations, DashboardTranslationKeys } from '@/components/dashboard/types';
+import { dashboardTranslations, DashboardTranslationKeys, ITEMS_PER_PAGE } from '@/components/dashboard/types';
 import UserHeader from '@/components/UserHeader';
 
 // 状态信息映射
@@ -78,15 +77,22 @@ export default function ApprovalsPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const { language } = useLanguage();
+  
   const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
   const [approvalHistory, setApprovalHistory] = useState<ApprovalRequest[]>([]);
-
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [selectedApproval, setSelectedApproval] = useState<ApprovalRequest | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [approvalComment, setApprovalComment] = useState('');
-  const [approvalAction, setApprovalAction] = useState<'approve' | 'reject'>('approve');
   const [error, setError] = useState<string | null>(null);
+  
+  // 分页相关状态
+  const [currentPagePending, setCurrentPagePending] = useState(1);
+  const [currentPageHistory, setCurrentPageHistory] = useState(1);
+  const [pageInputPending, setPageInputPending] = useState("");
+  const [pageInputHistory, setPageInputHistory] = useState("");
+  
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedApproval, setSelectedApproval] = useState<ApprovalRequest | null>(null);
+  const [approvalAction, setApprovalAction] = useState<'approve' | 'reject'>('approve');
+  const [approvalComment, setApprovalComment] = useState('');
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('pending');
 
   // 翻译函数
@@ -97,6 +103,95 @@ export default function ApprovalsPage() {
     },
     [language]
   );
+
+  // 分页逻辑 - 待审批
+  const totalPendingApprovals = pendingApprovals.length;
+  const totalPagesPending = Math.ceil(totalPendingApprovals / ITEMS_PER_PAGE);
+  const startIndexPending = (currentPagePending - 1) * ITEMS_PER_PAGE;
+  const endIndexPending = startIndexPending + ITEMS_PER_PAGE;
+  const paginatedPendingApprovals = pendingApprovals.slice(startIndexPending, endIndexPending);
+
+  // 分页逻辑 - 历史记录
+  const totalHistoryApprovals = approvalHistory.length;
+  const totalPagesHistory = Math.ceil(totalHistoryApprovals / ITEMS_PER_PAGE);
+  const startIndexHistory = (currentPageHistory - 1) * ITEMS_PER_PAGE;
+  const endIndexHistory = startIndexHistory + ITEMS_PER_PAGE;
+  const paginatedHistoryApprovals = approvalHistory.slice(startIndexHistory, endIndexHistory);
+
+  // 分页相关函数 - 待审批
+  const handlePageInputChangePending = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageInputPending(e.target.value);
+  };
+
+  const handlePageInputSubmitPending = (e: React.FormEvent) => {
+    e.preventDefault();
+    const page = parseInt(pageInputPending, 10);
+    if (!isNaN(page) && page >= 1 && page <= totalPagesPending) {
+      setCurrentPagePending(page);
+      setPageInputPending("");
+    }
+  };
+
+  const handlePageInputKeyDownPending = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handlePageInputSubmitPending(e);
+    }
+    if (
+      !/[\d\b]/.test(e.key) &&
+      !["ArrowLeft", "ArrowRight", "Delete", "Backspace", "Tab"].includes(e.key)
+    ) {
+      e.preventDefault();
+    }
+  };
+
+  // 分页相关函数 - 历史记录
+  const handlePageInputChangeHistory = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageInputHistory(e.target.value);
+  };
+
+  const handlePageInputSubmitHistory = (e: React.FormEvent) => {
+    e.preventDefault();
+    const page = parseInt(pageInputHistory, 10);
+    if (!isNaN(page) && page >= 1 && page <= totalPagesHistory) {
+      setCurrentPageHistory(page);
+      setPageInputHistory("");
+    }
+  };
+
+  const handlePageInputKeyDownHistory = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handlePageInputSubmitHistory(e);
+    }
+    if (
+      !/[\d\b]/.test(e.key) &&
+      !["ArrowLeft", "ArrowRight", "Delete", "Backspace", "Tab"].includes(e.key)
+    ) {
+      e.preventDefault();
+    }
+  };
+
+  // 格式化分页信息
+  const formatPageInfoPending = () => {
+    const start = startIndexPending + 1;
+    const end = Math.min(endIndexPending, totalPendingApprovals);
+    return t("pageInfo")
+      .replace("%s", String(start))
+      .replace("%s", String(end))
+      .replace("%s", String(totalPendingApprovals))
+      .replace("%s", String(currentPagePending))
+      .replace("%s", String(totalPagesPending));
+  };
+
+  const formatPageInfoHistory = () => {
+    const start = startIndexHistory + 1;
+    const end = Math.min(endIndexHistory, totalHistoryApprovals);
+    return t("pageInfo")
+      .replace("%s", String(start))
+      .replace("%s", String(end))
+      .replace("%s", String(totalHistoryApprovals))
+      .replace("%s", String(currentPageHistory))
+      .replace("%s", String(totalPagesHistory));
+  };
 
   // 检查当前用户权限
   useEffect(() => {
@@ -173,7 +268,7 @@ export default function ApprovalsPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          approvalId: selectedApproval.id,
+          requestId: selectedApproval.id,
           action: approvalAction,
           comment: approvalComment.trim() || undefined,
         }),
@@ -305,13 +400,14 @@ export default function ApprovalsPage() {
                   size="sm"
                   onClick={() => openApprovalDialog(approval, 'approve')}
                   disabled={actionLoading === approval.id}
+                  className="bg-green-600 hover:bg-green-700 text-white"
                 >
                   <CheckCircle className="h-4 w-4 mr-1" />
                   {t('approve')}
                 </Button>
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="destructive"
                   onClick={() => openApprovalDialog(approval, 'reject')}
                   disabled={actionLoading === approval.id}
                 >
@@ -321,147 +417,249 @@ export default function ApprovalsPage() {
               </div>
             )}
           </div>
-
-          <div className="border-t pt-3">
-            <div className="text-xs text-muted-foreground">
-              {t('requiredRoles')}: {approval.requiredApprovers.join(', ')} | 
-              {t('progress')}: {approval.currentApprovers.length}/{approval.requiredApprovers.length} |
-              {approval.isComplete ? ` ${t('approvalComplete')}` : ` ${t('pendingApproval')}`}
-            </div>
-          </div>
         </CardContent>
       </Card>
+    );
+  };
+
+  // 渲染分页组件
+  const renderPagination = (
+    currentPage: number,
+    totalPages: number,
+    totalItems: number,
+    pageInput: string,
+    onPageChange: (page: number) => void,
+    onPageInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void,
+    onPageInputSubmit: (e: React.FormEvent) => void,
+    onPageInputKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void,
+    formatPageInfo: () => string
+  ) => {
+    if (totalPages <= 1) return null;
+
+    return (
+      <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t px-5 py-3 text-xs gap-2">
+        <div className="text-muted-foreground text-center sm:text-left">
+          {formatPageInfo()}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
+            disabled={currentPage === 1}
+            className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
+          >
+            <ChevronLeft className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">{t("previous")}</span>
+          </Button>
+
+          <div className="flex items-center gap-1.5 px-2">
+            <div className="hidden md:flex items-center gap-1">
+              {currentPage > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onPageChange(1)}
+                  className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground"
+                  title={t("jumpToFirst")}
+                >
+                  1
+                </Button>
+              )}
+              {currentPage > 3 && (
+                <span className="text-muted-foreground">...</span>
+              )}
+            </div>
+
+            <span className="text-muted-foreground text-xs">
+              {t("pageNumber")}
+            </span>
+            <span className="font-medium text-xs min-w-[1.5rem] text-center">
+              {currentPage}
+            </span>
+            <span className="text-muted-foreground text-xs">
+              {t("of")} {totalPages} {t("pages")}
+            </span>
+
+            <div className="hidden md:flex items-center gap-1">
+              {currentPage < totalPages - 2 && (
+                <span className="text-muted-foreground">...</span>
+              )}
+              {currentPage < totalPages && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onPageChange(totalPages)}
+                  className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground"
+                  title={t("jumpToLast")}
+                >
+                  {totalPages}
+                </Button>
+              )}
+            </div>
+
+            {totalPages > 2 && (
+              <div className="hidden lg:flex items-center gap-1 ml-2">
+                <MoreHorizontal className="h-3 w-3 text-muted-foreground" />
+                <form
+                  onSubmit={onPageInputSubmit}
+                  className="flex items-center gap-1"
+                >
+                  <input
+                    type="number"
+                    min="1"
+                    max={totalPages}
+                    value={pageInput}
+                    onChange={onPageInputChange}
+                    onKeyDown={onPageInputKeyDown}
+                    placeholder={t("jumpToPage")}
+                    className="w-12 h-6 px-1 text-xs text-center border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    size="sm"
+                    disabled={
+                      !pageInput ||
+                      isNaN(parseInt(pageInput, 10)) ||
+                      parseInt(pageInput, 10) < 1 ||
+                      parseInt(pageInput, 10) > totalPages
+                    }
+                    className="h-6 px-2 text-xs"
+                    title={t("pageJump")}
+                  >
+                    {t("pageJump")}
+                  </Button>
+                </form>
+              </div>
+            )}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
+          >
+            <span className="hidden sm:inline">{t("next")}</span>
+            <ChevronRight className="h-3.5 w-3.5 ml-1" />
+          </Button>
+        </div>
+      </CardFooter>
     );
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
       <UserHeader />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        <div className="space-y-8 animate-fadeIn">
-          {/* Header Section */}
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="space-y-8">
           <header className="text-center lg:text-left">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-              <div className="space-y-3">
-                <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent leading-tight py-1">
-                  {t('approvalsTitle')}
-                </h1>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  {t('approvalsDescription')}
-                </p>
-              </div>
-            </div>
+            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent leading-tight py-1">
+              {t('approvalsTitle')}
+            </h1>
+            <p className="text-lg text-muted-foreground mt-3">
+              {t('approvalsDescription')}
+            </p>
           </header>
 
-          {/* Error Display */}
-          {error && (
-            <Alert className="border-destructive bg-destructive/10">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription className="text-destructive">
-                {error}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Main Content */}
-          {(
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-2">
-                <TabsTrigger value="pending" className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4" />
-                  <span>{t('pendingApprovals')} ({pendingApprovals.length})</span>
-                </TabsTrigger>
-                <TabsTrigger value="history" className="flex items-center space-x-2">
-                  <FileText className="h-4 w-4" />
-                  <span>{t('approvalHistory')} ({approvalHistory.length})</span>
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="pending">
-                <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
-                  {/* 装饰性背景 */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-                  
-                  <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-xl bg-yellow-500/10 ring-2 ring-yellow-500/20 group-hover:ring-yellow-500/30 transition-all duration-300">
-                        <Clock className="h-6 w-6 text-yellow-600 group-hover:scale-110 transition-transform duration-300" />
-                      </div>
-                      <div className="space-y-2">
-                        <CardTitle className="text-2xl font-bold text-foreground leading-relaxed">
-                          {t('pendingScripts')}
-                        </CardTitle>
-                        <CardDescription className="text-muted-foreground">
-                          {t('pendingScriptsDesc')}
-                        </CardDescription>
-                      </div>
+          <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
+            {/* 装饰性背景 */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+            
+            <CardContent className="relative p-6">
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/50 rounded-xl p-1 border border-border/30">
+                  <TabsTrigger 
+                    value="pending"
+                    className="relative rounded-lg font-medium transition-all duration-300 data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-border/50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{t('pendingApprovals')}</span>
+                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                        {totalPendingApprovals}
+                      </Badge>
                     </div>
-                  </CardHeader>
-                  <CardContent className="relative p-6">
-                    {pendingApprovals.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <Clock className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                        <p className="text-lg font-medium">{t('noPendingApprovals')}</p>
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="history"
+                    className="relative rounded-lg font-medium transition-all duration-300 data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-border/50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      <span>{t('approvalHistory')}</span>
+                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                        {totalHistoryApprovals}
+                      </Badge>
+                    </div>
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="pending" className="space-y-6 mt-0">
+                  <div className="space-y-4">
+                    {paginatedPendingApprovals.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="p-6 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-dashed border-muted-foreground/20 max-w-md mx-auto">
+                          <Clock className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                          <p className="text-lg font-medium text-muted-foreground mb-2">{t('noPendingApprovals')}</p>
+                          <p className="text-sm text-muted-foreground/70">所有审批申请已处理完毕</p>
+                        </div>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {pendingApprovals.map((approval) => (
-                          <ApprovalCard key={approval.id} approval={approval} />
-                        ))}
-                      </div>
+                      paginatedPendingApprovals.map((approval) => (
+                        <ApprovalCard key={approval.id} approval={approval} />
+                      ))
                     )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="history">
-                <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
-                  {/* 装饰性背景 */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-                  
-                  <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-xl bg-blue-500/10 ring-2 ring-blue-500/20 group-hover:ring-blue-500/30 transition-all duration-300">
-                        <FileText className="h-6 w-6 text-blue-600 group-hover:scale-110 transition-transform duration-300" />
-                      </div>
-                      <div className="space-y-2">
-                        <CardTitle className="text-2xl font-bold text-foreground leading-relaxed">
-                          {t('historyScripts')}
-                        </CardTitle>
-                        <CardDescription className="text-muted-foreground">
-                          {t('historyScriptsDesc')}
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="relative p-6">
-                    {approvalHistory.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                        <p className="text-lg font-medium">{t('noApprovalHistory')}</p>
+                <TabsContent value="history" className="space-y-6 mt-0">
+                  <div className="space-y-4">
+                    {paginatedHistoryApprovals.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="p-6 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-dashed border-muted-foreground/20 max-w-md mx-auto">
+                          <FileText className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+                          <p className="text-lg font-medium text-muted-foreground mb-2">{t('noApprovalHistory')}</p>
+                          <p className="text-sm text-muted-foreground/70">暂无审批历史记录</p>
+                        </div>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {approvalHistory.map((approval) => (
-                          <ApprovalCard key={approval.id} approval={approval} />
-                        ))}
-                      </div>
+                      paginatedHistoryApprovals.map((approval) => (
+                        <ApprovalCard key={approval.id} approval={approval} />
+                      ))
                     )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          )}
-        </div>
-      </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
 
-      {/* 版本号显示 - 固定在左下角 */}
-      <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 shadow-lg hover:shadow-xl transition-all duration-300">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="font-mono text-xs text-muted-foreground font-medium">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || "0.4.0"}
-          </span>
+            {/* 分页 - 根据当前活跃的Tab显示 */}
+            {activeTab === 'pending' && renderPagination(
+              currentPagePending,
+              totalPagesPending,
+              totalPendingApprovals,
+              pageInputPending,
+              setCurrentPagePending,
+              handlePageInputChangePending,
+              handlePageInputSubmitPending,
+              handlePageInputKeyDownPending,
+              formatPageInfoPending
+            )}
+
+            {activeTab === 'history' && renderPagination(
+              currentPageHistory,
+              totalPagesHistory,
+              totalHistoryApprovals,
+              pageInputHistory,
+              setCurrentPageHistory,
+              handlePageInputChangeHistory,
+              handlePageInputSubmitHistory,
+              handlePageInputKeyDownHistory,
+              formatPageInfoHistory
+            )}
+          </Card>
         </div>
       </div>
 
@@ -473,50 +671,26 @@ export default function ApprovalsPage() {
               {approvalAction === 'approve' ? t('approveScript') : t('rejectScript')}
             </DialogTitle>
             <DialogDescription>
-              {t('scriptType')}: {selectedApproval?.scriptName}
+              {selectedApproval && `脚本: ${selectedApproval.scriptName} (${selectedApproval.scriptId})`}
             </DialogDescription>
           </DialogHeader>
-          
-          {selectedApproval && (
-            <div className="space-y-4">
-              <div className="bg-muted p-4 rounded-md">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">{t('requestor')}:</span> {selectedApproval.requesterEmail}
-                  </div>
-                  <div>
-                    <span className="font-medium">{t('scriptType')}:</span> {getScriptTypeInfo(selectedApproval.scriptType, t).label}
-                  </div>
-                  <div>
-                    <span className="font-medium">{t('createdAt')}:</span> {new Date(selectedApproval.createdAt).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US')}
-                  </div>
-                  <div>
-                    <span className="font-medium">{t('scriptId')}:</span> {selectedApproval.scriptId}
-                  </div>
-                </div>
-                {selectedApproval.reason && (
-                  <div className="mt-3">
-                    <div className="font-medium text-sm mb-1">{t('requestReason')}:</div>
-                    <div className="text-sm">{selectedApproval.reason}</div>
-                  </div>
-                )}
-              </div>
-              
-              <div>
-                <Label htmlFor="comment">
-                  {t('approvalReason')}
-                </Label>
-                <Textarea
-                  id="comment"
-                  value={approvalComment}
-                  onChange={(e) => setApprovalComment(e.target.value)}
-                  placeholder={approvalAction === 'approve' ? t('approvalReasonPlaceholder') : t('rejectReasonPlaceholder')}
-                  rows={3}
-                />
-              </div>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">
+                {approvalAction === 'approve' ? t('approvalReason') : t('rejectReasonPlaceholder')}
+              </label>
+              <Textarea
+                value={approvalComment}
+                onChange={(e) => setApprovalComment(e.target.value)}
+                placeholder={
+                  approvalAction === 'approve'
+                    ? t('approvalReasonPlaceholder')
+                    : t('rejectReasonPlaceholder')
+                }
+                className="mt-1"
+              />
             </div>
-          )}
-          
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               {t('cancel')}
@@ -524,7 +698,11 @@ export default function ApprovalsPage() {
             <Button
               onClick={handleApproval}
               disabled={actionLoading === selectedApproval?.id}
-              variant={approvalAction === 'approve' ? 'default' : 'destructive'}
+              className={
+                approvalAction === 'approve'
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : 'bg-red-600 hover:bg-red-700'
+              }
             >
               {actionLoading === selectedApproval?.id && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
