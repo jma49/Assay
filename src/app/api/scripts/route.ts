@@ -3,8 +3,15 @@ import mongoDbClient from "@/lib/mongodb"; // 假设 mongodb.ts 位于 src/lib/
 import { Collection, Document, ObjectId } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache-utils";
 import { validateApiAuth } from "@/lib/auth-utils";
-import { Permission, requirePermission } from "@/lib/rbac";
-import { ApprovalStatus } from "@/lib/approval-workflow";
+import { Permission, requirePermission, getUserRole } from "@/lib/rbac";
+import {
+  ApprovalStatus,
+  createApprovalRequest,
+  isAutoApprovalEligible,
+  analyzeScriptType,
+} from "@/lib/approval-workflow";
+import { createScriptVersion } from "@/lib/version-control";
+import { recordEditHistory } from "@/lib/edit-history";
 
 // 定义脚本数据的接口
 interface NewScriptData {
@@ -224,7 +231,76 @@ export async function POST(request: Request) {
       ); // 403 Forbidden
     }
 
-    // 4. 准备要插入的数据
+    // 4. 检查是否需要审批
+    const userRole = await getUserRole(user.id);
+    if (!userRole) {
+      return NextResponse.json(
+        { success: false, message: "无法获取用户角色信息" },
+        { status: 500 }
+      );
+    }
+
+    // 检查是否符合自动审批条件
+    const autoApprovalEligible = isAutoApprovalEligible(
+      analyzeScriptType(sqlContent),
+      userRole,
+      "create"
+    );
+
+    // 如果需要审批，先创建审批请求
+    if (!autoApprovalEligible) {
+      const requestId = await createApprovalRequest(
+        scriptId,
+        user.id,
+        userEmail,
+        userRole,
+        sqlContent,
+        `创建脚本: ${name}`,
+        `用户 ${userEmail} 申请创建脚本 "${name}"`,
+        "medium",
+        "create",
+        {
+          scriptId,
+          name,
+          cnName: cnName || "",
+          description: description || "",
+          cnDescription: cnDescription || "",
+          scope: scope || "",
+          cnScope: cnScope || "",
+          author: author || userEmail.split("@")[0],
+          hashtags: hashtags || [],
+          sqlContent,
+          isScheduled: false,
+          cronSchedule: "",
+        }
+      );
+
+      if (requestId) {
+        console.log(`[Script] 创建脚本审批请求已创建: ${requestId}`);
+
+        return NextResponse.json(
+          {
+            success: true,
+            message: "创建脚本申请已提交，等待管理员审批",
+            approvalRequestId: requestId,
+            requiresApproval: true,
+            policy: "根据安全策略，创建脚本需要管理员审批",
+            securityPolicy: "系统已确认这是安全的查询操作",
+          },
+          { status: 200 }
+        );
+      } else {
+        return NextResponse.json(
+          { success: false, message: "创建审批请求失败" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // 如果符合自动审批条件（管理员），直接创建脚本
+    console.log(`[Script] 管理员创建脚本，自动审批通过，直接创建: ${scriptId}`);
+
+    // 5. 准备要插入的数据
     const newScriptDocument = {
       scriptId,
       name,
@@ -240,29 +316,60 @@ export async function POST(request: Request) {
       cronSchedule: "", // 默认 Cron 表达式为空
       createdAt: new Date(),
       updatedAt: new Date(),
-      approvalStatus: ApprovalStatus.APPROVED, // 新建脚本直接批准
-      approvalRequestId: null, // 不需要审批请求
+      approvalStatus: ApprovalStatus.APPROVED, // 自动审批通过
+      approvalRequestId: null,
     };
 
-    // 5. 插入数据到 MongoDB
+    // 6. 插入数据到 MongoDB
     const result = await collection.insertOne(newScriptDocument);
 
     if (result.insertedId) {
-      // 根据新的审批策略：新建脚本不需要审批，直接创建
-      console.log(`[Script] 新建脚本创建成功，无需审批: ${scriptId}`);
+      // 创建版本记录
+      await createScriptVersion(
+        scriptId,
+        {
+          name: newScriptDocument.name,
+          cnName: newScriptDocument.cnName,
+          description: newScriptDocument.description,
+          cnDescription: newScriptDocument.cnDescription,
+          scope: newScriptDocument.scope,
+          cnScope: newScriptDocument.cnScope,
+          author: newScriptDocument.author,
+          hashtags: newScriptDocument.hashtags,
+          sqlContent: newScriptDocument.sqlContent,
+        },
+        user.id,
+        userEmail,
+        "create",
+        "脚本创建",
+        "major"
+      );
+
+      // 记录创建历史
+      await recordEditHistory({
+        scriptId,
+        operation: "create",
+        newData: newScriptDocument as unknown as Record<string, unknown>,
+      });
 
       // 清除 Redis 缓存
       await clearScriptsCache();
 
+      const message = autoApprovalEligible
+        ? "查询脚本创建成功（管理员自动审批通过）"
+        : "查询脚本创建成功";
+
       return NextResponse.json(
         {
           success: true,
-          message: "查询脚本创建成功",
+          message,
           scriptId: newScriptDocument.scriptId,
           mongoId: result.insertedId,
           approvalStatus: newScriptDocument.approvalStatus,
           securityPolicy: "系统已确认这是安全的查询操作",
-          policy: "根据新的审批策略，新建脚本无需审批，可以直接使用",
+          policy: autoApprovalEligible
+            ? "管理员创建脚本，自动审批通过"
+            : "脚本创建成功",
         },
         { status: 201 }
       );

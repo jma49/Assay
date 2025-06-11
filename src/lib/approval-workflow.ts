@@ -1,6 +1,9 @@
 import mongoDbClient from "./mongodb";
 import { Collection, Document } from "mongodb";
 import { UserRole, Permission, hasPermission } from "./rbac";
+import { clearScriptsCache } from "./cache-utils";
+import { createScriptVersion } from "./version-control";
+import { recordEditHistory } from "./edit-history";
 
 // 审批状态枚举
 export enum ApprovalStatus {
@@ -41,6 +44,11 @@ export interface ApprovalRequest {
   autoApprovalEligible: boolean;
   requiredApprovers: string[]; // 必需的审批人角色或用户ID
   currentApprovers: string[]; // 已审批的用户ID
+
+  // 新增字段：存储原始操作信息
+  operationType: "create" | "update" | "delete";
+  originalData?: Record<string, unknown>; // 存储原始脚本数据（用于创建和更新）
+  sqlContent?: string; // SQL内容（单独存储便于查看）
 }
 
 // 审批历史接口
@@ -152,21 +160,23 @@ export function isAutoApprovalEligible(
   operationType: "create" | "update" | "delete" = "create"
 ): boolean {
   // 新的审批策略：
-  // 1. 新建脚本 - 不需要审批（自动通过）
-  // 2. 修改别人的脚本 - 需要管理员审批
-  // 3. 删除任意脚本 - 需要管理员审批
+  // 1. 管理员操作 - 自动通过（创建、修改、删除）
+  // 2. 普通用户创建脚本 - 需要管理员审批
+  // 3. 普通用户修改别人的脚本 - 需要管理员审批
+  // 4. 普通用户删除任意脚本 - 需要管理员审批
 
-  // 新建脚本总是自动通过
-  if (operationType === "create") {
+  // 管理员操作总是自动通过
+  if (requesterRole === UserRole.ADMIN) {
+    console.log(
+      `[Approval] 管理员操作自动通过: ${operationType} - ${scriptType}`
+    );
     return true;
   }
 
-  // 删除和修改操作：只有管理员可以自动通过
-  if (operationType === "delete" || operationType === "update") {
-    return requesterRole === UserRole.ADMIN;
-  }
-
-  // 默认不自动通过
+  // 普通用户的所有操作都需要审批
+  console.log(
+    `[Approval] 普通用户操作需要审批: ${operationType} - ${scriptType}`
+  );
   return false;
 }
 
@@ -177,17 +187,10 @@ export function getRequiredApprovers(
   scriptType: ScriptType,
   operationType: "create" | "update" | "delete" = "create"
 ): string[] {
-  // 新建脚本不需要审批
-  if (operationType === "create") {
-    return [];
-  }
-
-  // 修改和删除操作都需要管理员审批
-  if (operationType === "update" || operationType === "delete") {
-    return [UserRole.ADMIN];
-  }
-
-  // 默认需要管理员审批
+  // 所有操作都需要管理员审批（除非是管理员操作，那种情况下会自动审批）
+  console.log(
+    `[Approval] 操作需要审批人: ${operationType} - ${scriptType} -> ${UserRole.ADMIN}`
+  );
   return [UserRole.ADMIN];
 }
 
@@ -203,7 +206,8 @@ export async function createApprovalRequest(
   title: string,
   description: string,
   priority: "low" | "medium" | "high" | "urgent" = "medium",
-  operationType: "create" | "update" | "delete" = "create"
+  operationType: "create" | "update" | "delete" = "create",
+  originalData?: Record<string, unknown> // 新增参数：原始脚本数据
 ): Promise<string | null> {
   try {
     const collection = await getApprovalRequestsCollection();
@@ -241,6 +245,11 @@ export async function createApprovalRequest(
       autoApprovalEligible,
       requiredApprovers,
       currentApprovers: autoApprovalEligible ? ["system"] : [],
+
+      // 新增字段
+      operationType,
+      originalData,
+      sqlContent,
     };
 
     const result = await collection.insertOne(approvalRequest);
@@ -372,9 +381,17 @@ export async function approveScript(
         comment
       );
 
-      console.log(
-        `[Approval] 脚本已审批通过: ${requestId} by ${approverEmail}`
-      );
+      // 执行实际的脚本操作
+      try {
+        await executeApprovedOperation(request as unknown as ApprovalRequest);
+        console.log(
+          `[Approval] 脚本已审批通过并执行操作: ${requestId} by ${approverEmail}`
+        );
+      } catch (error) {
+        console.error(`[Approval] 执行审批操作失败: ${requestId}`, error);
+        // 即使执行失败，审批状态仍然是通过的，但需要记录错误
+      }
+
       return { success: true, message: "脚本审批通过" };
     }
 
@@ -518,6 +535,9 @@ export async function getPendingApprovals(
       autoApprovalEligible: doc.autoApprovalEligible,
       requiredApprovers: doc.requiredApprovers,
       currentApprovers: doc.currentApprovers,
+      operationType: doc.operationType,
+      originalData: doc.originalData,
+      sqlContent: doc.sqlContent,
     })) as ApprovalRequest[];
 
     return {
@@ -637,6 +657,9 @@ export async function getCompletedApprovals(
       autoApprovalEligible: doc.autoApprovalEligible,
       requiredApprovers: doc.requiredApprovers,
       currentApprovers: doc.currentApprovers,
+      operationType: doc.operationType,
+      originalData: doc.originalData,
+      sqlContent: doc.sqlContent,
     })) as ApprovalRequest[];
 
     return {
@@ -654,5 +677,194 @@ export async function getCompletedApprovals(
       data: [],
       pagination: { page, limit, total: 0, totalPages: 0 },
     };
+  }
+}
+
+/**
+ * 执行已审批的操作
+ */
+async function executeApprovedOperation(
+  request: ApprovalRequest
+): Promise<void> {
+  try {
+    console.log(
+      `[Approval] 开始执行审批操作: ${request.operationType} for ${request.scriptId}`
+    );
+
+    // 获取脚本集合
+    const scriptsDb = await mongoDbClient.getDb();
+    const collection = scriptsDb.collection("sql_scripts");
+
+    switch (request.operationType) {
+      case "create":
+        if (!request.originalData) {
+          throw new Error("创建操作缺少原始数据");
+        }
+
+        // 执行创建操作
+        const createData = {
+          ...request.originalData,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          approvalStatus: ApprovalStatus.APPROVED,
+          approvalRequestId: request.requestId,
+        };
+
+        await collection.insertOne(createData);
+
+        // 创建版本记录
+        await createScriptVersion(
+          request.scriptId,
+          {
+            name: (request.originalData as Record<string, unknown>)
+              .name as string,
+            cnName: (request.originalData as Record<string, unknown>).cnName as
+              | string
+              | undefined,
+            description: (request.originalData as Record<string, unknown>)
+              .description as string | undefined,
+            cnDescription: (request.originalData as Record<string, unknown>)
+              .cnDescription as string | undefined,
+            scope: (request.originalData as Record<string, unknown>).scope as
+              | string
+              | undefined,
+            cnScope: (request.originalData as Record<string, unknown>)
+              .cnScope as string | undefined,
+            author: (request.originalData as Record<string, unknown>)
+              .author as string,
+            hashtags: (request.originalData as Record<string, unknown>)
+              .hashtags as string[] | undefined,
+            sqlContent: (request.originalData as Record<string, unknown>)
+              .sqlContent as string,
+          },
+          request.requesterId,
+          request.requesterEmail,
+          "create",
+          "脚本创建（审批通过）",
+          "minor"
+        );
+
+        // 记录编辑历史
+        await recordEditHistory({
+          scriptId: request.scriptId,
+          operation: "create",
+          newData: request.originalData,
+        });
+
+        console.log(`[Approval] 脚本创建完成: ${request.scriptId}`);
+        break;
+
+      case "update":
+        if (!request.originalData) {
+          throw new Error("更新操作缺少原始数据");
+        }
+
+        // 获取现有脚本数据用于记录历史
+        const existingScript = await collection.findOne({
+          scriptId: request.scriptId,
+        });
+
+        // 执行更新操作
+        const updateData = {
+          ...request.originalData,
+          updatedAt: new Date(),
+          approvalStatus: ApprovalStatus.APPROVED,
+          approvalRequestId: request.requestId,
+        };
+
+        // 移除 scriptId 和 _id 字段避免冲突
+        delete (updateData as Record<string, unknown>).scriptId;
+        delete (updateData as Record<string, unknown>)._id;
+
+        const updateResult = await collection.updateOne(
+          { scriptId: request.scriptId },
+          { $set: updateData }
+        );
+
+        if (updateResult.matchedCount === 0) {
+          throw new Error(`脚本不存在: ${request.scriptId}`);
+        }
+
+        // 创建版本记录
+        const updatedScript = await collection.findOne({
+          scriptId: request.scriptId,
+        });
+        if (updatedScript) {
+          await createScriptVersion(
+            request.scriptId,
+            {
+              name: updatedScript.name as string,
+              cnName: updatedScript.cnName as string | undefined,
+              description: updatedScript.description as string | undefined,
+              cnDescription: updatedScript.cnDescription as string | undefined,
+              scope: updatedScript.scope as string | undefined,
+              cnScope: updatedScript.cnScope as string | undefined,
+              author: updatedScript.author as string,
+              hashtags: updatedScript.hashtags as string[] | undefined,
+              sqlContent: updatedScript.sqlContent as string,
+            },
+            request.requesterId,
+            request.requesterEmail,
+            "update",
+            "脚本更新（审批通过）",
+            "patch"
+          );
+        }
+
+        // 记录编辑历史
+        await recordEditHistory({
+          scriptId: request.scriptId,
+          operation: "update",
+          oldData: existingScript as unknown as Record<string, unknown>,
+          newData: request.originalData,
+        });
+
+        console.log(`[Approval] 脚本更新完成: ${request.scriptId}`);
+        break;
+
+      case "delete":
+        // 获取现有脚本数据用于记录历史
+        const scriptToDelete = await collection.findOne({
+          scriptId: request.scriptId,
+        });
+        if (!scriptToDelete) {
+          throw new Error(`要删除的脚本不存在: ${request.scriptId}`);
+        }
+
+        // 执行删除操作
+        const deleteResult = await collection.deleteOne({
+          scriptId: request.scriptId,
+        });
+
+        if (deleteResult.deletedCount === 0) {
+          throw new Error(`删除脚本失败: ${request.scriptId}`);
+        }
+
+        // 记录编辑历史
+        await recordEditHistory({
+          scriptId: request.scriptId,
+          operation: "delete",
+          oldData: scriptToDelete as unknown as Record<string, unknown>,
+        });
+
+        console.log(`[Approval] 脚本删除完成: ${request.scriptId}`);
+        break;
+
+      default:
+        throw new Error(`不支持的操作类型: ${request.operationType}`);
+    }
+
+    // 清除缓存
+    await clearScriptsCache();
+
+    console.log(
+      `[Approval] 审批操作执行完成: ${request.operationType} for ${request.scriptId}`
+    );
+  } catch (error) {
+    console.error(
+      `[Approval] 执行审批操作失败: ${request.operationType} for ${request.scriptId}`,
+      error
+    );
+    throw error;
   }
 }
