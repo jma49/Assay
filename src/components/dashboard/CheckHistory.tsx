@@ -433,7 +433,18 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                         className="font-semibold px-4 py-4 max-w-64 group-hover/row:text-primary transition-colors duration-200"
                         title={check.script_name}
                       >
-                        <div className="truncate">{check.script_name}</div>
+                        <Link 
+                          href={`/manage-scripts?scriptId=${encodeURIComponent(check.script_name)}`}
+                          className="flex items-center gap-2 hover:text-primary transition-colors duration-200 group/link"
+                        >
+                          <div className="truncate">{check.script_name}</div>
+                          <span 
+                            className="text-xs opacity-60 group-hover/link:opacity-100 transition-opacity duration-200" 
+                            title={t("editScript") || "编辑脚本"}
+                          >
+                            ✏️
+                          </span>
+                        </Link>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-muted-foreground px-4 py-4 max-w-52 font-mono text-sm">
                         <div className="truncate">

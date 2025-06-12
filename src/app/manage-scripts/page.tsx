@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   PlusCircle,
   Edit,
@@ -84,8 +84,9 @@ import { LoadingOverlay } from "@/components/ui/loading";
 // Helper type for the form state, combining metadata and SQL content
 type ManageScriptFormState = Partial<SqlScript>;
 
-const ManageScriptsPage = () => {
+const ManageScriptsContent = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [scripts, setScripts] = useState<SqlScript[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -164,11 +165,7 @@ const ManageScriptsPage = () => {
     }
   }, []); // 移除所有依赖，确保只在组件首次加载时调用
 
-  useEffect(() => {
-    fetchScripts();
-  }, [fetchScripts]);
-
-  const handleOpenDialog = (mode: "add" | "edit", scriptData?: SqlScript) => {
+  const handleOpenDialog = useCallback((mode: "add" | "edit", scriptData?: SqlScript) => {
     setDialogMode(mode);
     if (mode === "add") {
       const newScriptId = `new-script-${Date.now().toString().slice(-6)}`;
@@ -211,7 +208,26 @@ const ManageScriptsPage = () => {
       setOriginalScriptData(scriptData);
     }
     setIsDialogOpen(true);
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchScripts();
+  }, [fetchScripts]);
+
+  // 处理URL参数中的scriptId，自动打开编辑对话框
+  useEffect(() => {
+    const scriptIdFromUrl = searchParams.get('scriptId');
+    if (scriptIdFromUrl && scripts.length > 0 && !isDialogOpen) {
+      const targetScript = scripts.find(script => script.scriptId === scriptIdFromUrl);
+      if (targetScript) {
+        handleOpenDialog('edit', targetScript);
+        // 清除URL参数，避免重复触发
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('scriptId');
+        window.history.replaceState({}, '', newUrl.toString());
+      }
+    }
+  }, [scripts, searchParams, isDialogOpen, handleOpenDialog]);
 
   const handleMetadataChange = (
     fieldName: keyof ScriptFormData,
@@ -1068,6 +1084,14 @@ const ManageScriptsPage = () => {
         />
       )}
     </div>
+  );
+};
+
+const ManageScriptsPage = () => {
+  return (
+    <Suspense fallback={<div>加载中...</div>}>
+      <ManageScriptsContent />
+    </Suspense>
   );
 };
 
