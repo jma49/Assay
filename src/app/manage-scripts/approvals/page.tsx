@@ -566,7 +566,7 @@ export default function ApprovalsPage() {
 
           <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
             {/* 装饰性背景 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500 pointer-events-none" />
             
             <CardContent className="relative p-6">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
