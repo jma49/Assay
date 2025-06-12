@@ -84,6 +84,7 @@ export type DashboardTranslationKeys =
   | "addNewScriptButton"
   | "createScriptTitle"
   | "editScriptTitle"
+  | "editScript"
   | "fieldScriptId"
   | "fieldScriptNameEn"
   | "fieldScriptNameCn"
@@ -740,6 +741,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     addNewScriptButton: "Add New Script",
     createScriptTitle: "Create New SQL Script",
     editScriptTitle: "Edit SQL Script",
+    editScript: "Edit Script",
     fieldScriptId: "Script ID",
     fieldScriptNameEn: "Script Name (EN)",
     fieldScriptNameCn: "Script Name (CN)",
@@ -1298,6 +1300,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     addNewScriptButton: "添加新脚本",
     createScriptTitle: "创建新 SQL 脚本",
     editScriptTitle: "编辑 SQL 脚本",
+    editScript: "编辑脚本",
     fieldScriptId: "脚本ID",
     fieldScriptNameEn: "脚本名称 (英文)",
     fieldScriptNameCn: "脚本名称 (中文)",

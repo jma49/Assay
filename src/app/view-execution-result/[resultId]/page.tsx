@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import UserHeader from "@/components/UserHeader";
 import AnalysisResultDialog from '@/components/ai/AnalysisResultDialog';
+import Link from "next/link";
 
 // 基于SQL脚本实际输出的精确类型定义
 interface OrderDuplicateDetail {
@@ -807,9 +808,20 @@ export default function ViewExecutionResultPage() {
                   <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                     {t.scriptId}
                   </p>
-                  <p className="text-base text-foreground bg-muted/20 rounded-lg p-3 font-mono">
-                    {result.scriptId}
-                  </p>
+                  <div className="text-base text-foreground bg-muted/20 rounded-lg p-3 font-mono">
+                    <Link 
+                      href={`/manage-scripts?scriptId=${encodeURIComponent(result.scriptId)}`}
+                      className="flex items-center gap-2 hover:text-primary transition-colors duration-200 group/link"
+                    >
+                      <span>{result.scriptId}</span>
+                      <span 
+                        className="text-xs opacity-60 group-hover/link:opacity-100 transition-opacity duration-200" 
+                        title={language === "en" ? "Edit Script" : "编辑脚本"}
+                      >
+                        ✏️
+                      </span>
+                    </Link>
+                  </div>
                 </div>
 
                 {/* 结果ID - 总是显示 */}
