@@ -281,7 +281,7 @@ const createPool = async () => {
   if (sslFiles && sslFiles.ca) {
     // If SSL files were successfully prepared from URLs, use them.
     const sslOptions: ConnectionOptions = {
-      rejectUnauthorized: true, // Default to true, can be overridden by connection string if pg supports it.
+      rejectUnauthorized: false, // 暂时设置为false以测试连接
       ca: sslFiles.ca,
     };
 
