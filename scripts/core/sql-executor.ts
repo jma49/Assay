@@ -374,23 +374,439 @@ function determineStatusType(
 }
 
 /**
- * 执行从数据库获取的 SQL 脚本内容。
- * 该函数负责解析并执行 SQL 内容，
- * 然后调用服务保存结果到 MongoDB 并发送 Slack 通知。
- *
- * @param scriptId 脚本的唯一标识符。
- * @param sqlContent SQL 脚本的完整内容。
- * @param scriptHashtags 脚本的标签信息（可选）。
- * @returns 返回一个包含执行结果的 Promise 对象。
+ * 解析SQL内容为查询语句数组
+ * @param sqlContent SQL内容
+ * @returns 解析后的SQL语句数组
+ */
+function parseSql(sqlContent: string): string[] {
+  const queries = parsePostgreSQLStatements(sqlContent)
+    .map((q) => q.trim())
+    .filter((q) => q.length > 0);
+
+  return queries;
+}
+
+/**
+ * 执行单个查询并处理超时
+ * @param query SQL查询语句
+ * @param queryIndex 查询索引（用于日志）
+ * @param executionTimestamp 执行时间戳（用于日志）
+ * @returns 查询结果
+ */
+async function runQueryWithTimeout(
+  query: string,
+  queryIndex: number,
+  executionTimestamp: number
+): Promise<QueryResult> {
+  const isLongRunning = isLongRunningQuery(query);
+  const timeout = isLongRunning ? 300000 : 30000; // 5分钟 vs 30秒
+
+  if (isLongRunning) {
+    console.log(
+      `[EXEC ${executionTimestamp}] Detected potentially long-running query, setting extended timeout`
+    );
+  }
+
+  // 创建带超时的Promise
+  const queryPromise = db.query(query);
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(
+        new Error(
+          `Query timeout after ${
+            timeout / 1000
+          } seconds. Query may be too complex or processing large amounts of data.`
+        )
+      );
+    }, timeout);
+  });
+
+  console.log(
+    `[EXEC ${executionTimestamp}] Query ${
+      queryIndex + 1
+    } started, timeout set to ${timeout / 1000} seconds`
+  );
+
+  // 添加额外的调试信息
+  if (process.env.NODE_ENV === "development") {
+    console.log(`[EXEC ${executionTimestamp}] Query details:`, {
+      length: query.length,
+      hasNestedLoops: /\bloop\b.*\bloop\b/s.test(query.toLowerCase()),
+      estimatedComplexity: estimateQueryComplexity(query),
+    });
+  }
+
+  const result = await Promise.race([queryPromise, timeoutPromise]);
+
+  console.log(
+    `[EXEC ${executionTimestamp}] Query ${
+      queryIndex + 1
+    } completed successfully, affected rows: ${result.rowCount || 0}`
+  );
+
+  return result;
+}
+
+/**
+ * 判断执行状态
+ * @param results 查询结果数组
+ * @param scriptId 脚本ID
+ * @param findings 执行发现
+ * @returns 执行状态类型
+ */
+function determineResultStatus(
+  results: QueryResult[],
+  scriptId: string,
+  findings: string
+): ExecutionStatusType {
+  return determineStatusType(scriptId, findings, results);
+}
+
+/**
+ * 格式化查询结果
+ * @param results 查询结果数组
+ * @returns 格式化后的结果字符串
+ */
+function formatFindings(results: QueryResult[]): string {
+  return formatPostgreSQLFindings(results);
+}
+
+/**
+ * 格式化标签用于Slack通知
+ * @param tags 标签数组
+ * @returns 格式化后的标签字符串
+ */
+function formatTagsForSlack(tags?: string[]): string | undefined {
+  if (!tags || tags.length === 0) return undefined;
+  return tags.join(", ");
+}
+
+/**
+ * 处理空SQL内容的情况
+ * @param scriptId 脚本ID
+ * @param executionTimestamp 执行时间戳
+ * @param slackTag Slack标签
+ * @returns 执行结果
+ */
+async function handleEmptySqlContent(
+  scriptId: string,
+  executionTimestamp: number,
+  slackTag?: string
+): Promise<ExecutionResult> {
+  const successMessage = "SQL content is empty.";
+  const findings = "No SQL content provided";
+  const statusType: ExecutionStatusType = "success";
+  const results: QueryResult[] = [];
+
+  console.warn(`[EXEC ${executionTimestamp}] ${scriptId}: ${successMessage}`);
+
+  const mongoSaveResult = await saveResultToMongo(
+    scriptId,
+    "success",
+    statusType,
+    successMessage,
+    findings,
+    results
+  );
+
+  let mongoResultId: string | undefined = undefined;
+  if (mongoSaveResult && mongoSaveResult.insertedId) {
+    mongoResultId = mongoSaveResult.insertedId.toString();
+  }
+
+  await sendSlackNotification(
+    scriptId,
+    `${successMessage} (${findings})`,
+    statusType,
+    mongoResultId,
+    slackTag
+  );
+
+  return {
+    success: true,
+    statusType,
+    message: successMessage,
+    findings,
+    mongoResultId,
+  };
+}
+
+/**
+ * 处理无有效查询的情况
+ * @param scriptId 脚本ID
+ * @param executionTimestamp 执行时间戳
+ * @param slackTag Slack标签
+ * @returns 执行结果
+ */
+async function handleNoValidQueries(
+  scriptId: string,
+  executionTimestamp: number,
+  slackTag?: string
+): Promise<ExecutionResult> {
+  const successMessage =
+    "SQL content is empty or contains only comments after processing.";
+  const findings = "No valid queries after processing";
+  const statusType: ExecutionStatusType = "success";
+  const results: QueryResult[] = [];
+
+  console.warn(`[EXEC ${executionTimestamp}] ${scriptId}: ${successMessage}`);
+
+  const mongoSaveResult = await saveResultToMongo(
+    scriptId,
+    "success",
+    statusType,
+    successMessage,
+    findings,
+    results
+  );
+
+  let mongoResultId: string | undefined = undefined;
+  if (mongoSaveResult && mongoSaveResult.insertedId) {
+    mongoResultId = mongoSaveResult.insertedId.toString();
+    console.log(
+      `[EXEC ${executionTimestamp}] 保存结果到MongoDB，ID: ${mongoResultId}`
+    );
+  }
+
+  await sendSlackNotification(
+    scriptId,
+    `${successMessage} (${findings})`,
+    statusType,
+    mongoResultId,
+    slackTag
+  );
+
+  return {
+    success: true,
+    statusType,
+    message: successMessage,
+    findings,
+    mongoResultId,
+  };
+}
+
+/**
+ * 验证数据库连接
+ * @returns 是否连接成功
+ */
+async function validateDatabaseConnection(): Promise<boolean> {
+  const isConnected = await db.testConnection();
+  if (!isConnected) {
+    throw new Error("Database connection failed");
+  }
+  return true;
+}
+
+/**
+ * 检查查询是否需要事务处理
+ * @param queries 查询数组
+ * @returns 是否需要事务
+ */
+function needsTransaction(queries: string[]): boolean {
+  if (queries.length <= 1) return false;
+
+  // 检查是否包含修改数据的操作
+  const modifyingOperations = [
+    "INSERT",
+    "UPDATE",
+    "DELETE",
+    "CREATE",
+    "DROP",
+    "ALTER",
+  ];
+  let hasModifyingOps = 0;
+
+  for (const query of queries) {
+    const upperQuery = query.trim().toUpperCase();
+    if (modifyingOperations.some((op) => upperQuery.startsWith(op))) {
+      hasModifyingOps++;
+    }
+  }
+
+  // 如果有多个修改操作，建议使用事务
+  return hasModifyingOps > 1;
+}
+
+/**
+ * 在事务中执行所有查询
+ * @param queries 查询数组
+ * @param executionTimestamp 执行时间戳
+ * @returns 查询结果数组
+ */
+async function executeQueriesWithTransaction(
+  queries: string[],
+  executionTimestamp: number
+): Promise<QueryResult[]> {
+  const results: QueryResult[] = [];
+
+  // 验证数据库连接
+  await validateDatabaseConnection();
+
+  try {
+    // 开始事务
+    console.log(
+      `[EXEC ${executionTimestamp}] Starting transaction for ${queries.length} queries`
+    );
+    await db.query("BEGIN");
+
+    for (let i = 0; i < queries.length; i++) {
+      const queryText = queries[i];
+      console.log(
+        `[EXEC ${executionTimestamp}] Executing query ${i + 1}/${
+          queries.length
+        } in transaction`
+      );
+
+      try {
+        // 在事务中执行查询
+        const result = await db.query(queryText);
+        results.push(result);
+
+        console.log(
+          `[EXEC ${executionTimestamp}] Query ${
+            i + 1
+          } completed successfully in transaction, affected rows: ${
+            result.rowCount || 0
+          }`
+        );
+      } catch (queryError) {
+        console.error(
+          `[EXEC ${executionTimestamp}] Query ${i + 1} failed in transaction:`,
+          queryError
+        );
+
+        // 事务中的任何错误都会导致回滚
+        await db.query("ROLLBACK");
+        console.log(
+          `[EXEC ${executionTimestamp}] Transaction rolled back due to error`
+        );
+        throw queryError;
+      }
+    }
+
+    // 提交事务
+    await db.query("COMMIT");
+    console.log(
+      `[EXEC ${executionTimestamp}] Transaction committed successfully`
+    );
+  } catch (error) {
+    console.error(`[EXEC ${executionTimestamp}] Transaction error:`, error);
+    try {
+      await db.query("ROLLBACK");
+      console.log(`[EXEC ${executionTimestamp}] Transaction rolled back`);
+    } catch (rollbackError) {
+      console.error(
+        `[EXEC ${executionTimestamp}] Rollback failed:`,
+        rollbackError
+      );
+    }
+    throw error;
+  }
+
+  return results;
+}
+
+/**
+ * 执行所有查询（支持事务）
+ * @param queries 查询数组
+ * @param executionTimestamp 执行时间戳
+ * @param useTransaction 是否使用事务
+ * @returns 查询结果数组
+ */
+async function executeQueries(
+  queries: string[],
+  executionTimestamp: number,
+  useTransaction: boolean = false
+): Promise<QueryResult[]> {
+  if (useTransaction) {
+    return await executeQueriesWithTransaction(queries, executionTimestamp);
+  }
+
+  // 原有的非事务执行逻辑
+  const results: QueryResult[] = [];
+
+  for (let i = 0; i < queries.length; i++) {
+    const queryText = queries[i];
+    console.log(
+      `[EXEC ${executionTimestamp}] Executing query ${i + 1}/${queries.length}`
+    );
+
+    try {
+      const result = await runQueryWithTimeout(
+        queryText,
+        i,
+        executionTimestamp
+      );
+      results.push(result);
+    } catch (queryError) {
+      console.error(
+        `[EXEC ${executionTimestamp}] Query ${i + 1} failed:`,
+        queryError
+      );
+
+      // 检查是否是超时错误
+      if (
+        queryError instanceof Error &&
+        queryError.message.includes("timeout")
+      ) {
+        console.error(
+          `[EXEC ${executionTimestamp}] Query ${
+            i + 1
+          } timed out. Consider optimizing the query or breaking it into smaller parts.`
+        );
+        throw new Error(
+          `Query execution timed out. The query may be processing too much data or contain inefficient logic. Original error: ${queryError.message}`
+        );
+      }
+
+      // 对于PostgreSQL，某些类型的"错误"实际上是正常的（如DO块中的NOTICE）
+      if (queryError instanceof Error) {
+        const errorMessage = queryError.message.toLowerCase();
+
+        // 如果是PostgreSQL的NOTICE或INFO消息，不视为错误
+        if (
+          errorMessage.includes("notice:") ||
+          errorMessage.includes("info:")
+        ) {
+          console.log(
+            `[EXEC ${executionTimestamp}] Query ${
+              i + 1
+            } generated notice/info, continuing...`
+          );
+          // 创建一个假的成功结果
+          results.push({
+            command: "NOTICE",
+            rowCount: 0,
+            rows: [],
+            fields: [],
+            oid: 0,
+          } as unknown as QueryResult);
+          continue;
+        }
+      }
+
+      // 真正的错误，重新抛出
+      throw queryError;
+    }
+  }
+
+  return results;
+}
+
+/**
+ * 主要的SQL脚本执行函数
+ * @param scriptId 脚本ID
+ * @param sqlContent SQL内容
+ * @param scriptHashtags 脚本标签信息
+ * @returns 执行结果
  */
 export async function executeSqlScriptFromDb(
   scriptId: string,
-  sqlContent: string, // Changed from filePath
-  scriptHashtags?: string[] // 新增：脚本标签信息
+  sqlContent: string,
+  scriptHashtags?: string[]
 ): Promise<ExecutionResult> {
   const executionTimestamp = Date.now();
   console.log(
-    // Updated log message
     `[EXEC ${executionTimestamp}] Starting script execution: ${scriptId} (from DB content)${
       scriptHashtags ? ` [tags: ${scriptHashtags.join(", ")}]` : ""
     }`
@@ -400,67 +816,26 @@ export async function executeSqlScriptFromDb(
   let successMessage = ``;
   let errorMessage = ``;
   let findings = "Execution incomplete";
-  let statusType: ExecutionStatusType = "failure"; // 默认失败
+  let statusType: ExecutionStatusType = "failure";
   let mongoResultId: string | undefined = undefined;
-
-  // 格式化标签用于Slack通知
-  const formatTagsForSlack = (tags?: string[]): string | undefined => {
-    if (!tags || tags.length === 0) return undefined;
-    return tags.join(", ");
-  };
 
   const slackTag = formatTagsForSlack(scriptHashtags);
 
   try {
-    // Removed: if (!fs.existsSync(filePath)) { ... }
+    // 验证数据库连接
+    await validateDatabaseConnection();
 
-    const isConnected = await db.testConnection();
-    if (!isConnected) {
-      throw new Error("Database connection failed");
-    }
-
-    // Removed: const sqlContentFromFile = fs.readFileSync(filePath, "utf8");
-    // sqlContent is now a parameter
-
+    // 处理空SQL内容
     if (!sqlContent || sqlContent.trim() === "") {
-      successMessage = "SQL content is empty.";
-      findings = "No SQL content provided";
-      statusType = "success"; // Or perhaps a specific status like 'no_content'
-      results = [];
-      console.warn(
-        `[EXEC ${executionTimestamp}] ${scriptId}: ${successMessage}`
-      );
-      const mongoSaveResult = await saveResultToMongo(
+      return await handleEmptySqlContent(
         scriptId,
-        statusType,
-        statusType,
-        successMessage,
-        findings,
-        results
+        executionTimestamp,
+        slackTag
       );
-      if (mongoSaveResult && mongoSaveResult.insertedId) {
-        mongoResultId = mongoSaveResult.insertedId.toString();
-      }
-      await sendSlackNotification(
-        scriptId,
-        `${successMessage} (${findings})`,
-        statusType,
-        mongoResultId,
-        slackTag // 传递标签信息
-      );
-      return {
-        success: true, // Technically not a failure, but script didn't run SQL
-        statusType,
-        message: successMessage,
-        findings,
-        mongoResultId,
-      };
     }
 
-    // 使用完整的PostgreSQL解析器，无需预处理注释
-    const queries = parsePostgreSQLStatements(sqlContent)
-      .map((q) => q.trim())
-      .filter((q) => q.length > 0);
+    // 解析SQL
+    const queries = parseSql(sqlContent);
 
     console.log(
       `[EXEC ${executionTimestamp}] Parsed ${queries.length} PostgreSQL statements with full syntax support`
@@ -483,168 +858,41 @@ export async function executeSqlScriptFromDb(
         `[EXEC ${executionTimestamp}] PostgreSQL syntax validation warnings:`,
         validation.errors
       );
-      // 注意：这里我们只警告，不阻止执行，因为验证器可能不完美
     }
 
+    // 处理无有效查询
     if (queries.length === 0) {
-      successMessage =
-        "SQL content is empty or contains only comments after processing."; // Adjusted message
-      findings = "No valid queries after processing";
-      statusType = "success";
-      results = [];
-      // ... (rest of the block for no queries is the same as original)
-      console.warn(
-        `[EXEC ${executionTimestamp}] ${scriptId}: ${successMessage}`
-      );
-      const mongoSaveResult = await saveResultToMongo(
-        scriptId,
-        statusType,
-        statusType,
-        successMessage,
-        findings,
-        results
-      );
-      if (mongoSaveResult && mongoSaveResult.insertedId) {
-        mongoResultId = mongoSaveResult.insertedId.toString();
-        console.log(
-          `[EXEC ${executionTimestamp}] 保存结果到MongoDB，ID: ${mongoResultId}`
-        );
-      }
-      await sendSlackNotification(
-        scriptId,
-        `${successMessage} (${findings})`,
-        statusType,
-        mongoResultId,
-        slackTag // 传递标签信息
-      );
-      return {
-        success: true,
-        statusType,
-        message: successMessage,
-        findings,
-        mongoResultId,
-      };
+      return await handleNoValidQueries(scriptId, executionTimestamp, slackTag);
     }
 
-    results = [];
-    for (let i = 0; i < queries.length; i++) {
-      const queryText = queries[i];
+    // 检查是否需要事务处理
+    const shouldUseTransaction = needsTransaction(queries);
+    if (shouldUseTransaction) {
       console.log(
-        `[EXEC ${executionTimestamp}] Executing query ${i + 1}/${
-          queries.length
-        }`
+        `[EXEC ${executionTimestamp}] Multiple modifying operations detected, executing in transaction`
       );
-
-      // 检查是否是可能长时间运行的查询
-      const isLongRunning = isLongRunningQuery(queryText);
-      if (isLongRunning) {
-        console.log(
-          `[EXEC ${executionTimestamp}] Detected potentially long-running query, setting extended timeout`
-        );
-      }
-
-      try {
-        // 设置查询超时（普通查询30秒，复杂查询5分钟）
-        const timeout = isLongRunning ? 300000 : 30000; // 5分钟 vs 30秒
-
-        // 创建带超时的Promise
-        const queryPromise = db.query(queryText);
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => {
-            reject(
-              new Error(
-                `Query timeout after ${
-                  timeout / 1000
-                } seconds. Query may be too complex or processing large amounts of data.`
-              )
-            );
-          }, timeout);
-        });
-
-        console.log(
-          `[EXEC ${executionTimestamp}] Query ${
-            i + 1
-          } started, timeout set to ${timeout / 1000} seconds`
-        );
-
-        // 添加额外的调试信息
-        if (process.env.NODE_ENV === "development") {
-          console.log(`[EXEC ${executionTimestamp}] Query details:`, {
-            length: queryText.length,
-            hasNestedLoops: /\bloop\b.*\bloop\b/s.test(queryText.toLowerCase()),
-            estimatedComplexity: estimateQueryComplexity(queryText),
-          });
-        }
-
-        const result = (await Promise.race([
-          queryPromise,
-          timeoutPromise,
-        ])) as QueryResult;
-        results.push(result);
-        console.log(
-          `[EXEC ${executionTimestamp}] Query ${
-            i + 1
-          } completed successfully, affected rows: ${result.rowCount || 0}`
-        );
-      } catch (queryError) {
-        console.error(
-          `[EXEC ${executionTimestamp}] Query ${i + 1} failed:`,
-          queryError
-        );
-
-        // 检查是否是超时错误
-        if (
-          queryError instanceof Error &&
-          queryError.message.includes("timeout")
-        ) {
-          console.error(
-            `[EXEC ${executionTimestamp}] Query ${
-              i + 1
-            } timed out. Consider optimizing the query or breaking it into smaller parts.`
-          );
-          throw new Error(
-            `Query execution timed out. The query may be processing too much data or contain inefficient logic. Original error: ${queryError.message}`
-          );
-        }
-
-        // 对于PostgreSQL，某些类型的"错误"实际上是正常的（如DO块中的NOTICE）
-        if (queryError instanceof Error) {
-          const errorMessage = queryError.message.toLowerCase();
-
-          // 如果是PostgreSQL的NOTICE或INFO消息，不视为错误
-          if (
-            errorMessage.includes("notice:") ||
-            errorMessage.includes("info:")
-          ) {
-            console.log(
-              `[EXEC ${executionTimestamp}] Query ${
-                i + 1
-              } generated notice/info, continuing...`
-            );
-            // 创建一个假的成功结果
-            results.push({
-              command: "NOTICE",
-              rowCount: 0,
-              rows: [],
-              fields: [],
-              oid: 0,
-            } as unknown as QueryResult);
-            continue;
-          }
-        }
-
-        // 真正的错误，重新抛出
-        throw queryError;
-      }
     }
 
-    findings = formatPostgreSQLFindings(results);
-    successMessage = `Script ${scriptId} executed successfully. ${findings}.`;
-    console.log(`[EXEC ${executionTimestamp}] ${successMessage}`);
+    // 执行查询（根据需要使用事务）
+    results = await executeQueries(
+      queries,
+      executionTimestamp,
+      shouldUseTransaction
+    );
 
-    statusType = determineStatusType(scriptId, findings, results);
+    // 格式化结果
+    findings = formatFindings(results);
+    statusType = determineResultStatus(results, scriptId, findings);
+    successMessage = `Script executed successfully. Found ${findings}`;
 
-    const mongoSaveResultOnSuccess = await saveResultToMongo(
+    console.log(
+      `[EXEC ${executionTimestamp}] Script execution completed successfully: ${scriptId}`
+    );
+    console.log(`[EXEC ${executionTimestamp}] Status: ${statusType}`);
+    console.log(`[EXEC ${executionTimestamp}] Findings: ${findings}`);
+
+    // 保存结果到MongoDB
+    const mongoSaveResult = await saveResultToMongo(
       scriptId,
       statusType === "attention_needed" ? "success" : statusType,
       statusType,
@@ -653,87 +901,67 @@ export async function executeSqlScriptFromDb(
       results
     );
 
-    if (mongoSaveResultOnSuccess && mongoSaveResultOnSuccess.insertedId) {
-      mongoResultId = mongoSaveResultOnSuccess.insertedId.toString();
+    if (mongoSaveResult && mongoSaveResult.insertedId) {
+      mongoResultId = mongoSaveResult.insertedId.toString();
       console.log(
         `[EXEC ${executionTimestamp}] 保存结果到MongoDB，ID: ${mongoResultId}`
       );
     }
 
-    // 只在需要关注或失败时发送通知，成功时不发送
-    if (statusType === "attention_needed" || statusType === "failure") {
-      await sendSlackNotification(
-        scriptId,
-        successMessage,
-        statusType,
-        mongoResultId,
-        slackTag // 传递标签信息
-      );
-      console.log(
-        `[EXEC ${executionTimestamp}] 发送通知 (${statusType}): ${scriptId}${
-          slackTag ? ` [标签: ${slackTag}]` : ""
-        }`
-      );
-    } else {
-      console.log(
-        `[EXEC ${executionTimestamp}] 跳过通知 (${statusType}): ${scriptId} - 执行成功无需通知`
-      );
-    }
+    // 发送Slack通知
+    await sendSlackNotification(
+      scriptId,
+      `${successMessage} (${findings})`,
+      statusType,
+      mongoResultId,
+      slackTag
+    );
 
     return {
       success: true,
       statusType,
       message: successMessage,
       findings,
-      data: results,
       mongoResultId,
     };
-  } catch (error: unknown) {
-    errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
+  } catch (error) {
+    errorMessage = error instanceof Error ? error.message : String(error);
     console.error(
-      `[EXEC ${executionTimestamp}] Script ${scriptId} execution failed: ${errorMessage}`,
+      `[EXEC ${executionTimestamp}] Script execution failed: ${scriptId}`,
       error
     );
-    findings = "Execution failed";
-    statusType = "failure";
 
-    try {
-      const mongoSaveResultOnError = await saveResultToMongo(
-        scriptId,
-        statusType,
-        statusType,
-        errorMessage,
-        findings,
-        results
-      );
-      if (mongoSaveResultOnError && mongoSaveResultOnError.insertedId) {
-        mongoResultId = mongoSaveResultOnError.insertedId.toString();
-        console.log(
-          `[EXEC ${executionTimestamp}] 保存错误结果到MongoDB，ID: ${mongoResultId}`
-        );
-      }
-    } catch (mongoError) {
-      console.error(
-        `[EXEC ${executionTimestamp}] Failed to save error result to MongoDB for ${scriptId}:`,
-        mongoError
+    // 保存错误结果到MongoDB
+    const mongoSaveResult = await saveResultToMongo(
+      scriptId,
+      "failure",
+      "failure",
+      errorMessage,
+      findings,
+      results || []
+    );
+
+    if (mongoSaveResult && mongoSaveResult.insertedId) {
+      mongoResultId = mongoSaveResult.insertedId.toString();
+      console.log(
+        `[EXEC ${executionTimestamp}] 保存错误结果到MongoDB，ID: ${mongoResultId}`
       );
     }
 
+    // 发送Slack错误通知
     await sendSlackNotification(
       scriptId,
-      `Execution failed: ${errorMessage}`,
-      statusType,
+      errorMessage,
+      "failure",
       mongoResultId,
-      slackTag // 传递标签信息
+      slackTag
     );
 
     return {
       success: false,
-      statusType,
+      statusType: "failure",
       message: errorMessage,
       findings,
-      data: results,
       mongoResultId,
     };
   }
