@@ -71,6 +71,49 @@ const downloadFile = (url: string): Promise<Buffer> => {
   });
 };
 
+/**
+ * 数据库连接池单例类
+ * 确保应用全局只有一个连接池实例，避免连接资源浪费
+ */
+class DatabasePool {
+  private static instance: DatabasePool;
+  private pool: Pool | null = null;
+
+  private constructor() {}
+
+  /**
+   * 获取数据库连接池单例实例
+   * @returns DatabasePool实例
+   */
+  public static getInstance(): DatabasePool {
+    if (!DatabasePool.instance) {
+      DatabasePool.instance = new DatabasePool();
+    }
+    return DatabasePool.instance;
+  }
+
+  /**
+   * 获取连接池，如果不存在则创建
+   * @returns 数据库连接池
+   */
+  public async getPool(): Promise<Pool> {
+    if (!this.pool) {
+      this.pool = await createPool();
+    }
+    return this.pool;
+  }
+
+  /**
+   * 关闭连接池
+   */
+  public async closePool(): Promise<void> {
+    if (this.pool) {
+      await this.pool.end();
+      this.pool = null;
+    }
+  }
+}
+
 // 准备SSL文件
 const prepareSSLFiles = async () => {
   const tmpDir = "/tmp";
@@ -226,7 +269,7 @@ const prepareSSLFiles = async () => {
 };
 
 // 创建数据库连接池
-const createPool = async () => {
+const createPool = async (): Promise<Pool> => {
   let sslFiles = null; // Initialize to null
   let sslPreparationAttempted = false;
   let sslPreparationError = null;
@@ -366,15 +409,10 @@ const createPool = async () => {
   }
 };
 
-// 创建池的Promise
-let poolPromise: Promise<Pool>;
-
-// 获取连接池
+// 获取连接池 - 使用单例模式
 const getPool = async (): Promise<Pool> => {
-  if (!poolPromise) {
-    poolPromise = createPool();
-  }
-  return poolPromise;
+  const dbPool = DatabasePool.getInstance();
+  return await dbPool.getPool();
 };
 
 // Test database connection
@@ -409,8 +447,8 @@ export const query = async (
 // Close connection pool
 export const closePool = async () => {
   try {
-    const pool = await getPool();
-    await pool.end();
+    const dbPool = DatabasePool.getInstance();
+    await dbPool.closePool();
   } catch (error) {
     console.error("Error closing pool:", error);
   }
