@@ -490,8 +490,7 @@ function formatTagsForSlack(tags?: string[]): string | undefined {
  */
 async function handleEmptySqlContent(
   scriptId: string,
-  executionTimestamp: number,
-  slackTag?: string
+  executionTimestamp: number
 ): Promise<ExecutionResult> {
   const successMessage = "SQL content is empty.";
   const findings = "No SQL content provided";
@@ -534,8 +533,7 @@ async function handleEmptySqlContent(
  */
 async function handleNoValidQueries(
   scriptId: string,
-  executionTimestamp: number,
-  slackTag?: string
+  executionTimestamp: number
 ): Promise<ExecutionResult> {
   const successMessage =
     "SQL content is empty or contains only comments after processing.";
@@ -815,11 +813,7 @@ export async function executeSqlScriptFromDb(
 
     // 处理空SQL内容
     if (!sqlContent || sqlContent.trim() === "") {
-      return await handleEmptySqlContent(
-        scriptId,
-        executionTimestamp,
-        slackTag
-      );
+      return await handleEmptySqlContent(scriptId, executionTimestamp);
     }
 
     // 解析SQL
@@ -850,7 +844,7 @@ export async function executeSqlScriptFromDb(
 
     // 处理无有效查询
     if (queries.length === 0) {
-      return await handleNoValidQueries(scriptId, executionTimestamp, slackTag);
+      return await handleNoValidQueries(scriptId, executionTimestamp);
     }
 
     // 检查是否需要事务处理
