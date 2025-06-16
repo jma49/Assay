@@ -514,13 +514,7 @@ async function handleEmptySqlContent(
     mongoResultId = mongoSaveResult.insertedId.toString();
   }
 
-  await sendSlackNotification(
-    scriptId,
-    `${successMessage} (${findings})`,
-    statusType,
-    mongoResultId,
-    slackTag
-  );
+  // 空SQL内容不需要发送通知 (statusType 总是 "success")
 
   return {
     success: true,
@@ -568,13 +562,7 @@ async function handleNoValidQueries(
     );
   }
 
-  await sendSlackNotification(
-    scriptId,
-    `${successMessage} (${findings})`,
-    statusType,
-    mongoResultId,
-    slackTag
-  );
+  // 无有效查询不需要发送通知 (statusType 总是 "success")
 
   return {
     success: true,
@@ -908,14 +896,16 @@ export async function executeSqlScriptFromDb(
       );
     }
 
-    // 发送Slack通知
-    await sendSlackNotification(
-      scriptId,
-      `${successMessage} (${findings})`,
-      statusType,
-      mongoResultId,
-      slackTag
-    );
+    // 只有在需要关注时才发送Slack通知
+    if (statusType === "attention_needed") {
+      await sendSlackNotification(
+        scriptId,
+        `${successMessage} (${findings})`,
+        statusType,
+        mongoResultId,
+        slackTag
+      );
+    }
 
     return {
       success: true,
@@ -948,7 +938,7 @@ export async function executeSqlScriptFromDb(
       );
     }
 
-    // 发送Slack错误通知
+    // 发送Slack错误通知 - 失败时也需要发送通知
     await sendSlackNotification(
       scriptId,
       errorMessage,
