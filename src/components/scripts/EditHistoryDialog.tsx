@@ -181,7 +181,7 @@ export function EditHistoryDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh]">
-        <DialogHeader>
+        <DialogHeader className="px-1">
           <DialogTitle className="flex items-center gap-2">
             <History className="w-5 h-5" />
             {t("editHistoryTitle")}
@@ -191,27 +191,28 @@ export function EditHistoryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[60vh] pr-4">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin mr-2" />
-              <span>{t("loadingEditHistory")}</span>
-            </div>
-          ) : error ? (
-            <div className="flex items-center justify-center py-8 text-red-600">
-              <AlertCircle className="w-6 h-6 mr-2" />
-              <span>{error}</span>
-            </div>
-          ) : histories.length === 0 ? (
-            <div className="flex items-center justify-center py-8 text-gray-500">
-              <History className="w-6 h-6 mr-2" />
-              <span>{t("noEditHistory")}</span>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {histories.map((history, index) => (
-                <Card key={history._id || index} className="relative">
-                  <CardHeader className="pb-3">
+        <ScrollArea className="h-[60vh] pr-2">
+          <div className="px-1">
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                <span>{t("loadingEditHistory")}</span>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center py-8 text-red-600">
+                <AlertCircle className="w-6 h-6 mr-2" />
+                <span>{error}</span>
+              </div>
+            ) : histories.length === 0 ? (
+              <div className="flex items-center justify-center py-8 text-gray-500">
+                <History className="w-6 h-6 mr-2" />
+                <span>{t("noEditHistory")}</span>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {histories.map((history, index) => (
+                  <Card key={history._id || index} className="relative mx-1">
+                  <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         {getOperationIcon(history.operation)}
@@ -262,7 +263,7 @@ export function EditHistoryDialog({
                         {history.changes.map((change, changeIndex) => (
                           <div
                             key={changeIndex}
-                            className="bg-gray-50 rounded-lg p-3"
+                            className="bg-gray-50 rounded-lg p-2"
                           >
                             <div className="flex items-center gap-2 mb-2">
                               <span className="text-sm font-medium text-gray-700">
@@ -307,16 +308,17 @@ export function EditHistoryDialog({
                   )}
 
                   {index < histories.length - 1 && (
-                    <Separator className="mt-4" />
+                    <Separator className="mt-2" />
                   )}
                 </Card>
-              ))}
+                              ))}
+                </div>
+              )}
             </div>
-          )}
-        </ScrollArea>
+          </ScrollArea>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-between mt-4 px-1">
             <Button
               variant="outline"
               size="sm"

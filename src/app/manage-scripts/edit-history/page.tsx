@@ -522,12 +522,10 @@ export default function GlobalEditHistoryPage() {
                 </div>
                 <div className="space-y-2">
                   <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
-                    {totalRecords > 0
-                      ? `${totalRecords} ${t("editHistoryRecords")} ${totalPages > 1 ? `(${t("pageNumber")} ${currentPage}/${totalPages})` : ""}`
-                      : t("editHistoryTitle")}
+                    Edit History
                   </CardTitle>
                   <div className="text-sm text-muted-foreground">
-                    {totalPages > 1 ? formatPageInfo() : ""}
+                    {totalPages > 1 ? formatPageInfo() : totalRecords > 0 ? `${totalRecords} ${t("recordsTotal")}` : ""}
                   </div>
                 </div>
               </div>
@@ -582,37 +580,37 @@ export default function GlobalEditHistoryPage() {
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-gradient-to-r from-primary/5 via-primary/3 to-primary/5 border-b-2 border-primary/20 backdrop-blur-sm">
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                          <TableHead className="h-12 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-blue-400/60"></div>
                               {t("operationType")}
                             </div>
                           </TableHead>
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                          <TableHead className="h-12 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-emerald-400/60"></div>
                               {t("scriptName")}
                             </div>
                           </TableHead>
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                          <TableHead className="h-12 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-amber-400/60"></div>
                               {t("operationUser")}
                             </div>
                           </TableHead>
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                          <TableHead className="h-12 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-purple-400/60"></div>
                               {t("operationTime")}
                             </div>
                           </TableHead>
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                          <TableHead className="h-12 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-indigo-400/60"></div>
                               {t("fieldChanges")}
                             </div>
                           </TableHead>
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 text-center leading-relaxed">
+                          <TableHead className="h-12 px-4 font-bold text-foreground/90 text-center leading-relaxed">
                             <div className="flex items-center justify-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-pink-400/60"></div>
                               {t("tableActions")}
@@ -629,7 +627,7 @@ export default function GlobalEditHistoryPage() {
                               index % 2 === 0 ? "bg-background" : "bg-muted/5",
                             )}
                           >
-                            <TableCell className="px-4 py-5 leading-relaxed">
+                            <TableCell className="px-4 py-3 leading-relaxed">
                               <div className="flex items-center gap-3">
                                 {getOperationIcon(history.operation)}
                                 <Badge
@@ -641,7 +639,7 @@ export default function GlobalEditHistoryPage() {
                               </div>
                             </TableCell>
                             <TableCell
-                              className="px-4 py-5 font-medium max-w-56 leading-relaxed"
+                              className="px-4 py-3 font-medium max-w-56 leading-relaxed"
                               title={
                                 history.scriptSnapshot?.name ||
                                 history.scriptSnapshot?.scriptId
@@ -661,7 +659,7 @@ export default function GlobalEditHistoryPage() {
                               </div>
                             </TableCell>
                             <TableCell
-                              className="px-4 py-5 text-muted-foreground max-w-32 leading-relaxed"
+                              className="px-4 py-3 text-muted-foreground max-w-32 leading-relaxed"
                               title={history.userName || history.userEmail}
                             >
                               <div className="flex items-center gap-2">
@@ -674,7 +672,7 @@ export default function GlobalEditHistoryPage() {
                                 </span>
                               </div>
                             </TableCell>
-                            <TableCell className="px-4 py-5 text-muted-foreground max-w-40 font-mono text-sm leading-relaxed">
+                            <TableCell className="px-4 py-3 text-muted-foreground max-w-40 font-mono text-sm leading-relaxed">
                               <div className="flex items-center gap-2">
                                 <Calendar className="w-3 h-3" />
                                 <span className="truncate">
@@ -687,12 +685,12 @@ export default function GlobalEditHistoryPage() {
                                 </span>
                               </div>
                             </TableCell>
-                            <TableCell className="px-4 py-5 text-muted-foreground max-w-48 leading-relaxed">
+                            <TableCell className="px-4 py-3 text-muted-foreground max-w-48 leading-relaxed">
                               <div className="truncate text-sm">
                                 {getChangesPreview(history.changes)}
                               </div>
                             </TableCell>
-                            <TableCell className="px-4 py-5 text-center">
+                            <TableCell className="px-4 py-3 text-center">
                               <Button
                                 variant="outline"
                                 size="sm"
