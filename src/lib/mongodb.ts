@@ -39,6 +39,7 @@ class MongoDbClient {
   private dbName: string = "sql_check_history_db";
   private uri: string;
   private isLoggedConnection: boolean = false;
+  private hasLoggedConnection: boolean = false;
   private static readonly shouldLog =
     process.env.NODE_ENV === "development" &&
     process.env.MONGODB_SILENT !== "true";
@@ -106,7 +107,7 @@ class MongoDbClient {
       if (MongoDbClient.shouldLog) {
         devWarn(
           `无法从 URI '${this.uri}' 解析数据库名称，将使用默认值: ${this.dbName}`,
-          e,
+          e
         );
       }
     }
@@ -122,6 +123,13 @@ class MongoDbClient {
 
     try {
       this.client = await this.clientPromise;
+
+      // 只在第一次成功连接时打印日志
+      if (!this.hasLoggedConnection && MongoDbClient.shouldLog) {
+        devLog("MongoDB 连接已建立。");
+        this.hasLoggedConnection = true;
+      }
+
       return this.client;
     } catch (error) {
       // 连接失败时清除缓存的Promise，以便下次重试
@@ -133,14 +141,13 @@ class MongoDbClient {
   public async getDb(): Promise<Db> {
     try {
       const client = await this.getClient();
-      devWarn("MongoDB 连接已建立。");
       return client.db(this.dbName);
     } catch (error) {
       devError("获取 MongoDB 数据库实例失败:", error);
       throw new Error(
         `MongoDB 连接失败: ${
           error instanceof Error ? error.message : "未知错误"
-        }`,
+        }`
       );
     }
   }

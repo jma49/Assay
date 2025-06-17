@@ -88,6 +88,10 @@ export default function ApprovalsPage() {
   const [pageInputPending, setPageInputPending] = useState("");
   const [pageInputHistory, setPageInputHistory] = useState("");
   
+  // 审批历史分页信息
+  const [totalHistoryPages, setTotalHistoryPages] = useState(1);
+  const [totalHistoryCount, setTotalHistoryCount] = useState(0);
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedApproval, setSelectedApproval] = useState<ApprovalRequest | null>(null);
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject'>('approve');
@@ -111,12 +115,12 @@ export default function ApprovalsPage() {
   const endIndexPending = startIndexPending + ITEMS_PER_PAGE;
   const paginatedPendingApprovals = pendingApprovals.slice(startIndexPending, endIndexPending);
 
-  // 分页逻辑 - 历史记录
-  const totalHistoryApprovals = approvalHistory.length;
-  const totalPagesHistory = Math.ceil(totalHistoryApprovals / ITEMS_PER_PAGE);
+  // 分页逻辑 - 历史记录（使用服务端分页）
+  const totalHistoryApprovals = totalHistoryCount;
+  const totalPagesHistory = totalHistoryPages;
   const startIndexHistory = (currentPageHistory - 1) * ITEMS_PER_PAGE;
   const endIndexHistory = startIndexHistory + ITEMS_PER_PAGE;
-  const paginatedHistoryApprovals = approvalHistory.slice(startIndexHistory, endIndexHistory);
+  const paginatedHistoryApprovals = approvalHistory; // 服务端已经分页了，直接使用
 
   // 分页相关函数 - 待审批
   const handlePageInputChangePending = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -223,9 +227,9 @@ export default function ApprovalsPage() {
   }, []);
 
   // 加载审批历史
-  const loadApprovalHistory = useCallback(async () => {
+  const loadApprovalHistory = useCallback(async (page: number = 1) => {
     try {
-      const response = await fetch('/api/approvals?action=history');
+      const response = await fetch(`/api/approvals?action=history&page=${page}&limit=${ITEMS_PER_PAGE}`);
       
       if (!response.ok) {
         throw new Error('获取审批历史失败');
@@ -233,6 +237,12 @@ export default function ApprovalsPage() {
 
       const data = await response.json();
       setApprovalHistory(data.data || []);
+      
+      // 设置分页信息
+      if (data.pagination) {
+        setTotalHistoryPages(data.pagination.totalPages || 1);
+        setTotalHistoryCount(data.pagination.total || 0);
+      }
     } catch (error) {
       console.error('加载审批历史失败:', error);
       toast.error('加载审批历史失败');
@@ -242,18 +252,25 @@ export default function ApprovalsPage() {
   // 加载数据
   const loadData = useCallback(async () => {
     try {
-      await Promise.all([loadPendingApprovals(), loadApprovalHistory()]);
+      await Promise.all([loadPendingApprovals(), loadApprovalHistory(currentPageHistory)]);
       setError(null);
     } catch (error) {
       console.error('加载数据失败:', error);
     }
-  }, [loadPendingApprovals, loadApprovalHistory]);
+  }, [loadPendingApprovals, loadApprovalHistory, currentPageHistory]);
 
   useEffect(() => {
     if (isLoaded && user) {
       loadData();
     }
   }, [isLoaded, user, loadData]);
+
+  // 监听审批历史页面变化
+  useEffect(() => {
+    if (isLoaded && user && activeTab === 'history') {
+      loadApprovalHistory(currentPageHistory);
+    }
+  }, [isLoaded, user, activeTab, currentPageHistory, loadApprovalHistory]);
 
   // 处理审批操作
   const handleApproval = async () => {
@@ -289,7 +306,8 @@ export default function ApprovalsPage() {
       setIsDialogOpen(false);
       setApprovalComment('');
       setSelectedApproval(null);
-      loadData(); // 重新加载数据
+      // 重新加载数据，保持当前页面
+      await Promise.all([loadPendingApprovals(), loadApprovalHistory(currentPageHistory)]);
     } catch (error) {
       console.error('审批操作失败:', error);
       toast.error(error instanceof Error ? error.message : '审批操作失败');
