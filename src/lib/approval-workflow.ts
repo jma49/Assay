@@ -1,5 +1,5 @@
 import mongoDbClient from "./mongodb";
-import { Collection, Document } from "mongodb";
+import { Collection, Document, Db } from "mongodb";
 import { UserRole, Permission, hasPermission } from "./rbac";
 import { clearScriptsCache } from "./cache-utils";
 import { createScriptVersion } from "./version-control";
@@ -66,15 +66,26 @@ export interface ApprovalHistory {
   metadata?: Record<string, unknown>;
 }
 
+// 缓存数据库实例
+let cachedDb: Db | null = null;
+
+// 获取数据库实例（缓存版本）
+async function getDb(): Promise<Db> {
+  if (!cachedDb) {
+    cachedDb = await mongoDbClient.getDb();
+  }
+  return cachedDb;
+}
+
 // 获取审批请求集合
 async function getApprovalRequestsCollection(): Promise<Collection<Document>> {
-  const db = await mongoDbClient.getDb();
+  const db = await getDb();
   return db.collection("approval_requests");
 }
 
 // 获取审批历史集合
 async function getApprovalHistoryCollection(): Promise<Collection<Document>> {
-  const db = await mongoDbClient.getDb();
+  const db = await getDb();
   return db.collection("approval_history");
 }
 
@@ -692,7 +703,7 @@ async function executeApprovedOperation(
     );
 
     // 获取脚本集合
-    const scriptsDb = await mongoDbClient.getDb();
+    const scriptsDb = await getDb();
     const collection = scriptsDb.collection("sql_scripts");
 
     switch (request.operationType) {
