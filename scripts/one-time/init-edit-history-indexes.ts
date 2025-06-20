@@ -1,6 +1,6 @@
 // 初始化编辑历史索引的脚本
 import dotenv from "dotenv";
-import mongoDbClient from "../../src/lib/mongodb";
+import mongoDbClient from "../../src/lib/database/mongodb";
 
 // 加载环境变量
 dotenv.config({ path: ".env.local" });

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateApiAuth } from "@/lib/auth-utils";
-import { Permission, requirePermission } from "@/lib/rbac";
+import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { Permission, requirePermission } from "@/lib/auth/rbac";
 import {
   getScriptVersions,
   getScriptVersion,
   compareVersions,
   rollbackToVersion,
   getVersionStatistics,
-} from "@/lib/version-control";
+} from "@/lib/workflows/version-control";
 
 /**
  * GET - 获取脚本版本列表、版本详情、版本比较或统计信息

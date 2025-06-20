@@ -16,7 +16,7 @@ import {
   ChevronUp,
   Zap
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils/utils";
 
 interface AIAssistantPanelProps {
   value: string;

@@ -1,7 +1,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { User } from "@clerk/nextjs/server";
-import { getUserRole, setUserRole, UserRole } from "@/lib/rbac";
+import { getUserRole, setUserRole, UserRole } from "@/lib/auth/rbac";
 
 // 国际化文本
 export const authMessages = {

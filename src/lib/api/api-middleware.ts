@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateApiAuth } from "@/lib/auth-utils";
-import { Permission, requirePermission } from "@/lib/rbac";
+import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { Permission, requirePermission } from "@/lib/auth/rbac";
 import { Redis } from "@upstash/redis";
 
 // ===== 精确类型定义 =====

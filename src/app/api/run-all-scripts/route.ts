@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateApiAuth } from "@/lib/auth-utils";
-import getMongoDbClient from "@/lib/mongodb";
-import { executeScriptAndNotify } from "@/lib/script-executor";
+import { validateApiAuth } from "@/lib/auth/auth-utils";
+import getMongoDbClient from "@/lib/database/mongodb";
+import { executeScriptAndNotify } from "@/lib/utils/script-executor";
 import batchExecutionCache from "@/services/batch-execution-cache";
 import { Collection, Document } from "mongodb";
 import { v4 as uuidv4 } from "uuid";

@@ -24,7 +24,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { UserRole } from '@/lib/types/approval';
+import { UserRole } from "@/lib/types/approval";
 import { useLanguage } from '@/components/LanguageProvider';
 import { dashboardTranslations, DashboardTranslationKeys, ITEMS_PER_PAGE } from '@/components/dashboard/types';
 import UserHeader from '@/components/UserHeader';

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoDbClient from "@/lib/mongodb"; // 建议使用路径别名
+import mongoDbClient from "@/lib/database/mongodb"; // 建议使用路径别名
 import { ObjectId } from "mongodb";
 
 const MONGO_COLLECTION_NAME = process.env.MONGO_COLLECTION_NAME || "result";

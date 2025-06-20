@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { useLanguage } from "@/components/LanguageProvider";
 import { dashboardTranslations, DashboardTranslationKeys } from "@/components/dashboard/types";
 import { PriorityBadge } from "./priority-badge";

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateApiAuth } from "@/lib/auth-utils";
+import { validateApiAuth } from "@/lib/auth/auth-utils";
 import {
   UserRole,
   Permission,
@@ -8,7 +8,7 @@ import {
   removeUserRole,
   requirePermission,
   canManageRole,
-} from "@/lib/rbac";
+} from "@/lib/auth/rbac";
 
 // 设置角色的请求体接口
 interface SetUserRoleRequest {

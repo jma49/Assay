@@ -1,16 +1,16 @@
 import { NextResponse, NextRequest } from "next/server";
-import mongoDbClient from "@/lib/mongodb";
+import mongoDbClient from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
-import { clearScriptsCache } from "@/lib/cache-utils";
-import { validateApiAuth } from "@/lib/auth-utils";
-import { Permission, requirePermission, getUserRole } from "@/lib/rbac";
-import { createScriptVersion } from "@/lib/version-control";
+import { clearScriptsCache } from "@/lib/cache/cache-utils";
+import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
+import { createScriptVersion } from "@/lib/workflows/version-control";
 import {
   createApprovalRequest,
   isAutoApprovalEligible,
   analyzeScriptType,
-} from "@/lib/approval-workflow";
-import { recordEditHistory } from "@/lib/edit-history";
+} from "@/lib/workflows/approval-workflow";
+import { recordEditHistory } from "@/lib/workflows/edit-history";
 
 // Helper function to get the MongoDB collection
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {

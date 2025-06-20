@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils/utils";
 
 // 虚拟列表项的类型定义
 export interface VirtualListItem<T = unknown> {

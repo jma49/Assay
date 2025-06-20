@@ -1,5 +1,5 @@
 import { QueryResult } from "pg";
-import db from "../../src/lib/db"; // 调整路径
+import db from "../../src/lib/database/db"; // 调整路径
 import { saveResultToMongo } from "../services/mongo-service";
 import { sendSlackNotification } from "../services/slack-service";
 import { ExecutionResult, ExecutionStatusType } from "../types";

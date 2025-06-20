@@ -42,7 +42,7 @@ import { formatDate } from "@/components/dashboard/utils";
 import {
   EditHistoryRecord,
   EditHistoryFilter,
-} from "@/lib/edit-history-schema";
+} from "@/lib/workflows/edit-history-schema";
 import { 
   DashboardTranslationKeys,
   ITEMS_PER_PAGE 

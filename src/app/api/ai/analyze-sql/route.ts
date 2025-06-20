@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCachedSchema } from "@/lib/db-schema";
+import { getCachedSchema } from "@/lib/database/db-schema";
 import {
   generateContentWithRetry,
   getAIErrorMessage,
   logTokenUsage,
-} from "@/lib/ai-utils";
+} from "@/lib/utils/ai-utils";
 
 export async function POST(request: NextRequest) {
   try {

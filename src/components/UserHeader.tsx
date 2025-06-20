@@ -7,7 +7,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import MainNavigation, { Breadcrumb } from "@/components/ui/main-navigation";
 import { RefreshCw, Sun, Moon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { useTheme } from "next-themes";
 
 export default function UserHeader() {

@@ -1,6 +1,6 @@
 import { Collection } from "mongodb";
 import { QueryResult } from "pg";
-import mongoDbClient from "../../src/lib/mongodb"; // 调整路径
+import mongoDbClient from "../../src/lib/database/mongodb"; // 调整路径
 import { SqlCheckHistoryDocument, ExecutionStatusType } from "../types";
 
 /**

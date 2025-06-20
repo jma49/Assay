@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { withMiddleware, MiddlewareContext } from "@/lib/api-middleware";
-import { Permission } from "@/lib/rbac";
+import { withMiddleware, MiddlewareContext } from "@/lib/api/api-middleware";
+import { Permission } from "@/lib/auth/rbac";
 
 // 演示业务逻辑处理函数
 async function getScriptsHandler(req: NextRequest, context: MiddlewareContext) {

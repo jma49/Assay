@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoDbClient from "@/lib/mongodb";
-import redis from "@/lib/redis";
+import mongoDbClient from "@/lib/database/mongodb";
+import redis from "@/lib/cache/redis";
 import { Collection, Document } from "mongodb";
-import { validateApiAuth } from "@/lib/auth-utils";
-import { Permission, requirePermission } from "@/lib/rbac";
+import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { Permission, requirePermission } from "@/lib/auth/rbac";
 
 interface ScriptInfo {
   scriptId: string;

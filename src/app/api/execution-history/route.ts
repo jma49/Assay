@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoDbClient from "@/lib/mongodb";
+import mongoDbClient from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 
 // 执行记录数据结构

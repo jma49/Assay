@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoDbClient from "@/lib/mongodb";
+import mongoDbClient from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import {
   EditHistoryRecord,
   EditHistoryFilter,
-} from "@/lib/edit-history-schema";
+} from "@/lib/workflows/edit-history-schema";
 
 // 获取编辑历史集合
 async function getEditHistoryCollection(): Promise<Collection<Document>> {

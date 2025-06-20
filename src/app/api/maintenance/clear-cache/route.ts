@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import redis from "@/lib/redis";
-import { validateApiAuth } from "@/lib/auth-utils";
+import redis from "@/lib/cache/redis";
+import { validateApiAuth } from "@/lib/auth/auth-utils";
 
 /**
  * 清理 Redis 缓存的维护 API
