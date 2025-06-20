@@ -33,7 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { Check, DashboardTranslationKeys } from "./types";
 import { formatDate } from "./utils";
 import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";

@@ -7,7 +7,7 @@ dotenv.config({
 }); // Use override to be sure
 
 // Now import other modules
-import mongoDbClient from "../../src/lib/mongodb";
+import mongoDbClient from "../../src/lib/database/mongodb";
 
 // test/mongodb/connection.test.ts
 

@@ -1,4 +1,4 @@
-import mongoDbClient from "./mongodb";
+import mongoDbClient from "../database/mongodb";
 import { Collection, Document } from "mongodb";
 
 // 定义系统角色枚举

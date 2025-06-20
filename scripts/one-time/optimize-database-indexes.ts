@@ -17,7 +17,7 @@ import { config } from "dotenv";
 import {
   generateOptimizationReport,
   dbOptimization,
-} from "../../src/lib/database-optimization";
+} from "../../src/lib/database/database-optimization";
 
 // 加载环境变量
 config();
@@ -256,7 +256,7 @@ async function main() {
       console.log("将创建以下索引:");
 
       const { MONGODB_RECOMMENDED_INDEXES } = await import(
-        "../../src/lib/database-optimization.js"
+        "../../src/lib/database/database-optimization.js"
       );
 
       for (const [collectionName, indexes] of Object.entries(

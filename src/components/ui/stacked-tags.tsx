@@ -6,7 +6,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { MoreHorizontal, Hash } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { useLanguage } from "@/components/LanguageProvider";
 import { dashboardTranslations, DashboardTranslationKeys } from "@/components/dashboard/types";
 import { PriorityBadge } from "./priority-badge";

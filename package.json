@@ -40,7 +40,11 @@
     "cache:strategies": "ts-node -r dotenv/config scripts/manage-cache.ts strategies",
     "middleware:test": "curl -H 'Authorization: Bearer test' http://localhost:3000/api/demo-middleware",
     "frontend:build": "npm run build",
-    "frontend:analyze": "ANALYZE=true npm run build"
+    "frontend:analyze": "ANALYZE=true npm run build",
+    "security:deploy": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security.ts",
+    "security:deploy-sql-only": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security.ts --security-only",
+    "security:deploy-pool-only": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security.ts --pool-only",
+    "security:deploy-no-tests": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security.ts --no-tests"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.20.2",

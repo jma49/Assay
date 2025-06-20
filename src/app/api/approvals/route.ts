@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateApiAuth } from "@/lib/auth-utils";
-import { Permission, requirePermission } from "@/lib/rbac";
+import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { Permission, requirePermission } from "@/lib/auth/rbac";
 import {
   getPendingApprovals,
   approveScript,
   rejectScript,
   getCompletedApprovals,
-} from "@/lib/approval-workflow";
+} from "@/lib/workflows/approval-workflow";
 
 /**
  * GET - 获取待审批列表或审批历史

@@ -52,14 +52,14 @@ import { formatDate } from "@/components/dashboard/utils";
 import {
   EditHistoryRecord,
   EditHistoryFilter,
-} from "@/lib/edit-history-schema";
+} from "@/lib/workflows/edit-history-schema";
 import {
   DashboardTranslationKeys,
   dashboardTranslations,
   ITEMS_PER_PAGE,
 } from "@/components/dashboard/types";
 import { useLanguage } from "@/components/LanguageProvider";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import UserHeader from "@/components/UserHeader";
 
 export default function GlobalEditHistoryPage() {

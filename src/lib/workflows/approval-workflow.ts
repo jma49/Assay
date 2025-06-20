@@ -1,7 +1,7 @@
-import mongoDbClient from "./mongodb";
+import mongoDbClient from "../database/mongodb";
 import { Collection, Document, Db } from "mongodb";
-import { UserRole, Permission, hasPermission } from "./rbac";
-import { clearScriptsCache } from "./cache-utils";
+import { UserRole, Permission, hasPermission } from "../auth/rbac";
+import { clearScriptsCache } from "../cache/cache-utils";
 import { createScriptVersion } from "./version-control";
 import { recordEditHistory } from "./edit-history";
 

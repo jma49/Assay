@@ -1,4 +1,4 @@
-import redis from "./redis";
+import redis from "../cache/redis";
 import { query } from "./db";
 
 /**

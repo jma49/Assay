@@ -1,5 +1,5 @@
 // 测试编辑历史功能的脚本
-import mongoDbClient from "../../src/lib/mongodb";
+import mongoDbClient from "../../src/lib/database/mongodb";
 
 async function testEditHistory() {
   try {

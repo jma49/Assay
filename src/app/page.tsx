@@ -1,7 +1,7 @@
 import React from "react";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { isValidEmailDomain } from "@/lib/auth-utils";
+import { isValidEmailDomain } from "@/lib/auth/auth-utils";
 import Dashboard from "@/components/Dashboard";
 import UserHeader from "@/components/UserHeader";
 import { Toaster } from "@/components/ui/sonner";

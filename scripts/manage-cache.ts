@@ -19,8 +19,8 @@ import {
   cacheManager,
   getCacheHealth,
   INTELLIGENT_CACHE_STRATEGIES,
-} from "../src/lib/cache-strategies";
-import redis from "../src/lib/redis";
+} from "../src/lib/cache/cache-strategies";
+import redis from "../src/lib/cache/redis";
 
 // 加载环境变量
 config();

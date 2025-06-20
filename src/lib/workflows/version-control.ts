@@ -1,6 +1,6 @@
-import mongoDbClient from "./mongodb";
+import mongoDbClient from "../database/mongodb";
 import { Collection, Document } from "mongodb";
-import { clearScriptsCache } from "@/lib/cache-utils";
+import { clearScriptsCache } from "@/lib/cache/cache-utils";
 
 // 版本状态枚举
 export enum VersionStatus {

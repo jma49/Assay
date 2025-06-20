@@ -1,5 +1,5 @@
-import db from "../src/lib/db"; // For closing PG pool
-import mongoDbClient from "../src/lib/mongodb"; // For MongoDB operations
+import db from "../src/lib/database/db"; // For closing PG pool
+import mongoDbClient from "../src/lib/database/mongodb"; // For MongoDB operations
 import { Collection, Document } from "mongodb"; // For types
 import { executeSqlScriptFromDb } from "./core/sql-executor";
 

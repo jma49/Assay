@@ -1,4 +1,4 @@
-import redis from "@/lib/redis";
+import redis from "@/lib/cache/redis";
 import type { Redis } from "@upstash/redis";
 
 /**

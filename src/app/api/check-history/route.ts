@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoDbClient from "@/lib/mongodb"; // 使用路径别名
+import mongoDbClient from "@/lib/database/mongodb"; // 使用路径别名
 import { Collection, Document, WithId } from "mongodb";
 import { ExecutionStatusType } from "@/../scripts/types"; // 假设 @/ 解析到 src/，scripts 与 src 平级
 

@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
-import mongoDbClient from "@/lib/mongodb"; // 假设 mongodb.ts 位于 src/lib/
+import mongoDbClient from "@/lib/database/mongodb"; // 假设 mongodb.ts 位于 src/lib/
 import { Collection, Document, ObjectId } from "mongodb";
-import { clearScriptsCache } from "@/lib/cache-utils";
-import { validateApiAuth } from "@/lib/auth-utils";
-import { Permission, requirePermission, getUserRole } from "@/lib/rbac";
+import { clearScriptsCache } from "@/lib/cache/cache-utils";
+import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
 import {
   ApprovalStatus,
   createApprovalRequest,
   isAutoApprovalEligible,
   analyzeScriptType,
-} from "@/lib/approval-workflow";
-import { createScriptVersion } from "@/lib/version-control";
-import { recordEditHistory } from "@/lib/edit-history";
+} from "@/lib/workflows/approval-workflow";
+import { createScriptVersion } from "@/lib/workflows/version-control";
+import { recordEditHistory } from "@/lib/workflows/edit-history";
 
 // 定义脚本数据的接口
 interface NewScriptData {

@@ -66,16 +66,16 @@ import {
 } from "@/components/dashboard/types";
 import { useLanguage } from "@/components/LanguageProvider";
 import { formatDate } from "@/components/dashboard/utils";
-import { isReadOnlyQuery } from "@/lib/utils";
+import { isReadOnlyQuery } from "@/lib/utils/utils";
 import {
   ScriptMetadataForm,
   ScriptFormData,
 } from "@/components/scripts/ScriptMetadataForm";
 import CodeMirrorEditor from "@/components/scripts/CodeMirrorEditor";
 import { generateSqlTemplateWithTranslation } from "@/components/dashboard/scriptTranslations";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { EditHistoryDialog } from "@/components/scripts/EditHistoryDialog";
-import { recordEditHistory } from "@/lib/edit-history";
+import { recordEditHistory } from "@/lib/workflows/edit-history";
 import UserHeader from "@/components/UserHeader";
 import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
 import { StackedTags } from "@/components/ui/stacked-tags";

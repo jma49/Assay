@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { useLanguage } from "@/components/LanguageProvider";
 import { dashboardTranslations, DashboardTranslationKeys } from "@/components/dashboard/types";
 

@@ -14,7 +14,7 @@ import {
   Download,
   Brain,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import UserHeader from "@/components/UserHeader";
 import AnalysisResultDialog from '@/components/ai/AnalysisResultDialog';
 import Link from "next/link";

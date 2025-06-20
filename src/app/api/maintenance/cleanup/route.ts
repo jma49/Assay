@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import batchExecutionCache from "@/services/batch-execution-cache";
-import redis from "@/lib/redis";
+import redis from "@/lib/cache/redis";
 
 /**
  * POST - 执行缓存清理任务

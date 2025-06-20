@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateApiAuth, getUserInfo } from "@/lib/auth-utils";
-import { executeScriptAndNotify } from "@/lib/script-executor";
+import { validateApiAuth, getUserInfo } from "@/lib/auth/auth-utils";
+import { executeScriptAndNotify } from "@/lib/utils/script-executor";
 
 /**
  * 处理手动触发 SQL 脚本检查的 API 请求。
