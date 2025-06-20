@@ -2,8 +2,8 @@ import { Pool, QueryResult, PoolConfig } from "pg";
 
 // 配置 pg 库处理 BigInt - 将其转换为字符串而不是 BigInt 类型
 // 这可以避免 JSON.stringify 时出现错误
-const { types } = require("pg");
-types.setTypeParser(20, function (val: string) {
+import pg from "pg";
+pg.types.setTypeParser(20, function (val: string) {
   // 20 是 PostgreSQL 中 BIGINT 的 OID
   return val; // 返回字符串而不是 BigInt
 });
