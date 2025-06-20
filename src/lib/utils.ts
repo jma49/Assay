@@ -78,17 +78,28 @@ export function isReadOnlyQuery(sqlContent: string): {
     .replace(/\s+/g, " ") // 标准化空白字符
     .trim();
 
-  // 检查是否以SELECT开头（最基本的要求）
+  // 检查是否以允许的关键词开头
   if (
     !cleanSql.startsWith("SELECT") &&
     !cleanSql.startsWith("WITH") &&
-    !cleanSql.startsWith("EXPLAIN")
+    !cleanSql.startsWith("EXPLAIN") &&
+    !cleanSql.startsWith("DO $$") &&
+    !cleanSql.startsWith("DO $")
   ) {
     return {
       isValid: false,
       reason:
-        "SQL语句必须以 SELECT、WITH 或 EXPLAIN 开头。系统仅允许查询操作。",
+        "SQL语句必须以 SELECT、WITH、EXPLAIN 或 DO 开头。系统仅允许查询操作和安全的PL/pgSQL块。",
     };
+  }
+
+  // 如果是DO块，进行额外的安全检查
+  if (cleanSql.startsWith("DO $$") || cleanSql.startsWith("DO $")) {
+    // 检查DO块是否只包含安全操作
+    const doBlockSafetyCheck = validateDoBlock(cleanSql);
+    if (!doBlockSafetyCheck.isValid) {
+      return doBlockSafetyCheck;
+    }
   }
 
   // 额外的安全检查：检查是否有可疑的函数调用
@@ -101,6 +112,49 @@ export function isReadOnlyQuery(sqlContent: string): {
       };
     }
   }
+
+  return { isValid: true };
+}
+
+// 验证DO块的安全性
+function validateDoBlock(cleanSql: string): {
+  isValid: boolean;
+  reason?: string;
+} {
+  // DO块中禁止的危险操作
+  const doBlockForbiddenKeywords = [
+    // 数据修改操作
+    "INSERT INTO",
+    "UPDATE ",
+    "DELETE FROM",
+    "TRUNCATE ",
+    "MERGE ",
+    // 结构修改操作
+    "CREATE ",
+    "DROP ",
+    "ALTER ",
+    // 权限管理
+    "GRANT ",
+    "REVOKE ",
+    // 危险的系统函数
+    "COPY ",
+    "\\COPY",
+    "PERFORM PG_TERMINATE_BACKEND",
+    "PERFORM PG_CANCEL_BACKEND",
+  ];
+
+  // 检查DO块中是否包含禁止的操作
+  for (const keyword of doBlockForbiddenKeywords) {
+    if (cleanSql.includes(keyword)) {
+      return {
+        isValid: false,
+        reason: `DO块中禁止使用 "${keyword.trim()}" 操作。`,
+      };
+    }
+  }
+
+  // 采用相对宽松的策略：只要不包含明确禁止的操作就允许
+  // DO块主要用于：声明变量、循环、条件判断、查询和日志输出
 
   return { isValid: true };
 }

@@ -106,17 +106,49 @@ function isReadOnlyQuery(sqlContent: string): {
     .replace(/\s+/g, " ") // 标准化空白字符
     .trim();
 
-  // 检查是否以SELECT开头（最基本的要求）
+  // 检查是否以允许的关键词开头
   if (
     !cleanSql.startsWith("SELECT") &&
     !cleanSql.startsWith("WITH") &&
-    !cleanSql.startsWith("EXPLAIN")
+    !cleanSql.startsWith("EXPLAIN") &&
+    !cleanSql.startsWith("DO $$") &&
+    !cleanSql.startsWith("DO $")
   ) {
     return {
       isValid: false,
       reason:
-        "SQL语句必须以 SELECT、WITH 或 EXPLAIN 开头。系统仅允许查询操作。",
+        "SQL语句必须以 SELECT、WITH、EXPLAIN 或 DO 开头。系统仅允许查询操作和安全的PL/pgSQL块。",
     };
+  }
+
+  // 如果是DO块，进行额外的安全检查
+  if (cleanSql.startsWith("DO $$") || cleanSql.startsWith("DO $")) {
+    // DO块中禁止的危险操作
+    const doBlockForbiddenKeywords = [
+      "INSERT INTO",
+      "UPDATE ",
+      "DELETE FROM",
+      "TRUNCATE ",
+      "MERGE ",
+      "CREATE ",
+      "DROP ",
+      "ALTER ",
+      "GRANT ",
+      "REVOKE ",
+      "COPY ",
+      "\\COPY",
+      "PERFORM PG_TERMINATE_BACKEND",
+      "PERFORM PG_CANCEL_BACKEND",
+    ];
+
+    for (const keyword of doBlockForbiddenKeywords) {
+      if (cleanSql.includes(keyword)) {
+        return {
+          isValid: false,
+          reason: `DO块中禁止使用 "${keyword.trim()}" 操作。`,
+        };
+      }
+    }
   }
 
   // 额外的安全检查：检查是否有可疑的函数调用

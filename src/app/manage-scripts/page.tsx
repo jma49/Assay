@@ -259,13 +259,18 @@ const ManageScriptsContent = () => {
   };
 
   const handleDialogSave = async () => {
-    if (
-      !currentFormScript.scriptId ||
-      !currentFormScript.name ||
-      !currentFormScript.author ||
-      !currentSqlContent
-    ) {
-      toast.error(t("fillRequiredFieldsError"));
+    // 详细的字段验证，提供具体的错误信息
+    const missingFields = [];
+    if (!currentFormScript.scriptId?.trim()) missingFields.push("脚本ID");
+    if (!currentFormScript.name?.trim()) missingFields.push("脚本名称");
+    if (!currentFormScript.author?.trim()) missingFields.push("作者");
+    if (!currentSqlContent?.trim()) missingFields.push("SQL内容");
+
+    if (missingFields.length > 0) {
+      toast.error("请填写必填字段", {
+        description: `缺少字段：${missingFields.join("、")}`,
+        duration: 6000,
+      });
       return;
     }
     
@@ -273,11 +278,30 @@ const ManageScriptsContent = () => {
     const securityCheck = isReadOnlyQuery(currentSqlContent);
     if (!securityCheck.isValid) {
       toast.error("SQL内容安全检查失败", {
-        description: securityCheck.reason || "SQL内容包含不安全的操作",
-        duration: 8000,
+        description: `${securityCheck.reason}\n\n系统允许查询操作（SELECT、WITH、EXPLAIN）和安全的PL/pgSQL块（DO），禁止数据修改和结构变更操作。`,
+        duration: 10000,
+        action: {
+          label: "查看安全规则",
+          onClick: () => {
+            toast.info("SQL安全规则", {
+              description: "✅ 允许：SELECT、WITH、EXPLAIN查询、DO块（仅包含查询和日志）\n❌ 禁止：INSERT、UPDATE、DELETE、CREATE、ALTER、DROP等操作",
+              duration: 8000,
+            });
+          },
+        },
       });
       return;
     }
+
+    // 添加调试日志
+    console.log("🚀 开始保存脚本", {
+      mode: dialogMode,
+      scriptId: currentFormScript.scriptId,
+      name: currentFormScript.name,
+      author: currentFormScript.author,
+      sqlContentLength: currentSqlContent.length,
+      sqlPreview: currentSqlContent.substring(0, 100) + "...",
+    });
 
     setIsSubmitting(true);
     const currentPayload: Partial<SqlScript> = {
@@ -1014,23 +1038,62 @@ const ManageScriptsContent = () => {
             </div>
           </div>
           <DialogFooter className="pt-4 border-t">
-            <DialogClose asChild>
-              <Button type="button" variant="outline" disabled={isSubmitting}>
-                {t("cancelButton")}
+            {/* 验证状态提示 */}
+            <div className="flex-1 text-sm text-muted-foreground">
+              {(() => {
+                const missingFields = [];
+                if (!currentFormScript.scriptId?.trim()) missingFields.push("脚本ID");
+                if (!currentFormScript.name?.trim()) missingFields.push("名称");
+                if (!currentFormScript.author?.trim()) missingFields.push("作者");
+                if (!currentSqlContent?.trim()) missingFields.push("SQL内容");
+                
+                if (missingFields.length > 0) {
+                  return (
+                    <div className="flex items-center gap-1 text-orange-600">
+                      <AlertTriangle className="h-3 w-3" />
+                      <span>缺少必填字段：{missingFields.join("、")}</span>
+                    </div>
+                  );
+                }
+                
+                const securityCheck = isReadOnlyQuery(currentSqlContent);
+                if (!securityCheck.isValid) {
+                  return (
+                    <div className="flex items-center gap-1 text-red-600">
+                      <AlertTriangle className="h-3 w-3" />
+                      <span>SQL安全检查失败：{securityCheck.reason}</span>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div className="flex items-center gap-1 text-green-600">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <span>验证通过，可以保存</span>
+                  </div>
+                );
+              })()}
+            </div>
+            
+            <div className="flex gap-2">
+              <DialogClose asChild>
+                <Button type="button" variant="outline" disabled={isSubmitting}>
+                  {t("cancelButton")}
+                </Button>
+              </DialogClose>
+              <Button
+                type="button"
+                onClick={handleDialogSave}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="mr-0 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-0 h-4 w-4" />
+                )}
+                {t("saveScriptButton")}
               </Button>
-            </DialogClose>
-            <Button
-              type="button"
-              onClick={handleDialogSave}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <Loader2 className="mr-0 h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="mr-0 h-4 w-4" />
-              )}
-              {t("saveScriptButton")}
-            </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
