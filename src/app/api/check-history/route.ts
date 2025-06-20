@@ -30,14 +30,18 @@ interface PaginatedResponse {
   query_info: {
     script_name?: string;
     status?: string;
+    hashtags?: string[];
+    sort_by?: string;
+    sort_order?: string;
     include_results: boolean;
   };
 }
 
 const COLLECTION_NAME = "result";
+const SCRIPTS_COLLECTION_NAME = "sql_scripts";
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 50;
-const MAX_LIMIT = 500; // 最大限制
+const MAX_LIMIT = 2000; // 增加最大限制到2000
 
 export async function GET(request: NextRequest) {
   try {
@@ -60,17 +64,111 @@ export async function GET(request: NextRequest) {
     const scriptName = searchParams.get("script_name");
     const status = searchParams.get("status");
     const includeResults = searchParams.get("include_results") === "true";
+    const hashtagsParam = searchParams.get("hashtags");
+    const hashtags = hashtagsParam
+      ? hashtagsParam
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag)
+      : [];
+
+    // 排序参数
+    const sortBy = searchParams.get("sort_by") || "execution_time";
+    const sortOrder = searchParams.get("sort_order") || "desc"; // desc 或 asc
 
     const db = await mongoDbClient.getDb();
     const collection: Collection<Document> = db.collection(COLLECTION_NAME);
+    const scriptsCollection: Collection<Document> = db.collection(
+      SCRIPTS_COLLECTION_NAME
+    );
+
+    // 如果有hashtag过滤，先从scripts集合获取匹配的script IDs
+    let scriptIdsForHashtagFilter: string[] = [];
+    if (hashtags.length > 0) {
+      console.log(
+        `[API] Hashtag过滤: 查找包含标签 [${hashtags.join(", ")}] 的脚本`
+      );
+
+      const scriptsWithHashtags = await scriptsCollection
+        .find(
+          { hashtags: { $in: hashtags } },
+          { projection: { scriptId: 1, name: 1, hashtags: 1 } }
+        )
+        .toArray();
+
+      scriptIdsForHashtagFilter = scriptsWithHashtags
+        .filter((script) => {
+          // 检查脚本是否包含所有选中的hashtag（精确匹配）
+          const scriptHashtags = (script.hashtags as string[]) || [];
+          return hashtags.every((tag) => scriptHashtags.includes(tag));
+        })
+        .map((script) => script.scriptId as string);
+
+      console.log(
+        `[API] 找到 ${scriptIdsForHashtagFilter.length} 个匹配标签的脚本:`,
+        scriptIdsForHashtagFilter
+      );
+
+      // 如果没有匹配的脚本，直接返回空结果
+      if (scriptIdsForHashtagFilter.length === 0) {
+        return NextResponse.json({
+          data: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+            hasNext: false,
+            hasPrev: false,
+          },
+          query_info: {
+            script_name: scriptName || undefined,
+            status: status || undefined,
+            hashtags,
+            include_results: includeResults,
+          },
+        });
+      }
+    }
 
     // 构建查询条件
     const query: Record<string, unknown> = {};
+
+    // 处理script_name查询条件
+    let scriptNameQuery: unknown = undefined;
     if (scriptName) {
-      query.script_name = scriptName;
+      scriptNameQuery = { $regex: scriptName, $options: "i" }; // 支持模糊搜索
     }
-    if (status && (status === "success" || status === "failure")) {
-      query.status = status;
+
+    // 添加hashtag过滤条件
+    if (scriptIdsForHashtagFilter.length > 0) {
+      if (scriptNameQuery) {
+        // 如果已有script_name搜索条件，需要同时满足搜索和hashtag过滤
+        query.script_name = {
+          $and: [scriptNameQuery, { $in: scriptIdsForHashtagFilter }],
+        };
+      } else {
+        // 只有hashtag过滤
+        query.script_name = { $in: scriptIdsForHashtagFilter };
+      }
+    } else if (scriptNameQuery) {
+      // 只有script_name搜索
+      query.script_name = scriptNameQuery;
+    }
+
+    // 处理状态过滤
+    if (status) {
+      if (status === "success") {
+        // 成功状态：status为success且statusType不是attention_needed
+        query.status = "success";
+        query.statusType = { $ne: "attention_needed" };
+      } else if (status === "failure") {
+        // 失败状态
+        query.status = "failure";
+      } else if (status === "attention_needed") {
+        // 需要注意状态：statusType为attention_needed
+        query.statusType = "attention_needed";
+      }
     }
 
     // 构建投影（默认不包含大字段 raw_results）
@@ -92,14 +190,29 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     console.log(
-      `[API] 分页查询历史记录 - 页码: ${page}, 每页: ${limit}, 跳过: ${skip}`
+      `[API] 分页查询历史记录 - 页码: ${page}, 每页: ${limit}, 跳过: ${skip}${
+        hashtags.length > 0 ? `, Hashtag过滤: [${hashtags.join(", ")}]` : ""
+      }${status ? `, 状态过滤: ${status}` : ""}${
+        sortBy ? `, 排序: ${sortBy} ${sortOrder}` : ""
+      }`
     );
+
+    // 构建排序条件
+    const sortCondition: Record<string, 1 | -1> = {};
+    if (sortBy === "execution_time") {
+      sortCondition.execution_time = sortOrder === "asc" ? 1 : -1;
+    } else if (sortBy === "script_name") {
+      sortCondition.script_name = sortOrder === "asc" ? 1 : -1;
+    } else {
+      // 默认按执行时间倒序
+      sortCondition.execution_time = -1;
+    }
 
     // 并行执行查询和计数
     const [historyDocs, totalCount] = await Promise.all([
       collection
         .find(query, { projection })
-        .sort({ execution_time: -1 })
+        .sort(sortCondition)
         .skip(skip)
         .limit(limit)
         .toArray(),
@@ -112,7 +225,11 @@ export async function GET(request: NextRequest) {
     const hasPrev = page > 1;
 
     console.log(
-      `[API] 分页查询完成 - 返回 ${historyDocs.length} 条记录，总计 ${totalCount} 条，共 ${totalPages} 页`
+      `[API] 分页查询完成 - 返回 ${
+        historyDocs.length
+      } 条记录，总计 ${totalCount} 条，共 ${totalPages} 页${
+        hashtags.length > 0 ? `，Hashtag过滤生效` : ""
+      }`
     );
 
     // 转换数据格式
@@ -143,6 +260,9 @@ export async function GET(request: NextRequest) {
       query_info: {
         script_name: scriptName || undefined,
         status: status || undefined,
+        hashtags: hashtags.length > 0 ? hashtags : undefined,
+        sort_by: sortBy,
+        sort_order: sortOrder,
         include_results: includeResults,
       },
     };
