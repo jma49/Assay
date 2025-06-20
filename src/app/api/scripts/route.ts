@@ -430,7 +430,6 @@ export async function POST(request: Request) {
 }
 
 // 未来可以添加 GET (获取列表或单个), PUT (更新), DELETE (删除) 方法
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(_request: Request) {
   try {
     console.log("API: GET /api/scripts - 请求已收到");

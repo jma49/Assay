@@ -37,7 +37,10 @@
     "cache:stats": "ts-node -r dotenv/config scripts/manage-cache.ts stats",
     "cache:clear": "ts-node -r dotenv/config scripts/manage-cache.ts clear",
     "cache:monitor": "ts-node -r dotenv/config scripts/manage-cache.ts monitor",
-    "cache:strategies": "ts-node -r dotenv/config scripts/manage-cache.ts strategies"
+    "cache:strategies": "ts-node -r dotenv/config scripts/manage-cache.ts strategies",
+    "middleware:test": "curl -H 'Authorization: Bearer test' http://localhost:3000/api/demo-middleware",
+    "frontend:build": "npm run build",
+    "frontend:analyze": "ANALYZE=true npm run build"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.20.2",
