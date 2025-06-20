@@ -12,9 +12,9 @@ import { useLanguage } from "@/components/LanguageProvider";
 import {
   Check,
   dashboardTranslations,
-  DashboardTranslationKeys,
-  ITEMS_PER_PAGE,
+  CHECK_HISTORY_ITEMS_PER_PAGE,
   ScriptInfo,
+  type DashboardTranslationKeys,
 } from "@/components/dashboard/types";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { ManualTrigger } from "@/components/dashboard/ManualTrigger";
@@ -50,6 +50,15 @@ const Dashboard = () => {
   >(null);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // 新增：后端分页相关状态
+  const [paginationInfo, setPaginationInfo] = useState({
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false,
+  });
+  const [isLoadingChecks, setIsLoadingChecks] = useState(false);
+
   // 新增：分离统计数据状态
   const [overallStats, setOverallStats] = useState<{
     totalCount: number;
@@ -84,6 +93,244 @@ const Dashboard = () => {
     [language],
   );
 
+  // 新增：获取分页检查数据的函数
+  const loadPaginatedChecks = useCallback(async (
+    page: number = 1,
+    status?: string | null,
+    search?: string,
+    hashtags?: string[],
+    sortBy?: string,
+    sortOrder?: string
+  ) => {
+    if (isLoadingRef.current) {
+      console.log("🚫 防止重复调用：loadPaginatedChecks已在执行中");
+      return;
+    }
+
+    isLoadingRef.current = true;
+    setIsLoadingChecks(true);
+
+    console.log("🚀 开始loadPaginatedChecks调用:", {
+      page,
+      status,
+      search,
+      hashtags,
+      sortBy,
+      sortOrder,
+      CHECK_HISTORY_ITEMS_PER_PAGE
+    });
+
+    try {
+      // 构建查询参数
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: CHECK_HISTORY_ITEMS_PER_PAGE.toString(),
+        include_results: "false", // 不包含大字段以提高性能
+      });
+
+      if (status && status !== null) {
+        params.set("status", status);
+      }
+      if (search && search.trim()) {
+        params.set("script_name", search.trim());
+      }
+      if (hashtags && hashtags.length > 0) {
+        params.set("hashtags", hashtags.join(","));
+      }
+      if (sortBy) {
+        params.set("sort_by", sortBy);
+      }
+      if (sortOrder) {
+        params.set("sort_order", sortOrder);
+      }
+
+      const url = `/api/check-history?${params.toString()}`;
+      console.log("🌐 API调用URL:", url);
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("📡 API响应状态:", response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ API响应错误:", errorText);
+        throw new Error(`获取检查历史失败: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("📄 API返回数据:", data);
+
+      // 更新检查数据
+      if (data.data && Array.isArray(data.data)) {
+        const processedChecks = data.data.map((check: Check) => ({
+          ...check,
+          createdAt: check.createdAt
+            ? typeof check.createdAt === "string"
+              ? check.createdAt
+              : check.createdAt.toString()
+            : new Date().toISOString(),
+        }));
+
+        console.log("✅ 处理后的检查数据:", processedChecks.slice(0, 2)); // 只显示前2条避免日志过长
+        setChecks(processedChecks);
+      } else {
+        console.warn("⚠️ API返回的data.data不是数组:", data.data);
+        setChecks([]);
+      }
+
+      // 更新分页信息
+      if (data.pagination) {
+        setPaginationInfo({
+          total: data.pagination.total,
+          totalPages: data.pagination.totalPages,
+          hasNext: data.pagination.hasNext,
+          hasPrev: data.pagination.hasPrev,
+        });
+        console.log("📊 分页信息更新:", data.pagination);
+      } else {
+        console.warn("⚠️ API返回的data.pagination不存在:", data.pagination);
+      }
+
+      console.log("📊 分页检查数据加载完成:", {
+        page,
+        totalChecks: data.pagination?.total || 0,
+        returnedChecks: data.data?.length || 0,
+        totalPages: data.pagination?.totalPages || 0,
+        hashtags: hashtags?.length ? hashtags : "无",
+        status: status || "全部",
+        sortBy: sortBy || "execution_time",
+        sortOrder: sortOrder || "desc",
+      });
+
+    } catch (err) {
+      console.error("❌ 获取分页检查数据失败:", err);
+      setError(err instanceof Error ? err.message : "数据加载失败");
+      setChecks([]); // 确保在错误时清空数据
+    } finally {
+      setIsLoadingChecks(false);
+      isLoadingRef.current = false;
+      console.log("🏁 loadPaginatedChecks完成，isLoadingChecks:", false);
+    }
+  }, []);
+
+  // 修改requestSort函数以支持后端排序
+  const requestSort = (key: keyof Check) => {
+    let newDirection: "ascending" | "descending";
+    
+    if (sortConfig.key === key) {
+      newDirection = sortConfig.direction === "ascending" ? "descending" : "ascending";
+    } else {
+      newDirection = "descending";
+    }
+
+    setSortConfig({ key, direction: newDirection });
+    setCurrentPage(1);
+
+    // 转换为后端API期望的格式
+    const sortBy = key === "execution_time" ? "execution_time" : "script_name";
+    const sortOrder = newDirection === "ascending" ? "asc" : "desc";
+
+    // 触发后端重新排序
+    loadPaginatedChecks(1, filterStatus, searchTerm, selectedHashtags, sortBy, sortOrder);
+  };
+
+  // 处理页面变化
+  const handlePageChange = useCallback((newPage: number) => {
+    setCurrentPage(newPage);
+    const sortBy = sortConfig.key === "execution_time" ? "execution_time" : 
+                  sortConfig.key === "script_name" ? "script_name" : "execution_time";
+    const sortOrder = sortConfig.direction === "ascending" ? "asc" : "desc";
+    loadPaginatedChecks(newPage, filterStatus, searchTerm, selectedHashtags, sortBy, sortOrder);
+  }, [loadPaginatedChecks, filterStatus, searchTerm, selectedHashtags, sortConfig]);
+
+  // 处理状态过滤变化
+  const handleFilterStatusChange = useCallback((status: string | null) => {
+    setFilterStatus(status);
+    setCurrentPage(1);
+    const sortBy = sortConfig.key === "execution_time" ? "execution_time" : 
+                  sortConfig.key === "script_name" ? "script_name" : "execution_time";
+    const sortOrder = sortConfig.direction === "ascending" ? "asc" : "desc";
+    loadPaginatedChecks(1, status, searchTerm, selectedHashtags, sortBy, sortOrder);
+  }, [loadPaginatedChecks, searchTerm, selectedHashtags, sortConfig]);
+
+  // 处理搜索变化
+  const handleSearchChange = useCallback((search: string) => {
+    setSearchTerm(search);
+    setCurrentPage(1);
+    const sortBy = sortConfig.key === "execution_time" ? "execution_time" : 
+                  sortConfig.key === "script_name" ? "script_name" : "execution_time";
+    const sortOrder = sortConfig.direction === "ascending" ? "asc" : "desc";
+    loadPaginatedChecks(1, filterStatus, search, selectedHashtags, sortBy, sortOrder);
+  }, [loadPaginatedChecks, filterStatus, selectedHashtags, sortConfig]);
+
+  // 处理hashtag变化  
+  const handleHashtagsChange = useCallback((hashtags: string[]) => {
+    setSelectedHashtags(hashtags);
+    setCurrentPage(1);
+    const sortBy = sortConfig.key === "execution_time" ? "execution_time" : 
+                  sortConfig.key === "script_name" ? "script_name" : "execution_time";
+    const sortOrder = sortConfig.direction === "ascending" ? "asc" : "desc";
+    loadPaginatedChecks(1, filterStatus, searchTerm, hashtags, sortBy, sortOrder);
+  }, [loadPaginatedChecks, filterStatus, searchTerm, sortConfig]);
+
+  // 获取整体统计数据的函数
+  const loadOverallStats = useCallback(async () => {
+    try {
+      // 获取更多数据用于统计计算 (获取最近2000条数据)
+      const response = await fetch("/api/check-history?limit=2000&include_results=false", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`获取统计数据失败: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      let statsData: Check[] = [];
+
+      if (data.data && Array.isArray(data.data)) {
+        statsData = data.data;
+      }
+
+      // 计算整体统计数据
+      const overallSuccessCount = statsData.filter(
+        (c) => c.status === "success" && c.statusType !== "attention_needed",
+      ).length;
+      const overallFailureCount = statsData.filter(
+        (c) => c.status === "failure",
+      ).length;
+      const overallNeedsAttentionCount = statsData.filter(
+        (c) => c.statusType === "attention_needed",
+      ).length;
+      const overallTotalCount = statsData.length;
+
+      setOverallStats({
+        totalCount: overallTotalCount,
+        successCount: overallSuccessCount,
+        failureCount: overallFailureCount,
+        needsAttentionCount: overallNeedsAttentionCount,
+      });
+
+      console.log("📊 整体统计数据加载完成:", {
+        totalChecks: overallTotalCount,
+        successCount: overallSuccessCount,
+        failureCount: overallFailureCount,
+        needsAttentionCount: overallNeedsAttentionCount,
+      });
+
+    } catch (err) {
+      console.error("获取整体统计数据失败:", err);
+    }
+  }, []);
+
   const loadInitialData = useCallback(async () => {
     // 防止重复调用 - 使用更强的防护机制
     if (isLoadingRef.current) {
@@ -101,28 +348,20 @@ const Dashboard = () => {
     console.log(`🚀 开始数据加载请求 ${requestId}`);
 
     try {
-      const [scriptsResult, checksResult] = await Promise.all([
+      // 并行加载脚本列表、分页检查数据和整体统计
+      const [scriptsResult] = await Promise.all([
         // 获取脚本列表
         fetch("/api/list-scripts", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "X-Request-ID": requestId, // 添加请求标识
-          },
-        }),
-        // 获取检查历史数据（获取更多数据，用于显示和统计）
-        fetch("/api/check-history?limit=500&includeResults=false", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Request-ID": requestId, // 添加请求标识
+            "X-Request-ID": requestId,
           },
         }),
       ]);
 
       console.log(`✅ API响应完成 ${requestId}:`, {
         scriptsOk: scriptsResult.ok,
-        checksOk: checksResult.ok
       });
 
       // 处理脚本列表响应
@@ -133,28 +372,23 @@ const Dashboard = () => {
         // 处理不同的API响应格式
         if (scriptsResponseData && typeof scriptsResponseData === "object") {
           if (Array.isArray(scriptsResponseData)) {
-            // 直接是数组格式
             scriptsData = scriptsResponseData;
           } else if (
             scriptsResponseData.data &&
             Array.isArray(scriptsResponseData.data)
           ) {
-            // { data: [...] } 格式
             scriptsData = scriptsResponseData.data;
           } else if (
             scriptsResponseData.success &&
             Array.isArray(scriptsResponseData.data)
           ) {
-            // { success: true, data: [...] } 格式
             scriptsData = scriptsResponseData.data;
           } else if (
             scriptsResponseData.scripts &&
             Array.isArray(scriptsResponseData.scripts)
           ) {
-            // { scripts: [...] } 格式
             scriptsData = scriptsResponseData.scripts;
           } else {
-            // 其他可能的格式，尝试从其他字段获取
             const possibleArrayFields = ["items", "results", "list"];
             for (const field of possibleArrayFields) {
               if (
@@ -168,7 +402,6 @@ const Dashboard = () => {
           }
         }
 
-        // 确保数据是数组格式
         if (!Array.isArray(scriptsData)) {
           scriptsData = [];
         }
@@ -186,129 +419,27 @@ const Dashboard = () => {
             }))
           });
         }
-
-        // 验证状态更新
-        setTimeout(() => {
-          // 状态验证已完成
-        }, 100);
       } else {
         throw new Error(
           `脚本列表获取失败: ${scriptsResult.status} ${scriptsResult.statusText}`,
         );
       }
 
-      // 处理检查历史数据响应
-      if (checksResult.ok) {
-        const checksResponseData = await checksResult.json();
-        let checksData: Check[] = [];
-
-        // 处理不同的API响应格式，支持历史数据
-        if (checksResponseData && typeof checksResponseData === "object") {
-          if (Array.isArray(checksResponseData)) {
-            // 直接是数组格式
-            checksData = checksResponseData;
-          } else if (
-            checksResponseData.data &&
-            Array.isArray(checksResponseData.data)
-          ) {
-            // { data: [...] } 格式
-            checksData = checksResponseData.data;
-          } else if (
-            checksResponseData.checks &&
-            Array.isArray(checksResponseData.checks)
-          ) {
-            // { checks: [...] } 格式 (历史格式支持)
-            checksData = checksResponseData.checks;
-          } else if (
-            checksResponseData.success &&
-            Array.isArray(checksResponseData.data)
-          ) {
-            // { success: true, data: [...] } 格式
-            checksData = checksResponseData.data;
-          } else {
-            // 其他可能的格式
-            const possibleArrayFields = ["items", "results", "list", "records"];
-            for (const field of possibleArrayFields) {
-              if (
-                checksResponseData[field] &&
-                Array.isArray(checksResponseData[field])
-              ) {
-                checksData = checksResponseData[field];
-                break;
-              }
-            }
-          }
-        }
-
-        // 确保数据是数组格式
-        if (!Array.isArray(checksData)) {
-          checksData = [];
-        }
-
-        // 处理日期字段，确保兼容性
-        const processedChecks = checksData.map((check) => ({
-          ...check,
-          // 安全处理日期字段
-          createdAt: check.createdAt
-            ? typeof check.createdAt === "string"
-              ? check.createdAt
-              : check.createdAt.toString()
-            : new Date().toISOString(),
-        }));
-
-        setChecks(processedChecks);
-
-        // 统一计算整体统计数据（使用同一份数据）
-        const overallSuccessCount = processedChecks.filter(
-          (c) => c.status === "success" && c.statusType !== "attention_needed",
-        ).length;
-        const overallFailureCount = processedChecks.filter(
-          (c) => c.status === "failure",
-        ).length;
-        const overallNeedsAttentionCount = processedChecks.filter(
-          (c) => c.statusType === "attention_needed",
-        ).length;
-        const overallTotalCount = processedChecks.length;
-
-        setOverallStats({
-          totalCount: overallTotalCount,
-          successCount: overallSuccessCount,
-          failureCount: overallFailureCount,
-          needsAttentionCount: overallNeedsAttentionCount,
-        });
-
-        if (process.env.NODE_ENV === "development") {
-          console.log("📊 检查数据和统计加载完成:", {
-            totalChecks: overallTotalCount,
-            successCount: overallSuccessCount,
-            failureCount: overallFailureCount,
-            needsAttentionCount: overallNeedsAttentionCount,
-            sampleChecks: processedChecks.slice(0, 3).map(c => ({
-              script_name: c.script_name,
-              script_id: c.script_id,
-              status: c.status,
-              statusType: c.statusType
-            }))
-          });
-        }
-
-        // 验证状态更新
-        setTimeout(() => {
-          // 状态验证已完成
-        }, 100);
-      } else {
-        throw new Error(
-          `检查历史获取失败: ${checksResult.status} ${checksResult.statusText}`,
-        );
-      }
+      // 先重置防护标志，然后加载分页检查数据和统计数据
+      isLoadingRef.current = false;
+      
+      await Promise.all([
+        loadPaginatedChecks(1, null, "", [], "execution_time", "desc"),
+        loadOverallStats(),
+      ]);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : "数据加载失败");
+      isLoadingRef.current = false; // 确保在错误时也重置标志
     } finally {
       setLoading(false);
-      isLoadingRef.current = false;
     }
-  }, []);
+  }, [loadPaginatedChecks, loadOverallStats]);
 
   useEffect(() => {
     loadInitialData();
@@ -475,214 +606,12 @@ const Dashboard = () => {
     }
   }, [selectedScriptId, isTriggering, loadInitialData]); // 移除language依赖
 
-  const requestSort = (key: keyof Check) => {
-    if (sortConfig.key === key) {
-      setSortConfig({
-        key,
-        direction:
-          sortConfig.direction === "ascending" ? "descending" : "ascending",
-      });
-    } else {
-      setSortConfig({ key, direction: "descending" });
-    }
-    setCurrentPage(1);
-  };
-
-  const filteredAndSortedChecks = React.useMemo(() => {
-    let filtered = checks;
-
-    // 添加数据结构调试信息
-    if (process.env.NODE_ENV === "development") {
-      console.log('🔍 搜索调试信息:', {
-        searchTerm: searchTerm,
-        selectedHashtags: selectedHashtags,
-        totalChecks: checks.length,
-        availableScriptsCount: availableScripts.length,
-        sampleCheck: checks[0] ? {
-          script_name: checks[0].script_name,
-          script_id: checks[0].script_id,
-          status: checks[0].status
-        } : null,
-        sampleScript: availableScripts[0] ? {
-          scriptId: availableScripts[0].scriptId,
-          name: availableScripts[0].name,
-          cnName: availableScripts[0].cnName,
-          hashtags: availableScripts[0].hashtags
-        } : null
-      });
-    }
-
-    // 根据不同的筛选状态进行过滤
-    if (filterStatus === "success") {
-      filtered = filtered.filter(
-        (check) =>
-          check.status === "success" && check.statusType !== "attention_needed",
-      );
-    } else if (filterStatus === "failure") {
-      filtered = filtered.filter((check) => check.status === "failure");
-    } else if (filterStatus === "attention_needed") {
-      filtered = filtered.filter(
-        (check) => check.statusType === "attention_needed",
-      );
-    }
-    // filterStatus === null 时显示所有记录
-
-    // 文本搜索筛选 - 支持hashtag搜索
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      
-      // 检查是否是hashtag搜索（以#开头）
-      if (term.startsWith('#')) {
-        const hashtagToSearch = term.substring(1); // 移除#符号
-        console.log('🔍 Hashtag搜索开始:', {
-          originalTerm: searchTerm,
-          hashtagToSearch: hashtagToSearch,
-          availableScriptsWithHashtags: availableScripts.filter(s => s.hashtags && s.hashtags.length > 0).map(s => ({
-            scriptId: s.scriptId,
-            name: s.name,
-            cnName: s.cnName,
-            hashtags: s.hashtags
-          }))
-        });
-        
-        filtered = filtered.filter((check) => {
-          // 尝试多种方式找到对应的脚本
-          const script = availableScripts.find(s => 
-            s.scriptId === check.script_name || 
-            s.name === check.script_name ||
-            s.cnName === check.script_name ||
-            s.scriptId === check.script_id ||
-            s.name === check.script_id ||
-            s.cnName === check.script_id ||
-            // 尝试部分匹配
-            check.script_name.includes(s.scriptId) ||
-            s.scriptId.includes(check.script_name) ||
-            (s.name && check.script_name.includes(s.name)) ||
-            (s.name && s.name.includes(check.script_name)) ||
-            (s.cnName && check.script_name.includes(s.cnName)) ||
-            (s.cnName && s.cnName.includes(check.script_name))
-          );
-          
-          if (process.env.NODE_ENV === "development") {
-            console.log('🔍 脚本匹配尝试:', {
-              checkScriptName: check.script_name,
-              checkScriptId: check.script_id,
-              foundScript: script ? {
-                scriptId: script.scriptId,
-                name: script.name,
-                cnName: script.cnName,
-                hashtags: script.hashtags
-              } : null
-            });
-          }
-          
-          if (!script) {
-            if (process.env.NODE_ENV === "development") {
-              console.log('❌ 未找到脚本匹配:', {
-                checkScriptName: check.script_name,
-                checkScriptId: check.script_id,
-                availableScriptIds: availableScripts.map(s => s.scriptId),
-                availableScriptNames: availableScripts.map(s => s.name),
-                availableScriptCnNames: availableScripts.map(s => s.cnName)
-              });
-            }
-            return false;
-          }
-          
-          if (!script.hashtags || script.hashtags.length === 0) {
-            if (process.env.NODE_ENV === "development") {
-              console.log('❌ 脚本无标签:', {
-                scriptId: script.scriptId,
-                hashtags: script.hashtags
-              });
-            }
-            return false;
-          }
-          
-          // 检查脚本的hashtag是否包含搜索词
-          const hasMatchingTag = script.hashtags.some(tag => 
-            tag.toLowerCase().includes(hashtagToSearch) ||
-            hashtagToSearch.includes(tag.toLowerCase())
-          );
-          
-          if (process.env.NODE_ENV === "development") {
-            console.log('🎯 标签匹配检查:', {
-              searchTerm: hashtagToSearch,
-              scriptTags: script.hashtags,
-              scriptName: script.name,
-              hasMatchingTag: hasMatchingTag,
-              tagMatches: script.hashtags.map(tag => ({
-                tag: tag,
-                lowerTag: tag.toLowerCase(),
-                includes: tag.toLowerCase().includes(hashtagToSearch),
-                reverseIncludes: hashtagToSearch.includes(tag.toLowerCase())
-              }))
-            });
-          }
-          
-          return hasMatchingTag;
-        });
-        
-        console.log('📊 Hashtag搜索结果:', {
-          searchTerm: hashtagToSearch,
-          totalChecks: checks.length,
-          beforeFilter: checks.length,
-          afterFilter: filtered.length,
-          filteredChecks: filtered.map(c => ({
-            script_name: c.script_name,
-            script_id: c.script_id,
-            status: c.status
-          }))
-        });
-      } else {
-        // 普通文本搜索
-        filtered = filtered.filter(
-          (check) =>
-            check.script_name.toLowerCase().includes(term) ||
-            (check.message && check.message.toLowerCase().includes(term)) ||
-            (check.findings && check.findings.toLowerCase().includes(term)),
-        );
-      }
-    }
-
-    // Hashtag筛选 - 根据脚本的hashtag进行筛选
-    if (selectedHashtags.length > 0) {
-      filtered = filtered.filter((check) => {
-        // 找到对应的脚本
-        const script = availableScripts.find(s => s.scriptId === check.script_name || s.name === check.script_name);
-        if (!script || !script.hashtags || script.hashtags.length === 0) return false;
-        // 检查脚本是否包含所有选中的hashtag
-        return selectedHashtags.every(tag => script.hashtags?.includes(tag));
-      });
-    }
-
-    // 排序
-    if (sortConfig.key !== "") {
-      filtered = [...filtered].sort((a, b) => {
-        const key = sortConfig.key as keyof Check;
-        if (key === "execution_time") {
-          return sortConfig.direction === "ascending"
-            ? new Date(a[key] as string).getTime() -
-                new Date(b[key] as string).getTime()
-            : new Date(b[key] as string).getTime() -
-                new Date(a[key] as string).getTime();
-        } else {
-          const aValue = String(a[key] || "");
-          const bValue = String(b[key] || "");
-          return sortConfig.direction === "ascending"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
-        }
-      });
-    }
-    return filtered;
-  }, [checks, filterStatus, searchTerm, selectedHashtags, sortConfig, availableScripts]);
-
-  const totalChecks = filteredAndSortedChecks.length;
-  const totalPages = Math.ceil(totalChecks / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedChecks = filteredAndSortedChecks.slice(startIndex, endIndex);
+  // 由于现在使用后端分页，直接使用checks作为分页数据
+  const paginatedChecks = checks;
+  const totalChecks = paginationInfo.total;
+  const totalPages = paginationInfo.totalPages;
+  const startIndex = totalChecks > 0 ? (currentPage - 1) * CHECK_HISTORY_ITEMS_PER_PAGE : 0;
+  const endIndex = Math.min(currentPage * CHECK_HISTORY_ITEMS_PER_PAGE, totalChecks);
 
   const selectedScript = React.useMemo(
     () =>
@@ -702,21 +631,21 @@ const Dashboard = () => {
 
   // 调试信息
   if (process.env.NODE_ENV === "development") {
-    console.log("Dashboard渲染状态:");
+    console.log("🔍 Dashboard渲染状态:");
     console.log("  - loading:", loading);
+    console.log("  - isLoadingChecks:", isLoadingChecks);
     console.log("  - isFetchingScripts:", isFetchingScripts);
-    console.log(
-      "  - availableScripts length:",
-      Array.isArray(availableScripts) ? availableScripts.length : "not array",
-    );
     console.log("  - checks length:", checks.length);
-    console.log(
-      "  - filteredAndSortedChecks length:",
-      filteredAndSortedChecks.length,
-    );
     console.log("  - paginatedChecks length:", paginatedChecks.length);
-    console.log("  - selectedScript:", selectedScript);
+    console.log("  - totalChecks:", totalChecks);
+    console.log("  - totalPages:", totalPages);
+    console.log("  - currentPage:", currentPage);
+    console.log("  - filterStatus:", filterStatus);
+    console.log("  - searchTerm:", searchTerm);
+    console.log("  - selectedHashtags:", selectedHashtags);
     console.log("  - error:", error);
+    console.log("  - overallStats:", overallStats);
+    console.log("  - isLoading传递给CheckHistory:", isLoadingChecks || (loading && checks.length === 0));
   }
 
   if (loading && checks.length === 0 && isFetchingScripts) {
@@ -824,14 +753,15 @@ const Dashboard = () => {
               needsAttentionCount={needsAttentionCount}
               language={language}
               t={t}
-              setFilterStatus={setFilterStatus}
-              setSearchTerm={setSearchTerm}
-              setSelectedHashtags={setSelectedHashtags}
-              setCurrentPage={setCurrentPage}
+              setFilterStatus={handleFilterStatusChange}
+              setSearchTerm={handleSearchChange}
+              setSelectedHashtags={handleHashtagsChange}
+              setCurrentPage={handlePageChange}
               requestSort={requestSort}
               startIndex={startIndex}
               endIndex={endIndex}
               availableScripts={availableScripts}
+              isLoading={isLoadingChecks || loading}
             />
           </section>
 

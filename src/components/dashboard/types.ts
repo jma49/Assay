@@ -590,7 +590,9 @@ export const CheckStatus = {
   FAILURE: "failure",
 } as const;
 
-export const ITEMS_PER_PAGE = 10;
+// 分页配置
+export const ITEMS_PER_PAGE = 10; // 保持其他页面使用10条每页
+export const CHECK_HISTORY_ITEMS_PER_PAGE = 50; // Check History专用，每页50条
 
 // 接口定义
 export interface Check {
