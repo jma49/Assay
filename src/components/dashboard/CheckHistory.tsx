@@ -415,99 +415,99 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                   </TableRow>
                 ) : (
                   paginatedChecks.map((check, index) => (
-                    <React.Fragment key={check._id}>
-                      <TableRow
-                        className={cn(
-                          "group/row transition-all duration-200 hover:bg-gradient-to-r hover:from-muted/30 hover:to-muted/10 hover:shadow-sm",
-                          index % 2 === 0 ? "bg-background" : "bg-muted/5",
-                        )}
+                  <React.Fragment key={check._id}>
+                    <TableRow
+                      className={cn(
+                        "group/row transition-all duration-200 hover:bg-gradient-to-r hover:from-muted/30 hover:to-muted/10 hover:shadow-sm",
+                        index % 2 === 0 ? "bg-background" : "bg-muted/5",
+                      )}
+                    >
+                      <TableCell className="px-4 py-4">
+                        <div className="flex justify-center">
+                          {check.statusType === "attention_needed" ? (
+                            <Badge
+                              variant="outline"
+                              className="bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-amber-300/60 dark:from-amber-950/20 dark:to-yellow-950/20 dark:text-amber-400 dark:border-amber-700/50 text-xs font-medium shadow-sm"
+                            >
+                              <AlertCircle className="h-3.5 w-3.5 mr-1.5 text-amber-600 dark:text-amber-500" />
+                              {t("needsAttention") || "Attention"}
+                            </Badge>
+                          ) : check.status === "success" ? (
+                            <Badge
+                              variant="outline"
+                              className="bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-300/60 dark:from-green-950/20 dark:to-emerald-950/20 dark:text-green-400 dark:border-green-700/50 text-xs font-medium shadow-sm"
+                            >
+                              <CheckCircle className="h-3.5 w-3.5 mr-1.5 text-green-600 dark:text-green-500" />
+                              {t("filterSuccess")}
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="bg-gradient-to-r from-red-50 to-rose-50 text-red-700 border-red-300/60 dark:from-red-950/20 dark:to-rose-950/20 dark:text-red-400 dark:border-red-700/50 text-xs font-medium shadow-sm"
+                            >
+                              <AlertCircle className="h-3.5 w-3.5 mr-1.5 text-red-600 dark:text-red-500" />
+                              {t("filterFailed")}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell
+                        className="font-semibold px-4 py-4 max-w-64 group-hover/row:text-primary transition-colors duration-200"
+                        title={check.script_name}
                       >
-                        <TableCell className="px-4 py-4">
-                          <div className="flex justify-center">
-                            {check.statusType === "attention_needed" ? (
-                              <Badge
-                                variant="outline"
-                                className="bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-amber-300/60 dark:from-amber-950/20 dark:to-yellow-950/20 dark:text-amber-400 dark:border-amber-700/50 text-xs font-medium shadow-sm"
-                              >
-                                <AlertCircle className="h-3.5 w-3.5 mr-1.5 text-amber-600 dark:text-amber-500" />
-                                {t("needsAttention") || "Attention"}
-                              </Badge>
-                            ) : check.status === "success" ? (
-                              <Badge
-                                variant="outline"
-                                className="bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-300/60 dark:from-green-950/20 dark:to-emerald-950/20 dark:text-green-400 dark:border-green-700/50 text-xs font-medium shadow-sm"
-                              >
-                                <CheckCircle className="h-3.5 w-3.5 mr-1.5 text-green-600 dark:text-green-500" />
-                                {t("filterSuccess")}
-                              </Badge>
-                            ) : (
-                              <Badge
-                                variant="outline"
-                                className="bg-gradient-to-r from-red-50 to-rose-50 text-red-700 border-red-300/60 dark:from-red-950/20 dark:to-rose-950/20 dark:text-red-400 dark:border-red-700/50 text-xs font-medium shadow-sm"
-                              >
-                                <AlertCircle className="h-3.5 w-3.5 mr-1.5 text-red-600 dark:text-red-500" />
-                                {t("filterFailed")}
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell
-                          className="font-semibold px-4 py-4 max-w-64 group-hover/row:text-primary transition-colors duration-200"
-                          title={check.script_name}
+                        <Link 
+                          href={`/manage-scripts?scriptId=${encodeURIComponent(check.script_name)}`}
+                          className="flex items-center gap-2 hover:text-primary transition-colors duration-200 group/link"
                         >
-                          <Link 
-                            href={`/manage-scripts?scriptId=${encodeURIComponent(check.script_name)}`}
-                            className="flex items-center gap-2 hover:text-primary transition-colors duration-200 group/link"
+                          <div className="truncate">{check.script_name}</div>
+                          <span 
+                            className="text-xs opacity-60 group-hover/link:opacity-100 transition-opacity duration-200" 
+                            title={t("editScript") || "编辑脚本"}
                           >
-                            <div className="truncate">{check.script_name}</div>
-                            <span 
-                              className="text-xs opacity-60 group-hover/link:opacity-100 transition-opacity duration-200" 
-                              title={t("editScript") || "编辑脚本"}
-                            >
-                              ✏️
+                            ✏️
+                          </span>
+                        </Link>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-muted-foreground px-4 py-4 max-w-52 font-mono text-sm">
+                        <div className="truncate">
+                          {formatDate(check.execution_time, language)}
+                        </div>
+                      </TableCell>
+                      <TableCell
+                        className="hidden md:table-cell px-4 py-4 text-sm leading-relaxed"
+                        title={check.findings || check.message || t("noData")}
+                      >
+                        <div className="max-w-md truncate">
+                          {check.findings || check.message || (
+                            <span className="italic text-muted-foreground/80">
+                              {t("noData")}
                             </span>
-                          </Link>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-muted-foreground px-4 py-4 max-w-52 font-mono text-sm">
-                          <div className="truncate">
-                            {formatDate(check.execution_time, language)}
-                          </div>
-                        </TableCell>
-                        <TableCell
-                          className="hidden md:table-cell px-4 py-4 text-sm leading-relaxed"
-                          title={check.findings || check.message || t("noData")}
-                        >
-                          <div className="max-w-md truncate">
-                            {check.findings || check.message || (
-                              <span className="italic text-muted-foreground/80">
-                                {t("noData")}
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center px-4 py-4">
-                          <div className="flex justify-center">
-                            <Link
-                              href={`/view-execution-result/${check._id}`}
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center px-4 py-4">
+                        <div className="flex justify-center">
+                          <Link
+                            href={`/view-execution-result/${check._id}`}
+                          >
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-4 gap-2 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 dark:hover:bg-blue-950/20 dark:hover:border-blue-700/50 dark:hover:text-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
+                              title={
+                                t("viewFullReportButton") || "View Full Report"
+                              }
                             >
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 px-4 gap-2 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 dark:hover:bg-blue-950/20 dark:hover:border-blue-700/50 dark:hover:text-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
-                                title={
-                                  t("viewFullReportButton") || "View Full Report"
-                                }
-                              >
-                                  <ExternalLink size={14} />
-                                  <span className="hidden sm:inline">
-                                    {t("viewFullReportButton") || "View Report"}
-                                  </span>
-                              </Button>
-                            </Link>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    </React.Fragment>
+                                <ExternalLink size={14} />
+                                <span className="hidden sm:inline">
+                                  {t("viewFullReportButton") || "View Report"}
+                                </span>
+                            </Button>
+                          </Link>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
                   ))
                 )}
               </TableBody>
