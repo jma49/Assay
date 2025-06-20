@@ -1,6 +1,6 @@
 {
   "name": "sql_script_depoly",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "private": true,
   "engines": {
     "node": ">=18.18.0"
@@ -22,14 +22,22 @@
     "test:db": "NODE_OPTIONS='--import=ts-node/register --loader=ts-node/esm' node --no-warnings test/database/connection.test.ts",
     "test:notify": "ts-node test/notifications/slack.test.ts",
     "test:mongodb": "ts-node test/database/mongodb.test.ts",
-    "init:edit-history": "ts-node -r dotenv/config scripts/init-edit-history-indexes.ts",
+    "init:edit-history": "ts-node -r dotenv/config scripts/one-time/init-edit-history-indexes.ts",
     "redis:backup": "ts-node scripts/redis-backup-manager.ts backup",
     "redis:list": "ts-node scripts/redis-backup-manager.ts list",
     "redis:restore": "ts-node scripts/redis-backup-manager.ts restore",
     "redis:start": "./scripts/redis-server.sh",
     "redis:stop": "redis-cli -p 6379 shutdown",
     "redis:status": "redis-cli -p 6379 ping",
-    "redis:restart": "npm run redis:stop && sleep 2 && npm run redis:start"
+    "redis:restart": "npm run redis:stop && sleep 2 && npm run redis:start",
+    "optimize:db": "ts-node -r dotenv/config scripts/one-time/optimize-database-indexes.ts",
+    "optimize:db:report": "ts-node -r dotenv/config scripts/one-time/optimize-database-indexes.ts --report-only",
+    "optimize:db:dry-run": "ts-node -r dotenv/config scripts/one-time/optimize-database-indexes.ts --dry-run",
+    "cache:health": "ts-node -r dotenv/config scripts/manage-cache.ts health",
+    "cache:stats": "ts-node -r dotenv/config scripts/manage-cache.ts stats",
+    "cache:clear": "ts-node -r dotenv/config scripts/manage-cache.ts clear",
+    "cache:monitor": "ts-node -r dotenv/config scripts/manage-cache.ts monitor",
+    "cache:strategies": "ts-node -r dotenv/config scripts/manage-cache.ts strategies"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.20.2",
