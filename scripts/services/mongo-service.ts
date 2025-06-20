@@ -20,15 +20,34 @@ export async function saveResultToMongo(
   statusType: ExecutionStatusType, // 新增参数
   message: string,
   findings: string,
-  results?: QueryResult[],
+  results?: QueryResult[]
 ): Promise<{ success: boolean; insertedId?: any }> {
   try {
     const db = await mongoDbClient.getDb();
     const collection: Collection<SqlCheckHistoryDocument> =
       db.collection("result"); // 假设集合名称是 'result'
 
+    // 处理 PostgreSQL 数据类型，特别是 BigInt
     const rawResults: Record<string, unknown>[] = results
-      ? results.map((r) => r.rows || []).flat()
+      ? results
+          .map((r) => r.rows || [])
+          .flat()
+          .map((row) => {
+            // 转换每一行的数据，处理特殊类型
+            const processedRow: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(row)) {
+              if (typeof value === "bigint") {
+                // 将 BigInt 转换为字符串以避免 JSON 序列化问题
+                processedRow[key] = value.toString();
+              } else if (value instanceof Date) {
+                // 确保日期被正确序列化
+                processedRow[key] = value.toISOString();
+              } else {
+                processedRow[key] = value;
+              }
+            }
+            return processedRow;
+          })
       : [];
 
     const historyDoc: SqlCheckHistoryDocument = {
@@ -44,7 +63,7 @@ export async function saveResultToMongo(
 
     const result = await collection.insertOne(historyDoc);
     console.log(
-      `结果 (${scriptId}) 已保存到 MongoDB (status: ${status}, statusType: ${statusType}), ID: ${result.insertedId}`,
+      `结果 (${scriptId}) 已保存到 MongoDB (status: ${status}, statusType: ${statusType}), ID: ${result.insertedId}`
     );
 
     // 返回包含 insertedId 的结果

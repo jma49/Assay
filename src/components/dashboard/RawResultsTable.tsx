@@ -50,14 +50,28 @@ export const RawResultsTable = ({
                 {headers.map((header) => (
                   <TableCell
                     key={header}
-                    className="py-2 px-3 text-xs whitespace-nowrap min-w-24"
-                    title={String(row[header])}
+                    className={`py-2 px-3 text-xs whitespace-nowrap min-w-24 ${
+                      row[header] === null ? 'bg-red-50 dark:bg-red-900/20' : ''
+                    }`}
+                    title={`值: ${row[header]}, 类型: ${typeof row[header]}`}
                   >
-                    {typeof row[header] === "string" ||
-                    typeof row[header] === "number" ||
-                    typeof row[header] === "boolean"
-                      ? String(row[header])
-                      : JSON.stringify(row[header])}
+                    {row[header] === null ? (
+                      <span className="italic text-red-600 dark:text-red-400">
+                        NULL
+                      </span>
+                    ) : row[header] === undefined ? (
+                      <span className="italic text-yellow-600 dark:text-yellow-400">
+                        undefined
+                      </span>
+                    ) : typeof row[header] === "string" ||
+                      typeof row[header] === "number" ||
+                      typeof row[header] === "boolean" ? (
+                      String(row[header])
+                    ) : (
+                      <span className="text-blue-600 dark:text-blue-400">
+                        {JSON.stringify(row[header])}
+                      </span>
+                    )}
                   </TableCell>
                 ))}
               </TableRow>
