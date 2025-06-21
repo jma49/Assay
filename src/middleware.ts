@@ -6,7 +6,6 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/unauthorized",
-  "/api/db-test",
 ]);
 
 // 检查是否为静态文件请求
