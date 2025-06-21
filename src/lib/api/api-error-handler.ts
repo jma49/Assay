@@ -206,8 +206,14 @@ export class ErrorLogger {
     context?: Record<string, unknown>
   ): void {
     const timestamp = new Date().toISOString();
+    const errorId = `ERR_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+
     const errorInfo = {
+      errorId,
       timestamp,
+      environment: process.env.NODE_ENV,
       error: {
         name: error.name,
         message: error.message,
@@ -218,11 +224,18 @@ export class ErrorLogger {
         ? {
             method: request.method,
             url: request.url,
-            headers: Object.fromEntries(request.headers.entries()),
             userAgent: request.headers.get("user-agent"),
+            ip:
+              request.headers.get("x-forwarded-for") ||
+              request.headers.get("x-real-ip") ||
+              "unknown",
+            referer: request.headers.get("referer"),
+            // 过滤敏感头信息
+            headers: this.filterSensitiveHeaders(request.headers),
           }
         : undefined,
       context,
+      performance: this.getPerformanceMetrics(),
     };
 
     // 控制台日志记录
@@ -232,11 +245,102 @@ export class ErrorLogger {
       console.error("[API Error]", JSON.stringify(errorInfo));
     }
 
-    // 这里可以扩展为发送到外部日志服务
-    // 例如：Sentry, LogRocket, Datadog 等
+    // 发送到外部监控服务
     if (process.env.NODE_ENV === "production") {
-      // 生产环境下可以发送到外部监控服务
-      // 例如：sendToExternalLoggingService(errorInfo);
+      this.sendToExternalLoggingService(errorInfo);
+    }
+
+    // 存储到本地错误日志（可选）
+    this.storeErrorLocally(errorInfo);
+  }
+
+  /**
+   * 过滤敏感的请求头信息
+   */
+  private static filterSensitiveHeaders(
+    headers: Headers
+  ): Record<string, string> {
+    const sensitiveHeaders = [
+      "authorization",
+      "cookie",
+      "x-api-key",
+      "x-auth-token",
+    ];
+
+    const filteredHeaders: Record<string, string> = {};
+    headers.forEach((value, key) => {
+      if (!sensitiveHeaders.includes(key.toLowerCase())) {
+        filteredHeaders[key] = value;
+      } else {
+        filteredHeaders[key] = "[REDACTED]";
+      }
+    });
+
+    return filteredHeaders;
+  }
+
+  /**
+   * 获取性能指标
+   */
+  private static getPerformanceMetrics(): Record<string, unknown> {
+    try {
+      if (typeof performance !== "undefined") {
+        const perfMemory = (performance as unknown as Record<string, unknown>)
+          .memory as Record<string, number> | undefined;
+        return {
+          memory: perfMemory
+            ? {
+                used: perfMemory.usedJSHeapSize,
+                total: perfMemory.totalJSHeapSize,
+                limit: perfMemory.jsHeapSizeLimit,
+              }
+            : undefined,
+          timing: performance.now(),
+        };
+      }
+    } catch {
+      // 忽略性能API错误
+    }
+    return {};
+  }
+
+  /**
+   * 发送到外部日志服务
+   */
+  private static sendToExternalLoggingService(
+    errorInfo: Record<string, unknown>
+  ): void {
+    // 这里可以集成外部监控服务
+    // 例如：
+    // - Sentry: Sentry.captureException(error, { extra: errorInfo });
+    // - LogRocket: LogRocket.captureException(error);
+    // - Datadog: DD_LOGS.logger.error(errorInfo.error.message, errorInfo);
+
+    console.warn("[ErrorLogger] 错误已准备发送到监控服务:", errorInfo.errorId);
+  }
+
+  /**
+   * 本地错误存储（可选）
+   */
+  private static storeErrorLocally(errorInfo: Record<string, unknown>): void {
+    try {
+      // 在浏览器环境中存储到 localStorage（仅开发环境）
+      if (
+        typeof window !== "undefined" &&
+        process.env.NODE_ENV === "development"
+      ) {
+        const errors = JSON.parse(localStorage.getItem("app_errors") || "[]");
+        errors.push(errorInfo);
+
+        // 只保留最近100个错误
+        if (errors.length > 100) {
+          errors.splice(0, errors.length - 100);
+        }
+
+        localStorage.setItem("app_errors", JSON.stringify(errors));
+      }
+    } catch {
+      // 忽略存储错误
     }
   }
 }

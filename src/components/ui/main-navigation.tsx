@@ -29,11 +29,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useLanguage } from "@/components/LanguageProvider";
+import { useLanguage } from "@/components/common/LanguageProvider";
 import {
   dashboardTranslations,
   DashboardTranslationKeys,
-} from "@/components/dashboard/types";
+} from "@/components/business/dashboard/types";
 
 // 导航项配置
 const navigationItems = [

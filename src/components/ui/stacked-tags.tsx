@@ -7,8 +7,8 @@ import {
 } from "@/components/ui/popover";
 import { MoreHorizontal, Hash } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
-import { useLanguage } from "@/components/LanguageProvider";
-import { dashboardTranslations, DashboardTranslationKeys } from "@/components/dashboard/types";
+import { useLanguage } from "@/components/common/LanguageProvider";
+import { dashboardTranslations, DashboardTranslationKeys } from "@/components/business/dashboard/types";
 import { PriorityBadge } from "./priority-badge";
 
 interface StackedTagsProps {

@@ -17,8 +17,8 @@ import { Code, Sparkles, Eye, FileCode, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardTranslationKeys } from "../dashboard/types";
 import EditorThemeSettings from "./EditorThemeSettings";
-import AIAssistantPanel from "@/components/ai/AIAssistantPanel";
-import AnalysisResultDialog from "@/components/ai/AnalysisResultDialog";
+import AIAssistantPanel from "@/components/business/ai/AIAssistantPanel";
+import AnalysisResultDialog from "@/components/business/ai/AnalysisResultDialog";
 
 interface CodeMirrorEditorProps
   extends Omit<

@@ -18,7 +18,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 import { executeScriptAndNotify } from "@/lib/utils/script-executor";
-import { SqlScript } from "@/components/dashboard/types";
+import { SqlScript } from "@/components/business/dashboard/types";
 import { ExecutionResult } from "../../../../scripts/types";
 
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {

@@ -13,9 +13,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, CheckCircle, XCircle, Clock, AlertTriangle, FileText, User, Calendar, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { ApprovalStatus, ScriptType, ApprovalRequestDto } from "@/lib/types/approval";
-import { useLanguage } from '@/components/LanguageProvider';
-import { dashboardTranslations, DashboardTranslationKeys, ITEMS_PER_PAGE } from '@/components/dashboard/types';
-import UserHeader from '@/components/UserHeader';
+import { useLanguage } from '@/components/common/LanguageProvider';
+import { dashboardTranslations, DashboardTranslationKeys, ITEMS_PER_PAGE } from '@/components/business/dashboard/types';
+import UserHeader from '@/components/layout/UserHeader';
 
 // 状态信息映射
 const getStatusInfo = (status: ApprovalStatus, t: (key: DashboardTranslationKeys) => string) => ({

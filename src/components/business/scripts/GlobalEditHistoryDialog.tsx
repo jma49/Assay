@@ -38,7 +38,7 @@ import {
   ChevronRight,
   MoreHorizontal,
 } from "lucide-react";
-import { formatDate } from "@/components/dashboard/utils";
+import { formatDate } from "@/components/business/dashboard/utils";
 import {
   EditHistoryRecord,
   EditHistoryFilter,
@@ -46,7 +46,7 @@ import {
 import { 
   DashboardTranslationKeys,
   ITEMS_PER_PAGE 
-} from "@/components/dashboard/types";
+} from "@/components/business/dashboard/types";
 
 interface GlobalEditHistoryDialogProps {
   open: boolean;

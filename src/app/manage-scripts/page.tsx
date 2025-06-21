@@ -63,20 +63,20 @@ import {
   DashboardTranslationKeys,
   dashboardTranslations,
   ITEMS_PER_PAGE,
-} from "@/components/dashboard/types";
-import { useLanguage } from "@/components/LanguageProvider";
-import { formatDate } from "@/components/dashboard/utils";
+} from "@/components/business/dashboard/types";
+import { useLanguage } from "@/components/common/LanguageProvider";
+import { formatDate } from "@/components/business/dashboard/utils";
 import { isReadOnlyQuery } from "@/lib/utils/utils";
 import {
   ScriptMetadataForm,
   ScriptFormData,
-} from "@/components/scripts/ScriptMetadataForm";
-import CodeMirrorEditor from "@/components/scripts/CodeMirrorEditor";
-import { generateSqlTemplateWithTranslation } from "@/components/dashboard/scriptTranslations";
+} from "@/components/business/scripts/ScriptMetadataForm";
+import CodeMirrorEditor from "@/components/business/scripts/CodeMirrorEditor";
+import { generateSqlTemplateWithTranslation } from "@/components/business/dashboard/scriptTranslations";
 import { cn } from "@/lib/utils/utils";
-import { EditHistoryDialog } from "@/components/scripts/EditHistoryDialog";
+import { EditHistoryDialog } from "@/components/business/scripts/EditHistoryDialog";
 import { recordEditHistory } from "@/lib/workflows/edit-history";
-import UserHeader from "@/components/UserHeader";
+import UserHeader from "@/components/layout/UserHeader";
 import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
 import { StackedTags } from "@/components/ui/stacked-tags";
 import { LoadingOverlay } from "@/components/ui/loading";

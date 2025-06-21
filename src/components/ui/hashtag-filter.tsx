@@ -20,8 +20,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils/utils";
-import { useLanguage } from "@/components/LanguageProvider";
-import { dashboardTranslations, DashboardTranslationKeys } from "@/components/dashboard/types";
+import { useLanguage } from "@/components/common/LanguageProvider";
+import { dashboardTranslations, DashboardTranslationKeys } from "@/components/business/dashboard/types";
 
 interface HashtagFilterProps {
   availableHashtags: string[];

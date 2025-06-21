@@ -19,12 +19,12 @@ import {
   MoreHorizontal,
   PieChart,
 } from "lucide-react";
-import { useLanguage } from "@/components/LanguageProvider";
+import { useLanguage } from "@/components/common/LanguageProvider";
 import {
   dashboardTranslations,
   DashboardTranslationKeys,
   ITEMS_PER_PAGE,
-} from "@/components/dashboard/types";
+} from "@/components/business/dashboard/types";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -33,8 +33,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatDate } from "@/components/dashboard/utils";
-import UserHeader from "@/components/UserHeader";
+import { formatDate } from "@/components/business/dashboard/utils";
+import UserHeader from "@/components/layout/UserHeader";
 import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
 
 import {

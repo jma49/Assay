@@ -1,4 +1,4 @@
-import { ExecutionStatusType } from "../../../scripts/types";
+import { ExecutionStatusType } from "../../../../scripts/types";
 
 // 类型定义
 export type DashboardTranslationKeys =

@@ -6,17 +6,17 @@ import { Button } from "@/components/ui/button";
 import {
   ScriptMetadataForm,
   ScriptFormData,
-} from "@/components/scripts/ScriptMetadataForm";
-import { useLanguage } from "@/components/LanguageProvider"; // 使用新的语言provider
+} from "@/components/business/scripts/ScriptMetadataForm";
+import { useLanguage } from "@/components/common/LanguageProvider"; // 使用新的语言provider
 import {
   dashboardTranslations,
   DashboardTranslationKeys,
-} from "@/components/dashboard/types"; // For t function and keys
+} from "@/components/business/dashboard/types"; // For t function and keys
 import { toast } from "sonner";
 // Import the new CodeMirror component
-import CodeMirrorEditor from "@/components/scripts/CodeMirrorEditor";
+import CodeMirrorEditor from "@/components/business/scripts/CodeMirrorEditor";
 // Import the template generator
-import { generateSqlTemplateWithTranslation } from "@/components/dashboard/scriptTranslations";
+import { generateSqlTemplateWithTranslation } from "@/components/business/dashboard/scriptTranslations";
 import { Label } from "@/components/ui/label"; // Keep Label import
 
 const initialFormData: ScriptFormData = {
