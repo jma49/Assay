@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { ListChecks, Clock } from "lucide-react";
 import { toast } from "sonner";
-import { useLanguage } from "@/components/LanguageProvider";
+import { useLanguage } from "@/components/common/LanguageProvider";
 
 // Import shadcn UI components
 
@@ -15,16 +15,16 @@ import {
   CHECK_HISTORY_ITEMS_PER_PAGE,
   ScriptInfo,
   type DashboardTranslationKeys,
-} from "@/components/dashboard/types";
-import { StatsCards } from "@/components/dashboard/StatsCards";
-import { ManualTrigger } from "@/components/dashboard/ManualTrigger";
-import { CheckHistory } from "@/components/dashboard/CheckHistory";
-import { LoadingError } from "@/components/dashboard/LoadingError";
+} from "@/components/business/dashboard/types";
+import { StatsCards } from "@/components/business/dashboard/StatsCards";
+import { ManualTrigger } from "@/components/business/dashboard/ManualTrigger";
+import { CheckHistory } from "@/components/business/dashboard/CheckHistory";
+import { LoadingError } from "@/components/business/dashboard/LoadingError";
 import {
   SkeletonCard,
   SkeletonTable,
-} from "@/components/dashboard/SkeletonComponents";
-import { DashboardFooter } from "@/components/dashboard/DashboardFooter";
+} from "@/components/business/dashboard/SkeletonComponents";
+import { DashboardFooter } from "@/components/business/dashboard/DashboardFooter";
 
 // --- Main Component ---
 const Dashboard = () => {

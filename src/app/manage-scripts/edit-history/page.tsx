@@ -48,7 +48,7 @@ import {
   ChevronRight,
   MoreHorizontal,
 } from "lucide-react";
-import { formatDate } from "@/components/dashboard/utils";
+import { formatDate } from "@/components/business/dashboard/utils";
 import {
   EditHistoryRecord,
   EditHistoryFilter,
@@ -57,10 +57,10 @@ import {
   DashboardTranslationKeys,
   dashboardTranslations,
   ITEMS_PER_PAGE,
-} from "@/components/dashboard/types";
-import { useLanguage } from "@/components/LanguageProvider";
+} from "@/components/business/dashboard/types";
+import { useLanguage } from "@/components/common/LanguageProvider";
 import { cn } from "@/lib/utils/utils";
-import UserHeader from "@/components/UserHeader";
+import UserHeader from "@/components/layout/UserHeader";
 
 export default function GlobalEditHistoryPage() {
   const { language } = useLanguage();

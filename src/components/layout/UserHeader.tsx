@@ -2,7 +2,7 @@
 
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
-import { useLanguage } from "@/components/LanguageProvider";
+import { useLanguage } from "@/components/common/LanguageProvider";
 
 import { Button } from "@/components/ui/button";
 import MainNavigation, { Breadcrumb } from "@/components/ui/main-navigation";

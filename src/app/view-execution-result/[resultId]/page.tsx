@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useLanguage } from "@/components/LanguageProvider";
+import { useLanguage } from "@/components/common/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import {
   Home,
@@ -15,8 +15,8 @@ import {
   Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
-import UserHeader from "@/components/UserHeader";
-import AnalysisResultDialog from '@/components/ai/AnalysisResultDialog';
+import UserHeader from "@/components/layout/UserHeader";
+import AnalysisResultDialog from '@/components/business/ai/AnalysisResultDialog';
 import Link from "next/link";
 
 // 基于SQL脚本实际输出的精确类型定义

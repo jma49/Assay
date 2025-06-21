@@ -25,9 +25,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UserRole } from "@/lib/types/approval";
-import { useLanguage } from '@/components/LanguageProvider';
-import { dashboardTranslations, DashboardTranslationKeys, ITEMS_PER_PAGE } from '@/components/dashboard/types';
-import UserHeader from '@/components/UserHeader';
+import { useLanguage } from '@/components/common/LanguageProvider';
+import { dashboardTranslations, DashboardTranslationKeys, ITEMS_PER_PAGE } from '@/components/business/dashboard/types';
+import UserHeader from '@/components/layout/UserHeader';
 
 // 角色信息映射
 const getRoleInfo = (role: UserRole, t: (key: DashboardTranslationKeys) => string) => ({

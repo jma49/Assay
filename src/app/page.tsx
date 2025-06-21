@@ -2,8 +2,8 @@ import React from "react";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { isValidEmailDomain } from "@/lib/auth/auth-utils";
-import Dashboard from "@/components/Dashboard";
-import UserHeader from "@/components/UserHeader";
+import Dashboard from "@/components/layout/Dashboard";
+import UserHeader from "@/components/layout/UserHeader";
 import { Toaster } from "@/components/ui/sonner";
 
 // 强制动态渲染，避免静态预渲染

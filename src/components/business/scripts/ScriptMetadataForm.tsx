@@ -12,7 +12,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { HashtagInput } from "@/components/ui/hashtag-input";
-import { DashboardTranslationKeys } from "@/components/dashboard/types"; // For t function type
+import { DashboardTranslationKeys } from "@/components/business/dashboard/types"; // For t function type
 import {
   Clock,
   User,

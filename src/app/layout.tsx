@@ -3,8 +3,10 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "next-themes";
-import { LanguageProvider } from "@/components/LanguageProvider";
-import CSSErrorHandler from "@/components/CSSErrorHandler";
+import { LanguageProvider } from "@/components/common/LanguageProvider";
+import CSSErrorHandler from "@/components/error/CSSErrorHandler";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
+import { GlobalErrorHandlerProvider } from "@/components/error/GlobalErrorHandlerProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,11 +32,15 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <CSSErrorHandler />
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <LanguageProvider>
-            {children}
-          </LanguageProvider>
-        </ThemeProvider>
+        <GlobalErrorHandlerProvider>
+          <ErrorBoundary>
+            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <LanguageProvider>
+                {children}
+              </LanguageProvider>
+            </ThemeProvider>
+          </ErrorBoundary>
+        </GlobalErrorHandlerProvider>
       </body>
     </html>
   );

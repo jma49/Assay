@@ -23,8 +23,8 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { formatDate } from "@/components/dashboard/utils";
-import { DashboardTranslationKeys } from "@/components/dashboard/types";
+import { formatDate } from "@/components/business/dashboard/utils";
+import { DashboardTranslationKeys } from "@/components/business/dashboard/types";
 
 interface EditHistoryItem {
   _id: string;
