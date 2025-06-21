@@ -1,6 +1,6 @@
 {
   "name": "sql_script_depoly",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "private": true,
   "engines": {
     "node": ">=18.18.0"
@@ -23,13 +23,8 @@
     "test:notify": "ts-node test/notifications/slack.test.ts",
     "test:mongodb": "ts-node test/database/mongodb.test.ts",
     "init:edit-history": "ts-node -r dotenv/config scripts/one-time/init-edit-history-indexes.ts",
-    "redis:backup": "ts-node scripts/redis-backup-manager.ts backup",
-    "redis:list": "ts-node scripts/redis-backup-manager.ts list",
-    "redis:restore": "ts-node scripts/redis-backup-manager.ts restore",
-    "redis:start": "./scripts/redis-server.sh",
     "redis:stop": "redis-cli -p 6379 shutdown",
     "redis:status": "redis-cli -p 6379 ping",
-    "redis:restart": "npm run redis:stop && sleep 2 && npm run redis:start",
     "optimize:db": "ts-node -r dotenv/config scripts/one-time/optimize-database-indexes.ts",
     "optimize:db:report": "ts-node -r dotenv/config scripts/one-time/optimize-database-indexes.ts --report-only",
     "optimize:db:dry-run": "ts-node -r dotenv/config scripts/one-time/optimize-database-indexes.ts --dry-run",
@@ -41,10 +36,10 @@
     "middleware:test": "curl -H 'Authorization: Bearer test' http://localhost:3000/api/demo-middleware",
     "frontend:build": "npm run build",
     "frontend:analyze": "ANALYZE=true npm run build",
-    "security:deploy": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security.ts",
-    "security:deploy-sql-only": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security.ts --security-only",
-    "security:deploy-pool-only": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security.ts --pool-only",
-    "security:deploy-no-tests": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security.ts --no-tests"
+    "security:deploy": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security-lite.ts",
+    "security:deploy-sql-only": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security-lite.ts --security-only",
+    "security:deploy-pool-only": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security-lite.ts --pool-only",
+    "security:deploy-no-tests": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security-lite.ts --no-tests"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.20.2",
