@@ -7,7 +7,7 @@ dotenv.config({
 }); // Use override to be sure
 
 // Now import other modules
-import mongoDbClient from "../../src/lib/database/mongodb";
+import { getMongoDbClient } from "../../src/lib/database/mongodb";
 
 // test/mongodb/connection.test.ts
 
@@ -17,6 +17,7 @@ async function runTest() {
   try {
     // 1. 获取数据库实例
     console.log("正在获取 MongoDB 数据库实例...");
+    const mongoDbClient = getMongoDbClient();
     const db = await mongoDbClient.getDb();
     console.log(`成功连接到数据库: ${db.databaseName}`);
 
@@ -62,6 +63,7 @@ async function runTest() {
   } finally {
     // 5. 关闭连接
     console.log("正在关闭 MongoDB 连接...");
+    const mongoDbClient = getMongoDbClient();
     await mongoDbClient.closeConnection();
     console.log("测试脚本结束。");
   }

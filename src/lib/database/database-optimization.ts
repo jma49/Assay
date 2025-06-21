@@ -8,7 +8,7 @@
  */
 
 import { Db, IndexSpecification } from "mongodb";
-import mongoDbClient from "./mongodb";
+import { getMongoDbClient } from "./mongodb";
 import { query as pgQuery } from "./db";
 
 /**
@@ -237,6 +237,54 @@ export const MONGODB_RECOMMENDED_INDEXES = {
       },
     },
   ],
+
+  // 执行结果集合索引 (result集合 - Check History API专用)
+  result: [
+    {
+      spec: {
+        execution_time: -1,
+        status: 1,
+        statusType: 1,
+      } as IndexSpecification,
+      options: {
+        name: "execution_status_compound_idx",
+        background: true,
+        comment: "执行时间、状态和状态类型复合索引，优化Check History主查询",
+      },
+    },
+    {
+      spec: { script_name: 1, execution_time: -1 } as IndexSpecification,
+      options: {
+        name: "script_execution_idx",
+        background: true,
+        comment: "脚本名称和执行时间复合索引，优化脚本筛选查询",
+      },
+    },
+    {
+      spec: { script_name: "text" } as IndexSpecification,
+      options: {
+        name: "script_name_text_idx",
+        background: true,
+        comment: "脚本名称文本索引，支持模糊搜索",
+      },
+    },
+    {
+      spec: { status: 1, execution_time: -1 } as IndexSpecification,
+      options: {
+        name: "status_execution_idx",
+        background: true,
+        comment: "状态和执行时间索引，优化状态过滤",
+      },
+    },
+    {
+      spec: { statusType: 1, execution_time: -1 } as IndexSpecification,
+      options: {
+        name: "statusType_execution_idx",
+        background: true,
+        comment: "状态类型和执行时间索引，优化attention_needed过滤",
+      },
+    },
+  ],
 } as const;
 
 /**
@@ -286,7 +334,7 @@ export class DatabaseOptimization {
    */
   private async getDb(): Promise<Db> {
     if (!this.db) {
-      this.db = await mongoDbClient.getDb();
+      this.db = await getMongoDbClient().getDb();
     }
     return this.db;
   }

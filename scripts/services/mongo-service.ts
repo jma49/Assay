@@ -1,6 +1,6 @@
 import { Collection } from "mongodb";
 import { QueryResult } from "pg";
-import mongoDbClient from "../../src/lib/database/mongodb"; // 调整路径
+import { getMongoDbClient } from "../../src/lib/database/mongodb";
 import { SqlCheckHistoryDocument, ExecutionStatusType } from "../types";
 
 /**
@@ -23,6 +23,7 @@ export async function saveResultToMongo(
   results?: QueryResult[]
 ): Promise<{ success: boolean; insertedId?: any }> {
   try {
+    const mongoDbClient = getMongoDbClient();
     const db = await mongoDbClient.getDb();
     const collection: Collection<SqlCheckHistoryDocument> =
       db.collection("result"); // 假设集合名称是 'result'

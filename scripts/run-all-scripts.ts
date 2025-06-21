@@ -1,5 +1,5 @@
 import db from "../src/lib/database/db"; // For closing PG pool
-import mongoDbClient from "../src/lib/database/mongodb"; // For MongoDB operations
+import { getMongoDbClient } from "../src/lib/database/mongodb"; // For MongoDB operations
 import { Collection, Document } from "mongodb"; // For types
 import { executeSqlScriptFromDb } from "./core/sql-executor";
 
@@ -24,6 +24,7 @@ checkEnvVariables();
 
 // 获取MongoDB集合
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
+  const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
   return db.collection("sql_scripts");
 }
@@ -201,6 +202,7 @@ async function main(): Promise<void> {
     // 确保数据库连接被关闭
     console.log("[批量执行] 正在关闭数据库连接...");
     await db.closePool();
+    const mongoDbClient = getMongoDbClient();
     await mongoDbClient.closeConnection();
     console.log("[批量执行] 数据库连接已关闭");
   }

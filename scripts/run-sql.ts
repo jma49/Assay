@@ -1,7 +1,7 @@
 // import path from "path"; // No longer needed
 // import fs from "fs"; // No longer needed for reading files
 import db from "../src/lib/database/db"; // For closing PG pool
-import mongoDbClient from "../src/lib/database/mongodb"; // For MongoDB operations
+import { getMongoDbClient } from "../src/lib/database/mongodb";
 import { Collection, Document } from "mongodb"; // For types
 // Import the refactored function
 import { executeSqlScriptFromDb } from "./core/sql-executor";
@@ -32,6 +32,7 @@ checkEnvVariables();
 
 // Helper function to get MongoDB collection (similar to other places)
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
+  const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb(); // Assumes MONGODB_URI points to sql_script_result
   return db.collection("sql_scripts");
 }
@@ -115,6 +116,7 @@ async function main(): Promise<void> {
     // Ensure connections are closed
     console.log("尝试关闭数据库连接...");
     await db.closePool();
+    const mongoDbClient = getMongoDbClient();
     await mongoDbClient.closeConnection();
     console.log("数据库连接已关闭。");
   }

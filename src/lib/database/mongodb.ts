@@ -173,11 +173,11 @@ class MongoDbClient {
 // 使用单例模式，确保整个应用只有一个MongoDB客户端实例
 let mongoDbClientInstance: MongoDbClient | null = null;
 
-function getMongoDbClient(): MongoDbClient {
+export function getMongoDbClient(): MongoDbClient {
   if (!mongoDbClientInstance) {
     mongoDbClientInstance = new MongoDbClient();
   }
   return mongoDbClientInstance;
 }
 
-export default getMongoDbClient();
+export default getMongoDbClient;

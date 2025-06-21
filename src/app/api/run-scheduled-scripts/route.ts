@@ -15,14 +15,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 // 保留原有代码以便参考，但注释掉
 /*
-import mongoDbClient from "@/lib/database/mongodb";
+import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 import { executeScriptAndNotify } from "@/lib/utils/script-executor";
 import { SqlScript } from "@/components/dashboard/types";
 import { ExecutionResult } from "../../../../scripts/types";
 
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
-  const db = await mongoDbClient.getDb();
   return db.collection("sql_scripts");
 }
 */

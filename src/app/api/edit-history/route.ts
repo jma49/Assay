@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoDbClient from "@/lib/database/mongodb";
+import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import {
@@ -9,6 +9,7 @@ import {
 
 // 获取编辑历史集合
 async function getEditHistoryCollection(): Promise<Collection<Document>> {
+  const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
   return db.collection("edit_history");
 }
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     if (!scriptId || !operation) {
       return NextResponse.json(
         { error: "缺少必要参数：scriptId 和 operation" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
             fieldDisplayName: displayNames.en,
             fieldDisplayNameCn: displayNames.cn,
           };
-        },
+        }
       ) || [];
 
     // 生成默认描述（双语）
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
 
     const collection = await getEditHistoryCollection();
     const result = await collection.insertOne(
-      editHistory as Omit<EditHistoryRecord, "_id">,
+      editHistory as Omit<EditHistoryRecord, "_id">
     );
 
     return NextResponse.json({

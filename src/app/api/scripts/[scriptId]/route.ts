@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
-import mongoDbClient from "@/lib/database/mongodb";
+import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache/cache-utils";
 import { validateApiAuth } from "@/lib/auth/auth-utils";
@@ -14,6 +14,7 @@ import { recordEditHistory } from "@/lib/workflows/edit-history";
 
 // Helper function to get the MongoDB collection
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
+  const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
   return db.collection("sql_scripts"); // From sql_script_result DB
 }

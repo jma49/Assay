@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import mongoDbClient from "@/lib/database/mongodb"; // 假设 mongodb.ts 位于 src/lib/
+import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document, ObjectId } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache/cache-utils";
 import { validateApiAuth } from "@/lib/auth/auth-utils";
@@ -166,7 +166,8 @@ function isReadOnlyQuery(sqlContent: string): {
 }
 
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
-  const db = await mongoDbClient.getDb(); // Correct: get Db instance
+  const mongoDbClient = getMongoDbClient();
+  const db = await mongoDbClient.getDb();
   // As per previous correction, assuming MONGODB_URI points to sql_script_result
   // or the default db in MongoDbClient is configured accordingly.
   return db.collection("sql_scripts");
