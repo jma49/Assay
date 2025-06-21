@@ -1,4 +1,4 @@
-import mongoDbClient from "../database/mongodb";
+import { getMongoDbClient } from "../database/mongodb";
 import { Collection, Document } from "mongodb";
 
 // 定义系统角色枚举
@@ -91,6 +91,7 @@ export interface UserRoleInfo {
 
 // 获取用户角色集合
 async function getUserRolesCollection(): Promise<Collection<Document>> {
+  const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
   return db.collection("user_roles");
 }

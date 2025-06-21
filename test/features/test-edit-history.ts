@@ -1,9 +1,10 @@
 // 测试编辑历史功能的脚本
-import mongoDbClient from "../../src/lib/database/mongodb";
+import { getMongoDbClient } from "../../src/lib/database/mongodb";
 
 async function testEditHistory() {
   try {
     console.log("正在连接到 MongoDB...");
+    const mongoDbClient = getMongoDbClient();
     const db = await mongoDbClient.getDb();
 
     // 检查 edit_history 集合
@@ -74,6 +75,7 @@ async function testEditHistory() {
   } catch (error) {
     console.error("测试编辑历史失败:", error);
   } finally {
+    const mongoDbClient = getMongoDbClient();
     await mongoDbClient.closeConnection();
     console.log("\n数据库连接已关闭");
   }

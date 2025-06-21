@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoDbClient from "@/lib/database/mongodb";
+import { getMongoDbClient } from "@/lib/database/mongodb";
 import redis from "@/lib/cache/redis";
 import { Collection, Document } from "mongodb";
 import { validateApiAuth } from "@/lib/auth/auth-utils";
@@ -24,6 +24,7 @@ const SCRIPTS_CACHE_KEY = "scripts:list";
 const CACHE_TTL = 5 * 60; // 5分钟缓存（秒）
 
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
+  const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
   return db.collection("sql_scripts");
 }

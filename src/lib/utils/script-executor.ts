@@ -2,12 +2,13 @@ import { Collection, Document } from "mongodb"; // For type hinting
 // Changed import to the new function name
 import { executeSqlScriptFromDb } from "../../../scripts/core/sql-executor";
 import { ExecutionResult } from "../../../scripts/types";
-import getMongoDbClient from "../database/mongodb";
+import { getMongoDbClient } from "../database/mongodb";
 
 // Helper function to get the MongoDB collection for sql_scripts
 // This is similar to what we have in API routes and ensures consistency.
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
-  const db = await getMongoDbClient.getDb();
+  const mongoDbClient = getMongoDbClient();
+  const db = await mongoDbClient.getDb();
   return db.collection("sql_scripts"); // Assuming db is for 'sql_script_result' and collection is 'sql_scripts'
 }
 

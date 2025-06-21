@@ -19,8 +19,9 @@ import {
   dbOptimization,
 } from "../../src/lib/database/database-optimization";
 
-// 加载环境变量
-config();
+// 加载环境变量（优先使用 .env.local）
+config({ path: ".env.local" });
+config(); // 备用加载 .env
 
 /**
  * 格式化输出结果

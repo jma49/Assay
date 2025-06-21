@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoDbClient from "@/lib/database/mongodb";
+import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 
 // 执行记录数据结构
@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
     const scriptId = searchParams.get("scriptId");
     const limit = Math.min(500, parseInt(searchParams.get("limit") || "500"));
 
+    const mongoDbClient = getMongoDbClient();
     const db = await mongoDbClient.getDb();
     const collection: Collection<Document> = db.collection(COLLECTION_NAME);
 

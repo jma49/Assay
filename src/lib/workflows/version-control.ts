@@ -1,4 +1,4 @@
-import mongoDbClient from "../database/mongodb";
+import { getMongoDbClient } from "../database/mongodb";
 import { Collection, Document } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache/cache-utils";
 
@@ -72,12 +72,14 @@ export interface VersionDiff {
 
 // 获取脚本版本集合
 async function getScriptVersionsCollection(): Promise<Collection<Document>> {
+  const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
   return db.collection("script_versions");
 }
 
 // 获取主脚本集合
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
+  const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
   return db.collection("sql_scripts");
 }

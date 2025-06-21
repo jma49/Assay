@@ -27,7 +27,8 @@ const devWarn = (message: string, ...args: unknown[]) => {
 
 // Helper function to get the MongoDB collection for sql_scripts
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
-  const db = await getMongoDbClient.getDb();
+  const mongoDbClient = getMongoDbClient();
+  const db = await mongoDbClient.getDb();
   return db.collection("sql_scripts");
 }
 
@@ -179,7 +180,8 @@ export async function POST(request: NextRequest) {
   } finally {
     // 确保数据库连接被关闭
     try {
-      await getMongoDbClient.closeConnection();
+      const mongoDbClient = getMongoDbClient();
+      await mongoDbClient.closeConnection();
     } catch (closeError) {
       devError("[API 路由 /run-all-scripts] 关闭数据库连接失败:", closeError);
     }

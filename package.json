@@ -22,12 +22,11 @@
     "test:db": "NODE_OPTIONS='--import=ts-node/register --loader=ts-node/esm' node --no-warnings test/database/connection.test.ts",
     "test:notify": "ts-node test/notifications/slack.test.ts",
     "test:mongodb": "ts-node test/database/mongodb.test.ts",
-    "init:edit-history": "ts-node -r dotenv/config scripts/one-time/init-edit-history-indexes.ts",
     "redis:stop": "redis-cli -p 6379 shutdown",
     "redis:status": "redis-cli -p 6379 ping",
-    "optimize:db": "ts-node -r dotenv/config scripts/one-time/optimize-database-indexes.ts",
-    "optimize:db:report": "ts-node -r dotenv/config scripts/one-time/optimize-database-indexes.ts --report-only",
-    "optimize:db:dry-run": "ts-node -r dotenv/config scripts/one-time/optimize-database-indexes.ts --dry-run",
+    "optimize:db": "ts-node -r dotenv/config scripts/maintenance/optimize-database-indexes.ts",
+    "optimize:db:report": "ts-node -r dotenv/config scripts/maintenance/optimize-database-indexes.ts --report-only",
+    "optimize:db:dry-run": "ts-node -r dotenv/config scripts/maintenance/optimize-database-indexes.ts --dry-run",
     "cache:health": "ts-node -r dotenv/config scripts/manage-cache.ts health",
     "cache:stats": "ts-node -r dotenv/config scripts/manage-cache.ts stats",
     "cache:clear": "ts-node -r dotenv/config scripts/manage-cache.ts clear",
@@ -39,7 +38,9 @@
     "security:deploy": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security-lite.ts",
     "security:deploy-sql-only": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security-lite.ts --security-only",
     "security:deploy-pool-only": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security-lite.ts --pool-only",
-    "security:deploy-no-tests": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security-lite.ts --no-tests"
+    "security:deploy-no-tests": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security-lite.ts --no-tests",
+    "test:check-history-api": "curl -s 'http://localhost:3000/api/check-history?optimized=true&page=1&limit=10' | jq .",
+    "test:check-history-cache": "curl -s 'http://localhost:3000/api/check-history?optimized=true&page=1&limit=5' && echo '\n--- Second call (should be faster) ---' && curl -s 'http://localhost:3000/api/check-history?optimized=true&page=1&limit=5'"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.20.2",

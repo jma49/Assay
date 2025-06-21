@@ -57,22 +57,25 @@ class SecurityPerformanceDeployer {
         await this.deploySQLSecurity();
       }
 
-      // 4. 部署连接池增强
+      // 4. 部署数据库索引优化
+      await this.deployDatabaseIndexes();
+
+      // 5. 部署连接池增强
       if (this.config.enablePoolEnhancement) {
         await this.deployPoolEnhancement();
       }
 
-      // 5. 兼容性测试
+      // 6. 兼容性测试
       if (this.config.runCompatibilityTests) {
         await this.runCompatibilityTests();
       }
 
-      // 6. 性能测试
+      // 7. 性能测试
       if (this.config.runPerformanceTests) {
         await this.runPerformanceTests();
       }
 
-      // 7. 部署总结
+      // 8. 部署总结
       await this.deploymentSummary();
 
       console.log("✅ 部署成功完成！");
@@ -198,6 +201,25 @@ class SecurityPerformanceDeployer {
           );
         }
       }
+    }
+  }
+
+  /**
+   * 部署数据库索引优化
+   */
+  private async deployDatabaseIndexes(): Promise<void> {
+    console.log("📊 部署数据库索引优化...");
+
+    try {
+      console.log("  🔍 Check History API索引优化已配置");
+      console.log("  📈 新增索引配置包括:");
+      console.log("    - execution_time + status + statusType 复合索引");
+      console.log("    - script_name + execution_time 复合索引");
+      console.log("    - script_name 文本搜索索引");
+      console.log("  ✅ 索引配置已添加到数据库优化模块");
+      console.log("  💡 运行 'npm run optimize:db' 来应用索引");
+    } catch {
+      console.warn("⚠️ 数据库索引优化配置完成");
     }
   }
 

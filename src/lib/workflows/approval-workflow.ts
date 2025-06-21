@@ -1,4 +1,4 @@
-import mongoDbClient from "../database/mongodb";
+import { getMongoDbClient } from "../database/mongodb";
 import { Collection, Document, Db } from "mongodb";
 import { UserRole, Permission, hasPermission } from "../auth/rbac";
 import { clearScriptsCache } from "../cache/cache-utils";
@@ -72,6 +72,7 @@ let cachedDb: Db | null = null;
 // 获取数据库实例（缓存版本）
 async function getDb(): Promise<Db> {
   if (!cachedDb) {
+    const mongoDbClient = getMongoDbClient();
     cachedDb = await mongoDbClient.getDb();
   }
   return cachedDb;
