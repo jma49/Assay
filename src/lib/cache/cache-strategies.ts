@@ -747,3 +747,44 @@ export async function invalidateCache(
 export async function getCacheHealth() {
   return cacheManager.generateHealthReport();
 }
+
+/**
+ * API 缓存辅助函数
+ * 将现有 API 迁移到智能缓存管理器的便捷方法
+ */
+export async function withSmartCache<T>(
+  key: string,
+  dataType: string,
+  fetchFn: () => Promise<T>
+): Promise<T> {
+  // 尝试从缓存获取
+  const cached = await cacheManager.getIntelligent<T>(key, fetchFn, dataType);
+
+  if (cached !== null) {
+    return cached;
+  }
+
+  // 缓存未命中，执行获取函数
+  const data = await fetchFn();
+
+  // 存储到缓存
+  await cacheManager.setIntelligent(key, data, dataType);
+
+  return data;
+}
+
+/**
+ * 生成标准化的缓存键
+ */
+export function generateCacheKey(
+  prefix: string,
+  params: Record<string, string | number | boolean> = {}
+): string {
+  const sortedParams = Object.entries(params)
+    .filter(([_, value]) => value !== undefined && value !== null)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}:${value}`)
+    .join("&");
+
+  return sortedParams ? `${prefix}:${sortedParams}` : prefix;
+}
