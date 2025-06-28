@@ -66,7 +66,10 @@ export function EditHistoryDialog({
 
   const fetchHistories = useCallback(
     async (page: number = 1) => {
-      if (!scriptId) return;
+      if (!scriptId) {
+        console.warn("fetchHistories: scriptId为空，跳过请求");
+        return;
+      }
 
       setLoading(true);
       setError(null);
@@ -78,25 +81,39 @@ export function EditHistoryDialog({
           limit: "20",
         });
 
+        console.log("正在获取编辑历史:", { scriptId, page });
         const response = await fetch(`/api/edit-history?${params}`);
+        
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.error || t("editHistoryError") || "获取编辑历史失败",
-          );
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || 
+            `HTTP ${response.status}: ${response.statusText}`;
+          throw new Error(errorMessage);
         }
 
         const data = await response.json();
+        console.log("编辑历史获取成功:", data);
+        
+        if (!data.histories || !Array.isArray(data.histories)) {
+          console.warn("API返回数据格式异常:", data);
+          setHistories([]);
+          setTotalPages(0);
+          setCurrentPage(1);
+          return;
+        }
+        
         setHistories(data.histories);
-        setTotalPages(data.pagination.totalPages);
+        setTotalPages(data.pagination?.totalPages || 1);
         setCurrentPage(page);
       } catch (err) {
         console.error("Failed to fetch edit history:", err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : t("editHistoryErrorUnknown") || "获取编辑历史失败",
-        );
+        const errorMessage = err instanceof Error 
+          ? err.message 
+          : (t("editHistoryErrorUnknown") || "获取编辑历史失败");
+        setError(errorMessage);
+        setHistories([]);
+        setTotalPages(0);
+        setCurrentPage(1);
       } finally {
         setLoading(false);
       }

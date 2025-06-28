@@ -149,72 +149,88 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
   const handleFormat = async () => {
     if (!value.trim()) {
-      toast.warning(t("noCodeToFormat"));
+      toast.warning(t("noCodeToFormat") || "没有代码需要格式化");
       return;
     }
 
     setIsFormatting(true);
     try {
-      console.log("正在检测SQL代码类型...");
+      console.log("开始SQL格式化...");
 
-      // 检测DO$$块语法
-      const hasDoBlock = /\bdo\s*\$\$[\s\S]*?\$\$/i.test(value);
+      // 基础清理
+      const cleanedValue = value
+        .replace(/\r\n/g, '\n')  // 统一换行符
+        .replace(/\t/g, '  ')    // 将tab转换为空格
+        .trim();
 
-      if (hasDoBlock) {
-        console.log("检测到DO$$块，跳过自动格式化");
+      let formatted = cleanedValue;
 
-        // 对于DO$$块，提供友好的提示但不进行格式化
-        const title = t("doBlockDetected");
-        const description = t("doBlockDetectedDesc");
-
-        toast.info(title, {
-          description: description,
-          duration: 5000,
+      try {
+        // 尝试使用sql-formatter进行专业格式化
+        const { format } = await import("sql-formatter");
+        
+        formatted = format(cleanedValue, {
+          language: "postgresql",
+          keywordCase: "upper",
+          dataTypeCase: "upper", 
+          functionCase: "upper",
+          identifierCase: "preserve",
+          indentStyle: "standard",
+          tabWidth: 2,
+          useTabs: false,
+          logicalOperatorNewline: "before",
+          expressionWidth: 60,
+          linesBetweenQueries: 1,
+          denseOperators: false,
+          newlineBeforeSemicolon: false,
         });
 
-        return;
+        console.log("sql-formatter格式化成功");
+        
+      } catch (formatterError) {
+        console.warn("sql-formatter失败，使用基础格式化:", formatterError);
+        
+        // 基础格式化作为fallback
+        const lines = cleanedValue.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        
+        formatted = lines
+          .join('\n')
+          .replace(/;\s*/g, ';\n\n')  // 分号后添加空行
+          .replace(/,\s*/g, ',\n  ')  // 逗号后换行并缩进  
+          .replace(/\s+/g, ' ')       // 压缩多余空格
+          .replace(/\n\s*\n\s*\n+/g, '\n\n') // 移除多余空行
+          .trim();
+          
+        // 简单的关键字格式化 - 将主要SQL关键字放到新行
+        const keywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN', 'ORDER BY', 'GROUP BY', 'HAVING', 'WITH', 'UNION', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'ALTER', 'DROP'];
+        keywords.forEach(keyword => {
+          const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+          formatted = formatted.replace(regex, `\n${keyword}`);
+        });
+        
+        // 清理多余的换行
+        formatted = formatted
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0)
+          .join('\n')
+          .replace(/\n\s*\n+/g, '\n')
+          .trim();
       }
 
-      // 对于普通SQL，使用sql-formatter进行格式化
-      console.log("普通SQL代码，使用sql-formatter格式化");
-
-      const { format } = await import("sql-formatter");
-
-      const formatted = format(value, {
-        language: "postgresql",
-        keywordCase: "upper",
-        dataTypeCase: "upper",
-        functionCase: "upper",
-        identifierCase: "preserve",
-        indentStyle: "standard",
-        tabWidth: 2,
-        useTabs: false,
-        logicalOperatorNewline: "before",
-        expressionWidth: 60,
-        linesBetweenQueries: 1,
-        denseOperators: false,
-        newlineBeforeSemicolon: false,
-      });
-
+      // 应用格式化结果
       onChange(formatted);
 
-      // 双语成功通知
-      const successTitle = t("formatSuccess");
-      const successDesc = t("formatSuccessDesc");
-
-      toast.success(successTitle, {
-        description: successDesc,
+      // 成功提示
+      toast.success("格式化成功", {
+        description: "SQL代码已格式化",
         duration: 3000,
       });
+
     } catch (error) {
-      console.error("SQL格式化错误:", error);
-
-      // 双语错误通知
-      const errorTitle = t("formatError");
-      const errorDesc = t("formatErrorDesc");
-
-      toast.error(errorTitle, {
-        description: errorDesc,
+      console.error("格式化过程出错:", error);
+      toast.error("格式化失败", {
+        description: error instanceof Error ? error.message : "未知错误",
         duration: 5000,
       });
     } finally {

@@ -481,16 +481,45 @@ const ManageScriptsContent = () => {
 
   // 处理查看编辑历史
   const handleViewEditHistory = (scriptId: string) => {
+    console.log("🔍 打开编辑历史弹窗:", scriptId);
+    
+    if (!scriptId || scriptId.trim() === "") {
+      console.error("❌ 无效的scriptId:", scriptId);
+      toast.error("无效的脚本ID");
+      return;
+    }
+    
     setSelectedScriptForHistory(scriptId);
     setIsEditHistoryOpen(true);
+    
+    // 添加调试信息
+    toast.info("正在加载编辑历史", {
+      description: `脚本ID: ${scriptId}`,
+      duration: 2000,
+    });
   };
 
   // 跳转到主页的执行历史并过滤特定脚本
   const handleViewExecutionHistory = (scriptId: string) => {
-    // 将脚本ID存储到sessionStorage，以便主页读取
-    sessionStorage.setItem("filter-script-id", scriptId);
-    // 跳转到主页
-    router.push("/#execution-history");
+    console.log("🔍 [管理页面] 跳转到执行历史并搜索脚本:", scriptId);
+    
+    if (!scriptId || scriptId.trim() === "") {
+      console.error("❌ [管理页面] 无效的scriptId:", scriptId);
+      toast.error("无效的脚本ID");
+      return;
+    }
+    
+    const trimmedScriptId = scriptId.trim();
+    
+    // 显示跳转提示
+    toast.info("正在跳转到执行历史", {
+      description: `将搜索脚本: ${trimmedScriptId}`,
+      duration: 2000,
+    });
+    
+    // 直接跳转到主页并通过URL参数传递搜索条件
+    console.log("🚀 [管理页面] 跳转到主页并传递搜索参数:", trimmedScriptId);
+    router.push(`/?search=${encodeURIComponent(trimmedScriptId)}#execution-history`);
   };
 
   const filteredScripts = scripts.filter((script) => {

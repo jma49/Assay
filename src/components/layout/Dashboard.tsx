@@ -78,6 +78,9 @@ const Dashboard = () => {
   // --- Context Hooks ---
   const { language } = useLanguage();
 
+  // 新增：搜索模式状态
+  const [isSearchMode, setIsSearchMode] = useState(false);
+
   // 稳定的setSelectedScriptId包装函数，避免无限循环
   const stableSetSelectedScriptId = useCallback((scriptId: string) => {
     setSelectedScriptId(scriptId);
@@ -145,7 +148,18 @@ const Dashboard = () => {
       }
 
       const url = `/api/check-history?${params.toString()}`;
-      console.log("🌐 API调用URL:", url);
+      console.log("🔍 [Dashboard-API] 准备调用API:", {
+        url,
+        page,
+        status,
+        search,
+        hashtags,
+        sortBy,
+        sortOrder,
+        "search是否为空": !search || search.trim() === "",
+        "实际script_name参数": search && search.trim() ? search.trim() : "未设置",
+        "完整params": Object.fromEntries(params.entries())
+      });
 
       const response = await fetch(url, {
         method: "GET",
@@ -163,7 +177,26 @@ const Dashboard = () => {
       }
 
       const data = await response.json();
-      console.log("📄 API返回数据:", data);
+      console.log("📡 [Dashboard-API] API响应完整数据:", data);
+      console.log("🔍 [Dashboard-API] 返回数据分析:", {
+        "总记录数": data.pagination?.total || 0,
+        "返回记录数": data.data?.length || 0,
+        "查询信息": data.query_info,
+        "API传递的script_name": data.query_info?.script_name,
+        "搜索参数": search,
+        "前5条数据": data.data?.slice(0, 5).map((item: Check) => ({
+          script_name: item.script_name,
+          execution_time: item.execution_time,
+          status: item.status
+        })) || [],
+        "筛选效果检查": search ? {
+          "搜索关键词": search,
+          "匹配的记录数": data.data?.filter((item: Check) => 
+            item.script_name?.toLowerCase().includes(search.toLowerCase())
+          ).length || 0,
+          "总记录数": data.data?.length || 0
+        } : "无筛选条件"
+      });
 
       // 更新检查数据
       if (data.data && Array.isArray(data.data)) {
@@ -178,6 +211,7 @@ const Dashboard = () => {
 
         console.log("✅ 处理后的检查数据:", processedChecks.slice(0, 2)); // 只显示前2条避免日志过长
         setChecks(processedChecks);
+        console.log("🔄 setChecks完成，设置的数据长度:", processedChecks.length);
       } else {
         console.warn("⚠️ API返回的data.data不是数组:", data.data);
         setChecks([]);
@@ -278,6 +312,82 @@ const Dashboard = () => {
     loadPaginatedChecks(1, filterStatus, searchTerm, hashtags, sortBy, sortOrder);
   }, [loadPaginatedChecks, filterStatus, searchTerm, sortConfig]);
 
+  // 独立的脚本加载函数
+  const loadScripts = useCallback(async () => {
+    try {
+      console.log("📋 开始加载脚本列表");
+      
+      const scriptsResult = await fetch("/api/list-scripts", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (scriptsResult.ok) {
+        const scriptsResponseData = await scriptsResult.json();
+        let scriptsData: ScriptInfo[] = [];
+
+        // 处理不同的API响应格式
+        if (scriptsResponseData && typeof scriptsResponseData === "object") {
+          if (Array.isArray(scriptsResponseData)) {
+            scriptsData = scriptsResponseData;
+          } else if (
+            scriptsResponseData.data &&
+            Array.isArray(scriptsResponseData.data)
+          ) {
+            scriptsData = scriptsResponseData.data;
+          } else if (
+            scriptsResponseData.success &&
+            Array.isArray(scriptsResponseData.data)
+          ) {
+            scriptsData = scriptsResponseData.data;
+          } else if (
+            scriptsResponseData.scripts &&
+            Array.isArray(scriptsResponseData.scripts)
+          ) {
+            scriptsData = scriptsResponseData.scripts;
+          } else {
+            const possibleArrayFields = ["items", "results", "list"];
+            for (const field of possibleArrayFields) {
+              if (
+                scriptsResponseData[field] &&
+                Array.isArray(scriptsResponseData[field])
+              ) {
+                scriptsData = scriptsResponseData[field];
+                break;
+              }
+            }
+          }
+        }
+
+        if (!Array.isArray(scriptsData)) {
+          scriptsData = [];
+        }
+
+        setAvailableScripts(scriptsData);
+
+        if (process.env.NODE_ENV === "development") {
+          console.log("📋 脚本数据加载完成:", {
+            count: scriptsData.length,
+            scripts: scriptsData.map(s => ({
+              scriptId: s.scriptId,
+              name: s.name,
+              hashtags: s.hashtags
+            }))
+          });
+        }
+      } else {
+        throw new Error(
+          `脚本列表获取失败: ${scriptsResult.status} ${scriptsResult.statusText}`,
+        );
+      }
+    } catch (err) {
+      console.error("❌ 脚本加载失败:", err);
+      throw err;
+    }
+  }, []);
+
   // 获取整体统计数据的函数
   const loadOverallStats = useCallback(async () => {
     try {
@@ -335,6 +445,12 @@ const Dashboard = () => {
     // 防止重复调用 - 使用更强的防护机制
     if (isLoadingRef.current) {
       console.log("🚫 防止重复调用：loadInitialData已在执行中");
+      return;
+    }
+
+    // 如果是搜索模式，跳过常规初始化中的执行历史加载
+    if (isSearchMode) {
+      console.log("🔍 [Dashboard] 搜索模式下跳过常规初始化的执行历史加载");
       return;
     }
 
@@ -439,27 +555,86 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadPaginatedChecks, loadOverallStats]);
+  }, [loadPaginatedChecks, loadOverallStats, isSearchMode]);
 
   useEffect(() => {
-    loadInitialData();
-
-    // 检查是否从管理页面跳转过来并需要过滤特定脚本
-    const filterScriptId = sessionStorage.getItem("filter-script-id");
-    if (filterScriptId) {
-      setSearchTerm(filterScriptId);
-      setFilterStatus(null); // 显示所有状态
-      setCurrentPage(1); // 重置到第一页
-      // 清除sessionStorage中的值，避免重复过滤
-      sessionStorage.removeItem("filter-script-id");
+    // 检查URL参数中是否有搜索条件
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchParam = urlParams.get('search');
+    
+    console.log("🔍 [Dashboard] 组件初始化检查URL参数:", {
+      searchParam,
+      hasSearch: !!searchParam,
+      fullURL: window.location.href
+    });
+    
+    if (searchParam) {
+      const cleanSearchParam = searchParam.trim();
+      console.log("✅ [Dashboard] 检测到URL搜索参数:", cleanSearchParam);
       
-      // 滚动到执行历史部分
+      // 设置搜索模式标志
+      setIsSearchMode(true);
+      
+      // 设置搜索条件到搜索框
+      console.log("📝 [Dashboard] 设置搜索状态:", {
+        searchTerm: cleanSearchParam,
+        currentSearchTerm: searchTerm,
+        filterStatus: filterStatus,
+        selectedHashtags: selectedHashtags
+      });
+      
+      setSearchTerm(cleanSearchParam);
+      setFilterStatus(null);
+      setCurrentPage(1);
+      setSelectedHashtags([]);
+      
+      console.log("📝 [Dashboard] 搜索状态设置完成");
+      
+      // 清除URL参数以避免重复处理
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('search');
+      window.history.replaceState({}, '', newUrl.toString());
+      
+      // 显示筛选通知
+      toast.info("正在筛选执行历史", {
+        description: `搜索脚本: ${cleanSearchParam}`,
+        duration: 3000,
+      });
+      
+      // 延迟滚动到执行历史部分
       setTimeout(() => {
         const historyElement = document.getElementById("execution-history");
         if (historyElement) {
+          console.log("🎯 [Dashboard] 滚动到执行历史部分");
           historyElement.scrollIntoView({ behavior: "smooth" });
         }
-      }, 100);
+      }, 1000); // 延长滚动时间，等待搜索结果加载
+      
+      // 执行搜索的特殊初始化：只加载脚本和统计，搜索会通过useEffect触发
+      console.log("🚀 [Dashboard] 执行搜索模式的初始化（脚本+统计）");
+      // 重置防护标志，确保可以加载脚本和统计
+      isLoadingRef.current = false;
+      setLoading(true);
+      setIsFetchingScripts(true);
+      
+      // 并行加载脚本列表和整体统计，但不加载默认的check history
+      Promise.all([
+        loadScripts(), // 只加载脚本
+        loadOverallStats() // 只加载统计
+      ]).then(() => {
+        setLoading(false);
+        setIsFetchingScripts(false);
+        console.log("✅ [Dashboard] 搜索模式初始化完成，等待searchTerm触发搜索");
+      }).catch(err => {
+        setError(err instanceof Error ? err.message : "数据加载失败");
+        setLoading(false);
+        setIsFetchingScripts(false);
+      });
+      
+    } else {
+      // 常规初始化数据加载（只有在没有搜索参数时才执行）
+      console.log("🚀 [Dashboard] 执行常规初始化数据加载");
+      loadInitialData();
     }
 
     const now = new Date();
@@ -486,6 +661,40 @@ const Dashboard = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 移除loadInitialData依赖，避免重复调用
+
+  // 监听searchTerm变化并自动触发搜索
+  useEffect(() => {
+    console.log("🎯 [Dashboard] useEffect[searchTerm] 被触发:", {
+      searchTerm,
+      trimmed: searchTerm?.trim(),
+      isEmpty: !searchTerm || searchTerm.trim() === '',
+      willSearch: searchTerm && searchTerm.trim() !== ''
+    });
+    
+    // 跳过初始值和空值的搜索（防止不必要的API调用）
+    if (searchTerm && searchTerm.trim() !== '') {
+      console.log("🔍 [Dashboard] searchTerm变化，触发搜索:", searchTerm);
+      const sortBy = sortConfig.key === "execution_time" ? "execution_time" : 
+                    sortConfig.key === "script_name" ? "script_name" : "execution_time";
+      const sortOrder = sortConfig.direction === "ascending" ? "asc" : "desc";
+      
+      console.log("🚀 [Dashboard] 调用loadPaginatedChecks参数:", {
+        page: 1,
+        filterStatus,
+        searchTerm,
+        selectedHashtags,
+        sortBy,
+        sortOrder
+      });
+      
+      loadPaginatedChecks(1, filterStatus, searchTerm, selectedHashtags, sortBy, sortOrder);
+    } else {
+      console.log("⏭️ [Dashboard] searchTerm为空或无效，跳过搜索");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]); // 只监听searchTerm变化，避免其他依赖项导致的重复调用
+
+  // 注意：searchTerm变化触发筛选的逻辑已移到初始化useEffect中处理，避免重复调用
 
   useEffect(() => {
     // Only set a default if no script is currently selected AND there are available scripts
@@ -637,15 +846,11 @@ const Dashboard = () => {
     console.log("  - isFetchingScripts:", isFetchingScripts);
     console.log("  - checks length:", checks.length);
     console.log("  - paginatedChecks length:", paginatedChecks.length);
-    console.log("  - totalChecks:", totalChecks);
-    console.log("  - totalPages:", totalPages);
-    console.log("  - currentPage:", currentPage);
+    console.log("  - searchTerm:", `"${searchTerm}"`);
     console.log("  - filterStatus:", filterStatus);
-    console.log("  - searchTerm:", searchTerm);
-    console.log("  - selectedHashtags:", selectedHashtags);
-    console.log("  - error:", error);
-    console.log("  - overallStats:", overallStats);
-    console.log("  - isLoading传递给CheckHistory:", isLoadingChecks || (loading && checks.length === 0));
+    console.log("  - currentPage:", currentPage);
+    console.log("  - totalChecks:", totalChecks);
+    console.log("  - availableScripts length:", availableScripts.length);
   }
 
   if (loading && checks.length === 0 && isFetchingScripts) {
