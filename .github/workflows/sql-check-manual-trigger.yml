@@ -52,8 +52,9 @@ jobs:
         run: |
           echo "Current working directory: $(pwd)"
           echo "Using .env file: ${DOTENV_CONFIG_PATH}"
+          echo "Script ID to execute: ${{ github.event.inputs.script_id }}"
           ls -la ${DOTENV_CONFIG_PATH}
           echo "About to execute ts-node..."
-          # Use ts-node with -r to preload dotenv/config
-          npx ts-node -r dotenv/config scripts/run-sql.ts check-order-duplicates
+          # Use ts-node with -r to preload dotenv/config, using the input script_id
+          npx ts-node -r dotenv/config scripts/run-sql.ts "${{ github.event.inputs.script_id }}"
         continue-on-error: false # Fail the workflow if the script fails

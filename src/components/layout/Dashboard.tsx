@@ -639,9 +639,12 @@ const Dashboard = () => {
 
     const now = new Date();
     const nextRun = new Date();
-    // 设置下一个运行时间为 UTC 19:00
-    nextRun.setUTCHours(19, 0, 0, 0);
-    // 如果 UTC 19:00 已经过去，则设置为明天的 UTC 19:00
+    // 设置下一个运行时间为芝加哥时间凌晨 3:00 (Chicago Central Time)
+    // 芝加哥标准时间 CST = UTC-6，夏令时 CDT = UTC-5
+    // 凌晨3:00 CST = UTC 9:00，凌晨3:00 CDT = UTC 8:00
+    // 这里使用 UTC 8:00 来对应芝加哥夏令时凌晨3:00
+    nextRun.setUTCHours(8, 0, 0, 0);
+    // 如果 UTC 8:00 已经过去，则设置为明天的 UTC 8:00 (对应芝加哥时间凌晨3:00)
     if (nextRun < now) {
       nextRun.setDate(nextRun.getDate() + 1);
     }
