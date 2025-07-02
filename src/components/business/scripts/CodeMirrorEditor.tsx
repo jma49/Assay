@@ -39,7 +39,7 @@ const THEME_MAP = {
   materialLight: materialLight,
   nord: nord,
   solarizedLight: solarizedLight,
-  
+
   // 暗色主题
   tokyoNight: tokyoNight,
   okaidia: okaidia,
@@ -59,7 +59,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   const [showPreview, setShowPreview] = useState(false);
   const [isFormatting, setIsFormatting] = useState(false);
   const [editorTheme, setEditorTheme] = useState<string>("eclipse");
-  
+
   // AI功能相关状态
   const [isGenerating, setIsGenerating] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
@@ -71,11 +71,11 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   const getCurrentEditorTheme = React.useMemo(() => {
     // 根据主题名称获取主题对象
     const themeObj = THEME_MAP[editorTheme as keyof typeof THEME_MAP];
-    
+
     if (themeObj) {
       return themeObj;
     }
-    
+
     // 如果主题不存在，根据系统主题返回默认主题
     return systemTheme === "dark" ? tokyoNight : eclipse;
   }, [editorTheme, systemTheme]);
@@ -83,7 +83,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   // 从localStorage读取编辑器主题设置
   useEffect(() => {
     const savedTheme = localStorage.getItem("editor-theme");
-    
+
     if (savedTheme && THEME_MAP[savedTheme as keyof typeof THEME_MAP]) {
       setEditorTheme(savedTheme);
     } else {
@@ -104,7 +104,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
     };
 
     window.addEventListener('editorThemeChange', handleThemeChange as EventListener);
-    
+
     return () => {
       window.removeEventListener('editorThemeChange', handleThemeChange as EventListener);
     };
@@ -168,11 +168,11 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       try {
         // 尝试使用sql-formatter进行专业格式化
         const { format } = await import("sql-formatter");
-        
+
         formatted = format(cleanedValue, {
           language: "postgresql",
           keywordCase: "upper",
-          dataTypeCase: "upper", 
+          dataTypeCase: "upper",
           functionCase: "upper",
           identifierCase: "preserve",
           indentStyle: "standard",
@@ -186,35 +186,48 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         });
 
         console.log("sql-formatter格式化成功");
-        
+
       } catch (formatterError) {
         console.warn("sql-formatter失败，使用基础格式化:", formatterError);
-        
-        // 基础格式化作为fallback
+
+        // 基础格式化作为fallback - 修复逻辑
         const lines = cleanedValue.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-        
-        formatted = lines
-          .join('\n')
-          .replace(/;\s*/g, ';\n\n')  // 分号后添加空行
-          .replace(/,\s*/g, ',\n  ')  // 逗号后换行并缩进  
-          .replace(/\s+/g, ' ')       // 压缩多余空格
-          .replace(/\n\s*\n\s*\n+/g, '\n\n') // 移除多余空行
-          .trim();
-          
-        // 简单的关键字格式化 - 将主要SQL关键字放到新行
-        const keywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN', 'ORDER BY', 'GROUP BY', 'HAVING', 'WITH', 'UNION', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'ALTER', 'DROP'];
+
+        // 合并所有行为一个字符串
+        let singleLine = lines.join(' ');
+
+        // 压缩多余空格
+        singleLine = singleLine.replace(/\s+/g, ' ').trim();
+
+        // 在关键字前添加换行
+        const keywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN', 'ORDER BY', 'GROUP BY', 'HAVING', 'WITH', 'UNION', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'ALTER', 'DROP', 'LIMIT'];
         keywords.forEach(keyword => {
           const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
-          formatted = formatted.replace(regex, `\n${keyword}`);
+          singleLine = singleLine.replace(regex, `\n${keyword}`);
         });
-        
-        // 清理多余的换行
-        formatted = formatted
+
+        // 在AND/OR前添加换行并缩进
+        singleLine = singleLine.replace(/\b(AND|OR)\b/gi, '\n  $1');
+
+        // 在逗号后添加换行和缩进（仅在SELECT子句中）
+        const selectRegex = /(SELECT[^FROM]*)/gi;
+        singleLine = singleLine.replace(selectRegex, (match) => {
+          return match.replace(/,\s*/g, ',\n  ');
+        });
+
+        // 在分号后添加空行
+        singleLine = singleLine.replace(/;\s*/g, ';\n\n');
+
+        // 清理格式：移除开头的换行，清理多余空行
+        formatted = singleLine
           .split('\n')
           .map(line => line.trim())
-          .filter(line => line.length > 0)
+          .filter((line, index, array) => {
+            // 保留非空行，或者前后都有内容的空行
+            return line.length > 0 || (index > 0 && index < array.length - 1 && array[index - 1].length > 0 && array[index + 1].length > 0);
+          })
           .join('\n')
-          .replace(/\n\s*\n+/g, '\n')
+          .replace(/\n\s*\n\s*\n+/g, '\n\n') // 最多保留一个空行
           .trim();
       }
 
@@ -264,7 +277,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.sql) {
         onChange(data.sql);
         toast.success("AI已成功生成SQL语句", {
@@ -300,9 +313,9 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          sql: value, 
-          analysisType: type 
+        body: JSON.stringify({
+          sql: value,
+          analysisType: type
         }),
       });
 
@@ -312,7 +325,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.analysis) {
         setAnalysisResult(data.analysis);
         setIsAnalysisDialogOpen(true);
