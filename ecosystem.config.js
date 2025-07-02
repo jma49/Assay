@@ -45,9 +45,9 @@ module.exports = {
   deploy: {
     production: {
       user: 'root',
-      host: 'your-server-ip',
+      host: '47.89.253.113',
       ref: 'origin/main',
-      repo: 'https://github.com/your-username/sql-script-depoly.git',
+      repo: 'https://github.com/jma49/sql-script-depoly',
       path: '/root/sql-script-depoly',
       'post-deploy': 'npm ci && npm run build && pm2 reload ecosystem.config.js --env production && pm2 save'
     }
