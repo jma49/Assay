@@ -7,7 +7,7 @@ on:
 
 env:
   NODE_VERSION: '20.19.3'
-  APP_NAME: 'sql-script-deploy'
+  APP_NAME: 'next-app'
   HEALTH_CHECK_URL: 'http://localhost:3000'
   HEALTH_CHECK_TIMEOUT: 60
 

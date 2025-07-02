@@ -1,6 +1,6 @@
 module.exports = {
   apps: [{
-    name: 'sql-script-deploy',
+    name: 'next-app',
     script: 'npm',
     args: 'start',
     cwd: '/root/sql-script-depoly',
