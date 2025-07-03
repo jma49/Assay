@@ -3,7 +3,7 @@ name: SQL Script Cron Job
 on:
   schedule:
     - cron: "0 8 * * *"  # UTC 8:00 = 芝加哥夏令时凌晨 3:00 CDT
-  workflow_dispatch: # 添加手动触发选项，方便测试
+  workflow_dispatch: 
     inputs:
       execution_mode:
         description: "执行模式 (all: 所有脚本, scheduled: 仅定时脚本)"
