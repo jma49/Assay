@@ -2,8 +2,12 @@ name: SQL Script Cron Job
 
 on:
   schedule:
-    - cron: "0 8 * * *" # 每天 UTC 8:00 (芝加哥夏令时凌晨 3:00 CDT)
-  workflow_dispatch:
+    # 选项1: 北京时间早上8点执行 (推荐)
+    - cron: "0 0 * * *"  # UTC 0:00 = 北京时间 8:00 = 芝加哥时间 19:00(夏)/18:00(冬)
+    
+    # 选项2: 保持当前配置 (北京时间下午4点执行)
+    # - cron: "0 8 * * *" # UTC 8:00 = 北京时间 16:00 = 芝加哥时间 3:00(夏)/2:00(冬)
+  workflow_dispatch: # 添加手动触发选项，方便测试
     inputs:
       execution_mode:
         description: "执行模式 (all: 所有脚本, scheduled: 仅定时脚本)"
@@ -13,6 +17,11 @@ on:
         options:
           - scheduled
           - all
+      debug_mode:
+        description: "调试模式"
+        required: false
+        default: false
+        type: boolean
 
 env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -53,6 +62,46 @@ jobs:
           echo "NODE_ENV: $NODE_ENV"
           echo "GitHub Run ID: $GITHUB_RUN_ID"
           echo "Execution Mode: ${{ github.event.inputs.execution_mode || 'scheduled' }}"
+          echo "Debug Mode: ${{ github.event.inputs.debug_mode || 'false' }}"
+          
+          # 时区和时间调试
+          echo "--- 时间和时区信息 ---"
+          echo "UTC 时间: $(date -u)"
+          echo "当前时区时间: $(date)"
+          echo "TZ环境变量: $TZ"
+          echo "系统时区: $(timedatectl show --property=Timezone --value 2>/dev/null || cat /etc/timezone 2>/dev/null || echo 'Unknown')"
+          
+          # 触发方式检查
+          echo "--- 触发方式分析 ---"
+          echo "GitHub Event Name: ${{ github.event_name }}"
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "✅ 由定时任务触发"
+            echo "预期下次运行: 明天 UTC 8:00 ($(date -d 'tomorrow 08:00 UTC' '+%Y-%m-%d %H:%M:%S %Z'))"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "✅ 由手动触发"
+          else
+            echo "⚠️  由其他事件触发: ${{ github.event_name }}"
+          fi
+          
+          # 环境变量检查
+          echo "--- 必需环境变量检查 ---"
+          if [ -n "$DATABASE_URL" ]; then
+            echo "✅ DATABASE_URL: 已设置 (长度: ${#DATABASE_URL})"
+          else
+            echo "❌ DATABASE_URL: 未设置"
+          fi
+          
+          if [ -n "$MONGODB_URI" ]; then
+            echo "✅ MONGODB_URI: 已设置 (长度: ${#MONGODB_URI})"
+          else
+            echo "❌ MONGODB_URI: 未设置"
+          fi
+          
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
+            echo "✅ SLACK_WEBHOOK_URL: 已设置 (长度: ${#SLACK_WEBHOOK_URL})"
+          else
+            echo "⚠️  SLACK_WEBHOOK_URL: 未设置 (通知功能将跳过)"
+          fi
 
       - name: Run SQL Scripts from MongoDB
         env:
