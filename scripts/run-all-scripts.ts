@@ -41,14 +41,15 @@ async function main(): Promise<void> {
   try {
     const collection = await getSqlScriptsCollection();
 
-    // 根据模式设置过滤条件
+    // 根据执行模式设置过滤条件
     let filter = {};
     let modeDescription = "";
 
     switch (mode) {
       case "scheduled":
-        filter = { isScheduled: true };
-        modeDescription = "启用定时任务的";
+        // 修改：不再检查isScheduled字段，执行所有脚本
+        filter = {}; // 获取所有脚本
+        modeDescription = "所有可用的";
         break;
       case "enabled":
         filter = { isScheduled: true };
@@ -76,6 +77,13 @@ async function main(): Promise<void> {
     console.log(
       `[批量执行] 从MongoDB获取到 ${allScripts.length} 个${modeDescription}SQL脚本`
     );
+
+    // 如果是scheduled模式，说明这是定时任务触发的执行
+    if (mode === "scheduled") {
+      console.log(
+        `[批量执行] 注意：scheduled模式现在执行所有脚本，不再检查isScheduled字段`
+      );
+    }
 
     let successCount = 0;
     let failCount = 0;

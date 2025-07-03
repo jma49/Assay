@@ -2,11 +2,7 @@ name: SQL Script Cron Job
 
 on:
   schedule:
-    # 选项1: 北京时间早上8点执行 (推荐)
-    - cron: "0 0 * * *"  # UTC 0:00 = 北京时间 8:00 = 芝加哥时间 19:00(夏)/18:00(冬)
-    
-    # 选项2: 保持当前配置 (北京时间下午4点执行)
-    # - cron: "0 8 * * *" # UTC 8:00 = 北京时间 16:00 = 芝加哥时间 3:00(夏)/2:00(冬)
+    - cron: "0 8 * * *"  # UTC 8:00 = 芝加哥夏令时凌晨 3:00 CDT
   workflow_dispatch: # 添加手动触发选项，方便测试
     inputs:
       execution_mode:
@@ -113,9 +109,9 @@ jobs:
           echo "Using .env file: ${DOTENV_CONFIG_PATH}"
           echo "GitHub Run ID: ${GITHUB_RUN_ID}"
           echo "执行模式: ${EXECUTION_MODE}"
-          echo "定时执行时间: 芝加哥时间凌晨3:00 (UTC 8:00)"
+          echo "定时执行时间: 芝加哥夏令时凌晨 3:00 (UTC 8:00)"
           ls -la ${DOTENV_CONFIG_PATH}
-          echo "开始从MongoDB批量执行SQL脚本..."
-          # 使用新的批量执行脚本，根据执行模式运行
+          echo "开始从MongoDB批量执行SQL脚本（所有可用脚本）..."
+          # 使用新的批量执行脚本，scheduled模式现在执行所有脚本
           npx ts-node -r dotenv/config scripts/run-all-scripts.ts ${EXECUTION_MODE}
         continue-on-error: false
