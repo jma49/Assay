@@ -21,6 +21,7 @@
     "sql:run-enabled": "ts-node -r dotenv/config scripts/run-all-scripts.ts enabled",
     "scheduler": "ts-node -r dotenv/config scripts/scheduler/task-scheduler.ts",
     "scheduler:start": "chmod +x scripts/scheduler/start-scheduler.sh && ./scripts/scheduler/start-scheduler.sh",
+    "scheduler:manage": "chmod +x scripts/manage-scheduler.sh && ./scripts/manage-scheduler.sh",
     "test:scheduler": "ts-node -r dotenv/config scripts/test-schedule-utils.ts",
     "test:db": "NODE_OPTIONS='--import=ts-node/register --loader=ts-node/esm' node --no-warnings test/database/connection.test.ts",
     "test:notify": "ts-node test/notifications/slack.test.ts",
