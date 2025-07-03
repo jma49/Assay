@@ -193,7 +193,6 @@ export type DashboardTranslationKeys =
   | "sqlPreviewLabel"
   | "noCodeContent"
   | "editorStatusReady"
-  | "editorHelpText"
   | "formatSuccess"
   | "formatSuccessDesc"
   | "formatError"
@@ -579,7 +578,16 @@ export type DashboardTranslationKeys =
   | "viewerDesc"
   | "assignedBy"
   | "assignedAt"
-  | "totalUsers";
+  | "totalUsers"
+  | "schedulePreset"
+  | "selectSchedule"
+  | "customCronExpression"
+  | "nextExecution"
+  | "scheduleStatus"
+  | "scheduleValid"
+  | "scheduleInvalid"
+  | "noSchedule"
+  | "scheduleExecutionPlan";
 
 // 定义翻译记录类型
 export type TranslationRecord = Record<DashboardTranslationKeys, string>;
@@ -859,8 +867,6 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     sqlPreviewLabel: "SQL Preview",
     noCodeContent: "No code content...",
     editorStatusReady: "SQL",
-    editorHelpText:
-      "Use Ctrl+A to select all, Ctrl+Z to undo. Click the Format button to automatically organize SQL code format.",
     formatSuccess: "SQL code formatted successfully",
     formatSuccessDesc: "Code has been rearranged according to standard format",
     formatError: "Formatting failed",
@@ -882,6 +888,16 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
       "When enabled, the script will be executed automatically according to the specified schedule",
     cronFormatHelp:
       "Use Cron format: minute hour day month weekday (e.g., 0 9 * * 1-5 means weekdays at 9 AM)",
+    // Schedule-related translations
+    schedulePreset: "Schedule Preset",
+    selectSchedule: "Select a schedule...",
+    customCronExpression: "Custom Cron Expression",
+    nextExecution: "Next Execution",
+    scheduleStatus: "Schedule Status",
+    scheduleValid: "Valid",
+    scheduleInvalid: "Invalid",
+    noSchedule: "No schedule",
+    scheduleExecutionPlan: "Execution Plan",
     // 数据分析页面相关翻译
     timeRangeFilter: "Time Range Filter",
     scriptFilter: "Script Filter",
@@ -1414,8 +1430,6 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     sqlPreviewLabel: "SQL 预览",
     noCodeContent: "暂无代码内容...",
     editorStatusReady: "SQL",
-    editorHelpText:
-      "使用 Ctrl+A 全选，Ctrl+Z 撤销。点击格式化按钮可以自动整理 SQL 代码格式。",
     formatSuccess: "SQL 代码格式化成功",
     formatSuccessDesc: "代码已按照标准格式重新排列",
     formatError: "格式化失败",
@@ -1436,6 +1450,16 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     scheduleEnabledDesc: "启用后，脚本将按照指定的时间表自动执行",
     cronFormatHelp:
       "使用 Cron 格式: 分 时 日 月 周 (例如: 0 9 * * 1-5 表示工作日上午9点)",
+    // 新增定时任务相关翻译
+    schedulePreset: "定时模板",
+    selectSchedule: "选择定时模板...",
+    customCronExpression: "自定义 Cron 表达式",
+    nextExecution: "下次执行时间",
+    scheduleStatus: "定时状态",
+    scheduleValid: "有效",
+    scheduleInvalid: "无效",
+    noSchedule: "不设置定时任务",
+    scheduleExecutionPlan: "执行计划",
     // 数据分析页面相关翻译
     timeRangeFilter: "时间范围过滤器",
     scriptFilter: "脚本过滤器",

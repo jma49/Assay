@@ -2,6 +2,7 @@ import db from "../src/lib/database/db"; // For closing PG pool
 import { getMongoDbClient } from "../src/lib/database/mongodb"; // For MongoDB operations
 import { Collection, Document } from "mongodb"; // For types
 import { executeSqlScriptFromDb } from "./core/sql-executor";
+import { shouldExecuteNow } from "../src/lib/utils/schedule-utils-v2";
 
 // 环境变量检查
 function checkEnvVariables() {
@@ -47,9 +48,9 @@ async function main(): Promise<void> {
 
     switch (mode) {
       case "scheduled":
-        // 修改：不再检查isScheduled字段，执行所有脚本
-        filter = {}; // 获取所有脚本
-        modeDescription = "所有可用的";
+        // 修复：只执行启用了定时任务的脚本
+        filter = { isScheduled: true };
+        modeDescription = "已启用定时任务的";
         break;
       case "enabled":
         filter = { isScheduled: true };
@@ -80,9 +81,7 @@ async function main(): Promise<void> {
 
     // 如果是scheduled模式，说明这是定时任务触发的执行
     if (mode === "scheduled") {
-      console.log(
-        `[批量执行] 注意：scheduled模式现在执行所有脚本，不再检查isScheduled字段`
-      );
+      console.log(`[批量执行] scheduled模式：仅执行启用了定时任务的脚本`);
     }
 
     let successCount = 0;
@@ -96,6 +95,7 @@ async function main(): Promise<void> {
       const scriptName = script.name as string;
       const sqlContent = script.sqlContent as string;
       const isScheduled = script.isScheduled as boolean;
+      const cronSchedule = script.cronSchedule as string;
       const scriptHashtags = script.hashtags as string[] | undefined; // 获取hashtags信息
 
       if (!scriptId || !sqlContent) {
@@ -106,10 +106,22 @@ async function main(): Promise<void> {
         continue;
       }
 
+      // 如果是scheduled模式，检查是否应该在当前时间执行
+      if (mode === "scheduled" && isScheduled && cronSchedule) {
+        const shouldExecute = shouldExecuteNow(cronSchedule);
+        if (!shouldExecute) {
+          console.log(
+            `[批量执行] ⏳ 跳过脚本 ${scriptId} (${scriptName})，当前时间不在执行计划内`
+          );
+          skippedCount++;
+          continue;
+        }
+      }
+
       console.log(
         `[批量执行] 开始执行脚本: ${scriptId} (${scriptName})${
           isScheduled ? " [定时任务]" : ""
-        }${scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""}`
+        }${cronSchedule ? ` [计划: ${cronSchedule}]` : ""}${scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""}`
       );
 
       try {

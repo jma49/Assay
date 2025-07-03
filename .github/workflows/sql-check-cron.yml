@@ -1,23 +1,26 @@
-name: SQL Script Cron Job
+name: SQL Script Manual/Backup Job
 
 on:
-  schedule:
-    - cron: "0 8 * * *"  # UTC 8:00 = 芝加哥夏令时凌晨 3:00 CDT
+  # 去除自动定时，改为手动触发和备用模式
   workflow_dispatch: 
     inputs:
       execution_mode:
-        description: "执行模式 (all: 所有脚本, scheduled: 仅定时脚本)"
+        description: "执行模式 (all: 所有脚本, scheduled: 仅定时脚本, backup: 备用检查)"
         required: false
         default: "scheduled"
         type: choice
         options:
           - scheduled
           - all
+          - backup
       debug_mode:
         description: "调试模式"
         required: false
         default: false
         type: boolean
+  # 可选：保留每日备用检查 (可根据需要启用)
+  # schedule:
+  #   - cron: "0 12 * * *"  # 每天UTC 12:00 = 芝加哥早上7:00，作为备用检查
 
 env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
