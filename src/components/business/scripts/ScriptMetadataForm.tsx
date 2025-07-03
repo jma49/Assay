@@ -12,13 +12,13 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { HashtagInput } from "@/components/ui/hashtag-input";
+import { ScheduleSelector } from "@/components/ui/schedule-selector";
 import { DashboardTranslationKeys } from "@/components/business/dashboard/types"; // For t function type
 import {
   Clock,
   User,
   Hash,
   Globe,
-  Target,
   Calendar,
   Settings,
   Languages,
@@ -308,86 +308,56 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
 
           {/* 调度配置 */}
           <div className="space-y-6 pt-6 border-t border-border/30">
-            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Calendar className="h-4 w-4 text-primary" />
-              {t("scheduleConfig")}
-            </div>
-
-            {/* 功能状态提示 */}
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                    定时任务配置已保留，执行方式即将升级
-                  </h4>
-                  <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                    当前版本 (v0.3.1) 已暂时禁用 Vercel
-                    定时任务，但配置界面仍然可用。
-                    <br />
-                    将在后续版本 (v0.4.0) 中实现定时任务部署
-                  </p>
-                  <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
-                    <span>📋</span>
-                    <span>配置将自动迁移到新架构/或许</span>
-                  </div>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30">
+                <Calendar className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  {t("scheduleConfig") || "定时任务配置"}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  设置脚本的自动执行时间
+                </p>
               </div>
             </div>
 
-            <div className="p-4 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg border border-amber-200/60 dark:border-amber-800/60">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* 启用调度 */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 rounded-lg bg-background/60 border border-border/40 hover:bg-background/80 transition-colors duration-200">
-                    <Checkbox
-                      id="isScheduled"
-                      name="isScheduled"
-                      checked={formData.isScheduled}
-                      onCheckedChange={handleCheckboxChange}
-                      aria-label={t("fieldIsScheduled") || "Enable Schedule"}
-                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                    />
+            <div className="p-6 bg-gradient-to-br from-violet-50/50 to-purple-50/50 dark:from-violet-950/20 dark:to-purple-950/20 rounded-xl border border-violet-200/60 dark:border-violet-800/60">
+              <div className="space-y-6">
+                {/* 启用定时任务切换 */}
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-background/60 border border-border/40 hover:bg-background/80 transition-all duration-200">
+                  <Checkbox
+                    id="isScheduled"
+                    name="isScheduled"
+                    checked={formData.isScheduled}
+                    onCheckedChange={handleCheckboxChange}
+                    aria-label={t("fieldIsScheduled") || "Enable Schedule"}
+                    className="data-[state=checked]:bg-violet-600 data-[state=checked]:border-violet-600 mt-1"
+                  />
+                  <div className="flex-1 space-y-1">
                     <Label
                       htmlFor="isScheduled"
-                      className="font-medium flex items-center gap-2 cursor-pointer text-sm"
+                      className="font-medium flex items-center gap-2 cursor-pointer text-base"
                     >
-                      <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                      {t("fieldIsScheduled") || "Enable Schedule"}
+                      <Clock className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                      {t("fieldIsScheduled") || "启用定时执行"}
                     </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t("scheduleEnabledDesc") || "启用后，脚本将按照指定的时间表自动执行"}
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground px-3">
-                    {t("scheduleEnabledDesc")}
-                  </p>
                 </div>
 
-                {/* Cron 表达式 */}
+                {/* 定时任务配置 */}
                 {formData.isScheduled && (
-                  <div className="space-y-3 animate-in slide-in-from-right-5 duration-300">
-                    <Label
-                      htmlFor="cronSchedule"
-                      className="text-sm font-medium flex items-center gap-2"
-                    >
-                      <Target className="h-3.5 w-3.5 text-muted-foreground" />
-                      {t("fieldCronSchedule") || "Cron Schedule"}
-                      <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="cronSchedule"
-                      name="cronSchedule"
+                  <div className="space-y-4 animate-in slide-in-from-top-5 duration-300">
+                    <div className="h-px bg-gradient-to-r from-transparent via-violet-200 to-transparent dark:via-violet-800" />
+                    <ScheduleSelector
                       value={formData.cronSchedule}
-                      onChange={handleChange}
-                      placeholder={
-                        t("cronSchedulePlaceholder") || "e.g., 0 0 * * *"
-                      }
+                      onChange={(cronExpression) => onFormChange("cronSchedule", cronExpression)}
+                      language="zh"
                       required={formData.isScheduled}
-                      className="focus:ring-2 focus:ring-amber-200 focus:border-amber-400 dark:focus:ring-amber-800 dark:focus:border-amber-600 transition-all duration-200 font-mono"
                     />
-                    <p className="text-xs text-muted-foreground">
-                      {t("cronFormatHelp")}
-                    </p>
                   </div>
                 )}
               </div>

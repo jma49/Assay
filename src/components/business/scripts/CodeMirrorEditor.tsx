@@ -13,7 +13,7 @@ import { useTheme } from "next-themes";
 // import { format } from 'sql-formatter';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Code, Sparkles, Eye, FileCode, Palette } from "lucide-react";
+import { Code, Sparkles, Eye, FileCode } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardTranslationKeys } from "../dashboard/types";
 import EditorThemeSettings from "./EditorThemeSettings";
@@ -518,16 +518,6 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         type={analysisType}
       />
 
-      {/* 编辑器提示信息 */}
-      <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-lg border border-blue-200/60 dark:border-blue-800/60">
-        <div className="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/40">
-          <Palette className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-        </div>
-        <div className="text-xs text-blue-700 dark:text-blue-300">
-          <span className="font-medium">{t("editorHelpTitle")}</span>{" "}
-          {t("editorHelpText")}
-        </div>
-      </div>
     </div>
   );
 };
