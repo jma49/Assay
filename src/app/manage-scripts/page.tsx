@@ -738,13 +738,21 @@ const ManageScriptsContent = () => {
                       {t("manageScriptsPageDescription")}
                     </p>
                   </div>
-                  <Button
-                    onClick={() => handleOpenDialog("add")}
-                    className="mt-4"
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    {t("addNewScriptButton")}
-                  </Button>
+                  <div className="flex gap-3 mt-4">
+                    <Link href="/scripts/new">
+                      <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        {t("createScriptButton")}
+                      </Button>
+                    </Link>
+                    <Button
+                      onClick={() => handleOpenDialog("add")}
+                      variant="outline"
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      {t("quickCreateButton")}
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-lg border border-border/20 shadow-inner bg-gradient-to-b from-background to-muted/10">
@@ -1013,14 +1021,28 @@ const ManageScriptsContent = () => {
           {/* Action Buttons - Bottom Right */}
           <div className="flex justify-end">
             <div className="flex items-center space-x-3">
+              {/* 表单创建按钮 */}
+              <Link href="/scripts/new">
+                <Button
+                  size="lg"
+                  className="group shadow-md hover:shadow-lg transition-all duration-300"
+                >
+                  <PlusCircle className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                  {t("createScriptButton")}
+                </Button>
+              </Link>
+              
+              {/* 快速创建按钮 */}
               <Button
                 onClick={() => handleOpenDialog("add")}
+                variant="outline"
                 size="lg"
                 className="group shadow-md hover:shadow-lg transition-all duration-300"
               >
                 <PlusCircle className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                {t("addNewScriptButton")}
+                {t("quickCreateButton")}
               </Button>
+              
               <Link href="/">
                 <Button
                   variant="outline"

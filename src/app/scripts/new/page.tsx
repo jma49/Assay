@@ -170,7 +170,7 @@ export default function NewScriptPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6 lg:p-8 space-y-6">
+    <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 space-y-6">
       <header className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
           {t("createScriptTitle") || "Create New SQL Script"}
@@ -194,20 +194,25 @@ export default function NewScriptPage() {
         <CodeMirrorEditor
           value={sqlContent}
           onChange={handleSqlContentChange}
-          minHeight="350px"
+          minHeight="450px"
+          t={t}
         />
       </div>
 
-      <div className="flex justify-end items-center space-x-3 pt-6 mt-6 border-t">
+      <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 pt-6 mt-6 border-t">
         <Button
           variant="outline"
           onClick={handleCancel}
           disabled={isSaving}
-          className="w-28"
+          className="w-full sm:w-32"
         >
           {t("cancelButton") || "Cancel"}
         </Button>
-        <Button onClick={handleSaveScript} disabled={isSaving} className="w-28">
+        <Button 
+          onClick={handleSaveScript} 
+          disabled={isSaving} 
+          className="w-full sm:w-32"
+        >
           {isSaving
             ? t("savingStatusText") || "Saving..."
             : t("saveScriptButton") || "Save Script"}

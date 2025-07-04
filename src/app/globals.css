@@ -27,6 +27,25 @@
   body.loading {
     opacity: 0;
   }
+
+  /* 防止Dialog打开时导航栏高亮 */
+  [data-state="open"] ~ * a[href],
+  [data-state="open"] ~ * button:not([data-state]),
+  [data-state="open"] ~ * [role="link"],
+  [data-state="open"] ~ * [role="button"] {
+    pointer-events: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  /* 确保对话框内部的交互元素仍然可用 */
+  [role="dialog"] a[href],
+  [role="dialog"] button,
+  [role="dialog"] [role="link"],
+  [role="dialog"] [role="button"] {
+    pointer-events: auto !important;
+  }
 }
 
 :root {

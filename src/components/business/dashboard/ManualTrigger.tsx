@@ -18,6 +18,7 @@ import {
   Hash,
   Check,
   CornerDownLeft,
+  Files,
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,13 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -104,6 +112,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
   >([]);
   const [showProgressDialog, setShowProgressDialog] = useState(false);
   const [showHashtagDropdown, setShowHashtagDropdown] = useState(false);
+  const [showFilteredScriptsDialog, setShowFilteredScriptsDialog] = useState(false);
 
   // AbortController refs for cancelling requests
   const batchExecutionAbortRef = useRef<AbortController | null>(null);
@@ -623,7 +632,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
         {/* 装饰性背景 */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
 
-        <CardHeader className="relative px-6 py-4 border-b border-border/30">
+        <CardHeader className="relative px-6 py-3 border-b border-border/30">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
               <List className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
@@ -651,56 +660,60 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
           </div>
         </CardHeader>
 
-        <CardContent className="relative px-6 py-4 space-y-4 flex-1 overflow-y-auto">
+        <CardContent className="relative px-6 pt-2 pb-1 flex-1 flex flex-col">
           {isFetchingScripts ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground space-x-3">
               <Loader2 className="animate-spin h-6 w-6 text-primary" />
               <span className="text-lg font-medium">{t("loadingScripts")}</span>
             </div>
           ) : Array.isArray(availableScripts) && availableScripts.length > 0 ? (
-            <div className="space-y-3">
-              {/* 执行模式选择 */}
-              <div className="space-y-2">
-                <Label className="text-base font-semibold text-foreground flex items-center gap-2">
-                  <Settings2 className="h-4 w-4 text-primary" />
-                  {t("executionMode")}
-                </Label>
-                <RadioGroup
-                  value={executionMode}
-                  onValueChange={(value) =>
-                    stableSetExecutionMode(value as "single" | "bulk")
-                  }
-                  className="flex space-x-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="single" id="single" />
-                    <Label
-                      htmlFor="single"
-                      className="text-sm font-medium cursor-pointer flex items-center gap-2"
-                    >
-                      <Play className="h-3.5 w-3.5 text-primary" />
-                      {t("executeSelectedScript")}
-                    </Label>
+            <>
+              {/* 主要内容区域 */}
+              <div className="space-y-4 flex-1">
+                {/* 执行模式选择 */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-bold text-foreground/90 flex items-center gap-2 tracking-wide">
+                    <Settings2 className="h-4 w-4 text-primary drop-shadow-sm" />
+                    {t("executionMode")}
+                  </Label>
+                  <div className="bg-gradient-to-br from-muted/40 via-muted/25 to-muted/10 rounded-xl p-3 border border-border/30 shadow-sm">
+                                    <RadioGroup
+                    value={executionMode}
+                    onValueChange={(value) =>
+                      stableSetExecutionMode(value as "single" | "bulk")
+                    }
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+                  >
+                    <div className="flex items-center space-x-3 group hover:bg-background/60 rounded-lg p-3 transition-all duration-200 border border-transparent hover:border-border/30">
+                      <RadioGroupItem value="single" id="single" className="border-2" />
+                      <Label
+                        htmlFor="single"
+                        className="text-sm font-semibold cursor-pointer flex items-center gap-2.5 text-foreground/85 group-hover:text-foreground transition-colors flex-1"
+                      >
+                        <Play className="h-4 w-4 text-primary drop-shadow-sm" />
+                        Execute Selected Script
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-3 group hover:bg-background/60 rounded-lg p-3 transition-all duration-200 border border-transparent hover:border-border/30">
+                      <RadioGroupItem value="bulk" id="bulk" className="border-2" />
+                      <Label
+                        htmlFor="bulk"
+                        className="text-sm font-semibold cursor-pointer flex items-center gap-2.5 text-foreground/85 group-hover:text-foreground transition-colors flex-1"
+                      >
+                        <Zap className="h-4 w-4 text-orange-500 drop-shadow-sm" />
+                        Bulk Execution
+                      </Label>
+                    </div>
+                  </RadioGroup>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="bulk" id="bulk" />
-                    <Label
-                      htmlFor="bulk"
-                      className="text-sm font-medium cursor-pointer flex items-center gap-2"
-                    >
-                      <Zap className="h-3.5 w-3.5 text-orange-500" />
-                      {t("executeAllScripts")}
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
+                </div>
 
               {executionMode === "single" ? (
                 <>
                   {/* 脚本搜索 */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <Search className="h-3.5 w-3.5" />
+                    <Label className="text-sm font-bold text-foreground/90 flex items-center gap-2 tracking-wide">
+                      <Search className="h-4 w-4 text-primary drop-shadow-sm" />
                       {t("searchScripts")}
                     </Label>
                     <div className="relative">
@@ -710,7 +723,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                         value={searchTerm}
                         onChange={(e) => handleHashtagInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        className="h-10"
+                        className="h-11 border-border/60 focus:border-primary/60 bg-gradient-to-r from-background to-background/95 transition-all duration-300 shadow-sm focus:shadow-md hover:border-primary/40 focus:ring-2 focus:ring-primary/20"
                       />
                       {/* Hashtag建议 */}
                       {showHashtagDropdown && availableHashtags.length > 0 && (
@@ -758,9 +771,9 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                   <div className="space-y-2">
                     <Label
                       htmlFor="script-select"
-                      className="text-base font-semibold text-foreground flex items-center gap-2"
+                      className="text-sm font-bold text-foreground/90 flex items-center gap-2 tracking-wide"
                     >
-                      <Database className="h-4 w-4 text-primary" />
+                      <Database className="h-4 w-4 text-primary drop-shadow-sm" />
                       {t("selectScriptLabel")}
                       {filteredScripts.length !==
                         (Array.isArray(availableScripts)
@@ -781,7 +794,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                     >
                       <SelectTrigger
                         id="script-select"
-                        className="h-12 text-base border-2 border-border/50 hover:border-primary/30 focus:border-primary/50 transition-colors duration-200 bg-background/50"
+                        className="h-11 text-base border border-border/60 hover:border-primary/40 focus:border-primary/60 transition-all duration-300 bg-gradient-to-r from-background to-background/95 shadow-sm hover:shadow-md focus:ring-2 focus:ring-primary/20"
                       >
                         <SelectValue
                           placeholder={
@@ -832,10 +845,10 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
 
                   {/* Script Details */}
                   {selectedScript ? (
-                    <div className="bg-gradient-to-r from-background/80 to-background/60 rounded-xl border-2 border-border/30 shadow-md overflow-hidden h-[280px] flex flex-col">
-                      <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-5 py-3 border-b border-border/20">
-                        <h4 className="font-semibold text-foreground flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-primary" />
+                    <div className="bg-gradient-to-br from-background/95 via-background/90 to-background/85 rounded-xl border border-border/50 shadow-lg overflow-hidden flex flex-col backdrop-blur-sm">
+                      <div className="bg-gradient-to-r from-primary/10 via-primary/6 to-primary/8 px-4 py-3 border-b border-border/30 flex-shrink-0">
+                        <h4 className="font-bold text-sm text-foreground/90 flex items-center gap-2.5 tracking-wide">
+                          <FileText className="h-4 w-4 text-primary drop-shadow-sm" />
                           {t("scriptDetails")}
                           {selectedScript.isScheduled && (
                             <Badge
@@ -848,46 +861,46 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                           )}
                         </h4>
                       </div>
-                      <div className="p-4 space-y-3 flex-1 overflow-y-auto">
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <div className="space-y-2">
-                            <h5 className="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                              <Book className="h-3.5 w-3.5" />
+                      <div className="p-4 space-y-4">
+                                                  <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 h-auto">
+                          <div className="space-y-2 flex flex-col">
+                            <h5 className="text-xs font-bold text-muted-foreground/80 uppercase tracking-widest flex items-center gap-1.5">
+                              <Book className="h-3.5 w-3.5 text-blue-500 drop-shadow-sm" />
                               {t("description")}
                             </h5>
-                            <p className="text-sm text-foreground leading-relaxed bg-muted/20 rounded-lg p-3">
+                            <div className="text-sm text-foreground leading-relaxed bg-gradient-to-br from-muted/30 via-muted/20 to-muted/10 rounded-lg p-3 border border-border/20 shadow-sm flex-1 min-h-[4rem]">
                               {scriptDescription}
-                            </p>
+                            </div>
                           </div>
 
-                          <div className="space-y-2">
-                            <h5 className="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                              <Database className="h-3.5 w-3.5" />
+                          <div className="space-y-2 flex flex-col">
+                            <h5 className="text-xs font-bold text-muted-foreground/80 uppercase tracking-widest flex items-center gap-1.5">
+                              <Database className="h-3.5 w-3.5 text-green-500 drop-shadow-sm" />
                               {t("scope")}
                             </h5>
-                            <p className="text-sm text-foreground bg-muted/20 rounded-lg p-3">
+                            <div className="text-sm text-foreground bg-gradient-to-br from-muted/30 via-muted/20 to-muted/10 rounded-lg p-3 border border-border/20 shadow-sm flex-1 min-h-[4rem]">
                               {scriptScope}
-                            </p>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="grid gap-4 grid-cols-2">
                           <div className="space-y-2">
-                            <h5 className="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                              <User className="h-3.5 w-3.5" />
+                            <h5 className="text-xs font-bold text-muted-foreground/80 uppercase tracking-widest flex items-center gap-1.5">
+                              <User className="h-3.5 w-3.5 text-purple-500 drop-shadow-sm" />
                               {t("author")}
                             </h5>
-                            <p className="text-sm text-foreground bg-muted/20 rounded-lg p-3">
+                            <div className="text-sm text-foreground bg-gradient-to-br from-muted/30 via-muted/20 to-muted/10 rounded-lg p-3 border border-border/20 shadow-sm">
                               {selectedScript.author || t("unknown")}
-                            </p>
+                            </div>
                           </div>
 
                           <div className="space-y-2">
-                            <h5 className="text-sm font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                              <Calendar className="h-3.5 w-3.5" />
+                            <h5 className="text-xs font-bold text-muted-foreground/80 uppercase tracking-widest flex items-center gap-1.5">
+                              <Calendar className="h-3.5 w-3.5 text-orange-500 drop-shadow-sm" />
                               {t("createdAt")}
                             </h5>
-                            <p className="text-sm text-foreground bg-muted/20 rounded-lg p-3">
+                            <div className="text-sm text-foreground bg-gradient-to-br from-muted/30 via-muted/20 to-muted/10 rounded-lg p-3 border border-border/20 shadow-sm">
                               {selectedScript.createdAt
                                 ? formatDate(
                                     typeof selectedScript.createdAt === "string"
@@ -896,23 +909,23 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                                     language,
                                   )
                                 : t("unknown")}
-                            </p>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-gradient-to-r from-background/80 to-background/60 rounded-xl border-2 border-border/30 shadow-md overflow-hidden h-[280px] flex flex-col">
-                      <div className="bg-gradient-to-r from-muted/30 to-muted/20 px-5 py-3 border-b border-border/20">
-                        <h4 className="font-semibold text-muted-foreground flex items-center gap-2">
-                          <FileText className="h-4 w-4" />
+                    <div className="bg-gradient-to-br from-background/95 via-background/90 to-background/85 rounded-xl border border-border/50 shadow-lg overflow-hidden h-[200px] flex flex-col backdrop-blur-sm">
+                      <div className="bg-gradient-to-r from-muted/30 via-muted/20 to-muted/25 px-4 py-3 border-b border-border/30 flex-shrink-0">
+                        <h4 className="font-bold text-sm text-muted-foreground/90 flex items-center gap-2.5 tracking-wide">
+                          <FileText className="h-4 w-4 drop-shadow-sm" />
                           {t("scriptDetails")}
                         </h4>
                       </div>
-                      <div className="p-4 flex-1 flex items-center justify-center">
+                      <div className="p-6 flex items-center justify-center flex-1">
                         <div className="text-center text-muted-foreground">
-                          <Database className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                          <p className="text-sm">
+                          <Database className="h-10 w-10 mx-auto mb-4 opacity-50 text-primary/70 drop-shadow-sm" />
+                          <p className="text-sm font-semibold tracking-wide">
                             {language === "zh" ? "请先选择一个脚本查看详情" : "Please select a script to view details"}
                           </p>
                         </div>
@@ -921,12 +934,12 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                   )}
 
                   {/* Single Execution Button */}
-                  <div className="pt-1">
+                  <div>
                     <Button
                       onClick={handleTriggerCheck}
                       disabled={!selectedScriptId || isTriggering || loading}
                       size="lg"
-                      className="w-full h-14 text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 group/btn"
+                      className="w-full h-10 text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 group/btn"
                     >
                       {isTriggering ? (
                         <>
@@ -947,9 +960,9 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                   {/* 批量执行筛选 */}
                   <div className="space-y-4">
                     {/* 脚本搜索 */}
-                    <div className="space-y-3">
-                      <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                        <Search className="h-3.5 w-3.5" />
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold text-foreground/90 flex items-center gap-2 tracking-wide">
+                        <Search className="h-4 w-4 text-primary drop-shadow-sm" />
                         {t("searchScripts")}
                       </Label>
                       <div className="relative">
@@ -959,7 +972,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                           value={searchTerm}
                           onChange={(e) => handleHashtagInput(e.target.value)}
                           onKeyDown={handleKeyDown}
-                          className="h-10"
+                          className="h-11 border-border/60 focus:border-primary/60 bg-gradient-to-r from-background to-background/95 transition-all duration-300 shadow-sm focus:shadow-md hover:border-primary/40 focus:ring-2 focus:ring-primary/20"
                         />
                         {/* Hashtag建议 */}
                         {showHashtagDropdown && availableHashtags.length > 0 && (
@@ -1003,33 +1016,83 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                       </div>
                     </div>
 
-                    {/* 筛选结果统计 */}
+                    {/* 筛选结果按钮 */}
                     {searchTerm.trim().length > 0 && (
-                      <div className="bg-blue-50/50 dark:bg-blue-950/20 rounded-lg border border-blue-200/60 dark:border-blue-800/60 p-3">
-                        <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-400">
-                          <Database className="h-4 w-4" />
-                          <span>
-                            筛选结果: {filteredScripts.length} / {availableScripts.length} 个脚本
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-3 bg-gradient-to-r from-background to-background/95 hover:from-muted/50 hover:to-muted/30 border-border/60 hover:border-primary/30 transition-all duration-300 group"
+                          onClick={() => setShowFilteredScriptsDialog(true)}
+                        >
+                          <Files className="h-4 w-4 text-primary/70 group-hover:text-primary mr-2 transition-colors" />
+                          <span className="font-medium">
+                            {language === "zh" ? "已选择" : "Selected"}: {" "}
+                            <span className="text-primary">{filteredScripts.length}</span>
+                            <span className="text-muted-foreground/70"> / {availableScripts.length}</span>
                           </span>
                           {searchTerm.includes('#') && (
-                            <Badge variant="outline" className="text-xs ml-2">
-                              包含标签搜索
+                            <Badge variant="outline" className="ml-2 text-[10px]">
+                              {language === "zh" ? "标签筛选" : "Tag Filter"}
                             </Badge>
                           )}
-                        </div>
+                        </Button>
                       </div>
                     )}
+
+                    {/* 筛选结果对话框 */}
+                    <Dialog open={showFilteredScriptsDialog} onOpenChange={setShowFilteredScriptsDialog}>
+                      <DialogContent className="max-w-lg">
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2">
+                            <Files className="h-5 w-5 text-primary" />
+                            {language === "zh" ? "筛选结果" : "Filtered Scripts"}
+                            <Badge variant="outline" className="ml-2">
+                              {filteredScripts.length}/{availableScripts.length}
+                            </Badge>
+                          </DialogTitle>
+                          <DialogDescription>
+                            {language === "zh" ? "当前筛选条件匹配的脚本列表" : "List of scripts matching current filter"}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                          {filteredScripts.map((script) => {
+                            const displayName = (language === "zh" && script.cnName) ? script.cnName : script.name;
+                            return (
+                              <div
+                                key={script.scriptId}
+                                className="flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-muted/30 via-muted/20 to-muted/10 border border-border/30 hover:border-border/50 transition-all duration-200"
+                              >
+                                <div className="w-2 h-2 rounded-full bg-primary/60" />
+                                <div className="flex-1">
+                                  <div className="font-medium text-sm">{displayName}</div>
+                                  <div className="text-xs text-muted-foreground mt-0.5">
+                                    {script.description || script.cnDescription || "No description"}
+                                  </div>
+                                </div>
+                                {script.isScheduled && (
+                                  <Badge variant="outline" className="shrink-0">
+                                    <Calendar className="h-3 w-3 mr-1" />
+                                    {language === "zh" ? "定时" : "Scheduled"}
+                                  </Badge>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
 
                   <Separator />
 
                   {/* 批量执行模式选择 */}
-                  <div className="space-y-3">
-                    <Label className="text-base font-semibold text-foreground flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-orange-500" />
-                      {t("bulkExecution")}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold text-foreground/90 flex items-center gap-2 tracking-wide">
+                      <Zap className="h-4 w-4 text-orange-500 drop-shadow-sm" />
+                      Bulk Execution
                     </Label>
-                    <div className="bg-gradient-to-r from-orange-50/50 to-yellow-50/50 dark:from-orange-950/20 dark:to-yellow-950/20 rounded-lg border border-orange-200/60 dark:border-orange-800/60 p-3">
+                                          <div className="bg-gradient-to-br from-orange-50/60 via-orange-50/40 to-yellow-50/40 dark:from-orange-950/25 dark:via-orange-950/20 dark:to-yellow-950/20 rounded-xl border border-orange-200/70 dark:border-orange-800/70 p-3 shadow-sm">
                       <RadioGroup
                         value={bulkMode}
                         onValueChange={(value) =>
@@ -1037,47 +1100,47 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                         }
                         className="space-y-3"
                       >
-                        <div className="flex items-start space-x-3">
+                        <div className="flex items-start space-x-3 group hover:bg-background/30 rounded-lg p-2 transition-all duration-200">
                           <RadioGroupItem
                             value="all"
                             id="all"
-                            className="mt-1"
+                            className="mt-1 border-2"
                           />
                           <div className="flex-1">
                             <Label
                               htmlFor="all"
-                              className="text-sm font-medium cursor-pointer flex items-center gap-2"
+                              className="text-sm font-semibold cursor-pointer flex items-center gap-2"
                             >
-                              <CheckCircle2 className="h-4 w-4 text-green-600" />
-                              {t("executeAllScriptsOption")}
+                              <CheckCircle2 className="h-4 w-4 text-green-600 drop-shadow-sm" />
+                              Execute All Scripts
                               <Badge variant="outline" className="text-xs">
                                 {filteredScripts.length}
                               </Badge>
                             </Label>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {t("executeAllScriptsDesc")}
+                            <p className="text-xs text-muted-foreground/80 mt-1 leading-relaxed">
+                              Run all available scripts in the filtered list
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-start space-x-3">
+                        <div className="flex items-start space-x-3 group hover:bg-background/30 rounded-lg p-2 transition-all duration-200">
                           <RadioGroupItem
                             value="scheduled"
                             id="scheduled"
-                            className="mt-1"
+                            className="mt-1 border-2"
                           />
                           <div className="flex-1">
                             <Label
                               htmlFor="scheduled"
-                              className="text-sm font-medium cursor-pointer flex items-center gap-2"
+                              className="text-sm font-semibold cursor-pointer flex items-center gap-2"
                             >
-                              <Calendar className="h-4 w-4 text-blue-600" />
-                              {t("executeScheduledScriptsOption")}
+                              <Calendar className="h-4 w-4 text-blue-600 drop-shadow-sm" />
+                              Execute Scheduled Scripts
                               <Badge variant="outline" className="text-xs">
                                 {filteredScripts.filter(script => script.isScheduled).length}
                               </Badge>
                             </Label>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {t("executeScheduledScriptsDesc")}
+                            <p className="text-xs text-muted-foreground/80 mt-1 leading-relaxed">
+                              Run only scripts marked for scheduled execution
                             </p>
                           </div>
                         </div>
@@ -1086,37 +1149,39 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                   </div>
 
                   {/* 批量执行统计 */}
-                  <div className="bg-gradient-to-r from-background/80 to-background/60 rounded-xl border-2 border-border/30 shadow-md p-4">
-                    <h4 className="font-semibold text-foreground flex items-center gap-2 mb-3">
-                      <Database className="h-4 w-4 text-primary" />
-                      {t("scriptsExecutionProgress")}
-                    </h4>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold text-foreground/90 flex items-center gap-2 tracking-wide">
+                      <Database className="h-4 w-4 text-primary drop-shadow-sm" />
+                      Scripts Execution Progress
+                    </Label>
+                                          <div className="bg-gradient-to-br from-background/90 via-background/85 to-background/80 rounded-xl border border-border/40 shadow-sm p-3">
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="text-center p-3 bg-muted/20 rounded-lg">
-                        <div className="text-2xl font-bold text-primary">
+                      <div className="text-center p-3 bg-gradient-to-br from-muted/25 via-muted/20 to-muted/15 rounded-lg border border-border/20 shadow-sm">
+                        <div className="text-2xl font-bold text-primary drop-shadow-sm">
                           {getBatchScriptCount()}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {t("scriptsToExecute")}
+                        <div className="text-xs text-muted-foreground/80 font-medium mt-1">
+                          Scripts to Execute
                         </div>
                       </div>
-                      <div className="text-center p-3 bg-muted/20 rounded-lg">
-                        <div className="text-2xl font-bold text-green-600">
+                      <div className="text-center p-3 bg-gradient-to-br from-muted/25 via-muted/20 to-muted/15 rounded-lg border border-border/20 shadow-sm">
+                        <div className="text-2xl font-bold text-green-600 drop-shadow-sm">
                           {Array.isArray(availableScripts)
                             ? availableScripts.filter(
                                 (script) => script.isScheduled,
                               ).length
                             : 0}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {t("scheduledScripts")}
+                        <div className="text-xs text-muted-foreground/80 font-medium mt-1">
+                          Scheduled Scripts
                         </div>
                       </div>
+                    </div>
                     </div>
                   </div>
 
                   {/* Batch Execution Button */}
-                  <div className="pt-1">
+                  <div>
                     <AlertDialog
                       open={showBatchDialog}
                       onOpenChange={setShowBatchDialog}
@@ -1127,7 +1192,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                             isRunningBatch || getBatchScriptCount() === 0
                           }
                           size="lg"
-                          className="w-full h-14 text-base font-semibold bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg hover:shadow-xl transition-all duration-300 group/btn"
+                          className="w-full h-10 text-base font-semibold bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg hover:shadow-xl transition-all duration-300 group/btn"
                         >
                           {isRunningBatch ? (
                             <>
@@ -1137,7 +1202,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                           ) : (
                             <>
                               <Zap className="mr-3 h-5 w-5 group-hover/btn:scale-110 transition-transform duration-200" />
-                              {t("runAllScripts")} ({getBatchScriptCount()})
+                              Bulk Execution ({getBatchScriptCount()})
                             </>
                           )}
                         </Button>
@@ -1182,33 +1247,36 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                   </div>
                 </>
               )}
+              </div>
 
-              {/* Status Message */}
+              {/* Status Message 区域 - 底部固定 */}
               {triggerMessage && (
-                <Alert
-                  variant={
-                    triggerMessageType === "error" ? "destructive" : "default"
-                  }
-                  className="mt-3 shadow-sm slide-in-right transition-all duration-300"
-                >
-                  <AlertTitle>
-                    {triggerMessageType === "error"
-                      ? t("triggerErrorTitle")
-                      : t("triggerSuccessTitle")}
-                  </AlertTitle>
-                  <AlertDescription>{triggerMessage}</AlertDescription>
-                </Alert>
+                <div className="pt-1">
+                  <Alert
+                    variant={
+                      triggerMessageType === "error" ? "destructive" : "default"
+                    }
+                    className="shadow-sm slide-in-right transition-all duration-300"
+                  >
+                    <AlertTitle>
+                      {triggerMessageType === "error"
+                        ? t("triggerErrorTitle")
+                        : t("triggerSuccessTitle")}
+                    </AlertTitle>
+                    <AlertDescription>{triggerMessage}</AlertDescription>
+                  </Alert>
+                </div>
               )}
-            </div>
+            </>
           ) : (
-            <div className="text-center py-8 px-4 bg-card/50 rounded-lg border border-border/30 shadow-sm h-full flex flex-col justify-center">
-              <div className="icon-container bg-muted/30 rounded-lg p-2 mx-auto mb-4">
-                <Database className="h-10 w-10 text-muted-foreground" />
+            <div className="text-center py-4 px-4 bg-card/50 rounded-lg border border-border/30 shadow-sm flex flex-col justify-center flex-1">
+              <div className="icon-container bg-muted/30 rounded-lg p-2 mx-auto mb-2">
+                <Database className="h-8 w-8 text-muted-foreground" />
               </div>
               <p className="font-semibold text-base">
                 {t("noScriptsAvailable")}
               </p>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-sm text-muted-foreground mt-1.5">
                 {t("ensureConfigured")}
               </p>
             </div>
