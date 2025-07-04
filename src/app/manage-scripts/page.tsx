@@ -738,21 +738,6 @@ const ManageScriptsContent = () => {
                       {t("manageScriptsPageDescription")}
                     </p>
                   </div>
-                  <div className="flex gap-3 mt-4">
-                    <Link href="/scripts/new">
-                      <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        {t("createScriptButton")}
-                      </Button>
-                    </Link>
-                    <Button
-                      onClick={() => handleOpenDialog("add")}
-                      variant="outline"
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      {t("quickCreateButton")}
-                    </Button>
-                  </div>
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-lg border border-border/20 shadow-inner bg-gradient-to-b from-background to-muted/10">
