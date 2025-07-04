@@ -548,8 +548,6 @@ export default function ViewExecutionResultPage() {
     Array.isArray(result.findings) && result.findings.length > 0;
 
   if (hasTableData && Array.isArray(result.findings)) {
-    // 设置表格标题和数据
-    const headers = Object.keys(result.findings[0]);
     findingsContent = (
       <div className="space-y-4">
         <div
@@ -558,9 +556,9 @@ export default function ViewExecutionResultPage() {
           className="overflow-x-auto"
         >
           <table className="min-w-full">
-            <thead>
-              <tr className="bg-gradient-to-r from-muted/40 to-muted/20 border-b-2 border-border/30">
-                {headers.map((header) => (
+            <thead className="sticky top-0 z-10">
+              <tr className="bg-gradient-to-r from-muted/60 to-muted/40 border-b-2 border-border/30">
+                {Object.keys(result.findings[0]).map((header) => (
                   <th
                     key={header}
                     scope="col"
@@ -577,25 +575,28 @@ export default function ViewExecutionResultPage() {
                   key={rowIndex}
                   className={cn(
                     "transition-colors hover:bg-muted/20",
-                    rowIndex % 2 === 0 ? "bg-card" : "bg-muted/10",
+                    rowIndex % 2 === 0 ? "bg-card" : "bg-muted/10"
                   )}
                 >
-                  {headers.map((header) => {
+                  {Object.keys(result.findings[0]).map((header) => {
                     const value = row[header as keyof typeof row];
                     return (
                       <td
                         key={`${rowIndex}-${header}`}
-                        className="px-4 py-3 text-sm text-foreground whitespace-nowrap"
-                        title={String(value)}
+                        className="px-4 py-3 text-sm text-foreground whitespace-nowrap font-mono"
                       >
-                        {value === null ? (
+                        {value === null || value === undefined ? (
                           <span className="text-muted-foreground italic">
-                            NULL
+                            {value === null ? "NULL" : "undefined"}
                           </span>
                         ) : typeof value === "object" ? (
-                          JSON.stringify(value)
+                          <span className="text-primary">
+                            {JSON.stringify(value)}
+                          </span>
                         ) : (
-                          String(value)
+                          <span className="tabular-nums">
+                            {String(value)}
+                          </span>
                         )}
                       </td>
                     );
@@ -608,24 +609,29 @@ export default function ViewExecutionResultPage() {
 
         {/* 自定义滚动条 */}
         {showScrollBar && (
-          <div className="relative h-3 bg-muted/20 rounded-full border border-border/20 shadow-inner">
+          <div className="relative h-3 bg-muted/20 rounded-full border border-border/20 shadow-inner mx-4">
             <div
               ref={scrollBarRef}
               className={cn(
                 "absolute top-0 h-full bg-gradient-to-r from-primary/60 to-primary/80 rounded-full shadow-sm cursor-grab transition-colors duration-200 border border-primary/20",
                 isDragging
                   ? "cursor-grabbing bg-primary/90 from-primary/80 to-primary/90"
-                  : "hover:from-primary/70 hover:to-primary/90 hover:shadow-md",
+                  : "hover:from-primary/70 hover:to-primary/90 hover:shadow-md"
               )}
               style={{
-                width: `${Math.max(20, ((scrollContainerRef.current?.clientWidth || 0) / (scrollContainerRef.current?.scrollWidth || 1)) * 100)}%`,
+                width: `${Math.max(
+                  20,
+                  ((scrollContainerRef.current?.clientWidth || 0) /
+                    (scrollContainerRef.current?.scrollWidth || 1)) *
+                    100
+                )}%`,
                 transform: "translateX(0px)",
                 transition: isDragging
                   ? "none"
                   : "transform 0.1s ease-out, box-shadow 0.2s ease-out",
               }}
               onMouseDown={handleScrollBarMouseDown}
-              title="拖动以横向滚动表格"
+              title={language === "en" ? "Drag to scroll horizontally" : "拖动以横向滚动表格"}
             />
           </div>
         )}
@@ -634,7 +640,7 @@ export default function ViewExecutionResultPage() {
   } else if (typeof result.findings === "string") {
     findingsContent = (
       <div className="p-6 bg-muted/10 rounded-lg border border-border/20">
-        <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+        <p className="text-foreground whitespace-pre-wrap leading-relaxed font-mono">
           {result.findings}
         </p>
       </div>
@@ -803,97 +809,90 @@ export default function ViewExecutionResultPage() {
                 </h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* 脚本ID - 总是显示 */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                    {t.scriptId}
-                  </p>
-                  <div className="text-base text-foreground bg-muted/20 rounded-lg p-3 font-mono">
-                    <Link 
-                      href={`/manage-scripts?scriptId=${encodeURIComponent(result.scriptId)}`}
-                      className="flex items-center gap-2 hover:text-primary transition-colors duration-200 group/link"
-                    >
-                      <span>{result.scriptId}</span>
-                      <span 
-                        className="text-xs opacity-60 group-hover/link:opacity-100 transition-opacity duration-200" 
-                        title={language === "en" ? "Edit Script" : "编辑脚本"}
+                {/* 左侧列 */}
+                <div className="space-y-6">
+                  {/* Script ID */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                      {t.scriptId}
+                    </p>
+                    <div className="text-base text-foreground bg-muted/20 rounded-lg p-3 font-mono">
+                      <Link 
+                        href={`/manage-scripts?scriptId=${encodeURIComponent(result.scriptId)}`}
+                        className="flex items-center gap-2 hover:text-primary transition-colors duration-200 group/link"
                       >
-                        ✏️
-                      </span>
-                    </Link>
+                        <span>{result.scriptId}</span>
+                        <span 
+                          className="text-xs opacity-60 group-hover/link:opacity-100 transition-opacity duration-200" 
+                          title={language === "en" ? "Edit Script" : "编辑脚本"}
+                        >
+                          ✏️
+                        </span>
+                      </Link>
+                    </div>
                   </div>
+
+                  {/* Script Name */}
+                  {(result.name || result.cnName) && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                        {t.name}
+                      </p>
+                      <p className="text-base text-foreground bg-muted/20 rounded-lg p-3">
+                        {language === "en" ? result.name : (result.cnName || result.name)}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Description */}
+                  {(result.description || result.cnDescription) && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                        {t.description}
+                      </p>
+                      <p className="text-base text-foreground bg-muted/20 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
+                        {language === "en" ? result.description : (result.cnDescription || result.description)}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                {/* 结果ID - 总是显示 */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                    {t.resultId}
-                  </p>
-                  <p className="text-xs text-muted-foreground bg-muted/20 rounded-lg p-3 font-mono break-all">
-                    {result._id}
-                  </p>
+                {/* 右侧列 */}
+                <div className="space-y-6">
+                  {/* Author */}
+                  {result.author && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                        {t.author}
+                      </p>
+                      <p className="text-base text-foreground bg-muted/20 rounded-lg p-3">
+                        {result.author}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Result ID */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                      {t.resultId}
+                    </p>
+                    <p className="text-xs text-muted-foreground bg-muted/20 rounded-lg p-3 font-mono break-all">
+                      {result._id}
+                    </p>
+                  </div>
+
+                  {/* Scope */}
+                  {(result.scope || result.cnScope) && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                        {t.scope}
+                      </p>
+                      <p className="text-base text-foreground bg-muted/20 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
+                        {language === "en" ? result.scope : (result.cnScope || result.scope)}
+                      </p>
+                    </div>
+                  )}
                 </div>
-
-                {/* 脚本名称 - 如果存在则显示 */}
-                {(language === "en"
-                  ? result.name
-                  : result.cnName || result.name) && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                      {t.name || (language === "en" ? "Name" : "名称")}
-                    </p>
-                    <p className="text-base text-foreground bg-muted/20 rounded-lg p-3">
-                      {language === "en"
-                        ? result.name
-                        : result.cnName || result.name}
-                    </p>
-                  </div>
-                )}
-
-                {/* 作者 - 如果存在则显示 */}
-                {result.author && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                      {t.author || (language === "en" ? "Author" : "作者")}
-                    </p>
-                    <p className="text-base text-foreground bg-muted/20 rounded-lg p-3">
-                      {result.author}
-                    </p>
-                  </div>
-                )}
-
-                {/* 描述 - 如果存在则显示 */}
-                {(language === "en"
-                  ? result.description
-                  : result.cnDescription || result.description) && (
-                  <div className="md:col-span-2 space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                      {t.description ||
-                        (language === "en" ? "Description" : "描述")}
-                    </p>
-                    <p className="text-base text-foreground bg-muted/20 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
-                      {language === "en"
-                        ? result.description
-                        : result.cnDescription || result.description}
-                    </p>
-                  </div>
-                )}
-
-                {/* 范围 - 如果存在则显示 */}
-                {(language === "en"
-                  ? result.scope
-                  : result.cnScope || result.scope) && (
-                  <div className="md:col-span-2 space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                      {t.scope || (language === "en" ? "Scope" : "范围")}
-                    </p>
-                    <p className="text-base text-foreground bg-muted/20 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
-                      {language === "en"
-                        ? result.scope
-                        : result.cnScope || result.scope}
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
           </div>
