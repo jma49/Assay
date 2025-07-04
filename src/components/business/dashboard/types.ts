@@ -82,6 +82,8 @@ export type DashboardTranslationKeys =
   | "successfulRuns"
   | "needsAttention"
   | "addNewScriptButton"
+  | "createScriptButton"
+  | "quickCreateButton"
   | "createScriptTitle"
   | "editScriptTitle"
   | "editScript"
@@ -749,6 +751,8 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     successfulRuns: "Successful Executions",
     needsAttention: "Attention",
     addNewScriptButton: "Add New Script",
+    createScriptButton: "Create Script",
+    quickCreateButton: "Quick Create",
     createScriptTitle: "Create New SQL Script",
     editScriptTitle: "Edit SQL Script",
     editScript: "Edit Script",
@@ -1316,6 +1320,8 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     successfulRuns: "成功执行",
     needsAttention: "注意",
     addNewScriptButton: "添加新脚本",
+    createScriptButton: "创建脚本",
+    quickCreateButton: "快速创建",
     createScriptTitle: "创建新 SQL 脚本",
     editScriptTitle: "编辑 SQL 脚本",
     editScript: "编辑脚本",

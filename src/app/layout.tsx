@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/components/common/LanguageProvider";
 import CSSErrorHandler from "@/components/error/CSSErrorHandler";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { GlobalErrorHandlerProvider } from "@/components/error/GlobalErrorHandlerProvider";
+import { DialogPortalProvider } from "@/components/common/DialogPortalProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -36,7 +37,9 @@ export default function RootLayout({
           <ErrorBoundary>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
               <LanguageProvider>
-                {children}
+                <DialogPortalProvider>
+                  {children}
+                </DialogPortalProvider>
               </LanguageProvider>
             </ThemeProvider>
           </ErrorBoundary>

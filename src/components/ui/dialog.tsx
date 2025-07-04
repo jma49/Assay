@@ -21,7 +21,13 @@ function DialogTrigger({
 function DialogPortal({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
+  return (
+    <DialogPrimitive.Portal 
+      data-slot="dialog-portal" 
+      container={typeof document !== 'undefined' ? document.getElementById('dialog-portal-root') : undefined}
+      {...props} 
+    />
+  );
 }
 
 function DialogClose({
@@ -52,7 +58,7 @@ function DialogContent({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content>) {
   return (
-    <DialogPortal data-slot="dialog-portal">
+    <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
