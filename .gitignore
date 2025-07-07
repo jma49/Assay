@@ -80,3 +80,10 @@ Temporary Items
 
 # redis dump
 *.rdb
+
+# pm2 config    
+ecosystem.config.js
+logs/
+
+
+
