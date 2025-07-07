@@ -28,24 +28,6 @@
     opacity: 0;
   }
 
-  /* 防止Dialog打开时导航栏高亮 */
-  nav [data-state="open"] ~ * a[href],
-  nav [data-state="open"] ~ * button:not([data-state]),
-  nav [data-state="open"] ~ * [role="link"],
-  nav [data-state="open"] ~ * [role="button"] {
-    pointer-events: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    -webkit-tap-highlight-color: transparent !important;
-  }
-
-  /* 确保对话框内部的交互元素仍然可用 */
-  [role="dialog"] a[href],
-  [role="dialog"] button,
-  [role="dialog"] [role="link"],
-  [role="dialog"] [role="button"] {
-    pointer-events: auto !important;
-  }
 }
 
 :root {
