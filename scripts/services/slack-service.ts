@@ -9,13 +9,15 @@ import { ExecutionStatusType } from "../types";
  * @param statusType 执行的状态类型。
  * @param resultMongoId 可选参数，MongoDB中存储的详细执行结果的ID。
  * @param tag 可选参数，脚本的标签信息。
+ * @param author 可选参数，脚本的作者信息。
  */
 export async function sendSlackNotification(
   scriptId: string,
   message: string,
   statusType: ExecutionStatusType,
   resultMongoId?: string,
-  tag?: string
+  tag?: string,
+  author?: string
 ): Promise<void> {
   try {
     const webhookUrl = process.env.SLACK_WEBHOOK_URL;
@@ -101,6 +103,14 @@ export async function sendSlackNotification(
       { type: "mrkdwn", text: sourceText },
     ];
 
+    // 如果有作者信息，添加到字段中
+    if (author && author.trim()) {
+      fields.push({
+        type: "mrkdwn",
+        text: `*脚本作者:*\n${author}`,
+      });
+    }
+
     // 如果有tag信息，添加到字段中
     if (tag && tag.trim()) {
       fields.push({
@@ -148,6 +158,9 @@ export async function sendSlackNotification(
       execution_time: timestamp,
       github_log_url: githubLogUrl || sourceDisplayText,
       message: message,
+      author: author || "", // 脚本作者信息
+      author_display: author ? `${author}` : "", // 格式化的作者用于显示
+      has_author: author && author.trim() ? true : false, // 布尔值，方便条件显示
       tag: tag || "", // 确保tag不是undefined，用于Workflow Builder
       tag_display: tag ? `\`${tag}\`` : "", // 格式化的tag用于显示
       has_tag: tag && tag.trim() ? true : false, // 布尔值，方便条件显示
@@ -167,7 +180,9 @@ export async function sendSlackNotification(
       headers: { "Content-Type": "application/json" },
     });
     console.log(
-      `Slack 通知 (${scriptId}) 已发送${tag ? ` [标签: ${tag}]` : ""}`
+      `Slack 通知 (${scriptId}) 已发送${author ? ` [作者: ${author}]` : ""}${
+        tag ? ` [标签: ${tag}]` : ""
+      }`
     );
   } catch (error: unknown) {
     // 更健壮的 Axios 错误处理

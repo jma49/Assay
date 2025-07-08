@@ -254,7 +254,7 @@ class TaskScheduler {
     console.log("🔄 重新加载任务...");
 
     // 停止并清除现有任务
-    for (const [scriptId, taskInfo] of this.tasks) {
+    for (const [, taskInfo] of this.tasks) {
       taskInfo.task.stop();
     }
     this.tasks.clear();
@@ -331,7 +331,8 @@ class TaskScheduler {
       const result = await executeSqlScriptFromDb(
         scriptId,
         script.sqlContent,
-        script.hashtags
+        script.hashtags,
+        script.author
       );
 
       if (result.success) {

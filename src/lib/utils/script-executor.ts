@@ -47,6 +47,7 @@ export async function executeScriptAndNotify(
 
     const sqlContent = scriptDocument.sqlContent as string;
     const scriptHashtags = scriptDocument.hashtags as string[] | undefined;
+    const scriptAuthor = scriptDocument.author as string | undefined;
 
     if (
       !sqlContent ||
@@ -68,15 +69,18 @@ export async function executeScriptAndNotify(
 
     console.log(
       `[Script Executor] Found script '${scriptId}' in DB, proceeding with execution.${
+        scriptAuthor ? ` [author: ${scriptAuthor}]` : ""
+      }${
         scriptHashtags ? ` [tags: ${scriptHashtags.join(", ")}]` : ""
       }`
     );
 
-    // Call the refactored core execution function with scriptId, sqlContent, and hashtags
+    // Call the refactored core execution function with scriptId, sqlContent, hashtags, and author
     const result = await executeSqlScriptFromDb(
       scriptId,
       sqlContent,
-      scriptHashtags
+      scriptHashtags,
+      scriptAuthor
     );
 
     console.log(

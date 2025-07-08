@@ -64,14 +64,18 @@ async function main(): Promise<void> {
       await sendSlackNotification(
         scriptId,
         `脚本未找到: ${scriptId}`,
-        "failure"
+        "failure",
+        undefined,
+        undefined,
+        undefined // 未找到脚本时无法获取作者信息
       );
       process.exit(1);
     }
 
-    // Extract SQL content and hashtags from the document
+    // Extract SQL content, hashtags, and author from the document
     const sqlContent = scriptDoc.sqlContent as string;
     const scriptHashtags = scriptDoc.hashtags as string[] | undefined; // 获取hashtags信息
+    const scriptAuthor = scriptDoc.author as string | undefined; // 获取作者信息
 
     if (!sqlContent || sqlContent.trim() === "") {
       console.warn(`脚本 '${scriptId}' 没有SQL内容。`);
@@ -80,22 +84,24 @@ async function main(): Promise<void> {
         `脚本没有SQL内容: ${scriptId}`,
         "failure",
         undefined,
-        scriptHashtags?.join(", ") // 传递标签信息
+        scriptHashtags?.join(", "), // 传递标签信息
+        scriptAuthor // 传递作者信息
       );
       process.exit(1);
     }
 
     console.log(
       `找到脚本 '${scriptId}'，开始执行...${
-        scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""
-      }`
+        scriptAuthor ? ` [作者: ${scriptAuthor}]` : ""
+      }${scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""}`
     );
 
-    // Use executeSqlScriptFromDb with scriptId, sqlContent, and hashtags
+    // Use executeSqlScriptFromDb with scriptId, sqlContent, hashtags, and author
     const result = await executeSqlScriptFromDb(
       scriptId,
       sqlContent,
-      scriptHashtags
+      scriptHashtags,
+      scriptAuthor
     );
 
     if (result.success) {
@@ -110,7 +116,14 @@ async function main(): Promise<void> {
       error instanceof Error ? error.message : "发生未知的顶层错误";
     console.error(`[CLI] 执行脚本 ${scriptId} 时发生错误:`, errorMsg);
     // Try to send Slack notification even for fetch errors
-    await sendSlackNotification(scriptId, `执行失败: ${errorMsg}`, "failure");
+    await sendSlackNotification(
+      scriptId,
+      `执行失败: ${errorMsg}`,
+      "failure",
+      undefined,
+      undefined,
+      undefined
+    );
     // process.exit(1); // Decide if CLI should exit on error
   } finally {
     // Ensure connections are closed

@@ -71,6 +71,20 @@ ID | Name | Status
     );
     console.log("✅ Formatted success message notification sent successfully");
 
+    // Test notification with author and tag information
+    console.log(
+      "Test Case 5: Sending notification with author and tag information"
+    );
+    await sendSlackNotification(
+      "Test Script with Author",
+      "测试脚本执行成功，包含作者和标签信息。",
+      "success",
+      undefined,
+      "测试, 样例",
+      "张三"
+    );
+    console.log("✅ Notification with author and tag sent successfully");
+
     console.log("All tests completed!");
   } catch (error) {
     console.error("❌ Test failed:", error);
