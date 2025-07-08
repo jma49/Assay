@@ -789,11 +789,14 @@ async function executeQueries(
 export async function executeSqlScriptFromDb(
   scriptId: string,
   sqlContent: string,
-  scriptHashtags?: string[]
+  scriptHashtags?: string[],
+  scriptAuthor?: string
 ): Promise<ExecutionResult> {
   const executionTimestamp = Date.now();
   console.log(
     `[EXEC ${executionTimestamp}] Starting script execution: ${scriptId} (from DB content)${
+      scriptAuthor ? ` [author: ${scriptAuthor}]` : ""
+    }${
       scriptHashtags ? ` [tags: ${scriptHashtags.join(", ")}]` : ""
     }`
   );
@@ -897,7 +900,8 @@ export async function executeSqlScriptFromDb(
         `${successMessage} (${findings})`,
         statusType,
         mongoResultId,
-        slackTag
+        slackTag,
+        scriptAuthor
       );
     }
 
@@ -938,7 +942,8 @@ export async function executeSqlScriptFromDb(
       errorMessage,
       "failure",
       mongoResultId,
-      slackTag
+      slackTag,
+      scriptAuthor
     );
 
     return {

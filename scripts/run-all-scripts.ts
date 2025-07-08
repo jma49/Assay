@@ -97,6 +97,7 @@ async function main(): Promise<void> {
       const isScheduled = script.isScheduled as boolean;
       const cronSchedule = script.cronSchedule as string;
       const scriptHashtags = script.hashtags as string[] | undefined; // 获取hashtags信息
+      const scriptAuthor = script.author as string | undefined; // 获取作者信息
 
       if (!scriptId || !sqlContent) {
         console.warn(
@@ -121,7 +122,11 @@ async function main(): Promise<void> {
       console.log(
         `[批量执行] 开始执行脚本: ${scriptId} (${scriptName})${
           isScheduled ? " [定时任务]" : ""
-        }${cronSchedule ? ` [计划: ${cronSchedule}]` : ""}${scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""}`
+        }${cronSchedule ? ` [计划: ${cronSchedule}]` : ""}${
+          scriptAuthor ? ` [作者: ${scriptAuthor}]` : ""
+        }${
+          scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""
+        }`
       );
 
       try {
@@ -130,7 +135,8 @@ async function main(): Promise<void> {
         const result = await executeSqlScriptFromDb(
           scriptId,
           sqlContent,
-          scriptHashtags
+          scriptHashtags,
+          scriptAuthor
         );
 
         if (result.success) {
