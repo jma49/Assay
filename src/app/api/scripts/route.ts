@@ -25,7 +25,8 @@ interface NewScriptData {
   author?: string;
   hashtags?: string[];
   sqlContent: string;
-  // isScheduled and cronSchedule will be handled separately or have defaults
+  isScheduled?: boolean;
+  cronSchedule?: string;
 }
 
 // 帮助函数：验证 scriptId 格式
@@ -207,6 +208,8 @@ export async function POST(request: Request) {
       author,
       hashtags,
       sqlContent,
+      isScheduled,
+      cronSchedule,
     } = body as NewScriptData;
 
     // 1. 验证 scriptId
@@ -303,8 +306,8 @@ export async function POST(request: Request) {
           author: author || userEmail.split("@")[0],
           hashtags: hashtags || [],
           sqlContent,
-          isScheduled: false,
-          cronSchedule: "",
+          isScheduled: isScheduled || false,
+          cronSchedule: cronSchedule || "",
         }
       );
 
@@ -345,8 +348,8 @@ export async function POST(request: Request) {
       author: author || userEmail.split("@")[0], // 如果没有提供作者，使用当前用户
       hashtags: hashtags || [],
       sqlContent,
-      isScheduled: false, // 默认不启用定时任务
-      cronSchedule: "", // 默认 Cron 表达式为空
+      isScheduled: isScheduled || false, // 默认不启用定时任务
+      cronSchedule: cronSchedule || "", // 默认 Cron 表达式为空
       createdAt: new Date(),
       updatedAt: new Date(),
       approvalStatus: ApprovalStatus.APPROVED, // 自动审批通过
