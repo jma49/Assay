@@ -29,6 +29,7 @@ interface LoadingOverlayProps {
   isLoading: boolean;
   children: React.ReactNode;
   className?: string;
+  /** Unused since the overlay dropped its spinner; kept for existing callers. */
   spinnerSize?: "sm" | "md" | "lg";
   text?: string;
 }
@@ -37,22 +38,21 @@ export function LoadingOverlay({
   isLoading, 
   children, 
   className,
-  spinnerSize = "md",
   text
 }: LoadingOverlayProps) {
+  // Refreshing existing content: dim it and run a thin line along the top
+  // instead of hiding it behind a spinner.
   return (
-    <div className={cn("relative", className)}>
-      {children}
+    <div className={cn("relative", className)} aria-busy={isLoading} aria-label={isLoading ? text : undefined}>
+      <div className={cn("transition-opacity duration-200", isLoading && "pointer-events-none opacity-50")}>
+        {children}
+      </div>
       {isLoading && (
-        <div className="absolute inset-0 bg-background backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="flex flex-col items-center gap-3">
-            <LoadingSpinner size={spinnerSize} />
-            {text && (
-              <p className="text-sm text-muted-foreground font-medium">
-                {text}
-              </p>
-            )}
-          </div>
+        <div aria-hidden className="absolute inset-x-0 top-0 h-0.5 overflow-hidden">
+          <div
+            className="h-full origin-left bg-foreground/60"
+            style={{ animation: "nav-progress 4s cubic-bezier(0.1, 0.7, 0.2, 1) forwards" }}
+          />
         </div>
       )}
     </div>

@@ -82,6 +82,7 @@ import { EditHistoryDialog } from "@/components/business/scripts/EditHistoryDial
 import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
 import { StackedTags } from "@/components/ui/stacked-tags";
 import { LoadingOverlay } from "@/components/ui/loading";
+import { SkeletonTable } from "@/components/common/PageSkeletons";
 
 // Helper type for the form state, combining metadata and SQL content
 type ManageScriptFormState = Partial<SqlScript>;
@@ -675,7 +676,10 @@ const ManageScriptsContent = () => {
             </CardHeader>
 
             <CardContent className="relative p-0">
-              <LoadingOverlay isLoading={isLoading} text={t("loading")} spinnerSize="lg">
+              {isLoading && totalScripts === 0 ? (
+                <SkeletonTable rows={8} withTitle={false} className="rounded-none border-0" />
+              ) : (
+              <LoadingOverlay isLoading={isLoading} text={t("loading")}>
                 {error ? (
                 <div className="p-6 text-center space-y-4">
                   <div className="p-6 rounded-lg border border-dashed border-muted-foreground/20 max-w-md mx-auto">
@@ -835,6 +839,7 @@ const ManageScriptsContent = () => {
                 </div>
               )}
                 </LoadingOverlay>
+              )}
             </CardContent>
 
             {/* 分页 - 和CheckHistory组件风格一致 */}

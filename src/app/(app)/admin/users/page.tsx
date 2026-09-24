@@ -27,6 +27,8 @@ import { useLanguage } from '@/components/common/LanguageProvider';
 import { dashboardTranslations, DashboardTranslationKeys, ITEMS_PER_PAGE } from '@/components/business/dashboard/types';
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
+import { SkeletonPageHeader, SkeletonStatStrip, SkeletonTable } from "@/components/common/PageSkeletons";
+import { APP_CONTAINER } from "@/components/layout/app-container";
 
 // 角色信息映射
 const getRoleInfo = (role: UserRole, t: (key: DashboardTranslationKeys) => string) => ({
@@ -82,6 +84,8 @@ export default function AdminUsersPage() {
   const [newUserId, setNewUserId] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.DEVELOPER);
   const [error, setError] = useState<string | null>(null);
+  // Until the first load finishes, show placeholders rather than "no roles".
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   // 翻译函数
   const t = useCallback(
@@ -173,8 +177,10 @@ export default function AdminUsersPage() {
       console.error('加载用户角色失败:', error);
       setError(error instanceof Error ? error.message : '加载失败');
       toast.error(language === "zh" ? "加载用户角色列表失败" : "Could not load user roles");
+    } finally {
+      setHasLoaded(true);
     }
-   }, [language]);
+  }, [language]);
 
   useEffect(() => {
     if (isLoaded && user) {
@@ -293,10 +299,11 @@ export default function AdminUsersPage() {
 
   if (!isLoaded) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">{t('loading')}</span>
-      </div>
+      <main className={`${APP_CONTAINER} space-y-6 py-8`} aria-busy="true">
+        <SkeletonPageHeader withAction />
+        <SkeletonStatStrip />
+        <SkeletonTable rows={3} />
+      </main>
     );
   }
 
@@ -389,6 +396,7 @@ export default function AdminUsersPage() {
             }
           />
 
+          {!hasLoaded ? <SkeletonStatStrip /> : (
           <dl className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-4">
             {Object.entries(roleStats).map(([role, count]) => (
               <div key={role} className="space-y-1 bg-card px-5 py-4">
@@ -397,6 +405,7 @@ export default function AdminUsersPage() {
               </div>
             ))}
           </dl>
+          )}
 
           {/* User List */}
           <Card className="relative overflow-hidden gap-0 py-0">
@@ -407,7 +416,9 @@ export default function AdminUsersPage() {
             </CardHeader>
 
             <CardContent className="relative p-0">
-              {totalUsers === 0 ? (
+              {!hasLoaded ? (
+                <SkeletonTable rows={3} withTitle={false} className="rounded-none border-0" />
+              ) : totalUsers === 0 ? (
                 <EmptyState
                   title={language === "zh" ? "暂无用户角色" : "No roles assigned yet"}
                   hint={language === "zh" ? "点击右上角按钮为用户分配角色" : "Use “Add user role” to give someone access."}
