@@ -1,7 +1,7 @@
 import React from "react";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { isValidEmailDomain } from "@/lib/auth/auth-utils";
+import { getUserProfile, isValidEmailDomain } from "@/lib/auth/auth-utils";
 import Dashboard from "@/components/layout/Dashboard";
 import UserHeader from "@/components/layout/UserHeader";
 import { APP_CONTAINER } from "@/components/layout/app-container";
@@ -39,7 +39,7 @@ export default async function DashboardPage() {
   }
 
   // 获取用户信息并验证邮箱域名
-  const user = await currentUser();
+  const user = await getUserProfile(userId);
 
   if (!user) {
     redirect("/sign-in");
