@@ -223,9 +223,9 @@ export default function ApprovalsPage() {
       setPendingApprovals(data.data || []);
     } catch (error) {
       console.error('加载待审批列表失败:', error);
-      toast.error('加载待审批列表失败');
+      toast.error(language === "zh" ? "加载待审批列表失败" : "Could not load pending approvals");
     }
-  }, []);
+  }, [language]);
 
   // 加载审批历史
   const loadApprovalHistory = useCallback(async (page: number = 1) => {
@@ -246,9 +246,9 @@ export default function ApprovalsPage() {
       }
     } catch (error) {
       console.error('加载审批历史失败:', error);
-      toast.error('加载审批历史失败');
+      toast.error(language === "zh" ? "加载审批历史失败" : "Could not load approval history");
     }
-  }, []);
+  }, [language]);
 
   // 加载数据
   const loadData = useCallback(async () => {

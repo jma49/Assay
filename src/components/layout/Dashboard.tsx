@@ -595,8 +595,8 @@ const Dashboard = () => {
       window.history.replaceState({}, '', newUrl.toString());
       
       // 显示筛选通知
-      toast.info("正在筛选执行历史", {
-        description: `搜索脚本: ${cleanSearchParam}`,
+      toast.info(language === "zh" ? "正在筛选执行历史" : "Filtering run history", {
+        description: language === "zh" ? `搜索脚本: ${cleanSearchParam}` : `Script: ${cleanSearchParam}`,
         duration: 3000,
       });
       

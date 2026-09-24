@@ -6,7 +6,17 @@
 
 export interface SqlValidationResult {
   isValid: boolean;
+  /** Chinese message, kept as-is because API responses already return it. */
   reason?: string;
+  reasonEn?: string;
+}
+
+/** Picks the message for the UI language. */
+export function sqlValidationMessage(
+  result: SqlValidationResult,
+  language: "en" | "zh",
+): string | undefined {
+  return language === "zh" ? result.reason : result.reasonEn ?? result.reason;
 }
 
 const ALLOWED_LEADING_KEYWORDS = ["SELECT", "WITH", "EXPLAIN", "DO"];
@@ -187,7 +197,7 @@ export function validateReadOnlySql(sqlContent: string): SqlValidationResult {
   const { code, dollarBodies } = stripSql(sqlContent ?? "");
 
   if (code === "") {
-    return { isValid: false, reason: "SQL 内容为空。" };
+    return { isValid: false, reason: "SQL 内容为空。", reasonEn: "The SQL is empty." };
   }
 
   const everything = `${code} ${dollarBodies}`;
@@ -197,13 +207,14 @@ export function validateReadOnlySql(sqlContent: string): SqlValidationResult {
       return {
         isValid: false,
         reason: `禁止使用关键词 "${keyword}"。系统仅允许查询操作（SELECT）。`,
+        reasonEn: `"${keyword}" is not allowed. Checks can only read data.`,
       };
     }
   }
 
   for (const { pattern, label } of FORBIDDEN_PHRASES) {
     if (pattern.test(code) || pattern.test(dollarBodies)) {
-      return { isValid: false, reason: `禁止使用 "${label}"。` };
+      return { isValid: false, reason: `禁止使用 "${label}"。`, reasonEn: `"${label}" is not allowed.` };
     }
   }
 
@@ -212,6 +223,7 @@ export function validateReadOnlySql(sqlContent: string): SqlValidationResult {
     return {
       isValid: false,
       reason: `禁止在 DO 块之外使用 "INTO"（SELECT INTO 会创建新表）。`,
+      reasonEn: `"INTO" is only allowed inside a DO block (SELECT INTO creates a table).`,
     };
   }
 
@@ -221,6 +233,7 @@ export function validateReadOnlySql(sqlContent: string): SqlValidationResult {
       return {
         isValid: false,
         reason: `禁止调用函数 "${match[1].toLowerCase()}"，它会产生副作用。`,
+        reasonEn: `The function "${match[1].toLowerCase()}" has side effects and is not allowed.`,
       };
     }
   }
@@ -231,6 +244,7 @@ export function validateReadOnlySql(sqlContent: string): SqlValidationResult {
       isValid: false,
       reason:
         "SQL语句必须以 SELECT、WITH、EXPLAIN 或 DO 开头。系统仅允许查询操作和安全的PL/pgSQL块。",
+      reasonEn: "A check must start with SELECT, WITH, EXPLAIN or DO.",
     };
   }
 

@@ -14,8 +14,9 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { AlignLeft, Code, Eye, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
-import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
+import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { toast } from "sonner";
+import { useLanguage } from "@/components/common/LanguageProvider";
 import { DashboardTranslationKeys } from "../dashboard/types";
 import EditorThemeSettings from "./EditorThemeSettings";
 import AIAssistantPanel from "@/components/business/ai/AIAssistantPanel";
@@ -65,6 +66,8 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   const { theme: systemTheme } = useTheme();
   const [showPreview, setShowPreview] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const { language } = useLanguage();
+  const isZh = language === "zh";
   const [isFormatting, setIsFormatting] = useState(false);
   const [editorTheme, setEditorTheme] = useState<string>("eclipse");
 
@@ -243,14 +246,14 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       onChange(formatted);
 
       // 成功提示
-      toast.success("格式化成功", {
-        description: "SQL代码已格式化",
+      toast.success(isZh ? "格式化成功" : "Formatted", {
+        description: isZh ? "SQL代码已格式化" : "The query was reformatted.",
         duration: 3000,
       });
 
     } catch (error) {
       console.error("格式化过程出错:", error);
-      toast.error("格式化失败", {
+      toast.error(isZh ? "格式化失败" : "Could not format the query", {
         description: error instanceof Error ? error.message : "未知错误",
         duration: 5000,
       });
@@ -264,7 +267,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   // AI生成SQL函数
   const handleGenerateSql = async (prompt: string) => {
     if (!prompt.trim()) {
-      toast.warning("请输入SQL生成描述");
+      toast.warning(isZh ? "请输入SQL生成描述" : "Describe the check you want first");
       return;
     }
 
@@ -287,8 +290,8 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
       if (data.success && data.sql) {
         onChange(data.sql);
-        toast.success("AI已成功生成SQL语句", {
-          description: "SQL已插入到编辑器中",
+        toast.success(isZh ? "AI已成功生成SQL语句" : "Query generated", {
+          description: isZh ? "SQL已插入到编辑器中" : "It is now in the editor.",
           duration: 3000,
         });
       } else {
@@ -296,7 +299,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       }
     } catch (error) {
       console.error('AI生成SQL错误:', error);
-      toast.error("AI生成SQL失败", {
+      toast.error(isZh ? "AI生成SQL失败" : "Could not generate a query", {
         description: error instanceof Error ? error.message : '未知错误',
         duration: 5000,
       });
@@ -308,7 +311,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   // AI分析SQL函数
   const handleAnalyzeSql = async (type: 'explain' | 'optimize') => {
     if (!value.trim()) {
-      toast.warning("请先输入SQL语句");
+      toast.warning(isZh ? "请先输入SQL语句" : "Write a query first");
       return;
     }
 
@@ -337,7 +340,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         setAnalysisResult(data.analysis);
         setIsAnalysisDialogOpen(true);
         toast.success(type === 'explain' ? "AI解释已生成" : "AI优化建议已生成", {
-          description: "点击查看详细分析结果",
+          description: isZh ? "点击查看详细分析结果" : "Open it to read the analysis.",
           duration: 3000,
         });
       } else {
@@ -345,7 +348,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       }
     } catch (error) {
       console.error('AI分析SQL错误:', error);
-      toast.error("AI分析SQL失败", {
+      toast.error(isZh ? "AI分析SQL失败" : "Could not analyze the query", {
         description: error instanceof Error ? error.message : '未知错误',
         duration: 5000,
       });
@@ -358,7 +361,6 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
     () => (value.trim() ? validateReadOnlySql(value) : null),
     [value],
   );
-  const isZh = t("sqlEditorTitle") !== "SQL Editor";
 
   return (
     <div className={cn("overflow-hidden rounded-lg border bg-card", fill && "flex h-full flex-col")}>
@@ -474,7 +476,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         ) : (
           <span className="inline-flex min-w-0 items-center gap-2 text-failure">
             <span className="size-1.5 shrink-0 rounded-full bg-failure" aria-hidden />
-            <span className="truncate">{validation.reason}</span>
+            <span className="truncate">{sqlValidationMessage(validation, isZh ? "zh" : "en")}</span>
           </span>
         )}
         <span className="shrink-0 text-muted-foreground">PostgreSQL</span>

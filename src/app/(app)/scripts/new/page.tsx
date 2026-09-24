@@ -23,7 +23,7 @@ import {
   dashboardTranslations,
   DashboardTranslationKeys,
 } from "@/components/business/dashboard/types";
-import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
+import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
 
 const SCRIPT_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -141,7 +141,7 @@ export default function NewScriptPage() {
     }
     const validation = validateReadOnlySql(sqlContent);
     if (!validation.isValid) {
-      toast.error(validation.reason);
+      toast.error(sqlValidationMessage(validation, language));
       return;
     }
 
