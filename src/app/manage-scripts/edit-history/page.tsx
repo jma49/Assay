@@ -38,10 +38,8 @@ import {
   Trash2,
   AlertCircle,
   Loader2,
-  Filter,
   RotateCcw,
   Search,
-  ArrowLeft,
   FileText,
   Eye,
   ChevronLeft,
@@ -61,6 +59,7 @@ import {
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { cn } from "@/lib/utils/utils";
 import UserHeader from "@/components/layout/UserHeader";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 export default function GlobalEditHistoryPage() {
   const { language } = useLanguage();
@@ -252,26 +251,26 @@ export default function GlobalEditHistoryPage() {
   const getOperationIcon = (operation: string) => {
     switch (operation) {
       case "create":
-        return <Plus className="w-4 h-4 text-green-600" />;
+        return <Plus className="w-4 h-4 text-success" />;
       case "update":
-        return <Edit className="w-4 h-4 text-blue-600" />;
+        return <Edit className="w-4 h-4 text-muted-foreground" />;
       case "delete":
-        return <Trash2 className="w-4 h-4 text-red-600" />;
+        return <Trash2 className="w-4 h-4 text-failure" />;
       default:
-        return <History className="w-4 h-4 text-gray-600" />;
+        return <History className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
   const getOperationBadgeColor = (operation: string) => {
     switch (operation) {
       case "create":
-        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800";
+        return "bg-success/10 text-success border-success/30   ";
       case "update":
-        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800";
+        return "bg-muted text-foreground border-border   ";
       case "delete":
-        return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800";
+        return "bg-failure/10 text-failure border-failure/30   ";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700";
+        return "bg-muted text-foreground border-border   ";
     }
   };
 
@@ -324,49 +323,34 @@ export default function GlobalEditHistoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+    <div className="min-h-screen    ">
       <UserHeader />
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        <div className="space-y-8 animate-fadeIn">
-          {/* Header Section */}
-          <header className="text-center lg:text-left">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-              <div className="flex items-center gap-4">
-                <Link href="/manage-scripts">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="group shadow-md hover:shadow-lg transition-all duration-300 hover:bg-primary/5 hover:border-primary/30"
-                  >
-                    <ArrowLeft className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  </Button>
-                </Link>
-                <div className="space-y-3">
-                  <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent leading-tight py-1 flex items-center gap-4">
-                    <History className="w-10 h-10 text-primary" />
-                    {t("allScriptsHistory")}
-                  </h1>
-                  <p className="text-lg text-muted-foreground leading-relaxed">
-                    {t("editHistoryDescGlobal")} • {t("totalChanges")}:{" "}
-                    <span className="font-semibold text-primary">
-                      {totalRecords}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </header>
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="space-y-6 animate-fadeIn">
+          <div className="space-y-1">
+            <p className="text-[13px] text-muted-foreground">
+              <Link href="/manage-scripts" className="hover:text-foreground">
+                {language === "zh" ? "脚本" : "Scripts"}
+              </Link>{" "}
+              / {t("allScriptsHistory")}
+            </p>
+            <PageHeader
+              title={t("allScriptsHistory")}
+              description={
+                <>
+                  {t("editHistoryDescGlobal")} · {t("totalChanges")}:{" "}
+                  <span className="text-foreground tabular-nums">{totalRecords}</span>
+                </>
+              }
+            />
+          </div>
 
           {/* Filters Section */}
-          <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+          <Card className="relative overflow-hidden gap-0 py-0">
 
-            <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
+            <CardHeader className="relative border-b px-6 py-4">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
-                  <Filter className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
-                </div>
-                <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
+                <CardTitle>
                   {t("searchHistoryWithFilters")}
                 </CardTitle>
               </div>
@@ -378,9 +362,8 @@ export default function GlobalEditHistoryPage() {
                 <div className="space-y-2">
                   <Label
                     htmlFor="script-name-filter"
-                    className="text-sm font-semibold text-foreground/90 flex items-center gap-2"
+                    className="flex items-center gap-2 text-[13px] font-medium"
                   >
-                    <div className="w-2 h-2 rounded-full bg-blue-400/60"></div>
                     {t("scriptName")}
                   </Label>
                   <Input
@@ -389,7 +372,7 @@ export default function GlobalEditHistoryPage() {
                     placeholder={t("searchScriptsPlaceholder")}
                     value={scriptNameFilter}
                     onChange={(e) => setScriptNameFilter(e.target.value)}
-                    className="w-full h-11 text-sm border-2 border-border/50 bg-background/80 backdrop-blur-sm focus:border-primary/50 shadow-sm transition-all duration-300"
+                    className="h-9 w-full"
                   />
                 </div>
 
@@ -397,9 +380,8 @@ export default function GlobalEditHistoryPage() {
                 <div className="space-y-2">
                   <Label
                     htmlFor="author-filter"
-                    className="text-sm font-semibold text-foreground/90 flex items-center gap-2"
+                    className="flex items-center gap-2 text-[13px] font-medium"
                   >
-                    <div className="w-2 h-2 rounded-full bg-emerald-400/60"></div>
                     {t("author")}
                   </Label>
                   <Input
@@ -408,7 +390,7 @@ export default function GlobalEditHistoryPage() {
                     placeholder={t("author")}
                     value={authorFilter}
                     onChange={(e) => setAuthorFilter(e.target.value)}
-                    className="w-full h-11 text-sm border-2 border-border/50 bg-background/80 backdrop-blur-sm focus:border-primary/50 shadow-sm transition-all duration-300"
+                    className="h-9 w-full"
                   />
                 </div>
 
@@ -416,9 +398,8 @@ export default function GlobalEditHistoryPage() {
                 <div className="space-y-2">
                   <Label
                     htmlFor="operation-filter"
-                    className="text-sm font-semibold text-foreground/90 flex items-center gap-2"
+                    className="flex items-center gap-2 text-[13px] font-medium"
                   >
-                    <div className="w-2 h-2 rounded-full bg-amber-400/60"></div>
                     {t("operationType")}
                   </Label>
                   <Select
@@ -429,7 +410,7 @@ export default function GlobalEditHistoryPage() {
                       )
                     }
                   >
-                    <SelectTrigger className="w-full h-11 text-sm border-2 border-border/50 bg-background/80 backdrop-blur-sm focus:border-primary/50 shadow-sm transition-all duration-300 flex items-center">
+                    <SelectTrigger className="h-9 w-full">
                       <SelectValue
                         placeholder={t("selectOperationPlaceholder")}
                       />
@@ -453,9 +434,8 @@ export default function GlobalEditHistoryPage() {
                 <div className="space-y-2">
                   <Label
                     htmlFor="date-from-filter"
-                    className="text-sm font-semibold text-foreground/90 flex items-center gap-2"
+                    className="flex items-center gap-2 text-[13px] font-medium"
                   >
-                    <div className="w-2 h-2 rounded-full bg-purple-400/60"></div>
                     {t("dateFrom")}
                   </Label>
                   <Input
@@ -463,7 +443,7 @@ export default function GlobalEditHistoryPage() {
                     type="date"
                     value={dateFromFilter}
                     onChange={(e) => setDateFromFilter(e.target.value)}
-                    className="w-full h-11 text-sm border-2 border-border/50 bg-background/80 backdrop-blur-sm focus:border-primary/50 shadow-sm transition-all duration-300"
+                    className="h-9 w-full"
                   />
                 </div>
 
@@ -471,9 +451,8 @@ export default function GlobalEditHistoryPage() {
                 <div className="space-y-2">
                   <Label
                     htmlFor="date-to-filter"
-                    className="text-sm font-semibold text-foreground/90 flex items-center gap-2"
+                    className="flex items-center gap-2 text-[13px] font-medium"
                   >
-                    <div className="w-2 h-2 rounded-full bg-pink-400/60"></div>
                     {t("dateTo")}
                   </Label>
                   <Input
@@ -481,7 +460,7 @@ export default function GlobalEditHistoryPage() {
                     type="date"
                     value={dateToFilter}
                     onChange={(e) => setDateToFilter(e.target.value)}
-                    className="w-full h-11 text-sm border-2 border-border/50 bg-background/80 backdrop-blur-sm focus:border-primary/50 shadow-sm transition-all duration-300"
+                    className="h-9 w-full"
                   />
                 </div>
               </div>
@@ -491,7 +470,7 @@ export default function GlobalEditHistoryPage() {
                 <Button
                   onClick={applyFilters}
                   size="default"
-                  className="group flex items-center gap-2 shadow-md hover:shadow-lg transition-all duration-300"
+                  className="group flex items-center gap-2 transition-all duration-300"
                   disabled={loading}
                 >
                   <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
@@ -501,7 +480,7 @@ export default function GlobalEditHistoryPage() {
                   onClick={resetFilters}
                   variant="outline"
                   size="default"
-                  className="group flex items-center gap-2 shadow-md hover:shadow-lg transition-all duration-300"
+                  className="group flex items-center gap-2 transition-all duration-300"
                   disabled={loading}
                 >
                   <RotateCcw className="w-4 h-4 group-hover:rotate-45 transition-transform" />
@@ -512,20 +491,16 @@ export default function GlobalEditHistoryPage() {
           </Card>
 
           {/* History Records Table */}
-          <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+          <Card className="relative overflow-hidden gap-0 py-0">
 
-            <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
+            <CardHeader className="relative border-b px-6 py-4">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
-                  <FileText className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
-                </div>
                 <div className="space-y-2">
-                  <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
+                  <CardTitle>
                     Edit History
                   </CardTitle>
                   <div className="text-sm text-muted-foreground">
-                    {totalPages > 1 ? formatPageInfo() : totalRecords > 0 ? `${totalRecords} ${t("recordsTotal")}` : ""}
+                    {totalPages > 1 ? formatPageInfo() : totalRecords > 0 ? language === "zh" ? `共 ${totalRecords} 条` : `${totalRecords} records` : ""}
                   </div>
                 </div>
               </div>
@@ -543,19 +518,19 @@ export default function GlobalEditHistoryPage() {
                 </div>
               ) : error ? (
                 <div className="flex flex-col items-center justify-center py-16">
-                  <div className="p-6 rounded-2xl bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20 border-2 border-red-200 dark:border-red-800 max-w-md mx-auto text-center">
-                    <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                    <p className="text-lg font-medium text-red-700 dark:text-red-400 mb-2">
+                  <div className="p-6 rounded-lg border border-failure/30 max-w-md mx-auto text-center">
+                    <AlertCircle className="h-12 w-12 text-failure mx-auto mb-4" />
+                    <p className="text-lg font-medium text-failure mb-2">
                       {t("errorTitle")}
                     </p>
-                    <p className="text-sm text-red-600 dark:text-red-500 mb-4">
+                    <p className="text-sm text-failure mb-4">
                       {error}
                     </p>
                     <Button
                       onClick={() => fetchHistories()}
                       variant="outline"
                       size="sm"
-                      className="shadow-md hover:shadow-lg transition-all duration-300"
+                      className="transition-all duration-300"
                     >
                       <RotateCcw className="mr-2 h-4 w-4" />
                       {t("retry")}
@@ -564,7 +539,7 @@ export default function GlobalEditHistoryPage() {
                 </div>
               ) : histories.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16">
-                  <div className="p-6 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-dashed border-muted-foreground/20 max-w-md mx-auto text-center">
+                  <div className="p-6 rounded-lg border border-dashed border-muted-foreground/20 max-w-md mx-auto text-center">
                     <History className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
                     <p className="text-lg font-medium text-muted-foreground mb-2">
                       {t("noEditHistory")}
@@ -575,44 +550,38 @@ export default function GlobalEditHistoryPage() {
                   </div>
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-lg border border-border/20 shadow-inner bg-gradient-to-b from-background to-muted/10">
+                <div className="overflow-hidden rounded-lg border border-border/20    ">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-gradient-to-r from-primary/5 via-primary/3 to-primary/5 border-b-2 border-primary/20 backdrop-blur-sm">
-                          <TableHead className="h-12 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                        <TableRow className="hover:bg-transparent">
+                          <TableHead className="h-11 px-6 text-[13px] font-normal text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-blue-400/60"></div>
                               {t("operationType")}
                             </div>
                           </TableHead>
-                          <TableHead className="h-12 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                          <TableHead className="h-11 px-4 text-[13px] font-normal text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-emerald-400/60"></div>
                               {t("scriptName")}
                             </div>
                           </TableHead>
-                          <TableHead className="h-12 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                          <TableHead className="h-11 px-4 text-[13px] font-normal text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-amber-400/60"></div>
                               {t("operationUser")}
                             </div>
                           </TableHead>
-                          <TableHead className="h-12 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                          <TableHead className="h-11 px-4 text-[13px] font-normal text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-purple-400/60"></div>
                               {t("operationTime")}
                             </div>
                           </TableHead>
-                          <TableHead className="h-12 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                          <TableHead className="h-11 px-4 text-[13px] font-normal text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-indigo-400/60"></div>
                               {t("fieldChanges")}
                             </div>
                           </TableHead>
-                          <TableHead className="h-12 px-4 font-bold text-foreground/90 text-center leading-relaxed">
-                            <div className="flex items-center justify-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-pink-400/60"></div>
+                          <TableHead className="h-11 px-6 text-right text-[13px] font-normal text-muted-foreground">
+                            <div className="flex items-center justify-end gap-2">
                               {t("tableActions")}
                             </div>
                           </TableHead>
@@ -623,11 +592,11 @@ export default function GlobalEditHistoryPage() {
                           <TableRow
                             key={history._id?.toString() || index}
                             className={cn(
-                              "group/row transition-all duration-200 hover:bg-gradient-to-r hover:from-muted/30 hover:to-muted/10 hover:shadow-sm",
+                              "group/row transition-all duration-200    ",
                               index % 2 === 0 ? "bg-background" : "bg-muted/5",
                             )}
                           >
-                            <TableCell className="px-4 py-3 leading-relaxed">
+                            <TableCell className="px-6 py-3">
                               <div className="flex items-center gap-3">
                                 {getOperationIcon(history.operation)}
                                 <Badge
@@ -672,7 +641,7 @@ export default function GlobalEditHistoryPage() {
                                 </span>
                               </div>
                             </TableCell>
-                            <TableCell className="px-4 py-3 text-muted-foreground max-w-40 font-mono text-sm leading-relaxed">
+                            <TableCell className="max-w-40 px-4 py-3 text-[13px] text-muted-foreground tabular-nums">
                               <div className="flex items-center gap-2">
                                 <Calendar className="w-3 h-3" />
                                 <span className="truncate">
@@ -690,12 +659,12 @@ export default function GlobalEditHistoryPage() {
                                 {getChangesPreview(history.changes)}
                               </div>
                             </TableCell>
-                            <TableCell className="px-4 py-3 text-center">
+                            <TableCell className="px-6 py-3 text-right">
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => handleViewDetails(history)}
-                                className="h-8 px-3 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 dark:hover:bg-blue-950/20 dark:hover:border-blue-700/50 dark:hover:text-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
+                                className="-mr-2 size-8 p-0 text-muted-foreground hover:text-foreground"
                                 title={t("checkDetails")}
                               >
                                 <Eye className="h-3.5 w-3.5" />
@@ -722,7 +691,7 @@ export default function GlobalEditHistoryPage() {
                     size="sm"
                     onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
                     disabled={currentPage === 1 || loading}
-                    className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150 relative z-30"
+                    className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
                   >
                     <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                     <span className="hidden sm:inline">{t("previous")}</span>
@@ -817,7 +786,7 @@ export default function GlobalEditHistoryPage() {
                     size="sm"
                     onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
                     disabled={currentPage === totalPages || loading}
-                    className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150 relative z-30"
+                    className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
                   >
                     <span className="hidden sm:inline">{t("next")}</span>
                     <ChevronRight className="h-3.5 w-3.5 ml-1" />
@@ -962,7 +931,7 @@ export default function GlobalEditHistoryPage() {
                               <label className="text-xs text-muted-foreground font-medium">
                                 {t("originalValue")}
                               </label>
-                              <div className="mt-1 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded text-red-800 dark:text-red-400 font-mono text-xs break-all whitespace-pre-wrap max-h-32 overflow-y-auto">
+                              <div className="mt-1 p-3 bg-failure/10 border border-failure/30 rounded text-failure font-mono text-xs break-all whitespace-pre-wrap max-h-32 overflow-y-auto">
                                 {formatValue(change.oldValue)}
                               </div>
                             </div>
@@ -970,7 +939,7 @@ export default function GlobalEditHistoryPage() {
                               <label className="text-xs text-muted-foreground font-medium">
                                 {t("newValue")}
                               </label>
-                              <div className="mt-1 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded text-green-800 dark:text-green-400 font-mono text-xs break-all whitespace-pre-wrap max-h-32 overflow-y-auto">
+                              <div className="mt-1 p-3 bg-success/10 border border-success/30 rounded text-success font-mono text-xs break-all whitespace-pre-wrap max-h-32 overflow-y-auto">
                                 {formatValue(change.newValue)}
                               </div>
                             </div>
@@ -999,8 +968,8 @@ export default function GlobalEditHistoryPage() {
 
       {/* Version Display - Fixed Bottom Left */}
       <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 shadow-lg hover:shadow-xl transition-all duration-300">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 transition-all duration-300">
+          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
           <span className="font-mono text-xs text-muted-foreground font-medium">
             v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.7"}
           </span>
