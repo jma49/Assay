@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import { ClerkProvider } from "@clerk/nextjs";
 import { shadcn } from "@clerk/themes";
 import { ThemeProvider } from "next-themes";
@@ -14,8 +15,8 @@ const inter = Inter({ subsets: ["latin"] });
 
 // Keep metadata export here (Server Component)
 export const metadata: Metadata = {
-  title: "SQL Script Deployment & Monitoring System",
-  description: "Manage and monitor SQL script execution status",
+  title: { default: BRAND, template: `%s · ${BRAND}` },
+  description: BRAND_TAGLINE,
 };
 
 export default function RootLayout({
