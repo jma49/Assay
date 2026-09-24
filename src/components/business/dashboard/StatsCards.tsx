@@ -80,14 +80,15 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
   return (
     <dl
       className={cn(
-        "overflow-hidden rounded-lg border bg-card",
+        // gap-px over a border-colored background draws the dividers for any grid shape.
+        "grid gap-px overflow-hidden rounded-lg border bg-border",
         isVerticalLayout
-          ? "grid h-full grid-rows-4 divide-y"
-          : "grid divide-y sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4",
+          ? "h-full sm:grid-cols-2 lg:grid-cols-1 lg:grid-rows-4"
+          : "sm:grid-cols-2 lg:grid-cols-4",
       )}
     >
       {stats.map((stat) => (
-        <div key={stat.title} className="flex flex-col justify-center gap-1 px-5 py-4">
+        <div key={stat.title} className="flex flex-col justify-center gap-1 bg-card px-5 py-4">
           <dt className="text-[13px] text-muted-foreground">{stat.title}</dt>
           <dd className={cn("font-serif text-[30px] leading-tight font-semibold tabular-nums", toneClass[stat.tone])}>
             {stat.value}
