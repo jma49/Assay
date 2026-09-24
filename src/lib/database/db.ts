@@ -1,4 +1,4 @@
-import { Pool, QueryResult, PoolConfig } from "pg";
+import { Pool, PoolClient, QueryResult, PoolConfig } from "pg";
 
 // 配置 pg 库处理 BigInt - 将其转换为字符串而不是 BigInt 类型
 // 这可以避免 JSON.stringify 时出现错误
@@ -452,6 +452,27 @@ export const query = async (
   }
 };
 
+/** Runs fn on a single connection inside a READ ONLY transaction; the database rejects any write. */
+export const withReadOnlyTransaction = async <T>(
+  fn: (client: PoolClient) => Promise<T>
+): Promise<T> => {
+  const pool = await getPool();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN READ ONLY");
+    const result = await fn(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK").catch((rollbackError) => {
+      console.error("Rollback failed:", rollbackError);
+    });
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 // Close connection pool
 export const closePool = async () => {
   try {
@@ -464,6 +485,7 @@ export const closePool = async () => {
 
 const db = {
   query,
+  withReadOnlyTransaction,
   testConnection,
   closePool,
 };
