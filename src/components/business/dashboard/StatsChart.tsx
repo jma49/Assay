@@ -64,7 +64,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
       : 0;
 
   return (
-    <Card className="unified-card shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col">
+    <Card className="unified-card transition-all duration-300 h-full flex flex-col">
       <CardHeader className="px-4 py-3 bg-card/50 border-b border-border/50">
         <div className="flex items-center gap-2">
           <div className="icon-container bg-primary/10 rounded-lg">
@@ -100,7 +100,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
                 <span>{t("checksDistribution")}</span>
               </div>
               <p
-                className={`font-semibold ${growthRate >= 0 ? "text-green-500" : "text-red-500"}`}
+                className={`font-semibold ${growthRate >= 0 ? "text-success" : "text-failure"}`}
               >
                 {growthRate >= 0 ? "+" : ""}
                 {growthRate}%
@@ -135,7 +135,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
                     style={barSuccessStyle}
                   >
                     <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium flex items-center">
-                      <CheckCircle className="h-3 w-3 text-green-500 mr-0.5" />
+                      <CheckCircle className="h-3 w-3 text-success mr-0.5" />
                       {successCount}
                     </span>
                   </div>
@@ -157,7 +157,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
                     style={barFailureStyle}
                   >
                     <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium flex items-center">
-                      <XCircle className="h-3 w-3 text-red-500 mr-0.5" />
+                      <XCircle className="h-3 w-3 text-failure mr-0.5" />
                       {failureCount}
                     </span>
                   </div>
@@ -200,7 +200,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
                   <p className="text-lg font-semibold">{yesterdayChecks}</p>
                   {growthRate !== 0 && (
                     <p
-                      className={`text-xs ${growthRate >= 0 ? "text-green-500" : "text-red-500"}`}
+                      className={`text-xs ${growthRate >= 0 ? "text-success" : "text-failure"}`}
                     >
                       {growthRate >= 0 ? "↑" : "↓"} {Math.abs(growthRate)}%
                     </p>
