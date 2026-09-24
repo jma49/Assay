@@ -98,72 +98,25 @@ function createScriptSnapshot(
 }
 
 /**
- * 记录编辑历史
+ * Computes what to store for a script change: the changed fields and a snapshot.
+ * Returns null for an update that touched no tracked field.
  */
-export async function recordEditHistory({
+export function buildEditHistoryEntry({
   scriptId,
   operation,
   oldData,
   newData,
-  description,
-}: RecordEditHistoryParams): Promise<boolean> {
-  try {
-    let changes: ChangeDetail[] = [];
-
-    // 计算变更（仅对更新操作）
-    if (operation === "update" && oldData && newData) {
-      changes = getObjectChanges(oldData, newData);
-
-      // 如果没有实际变更，就不记录历史
-      if (changes.length === 0) {
-        console.log("No changes detected, skipping history record");
-        return true;
-      }
-    }
-
-    // 根据操作类型确定使用哪个数据作为快照
-    let scriptSnapshot: ScriptSnapshot;
-    if (operation === "delete" && oldData) {
-      scriptSnapshot = createScriptSnapshot(oldData);
-    } else if (newData) {
-      scriptSnapshot = createScriptSnapshot(newData);
-    } else if (oldData) {
-      scriptSnapshot = createScriptSnapshot(oldData);
-    } else {
-      // 最小化快照
-      scriptSnapshot = {
-        scriptId,
-        name: "",
-        author: "",
-      };
-    }
-
-    const response = await fetch("/api/edit-history", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        scriptId,
-        operation,
-        changes,
-        description,
-        scriptSnapshot,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Failed to record edit history:", errorData);
-      return false;
-    }
-
-    console.log(
-      `Edit history recorded for ${operation} operation on script ${scriptId}`,
-    );
-    return true;
-  } catch (error) {
-    console.error("Error recording edit history:", error);
-    return false;
+}: RecordEditHistoryParams): { changes: ChangeDetail[]; scriptSnapshot: ScriptSnapshot } | null {
+  const changes =
+    operation === "update" && oldData && newData ? getObjectChanges(oldData, newData) : [];
+  if (operation === "update" && oldData && newData && changes.length === 0) {
+    return null;
   }
+
+  const source = operation === "delete" ? oldData ?? newData : newData ?? oldData;
+  const scriptSnapshot: ScriptSnapshot = source
+    ? createScriptSnapshot(source)
+    : { scriptId, name: "", author: "" };
+
+  return { changes, scriptSnapshot };
 }

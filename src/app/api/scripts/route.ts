@@ -12,7 +12,7 @@ import {
   analyzeScriptType,
 } from "@/lib/workflows/approval-workflow";
 import { createScriptVersion } from "@/lib/workflows/version-control";
-import { recordEditHistory } from "@/lib/workflows/edit-history";
+import { recordEditHistoryOnServer } from "@/lib/workflows/edit-history-store";
 
 // 定义脚本数据的接口
 interface NewScriptData {
@@ -251,11 +251,14 @@ export async function POST(request: Request) {
       );
 
       // 记录创建历史
-      await recordEditHistory({
-        scriptId,
-        operation: "create",
-        newData: newScriptDocument as unknown as Record<string, unknown>,
-      });
+      await recordEditHistoryOnServer(
+        {
+          scriptId,
+          operation: "create",
+          newData: newScriptDocument as unknown as Record<string, unknown>,
+        },
+        { id: user.id, email: userEmail, name: userEmail.split("@")[0] }
+      );
 
       // 清除 Redis 缓存
       await clearScriptsCache();

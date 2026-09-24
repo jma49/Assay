@@ -11,7 +11,7 @@ import {
   isAutoApprovalEligible,
   analyzeScriptType,
 } from "@/lib/workflows/approval-workflow";
-import { recordEditHistory } from "@/lib/workflows/edit-history";
+import { recordEditHistoryOnServer } from "@/lib/workflows/edit-history-store";
 
 // Helper function to get the MongoDB collection
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
@@ -336,6 +336,16 @@ export async function PUT(
     // 获取更新后的脚本数据，创建新版本
     const updatedScript = await collection.findOne({ scriptId });
     if (updatedScript) {
+      await recordEditHistoryOnServer(
+        {
+          scriptId,
+          operation: "update",
+          oldData: existingScript as unknown as Record<string, unknown>,
+          newData: updatedScript as unknown as Record<string, unknown>,
+        },
+        { id: user.id, email: userEmail, name: userEmail.split("@")[0] }
+      );
+
       const userRole = await getUserRole(user.id);
       if (userRole) {
         await createScriptVersion(
@@ -506,12 +516,14 @@ export async function DELETE(
     }
 
     // 记录删除历史
-    await recordEditHistory({
-      scriptId,
-      operation: "delete",
-      oldData: existingScript as unknown as Record<string, unknown>,
-      // newData is not needed for delete
-    });
+    await recordEditHistoryOnServer(
+      {
+        scriptId,
+        operation: "delete",
+        oldData: existingScript as unknown as Record<string, unknown>,
+      },
+      { id: user.id, email: userEmail, name: userEmail.split("@")[0] }
+    );
 
     // 清除 Redis 缓存
     await clearScriptsCache();
