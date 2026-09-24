@@ -4,33 +4,14 @@ import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import {
-  EditHistoryRecord,
-  EditHistoryFilter,
-} from "@/lib/workflows/edit-history-schema";
+import { EditHistoryFilter } from "@/lib/workflows/edit-history-schema";
+import { insertEditHistory } from "@/lib/workflows/edit-history-store";
 
 // 获取编辑历史集合
 async function getEditHistoryCollection(): Promise<Collection<Document>> {
   const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
   return db.collection("edit_history");
-}
-
-// 获取字段的显示名称（双语支持）
-function getFieldDisplayNames(field: string) {
-  const fieldNames: Record<string, { en: string; cn: string }> = {
-    name: { en: "Script Name", cn: "脚本名称" },
-    cnName: { en: "Script Name (CN)", cn: "中文名称" },
-    description: { en: "Description", cn: "描述" },
-    cnDescription: { en: "Description (CN)", cn: "中文描述" },
-    scope: { en: "Scope", cn: "作用域" },
-    cnScope: { en: "Scope (CN)", cn: "中文作用域" },
-    author: { en: "Author", cn: "作者" },
-    isScheduled: { en: "Scheduled", cn: "是否定时执行" },
-    cronSchedule: { en: "Cron Schedule", cn: "定时设置" },
-    sqlContent: { en: "SQL Content", cn: "SQL内容" },
-  };
-  return fieldNames[field] || { en: field, cn: field };
 }
 
 // POST - 记录编辑历史
@@ -72,71 +53,16 @@ export async function POST(request: NextRequest) {
       userName = userId;
     }
 
-    // 处理变更详情，添加双语显示名称
-    const processedChanges =
-      changes?.map(
-        (change: { field: string; oldValue: unknown; newValue: unknown }) => {
-          const displayNames = getFieldDisplayNames(change.field);
-          return {
-            ...change,
-            fieldDisplayName: displayNames.en,
-            fieldDisplayNameCn: displayNames.cn,
-          };
-        }
-      ) || [];
-
-    // 生成默认描述（双语）
-    let finalDescription = description;
-    let finalDescriptionCn = description;
-
-    if (!description) {
-      switch (operation) {
-        case "create":
-          finalDescription = `Created script ${scriptId}`;
-          finalDescriptionCn = `创建了脚本 ${scriptId}`;
-          break;
-        case "update":
-          finalDescription = `Updated script ${scriptId}, changed ${processedChanges.length} fields`;
-          finalDescriptionCn = `更新了脚本 ${scriptId}，变更了 ${processedChanges.length} 个字段`;
-          break;
-        case "delete":
-          finalDescription = `Deleted script ${scriptId}`;
-          finalDescriptionCn = `删除了脚本 ${scriptId}`;
-          break;
-      }
-    }
-
-    // 构建编辑历史记录
-    const editHistory: EditHistoryRecord = {
+    const historyId = await insertEditHistory({
+      scriptId,
       operation,
-      operationTime: new Date(),
-      userId,
-      userEmail,
-      userName,
-      scriptSnapshot: scriptSnapshot || {
-        scriptId,
-        name: scriptSnapshot?.name || "",
-        author: scriptSnapshot?.author || "",
-      },
-      changes: processedChanges,
-      description: finalDescription,
-      descriptionCn: finalDescriptionCn,
-      // 索引字段
-      searchableAuthor: scriptSnapshot?.author?.toLowerCase() || "",
-      searchableScriptName: scriptSnapshot?.name?.toLowerCase() || "",
-      searchableScriptNameCn: scriptSnapshot?.cnName?.toLowerCase() || "",
-      operationType: operation,
-    };
-
-    const collection = await getEditHistoryCollection();
-    const result = await collection.insertOne(
-      editHistory as Omit<EditHistoryRecord, "_id">
-    );
-
-    return NextResponse.json({
-      success: true,
-      historyId: result.insertedId,
+      changes: changes || [],
+      scriptSnapshot: scriptSnapshot || { scriptId, name: "", author: "" },
+      description,
+      actor: { id: userId, email: userEmail, name: userName },
     });
+
+    return NextResponse.json({ success: true, historyId });
   } catch (error) {
     console.error("记录编辑历史失败:", error);
     return NextResponse.json({ error: "记录编辑历史失败" }, { status: 500 });

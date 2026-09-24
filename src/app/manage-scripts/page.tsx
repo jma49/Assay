@@ -73,7 +73,6 @@ import {
 import CodeMirrorEditor from "@/components/business/scripts/CodeMirrorEditor";
 import { generateSqlTemplateWithTranslation } from "@/components/business/dashboard/scriptTranslations";
 import { EditHistoryDialog } from "@/components/business/scripts/EditHistoryDialog";
-import { recordEditHistory } from "@/lib/workflows/edit-history";
 import UserHeader from "@/components/layout/UserHeader";
 import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
 import { StackedTags } from "@/components/ui/stacked-tags";
@@ -117,8 +116,6 @@ const ManageScriptsContent = () => {
   const [isEditHistoryOpen, setIsEditHistoryOpen] = useState(false);
   const [selectedScriptForHistory, setSelectedScriptForHistory] =
     useState<string>("");
-  const [originalScriptData, setOriginalScriptData] =
-    useState<SqlScript | null>(null);
 
   const { language } = useLanguage();
   const t = useCallback(
@@ -190,7 +187,6 @@ const ManageScriptsContent = () => {
       setCurrentSqlContent(templateSql);
       setInitialSqlContentForEdit(templateSql);
       setScriptIdManuallyEdited(false);
-      setOriginalScriptData(null);
     } else if (scriptData) {
       setCurrentFormScript({
         ...scriptData,
@@ -203,7 +199,6 @@ const ManageScriptsContent = () => {
       setCurrentSqlContent(scriptData.sqlContent || "");
       setInitialSqlContentForEdit(scriptData.sqlContent || "");
       setScriptIdManuallyEdited(true);
-      setOriginalScriptData(scriptData);
     }
     setIsDialogOpen(true);
   }, []);
@@ -391,20 +386,7 @@ const ManageScriptsContent = () => {
         return; // 不需要重新加载和记录历史
       }
 
-      // 记录编辑历史
-      if (currentFormScript.scriptId) {
-        await recordEditHistory({
-          scriptId: currentFormScript.scriptId,
-          operation: dialogMode === "add" ? "create" : "update",
-          oldData: originalScriptData
-            ? (originalScriptData as unknown as Record<string, unknown>)
-            : undefined,
-          newData: {
-            ...currentFormScript,
-            sqlContent: currentSqlContent,
-          } as unknown as Record<string, unknown>,
-        });
-      }
+      // Edit history is recorded by the API route.
 
       toast.success(successMessage);
       setIsDialogOpen(false);
@@ -455,14 +437,7 @@ const ManageScriptsContent = () => {
         return; // 不需要重新加载，因为脚本还没有被实际删除
       }
 
-      // 如果是直接删除成功（不太可能，因为现在都需要审批）
-      // 记录删除历史
-      await recordEditHistory({
-        scriptId: scriptToDelete.scriptId,
-        operation: "delete",
-        oldData: scriptToDelete as unknown as Record<string, unknown>,
-        // newData is not needed for delete
-      });
+      // Edit history is recorded by the API route.
 
       toast.success(t("scriptDeletedSuccess"));
       fetchScripts();
