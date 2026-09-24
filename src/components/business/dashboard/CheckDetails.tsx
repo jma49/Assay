@@ -19,29 +19,29 @@ export const CheckDetails: React.FC<CheckDetailsProps> = ({
 }) => {
   const content = (
     <>
-      <div className="bg-card/90 dark:bg-card/90 backdrop-blur-sm rounded-lg border shadow-sm p-4">
+      <div className="bg-card/90 dark:bg-card/90 backdrop-blur-sm rounded-lg border p-4">
         <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
           {check.statusType === "attention_needed" ? (
-            <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
+            <AlertCircle className="h-4 w-4 text-attention " />
           ) : check.status === CheckStatus.SUCCESS ? (
-            <CheckCircle className="h-4 w-4 text-green-500" />
+            <CheckCircle className="h-4 w-4 text-success" />
           ) : (
-            <AlertCircle className="h-4 w-4 text-red-500" />
+            <AlertCircle className="h-4 w-4 text-failure" />
           )}
           {t("executionStatus")}
         </h4>
         {check.statusType === "attention_needed" ? (
           <Badge
             variant="outline"
-            className="bg-yellow-50 text-yellow-700 border-yellow-300 dark:bg-yellow-950 dark:text-yellow-400 dark:border-yellow-700"
+            className="bg-attention/10 text-attention border-attention/30   "
           >
-            <AlertCircle className="h-3.5 w-3.5 mr-1 text-yellow-600 dark:text-yellow-500" />
+            <AlertCircle className="h-3.5 w-3.5 mr-1 text-attention " />
             {t("needsAttention") || "Attention Needed"}
           </Badge>
         ) : check.status === CheckStatus.SUCCESS ? (
           <Badge
             variant="outline"
-            className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800"
+            className="bg-success/10 text-success border-success/30   "
           >
             <CheckCircle className="h-3.5 w-3.5 mr-1" />
             {t("filterSuccess")}
@@ -49,7 +49,7 @@ export const CheckDetails: React.FC<CheckDetailsProps> = ({
         ) : (
           <Badge
             variant="outline"
-            className="bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800"
+            className="bg-failure/10 text-failure border-failure/30   "
           >
             <AlertCircle className="h-3.5 w-3.5 mr-1" />
             {t("filterFailed")}
@@ -57,7 +57,7 @@ export const CheckDetails: React.FC<CheckDetailsProps> = ({
         )}
       </div>
 
-      <div className="bg-card/90 dark:bg-card/90 backdrop-blur-sm rounded-lg border shadow-sm p-4">
+      <div className="bg-card/90 dark:bg-card/90 backdrop-blur-sm rounded-lg border p-4">
         <h4 className="text-sm font-semibold mb-2">{t("executionMessage")}</h4>
         <div className="bg-muted/50 p-3 rounded-md text-sm break-words border">
           {check.message || (
@@ -69,15 +69,15 @@ export const CheckDetails: React.FC<CheckDetailsProps> = ({
       </div>
 
       {check.findings && (
-        <div className="bg-card/90 dark:bg-card/90 backdrop-blur-sm rounded-lg border shadow-sm p-4">
+        <div className="bg-card/90 dark:bg-card/90 backdrop-blur-sm rounded-lg border p-4">
           <h4 className="text-sm font-semibold mb-2">{t("findings")}</h4>
-          <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded-md text-sm text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 break-words">
+          <div className="bg-attention/10 p-3 rounded-md text-sm text-attention border border-attention/30 break-words">
             {check.findings}
           </div>
         </div>
       )}
 
-      <div className="bg-card/90 dark:bg-card/90 backdrop-blur-sm rounded-lg border shadow-sm p-4">
+      <div className="bg-card/90 dark:bg-card/90 backdrop-blur-sm rounded-lg border p-4">
         <h4 className="text-sm font-semibold mb-2">{t("rawResults")}</h4>
         <RawResultsTable
           results={check.raw_results}
@@ -91,7 +91,7 @@ export const CheckDetails: React.FC<CheckDetailsProps> = ({
             asChild
             variant="outline"
             size="sm"
-            className="shadow-sm hover:bg-primary/10 transition-colors"
+            className="hover:bg-primary/10 transition-colors"
           >
             <a
               href={`https://github.com/${process.env.NEXT_PUBLIC_GITHUB_REPO || "your-org/your-repo"}/actions/runs/${check.github_run_id}`}
@@ -110,7 +110,7 @@ export const CheckDetails: React.FC<CheckDetailsProps> = ({
 
   if (mode === "expanded") {
     return (
-      <Card className="shadow-sm border overflow-x-hidden">
+      <Card className="border overflow-x-hidden">
         <CardContent className="space-y-5 pt-5 px-4 pb-4">
           {content}
         </CardContent>

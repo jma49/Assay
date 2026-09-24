@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { ListChecks, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/common/LanguageProvider";
 
@@ -858,7 +857,7 @@ const Dashboard = () => {
 
   if (loading && checks.length === 0 && isFetchingScripts) {
     return (
-      <div className="space-y-6 p-4 md:p-6 lg:p-8">
+      <div className="space-y-6">
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
@@ -872,34 +871,25 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fadeIn">
-          {/* Header Section */}
-          <header className="text-center lg:text-left">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-              <div className="space-y-2">
-                <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-                  {t("dashboardTitle")}
-                </h1>
-                {nextScheduled && (
-                  <p className="text-base text-muted-foreground flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    {t("nextScheduledCheck")}:{" "}
-                    {nextScheduled.toLocaleString(language, {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </p>
-                )}
-              </div>
-
-            </div>
+    <div className="space-y-10 animate-fadeIn">
+          <header className="space-y-1">
+            <h1 className="text-[28px] leading-tight font-semibold">
+              {t("dashboardTitle")}
+            </h1>
+            {nextScheduled && (
+              <p className="text-[13px] text-muted-foreground">
+                {t("nextScheduledCheck")}:{" "}
+                {nextScheduled.toLocaleString(language, {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </p>
+            )}
           </header>
 
           {/* Manual Trigger & Stats Combined Section */}
-          <section className="space-y-6">
-            <div className="flex gap-6 lg:flex-row flex-col lg:items-stretch items-start">
-              {/* Manual Trigger - Left Side (2/3) */}
-              <div className="flex-1 lg:flex-[2] w-full">
+          <section className="grid gap-6 lg:grid-cols-12">
+              <div className="min-w-0 lg:col-span-8">
                 <ManualTrigger
                   availableScripts={availableScripts}
                   selectedScriptId={selectedScriptId}
@@ -916,8 +906,7 @@ const Dashboard = () => {
                 />
               </div>
               
-              {/* Stats Cards - Right Side (1/3) Vertical Layout */}
-              <div className="flex-1 w-full lg:w-auto">
+              <div className="min-w-0 lg:col-span-4">
                 <StatsCards
                   nextScheduled={nextScheduled}
                   successCount={successCount}
@@ -929,22 +918,13 @@ const Dashboard = () => {
                   isVerticalLayout={true}
                 />
               </div>
-            </div>
           </section>
 
           {/* Check History Section */}
-          <section id="execution-history" className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="space-y-1">
-                <h2 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-                  <div className="icon-container bg-primary/10 rounded-xl p-2">
-                    <ListChecks className="h-6 w-6 text-primary" />
-                  </div>
-                  {t("checkHistoryTitle")}
-                </h2>
-              </div>
-
-            </div>
+          <section id="execution-history" className="scroll-mt-20 space-y-4">
+            <h2 className="text-[23px] leading-tight font-semibold">
+              {t("checkHistoryTitle")}
+            </h2>
 
             <CheckHistory
               paginatedChecks={paginatedChecks}
@@ -974,7 +954,7 @@ const Dashboard = () => {
           </section>
 
           {/* Footer Section */}
-          <section className="pt-8 border-t border-border/20">
+          <section className="border-t">
             <DashboardFooter t={t} />
           </section>
     </div>
