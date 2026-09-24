@@ -463,16 +463,21 @@ const Dashboard = () => {
     console.log(`🚀 开始数据加载请求 ${requestId}`);
 
     try {
-      // 并行加载脚本列表、分页检查数据和整体统计
+      const scriptsRequest = fetch("/api/list-scripts", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Request-ID": requestId,
+        },
+      });
+      // History and stats do not depend on the script list, so request all
+      // three at once. The guard is released first because
+      // loadPaginatedChecks skips while it is set.
+      isLoadingRef.current = false;
       const [scriptsResult] = await Promise.all([
-        // 获取脚本列表
-        fetch("/api/list-scripts", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Request-ID": requestId,
-          },
-        }),
+        scriptsRequest,
+        loadPaginatedChecks(1, null, "", [], "execution_time", "desc"),
+        loadOverallStats(),
       ]);
 
       console.log(`✅ API响应完成 ${requestId}:`, {
@@ -540,13 +545,6 @@ const Dashboard = () => {
         );
       }
 
-      // 先重置防护标志，然后加载分页检查数据和统计数据
-      isLoadingRef.current = false;
-      
-      await Promise.all([
-        loadPaginatedChecks(1, null, "", [], "execution_time", "desc"),
-        loadOverallStats(),
-      ]);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : "数据加载失败");
@@ -595,8 +593,8 @@ const Dashboard = () => {
       window.history.replaceState({}, '', newUrl.toString());
       
       // 显示筛选通知
-      toast.info("正在筛选执行历史", {
-        description: `搜索脚本: ${cleanSearchParam}`,
+      toast.info(language === "zh" ? "正在筛选执行历史" : "Filtering run history", {
+        description: language === "zh" ? `搜索脚本: ${cleanSearchParam}` : `Script: ${cleanSearchParam}`,
         duration: 3000,
       });
       

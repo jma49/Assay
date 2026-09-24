@@ -65,7 +65,7 @@ import {
 } from "@/components/business/dashboard/types";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { formatDate } from "@/components/business/dashboard/utils";
-import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
+import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import {
   ScriptMetadataForm,
   ScriptFormData,
@@ -265,8 +265,8 @@ const ManageScriptsContent = () => {
     if (!currentSqlContent?.trim()) missingFields.push("SQL内容");
 
     if (missingFields.length > 0) {
-      toast.error("请填写必填字段", {
-        description: `缺少字段：${missingFields.join("、")}`,
+      toast.error(language === "zh" ? "请填写必填字段" : "Fill in the required fields", {
+        description: language === "zh" ? `缺少字段：${missingFields.join("、")}` : `Missing: ${missingFields.join(", ")}`,
         duration: 6000,
       });
       return;
@@ -275,18 +275,9 @@ const ManageScriptsContent = () => {
     // 严格的安全检查 - 只允许查询操作
     const securityCheck = validateReadOnlySql(currentSqlContent);
     if (!securityCheck.isValid) {
-      toast.error("SQL内容安全检查失败", {
-        description: `${securityCheck.reason}\n\n系统允许查询操作（SELECT、WITH、EXPLAIN）和安全的PL/pgSQL块（DO），禁止数据修改和结构变更操作。`,
+      toast.error(language === "zh" ? "查询未通过只读检查" : "The query failed the read-only check", {
+        description: sqlValidationMessage(securityCheck, language),
         duration: 10000,
-        action: {
-          label: "查看安全规则",
-          onClick: () => {
-            toast.info("SQL安全规则", {
-              description: "✅ 允许：SELECT、WITH、EXPLAIN查询、DO块（仅包含查询和日志）\n❌ 禁止：INSERT、UPDATE、DELETE、CREATE、ALTER、DROP等操作",
-              duration: 8000,
-            });
-          },
-        },
       });
       return;
     }
@@ -366,7 +357,7 @@ const ManageScriptsContent = () => {
         
         // 检查是否是需要审批的情况
         if (errorData.requiresApproval) {
-          toast.success("申请已提交", {
+          toast.success(language === "zh" ? "申请已提交" : "Submitted for approval", {
             description: errorData.message,
             duration: 6000,
           });
@@ -383,7 +374,7 @@ const ManageScriptsContent = () => {
       
       // 检查响应中是否有审批相关信息
       if (responseData.requiresApproval) {
-        toast.success("申请已提交", {
+        toast.success(language === "zh" ? "申请已提交" : "Submitted for approval", {
           description: responseData.message,
           duration: 6000,
         });
@@ -433,7 +424,7 @@ const ManageScriptsContent = () => {
       
       // 检查是否需要审批
       if (responseData.requiresApproval) {
-        toast.success("删除申请已提交", {
+        toast.success(language === "zh" ? "删除申请已提交" : "Deletion submitted for approval", {
           description: responseData.message,
           duration: 6000,
         });
@@ -463,7 +454,7 @@ const ManageScriptsContent = () => {
     
     if (!scriptId || scriptId.trim() === "") {
       console.error("❌ 无效的scriptId:", scriptId);
-      toast.error("无效的脚本ID");
+      toast.error(language === "zh" ? "无效的脚本ID" : "Invalid script ID");
       return;
     }
     
@@ -471,8 +462,8 @@ const ManageScriptsContent = () => {
     setIsEditHistoryOpen(true);
     
     // 添加调试信息
-    toast.info("正在加载编辑历史", {
-      description: `脚本ID: ${scriptId}`,
+    toast.info(language === "zh" ? "正在加载编辑历史" : "Loading edit history", {
+      description: language === "zh" ? `脚本ID: ${scriptId}` : `Script ID: ${scriptId}`,
       duration: 2000,
     });
   };
@@ -483,15 +474,15 @@ const ManageScriptsContent = () => {
     
     if (!scriptId || scriptId.trim() === "") {
       console.error("❌ [管理页面] 无效的scriptId:", scriptId);
-      toast.error("无效的脚本ID");
+      toast.error(language === "zh" ? "无效的脚本ID" : "Invalid script ID");
       return;
     }
     
     const trimmedScriptId = scriptId.trim();
     
     // 显示跳转提示
-    toast.info("正在跳转到执行历史", {
-      description: `将搜索脚本: ${trimmedScriptId}`,
+    toast.info(language === "zh" ? "正在跳转到执行历史" : "Opening run history", {
+      description: language === "zh" ? `将搜索脚本: ${trimmedScriptId}` : `Filtering by ${trimmedScriptId}`,
       duration: 2000,
     });
     
@@ -1036,40 +1027,20 @@ const ManageScriptsContent = () => {
             </div>
           </div>
           <DialogFooter className="pt-4 border-t">
-            {/* 验证状态提示 */}
-            <div className="flex-1 text-sm text-muted-foreground">
+            {/* The editor's status bar already reports the read-only check. */}
+            <div className="flex-1 text-[13px]">
               {(() => {
-                const missingFields = [];
-                if (!currentFormScript.scriptId?.trim()) missingFields.push("脚本ID");
-                if (!currentFormScript.name?.trim()) missingFields.push("名称");
-                if (!currentFormScript.author?.trim()) missingFields.push("作者");
-                if (!currentSqlContent?.trim()) missingFields.push("SQL内容");
-                
-                if (missingFields.length > 0) {
-                  return (
-                    <div className="flex items-center gap-1 text-attention">
-                      <AlertTriangle className="h-3 w-3" />
-                      <span>缺少必填字段：{missingFields.join("、")}</span>
-                    </div>
-                  );
-                }
-                
-                const securityCheck = validateReadOnlySql(currentSqlContent);
-                if (!securityCheck.isValid) {
-                  return (
-                    <div className="flex items-center gap-1 text-failure">
-                      <AlertTriangle className="h-3 w-3" />
-                      <span>SQL安全检查失败：{securityCheck.reason}</span>
-                    </div>
-                  );
-                }
-                
-                return (
-                  <div className="flex items-center gap-1 text-success">
-                    <span className="w-2 h-2 bg-success rounded-full"></span>
-                    <span>验证通过，可以保存</span>
-                  </div>
-                );
+                const zh = language === "zh";
+                const missing = [
+                  !currentFormScript.name?.trim() && (zh ? "名称" : "name"),
+                  !currentFormScript.scriptId?.trim() && (zh ? "脚本 ID" : "script ID"),
+                  !currentSqlContent?.trim() && (zh ? "查询" : "query"),
+                ].filter(Boolean);
+                return missing.length > 0 ? (
+                  <span className="text-attention">
+                    {zh ? `还需填写：${missing.join("、")}` : `Still needed: ${missing.join(", ")}`}
+                  </span>
+                ) : null;
               })()}
             </div>
             

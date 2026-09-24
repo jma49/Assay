@@ -123,4 +123,12 @@ END $$;`);
     const result = validateReadOnlySql("DELETE FROM orders");
     expect(result.reason).toMatch(/DELETE/);
   });
+
+  it("gives an English message for every rejection", () => {
+    for (const sql of ["", "DELETE FROM t", "SELECT 1 INTO t", "SELECT pg_sleep(1)", "VALUES (1)"]) {
+      const result = validateReadOnlySql(sql);
+      expect(result.isValid).toBe(false);
+      expect(result.reasonEn).toMatch(/^[\x20-\x7E]+$/);
+    }
+  });
 });
