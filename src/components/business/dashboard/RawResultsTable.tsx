@@ -26,7 +26,7 @@ export const RawResultsTable = ({
   const headers = Object.keys(results[0]);
 
   return (
-    <div className="mt-2 rounded-md border shadow-sm overflow-hidden">
+    <div className="mt-2 rounded-md border overflow-hidden">
       <div className="overflow-x-auto max-w-full">
         <Table className="min-w-full">
           <TableHeader>
@@ -51,16 +51,16 @@ export const RawResultsTable = ({
                   <TableCell
                     key={header}
                     className={`py-2 px-3 text-xs whitespace-nowrap min-w-24 ${
-                      row[header] === null ? 'bg-red-50 dark:bg-red-900/20' : ''
+                      row[header] === null ? 'bg-failure/10 ' : ''
                     }`}
                     title={`值: ${row[header]}, 类型: ${typeof row[header]}`}
                   >
                     {row[header] === null ? (
-                      <span className="italic text-red-600 dark:text-red-400">
+                      <span className="italic text-failure ">
                         NULL
                       </span>
                     ) : row[header] === undefined ? (
-                      <span className="italic text-yellow-600 dark:text-yellow-400">
+                      <span className="italic text-attention ">
                         undefined
                       </span>
                     ) : typeof row[header] === "string" ||
@@ -68,7 +68,7 @@ export const RawResultsTable = ({
                       typeof row[header] === "boolean" ? (
                       String(row[header])
                     ) : (
-                      <span className="text-blue-600 dark:text-blue-400">
+                      <span className="text-muted-foreground ">
                         {JSON.stringify(row[header])}
                       </span>
                     )}

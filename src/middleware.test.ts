@@ -40,13 +40,44 @@ describe("middleware", () => {
     expect(auth).not.toHaveBeenCalled();
   });
 
+  it("serves the landing page at / without a session", async () => {
+    const res = await run("/");
+
+    expect(res.headers.get("location")).toBeNull();
+    expect(auth).not.toHaveBeenCalled();
+  });
+
+  it("keeps other pages private when / is public", async () => {
+    auth.mockResolvedValue({ userId: null });
+
+    const res = await run("/dashboard");
+
+    expect(res.headers.get("location")).toBe(
+      "http://localhost/sign-in?redirect_url=%2Fdashboard"
+    );
+  });
+
+  it("sends signed-out users back to the page they asked for", async () => {
+    auth.mockResolvedValue({ userId: null });
+
+    const res = await run("/manage-scripts?scriptId=demo-duplicate-orders");
+
+    const location = new URL(res.headers.get("location")!);
+    expect(location.origin + location.pathname).toBe("http://localhost/sign-in");
+    expect(location.searchParams.get("redirect_url")).toBe(
+      "/manage-scripts?scriptId=demo-duplicate-orders"
+    );
+  });
+
   it("redirects signed-out users to sign-in", async () => {
     auth.mockResolvedValue({ userId: null });
 
     const res = await run("/api/execution-details/abc.js");
 
     expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toBe("http://localhost/sign-in");
+    expect(res.headers.get("location")).toBe(
+      "http://localhost/sign-in?redirect_url=%2Fapi%2Fexecution-details%2Fabc.js"
+    );
   });
 
   it("lets signed-in users through", async () => {

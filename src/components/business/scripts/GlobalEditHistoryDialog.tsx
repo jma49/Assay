@@ -245,26 +245,26 @@ export function GlobalEditHistoryDialog({
   const getOperationIcon = (operation: string) => {
     switch (operation) {
       case "create":
-        return <Plus className="w-4 h-4 text-green-600" />;
+        return <Plus className="w-4 h-4 text-success" />;
       case "update":
-        return <Edit className="w-4 h-4 text-blue-600" />;
+        return <Edit className="w-4 h-4 text-muted-foreground" />;
       case "delete":
-        return <Trash2 className="w-4 h-4 text-red-600" />;
+        return <Trash2 className="w-4 h-4 text-failure" />;
       default:
-        return <History className="w-4 h-4 text-gray-600" />;
+        return <History className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
   const getOperationBadgeColor = (operation: string) => {
     switch (operation) {
       case "create":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-success/10 text-success border-success/30";
       case "update":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-muted text-foreground border-border";
       case "delete":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-failure/10 text-failure border-failure/30";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-muted text-foreground border-border";
     }
   };
 
@@ -310,19 +310,19 @@ export function GlobalEditHistoryDialog({
       <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0 pb-6">
           <DialogTitle className="flex items-center gap-3 text-xl">
-            <History className="w-6 h-6 text-gray-600" />
+            <History className="w-6 h-6 text-muted-foreground" />
             {t("allScriptsHistory")}
           </DialogTitle>
-          <DialogDescription className="text-base text-gray-600 mt-2">
+          <DialogDescription className="text-base text-muted-foreground mt-2">
             {t("editHistoryDescGlobal")} - {t("totalChanges")}: {totalRecords}
             {totalRecords >= 500 && ` (每页显示${ITEMS_PER_PAGE}条记录)`}
           </DialogDescription>
         </DialogHeader>
 
         {/* 筛选器区域 */}
-        <Card className="border border-gray-200 flex-shrink-0 mb-6">
+        <Card className="border border-border flex-shrink-0 mb-6">
           <CardHeader className="pb-4">
-            <CardTitle className="text-base flex items-center gap-2 text-gray-800">
+            <CardTitle className="text-base flex items-center gap-2 text-foreground">
               <Filter className="w-4 h-4" />
               {t("searchHistoryWithFilters")}
             </CardTitle>
@@ -332,7 +332,7 @@ export function GlobalEditHistoryDialog({
               <div className="space-y-2">
                 <Label
                   htmlFor="script-name-filter"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium text-foreground"
                 >
                   {t("scriptName")}
                 </Label>
@@ -349,7 +349,7 @@ export function GlobalEditHistoryDialog({
               <div className="space-y-2">
                 <Label
                   htmlFor="author-filter"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium text-foreground"
                 >
                   {t("author")}
                 </Label>
@@ -366,7 +366,7 @@ export function GlobalEditHistoryDialog({
               <div className="space-y-2">
                 <Label
                   htmlFor="operation-filter"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium text-foreground"
                 >
                   {t("operationType")}
                 </Label>
@@ -399,7 +399,7 @@ export function GlobalEditHistoryDialog({
               <div className="space-y-2">
                 <Label
                   htmlFor="date-from-filter"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium text-foreground"
                 >
                   {t("dateFrom")}
                 </Label>
@@ -415,7 +415,7 @@ export function GlobalEditHistoryDialog({
               <div className="space-y-2">
                 <Label
                   htmlFor="date-to-filter"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium text-foreground"
                 >
                   {t("dateTo")}
                 </Label>
@@ -458,13 +458,13 @@ export function GlobalEditHistoryDialog({
           <ScrollArea className="h-full pr-4">
             {loading ? (
               <div className="flex items-center justify-center py-16">
-                <Loader2 className="w-8 h-8 animate-spin mr-3 text-gray-600" />
-                <span className="text-lg text-gray-600">
+                <Loader2 className="w-8 h-8 animate-spin mr-3 text-muted-foreground" />
+                <span className="text-lg text-muted-foreground">
                   {t("loadingEditHistory")}
                 </span>
               </div>
             ) : error ? (
-              <div className="flex flex-col items-center justify-center py-16 text-red-600">
+              <div className="flex flex-col items-center justify-center py-16 text-failure">
                 <AlertCircle className="w-8 h-8 mb-3" />
                 <span className="text-lg font-medium">{error}</span>
                 <Button
@@ -477,7 +477,7 @@ export function GlobalEditHistoryDialog({
                 </Button>
               </div>
             ) : histories.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                 <History className="w-8 h-8 mb-3" />
                 <span className="text-lg">{t("noEditHistory")}</span>
                 <span className="text-sm mt-2">
@@ -489,7 +489,7 @@ export function GlobalEditHistoryDialog({
                 {histories.map((history, index) => (
                   <Card
                     key={history._id?.toString() || index}
-                    className="relative border border-gray-200 shadow-sm"
+                    className="relative border border-border "
                   >
                     <CardHeader className="pb-4">
                       <div className="flex items-start justify-between">
@@ -505,18 +505,18 @@ export function GlobalEditHistoryDialog({
                               >
                                 {getOperationText(history.operation)}
                               </Badge>
-                              <span className="font-semibold text-base text-gray-900 truncate">
+                              <span className="font-semibold text-base text-foreground truncate">
                                 {history.scriptSnapshot?.name ||
                                   history.scriptSnapshot?.scriptId ||
                                   "Unknown Script"}
                               </span>
                               {history.scriptSnapshot?.cnName && (
-                                <span className="text-sm text-gray-500 truncate">
+                                <span className="text-sm text-muted-foreground truncate">
                                   ({history.scriptSnapshot.cnName})
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-6 text-sm text-gray-600">
+                            <div className="flex items-center gap-6 text-sm text-muted-foreground">
                               <div className="flex items-center gap-2">
                                 <User className="w-4 h-4" />
                                 <span>
@@ -538,7 +538,7 @@ export function GlobalEditHistoryDialog({
                               </div>
                               {history.changes &&
                                 history.changes.length > 0 && (
-                                  <span className="text-gray-700 font-medium">
+                                  <span className="text-foreground font-medium">
                                     {history.changes.length} 项更改
                                   </span>
                                 )}
@@ -551,35 +551,35 @@ export function GlobalEditHistoryDialog({
                     {history.changes && history.changes.length > 0 && (
                       <CardContent className="pt-0">
                         <div className="space-y-3">
-                          <h4 className="text-sm font-medium text-gray-800">
+                          <h4 className="text-sm font-medium text-foreground">
                             {t("changesDetails")}：
                           </h4>
                           <div className="space-y-3 max-h-48 overflow-y-auto">
                             {history.changes.map((change, changeIndex) => (
                               <div
                                 key={changeIndex}
-                                className="bg-gray-50 rounded-lg p-4 border border-gray-100"
+                                className="bg-muted rounded-lg p-4 border border-border"
                               >
                                 <div className="flex items-center gap-2 mb-3">
-                                  <span className="text-sm font-medium text-gray-800">
+                                  <span className="text-sm font-medium text-foreground">
                                     {change.fieldDisplayNameCn ||
                                       change.fieldDisplayName}
                                   </span>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                   <div>
-                                    <span className="text-gray-600 font-medium">
+                                    <span className="text-muted-foreground font-medium">
                                       {t("originalValue")}：
                                     </span>
-                                    <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded text-red-800 font-mono text-sm">
+                                    <div className="mt-2 p-3 bg-failure/10 border border-failure/30 rounded text-failure font-mono text-sm">
                                       {formatValue(change.oldValue)}
                                     </div>
                                   </div>
                                   <div>
-                                    <span className="text-gray-600 font-medium">
+                                    <span className="text-muted-foreground font-medium">
                                       {t("newValue")}：
                                     </span>
-                                    <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded text-green-800 font-mono text-sm">
+                                    <div className="mt-2 p-3 bg-success/10 border border-success/30 rounded text-success font-mono text-sm">
                                       {formatValue(change.newValue)}
                                     </div>
                                   </div>
@@ -593,7 +593,7 @@ export function GlobalEditHistoryDialog({
 
                     {(history.descriptionCn || history.description) && (
                       <CardContent className="pt-0">
-                        <div className="text-sm text-gray-700 bg-gray-50 rounded p-3">
+                        <div className="text-sm text-foreground bg-muted rounded p-3">
                           <span className="font-medium">
                             {t("description")}：
                           </span>
@@ -614,7 +614,7 @@ export function GlobalEditHistoryDialog({
 
         {/* 分页 - 和CheckHistory组件风格一致 */}
         {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-4 border-t border-gray-200 flex-shrink-0 text-sm gap-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-4 border-t border-border flex-shrink-0 text-sm gap-2">
             <div className="text-muted-foreground text-center sm:text-left">
               {formatPageInfo()}
             </div>
@@ -624,7 +624,7 @@ export function GlobalEditHistoryDialog({
                 size="sm"
                 onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
                 disabled={currentPage === 1 || loading}
-                className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
+                className="h-7 px-2 text-xs transition-all duration-150"
               >
                 <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                 <span className="hidden sm:inline">{t("previous")}</span>
@@ -719,7 +719,7 @@ export function GlobalEditHistoryDialog({
                   handlePageChange(Math.min(currentPage + 1, totalPages))
                 }
                 disabled={currentPage === totalPages || loading}
-                className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
+                className="h-7 px-2 text-xs transition-all duration-150"
               >
                 <span className="hidden sm:inline">{t("next")}</span>
                 <ChevronRight className="h-3.5 w-3.5 ml-1" />

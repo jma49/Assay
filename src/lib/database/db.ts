@@ -12,6 +12,7 @@ import fs from "fs";
 import path from "path";
 import https from "https";
 import { ConnectionOptions } from "tls";
+import { redactConnectionString } from "./redact-connection-string";
 
 // Loading environment variables
 dotenv.config({ path: ".env.local" });
@@ -384,6 +385,9 @@ const createPool = async (): Promise<Pool> => {
     JSON.stringify(
       {
         ...poolConfig,
+        connectionString: redactConnectionString(
+          poolConfig.connectionString ?? ""
+        ),
         ssl: poolConfig.ssl
           ? {
               ...Object.fromEntries(

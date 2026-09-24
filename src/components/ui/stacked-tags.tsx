@@ -62,9 +62,9 @@ export function StackedTags({
         <PriorityBadge 
           hashtag={tags[0]} 
           className={cn(
-            "transition-all duration-300 hover:scale-105 hover:z-10 relative",
-            "shadow-sm hover:shadow-md",
-            isOpen && "z-20 scale-105 shadow-lg"
+            "transition-all duration-300 hover:z-10 relative",
+            " ",
+            isOpen && "z-20 scale-105 "
           )}
         />
         
@@ -75,7 +75,7 @@ export function StackedTags({
             hashtag={tag}
             className={cn(
               "absolute transition-all duration-500 pointer-events-none",
-              "shadow-sm",
+              "",
               !isOpen && stackedStyle(index + 1),
               isOpen && {
                 "opacity-0": true,
@@ -100,7 +100,7 @@ export function StackedTags({
             </Button>
           </PopoverTrigger>
           <PopoverContent 
-            className="w-auto p-3 max-w-xs shadow-lg border-2 border-border/30" 
+            className="w-auto p-3 max-w-xs border border-border/30" 
             align="start"
             side="top"
           >

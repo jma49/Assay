@@ -2,7 +2,9 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // 定义公开路由（不需要认证）
+// "/" is the public landing page; only the exact root path is public.
 const isPublicRoute = createRouteMatcher([
+  "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/unauthorized",
@@ -26,7 +28,12 @@ export default clerkMiddleware(async (auth, req) => {
 
   if (!userId) {
     // 未认证用户重定向到登录页
+    // Only the path is carried over, so the redirect cannot leave this origin.
     const signInUrl = new URL("/sign-in", req.url);
+    signInUrl.searchParams.set(
+      "redirect_url",
+      req.nextUrl.pathname + req.nextUrl.search,
+    );
     return NextResponse.redirect(signInUrl);
   }
 
@@ -40,5 +47,6 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)).*)",
     // 总是运行在API路由上
     "/(api|trpc)(.*)",
+    "/__clerk/:path*",
   ],
 };
