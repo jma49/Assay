@@ -17,6 +17,8 @@ import { useLanguage } from '@/components/common/LanguageProvider';
 import { dashboardTranslations, DashboardTranslationKeys, ITEMS_PER_PAGE } from '@/components/business/dashboard/types';
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
+import { SkeletonCardList, SkeletonPageHeader } from "@/components/common/PageSkeletons";
+import { APP_CONTAINER } from "@/components/layout/app-container";
 
 // 状态信息映射
 const getStatusInfo = (status: ApprovalStatus, t: (key: DashboardTranslationKeys) => string) => ({
@@ -94,6 +96,8 @@ export default function ApprovalsPage() {
   const [totalHistoryCount, setTotalHistoryCount] = useState(0);
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // Until the first load finishes, show placeholders rather than "nothing pending".
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [selectedApproval, setSelectedApproval] = useState<ApprovalRequest | null>(null);
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject'>('approve');
   const [approvalComment, setApprovalComment] = useState('');
@@ -257,6 +261,8 @@ export default function ApprovalsPage() {
       setError(null);
     } catch (error) {
       console.error('加载数据失败:', error);
+    } finally {
+      setHasLoaded(true);
     }
   }, [loadPendingApprovals, loadApprovalHistory, currentPageHistory]);
 
@@ -327,10 +333,10 @@ export default function ApprovalsPage() {
 
   if (!isLoaded) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">{t('loading')}</span>
-      </div>
+      <main className={`${APP_CONTAINER} space-y-6 py-8`} aria-busy="true">
+        <SkeletonPageHeader />
+        <SkeletonCardList />
+      </main>
     );
   }
 
@@ -558,16 +564,18 @@ export default function ApprovalsPage() {
             <TabsList className="w-full">
               <TabsTrigger value="pending">
                 {t('pendingApprovals')}
-                <span className="text-muted-foreground tabular-nums">{totalPendingApprovals}</span>
+                <span className="text-muted-foreground tabular-nums">{hasLoaded ? totalPendingApprovals : "–"}</span>
               </TabsTrigger>
               <TabsTrigger value="history">
                 {t('approvalHistory')}
-                <span className="text-muted-foreground tabular-nums">{totalHistoryApprovals}</span>
+                <span className="text-muted-foreground tabular-nums">{hasLoaded ? totalHistoryApprovals : "–"}</span>
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="pending" className="mt-6 space-y-4">
-              {paginatedPendingApprovals.length === 0 ? (
+              {!hasLoaded ? (
+                <SkeletonCardList count={2} />
+              ) : paginatedPendingApprovals.length === 0 ? (
                 <EmptyState
                   title={t('noPendingApprovals')}
                   hint={language === "zh" ? "所有审批申请都已处理" : "Every request has been handled."}
@@ -591,7 +599,9 @@ export default function ApprovalsPage() {
             </TabsContent>
 
             <TabsContent value="history" className="mt-6 space-y-4">
-              {paginatedHistoryApprovals.length === 0 ? (
+              {!hasLoaded ? (
+                <SkeletonCardList count={2} />
+              ) : paginatedHistoryApprovals.length === 0 ? (
                 <EmptyState
                   title={t('noApprovalHistory')}
                   hint={language === "zh" ? "审批过的申请会显示在这里" : "Approved and rejected requests show up here."}

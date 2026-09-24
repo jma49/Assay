@@ -19,11 +19,8 @@ import { StatsCards } from "@/components/business/dashboard/StatsCards";
 import { ManualTrigger } from "@/components/business/dashboard/ManualTrigger";
 import { CheckHistory } from "@/components/business/dashboard/CheckHistory";
 import { LoadingError } from "@/components/business/dashboard/LoadingError";
-import {
-  SkeletonCard,
-  SkeletonTable,
-} from "@/components/business/dashboard/SkeletonComponents";
 import { DashboardFooter } from "@/components/business/dashboard/DashboardFooter";
+import { DashboardSkeleton } from "@/components/common/PageSkeletons";
 
 // --- Main Component ---
 const Dashboard = () => {
@@ -855,12 +852,7 @@ const Dashboard = () => {
 
   if (loading && checks.length === 0 && isFetchingScripts) {
     return (
-      <div className="space-y-6">
-        <SkeletonCard />
-        <SkeletonCard />
-        <SkeletonCard />
-        <SkeletonTable />
-      </div>
+      <DashboardSkeleton />
     );
   }
 

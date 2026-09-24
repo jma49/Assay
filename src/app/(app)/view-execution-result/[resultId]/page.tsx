@@ -16,6 +16,8 @@ import dynamic from 'next/dynamic';
 // Pulls in a syntax highlighter; only load it when an analysis is shown.
 const AnalysisResultDialog = dynamic(() => import("@/components/business/ai/AnalysisResultDialog"), { ssr: false });
 import Link from "next/link";
+import { SkeletonPageHeader, SkeletonTable } from "@/components/common/PageSkeletons";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // 基于SQL脚本实际输出的精确类型定义
 interface OrderDuplicateDetail {
@@ -468,14 +470,12 @@ export default function ViewExecutionResultPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen    ">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8 text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-border border-r-transparent"></div>
-          <p className="mt-4 text-lg text-foreground ">
-            {t.loading}
-          </p>
-        </div>
-      </div>
+      <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8" aria-busy="true">
+        <SkeletonPageHeader />
+        <Skeleton className="h-[88px] rounded-lg" />
+        <Skeleton className="h-[300px] rounded-lg" />
+        <SkeletonTable rows={5} />
+      </main>
     );
   }
 
