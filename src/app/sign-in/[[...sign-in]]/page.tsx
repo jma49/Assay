@@ -1,98 +1,35 @@
 "use client";
 
 import { SignIn } from "@clerk/nextjs";
-import { useState } from "react";
+import { useLanguage } from "@/components/common/LanguageProvider";
+import { AuthShell, clerkAppearance } from "@/components/layout/AuthShell";
 
-const messages = {
+const copy = {
   en: {
-    title: "SQL Script Management System",
-    subtitle: "🔐 Internal System",
-    emailHint: "Please login with your invited email",
-    noAccount: "No account? Contact administrator for access",
-    systemInfo: "System Access Information",
-    inviteOnly:
-      "• This system uses invitation-only access to ensure data security",
-    contactIT: "• Contact Jincheng for access",
+    title: "Sign in",
+    description: "Sign in to open the dashboard.",
+    footer: "New here? Any email works; new accounts join the demo workspace as viewers.",
   },
   zh: {
-    title: "SQL脚本管理系统",
-    subtitle: "🔐 内部系统",
-    emailHint: "请使用受邀邮箱登录",
-    noAccount: "没有账户？请联系管理员申请访问权限",
-    systemInfo: "系统访问说明",
-    inviteOnly: "• 此系统采用邀请制，确保数据安全",
-    contactIT: "• 如需访问权限，请联系Jincheng",
+    title: "登录",
+    description: "登录后进入控制台。",
+    footer: "第一次使用？任意邮箱都可以注册，新账号会以查看者身份进入演示工作区。",
   },
 };
 
-export default function Page() {
-  const [language, setLanguage] = useState<"en" | "zh">("en");
-  const t = messages[language];
+export default function SignInPage() {
+  const { language } = useLanguage();
+  const t = copy[language];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="flex justify-center space-x-2">
-          <button
-            onClick={() => setLanguage("zh")}
-            className={`px-3 py-1 text-sm rounded ${
-              language === "zh"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            中文
-          </button>
-          <button
-            onClick={() => setLanguage("en")}
-            className={`px-3 py-1 text-sm rounded ${
-              language === "en"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            English
-          </button>
-        </div>
-
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {t.title}
-          </h2>
-          <div className="mt-4 text-center space-y-2">
-            <p className="text-sm text-blue-600 font-medium">{t.subtitle}</p>
-            <p className="text-sm text-gray-600">{t.emailHint}</p>
-            <p className="text-xs text-gray-500">{t.noAccount}</p>
-          </div>
-        </div>
-
-        <div className="flex justify-center">
-          <SignIn
-            appearance={{
-              elements: {
-                formButtonPrimary: "bg-blue-600 hover:bg-blue-700",
-                card: "shadow-lg",
-                signUpLinkText: "display: none;",
-              },
-            }}
-            routing="path"
-            path="/sign-in"
-            fallbackRedirectUrl="/dashboard"
-          />
-        </div>
-
-        <div className="mt-6 bg-gray-50 border border-gray-200 rounded-md p-4">
-          <div className="text-center">
-            <h3 className="text-sm font-medium text-gray-800 mb-2">
-              {t.systemInfo}
-            </h3>
-            <div className="text-xs text-gray-600 space-y-1">
-              <p>{t.inviteOnly}</p>
-              <p>{t.contactIT}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <AuthShell title={t.title} description={t.description} footer={t.footer}>
+      <SignIn
+        appearance={clerkAppearance}
+        routing="path"
+        path="/sign-in"
+        signUpUrl="/sign-up"
+        fallbackRedirectUrl="/dashboard"
+      />
+    </AuthShell>
   );
 }

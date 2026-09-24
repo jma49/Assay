@@ -17,7 +17,7 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
   return (
     <div 
       className={cn(
-        "animate-spin rounded-full border-2 border-gray-300 border-t-gray-600 dark:border-gray-600 dark:border-t-gray-300",
+        "animate-spin rounded-full border border-border border-t-border  ",
         sizeClasses[size],
         className
       )}
@@ -44,11 +44,11 @@ export function LoadingOverlay({
     <div className={cn("relative", className)}>
       {children}
       {isLoading && (
-        <div className="absolute inset-0 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="absolute inset-0 bg-background backdrop-blur-sm flex items-center justify-center z-50">
           <div className="flex flex-col items-center gap-3">
             <LoadingSpinner size={spinnerSize} />
             {text && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+              <p className="text-sm text-muted-foreground font-medium">
                 {text}
               </p>
             )}
@@ -65,10 +65,10 @@ interface PageLoadingProps {
 
 export function PageLoading({ text = "加载中..." }: PageLoadingProps) {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+    <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <LoadingSpinner size="lg" />
-        <p className="text-gray-600 dark:text-gray-400 font-medium">
+        <p className="text-muted-foreground font-medium">
           {text}
         </p>
       </div>
@@ -86,9 +86,9 @@ export function ContentLoading({ rows = 3, className }: ContentLoadingProps) {
     <div className={cn("space-y-3", className)}>
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="space-y-2">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" 
+          <div className="h-4 bg-accent rounded animate-pulse" 
                style={{ width: `${Math.random() * 40 + 60}%` }} />
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" 
+          <div className="h-4 bg-accent rounded animate-pulse" 
                style={{ width: `${Math.random() * 60 + 40}%` }} />
         </div>
       ))}
