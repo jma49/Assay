@@ -41,7 +41,10 @@
     "security:deploy-pool-only": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security-lite.ts --pool-only",
     "security:deploy-no-tests": "ts-node -r dotenv/config scripts/security-and-performance/deploy-enhanced-security-lite.ts --no-tests",
     "test:check-history-api": "curl -s 'http://localhost:3000/api/check-history?optimized=true&page=1&limit=10' | jq .",
-    "test:check-history-cache": "curl -s 'http://localhost:3000/api/check-history?optimized=true&page=1&limit=5' && echo '\n--- Second call (should be faster) ---' && curl -s 'http://localhost:3000/api/check-history?optimized=true&page=1&limit=5'"
+    "test:check-history-cache": "curl -s 'http://localhost:3000/api/check-history?optimized=true&page=1&limit=5' && echo '\n--- Second call (should be faster) ---' && curl -s 'http://localhost:3000/api/check-history?optimized=true&page=1&limit=5'",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
     "@clerk/nextjs": "^6.39.7",
@@ -114,6 +117,8 @@
     "eslint-config-next": "^15.5.26",
     "tailwindcss": "^4",
     "ts-node": "^10.9.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^3.2.7"
   }
 }
