@@ -1,4 +1,4 @@
-import redis from "@/lib/cache/redis";
+import redis from "./redis";
 
 // Redis 缓存键常量
 const SCRIPTS_CACHE_KEY = "scripts:list";
