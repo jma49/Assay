@@ -1,23 +1,34 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
+import UserHeader from "@/components/layout/UserHeader";
+import { APP_CONTAINER } from "@/components/layout/app-container";
 import {
   ScriptMetadataForm,
   ScriptFormData,
 } from "@/components/business/scripts/ScriptMetadataForm";
-import { useLanguage } from "@/components/common/LanguageProvider"; // 使用新的语言provider
+import CodeMirrorEditor from "@/components/business/scripts/CodeMirrorEditor";
+import { useLanguage } from "@/components/common/LanguageProvider";
 import {
   dashboardTranslations,
   DashboardTranslationKeys,
-} from "@/components/business/dashboard/types"; // For t function and keys
-import { toast } from "sonner";
-// Import the new CodeMirror component
-import CodeMirrorEditor from "@/components/business/scripts/CodeMirrorEditor";
-// Import the template generator
-import { generateSqlTemplateWithTranslation } from "@/components/business/dashboard/scriptTranslations";
-import { Label } from "@/components/ui/label"; // Keep Label import
+} from "@/components/business/dashboard/types";
+import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
+
+const SCRIPT_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+const INITIAL_SQL = `-- A check passes when this query returns no rows.
+-- Return the rows that need attention, for example:
+SELECT id, created_at
+FROM your_table
+WHERE status IS NULL;
+`;
 
 const initialFormData: ScriptFormData = {
   scriptId: "",
@@ -33,191 +44,177 @@ const initialFormData: ScriptFormData = {
   cronSchedule: "",
 };
 
-// Helper function to generate script ID from name
-const generateScriptIdFromName = (name: string): string => {
-  if (!name) return "";
-  return name
-    .toLowerCase()
-    .replace(/\s+/g, "-") // Replace spaces with hyphens
-    .replace(/[^a-z0-9-]/g, "") // Remove invalid characters
-    .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens (just in case)
+const copy = {
+  en: {
+    breadcrumb: "Scripts",
+    title: "New check",
+    lead: "A check passes when its query returns no rows. Any rows it returns need attention.",
+    cancel: "Cancel",
+    save: "Save check",
+    saving: "Saving…",
+    missing: "Add a name, a script ID and a query before saving.",
+    badId: "Script ID can only use lowercase letters, numbers and hyphens.",
+    saved: "Check saved",
+    submitted: "Submitted for approval",
+    submittedDesc: "An admin or manager needs to approve it before it runs.",
+    failed: "Could not save the check",
+  },
+  zh: {
+    breadcrumb: "脚本",
+    title: "新建检查",
+    lead: "查询没有返回任何行即为通过，返回的每一行都需要关注。",
+    cancel: "取消",
+    save: "保存检查",
+    saving: "保存中…",
+    missing: "保存前请填写名称、脚本 ID 和查询。",
+    badId: "脚本 ID 只能使用小写字母、数字和连字符。",
+    saved: "检查已保存",
+    submitted: "已提交审批",
+    submittedDesc: "需要管理员或经理审批后才会生效。",
+    failed: "保存失败",
+  },
 };
+
+const toScriptId = (name: string) =>
+  name
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
 export default function NewScriptPage() {
   const router = useRouter();
+  const { user } = useUser();
   const { language } = useLanguage();
-  const [formData, setFormData] = useState<ScriptFormData>(initialFormData);
+  const c = copy[language];
 
-  // Generate initial SQL content using the template generator
-  // We pass default/empty values initially, the template generator handles defaults
-  const [sqlContent, setSqlContent] = useState<string>(() =>
-    generateSqlTemplateWithTranslation(
-      initialFormData.scriptId,
-      initialFormData.name,
-      initialFormData.description,
-      initialFormData.scope,
-      initialFormData.author,
-      // Note: The template generator currently only uses scriptId for translation lookup,
-      // which will be empty here. Ideally, it could generate based on name/desc fields
-      // after user interaction, or we update the template logic.
-      // For now, it generates a basic template with current date.
-    ),
-  );
+  const [formData, setFormData] = useState<ScriptFormData>(initialFormData);
+  const [sqlContent, setSqlContent] = useState(INITIAL_SQL);
+  const [scriptIdEdited, setScriptIdEdited] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  // Track if scriptId was manually edited to prevent overwriting user input
-  const [scriptIdManuallyEdited, setScriptIdManuallyEdited] = useState(false);
 
   const t = useCallback(
     (key: DashboardTranslationKeys | string): string => {
-      const langTranslations =
-        dashboardTranslations[language] || dashboardTranslations.en;
-      // Allow string type for key to accommodate new keys not yet in DashboardTranslationKeys strict type
-      return (
-        langTranslations[key as keyof typeof langTranslations] || key.toString()
-      );
+      const translations = dashboardTranslations[language] || dashboardTranslations.en;
+      return translations[key as keyof typeof translations] || key.toString();
     },
     [language],
   );
 
+  // Prefill the author once the signed-in user is known; the API falls back to it anyway.
+  useEffect(() => {
+    const defaultAuthor =
+      user?.fullName || user?.primaryEmailAddress?.emailAddress?.split("@")[0];
+    if (defaultAuthor) {
+      setFormData((prev) => (prev.author ? prev : { ...prev, author: defaultAuthor }));
+    }
+  }, [user]);
+
   const handleFormChange = (
-    fieldName: keyof ScriptFormData,
+    field: keyof ScriptFormData,
     value: string | boolean | string[],
   ) => {
-    let newScriptId = formData.scriptId;
-    let isManuallyEditingScriptId = scriptIdManuallyEdited;
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "name" && typeof value === "string" && !scriptIdEdited) {
+        next.scriptId = toScriptId(value);
+      }
+      return next;
+    });
+    if (field === "scriptId") setScriptIdEdited(true);
+  };
 
-    if (fieldName === "scriptId" && typeof value === "string") {
-      isManuallyEditingScriptId = true;
-      setScriptIdManuallyEdited(true);
-      newScriptId = value;
-    } else if (
-      fieldName === "name" &&
-      typeof value === "string" &&
-      !isManuallyEditingScriptId
-    ) {
-      newScriptId = generateScriptIdFromName(value);
-    } else {
-      // For other fields or if value is boolean or string[], scriptId logic doesn't apply directly here
+  const handleSave = async () => {
+    if (!formData.name.trim() || !formData.scriptId.trim() || !sqlContent.trim()) {
+      toast.error(c.missing);
+      return;
+    }
+    if (!SCRIPT_ID_PATTERN.test(formData.scriptId)) {
+      toast.error(c.badId);
+      return;
+    }
+    const validation = validateReadOnlySql(sqlContent);
+    if (!validation.isValid) {
+      toast.error(validation.reason);
+      return;
     }
 
-    setFormData((prev) => ({
-      ...prev,
-      [fieldName]: value,
-      scriptId: newScriptId,
-    }));
-  };
-
-  const handleSqlContentChange = (content: string) => {
-    setSqlContent(content);
-  };
-
-  const handleSaveScript = async () => {
     setIsSaving(true);
-    // Basic client-side validation
-    if (
-      !formData.scriptId.trim() ||
-      !formData.name.trim() ||
-      !sqlContent.trim()
-    ) {
-      toast.error(
-        t("fillRequiredFieldsError") ||
-          "Please fill all required fields: Script ID, Name, and SQL Content.",
-      );
-      setIsSaving(false);
-      return;
-    }
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(formData.scriptId)) {
-      toast.error(
-        t("invalidScriptIdError") ||
-          "Invalid Script ID format. Use lowercase letters, numbers, and hyphens.",
-      );
-      setIsSaving(false);
-      return;
-    }
-
     try {
       const response = await fetch("/api/scripts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          sqlContent,
-        }),
+        body: JSON.stringify({ ...formData, sqlContent }),
       });
-
       const result = await response.json();
 
-      if (response.ok) {
-        toast.success(t("scriptSavedSuccess") || "Script saved successfully!");
-        router.push("/dashboard");
-      } else {
-        toast.error(
-          `${t("scriptSaveError") || "Failed to save script:"} ${result.message || response.statusText}`,
-        );
+      if (!response.ok) {
+        toast.error(c.failed, { description: result.message || response.statusText });
+        return;
       }
+      if (result.requiresApproval) {
+        toast.success(c.submitted, { description: c.submittedDesc });
+      } else {
+        toast.success(c.saved);
+      }
+      router.push("/manage-scripts");
     } catch (error) {
-      console.error("Error saving script:", error);
-      toast.error(
-        `${t("scriptSaveError") || "Failed to save script."} An unexpected error occurred.`,
-      );
+      toast.error(c.failed, {
+        description: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleCancel = () => {
-    router.push("/dashboard");
-  };
-
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8 space-y-6">
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-          {t("createScriptTitle") || "Create New SQL Script"}
-        </h1>
-        {/* Optional: Add a subtitle or breadcrumbs here */}
-      </header>
+    <div className="min-h-screen">
+      <UserHeader />
+      <main className={`${APP_CONTAINER} space-y-8 py-8`}>
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-1">
+            <p className="text-[13px] text-muted-foreground">
+              <Link href="/manage-scripts" className="hover:text-foreground">
+                {c.breadcrumb}
+              </Link>{" "}
+              / {c.title}
+            </p>
+            <h1 className="text-[28px] leading-tight font-semibold">{c.title}</h1>
+            <p className="text-sm text-muted-foreground">{c.lead}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => router.push("/manage-scripts")} disabled={isSaving}>
+              {c.cancel}
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? c.saving : c.save}
+            </Button>
+          </div>
+        </header>
 
-      <ScriptMetadataForm
-        formData={formData}
-        onFormChange={handleFormChange}
-        t={t}
-        isEditMode={false}
-      />
-
-      {/* CodeMirror SQL Editor Section */}
-      <div className="mt-6 space-y-2">
-        <Label htmlFor="sqlContent">
-          {t("fieldSqlContent") || "SQL Content"}{" "}
-          <span className="text-destructive">*</span>
-        </Label>
-        <CodeMirrorEditor
-          value={sqlContent}
-          onChange={handleSqlContentChange}
-          minHeight="450px"
-          t={t}
-        />
-      </div>
-
-      <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 pt-6 mt-6 border-t">
-        <Button
-          variant="outline"
-          onClick={handleCancel}
-          disabled={isSaving}
-          className="w-full sm:w-32"
-        >
-          {t("cancelButton") || "Cancel"}
-        </Button>
-        <Button 
-          onClick={handleSaveScript} 
-          disabled={isSaving} 
-          className="w-full sm:w-32"
-        >
-          {isSaving
-            ? t("savingStatusText") || "Saving..."
-            : t("saveScriptButton") || "Save Script"}
-        </Button>
-      </div>
+        {/* items-stretch + fill keeps the editor and the details panel the same height. */}
+        <div className="grid gap-6 lg:grid-cols-12">
+          <div className="min-w-0 lg:col-span-8">
+            <CodeMirrorEditor
+              value={sqlContent}
+              onChange={setSqlContent}
+              minHeight="480px"
+              fill
+              t={t}
+            />
+          </div>
+          <aside className="self-start rounded-lg border bg-card p-5 lg:col-span-4">
+            <ScriptMetadataForm
+              formData={formData}
+              onFormChange={handleFormChange}
+              t={t}
+            />
+          </aside>
+        </div>
+      </main>
+      <Toaster />
     </div>
   );
 }
