@@ -324,21 +324,19 @@ export class IntelligentCacheManager {
       const cachedValue = await redis.get(key);
       const responseTime = Date.now() - startTime;
 
-      if (cachedValue !== null && typeof cachedValue === "string") {
-        // 缓存命中
+      // Upstash parses JSON on read, so a hit is usually an object, not a
+      // string. Treating only strings as hits made every read a miss.
+      if (cachedValue !== null && cachedValue !== undefined) {
         this.recordCacheHit(key, responseTime);
 
-        // 检查是否需要自动刷新
         if (refreshFunction && this.shouldAutoRefresh(key, dataType)) {
-          // 异步刷新，不阻塞当前请求
+          // Refresh in the background without blocking this request.
           this.refreshCacheAsync(key, refreshFunction, dataType);
         }
 
-        // 解压缩（如果需要）
-        const strategy = dataType ? this.getCacheStrategy(dataType) : null;
-        return strategy?.compression
-          ? this.decompressValue(cachedValue)
-          : JSON.parse(cachedValue);
+        return typeof cachedValue === "string"
+          ? this.decompressValue<T>(cachedValue)
+          : (cachedValue as T);
       } else {
         // 缓存未命中
         this.recordCacheMiss(key, responseTime);
@@ -511,10 +509,10 @@ export class IntelligentCacheManager {
    * 值压缩（简单的JSON压缩）
    */
   private compressValue(value: unknown): string {
-    const jsonString = JSON.stringify(value);
-    // 这里可以集成真正的压缩算法，如gzip
-    // 目前只是移除多余空格
-    return jsonString.replace(/\s+/g, "");
+    // Stripping whitespace from the JSON text also deleted spaces inside
+    // string values ("Duplicate orders" -> "Duplicateorders"); JSON.stringify
+    // is already compact.
+    return JSON.stringify(value);
   }
 
   /**
