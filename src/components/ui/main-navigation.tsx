@@ -34,7 +34,7 @@ interface NavigationItemConfig {
 }
 
 const navigationItems: NavigationItemConfig[] = [
-  { href: "/", labelKey: "navigationDashboard" },
+  { href: "/dashboard", labelKey: "navigationDashboard" },
   { href: "/manage-scripts", labelKey: "navigationScripts" },
   { href: "/data-analysis", labelKey: "navigationAnalysis" },
   { href: "/manage-scripts/approvals", labelKey: "navigationApprovals" },
@@ -59,8 +59,8 @@ export default function MainNavigation({ className }: { className?: string }) {
 
   const isActivePath = (href: string) => {
     if (!pathname) return false;
-    // Exact match for "/" and "/manage-scripts" so nested pages don't light them up.
-    if (href === "/" || href === "/manage-scripts") return pathname === href;
+    // Exact match for "/manage-scripts" so its nested pages don't light it up.
+    if (href === "/manage-scripts") return pathname === href;
     return pathname.startsWith(href);
   };
 
@@ -152,7 +152,7 @@ export default function MainNavigation({ className }: { className?: string }) {
             <Button
               onClick={() => {
                 setResultsDialogOpen(false);
-                window.location.href = "/#execution-history";
+                window.location.href = "/dashboard#execution-history";
               }}
             >
               {language === "zh" ? "前往执行历史" : "Go to run history"}

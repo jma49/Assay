@@ -149,7 +149,7 @@ export default function NewScriptPage() {
 
       if (response.ok) {
         toast.success(t("scriptSavedSuccess") || "Script saved successfully!");
-        router.push("/"); // Navigate to dashboard
+        router.push("/dashboard");
       } else {
         toast.error(
           `${t("scriptSaveError") || "Failed to save script:"} ${result.message || response.statusText}`,
@@ -166,7 +166,7 @@ export default function NewScriptPage() {
   };
 
   const handleCancel = () => {
-    router.push("/"); // Navigate back to dashboard
+    router.push("/dashboard");
   };
 
   return (

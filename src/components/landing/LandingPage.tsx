@@ -4,6 +4,7 @@ import "./landing.css";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
+import { ClerkLoading, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Moon, Sun } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { BRAND, GITHUB_URL, QUICK_START, landingCopy, type Language } from "./content";
@@ -61,9 +62,20 @@ function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void
             {lang === "en" ? "中文" : "EN"}
           </button>
           <ThemeToggle />
-          <Link href="/sign-in" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
-            {t.signIn}
-          </Link>
+          {/* Holds the button's width while Clerk loads so the nav does not shift. */}
+          <ClerkLoading>
+            <span className="ml-1 inline-block h-8 w-[118px]" aria-hidden />
+          </ClerkLoading>
+          <SignedOut>
+            <Link href="/sign-in?redirect_url=/dashboard" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
+              {t.signIn}
+            </Link>
+          </SignedOut>
+          <SignedIn>
+            <Link href="/dashboard" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
+              {t.openApp}
+            </Link>
+          </SignedIn>
         </div>
       </nav>
     </header>
@@ -202,13 +214,16 @@ export default function LandingPage() {
                 {t.hero.subtitle}
               </p>
               <div className="mt-8 flex justify-center gap-3">
-                <Link href="/sign-up" className={primaryButton}>
+                <Link href="/dashboard" className={primaryButton}>
                   {t.hero.primary}
                 </Link>
                 <a href={GITHUB_URL} className={secondaryButton}>
                   {t.hero.secondary}
                 </a>
               </div>
+              <SignedOut>
+                <p className="mt-4 text-[13px] text-(--l-muted)">{t.hero.demoNote}</p>
+              </SignedOut>
             </div>
             <div className="mt-14 sm:mt-16">
               <ProductPreview lang={language} />
@@ -293,7 +308,12 @@ export default function LandingPage() {
           </span>
           <span className="flex gap-6">
             <a href={GITHUB_URL} className="hover:text-(--l-fg)">GitHub</a>
-            <Link href="/sign-in" className="hover:text-(--l-fg)">{t.nav.signIn}</Link>
+            <SignedOut>
+              <Link href="/sign-in?redirect_url=/dashboard" className="hover:text-(--l-fg)">{t.nav.signIn}</Link>
+            </SignedOut>
+            <SignedIn>
+              <Link href="/dashboard" className="hover:text-(--l-fg)">{t.nav.openApp}</Link>
+            </SignedIn>
           </span>
         </div>
       </footer>

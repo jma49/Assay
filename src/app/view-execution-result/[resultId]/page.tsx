@@ -425,7 +425,7 @@ export default function ViewExecutionResultPage() {
 
   const handleGoToDashboard = () => {
     // 直接导航到仪表盘
-    router.push("/");
+    router.push("/dashboard");
   };
 
   // AI分析错误函数
