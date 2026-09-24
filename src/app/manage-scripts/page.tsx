@@ -66,7 +66,7 @@ import {
 } from "@/components/business/dashboard/types";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { formatDate } from "@/components/business/dashboard/utils";
-import { isReadOnlyQuery } from "@/lib/utils/utils";
+import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import {
   ScriptMetadataForm,
   ScriptFormData,
@@ -275,7 +275,7 @@ const ManageScriptsContent = () => {
     }
     
     // 严格的安全检查 - 只允许查询操作
-    const securityCheck = isReadOnlyQuery(currentSqlContent);
+    const securityCheck = validateReadOnlySql(currentSqlContent);
     if (!securityCheck.isValid) {
       toast.error("SQL内容安全检查失败", {
         description: `${securityCheck.reason}\n\n系统允许查询操作（SELECT、WITH、EXPLAIN）和安全的PL/pgSQL块（DO），禁止数据修改和结构变更操作。`,
@@ -1092,7 +1092,7 @@ const ManageScriptsContent = () => {
                   );
                 }
                 
-                const securityCheck = isReadOnlyQuery(currentSqlContent);
+                const securityCheck = validateReadOnlySql(currentSqlContent);
                 if (!securityCheck.isValid) {
                   return (
                     <div className="flex items-center gap-1 text-red-600">

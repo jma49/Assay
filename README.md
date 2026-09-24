@@ -7,7 +7,7 @@
 [![Redis](https://img.shields.io/badge/Redis-Cache-red.svg)](https://redis.io/)
 [![Clerk](https://img.shields.io/badge/Clerk-Auth-purple.svg)](https://clerk.com/)
 
-A modern SQL script management and monitoring system built with Next.js, providing a visual interface for managing, executing, and monitoring SQL check scripts with enterprise-grade authentication, real-time notifications, and high-performance caching.
+A modern SQL script management and monitoring system built with Next.js, providing a visual interface for managing, executing, and monitoring SQL check scripts with enterprise-grade authentication and high-performance caching.
 
 ## ✨ Key Features
 
@@ -44,9 +44,6 @@ REDIS_URL="redis://username:password@host:port"
 # Authentication (Clerk)
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
 CLERK_SECRET_KEY="sk_test_..."
-
-# Notifications (Optional)
-SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
 
 # Security
 CRON_SECRET_TOKEN="your-secure-random-token"
@@ -94,21 +91,7 @@ NODE_ENV="production"
    - Import your repository to Vercel
    - Configure environment variables in Vercel dashboard
 
-2. **Add Vercel Configuration**
-
-   ```json
-   // vercel.json
-   {
-     "crons": [
-       {
-         "path": "/api/run-scheduled-scripts",
-         "schedule": "0 8 * * *"
-       }
-     ]
-   }
-   ```
-
-3. **Deploy**
+2. **Deploy**
    ```bash
    vercel --prod
    ```
@@ -139,7 +122,6 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: npx ts-node scripts/run-all-scripts.ts
 ```
 
@@ -248,13 +230,7 @@ REDIS_URL="redis://username:password@host:port"
 REDIS_URL="rediss://username:password@host:port"
 ```
 
-### Monitoring & Notifications
-
-#### Slack Integration
-
-```bash
-SLACK_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
-```
+### Monitoring
 
 #### Health Checks
 

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { Permission } from "@/lib/auth/rbac";
 import batchExecutionCache from "@/services/batch-execution-cache";
 import redis from "@/lib/cache/redis";
 
@@ -7,6 +9,11 @@ import redis from "@/lib/cache/redis";
  */
 export async function POST(request: NextRequest) {
   try {
+    const authResult = await authorizeApiRequest(Permission.CACHE_MANAGE);
+    if (!authResult.isValid) {
+      return authResult.response;
+    }
+
     const { searchParams } = new URL(request.url);
     const force = searchParams.get("force") === "true";
     const dryRun = searchParams.get("dryRun") === "true";
@@ -138,6 +145,11 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
+    const authResult = await authorizeApiRequest(Permission.CACHE_MANAGE);
+    if (!authResult.isValid) {
+      return authResult.response;
+    }
+
     const stats = await batchExecutionCache.getExecutionStats();
     const activeExecutions = await batchExecutionCache.getActiveExecutions();
 

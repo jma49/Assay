@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import redis from "@/lib/cache/redis";
-import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { Permission } from "@/lib/auth/rbac";
 
 /**
  * 清理 Redis 缓存的维护 API
@@ -9,7 +10,7 @@ import { validateApiAuth } from "@/lib/auth/auth-utils";
 export async function POST(request: NextRequest) {
   try {
     // 验证用户认证
-    const authResult = await validateApiAuth("zh");
+    const authResult = await authorizeApiRequest(Permission.CACHE_MANAGE, "zh");
     if (!authResult.isValid) {
       return authResult.response!;
     }
@@ -66,11 +67,10 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
-    // 验证用户认证 - 暂时跳过认证检查，因为这是开发工具
-    // const authResult = await validateApiAuth("zh");
-    // if (!authResult.isValid) {
-    //   return authResult.response!;
-    // }
+    const authResult = await authorizeApiRequest(Permission.CACHE_MANAGE);
+    if (!authResult.isValid) {
+      return authResult.response;
+    }
 
     if (process.env.NODE_ENV !== "development") {
       return NextResponse.json(

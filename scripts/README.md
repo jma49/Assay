@@ -25,7 +25,6 @@
 ### 🔧 服务组件 (`services/`)
 
 - `mongo-service.ts` - MongoDB 服务管理
-- `slack-service.ts` - Slack 通知服务
 
 ### ⚙️ 核心组件 (`core/`)
 
@@ -174,24 +173,26 @@ npx ts-node scripts/scheduler/task-scheduler.ts
 
 **API 接口**:
 
+管理 API 默认只监听 `127.0.0.1`（可用 `SCHEDULER_HOST` 修改）。除 `/health` 外，所有接口都需要携带 `SCHEDULER_API_TOKEN`；未配置该变量时，管理接口返回 503。
+
 ```bash
 # 健康检查
 curl http://localhost:3001/health
 
 # 查看所有任务状态
-curl http://localhost:3001/tasks
+curl -H "Authorization: Bearer $SCHEDULER_API_TOKEN" http://localhost:3001/tasks
 
 # 暂停特定任务
-curl -X POST http://localhost:3001/tasks/check-user-activity/pause
+curl -X POST -H "Authorization: Bearer $SCHEDULER_API_TOKEN" http://localhost:3001/tasks/check-user-activity/pause
 
 # 恢复特定任务
-curl -X POST http://localhost:3001/tasks/check-user-activity/resume
+curl -X POST -H "Authorization: Bearer $SCHEDULER_API_TOKEN" http://localhost:3001/tasks/check-user-activity/resume
 
 # 手动执行任务
-curl -X POST http://localhost:3001/tasks/check-user-activity/execute
+curl -X POST -H "Authorization: Bearer $SCHEDULER_API_TOKEN" http://localhost:3001/tasks/check-user-activity/execute
 
 # 重新加载所有任务
-curl -X POST http://localhost:3001/reload
+curl -X POST -H "Authorization: Bearer $SCHEDULER_API_TOKEN" http://localhost:3001/reload
 ```
 
 #### **☁️ GitHub Actions** (备用/手动)
@@ -221,7 +222,7 @@ cronSchedule: "0 8 * * *"  // 每天芝加哥凌晨3点
 npm run scheduler
 
 // 3. 监控执行状态
-curl http://localhost:3001/tasks
+curl -H "Authorization: Bearer $SCHEDULER_API_TOKEN" http://localhost:3001/tasks
 ```
 
 #### **备用/应急** (GitHub Actions)

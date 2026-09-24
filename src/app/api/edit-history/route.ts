@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 import { auth, clerkClient } from "@clerk/nextjs/server";
@@ -144,6 +146,11 @@ export async function POST(request: NextRequest) {
 // GET - 查询编辑历史（支持筛选）
 export async function GET(request: NextRequest) {
   try {
+    const authResult = await authorizeApiRequest(Permission.HISTORY_READ);
+    if (!authResult.isValid) {
+      return authResult.response;
+    }
+
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });

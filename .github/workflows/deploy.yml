@@ -12,7 +12,11 @@ env:
   HEALTH_CHECK_TIMEOUT: 60
 
 jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+
   deploy:
+    needs: verify
     runs-on: ubuntu-latest
     
     steps:
