@@ -17,6 +17,7 @@ import * as cron from "node-cron";
 import { getMongoDbClient } from "../../src/lib/database/mongodb";
 import { executeSqlScriptFromDb } from "../core/sql-executor";
 import { Collection, Document } from "mongodb";
+import { createApiTokenGuard } from "./api-auth";
 
 interface ScheduledScript {
   scriptId: string;
@@ -47,7 +48,10 @@ class TaskScheduler {
   private isShuttingDown: boolean = false;
   private healthCheckInterval: NodeJS.Timeout | null = null;
 
-  constructor(private port: number = 3001) {
+  constructor(
+    private port: number = 3001,
+    private host: string = "127.0.0.1"
+  ) {
     this.app = express();
     this.setupExpress();
     this.setupGracefulShutdown();
@@ -55,6 +59,7 @@ class TaskScheduler {
 
   private setupExpress(): void {
     this.app.use(express.json());
+    this.app.use(createApiTokenGuard(process.env.SCHEDULER_API_TOKEN));
 
     // 健康检查端点
     this.app.get("/health", (req: any, res: any) => {
@@ -201,8 +206,8 @@ class TaskScheduler {
       await this.loadTasksFromDatabase();
 
       // 启动HTTP服务器
-      this.server = this.app.listen(this.port, () => {
-        console.log(`🌐 管理API服务器已启动: http://localhost:${this.port}`);
+      this.server = this.app.listen(this.port, this.host, () => {
+        console.log(`🌐 管理API服务器已启动: http://${this.host}:${this.port}`);
         console.log(`📊 健康检查: http://localhost:${this.port}/health`);
         console.log(`📋 任务状态: http://localhost:${this.port}/tasks`);
       });
@@ -357,7 +362,8 @@ class TaskScheduler {
 // 主函数
 async function main() {
   const port = parseInt(process.env.SCHEDULER_PORT || "3001");
-  const scheduler = new TaskScheduler(port);
+  const host = process.env.SCHEDULER_HOST || "127.0.0.1";
+  const scheduler = new TaskScheduler(port, host);
 
   try {
     await scheduler.start();
