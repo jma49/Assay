@@ -33,7 +33,6 @@ if [ ! -f "$ENV_FILE" ]; then
     echo "请创建环境文件并设置以下变量:"
     echo "  - DATABASE_URL"
     echo "  - MONGODB_URI"
-    echo "  - SLACK_WEBHOOK_URL (可选)"
     exit 1
 fi
 

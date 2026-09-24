@@ -25,7 +25,6 @@
 ### 🔧 服务组件 (`services/`)
 
 - `mongo-service.ts` - MongoDB 服务管理
-- `slack-service.ts` - Slack 通知服务
 
 ### ⚙️ 核心组件 (`core/`)
 
