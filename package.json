@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.39.7",
+    "@clerk/themes": "^2.4.64",
     "@codemirror/lang-sql": "^6.8.0",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@google/generative-ai": "^0.21.0",
