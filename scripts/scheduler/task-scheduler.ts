@@ -47,6 +47,7 @@ class TaskScheduler {
   private server: any;
   private isShuttingDown: boolean = false;
   private healthCheckInterval: NodeJS.Timeout | null = null;
+  private runningScripts: Set<string> = new Set();
 
   constructor(
     private port: number = 3001,
@@ -128,6 +129,10 @@ class TaskScheduler {
 
         if (!task) {
           return res.status(404).json({ error: "Task not found" });
+        }
+
+        if (this.runningScripts.has(scriptId)) {
+          return res.status(409).json({ error: "Task is already running" });
         }
 
         try {
@@ -314,6 +319,13 @@ class TaskScheduler {
       return;
     }
 
+    // node-cron does not wait for the previous run to finish.
+    if (this.runningScripts.has(scriptId)) {
+      console.warn(`⏭️  Skipping ${scriptId}: previous run is still in progress`);
+      return;
+    }
+    this.runningScripts.add(scriptId);
+
     try {
       console.log(`🏃 开始执行定时脚本: ${scriptId}`);
       taskInfo.lastExecuted = new Date();
@@ -349,6 +361,8 @@ class TaskScheduler {
     } catch (error) {
       console.error(`❌ 脚本执行失败 ${scriptId}:`, error);
       taskInfo.errorCount++;
+    } finally {
+      this.runningScripts.delete(scriptId);
     }
   }
 
