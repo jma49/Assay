@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { Permission } from "@/lib/auth/rbac";
 import batchExecutionCache, {
   BatchExecutionState,
 } from "@/services/batch-execution-cache";
@@ -43,6 +45,11 @@ async function safeSaveExecution(
  */
 export async function GET(request: NextRequest) {
   try {
+    const authResult = await authorizeApiRequest(Permission.HISTORY_READ);
+    if (!authResult.isValid) {
+      return authResult.response;
+    }
+
     const { searchParams } = new URL(request.url);
     const executionId = searchParams.get("executionId");
 
@@ -91,6 +98,11 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const authResult = await authorizeApiRequest(Permission.SCRIPT_EXECUTE);
+    if (!authResult.isValid) {
+      return authResult.response;
+    }
+
     const body = await request.json();
     const {
       executionId,
@@ -324,6 +336,11 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    const authResult = await authorizeApiRequest(Permission.SCRIPT_EXECUTE);
+    if (!authResult.isValid) {
+      return authResult.response;
+    }
+
     const { searchParams } = new URL(request.url);
     const executionId = searchParams.get("executionId");
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { Permission } from "@/lib/auth/rbac";
 import getMongoDbClient from "@/lib/database/mongodb";
 import { executeScriptAndNotify } from "@/lib/utils/script-executor";
 import batchExecutionCache from "@/services/batch-execution-cache";
@@ -39,7 +40,7 @@ async function getSqlScriptsCollection(): Promise<Collection<Document>> {
 export async function POST(request: NextRequest) {
   try {
     // 统一的认证检查
-    const authResult = await validateApiAuth("en");
+    const authResult = await authorizeApiRequest(Permission.SCRIPT_EXECUTE, "en");
     if (!authResult.isValid) {
       return authResult.response;
     }

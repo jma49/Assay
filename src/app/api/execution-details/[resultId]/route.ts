@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { ObjectId } from "mongodb";
 
@@ -9,6 +11,11 @@ export const GET = async (
   request: NextRequest,
   { params }: { params: Promise<{ resultId: string }> } // <--- 注意这里的 Promise
 ) => {
+  const authResult = await authorizeApiRequest(Permission.HISTORY_READ);
+  if (!authResult.isValid) {
+    return authResult.response;
+  }
+
   const awaitedParams = await params; // <--- await params
   const resultId = awaitedParams.resultId;
   // 或者直接解构: const { resultId } = await params;

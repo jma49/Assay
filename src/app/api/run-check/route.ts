@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateApiAuth, getUserInfo } from "@/lib/auth/auth-utils";
+import { authorizeApiRequest, getUserInfo } from "@/lib/auth/auth-utils";
+import { Permission } from "@/lib/auth/rbac";
 import { executeScriptAndNotify } from "@/lib/utils/script-executor";
 
 /**
@@ -9,7 +10,7 @@ import { executeScriptAndNotify } from "@/lib/utils/script-executor";
  */
 export async function POST(request: NextRequest) {
   // 验证用户认证和权限
-  const authResult = await validateApiAuth();
+  const authResult = await authorizeApiRequest(Permission.SCRIPT_EXECUTE, "en");
   if (!authResult.isValid) {
     return authResult.response;
   }

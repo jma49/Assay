@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { Permission } from "@/lib/auth/rbac";
 import { getCachedSchema } from "@/lib/database/db-schema";
 import { generateContentWithRetry, getAIErrorMessage } from "@/lib/utils/ai-utils";
 
 export async function POST(request: NextRequest) {
   try {
+    const authResult = await authorizeApiRequest(Permission.HISTORY_READ);
+    if (!authResult.isValid) {
+      return authResult.response;
+    }
+
     const { sql, errorMessage } = await request.json();
 
     if (!sql || typeof sql !== "string") {
