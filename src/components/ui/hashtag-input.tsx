@@ -83,13 +83,8 @@ export function HashtagInput({
   };
 
   return (
-    <div className={cn("space-y-2", className)}>
-      {label && (
-        <Label className="text-sm font-medium text-foreground flex items-center gap-2">
-          <Hash className="h-4 w-4" />
-          {label}
-        </Label>
-      )}
+    <div className={cn("space-y-1.5", className)}>
+      {label && <Label className="text-[13px] font-medium">{label}</Label>}
       
       <div
         className={cn(
@@ -161,7 +156,7 @@ export function HashtagInput({
           {helperText || "按 Enter 或逗号添加标签，支持中英文、数字和连字符"}
         </span>
         <span>
-          {hashtags.length}/{maxTags} 标签
+          {hashtags.length}/{maxTags}
         </span>
       </div>
     </div>

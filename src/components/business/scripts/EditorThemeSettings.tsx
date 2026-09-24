@@ -161,12 +161,14 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button
-          variant="outline"
-          size="sm"
-          className="h-8 px-3 text-xs gap-2 hover:bg-primary/10 hover:border-primary/50"
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-8"
+          title={t("themeSettings") || "主题设置"}
+          aria-label={t("themeSettings") || "主题设置"}
         >
-          <Settings className="h-3.5 w-3.5" />
-          {t("themeSettings") || "主题设置"}
+          <Settings className="size-3.5" />
         </Button>
       </DialogTrigger>
       
