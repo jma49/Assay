@@ -94,21 +94,7 @@ NODE_ENV="production"
    - Import your repository to Vercel
    - Configure environment variables in Vercel dashboard
 
-2. **Add Vercel Configuration**
-
-   ```json
-   // vercel.json
-   {
-     "crons": [
-       {
-         "path": "/api/run-scheduled-scripts",
-         "schedule": "0 8 * * *"
-       }
-     ]
-   }
-   ```
-
-3. **Deploy**
+2. **Deploy**
    ```bash
    vercel --prod
    ```
