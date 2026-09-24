@@ -1,7 +1,13 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { User } from "@clerk/nextjs/server";
-import { getUserRole, setUserRole, UserRole } from "@/lib/auth/rbac";
+import {
+  getUserRole,
+  Permission,
+  requirePermission,
+  setUserRole,
+  UserRole,
+} from "@/lib/auth/rbac";
 
 // 国际化文本
 export const authMessages = {
@@ -11,6 +17,7 @@ export const authMessages = {
     unauthorizedEmailNotFound: "Unauthorized: Email address not found",
     unauthorizedInvalidDomain: "Unauthorized: Only invited users are allowed",
     authenticationError: "Authentication error",
+    forbidden: "Forbidden: Insufficient permissions",
     restrictedAccess: "Access Restricted",
     contactAdmin: "Please contact administrator for access",
   },
@@ -20,6 +27,7 @@ export const authMessages = {
     unauthorizedEmailNotFound: "未授权：找不到邮箱地址",
     unauthorizedInvalidDomain: "未授权：只允许受邀用户访问",
     authenticationError: "认证错误",
+    forbidden: "权限不足",
     restrictedAccess: "访问受限",
     contactAdmin: "请联系管理员申请访问权限",
   },
@@ -126,6 +134,29 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
       ),
     } as const;
   }
+}
+
+export async function authorizeApiRequest(
+  permission: Permission,
+  language: "en" | "zh" = "zh"
+) {
+  const authResult = await validateApiAuth(language);
+  if (!authResult.isValid) {
+    return authResult;
+  }
+
+  const { authorized } = await requirePermission(authResult.user.id, permission);
+  if (!authorized) {
+    return {
+      isValid: false,
+      response: NextResponse.json(
+        { success: false, message: authMessages[language].forbidden },
+        { status: 403 }
+      ),
+    } as const;
+  }
+
+  return authResult;
 }
 
 /**
