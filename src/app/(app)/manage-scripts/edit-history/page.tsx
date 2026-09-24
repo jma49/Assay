@@ -37,7 +37,6 @@ import {
   Plus,
   Trash2,
   AlertCircle,
-  Loader2,
   RotateCcw,
   Search,
   FileText,
@@ -59,6 +58,7 @@ import {
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { cn } from "@/lib/utils/utils";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { SkeletonTable } from "@/components/common/PageSkeletons";
 
 export default function GlobalEditHistoryPage() {
   const { language } = useLanguage();
@@ -506,14 +506,7 @@ export default function GlobalEditHistoryPage() {
 
             <CardContent className="relative p-0">
               {loading ? (
-                <div className="flex items-center justify-center py-16">
-                  <div className="text-center space-y-4">
-                    <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
-                    <p className="text-lg font-medium text-foreground">
-                      {t("loadingEditHistory")}
-                    </p>
-                  </div>
-                </div>
+                <SkeletonTable rows={6} withTitle={false} className="rounded-none border-0" />
               ) : error ? (
                 <div className="flex flex-col items-center justify-center py-16">
                   <div className="p-6 rounded-lg border border-failure/30 max-w-md mx-auto text-center">
