@@ -3,6 +3,7 @@ import db from "../../src/lib/database/db"; // 调整路径
 import { saveResultToMongo } from "../services/mongo-service";
 import { sendSlackNotification } from "../services/slack-service";
 import { ExecutionResult, ExecutionStatusType } from "../types";
+import { validateReadOnlySql } from "../../src/lib/sql/read-only-validator";
 
 /**
  * PostgreSQL 完整语法解析器
@@ -817,6 +818,12 @@ export async function executeSqlScriptFromDb(
     // 处理空SQL内容
     if (!sqlContent || sqlContent.trim() === "") {
       return await handleEmptySqlContent(scriptId, executionTimestamp);
+    }
+
+    // Stored content may have bypassed the save-time check.
+    const securityCheck = validateReadOnlySql(sqlContent);
+    if (!securityCheck.isValid) {
+      throw new Error(`SQL security check failed: ${securityCheck.reason}`);
     }
 
     // 解析SQL
