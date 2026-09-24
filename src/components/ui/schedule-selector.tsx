@@ -140,7 +140,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
       {/* 预设选项选择器 */}
       <div className="space-y-2">
         <Label className="text-sm font-medium flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+          <Calendar className="h-4 w-4 text-muted-foreground " />
           {t('schedulePreset')}
           {required && <span className="text-destructive">*</span>}
         </Label>
@@ -174,7 +174,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
       {showCustomInput && (
         <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
           <Label className="text-sm font-medium flex items-center gap-2">
-            <Clock className="h-4 w-4 text-amber-600" />
+            <Clock className="h-4 w-4 text-attention" />
             {t('customCronExpression')}
             <span className="text-destructive">*</span>
           </Label>
@@ -196,24 +196,24 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
 
       {/* 下次执行时间显示 */}
       {(value && !validationError) && (
-        <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg border border-green-200 dark:border-green-800">
+        <div className="p-3 rounded-lg border border-success/30 ">
           <div className="flex items-start gap-3">
-            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+            <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
             <div className="space-y-2 flex-1">
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                <Badge variant="outline" className="text-xs bg-success/10 text-success ">
                   {t('valid')}
                 </Badge>
-                <span className="text-sm font-medium text-green-900 dark:text-green-100">
+                <span className="text-sm font-medium text-success ">
                   {t('scheduleStatus')}
                 </span>
               </div>
               
               <div className="space-y-1">
-                <p className="text-sm text-green-800 dark:text-green-200">
+                <p className="text-sm text-success ">
                   <span className="font-medium">{t('nextExecution')}:</span>
                 </p>
-                <p className="text-sm font-mono text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/50 px-2 py-1 rounded">
+                <p className="text-sm font-mono text-success bg-success/10 px-2 py-1 rounded">
                   {formatNextExecutionTime(nextExecution, language)}
                 </p>
               </div>
@@ -224,19 +224,19 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
 
       {/* 无效状态显示 */}
       {validationError && (
-        <div className="p-3 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/30 rounded-lg border border-red-200 dark:border-red-800">
+        <div className="p-3 rounded-lg border border-failure/30 ">
           <div className="flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+            <AlertCircle className="h-5 w-5 text-failure flex-shrink-0" />
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Badge variant="destructive" className="text-xs">
                   {t('invalid')}
                 </Badge>
-                <span className="text-sm font-medium text-red-900 dark:text-red-100">
+                <span className="text-sm font-medium text-failure ">
                   {t('scheduleStatus')}
                 </span>
               </div>
-              <p className="text-sm text-red-800 dark:text-red-200">
+              <p className="text-sm text-failure ">
                 {validationError}
               </p>
             </div>

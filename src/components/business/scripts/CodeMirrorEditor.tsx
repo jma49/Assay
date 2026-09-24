@@ -350,10 +350,10 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   return (
     <div className="space-y-4">
       {/* 编辑器工具栏 */}
-      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/40 to-muted/20 rounded-lg border border-border/40">
+      <div className="flex items-center justify-between p-4 rounded-lg border border-border/40">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="p-2.5 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 ring-2 ring-primary/20 shadow-sm">
+            <div className="p-2.5 rounded-lg ring-2 ring-primary/20 ">
               <FileCode className="h-5 w-5 text-primary" />
             </div>
             <div>
@@ -372,13 +372,13 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
           <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-background/60 border border-border/40">
             <Badge
               variant="outline"
-              className="text-xs bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-700"
+              className="text-xs bg-muted text-foreground border-border   "
             >
               {getLineCount(value)} {t("codeStatisticsLines")}
             </Badge>
             <Badge
               variant="outline"
-              className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-700"
+              className="text-xs bg-success/10 text-success border-success/30   "
             >
               {getCharCount(value)} {t("codeStatisticsChars")}
             </Badge>
@@ -410,11 +410,11 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
             size="sm"
             onClick={handleFormat}
             disabled={isFormatting || !value.trim()}
-            className="h-8 px-3 text-xs shadow-sm transition-all duration-200 hover:shadow-md hover:bg-primary/10 hover:border-primary/50 hover:text-primary focus:ring-2 focus:ring-primary/20"
+            className="h-8 px-3 text-xs transition-all duration-200 hover:bg-primary/10 hover:border-primary/50 hover:text-primary focus:ring-2 focus:ring-primary/20"
           >
             {isFormatting ? (
               <>
-                <div className="animate-spin h-3.5 w-3.5 mr-1.5 border-2 border-current border-t-transparent rounded-full" />
+                <div className="animate-spin h-3.5 w-3.5 mr-1.5 border border-current border-t-transparent rounded-full" />
                 {t("formatting")}
               </>
             ) : (
@@ -431,13 +431,13 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       </div>
 
       {/* 编辑器容器 */}
-      <div className="relative overflow-hidden rounded-lg border-2 border-border/40 bg-gradient-to-br from-background via-background to-muted/5 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-border/60">
+      <div className="relative overflow-hidden rounded-lg border border-border/40 transition-all duration-300 hover:border-border/60">
         {/* 装饰性顶部条 */}
-        <div className="h-1 bg-gradient-to-r from-primary/60 via-primary/40 to-primary/60"></div>
+        <div className="h-1    "></div>
 
         {showPreview ? (
           // 预览模式
-          <div className="p-6 bg-gradient-to-br from-muted/10 to-muted/5">
+          <div className="p-6   ">
             <div className="flex items-center gap-2 mb-4">
               <Eye className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium text-muted-foreground">
@@ -490,8 +490,8 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
             {/* 编辑器状态指示器 */}
             <div className="absolute bottom-2 right-2">
-              <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-background/90 backdrop-blur-sm border border-border/40 shadow-sm">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-background/90 backdrop-blur-sm border border-border/40 ">
+                <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
                 <span className="text-xs text-muted-foreground font-mono">
                   {t("editorStatusReady")}
                 </span>

@@ -130,26 +130,26 @@ export function EditHistoryDialog({
   const getOperationIcon = (operation: string) => {
     switch (operation) {
       case "create":
-        return <Plus className="w-4 h-4 text-green-600" />;
+        return <Plus className="w-4 h-4 text-success" />;
       case "update":
-        return <Edit className="w-4 h-4 text-blue-600" />;
+        return <Edit className="w-4 h-4 text-muted-foreground" />;
       case "delete":
-        return <Trash2 className="w-4 h-4 text-red-600" />;
+        return <Trash2 className="w-4 h-4 text-failure" />;
       default:
-        return <History className="w-4 h-4 text-gray-600" />;
+        return <History className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
   const getOperationBadgeColor = (operation: string) => {
     switch (operation) {
       case "create":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-success/10 text-success border-success/30";
       case "update":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-muted text-foreground border-border";
       case "delete":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-failure/10 text-failure border-failure/30";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-muted text-foreground border-border";
     }
   };
 
@@ -216,12 +216,12 @@ export function EditHistoryDialog({
                 <span>{t("loadingEditHistory")}</span>
               </div>
             ) : error ? (
-              <div className="flex items-center justify-center py-8 text-red-600">
+              <div className="flex items-center justify-center py-8 text-failure">
                 <AlertCircle className="w-6 h-6 mr-2" />
                 <span>{error}</span>
               </div>
             ) : histories.length === 0 ? (
-              <div className="flex items-center justify-center py-8 text-gray-500">
+              <div className="flex items-center justify-center py-8 text-muted-foreground">
                 <History className="w-6 h-6 mr-2" />
                 <span>{t("noEditHistory")}</span>
               </div>
@@ -244,7 +244,7 @@ export function EditHistoryDialog({
                               {getOperationText(history.operation)}
                             </Badge>
                           </CardTitle>
-                          <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
                             <div className="flex items-center gap-1">
                               <User className="w-3 h-3" />
                               <span>
@@ -274,16 +274,16 @@ export function EditHistoryDialog({
                   {history.changes && history.changes.length > 0 && (
                     <CardContent className="pt-0">
                       <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-gray-700">
+                        <h4 className="text-sm font-medium text-foreground">
                           {t("changesDetails")}：
                         </h4>
                         {history.changes.map((change, changeIndex) => (
                           <div
                             key={changeIndex}
-                            className="bg-gray-50 rounded-lg p-2"
+                            className="bg-muted rounded-lg p-2"
                           >
                             <div className="flex items-center gap-2 mb-2">
-                              <span className="text-sm font-medium text-gray-700">
+                              <span className="text-sm font-medium text-foreground">
                                 {change.fieldDisplayNameCn ||
                                   change.fieldDisplayName ||
                                   getFieldDisplayName(change.field)}
@@ -291,18 +291,18 @@ export function EditHistoryDialog({
                             </div>
                             <div className="grid grid-cols-2 gap-4 text-xs">
                               <div>
-                                <span className="text-gray-500">
+                                <span className="text-muted-foreground">
                                   {t("originalValue")}：
                                 </span>
-                                <div className="mt-1 p-2 bg-red-50 border border-red-200 rounded text-red-800 font-mono">
+                                <div className="mt-1 p-2 bg-failure/10 border border-failure/30 rounded text-failure font-mono">
                                   {formatValue(change.oldValue)}
                                 </div>
                               </div>
                               <div>
-                                <span className="text-gray-500">
+                                <span className="text-muted-foreground">
                                   {t("newValue")}：
                                 </span>
-                                <div className="mt-1 p-2 bg-green-50 border border-green-200 rounded text-green-800 font-mono">
+                                <div className="mt-1 p-2 bg-success/10 border border-success/30 rounded text-success font-mono">
                                   {formatValue(change.newValue)}
                                 </div>
                               </div>
@@ -315,7 +315,7 @@ export function EditHistoryDialog({
 
                   {(history.descriptionCn || history.description) && (
                     <CardContent className="pt-0">
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         <span className="font-medium">
                           {t("description")}：
                         </span>
@@ -344,7 +344,7 @@ export function EditHistoryDialog({
             >
               {t("previous")}
             </Button>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted-foreground">
               {t("pageInfoShort")} {currentPage}/{totalPages}
             </span>
             <Button

@@ -267,13 +267,13 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
           <div className="space-y-3 p-4 bg-muted/40 rounded-lg border">
             <h4 className="font-medium text-sm">{t("currentSettings") || "当前设置"}</h4>
             <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-700">
+              <Badge variant="outline" className="bg-muted text-foreground border-border   ">
                 {systemTheme === "dark" ? t("darkTheme") : t("lightTheme")}: {currentThemeLabel}
               </Badge>
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 dark:bg-green-950/20 dark:text-green-400 dark:border-green-700">
+              <Badge variant="outline" className="bg-success/10 text-success border-success/30   ">
                 {t("fontLabel")}: {FONT_FAMILIES.find(f => f.value === fontFamily)?.label}
               </Badge>
-              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-700">
+              <Badge variant="outline" className="bg-muted text-foreground border-border   ">
                 {t("fontSize")}: {fontSize[0]}px
               </Badge>
             </div>

@@ -13,7 +13,6 @@ import {
   Save,
   Loader2,
   Home,
-  FileText,
   History,
   Activity,
   ChevronLeft,
@@ -73,7 +72,6 @@ import {
 } from "@/components/business/scripts/ScriptMetadataForm";
 import CodeMirrorEditor from "@/components/business/scripts/CodeMirrorEditor";
 import { generateSqlTemplateWithTranslation } from "@/components/business/dashboard/scriptTranslations";
-import { cn } from "@/lib/utils/utils";
 import { EditHistoryDialog } from "@/components/business/scripts/EditHistoryDialog";
 import { recordEditHistory } from "@/lib/workflows/edit-history";
 import UserHeader from "@/components/layout/UserHeader";
@@ -623,18 +621,18 @@ const ManageScriptsContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+    <div className="min-h-screen    ">
       <UserHeader />
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-8 animate-fadeIn">
           {/* Header Section */}
-          <header className="text-center lg:text-left">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          <header className="">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="space-y-3">
-                <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent leading-tight py-1">
+                <h1 className="text-[28px] leading-tight font-semibold">
                   {t("manageScriptsPageTitle")}
                 </h1>
-                <p className="text-lg text-muted-foreground leading-relaxed">
+                <p className="text-sm text-muted-foreground">
                   {t("manageScriptsPageDescription")}
                 </p>
               </div>
@@ -642,18 +640,12 @@ const ManageScriptsContent = () => {
           </header>
 
           {/* Scripts Table */}
-          <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
-            {/* 装饰性背景 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-
-            <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
+          <Card className="relative gap-0 overflow-hidden py-0">
+            <CardHeader className="relative border-b px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
-                    <FileText className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
-                  </div>
                   <div className="space-y-2">
-                    <CardTitle className="text-2xl font-bold text-foreground leading-relaxed">
+                    <CardTitle>
                       {totalScripts > 0
                         ? `${totalScripts} ${t("scripts")}`
                         : t("manageScriptsPageTitle")}
@@ -671,7 +663,7 @@ const ManageScriptsContent = () => {
                       placeholder={t("searchPlaceholder")}
                       value={searchTerm}
                       onChange={(e) => handleSearchChange(e.target.value)}
-                      className="pl-9 pr-10 h-10 w-80 text-sm border-2 border-border/50 bg-background/80 backdrop-blur-sm focus:border-primary/50 shadow-sm transition-all duration-300"
+                      className="pl-9 pr-10 h-10 w-80 text-sm border border-border/50 bg-background/80 backdrop-blur-sm focus:border-primary/50 transition-all duration-300"
                     />
                     {searchTerm && (
                       <Button
@@ -700,7 +692,7 @@ const ManageScriptsContent = () => {
                   <Link href="/manage-scripts/edit-history">
                     <Button
                       variant="outline"
-                      className="h-10 flex items-center gap-2 text-purple-700 border-purple-300 hover:bg-purple-50 hover:text-purple-600 dark:text-purple-400 dark:border-purple-600 dark:hover:bg-purple-900/30 dark:hover:text-purple-300"
+                      className="h-10 flex items-center gap-2 text-foreground border-border hover:bg-muted hover:text-muted-foreground    "
                     >
                       <History className="h-4 w-4" />
                       {t("allScriptsHistory")}
@@ -716,8 +708,8 @@ const ManageScriptsContent = () => {
               <LoadingOverlay isLoading={isLoading} text={t("loading")} spinnerSize="lg">
                 {error ? (
                 <div className="p-6 text-center space-y-4">
-                  <div className="p-6 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-dashed border-muted-foreground/20 max-w-md mx-auto">
-                    <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                  <div className="p-6 rounded-lg border border-dashed border-muted-foreground/20 max-w-md mx-auto">
+                    <AlertTriangle className="h-12 w-12 text-failure mx-auto mb-4" />
                     <p className="text-lg font-medium text-foreground">
                       {t("errorTitle")}
                     </p>
@@ -729,7 +721,7 @@ const ManageScriptsContent = () => {
                 </div>
               ) : totalScripts === 0 ? (
                 <div className="p-8 text-center space-y-4">
-                  <div className="p-6 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-dashed border-muted-foreground/20 max-w-md mx-auto">
+                  <div className="p-6 rounded-lg border border-dashed border-muted-foreground/20 max-w-md mx-auto">
                     <PlusCircle className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
                     <p className="text-lg font-medium text-muted-foreground">
                       {t("noScriptsYet")}
@@ -740,83 +732,74 @@ const ManageScriptsContent = () => {
                   </div>
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-lg border border-border/20 shadow-inner bg-gradient-to-b from-background to-muted/10">
+                <div className="overflow-hidden">
                   <div className="overflow-x-auto">
-                    <Table>
+                    <Table className="table-fixed">
                       <TableHeader>
-                        <TableRow className="bg-gradient-to-r from-primary/5 via-primary/3 to-primary/5 border-b-2 border-primary/20 backdrop-blur-sm">
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                        <TableRow className="hover:bg-transparent">
+                          <TableHead className="h-11 w-[22%] px-6 text-[13px] font-normal text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-blue-400/60"></div>
                               {t("fieldScriptId")}
                             </div>
                           </TableHead>
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                          <TableHead className="h-11 w-[24%] px-4 text-[13px] font-normal text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-emerald-400/60"></div>
                               {t("fieldScriptNameEn")}
                             </div>
                           </TableHead>
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                          <TableHead className="h-11 w-[12%] px-4 text-[13px] font-normal text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-amber-400/60"></div>
                               {t("fieldScriptAuthor")}
                             </div>
                           </TableHead>
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                          <TableHead className="h-11 w-[14%] px-4 text-[13px] font-normal text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-teal-400/60"></div>
                               {t("hashtags") || "标签"}
                             </div>
                           </TableHead>
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 border-r border-border/10 last:border-r-0 leading-relaxed">
+                          <TableHead className="h-11 w-[16%] px-4 text-[13px] font-normal text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-purple-400/60"></div>
                               {t("fieldCreatedAt")}
                             </div>
                           </TableHead>
-                          <TableHead className="h-16 px-4 font-bold text-foreground/90 text-center leading-relaxed">
-                            <div className="flex items-center justify-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-pink-400/60"></div>
+                          <TableHead className="h-11 w-44 px-6 text-right text-[13px] font-normal text-muted-foreground">
+                            <div className="flex items-center justify-end gap-2">
                               {t("tableActions")}
                             </div>
                           </TableHead>
                         </TableRow>
                       </TableHeader>
-                      <TableBody className="divide-y divide-border/20">
-                        {paginatedScripts.map((script, index) => (
+                      <TableBody>
+                        {paginatedScripts.map((script) => (
                           <TableRow
                             key={script._id || script.scriptId}
-                            className={cn(
-                              "group/row transition-all duration-200 hover:bg-gradient-to-r hover:from-muted/30 hover:to-muted/10 hover:shadow-sm",
-                              index % 2 === 0 ? "bg-background" : "bg-muted/5",
-                            )}
+                            className="group/row"
                           >
                             <TableCell
-                              className="px-4 py-5 font-semibold max-w-48 group-hover/row:text-primary transition-colors duration-200 leading-relaxed"
+                              className="max-w-48 px-6 py-3 font-medium"
                               title={script.scriptId}
                             >
                               <div className="truncate">{script.scriptId}</div>
                             </TableCell>
                             <TableCell
-                              className="px-4 py-5 font-medium max-w-56 leading-relaxed"
+                              className="px-4 py-3 font-medium max-w-56"
                               title={script.name}
                             >
                               <div className="truncate">{script.name}</div>
                             </TableCell>
                             <TableCell
-                              className="px-4 py-5 text-muted-foreground max-w-32 leading-relaxed"
+                              className="px-4 py-3 text-muted-foreground max-w-32"
                               title={script.author}
                             >
                               <div className="truncate">{script.author}</div>
                             </TableCell>
                             <TableCell
-                              className="px-4 py-5 max-w-48 leading-relaxed"
+                              className="px-4 py-3 max-w-48"
                               title={script.hashtags?.join(", ") || ""}
                             >
                               <StackedTags tags={script.hashtags || []} visibleCount={1} />
                             </TableCell>
-                            <TableCell className="px-4 py-5 text-muted-foreground max-w-40 font-mono text-sm leading-relaxed">
+                            <TableCell className="max-w-40 px-4 py-3 text-[13px] text-muted-foreground tabular-nums">
                               <div className="truncate">
                                 {script.createdAt
                                   ? formatDate(
@@ -828,46 +811,46 @@ const ManageScriptsContent = () => {
                                   : t("unknown")}
                               </div>
                             </TableCell>
-                            <TableCell className="px-4 py-5 text-center">
-                              <div className="flex justify-center gap-2">
+                            <TableCell className="px-6 py-3 text-right">
+                              <div className="-mr-2 flex justify-end gap-0.5">
                                 <Button
-                                  variant="outline"
-                                  size="sm"
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={() =>
                                     handleOpenDialog("edit", script)
                                   }
-                                  className="h-8 px-3 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 dark:hover:bg-blue-950/20 dark:hover:border-blue-700/50 dark:hover:text-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
+                                  className="size-8 text-muted-foreground hover:text-foreground"
                                   title={t("editScriptTitle")}
                                 >
                                   <Edit className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
-                                  variant="outline"
-                                  size="sm"
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={() =>
                                     handleViewEditHistory(script.scriptId)
                                   }
-                                  className="h-8 px-3 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 dark:hover:bg-purple-950/20 dark:hover:border-purple-700/50 dark:hover:text-purple-400 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800"
+                                  className="size-8 text-muted-foreground hover:text-foreground"
                                   title={t("viewEditHistory")}
                                 >
                                   <History className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
-                                  variant="outline"
-                                  size="sm"
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={() =>
                                     handleViewExecutionHistory(script.scriptId)
                                   }
-                                  className="h-8 px-3 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 dark:hover:bg-orange-950/20 dark:hover:border-orange-700/50 dark:hover:text-orange-400 focus:ring-2 focus:ring-orange-200 dark:focus:ring-orange-800"
+                                  className="size-8 text-muted-foreground hover:text-foreground"
                                   title={t("viewExecutionHistory")}
                                 >
                                   <Activity className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
-                                  variant="outline"
-                                  size="sm"
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={() => handleDeleteClick(script)}
-                                  className="h-8 px-3 text-xs font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:bg-red-50 hover:border-red-300 hover:text-red-700 dark:hover:bg-red-950/20 dark:hover:border-red-700/50 dark:hover:text-red-400 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-800"
+                                  className="size-8 text-muted-foreground hover:bg-failure/10 hover:text-failure"
                                   title={t("deleteScriptButton")}
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
@@ -896,7 +879,7 @@ const ManageScriptsContent = () => {
                     size="sm"
                     onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
                     disabled={currentPage === 1}
-                    className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150 relative z-30"
+                    className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
                   >
                     <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                     <span className="hidden sm:inline">{t("previous")}</span>
@@ -993,7 +976,7 @@ const ManageScriptsContent = () => {
                       setCurrentPage(Math.min(currentPage + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
-                    className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150 relative z-30"
+                    className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
                   >
                     <span className="hidden sm:inline">{t("next")}</span>
                     <ChevronRight className="h-3.5 w-3.5 ml-1" />
@@ -1010,7 +993,7 @@ const ManageScriptsContent = () => {
               <Link href="/scripts/new">
                 <Button
                   size="lg"
-                  className="group shadow-md hover:shadow-lg transition-all duration-300"
+                  className="group transition-all duration-300"
                 >
                   <PlusCircle className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
                   {t("createScriptButton")}
@@ -1022,7 +1005,7 @@ const ManageScriptsContent = () => {
                 onClick={() => handleOpenDialog("add")}
                 variant="outline"
                 size="lg"
-                className="group shadow-md hover:shadow-lg transition-all duration-300"
+                className="group transition-all duration-300"
               >
                 <PlusCircle className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
                 {t("quickCreateButton")}
@@ -1032,7 +1015,7 @@ const ManageScriptsContent = () => {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="group shadow-md hover:shadow-lg transition-all duration-300"
+                  className="group transition-all duration-300"
                 >
                   <Home className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
                   {t("backToDashboardButton")}
@@ -1085,7 +1068,7 @@ const ManageScriptsContent = () => {
                 
                 if (missingFields.length > 0) {
                   return (
-                    <div className="flex items-center gap-1 text-orange-600">
+                    <div className="flex items-center gap-1 text-attention">
                       <AlertTriangle className="h-3 w-3" />
                       <span>缺少必填字段：{missingFields.join("、")}</span>
                     </div>
@@ -1095,7 +1078,7 @@ const ManageScriptsContent = () => {
                 const securityCheck = validateReadOnlySql(currentSqlContent);
                 if (!securityCheck.isValid) {
                   return (
-                    <div className="flex items-center gap-1 text-red-600">
+                    <div className="flex items-center gap-1 text-failure">
                       <AlertTriangle className="h-3 w-3" />
                       <span>SQL安全检查失败：{securityCheck.reason}</span>
                     </div>
@@ -1103,8 +1086,8 @@ const ManageScriptsContent = () => {
                 }
                 
                 return (
-                  <div className="flex items-center gap-1 text-green-600">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <div className="flex items-center gap-1 text-success">
+                    <span className="w-2 h-2 bg-success rounded-full"></span>
                     <span>验证通过，可以保存</span>
                   </div>
                 );
@@ -1165,8 +1148,8 @@ const ManageScriptsContent = () => {
 
       {/* 版本号显示 - 固定在左下角 */}
       <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 shadow-lg hover:shadow-xl transition-all duration-300">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 transition-all duration-300">
+          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
           <span className="font-mono text-xs text-muted-foreground font-medium">
             v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.7"}
           </span>

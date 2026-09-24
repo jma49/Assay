@@ -75,13 +75,13 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
   return (
     <div className="space-y-6">
       {/* 基本信息卡片 */}
-      <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
+      <Card className="group relative overflow-hidden border border-border/20 transition-all duration-500 hover:border-border/40">
         {/* 装饰性背景 */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+        <div className="absolute inset-0 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
 
-        <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
+        <CardHeader className="relative px-6 py-5 border-b border-border/30   ">
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
+            <div className="p-3 rounded-lg bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
               <Settings className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
             </div>
             <div className="space-y-1">
@@ -89,7 +89,7 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
                 {t("scriptMetadataTitle") || "Script Metadata"}
                 <Badge
                   variant="outline"
-                  className="text-xs bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-700"
+                  className="text-xs bg-muted text-foreground border-border   "
                 >
                   {isEditMode ? t("editModeLabel") : t("newModeLabel")}
                 </Badge>
@@ -187,10 +187,10 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* 英文信息 */}
-              <div className="space-y-6 p-4 bg-gradient-to-br from-blue-50/50 to-cyan-50/50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-lg border border-blue-200/60 dark:border-blue-800/60">
+              <div className="space-y-6 p-4 rounded-lg border border-border ">
                 <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  <span className="font-semibold text-sm text-blue-700 dark:text-blue-300">
+                  <Globe className="h-4 w-4 text-muted-foreground " />
+                  <span className="font-semibold text-sm text-foreground ">
                     {t("englishSection")}
                   </span>
                 </div>
@@ -208,7 +208,7 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
                       onChange={handleChange}
                       placeholder="e.g., Check User Activity"
                       required
-                      className="focus:ring-2 focus:ring-blue-200 focus:border-blue-400 dark:focus:ring-blue-800 dark:focus:border-blue-600 transition-all duration-200"
+                      className="focus:ring-2 focus:ring-border focus:border-border transition-all duration-200"
                     />
                   </div>
 
@@ -222,7 +222,7 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
                       value={formData.scope}
                       onChange={handleChange}
                       placeholder="e.g., User Management, Orders"
-                      className="focus:ring-2 focus:ring-blue-200 focus:border-blue-400 dark:focus:ring-blue-800 dark:focus:border-blue-600 transition-all duration-200"
+                      className="focus:ring-2 focus:ring-border focus:border-border transition-all duration-200"
                     />
                   </div>
 
@@ -240,17 +240,17 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
                       onChange={handleChange}
                       placeholder="Briefly describe what this script does."
                       rows={3}
-                      className="focus:ring-2 focus:ring-blue-200 focus:border-blue-400 dark:focus:ring-blue-800 dark:focus:border-blue-600 transition-all duration-200 resize-none"
+                      className="focus:ring-2 focus:ring-border focus:border-border transition-all duration-200 resize-none"
                     />
                   </div>
                 </div>
               </div>
 
               {/* 中文信息 */}
-              <div className="space-y-6 p-4 bg-gradient-to-br from-emerald-50/50 to-teal-50/50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-lg border border-emerald-200/60 dark:border-emerald-800/60">
+              <div className="space-y-6 p-4 rounded-lg border border-success/30 ">
                 <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  <span className="font-semibold text-sm text-emerald-700 dark:text-emerald-300">
+                  <Globe className="h-4 w-4 text-success " />
+                  <span className="font-semibold text-sm text-success ">
                     {t("chineseSection")}
                   </span>
                 </div>
@@ -266,7 +266,7 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
                       value={formData.cnName}
                       onChange={handleChange}
                       placeholder="例如, 检查用户活跃度"
-                      className="focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 dark:focus:ring-emerald-800 dark:focus:border-emerald-600 transition-all duration-200"
+                      className="focus:ring-2 focus:ring-success/30 focus:border-success/30 transition-all duration-200"
                     />
                   </div>
 
@@ -280,7 +280,7 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
                       value={formData.cnScope}
                       onChange={handleChange}
                       placeholder="例如, 用户管理, 订单"
-                      className="focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 dark:focus:ring-emerald-800 dark:focus:border-emerald-600 transition-all duration-200"
+                      className="focus:ring-2 focus:ring-success/30 focus:border-success/30 transition-all duration-200"
                     />
                   </div>
 
@@ -298,7 +298,7 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
                       onChange={handleChange}
                       placeholder="简要描述此脚本的功能。"
                       rows={3}
-                      className="focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 dark:focus:ring-emerald-800 dark:focus:border-emerald-600 transition-all duration-200 resize-none"
+                      className="focus:ring-2 focus:ring-success/30 focus:border-success/30 transition-all duration-200 resize-none"
                     />
                   </div>
                 </div>
@@ -309,8 +309,8 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
           {/* 调度配置 */}
           <div className="space-y-6 pt-6 border-t border-border/30">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30">
-                <Calendar className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg     ">
+                <Calendar className="h-4 w-4 text-muted-foreground " />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-foreground">
@@ -322,7 +322,7 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
               </div>
             </div>
 
-            <div className="p-6 bg-gradient-to-br from-violet-50/50 to-purple-50/50 dark:from-violet-950/20 dark:to-purple-950/20 rounded-xl border border-violet-200/60 dark:border-violet-800/60">
+            <div className="p-6 rounded-lg border border-border ">
               <div className="space-y-6">
                 {/* 启用定时任务切换 */}
                 <div className="flex items-start gap-4 p-4 rounded-lg bg-background/60 border border-border/40 hover:bg-background/80 transition-all duration-200">
@@ -332,14 +332,14 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
                     checked={formData.isScheduled}
                     onCheckedChange={handleCheckboxChange}
                     aria-label={t("fieldIsScheduled") || "Enable Schedule"}
-                    className="data-[state=checked]:bg-violet-600 data-[state=checked]:border-violet-600 mt-1"
+                    className="data-[state=checked]:bg-primary data-[state=checked]:border-border mt-1"
                   />
                   <div className="flex-1 space-y-1">
                     <Label
                       htmlFor="isScheduled"
                       className="font-medium flex items-center gap-2 cursor-pointer text-base"
                     >
-                      <Clock className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                      <Clock className="h-4 w-4 text-muted-foreground " />
                       {t("fieldIsScheduled") || "启用定时执行"}
                     </Label>
                     <p className="text-sm text-muted-foreground">
@@ -351,7 +351,7 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
                 {/* 定时任务配置 */}
                 {formData.isScheduled && (
                   <div className="space-y-4 animate-in slide-in-from-top-5 duration-300">
-                    <div className="h-px bg-gradient-to-r from-transparent via-violet-200 to-transparent dark:via-violet-800" />
+                    <div className="h-px     " />
                     <ScheduleSelector
                       value={formData.cronSchedule}
                       onChange={(cronExpression) => onFormChange("cronSchedule", cronExpression)}
