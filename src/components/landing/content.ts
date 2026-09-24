@@ -36,6 +36,8 @@ interface LandingCopy {
   sections: FeatureSection[];
   quickStart: { eyebrow: string; title: string; body: string; readme: string };
   faq: { title: string; items: { q: string; a: string }[] };
+  cta: { title: string; body: string };
+  themeLabel: string;
   footer: string;
 }
 
@@ -186,6 +188,11 @@ const en: LandingCopy = {
       },
     ],
   },
+  cta: {
+    title: "Know before your users do.",
+    body: "Turn the queries you already run by hand into checks that run on their own.",
+  },
+  themeLabel: "Editor theme",
   footer: "Open source SQL checks for PostgreSQL.",
 };
 
@@ -324,6 +331,11 @@ const zh: LandingCopy = {
       },
     ],
   },
+  cta: {
+    title: "在用户发现之前发现问题。",
+    body: "把你平时手动跑的查询，变成会自动运行的检查。",
+  },
+  themeLabel: "编辑器主题",
   footer: "面向 PostgreSQL 的开源 SQL 检查工具。",
 };
 
