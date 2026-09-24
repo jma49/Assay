@@ -78,7 +78,6 @@
     "@uiw/codemirror-theme-tokyo-night": "^4.23.12",
     "@uiw/react-codemirror": "^4.23.12",
     "@upstash/redis": "^1.35.0",
-    "@vercel/blob": "^1.0.1",
     "axios": "^1.20.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
