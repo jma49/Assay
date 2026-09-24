@@ -40,5 +40,6 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)).*)",
     // 总是运行在API路由上
     "/(api|trpc)(.*)",
+    "/__clerk/:path*",
   ],
 };
