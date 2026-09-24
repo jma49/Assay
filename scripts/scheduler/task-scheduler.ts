@@ -17,6 +17,7 @@ import * as cron from "node-cron";
 import { getMongoDbClient } from "../../src/lib/database/mongodb";
 import { executeSqlScriptFromDb } from "../core/sql-executor";
 import { Collection, Document } from "mongodb";
+import { createApiTokenGuard } from "./api-auth";
 
 interface ScheduledScript {
   scriptId: string;
@@ -46,8 +47,12 @@ class TaskScheduler {
   private server: any;
   private isShuttingDown: boolean = false;
   private healthCheckInterval: NodeJS.Timeout | null = null;
+  private runningScripts: Set<string> = new Set();
 
-  constructor(private port: number = 3001) {
+  constructor(
+    private port: number = 3001,
+    private host: string = "127.0.0.1"
+  ) {
     this.app = express();
     this.setupExpress();
     this.setupGracefulShutdown();
@@ -55,6 +60,7 @@ class TaskScheduler {
 
   private setupExpress(): void {
     this.app.use(express.json());
+    this.app.use(createApiTokenGuard(process.env.SCHEDULER_API_TOKEN));
 
     // 健康检查端点
     this.app.get("/health", (req: any, res: any) => {
@@ -123,6 +129,10 @@ class TaskScheduler {
 
         if (!task) {
           return res.status(404).json({ error: "Task not found" });
+        }
+
+        if (this.runningScripts.has(scriptId)) {
+          return res.status(409).json({ error: "Task is already running" });
         }
 
         try {
@@ -201,8 +211,8 @@ class TaskScheduler {
       await this.loadTasksFromDatabase();
 
       // 启动HTTP服务器
-      this.server = this.app.listen(this.port, () => {
-        console.log(`🌐 管理API服务器已启动: http://localhost:${this.port}`);
+      this.server = this.app.listen(this.port, this.host, () => {
+        console.log(`🌐 管理API服务器已启动: http://${this.host}:${this.port}`);
         console.log(`📊 健康检查: http://localhost:${this.port}/health`);
         console.log(`📋 任务状态: http://localhost:${this.port}/tasks`);
       });
@@ -309,6 +319,13 @@ class TaskScheduler {
       return;
     }
 
+    // node-cron does not wait for the previous run to finish.
+    if (this.runningScripts.has(scriptId)) {
+      console.warn(`⏭️  Skipping ${scriptId}: previous run is still in progress`);
+      return;
+    }
+    this.runningScripts.add(scriptId);
+
     try {
       console.log(`🏃 开始执行定时脚本: ${scriptId}`);
       taskInfo.lastExecuted = new Date();
@@ -344,6 +361,8 @@ class TaskScheduler {
     } catch (error) {
       console.error(`❌ 脚本执行失败 ${scriptId}:`, error);
       taskInfo.errorCount++;
+    } finally {
+      this.runningScripts.delete(scriptId);
     }
   }
 
@@ -357,7 +376,8 @@ class TaskScheduler {
 // 主函数
 async function main() {
   const port = parseInt(process.env.SCHEDULER_PORT || "3001");
-  const scheduler = new TaskScheduler(port);
+  const host = process.env.SCHEDULER_HOST || "127.0.0.1";
+  const scheduler = new TaskScheduler(port, host);
 
   try {
     await scheduler.start();

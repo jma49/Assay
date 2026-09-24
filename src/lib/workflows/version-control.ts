@@ -1,6 +1,7 @@
 import { getMongoDbClient } from "../database/mongodb";
 import { Collection, Document } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache/cache-utils";
+import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 
 // 版本状态枚举
 export enum VersionStatus {
@@ -426,6 +427,15 @@ export async function rollbackToVersion(
     const targetVersionData = await getScriptVersion(scriptId, targetVersion);
     if (!targetVersionData) {
       return { success: false, message: "目标版本不存在" };
+    }
+
+    // Older versions may predate the current rules.
+    const securityCheck = validateReadOnlySql(targetVersionData.sqlContent);
+    if (!securityCheck.isValid) {
+      return {
+        success: false,
+        message: `目标版本未通过SQL安全检查：${securityCheck.reason}`,
+      };
     }
 
     // 创建新版本（基于目标版本的内容）

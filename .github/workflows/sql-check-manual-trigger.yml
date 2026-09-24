@@ -11,7 +11,6 @@ on:
 
 env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
   MONGODB_URI: ${{ secrets.MONGODB_URI }} # Make sure MONGODB_URI is also a secret
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed if run_sql needs it, otherwise optional
 
@@ -35,7 +34,6 @@ jobs:
       - name: Create environment file
         run: |
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.local
-          echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}" >> .env.local
           echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env.local
           # Pass the GitHub Run ID for potential linking in saved results
           echo "GITHUB_RUN_ID=${{ github.run_id }}" >> .env.local 

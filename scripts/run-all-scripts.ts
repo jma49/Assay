@@ -6,7 +6,7 @@ import { shouldExecuteNow } from "../src/lib/utils/schedule-utils-v2";
 
 // 环境变量检查
 function checkEnvVariables() {
-  const requiredVars = ["DATABASE_URL", "MONGODB_URI", "SLACK_WEBHOOK_URL"];
+  const requiredVars = ["DATABASE_URL", "MONGODB_URI"];
   let allSet = true;
   console.log("检查环境变量...");
   requiredVars.forEach((varName) => {
@@ -130,8 +130,6 @@ async function main(): Promise<void> {
       );
 
       try {
-        // 注意：executeSqlScriptFromDb 已经包含了Slack通知的发送逻辑
-        // 所以每个脚本执行完成后会自动发送单独的通知
         const result = await executeSqlScriptFromDb(
           scriptId,
           sqlContent,
@@ -192,7 +190,7 @@ async function main(): Promise<void> {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    // 输出执行总结（仅日志，不发送Slack通知）
+    // 输出执行总结
     const summary = `${modeDescription}脚本批量执行完成: 总计 ${
       allScripts.length
     } 个脚本, 成功 ${successCount} 个, 失败 ${failCount} 个${
@@ -210,10 +208,6 @@ async function main(): Promise<void> {
         } ${result.statusType} - ${result.findings}`
       );
     });
-
-    console.log(
-      `[批量执行] 所有脚本执行完成，共发送了 ${allScripts.length} 个单独的Slack通知`
-    );
   } catch (error) {
     const errorMsg =
       error instanceof Error ? error.message : "批量执行过程中发生未知错误";
@@ -248,11 +242,6 @@ function showHelp() {
   npx ts-node scripts/run-all-scripts.ts
   npx ts-node scripts/run-all-scripts.ts all
   npx ts-node scripts/run-all-scripts.ts scheduled
-
-注意:
-  - 每个脚本执行完成后会单独发送Slack通知
-  - 不会发送汇总通知
-  - 如果没有脚本需要执行，不会发送任何通知
   `);
 }
 

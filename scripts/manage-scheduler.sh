@@ -6,6 +6,7 @@
 set -e
 
 API_BASE="http://localhost:3001"
+AUTH_HEADER="Authorization: Bearer ${SCHEDULER_API_TOKEN:-}"
 CYAN='\033[0;36m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -56,7 +57,7 @@ format_json() {
 # 查看任务状态
 show_status() {
     echo -e "${CYAN}📊 定时任务状态${NC}"
-    curl -s "$API_BASE/tasks" | format_json
+    curl -s -H "$AUTH_HEADER" "$API_BASE/tasks" | format_json
 }
 
 # 健康检查
@@ -74,7 +75,7 @@ pause_task() {
     fi
     
     echo -e "${YELLOW}⏸️  暂停任务: $script_id${NC}"
-    curl -s -X POST "$API_BASE/tasks/$script_id/pause" | format_json
+    curl -s -H "$AUTH_HEADER" -X POST "$API_BASE/tasks/$script_id/pause" | format_json
 }
 
 # 恢复任务
@@ -86,7 +87,7 @@ resume_task() {
     fi
     
     echo -e "${GREEN}▶️  恢复任务: $script_id${NC}"
-    curl -s -X POST "$API_BASE/tasks/$script_id/resume" | format_json
+    curl -s -H "$AUTH_HEADER" -X POST "$API_BASE/tasks/$script_id/resume" | format_json
 }
 
 # 手动执行任务
@@ -98,13 +99,13 @@ execute_task() {
     fi
     
     echo -e "${CYAN}🚀 手动执行任务: $script_id${NC}"
-    curl -s -X POST "$API_BASE/tasks/$script_id/execute" | format_json
+    curl -s -H "$AUTH_HEADER" -X POST "$API_BASE/tasks/$script_id/execute" | format_json
 }
 
 # 重新加载任务
 reload_tasks() {
     echo -e "${CYAN}🔄 重新加载所有任务${NC}"
-    curl -s -X POST "$API_BASE/reload" | format_json
+    curl -s -H "$AUTH_HEADER" -X POST "$API_BASE/reload" | format_json
 }
 
 # 列出数据库中的定时脚本
