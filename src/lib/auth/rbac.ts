@@ -1,5 +1,12 @@
 import { getMongoDbClient } from "../database/mongodb";
 import { Collection, Document } from "mongodb";
+import { TtlCache } from "../cache/ttl-cache";
+
+// Every API request checks the caller's role, and a MongoDB round trip costs
+// ~70ms. Changes made on this instance invalidate immediately; other
+// instances see a role change within ROLE_CACHE_TTL_MS.
+const ROLE_CACHE_TTL_MS = 30_000;
+const roleCache = new TtlCache<UserRole | null>(ROLE_CACHE_TTL_MS);
 
 // 定义系统角色枚举
 export enum UserRole {
@@ -100,6 +107,9 @@ async function getUserRolesCollection(): Promise<Collection<Document>> {
  * 获取用户角色
  */
 export async function getUserRole(userId: string): Promise<UserRole | null> {
+  const cached = roleCache.get(userId);
+  if (cached !== undefined) return cached;
+
   try {
     const collection = await getUserRolesCollection();
     const userRole = await collection.findOne(
@@ -107,7 +117,9 @@ export async function getUserRole(userId: string): Promise<UserRole | null> {
       { projection: { role: 1 } }
     );
 
-    return userRole ? (userRole.role as UserRole) : null;
+    const role = userRole ? (userRole.role as UserRole) : null;
+    roleCache.set(userId, role);
+    return role;
   } catch (error) {
     console.error("[RBAC] 获取用户角色失败:", error);
     return null;
@@ -141,6 +153,7 @@ export async function setUserRole(
     const result = await collection.replaceOne({ userId }, userRoleData, {
       upsert: true,
     });
+    roleCache.delete(userId);
 
     console.log(`[RBAC] 用户 ${email} 的角色已设置为 ${role}`);
     return result.acknowledged;
@@ -277,6 +290,7 @@ export async function removeUserRole(userId: string): Promise<boolean> {
         },
       }
     );
+    roleCache.delete(userId);
 
     return result.modifiedCount > 0;
   } catch (error) {
@@ -317,7 +331,5 @@ export async function requirePermission(
     return { authorized: false };
   }
 
-  const authorized = await hasPermission(userId, permission);
-
-  return { authorized, userRole };
+  return { authorized: ROLE_PERMISSIONS[userRole].includes(permission), userRole };
 }

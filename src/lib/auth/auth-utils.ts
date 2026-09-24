@@ -1,6 +1,20 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, clerkClient, type User } from "@clerk/nextjs/server";
+import { TtlCache } from "@/lib/cache/ttl-cache";
+
+// Fetching the Clerk profile is an HTTP call (~120ms) made on every API
+// request just to read the email. The session itself is still verified by
+// auth() each time; only the profile is reused for a few minutes.
+const userProfileCache = new TtlCache<User>(5 * 60_000);
+
+export async function getUserProfile(userId: string): Promise<User | null> {
+  const cached = userProfileCache.get(userId);
+  if (cached) return cached;
+  const client = await clerkClient();
+  const user = await client.users.getUser(userId).catch(() => null);
+  if (user) userProfileCache.set(userId, user);
+  return user;
+}
 import { NextResponse } from "next/server";
-import type { User } from "@clerk/nextjs/server";
 import {
   getUserRole,
   Permission,
@@ -68,8 +82,7 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
       } as const;
     }
 
-    // 获取完整的用户信息
-    const user = await currentUser();
+    const user = await getUserProfile(userId);
 
     if (!user) {
       return {

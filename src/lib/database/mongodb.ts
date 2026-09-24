@@ -1,5 +1,6 @@
 import { MongoClient, Db } from "mongodb";
 import { redactConnectionString } from "./redact-connection-string";
+import { ensureIndexes } from "./indexes";
 
 /**
  * 开发环境日志辅助函数
@@ -27,6 +28,7 @@ const globalWithMongo = global as typeof globalThis & {
   _mongoClientPromise: Promise<MongoClient> | null;
   _isConnected: boolean;
   _hasLoggedDbName: boolean; // 新增：跟踪是否已打印数据库名称
+  _indexesEnsured?: boolean;
 };
 
 /**
@@ -142,7 +144,13 @@ class MongoDbClient {
   public async getDb(): Promise<Db> {
     try {
       const client = await this.getClient();
-      return client.db(this.dbName);
+      const db = client.db(this.dbName);
+      if (!globalWithMongo._indexesEnsured) {
+        globalWithMongo._indexesEnsured = true;
+        // Runs once per process in the background so the first request is not delayed.
+        void ensureIndexes(db);
+      }
+      return db;
     } catch (error) {
       devError("获取 MongoDB 数据库实例失败:", error);
       throw new Error(
