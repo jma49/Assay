@@ -43,10 +43,13 @@
     "test:check-history-cache": "curl -s 'http://localhost:3000/api/check-history?optimized=true&page=1&limit=5' && echo '\n--- Second call (should be faster) ---' && curl -s 'http://localhost:3000/api/check-history?optimized=true&page=1&limit=5'",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit -p .",
+    "user:set-role": "DOTENV_CONFIG_PATH=.env.local ts-node -r dotenv/config scripts/set-user-role.ts",
+    "seed:demo": "DOTENV_CONFIG_PATH=.env.local ts-node -r dotenv/config scripts/demo/seed-demo.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.39.7",
+    "@clerk/themes": "^2.4.64",
     "@codemirror/lang-sql": "^6.8.0",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@google/generative-ai": "^0.21.0",

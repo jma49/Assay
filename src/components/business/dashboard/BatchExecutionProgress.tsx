@@ -73,13 +73,13 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
       case "pending":
         return <Clock className="h-4 w-4 text-muted-foreground" />;
       case "running":
-        return <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />;
+        return <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />;
       case "completed":
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+        return <CheckCircle2 className="h-4 w-4 text-success" />;
       case "failed":
-        return <X className="h-4 w-4 text-red-500" />;
+        return <X className="h-4 w-4 text-failure" />;
       case "attention_needed":
-        return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+        return <AlertTriangle className="h-4 w-4 text-attention" />;
       default:
         return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
@@ -138,7 +138,7 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card
-        className={`w-full max-w-6xl bg-background shadow-2xl transition-all duration-300 ${
+        className={`w-full max-w-6xl bg-background transition-all duration-300 ${
           isMinimized ? "h-auto" : "max-h-[90vh]"
         }`}
       >
@@ -210,40 +210,40 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
                 {language === "zh" ? "总计" : "Total"}
               </div>
             </div>
-            <div className="text-center p-2 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-              <div className="text-lg font-bold text-blue-600">
+            <div className="text-center p-2 bg-muted rounded-lg">
+              <div className="text-lg font-bold text-muted-foreground">
                 {stats.running}
               </div>
               <div className="text-xs text-muted-foreground">
                 {language === "zh" ? "执行中" : "Running"}
               </div>
             </div>
-            <div className="text-center p-2 bg-gray-50 dark:bg-gray-800/20 rounded-lg">
-              <div className="text-lg font-bold text-gray-600">
+            <div className="text-center p-2 bg-muted rounded-lg">
+              <div className="text-lg font-bold text-muted-foreground">
                 {stats.pending}
               </div>
               <div className="text-xs text-muted-foreground">
                 {language === "zh" ? "等待" : "Pending"}
               </div>
             </div>
-            <div className="text-center p-2 bg-green-50 dark:bg-green-950/20 rounded-lg">
-              <div className="text-lg font-bold text-green-600">
+            <div className="text-center p-2 bg-success/10 rounded-lg">
+              <div className="text-lg font-bold text-success">
                 {stats.completed}
               </div>
               <div className="text-xs text-muted-foreground">
                 {language === "zh" ? "成功" : "Success"}
               </div>
             </div>
-            <div className="text-center p-2 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
-              <div className="text-lg font-bold text-orange-600">
+            <div className="text-center p-2 bg-attention/10 rounded-lg">
+              <div className="text-lg font-bold text-attention">
                 {stats.attention}
               </div>
               <div className="text-xs text-muted-foreground">
                 {language === "zh" ? "关注" : "Attention"}
               </div>
             </div>
-            <div className="text-center p-2 bg-red-50 dark:bg-red-950/20 rounded-lg">
-              <div className="text-lg font-bold text-red-600">
+            <div className="text-center p-2 bg-failure/10 rounded-lg">
+              <div className="text-lg font-bold text-failure">
                 {stats.failed}
               </div>
               <div className="text-xs text-muted-foreground">
@@ -263,15 +263,15 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
                 {scripts.map((script, index) => (
                   <div
                     key={script.scriptId}
-                    className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-200 ${
+                    className={`flex items-center gap-3 p-4 rounded-lg border transition-all duration-200 ${
                       script.status === "running"
-                        ? "border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20"
+                        ? "border-border bg-muted  "
                         : script.status === "failed"
-                          ? "border-red-200 bg-red-50/50 dark:border-red-800 dark:bg-red-950/20"
+                          ? "border-failure/30 bg-failure/10  "
                           : script.status === "attention_needed"
-                            ? "border-orange-200 bg-orange-50/50 dark:border-orange-800 dark:bg-orange-950/20"
+                            ? "border-attention/30 bg-attention/10  "
                             : script.status === "completed"
-                              ? "border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20"
+                              ? "border-success/30 bg-success/10  "
                               : "border-border bg-background"
                     }`}
                   >

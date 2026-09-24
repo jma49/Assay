@@ -82,13 +82,13 @@ export class ErrorBoundary extends Component<Props, State> {
     // 这里可以集成 Sentry, LogRocket 等错误监控服务
     // 例如：
     // Sentry.captureException(error, {
-    //   contexts: {
-    //     react: {
-    //       componentStack: errorInfo.componentStack,
+    // contexts: {
+    // react: {
+    // componentStack: errorInfo.componentStack,
     //     },
     //   },
-    //   tags: {
-    //     errorBoundary: true,
+    // tags: {
+    // errorBoundary: true,
     //   },
     // });
 
@@ -118,7 +118,7 @@ export class ErrorBoundary extends Component<Props, State> {
    * 回到首页
    */
   private handleGoHome = () => {
-    window.location.href = '/';
+    window.location.href = '/dashboard';
   };
 
   /**
@@ -164,13 +164,13 @@ ${this.state.errorInfo?.componentStack}
 
       // 默认错误界面
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
+        <div className="min-h-screen flex items-center justify-center p-4 bg-muted">
           <Card className="w-full max-w-2xl">
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
-                <AlertTriangle className="h-12 w-12 text-red-500" />
+                <AlertTriangle className="h-12 w-12 text-failure" />
               </div>
-              <CardTitle className="text-2xl text-red-600">
+              <CardTitle className="text-2xl text-failure">
                 页面出现错误
               </CardTitle>
               <CardDescription>
@@ -197,7 +197,7 @@ ${this.state.errorInfo?.componentStack}
               {/* 开发环境或显示详情模式下展示详细错误信息 */}
               {(process.env.NODE_ENV === 'development' || this.props.showDetails) && 
                this.state.error && (
-                <Alert className="bg-red-50 border-red-200">
+                <Alert className="bg-failure/10 border-failure/30">
                   <AlertDescription className="text-sm font-mono">
                     <strong>错误消息:</strong>
                     <br />

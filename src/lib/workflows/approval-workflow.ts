@@ -3,7 +3,7 @@ import { Collection, Document, Db } from "mongodb";
 import { UserRole, Permission, hasPermission } from "../auth/rbac";
 import { clearScriptsCache } from "../cache/cache-utils";
 import { createScriptVersion } from "./version-control";
-import { recordEditHistory } from "./edit-history";
+import { recordEditHistoryOnServer } from "./edit-history-store";
 
 // 审批状态枚举
 export enum ApprovalStatus {
@@ -757,11 +757,18 @@ async function executeApprovedOperation(
         );
 
         // 记录编辑历史
-        await recordEditHistory({
-          scriptId: request.scriptId,
-          operation: "create",
-          newData: request.originalData,
-        });
+        await recordEditHistoryOnServer(
+          {
+            scriptId: request.scriptId,
+            operation: "create",
+            newData: request.originalData,
+          },
+          {
+            id: request.requesterId,
+            email: request.requesterEmail,
+            name: request.requesterEmail.split("@")[0],
+          }
+        );
 
         console.log(`[Approval] 脚本创建完成: ${request.scriptId}`);
         break;
@@ -824,12 +831,19 @@ async function executeApprovedOperation(
         }
 
         // 记录编辑历史
-        await recordEditHistory({
-          scriptId: request.scriptId,
-          operation: "update",
-          oldData: existingScript as unknown as Record<string, unknown>,
-          newData: request.originalData,
-        });
+        await recordEditHistoryOnServer(
+          {
+            scriptId: request.scriptId,
+            operation: "update",
+            oldData: existingScript as unknown as Record<string, unknown>,
+            newData: request.originalData,
+          },
+          {
+            id: request.requesterId,
+            email: request.requesterEmail,
+            name: request.requesterEmail.split("@")[0],
+          }
+        );
 
         console.log(`[Approval] 脚本更新完成: ${request.scriptId}`);
         break;
@@ -853,11 +867,18 @@ async function executeApprovedOperation(
         }
 
         // 记录编辑历史
-        await recordEditHistory({
-          scriptId: request.scriptId,
-          operation: "delete",
-          oldData: scriptToDelete as unknown as Record<string, unknown>,
-        });
+        await recordEditHistoryOnServer(
+          {
+            scriptId: request.scriptId,
+            operation: "delete",
+            oldData: scriptToDelete as unknown as Record<string, unknown>,
+          },
+          {
+            id: request.requesterId,
+            email: request.requesterEmail,
+            name: request.requesterEmail.split("@")[0],
+          }
+        );
 
         console.log(`[Approval] 脚本删除完成: ${request.scriptId}`);
         break;

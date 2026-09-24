@@ -19,6 +19,19 @@ vi.mock("pg", () => {
 
 const executedSql = () => client.query.mock.calls.map(([sql]) => sql);
 
+// Installed before any test runs, so it sees the logs from lazy pool creation.
+const consoleLog = vi.spyOn(console, "log");
+
+describe("pool creation logging", () => {
+  it("does not log the database password", async () => {
+    await withReadOnlyTransaction(async () => undefined);
+
+    const logged = JSON.stringify(consoleLog.mock.calls);
+    expect(logged).toContain("postgres://user:****@localhost:5432/db");
+    expect(logged).not.toContain("pass@");
+  });
+});
+
 describe("withReadOnlyTransaction", () => {
   beforeEach(() => {
     client.query.mockReset().mockResolvedValue({ rows: [] });

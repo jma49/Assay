@@ -675,7 +675,7 @@ export async function executeSqlScriptFromDb(
     // 格式化结果
     findings = formatFindings(results);
     statusType = determineResultStatus(results, scriptId, findings);
-    successMessage = `Script executed successfully. Found ${findings}`;
+    successMessage = `Script executed successfully. ${findings}`;
 
     console.log(
       `[EXEC ${executionTimestamp}] Script execution completed successfully: ${scriptId}`

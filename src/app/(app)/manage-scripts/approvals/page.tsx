@@ -3,46 +3,47 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CheckCircle, XCircle, Clock, AlertTriangle, FileText, User, Calendar, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Clock, AlertTriangle, FileText, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { ApprovalStatus, ScriptType, ApprovalRequestDto } from "@/lib/types/approval";
 import { useLanguage } from '@/components/common/LanguageProvider';
 import { dashboardTranslations, DashboardTranslationKeys, ITEMS_PER_PAGE } from '@/components/business/dashboard/types';
-import UserHeader from '@/components/layout/UserHeader';
+import { PageHeader } from "@/components/layout/PageHeader";
+import { EmptyState } from "@/components/common/EmptyState";
 
 // 状态信息映射
 const getStatusInfo = (status: ApprovalStatus, t: (key: DashboardTranslationKeys) => string) => ({
   [ApprovalStatus.PENDING]: {
     label: t('pending'),
     icon: Clock,
-    color: 'bg-yellow-100 text-yellow-800 border-yellow-200'
+    color: 'bg-attention/10 text-attention border-attention/30'
   },
   [ApprovalStatus.APPROVED]: {
     label: t('approved'),
     icon: CheckCircle,
-    color: 'bg-green-100 text-green-800 border-green-200'
+    color: 'bg-success/10 text-success border-success/30'
   },
   [ApprovalStatus.REJECTED]: {
     label: t('rejected'),
     icon: XCircle,
-    color: 'bg-red-100 text-red-800 border-red-200'
+    color: 'bg-failure/10 text-failure border-failure/30'
   },
   [ApprovalStatus.WITHDRAWN]: {
     label: t('withdrawn'),
     icon: AlertTriangle,
-    color: 'bg-gray-100 text-gray-800 border-gray-200'
+    color: 'bg-muted text-foreground border-border'
   },
   [ApprovalStatus.DRAFT]: {
     label: t('draft'),
     icon: FileText,
-    color: 'bg-blue-100 text-blue-800 border-blue-200'
+    color: 'bg-muted text-foreground border-border'
   }
 }[status]);
 
@@ -51,22 +52,22 @@ const getScriptTypeInfo = (scriptType: ScriptType, t: (key: DashboardTranslation
   [ScriptType.READ_ONLY]: {
     label: t('readOnlyQuery'),
     description: t('readOnlyDesc'),
-    color: 'bg-green-100 text-green-800'
+    color: 'bg-success/10 text-success'
   },
   [ScriptType.DATA_MODIFICATION]: {
     label: t('dataModification'),
     description: t('dataModificationDesc'),
-    color: 'bg-yellow-100 text-yellow-800'
+    color: 'bg-attention/10 text-attention'
   },
   [ScriptType.STRUCTURE_CHANGE]: {
     label: t('structureChange'),
     description: t('structureChangeDesc'),
-    color: 'bg-orange-100 text-orange-800'
+    color: 'bg-attention/10 text-attention'
   },
   [ScriptType.SYSTEM_ADMIN]: {
     label: t('systemAdmin'),
     description: t('systemAdminDesc'),
-    color: 'bg-red-100 text-red-800'
+    color: 'bg-failure/10 text-failure'
   }
 }[scriptType]);
 
@@ -335,7 +336,7 @@ export default function ApprovalsPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto py-8">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -346,97 +347,76 @@ export default function ApprovalsPage() {
   const ApprovalCard = ({ approval }: { approval: ApprovalRequest }) => {
     const statusInfo = getStatusInfo(approval.status, t);
     const typeInfo = getScriptTypeInfo(approval.scriptType, t);
-    const StatusIcon = statusInfo.icon;
+    const locale = language === 'zh' ? 'zh-CN' : 'en-US';
+    const statusTone =
+      approval.status === ApprovalStatus.APPROVED
+        ? 'text-success'
+        : approval.status === ApprovalStatus.REJECTED
+          ? 'text-failure'
+          : 'text-attention';
 
     return (
-      <Card className="mb-4">
-        <CardContent className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-2">
-                <h3 className="text-lg font-semibold">{approval.scriptName}</h3>
-                <Badge variant="outline" className={statusInfo.color}>
-                  <StatusIcon className="h-3 w-3 mr-1" />
-                  {statusInfo.label}
-                </Badge>
-                <Badge variant="outline" className={typeInfo.color}>
-                  {typeInfo.label}
-                </Badge>
-              </div>
-              
-              <div className="text-sm text-muted-foreground space-y-1">
-                <div className="flex items-center space-x-2">
-                  <User className="h-4 w-4" />
-                  <span>{t('requestor')}: {approval.requesterEmail}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4" />
-                  <span>{t('createdAt')}: {new Date(approval.createdAt).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US')}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <FileText className="h-4 w-4" />
-                  <span>{t('scriptId')}: {approval.scriptId}</span>
-                </div>
-              </div>
-
-              {approval.reason && (
-                <div className="mt-3 p-3 bg-muted rounded-md">
-                  <div className="text-sm font-medium mb-1">{t('requestReason')}:</div>
-                  <div className="text-sm">{approval.reason}</div>
-                </div>
-              )}
-
-              {approval.currentApprovers.length > 0 && (
-                <div className="mt-3">
-                  <div className="text-sm font-medium mb-2">{t('approvalRecord')}:</div>
-                  <div className="space-y-2">
-                    {approval.currentApprovers.map((approver, index) => (
-                      <div key={index} className="flex items-center space-x-2 text-sm">
-                        <Badge 
-                          variant="outline" 
-                          className={approver.decision === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
-                        >
-                          {approver.decision === 'approved' ? t('approved') : t('rejected')}
-                        </Badge>
-                        <span>{approver.email}</span>
-                        <span className="text-muted-foreground">
-                          {new Date(approver.timestamp).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US')}
-                        </span>
-                        {approver.comment && (
-                          <span className="text-muted-foreground">- {approver.comment}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+      <article className="rounded-lg border bg-card p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-medium">{approval.scriptName}</h3>
+              <Badge variant="secondary">{typeInfo.label}</Badge>
+              <span className={`inline-flex items-center gap-1.5 text-[13px] ${statusTone}`}>
+                <span className="size-1.5 rounded-full bg-current" aria-hidden />
+                {statusInfo.label}
+              </span>
             </div>
-
-            {approval.status === ApprovalStatus.PENDING && (
-              <div className="flex space-x-2 ml-4">
-                <Button
-                  size="sm"
-                  onClick={() => openApprovalDialog(approval, 'approve')}
-                  disabled={actionLoading === approval.id}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <CheckCircle className="h-4 w-4 mr-1" />
-                  {t('approve')}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => openApprovalDialog(approval, 'reject')}
-                  disabled={actionLoading === approval.id}
-                >
-                  <XCircle className="h-4 w-4 mr-1" />
-                  {t('reject')}
-                </Button>
-              </div>
-            )}
+            <p className="text-[13px] text-muted-foreground">
+              {approval.requesterEmail} · {new Date(approval.createdAt).toLocaleString(locale)} ·{' '}
+              <span className="font-mono">{approval.scriptId}</span>
+            </p>
           </div>
-        </CardContent>
-      </Card>
+
+          {approval.status === ApprovalStatus.PENDING && (
+            <div className="flex shrink-0 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openApprovalDialog(approval, 'reject')}
+                disabled={actionLoading === approval.id}
+              >
+                {t('reject')}
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => openApprovalDialog(approval, 'approve')}
+                disabled={actionLoading === approval.id}
+              >
+                {t('approve')}
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {approval.reason && (
+          <blockquote className="mt-4 border-l-2 pl-3 text-sm text-muted-foreground">
+            {approval.reason}
+          </blockquote>
+        )}
+
+        {approval.currentApprovers.length > 0 && (
+          <ul className="mt-4 space-y-1 border-t pt-3 text-[13px]">
+            {approval.currentApprovers.map((approver, index) => (
+              <li key={index} className="flex flex-wrap gap-x-2">
+                <span className={approver.decision === 'approved' ? 'text-success' : 'text-failure'}>
+                  {approver.decision === 'approved' ? t('approved') : t('rejected')}
+                </span>
+                <span>{approver.email}</span>
+                <span className="text-muted-foreground">
+                  {new Date(approver.timestamp).toLocaleString(locale)}
+                </span>
+                {approver.comment && <span className="text-muted-foreground">· {approver.comment}</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </article>
     );
   };
 
@@ -465,7 +445,7 @@ export default function ApprovalsPage() {
             size="sm"
             onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
             disabled={currentPage === 1}
-            className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
+            className="h-7 px-2 text-xs transition-all duration-150"
           >
             <ChevronLeft className="h-3.5 w-3.5 mr-1" />
             <span className="hidden sm:inline">{t("previous")}</span>
@@ -558,7 +538,7 @@ export default function ApprovalsPage() {
             size="sm"
             onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
+            className="h-7 px-2 text-xs transition-all duration-150"
           >
             <span className="hidden sm:inline">{t("next")}</span>
             <ChevronRight className="h-3.5 w-3.5 ml-1" />
@@ -569,115 +549,71 @@ export default function ApprovalsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
-      <UserHeader />
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        <div className="space-y-8">
-          <header className="text-center lg:text-left">
-            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent leading-tight py-1">
-              {t('approvalsTitle')}
-            </h1>
-            <p className="text-lg text-muted-foreground mt-3">
-              {t('approvalsDescription')}
-            </p>
-          </header>
+    <div className="min-h-screen    ">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="space-y-6">
+          <PageHeader title={t('approvalsTitle')} description={t('approvalsDescription')} />
 
-          <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
-            {/* 装饰性背景 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500 pointer-events-none" />
-            
-            <CardContent className="relative p-6">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/50 rounded-xl p-1 border border-border/30">
-                  <TabsTrigger 
-                    value="pending"
-                    className="relative rounded-lg font-medium transition-all duration-300 data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-border/50"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>{t('pendingApprovals')}</span>
-                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                        {totalPendingApprovals}
-                      </Badge>
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="history"
-                    className="relative rounded-lg font-medium transition-all duration-300 data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-border/50"
-                  >
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      <span>{t('approvalHistory')}</span>
-                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                        {totalHistoryApprovals}
-                      </Badge>
-                    </div>
-                  </TabsTrigger>
-                </TabsList>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-0">
+            <TabsList className="w-full">
+              <TabsTrigger value="pending">
+                {t('pendingApprovals')}
+                <span className="text-muted-foreground tabular-nums">{totalPendingApprovals}</span>
+              </TabsTrigger>
+              <TabsTrigger value="history">
+                {t('approvalHistory')}
+                <span className="text-muted-foreground tabular-nums">{totalHistoryApprovals}</span>
+              </TabsTrigger>
+            </TabsList>
 
-                <TabsContent value="pending" className="space-y-6 mt-0">
-                  <div className="space-y-4">
-                    {paginatedPendingApprovals.length === 0 ? (
-                      <div className="text-center py-12">
-                        <div className="p-6 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-dashed border-muted-foreground/20 max-w-md mx-auto">
-                          <Clock className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-                          <p className="text-lg font-medium text-muted-foreground mb-2">{t('noPendingApprovals')}</p>
-                          <p className="text-sm text-muted-foreground/70">所有审批申请已处理完毕</p>
-                        </div>
-                      </div>
-                    ) : (
-                      paginatedPendingApprovals.map((approval) => (
-                        <ApprovalCard key={approval.id} approval={approval} />
-                      ))
-                    )}
-                  </div>
-                </TabsContent>
+            <TabsContent value="pending" className="mt-6 space-y-4">
+              {paginatedPendingApprovals.length === 0 ? (
+                <EmptyState
+                  title={t('noPendingApprovals')}
+                  hint={language === "zh" ? "所有审批申请都已处理" : "Every request has been handled."}
+                />
+              ) : (
+                paginatedPendingApprovals.map((approval) => (
+                  <ApprovalCard key={approval.id} approval={approval} />
+                ))
+              )}
+              {renderPagination(
+                currentPagePending,
+                totalPagesPending,
+                totalPendingApprovals,
+                pageInputPending,
+                setCurrentPagePending,
+                handlePageInputChangePending,
+                handlePageInputSubmitPending,
+                handlePageInputKeyDownPending,
+                formatPageInfoPending
+              )}
+            </TabsContent>
 
-                <TabsContent value="history" className="space-y-6 mt-0">
-                  <div className="space-y-4">
-                    {paginatedHistoryApprovals.length === 0 ? (
-                      <div className="text-center py-12">
-                        <div className="p-6 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-dashed border-muted-foreground/20 max-w-md mx-auto">
-                          <FileText className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-                          <p className="text-lg font-medium text-muted-foreground mb-2">{t('noApprovalHistory')}</p>
-                          <p className="text-sm text-muted-foreground/70">暂无审批历史记录</p>
-                        </div>
-                      </div>
-                    ) : (
-                      paginatedHistoryApprovals.map((approval) => (
-                        <ApprovalCard key={approval.id} approval={approval} />
-                      ))
-                    )}
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-
-            {/* 分页 - 根据当前活跃的Tab显示 */}
-            {activeTab === 'pending' && renderPagination(
-              currentPagePending,
-              totalPagesPending,
-              totalPendingApprovals,
-              pageInputPending,
-              setCurrentPagePending,
-              handlePageInputChangePending,
-              handlePageInputSubmitPending,
-              handlePageInputKeyDownPending,
-              formatPageInfoPending
-            )}
-
-            {activeTab === 'history' && renderPagination(
-              currentPageHistory,
-              totalPagesHistory,
-              totalHistoryApprovals,
-              pageInputHistory,
-              setCurrentPageHistory,
-              handlePageInputChangeHistory,
-              handlePageInputSubmitHistory,
-              handlePageInputKeyDownHistory,
-              formatPageInfoHistory
-            )}
-          </Card>
+            <TabsContent value="history" className="mt-6 space-y-4">
+              {paginatedHistoryApprovals.length === 0 ? (
+                <EmptyState
+                  title={t('noApprovalHistory')}
+                  hint={language === "zh" ? "审批过的申请会显示在这里" : "Approved and rejected requests show up here."}
+                />
+              ) : (
+                paginatedHistoryApprovals.map((approval) => (
+                  <ApprovalCard key={approval.id} approval={approval} />
+                ))
+              )}
+              {renderPagination(
+                currentPageHistory,
+                totalPagesHistory,
+                totalHistoryApprovals,
+                pageInputHistory,
+                setCurrentPageHistory,
+                handlePageInputChangeHistory,
+                handlePageInputSubmitHistory,
+                handlePageInputKeyDownHistory,
+                formatPageInfoHistory
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
@@ -689,7 +625,7 @@ export default function ApprovalsPage() {
               {approvalAction === 'approve' ? t('approveScript') : t('rejectScript')}
             </DialogTitle>
             <DialogDescription>
-              {selectedApproval && `脚本: ${selectedApproval.scriptName} (${selectedApproval.scriptId})`}
+              {selectedApproval && `${language === "zh" ? "脚本" : "Script"}: ${selectedApproval.scriptName} (${selectedApproval.scriptId})`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -718,8 +654,8 @@ export default function ApprovalsPage() {
               disabled={actionLoading === selectedApproval?.id}
               className={
                 approvalAction === 'approve'
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-red-600 hover:bg-red-700'
+                  ? 'bg-success hover:bg-success'
+                  : 'bg-failure hover:bg-failure'
               }
             >
               {actionLoading === selectedApproval?.id && (

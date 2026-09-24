@@ -12,13 +12,17 @@ import { solarizedLight, solarizedDark } from "@uiw/codemirror-theme-solarized";
 import { useTheme } from "next-themes";
 // import { format } from 'sql-formatter';
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Code, Sparkles, Eye, FileCode } from "lucide-react";
+import { AlignLeft, Code, Eye, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils/utils";
+import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { toast } from "sonner";
 import { DashboardTranslationKeys } from "../dashboard/types";
 import EditorThemeSettings from "./EditorThemeSettings";
 import AIAssistantPanel from "@/components/business/ai/AIAssistantPanel";
-import AnalysisResultDialog from "@/components/business/ai/AnalysisResultDialog";
+import dynamic from "next/dynamic";
+
+// Pulls in a syntax highlighter; only load it when an analysis is shown.
+const AnalysisResultDialog = dynamic(() => import("@/components/business/ai/AnalysisResultDialog"), { ssr: false });
 
 interface CodeMirrorEditorProps
   extends Omit<
@@ -28,6 +32,8 @@ interface CodeMirrorEditorProps
   value: string;
   onChange: (value: string) => void;
   minHeight?: string;
+  /** Grow to the parent's height (minHeight stays the floor). */
+  fill?: boolean;
   t?: (key: DashboardTranslationKeys | string) => string;
 }
 
@@ -52,11 +58,13 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   value,
   onChange,
   minHeight = "300px",
+  fill = false,
   t = (key) => key.toString(),
   ...rest
 }) => {
   const { theme: systemTheme } = useTheme();
   const [showPreview, setShowPreview] = useState(false);
+  const [showAI, setShowAI] = useState(false);
   const [isFormatting, setIsFormatting] = useState(false);
   const [editorTheme, setEditorTheme] = useState<string>("eclipse");
 
@@ -252,7 +260,6 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   };
 
   const getLineCount = (text: string) => text.split("\n").length;
-  const getCharCount = (text: string) => text.length;
 
   // AI生成SQL函数
   const handleGenerateSql = async (prompt: string) => {
@@ -347,177 +354,140 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
     }
   };
 
+  const validation = React.useMemo(
+    () => (value.trim() ? validateReadOnlySql(value) : null),
+    [value],
+  );
+  const isZh = t("sqlEditorTitle") !== "SQL Editor";
+
   return (
-    <div className="space-y-4">
-      {/* 编辑器工具栏 */}
-      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/40 to-muted/20 rounded-lg border border-border/40">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2.5 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 ring-2 ring-primary/20 shadow-sm">
-              <FileCode className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-sm text-foreground">
-                {t("sqlEditorTitle")}
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                {t("sqlEditorDescription")}
-              </p>
-            </div>
-          </div>
+    <div className={cn("overflow-hidden rounded-lg border bg-card", fill && "flex h-full flex-col")}>
+      <div className="flex h-11 items-center justify-between gap-2 border-b bg-muted/40 px-4">
+        <div className="flex min-w-0 items-center gap-3 text-[13px]">
+          <span className="font-medium">SQL</span>
+          <span className="text-muted-foreground tabular-nums">
+            {getLineCount(value)} {t("codeStatisticsLines")}
+          </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* 代码统计 */}
-          <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-background/60 border border-border/40">
-            <Badge
-              variant="outline"
-              className="text-xs bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-700"
-            >
-              {getLineCount(value)} {t("codeStatisticsLines")}
-            </Badge>
-            <Badge
-              variant="outline"
-              className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-700"
-            >
-              {getCharCount(value)} {t("codeStatisticsChars")}
-            </Badge>
-          </div>
-
-          {/* 预览切换 */}
+        <div className="-mr-2 flex items-center gap-0.5">
           <Button
-            variant="outline"
+            type="button"
+            variant="ghost"
             size="sm"
-            onClick={() => setShowPreview(!showPreview)}
-            className="h-8 px-3 text-xs"
+            onClick={() => setShowAI(!showAI)}
+            aria-pressed={showAI}
+            className={cn("h-8 px-2.5 text-[13px]", showAI && "bg-accent")}
           >
-            {showPreview ? (
-              <>
-                <Code className="h-3.5 w-3.5 mr-1.5" />
-                {t("editMode")}
-              </>
-            ) : (
-              <>
-                <Eye className="h-3.5 w-3.5 mr-1.5" />
-                {t("previewMode")}
-              </>
-            )}
+            <Sparkles className="size-3.5" />
+            AI
           </Button>
-
-          {/* 格式化按钮 */}
           <Button
-            variant="outline"
+            type="button"
+            variant="ghost"
             size="sm"
             onClick={handleFormat}
             disabled={isFormatting || !value.trim()}
-            className="h-8 px-3 text-xs shadow-sm transition-all duration-200 hover:shadow-md hover:bg-primary/10 hover:border-primary/50 hover:text-primary focus:ring-2 focus:ring-primary/20"
+            className="h-8 px-2.5 text-[13px]"
           >
-            {isFormatting ? (
-              <>
-                <div className="animate-spin h-3.5 w-3.5 mr-1.5 border-2 border-current border-t-transparent rounded-full" />
-                {t("formatting")}
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                {t("formatCode")}
-              </>
-            )}
+            <AlignLeft className="size-3.5" />
+            {isFormatting ? t("formatting") : t("formatCode")}
           </Button>
-
-          {/* 主题设置按钮 */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowPreview(!showPreview)}
+            className="h-8 px-2.5 text-[13px]"
+          >
+            {showPreview ? <Code className="size-3.5" /> : <Eye className="size-3.5" />}
+            {showPreview ? t("editMode") : t("previewMode")}
+          </Button>
           <EditorThemeSettings t={t} />
         </div>
       </div>
 
-      {/* 编辑器容器 */}
-      <div className="relative overflow-hidden rounded-lg border-2 border-border/40 bg-gradient-to-br from-background via-background to-muted/5 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-border/60">
-        {/* 装饰性顶部条 */}
-        <div className="h-1 bg-gradient-to-r from-primary/60 via-primary/40 to-primary/60"></div>
+      {showAI && (
+        <AIAssistantPanel
+          value={value}
+          onAnalyze={handleAnalyzeSql}
+          onGenerate={handleGenerateSql}
+          isGenerating={isGenerating}
+          isAnalyzing={isAnalyzing}
+        />
+      )}
 
-        {showPreview ? (
-          // 预览模式
-          <div className="p-6 bg-gradient-to-br from-muted/10 to-muted/5">
-            <div className="flex items-center gap-2 mb-4">
-              <Eye className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-muted-foreground">
-                {t("sqlPreviewLabel")}
-              </span>
-            </div>
-            <pre className="whitespace-pre-wrap text-sm font-mono bg-background/80 border border-border/40 rounded-md p-4 max-h-96 overflow-auto">
-              {value || (
-                <span className="italic text-muted-foreground">
-                  {t("noCodeContent")}
-                </span>
-              )}
-            </pre>
-          </div>
+      {showPreview ? (
+        <pre
+          className={cn("overflow-auto whitespace-pre-wrap bg-muted/30 p-4 font-mono text-sm", fill && "flex-1")}
+          style={{ minHeight }}
+        >
+          {value || <span className="text-muted-foreground">{t("noCodeContent")}</span>}
+        </pre>
+      ) : (
+        <div className={cn(fill && "relative flex-1")} style={fill ? { minHeight } : undefined}>
+        <ReactCodeMirror
+          value={value}
+          onChange={onChange}
+          extensions={postgresExtensions}
+          theme={getCurrentEditorTheme}
+          height={fill ? "100%" : "auto"}
+          minHeight={fill ? undefined : minHeight}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: true,
+            highlightActiveLineGutter: true,
+            highlightSpecialChars: true,
+            history: true,
+            drawSelection: true,
+            dropCursor: true,
+            allowMultipleSelections: true,
+            indentOnInput: true,
+            syntaxHighlighting: true,
+            autocompletion: true,
+            bracketMatching: true,
+            closeBrackets: true,
+            highlightActiveLine: true,
+            searchKeymap: true,
+          }}
+          className={cn("text-sm", fill && "absolute inset-0")}
+          style={{
+            fontFamily: "var(--editor-font-family, var(--font-mono))",
+            fontSize: "var(--editor-font-size, 14px)",
+          }}
+          placeholder={t("sqlPlaceholder")}
+          {...rest}
+        />
+        </div>
+      )}
+
+      <div className="flex h-9 items-center justify-between gap-4 border-t px-4 text-[12px]">
+        {validation === null ? (
+          <span className="text-muted-foreground">
+            {isZh ? "写一条查询，查出结果即表示需要关注" : "Write a query; any rows it returns need attention"}
+          </span>
+        ) : validation.isValid ? (
+          <span className="inline-flex items-center gap-2 text-success">
+            <span className="size-1.5 rounded-full bg-success" aria-hidden />
+            {isZh ? "只读查询，可以保存" : "Read-only, ready to save"}
+          </span>
         ) : (
-          // 编辑模式
-          <div className="relative">
-            <ReactCodeMirror
-              value={value}
-              onChange={onChange}
-              extensions={postgresExtensions}
-              theme={getCurrentEditorTheme}
-              height="auto"
-              minHeight={minHeight}
-              basicSetup={{
-                lineNumbers: true,
-                foldGutter: true,
-                highlightActiveLineGutter: true,
-                highlightSpecialChars: true,
-                history: true,
-                drawSelection: true,
-                dropCursor: true,
-                allowMultipleSelections: true,
-                indentOnInput: true,
-                syntaxHighlighting: true,
-                autocompletion: true,
-                bracketMatching: true,
-                closeBrackets: true,
-                highlightActiveLine: true,
-                searchKeymap: true,
-              }}
-              className="text-sm leading-relaxed"
-              style={{
-                fontFamily: "var(--editor-font-family, 'Fira Code', monospace)",
-                fontSize: "var(--editor-font-size, 14px)",
-              }}
-              placeholder={t("sqlPlaceholder")}
-              {...rest}
-            />
-
-            {/* 编辑器状态指示器 */}
-            <div className="absolute bottom-2 right-2">
-              <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-background/90 backdrop-blur-sm border border-border/40 shadow-sm">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs text-muted-foreground font-mono">
-                  {t("editorStatusReady")}
-                </span>
-              </div>
-            </div>
-          </div>
+          <span className="inline-flex min-w-0 items-center gap-2 text-failure">
+            <span className="size-1.5 shrink-0 rounded-full bg-failure" aria-hidden />
+            <span className="truncate">{validation.reason}</span>
+          </span>
         )}
+        <span className="shrink-0 text-muted-foreground">PostgreSQL</span>
       </div>
 
-      {/* AI智能助手面板 */}
-      <AIAssistantPanel
-        value={value}
-        onAnalyze={handleAnalyzeSql}
-        onGenerate={handleGenerateSql}
-        isGenerating={isGenerating}
-        isAnalyzing={isAnalyzing}
-      />
-
-      {/* AI分析结果弹窗 */}
+      {isAnalysisDialogOpen && (
       <AnalysisResultDialog
         isOpen={isAnalysisDialogOpen}
         onOpenChange={setIsAnalysisDialogOpen}
         result={analysisResult}
         type={analysisType}
       />
-
+      )}
     </div>
   );
 };

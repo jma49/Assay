@@ -1,4 +1,6 @@
-# SQL Script Management & Monitoring System
+# Assay
+
+Open-source SQL data checks for PostgreSQL: write read-only checks, run them on a schedule, and see what needs attention.
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black.svg)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
@@ -68,6 +70,16 @@ NODE_ENV="production"
    ```bash
    # Ensure your PostgreSQL and MongoDB instances are running
    # The application will automatically create necessary collections
+   ```
+
+   Optionally load demo data: a `demo` schema (customers, orders, payments,
+   inventory with injected data quality issues) in `DATABASE_URL`, plus 11
+   check scripts in MongoDB. It only touches the `demo` schema and scripts
+   authored by `demo-seed`, and is safe to re-run.
+
+   ```bash
+   npm run seed:demo
+   DOTENV_CONFIG_PATH=.env.local npm run sql:run-all
    ```
 
 3. **Development Mode**

@@ -94,15 +94,15 @@ export function CompactHashtagFilter({
               disabled={disabled}
               className={cn(
                 "h-10 px-4 justify-between gap-2 text-sm font-medium flex-1",
-                "border-2 border-border/50 bg-background/80 backdrop-blur-sm",
+                "border border-border/50 bg-background/80 backdrop-blur-sm",
                 "hover:border-primary/30 focus:border-primary/50",
-                "shadow-sm hover:shadow-md transition-all duration-300",
+                "  transition-all duration-300",
                 "group relative overflow-hidden",
                 selectedHashtags.length > 0 && "border-primary/40 bg-primary/5"
               )}
             >
               {/* 背景装饰 */}
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               
               <div className="relative flex items-center gap-2 min-w-0 flex-1">
                 <Filter className="h-4 w-4 text-primary shrink-0" />
@@ -122,13 +122,13 @@ export function CompactHashtagFilter({
           </PopoverTrigger>
 
           <PopoverContent 
-            className="w-80 p-0 shadow-lg border-2 border-border/30" 
+            className="w-80 p-0 border border-border/30" 
             align="start"
             sideOffset={4}
           >
-            <div className="bg-gradient-to-br from-card via-card to-card/90">
+            <div className="">
               {/* 头部 */}
-              <div className="px-4 py-3 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
+              <div className="px-4 py-3 border-b border-border/30   ">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-primary/10 ring-1 ring-primary/20">
@@ -205,7 +205,7 @@ export function CompactHashtagFilter({
                           onClick={() => toggleHashtag(tag)}
                         >
                           <div className={cn(
-                            "flex items-center justify-center w-4 h-4 rounded border-2 transition-all duration-200",
+                            "flex items-center justify-center w-4 h-4 rounded border transition-all duration-200",
                             isSelected 
                               ? "bg-primary border-primary text-primary-foreground" 
                               : "border-muted-foreground/30 group-hover:border-primary/50"

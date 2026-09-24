@@ -1,102 +1,40 @@
 "use client";
 
-import { SignOutButton } from "@clerk/nextjs";
 import Link from "next/link";
-import { useState } from "react";
+import { SignOutButton } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/common/LanguageProvider";
+import { AuthShell } from "@/components/layout/AuthShell";
 
-const messages = {
+const copy = {
   en: {
-    title: "Access Denied",
-    subtitle: "Only invited users can access this system",
-    contactAdmin: "Please contact the administrator for access permissions",
-    signOut: "Sign Out",
-    tryAnother: "Sign in with another account",
+    title: "No access",
+    description: "This workspace only accepts accounts from approved email domains.",
+    signOut: "Sign out",
+    home: "Back to home",
   },
   zh: {
-    title: "访问被拒绝",
-    subtitle: "只有受邀用户才能访问此系统",
-    contactAdmin: "请联系管理员获取访问权限",
+    title: "无法访问",
+    description: "这个工作区只接受指定邮箱域名的账号。",
     signOut: "退出登录",
-    tryAnother: "使用其他账户登录",
+    home: "返回首页",
   },
 };
 
 export default function UnauthorizedPage() {
-  const [language, setLanguage] = useState<"en" | "zh">("en");
-  const t = messages[language];
+  const { language } = useLanguage();
+  const t = copy[language];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 text-center">
-        <div className="flex justify-center space-x-2">
-          <button
-            onClick={() => setLanguage("zh")}
-            className={`px-3 py-1 text-sm rounded ${
-              language === "zh"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            中文
-          </button>
-          <button
-            onClick={() => setLanguage("en")}
-            className={`px-3 py-1 text-sm rounded ${
-              language === "en"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
-          >
-            English
-          </button>
-        </div>
-
-        <div>
-          <div className="mx-auto h-12 w-12 text-red-600">
-            <svg
-              className="h-12 w-12"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
-              />
-            </svg>
-          </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            {t.title}
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">{t.subtitle}</p>
-          <p className="mt-2 text-sm text-gray-500">{t.contactAdmin}</p>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <SignOutButton>
-              <button className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                {t.signOut}
-              </button>
-            </SignOutButton>
-          </div>
-
-          <div>
-            <Link
-              href="/sign-in"
-              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              {t.tryAnother}
-            </Link>
-          </div>
-        </div>
-
-        <div className="mt-8 text-xs text-gray-400">
-          <p>SQL Script Management System - Internal Use Only</p>
-        </div>
+    <AuthShell title={t.title} description={t.description}>
+      <div className="flex gap-2">
+        <Button asChild variant="outline">
+          <Link href="/">{t.home}</Link>
+        </Button>
+        <SignOutButton redirectUrl="/sign-in">
+          <Button>{t.signOut}</Button>
+        </SignOutButton>
       </div>
-    </div>
+    </AuthShell>
   );
 }
