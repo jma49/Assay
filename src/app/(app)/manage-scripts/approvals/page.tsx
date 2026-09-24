@@ -15,7 +15,6 @@ import { toast } from 'sonner';
 import { ApprovalStatus, ScriptType, ApprovalRequestDto } from "@/lib/types/approval";
 import { useLanguage } from '@/components/common/LanguageProvider';
 import { dashboardTranslations, DashboardTranslationKeys, ITEMS_PER_PAGE } from '@/components/business/dashboard/types';
-import UserHeader from '@/components/layout/UserHeader';
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 
@@ -551,7 +550,6 @@ export default function ApprovalsPage() {
 
   return (
     <div className="min-h-screen    ">
-      <UserHeader />
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-6">
           <PageHeader title={t('approvalsTitle')} description={t('approvalsDescription')} />

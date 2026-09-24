@@ -19,7 +19,10 @@ import { toast } from "sonner";
 import { DashboardTranslationKeys } from "../dashboard/types";
 import EditorThemeSettings from "./EditorThemeSettings";
 import AIAssistantPanel from "@/components/business/ai/AIAssistantPanel";
-import AnalysisResultDialog from "@/components/business/ai/AnalysisResultDialog";
+import dynamic from "next/dynamic";
+
+// Pulls in a syntax highlighter; only load it when an analysis is shown.
+const AnalysisResultDialog = dynamic(() => import("@/components/business/ai/AnalysisResultDialog"), { ssr: false });
 
 interface CodeMirrorEditorProps
   extends Omit<
@@ -477,12 +480,14 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         <span className="shrink-0 text-muted-foreground">PostgreSQL</span>
       </div>
 
+      {isAnalysisDialogOpen && (
       <AnalysisResultDialog
         isOpen={isAnalysisDialogOpen}
         onOpenChange={setIsAnalysisDialogOpen}
         result={analysisResult}
         type={analysisType}
       />
+      )}
     </div>
   );
 };

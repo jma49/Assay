@@ -30,23 +30,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDate } from "@/components/business/dashboard/utils";
-import UserHeader from "@/components/layout/UserHeader";
 import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
 
-import {
-  PieChart as RechartsPieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
+import dynamic from "next/dynamic";
+import { CHART_COLORS } from "@/components/business/analysis/chart-colors";
 
-} from "recharts";
+// recharts is the bulk of this page's JavaScript; load it after the page shell.
+const chartPlaceholder = () => <div className="h-full animate-pulse rounded-md bg-muted/40" />;
+const StatusPieChart = dynamic(
+  () => import("@/components/business/analysis/AnalysisCharts").then((m) => m.StatusPieChart),
+  { ssr: false, loading: chartPlaceholder },
+);
+const TrendLineChart = dynamic(
+  () => import("@/components/business/analysis/AnalysisCharts").then((m) => m.TrendLineChart),
+  { ssr: false, loading: chartPlaceholder },
+);
 import { cn } from "@/lib/utils/utils";
 
 // 添加进度条动画样式
@@ -78,30 +76,7 @@ const progressAnimationStyle = `
   }
 `;
 
-// Chart colors resolve to the design tokens, so they follow light and dark mode.
-const CHART_COLORS = {
-  success: "var(--success)",
-  failed: "var(--failure)",
-  attention_needed: "var(--attention)",
-  primary: "var(--foreground)",
-  secondary: "var(--muted-foreground)",
-  accent: "var(--info)",
-  muted: "var(--muted-foreground)",
-  border: "var(--border)",
-  background: "var(--background)",
 
-  lightBlue: "var(--muted)",
-  lightGreen: "color-mix(in srgb, var(--success) 10%, transparent)",
-  lightRed: "color-mix(in srgb, var(--failure) 10%, transparent)",
-  lightPurple: "var(--muted)",
-  lightGray: "var(--muted)",
-
-  chartBlue: "var(--foreground)",
-  chartGreen: "var(--success)",
-  chartRed: "var(--failure)",
-  chartPurple: "var(--info)",
-  chartOrange: "var(--attention)",
-};
 
 
 // 数据接口定义
@@ -443,7 +418,6 @@ export default function DataAnalysisPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <UserHeader />
       {/* 注入样式 */}
       <style dangerouslySetInnerHTML={{ __html: progressAnimationStyle }} />
 
@@ -755,79 +729,12 @@ export default function DataAnalysisPage() {
 
                                     <CardContent className="relative px-6 py-6">
                     <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RechartsPieChart>
-                          <Pie
-                            data={[
-                              { 
-                                name: t('successLabel'), 
-                                value: analyticsData.statusDistribution.success, 
-                                color: CHART_COLORS.chartGreen,
-                                percentage: ((analyticsData.statusDistribution.success / analyticsData.totalExecutions) * 100).toFixed(1)
-                              },
-                              { 
-                                name: t('failedLabel'), 
-                                value: analyticsData.statusDistribution.failed, 
-                                color: CHART_COLORS.chartRed,
-                                percentage: ((analyticsData.statusDistribution.failed / analyticsData.totalExecutions) * 100).toFixed(1)
-                              },
-                              { 
-                                name: t('attentionLabel'), 
-                                value: analyticsData.statusDistribution.attention_needed, 
-                                color: CHART_COLORS.chartOrange,
-                                percentage: ((analyticsData.statusDistribution.attention_needed / analyticsData.totalExecutions) * 100).toFixed(1)
-                              }
-                            ]}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={70}
-                            outerRadius={120}
-                            paddingAngle={2}
-                            dataKey="value"
-                            stroke="var(--background)"
-                            strokeWidth={2}
-                            isAnimationActive={false}
-                          >
-                            {[
-                              { name: t('successLabel'), value: analyticsData.statusDistribution.success, color: CHART_COLORS.chartGreen },
-                              { name: t('failedLabel'), value: analyticsData.statusDistribution.failed, color: CHART_COLORS.chartRed },
-                              { name: t('attentionLabel'), value: analyticsData.statusDistribution.attention_needed, color: CHART_COLORS.chartOrange }
-                            ].map((entry, index) => (
-                              <Cell 
-                                key={`cell-${index}`} 
-                                fill={entry.color}
-                                className="hover:opacity-80 transition-opacity duration-200 cursor-pointer"
-                              />
-                            ))}
-                          </Pie>
-                          <Tooltip 
-                            formatter={(value: number, name: string, props: { payload?: { percentage: string } }) => [
-                              `${value} 次 (${props.payload?.percentage}%)`, 
-                              name
-                            ]}
-                            contentStyle={{
-                              backgroundColor: CHART_COLORS.background,
-                              borderColor: CHART_COLORS.border,
-                              borderRadius: '12px',
-                              fontSize: '14px',
-                              fontWeight: '500',
-                              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                              border: '1px solid'
-                            }}
-                            labelStyle={{
-                              color: 'var(--foreground)',
-                              fontWeight: '600'
-                            }}
-                          />
-                          <Legend 
-                            wrapperStyle={{
-                              paddingTop: '20px',
-                              fontSize: '14px',
-                              fontWeight: '500'
-                            }}
-                          />
-                        </RechartsPieChart>
-                      </ResponsiveContainer>
+                      <StatusPieChart
+                        success={analyticsData.statusDistribution.success}
+                        failed={analyticsData.statusDistribution.failed}
+                        attention={analyticsData.statusDistribution.attention_needed}
+                        labels={{ success: t("successLabel"), failed: t("failedLabel"), attention: t("attentionLabel") }}
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -848,121 +755,15 @@ export default function DataAnalysisPage() {
 
                   <CardContent className="relative px-6 py-6">
                     <div className="h-80">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart 
-                          data={analyticsData.dailyTrend.slice(-14)}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                        >
-                          <CartesianGrid 
-                            strokeDasharray="2 2" 
-                            stroke={CHART_COLORS.border}
-                            strokeOpacity={0.3}
-                          />
-                          <XAxis 
-                            dataKey="date" 
-                            tickFormatter={(value) => {
-                              const date = new Date(value);
-                              return `${date.getMonth() + 1}/${date.getDate()}`;
-                            }}
-                            stroke={CHART_COLORS.muted}
-                            fontSize={12}
-                            tickMargin={10}
-                          />
-                          <YAxis 
-                            stroke={CHART_COLORS.muted}
-                            fontSize={12}
-                            tickMargin={10}
-                          />
-                          <Tooltip 
-                            labelFormatter={(value) => {
-                              const date = new Date(value);
-                              return `${t('date')}: ${date.toLocaleDateString()}`;
-                            }}
-                            formatter={(value: number, name: string) => [
-                              value,
-                              name
-                            ]}
-                            contentStyle={{
-                              backgroundColor: CHART_COLORS.background,
-                              borderColor: CHART_COLORS.border,
-                              borderRadius: '12px',
-                              fontSize: '14px',
-                              fontWeight: '500',
-                              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                              border: '1px solid'
-                            }}
-                            labelStyle={{
-                              color: 'var(--foreground)',
-                              fontWeight: '600',
-                              marginBottom: '8px'
-                            }}
-                          />
-                          <Legend 
-                            wrapperStyle={{
-                              paddingTop: '20px',
-                              fontSize: '14px',
-                              fontWeight: '500'
-                            }}
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="executions" 
-                            stroke={CHART_COLORS.chartBlue} 
-                            strokeWidth={4}
-                            name={t('totalExecutions')}
-                            dot={{ 
-                              fill: CHART_COLORS.chartBlue, 
-                              strokeWidth: 3, 
-                              r: 6,
-                              className: "hover:r-8 transition-all duration-200"
-                            }}
-                            activeDot={{ 
-                              r: 10, 
-                              stroke: CHART_COLORS.chartBlue,
-                              strokeWidth: 3,
-                              fill: CHART_COLORS.background
-                            }}
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="successes" 
-                            stroke={CHART_COLORS.chartGreen} 
-                            strokeWidth={4}
-                            name={t('successfulExecutions')}
-                            dot={{ 
-                              fill: CHART_COLORS.chartGreen, 
-                              strokeWidth: 3, 
-                              r: 6,
-                              className: "hover:r-8 transition-all duration-200"
-                            }}
-                            activeDot={{ 
-                              r: 10, 
-                              stroke: CHART_COLORS.chartGreen,
-                              strokeWidth: 3,
-                              fill: CHART_COLORS.background
-                            }}
-                          />
-                          <Line 
-                            type="monotone" 
-                            dataKey="failures" 
-                            stroke={CHART_COLORS.chartRed} 
-                            strokeWidth={4}
-                            name={t('failedExecutions')}
-                            dot={{ 
-                              fill: CHART_COLORS.chartRed, 
-                              strokeWidth: 3, 
-                              r: 6,
-                              className: "hover:r-8 transition-all duration-200"
-                            }}
-                            activeDot={{ 
-                              r: 10, 
-                              stroke: CHART_COLORS.chartRed,
-                              strokeWidth: 3,
-                              fill: CHART_COLORS.background
-                            }}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
+                      <TrendLineChart
+                        data={analyticsData.dailyTrend.slice(-14)}
+                        labels={{
+                          date: t("date"),
+                          total: t("totalExecutions"),
+                          success: t("successfulExecutions"),
+                          failed: t("failedExecutions"),
+                        }}
+                      />
                     </div>
                   </CardContent>
                 </Card>
