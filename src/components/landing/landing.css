@@ -9,6 +9,7 @@
   --l-success: var(--success);
   --l-attention: var(--attention);
   --l-failure: var(--failure);
+  --l-accent: var(--foreground);
 
   background: var(--l-bg);
   color: var(--l-fg);
