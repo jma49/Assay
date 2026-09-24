@@ -183,3 +183,96 @@ FROM demo.orders
 WHERE status = 'shipped' AND shipping_status IS NULL;`,
   },
 ];
+
+export interface DemoApproval {
+  requestId: string;
+  status: "pending" | "approved" | "rejected";
+  operationType: "create" | "update";
+  requesterEmail: string;
+  daysAgo: number;
+  description: string;
+  review?: { email: string; comment: string };
+  check: Omit<DemoCheck, "isScheduled" | "cronSchedule">;
+}
+
+/** Approval requests so the approvals page has something to show in the demo. */
+export const demoApprovals: DemoApproval[] = [
+  {
+    requestId: "demo-approval-orders-without-items",
+    status: "pending",
+    operationType: "create",
+    requesterEmail: "alex@example.com",
+    daysAgo: 0,
+    description: "Checkout sometimes creates an order before its items are written.",
+    check: {
+      scriptId: "demo-orders-without-items",
+      name: "Orders without items",
+      cnName: "没有明细的订单",
+      description: "Orders that have no order items.",
+      cnDescription: "没有任何订单明细的订单。",
+      hashtags: ["demo", "orders", "integrity"],
+      sqlContent: `SELECT o.id AS order_id, o.status, o.created_at
+FROM demo.orders o
+WHERE NOT EXISTS (SELECT 1 FROM demo.order_items oi WHERE oi.order_id = o.id);`,
+    },
+  },
+  {
+    requestId: "demo-approval-large-orders",
+    status: "pending",
+    operationType: "create",
+    requesterEmail: "sam@example.com",
+    daysAgo: 1,
+    description: "Finance wants to review unusually large orders by hand.",
+    check: {
+      scriptId: "demo-large-orders",
+      name: "Unusually large orders",
+      cnName: "金额异常大的订单",
+      description: "Orders above 3,000 in total.",
+      cnDescription: "总额超过 3000 的订单。",
+      hashtags: ["demo", "orders", "finance"],
+      sqlContent: `SELECT id AS order_id, customer_id, total
+FROM demo.orders
+WHERE total > 3000
+ORDER BY total DESC;`,
+    },
+  },
+  {
+    requestId: "demo-approval-negative-inventory",
+    status: "approved",
+    operationType: "update",
+    requesterEmail: "riley@example.com",
+    daysAgo: 3,
+    description: "Include reserved stock in the output.",
+    review: { email: "admin@example.com", comment: "Looks good." },
+    check: {
+      scriptId: "demo-negative-inventory",
+      name: "Negative inventory",
+      cnName: "库存为负",
+      description: "Products whose on-hand stock is below zero.",
+      cnDescription: "现有库存小于 0 的商品。",
+      hashtags: ["demo", "inventory"],
+      sqlContent: "SELECT product_id, on_hand, reserved FROM demo.inventory WHERE on_hand < 0;",
+    },
+  },
+  {
+    requestId: "demo-approval-all-customers",
+    status: "rejected",
+    operationType: "create",
+    requesterEmail: "casey@example.com",
+    daysAgo: 5,
+    description: "Export every customer for a spreadsheet.",
+    review: {
+      email: "admin@example.com",
+      comment: "A check should return only rows that need attention, not a full export.",
+    },
+    check: {
+      scriptId: "demo-all-customers",
+      name: "All customers",
+      cnName: "所有客户",
+      description: "Every customer record.",
+      cnDescription: "所有客户记录。",
+      hashtags: ["demo", "customers"],
+      sqlContent: "SELECT * FROM demo.customers;",
+    },
+  },
+];

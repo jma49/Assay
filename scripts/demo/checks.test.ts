@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { validateReadOnlySql } from "../../src/lib/sql/read-only-validator";
-import { demoChecks } from "./checks";
+import { demoApprovals, demoChecks } from "./checks";
 
 describe("demoChecks", () => {
   it.each(demoChecks.map((c) => [c.scriptId, c.sqlContent]))(
@@ -23,4 +23,11 @@ describe("demoChecks", () => {
       expect(check.cronSchedule.split(" ")).toHaveLength(5);
     }
   });
+
+  it.each(demoApprovals.map((a) => [a.requestId, a.check.sqlContent]))(
+    "approval %s carries a read-only query",
+    (_id, sql) => {
+      expect(validateReadOnlySql(sql)).toEqual({ isValid: true });
+    }
+  );
 });

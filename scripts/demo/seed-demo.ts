@@ -10,7 +10,7 @@ import { Client } from "pg";
 import { getMongoDbClient } from "../../src/lib/database/mongodb";
 import { redactConnectionString } from "../../src/lib/database/redact-connection-string";
 import { clearScriptsCache } from "../../src/lib/cache/cache-utils";
-import { DEMO_AUTHOR, demoChecks } from "./checks";
+import { DEMO_AUTHOR, demoApprovals, demoChecks } from "./checks";
 
 // ApprovalStatus.APPROVED; importing the enum pulls in modules that use the
 // "@/" path alias, which ts-node cannot resolve.
@@ -70,6 +70,50 @@ async function seedScripts(): Promise<void> {
     console.log(
       `MongoDB sql_scripts: upserted ${demoChecks.length} demo checks, removed ${deletedCount} stale ones`
     );
+
+    const approvals = (await mongo.getDb()).collection("approval_requests");
+    await approvals.deleteMany({ requestId: { $regex: "^demo-approval-" } });
+    const day = 24 * 60 * 60 * 1000;
+    await approvals.insertMany(
+      demoApprovals.map((a) => {
+        const requestedAt = new Date(now.getTime() - a.daysAgo * day);
+        const reviewedAt = a.review ? new Date(requestedAt.getTime() + 2 * 60 * 60 * 1000) : undefined;
+        return {
+          requestId: a.requestId,
+          scriptId: a.check.scriptId,
+          requesterId: `demo-${a.requesterEmail.split("@")[0]}`,
+          requesterEmail: a.requesterEmail,
+          scriptType: "read_only",
+          status: a.status,
+          priority: "medium",
+          title: a.check.name,
+          description: a.description,
+          requestedAt,
+          submittedAt: requestedAt,
+          updatedAt: reviewedAt ?? requestedAt,
+          autoApprovalEligible: false,
+          requiredApprovers: ["admin", "manager"],
+          currentApprovers: a.review ? ["demo-admin"] : [],
+          operationType: a.operationType,
+          originalData: {
+            ...a.check,
+            scope: "demo",
+            cnScope: "演示",
+            author: DEMO_AUTHOR,
+            isScheduled: false,
+            cronSchedule: "",
+          },
+          sqlContent: a.check.sqlContent,
+          ...(a.review && {
+            reviewedAt,
+            reviewedBy: "demo-admin",
+            reviewerEmail: a.review.email,
+            reviewComment: a.review.comment,
+          }),
+        };
+      })
+    );
+    console.log(`MongoDB approval_requests: ${demoApprovals.length} demo requests`);
   } finally {
     await mongo.closeConnection();
   }

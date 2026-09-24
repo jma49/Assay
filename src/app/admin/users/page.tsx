@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -15,7 +14,6 @@ import {
   Loader2, 
   UserPlus, 
   Shield, 
-  Users, 
   Crown, 
   Code, 
   Eye, 
@@ -28,6 +26,8 @@ import { UserRole } from "@/lib/types/approval";
 import { useLanguage } from '@/components/common/LanguageProvider';
 import { dashboardTranslations, DashboardTranslationKeys, ITEMS_PER_PAGE } from '@/components/business/dashboard/types';
 import UserHeader from '@/components/layout/UserHeader';
+import { PageHeader } from "@/components/layout/PageHeader";
+import { EmptyState } from "@/components/common/EmptyState";
 
 // 角色信息映射
 const getRoleInfo = (role: UserRole, t: (key: DashboardTranslationKeys) => string) => ({
@@ -35,25 +35,25 @@ const getRoleInfo = (role: UserRole, t: (key: DashboardTranslationKeys) => strin
     label: t('adminRole'),
     description: t('adminDesc'),
     icon: Crown,
-    color: 'bg-red-100 text-red-800 border-red-200'
+    color: 'bg-failure/10 text-failure border-failure/30'
   },
   [UserRole.MANAGER]: {
     label: t('managerRole'),
     description: t('managerDesc'),
     icon: Shield,
-    color: 'bg-blue-100 text-blue-800 border-blue-200'
+    color: 'bg-muted text-foreground border-border'
   },
   [UserRole.DEVELOPER]: {
     label: t('developerRole'),
     description: t('developerDesc'),
     icon: Code,
-    color: 'bg-green-100 text-green-800 border-green-200'
+    color: 'bg-success/10 text-success border-success/30'
   },
   [UserRole.VIEWER]: {
     label: t('viewerRole'),
     description: t('viewerDesc'),
     icon: Eye,
-    color: 'bg-gray-100 text-gray-800 border-gray-200'
+    color: 'bg-muted text-foreground border-border'
   }
 }[role]);
 
@@ -303,7 +303,7 @@ export default function AdminUsersPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto py-8">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -312,223 +312,168 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+    <div className="min-h-screen    ">
       <UserHeader />
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        <div className="space-y-8">
-          {/* Header Section */}
-          <header className="text-center lg:text-left">
-            <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent leading-tight py-1">
-              {t('userManagementTitle')}
-            </h1>
-            <p className="text-lg text-muted-foreground mt-3">
-              {t('userManagementDesc')}
-            </p>
-          </header>
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="space-y-6">
+          <PageHeader
+            title={t('userManagementTitle')}
+            description={t('userManagementDesc')}
+            actions={
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <UserPlus />
+                          {t('addUserRole')}
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>{t('addUserRole')}</DialogTitle>
+                          <DialogDescription>
+                            {language === "zh" ? "为用户分配系统权限角色" : "Give a user a role in this workspace."}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="userId">{t('userIdField')}</Label>
+                            <Input
+                              id="userId"
+                              value={newUserId}
+                              onChange={(e) => setNewUserId(e.target.value)}
+                              placeholder="user_xxx"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="email">{t('userEmail')}</Label>
+                            <Input
+                              id="email"
+                              value={newUserEmail}
+                              onChange={(e) => setNewUserEmail(e.target.value)}
+                              placeholder="user@example.com"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="role">{t('selectRole')}</Label>
+                            <Select value={selectedRole} onValueChange={(value: UserRole) => setSelectedRole(value)}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.values(UserRole).map((role) => {
+                                  const roleInfo = ROLE_INFO[role];
+                                  return (
+                                    <SelectItem key={role} value={role}>
+                                      <div className="flex items-center space-x-2">
+                                        <roleInfo.icon className="h-4 w-4" />
+                                        <span>{roleInfo.label}</span>
+                                      </div>
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                            {language === "zh" ? "取消" : "Cancel"}
+                          </Button>
+                          <Button onClick={assignRole} disabled={actionLoading === 'assign'}>
+                            {actionLoading === 'assign' && (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            )}
+                            {t('assignRole')}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+            }
+          />
 
-          {/* Role Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Object.entries(roleStats).map(([role, count]) => {
-              const roleInfo = ROLE_INFO[role as UserRole];
-              const Icon = roleInfo.icon;
-              return (
-                <Card key={role} className="relative overflow-hidden">
-                  <CardContent className="p-6">
-                    <div className="flex items-center space-x-4">
-                      <div className={`p-3 rounded-lg ${roleInfo.color}`}>
-                        <Icon className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">{roleInfo.label}</p>
-                        <p className="text-2xl font-bold">{count}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          <dl className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-4">
+            {Object.entries(roleStats).map(([role, count]) => (
+              <div key={role} className="space-y-1 bg-card px-5 py-4">
+                <dt className="text-[13px] text-muted-foreground">{ROLE_INFO[role as UserRole].label}</dt>
+                <dd className="font-serif text-[30px] leading-tight font-semibold tabular-nums">{count}</dd>
+              </div>
+            ))}
+          </dl>
 
           {/* User List */}
-          <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
-            <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
-                    <Users className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
-                  </div>
-                  <div className="space-y-2">
-                    <CardTitle className="text-2xl font-bold text-foreground leading-relaxed">
-                      {t('userList')} ({totalUsers})
-                    </CardTitle>
-                    <CardDescription>
-                      {t('userManagementDesc')}
-                    </CardDescription>
-                  </div>
-                </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="h-10 flex items-center gap-2">
-                      <UserPlus className="h-4 w-4" />
-                      {t('addUserRole')}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{t('addUserRole')}</DialogTitle>
-                      <DialogDescription>
-                        为用户分配系统权限角色
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="userId">{t('userIdField')}</Label>
-                        <Input
-                          id="userId"
-                          value={newUserId}
-                          onChange={(e) => setNewUserId(e.target.value)}
-                          placeholder="user_xxx"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="email">{t('userEmail')}</Label>
-                        <Input
-                          id="email"
-                          value={newUserEmail}
-                          onChange={(e) => setNewUserEmail(e.target.value)}
-                          placeholder="user@example.com"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="role">{t('selectRole')}</Label>
-                        <Select value={selectedRole} onValueChange={(value: UserRole) => setSelectedRole(value)}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.values(UserRole).map((role) => {
-                              const roleInfo = ROLE_INFO[role];
-                              return (
-                                <SelectItem key={role} value={role}>
-                                  <div className="flex items-center space-x-2">
-                                    <roleInfo.icon className="h-4 w-4" />
-                                    <span>{roleInfo.label}</span>
-                                  </div>
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        取消
-                      </Button>
-                      <Button onClick={assignRole} disabled={actionLoading === 'assign'}>
-                        {actionLoading === 'assign' && (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        )}
-                        {t('assignRole')}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
+          <Card className="relative overflow-hidden gap-0 py-0">
+            <CardHeader className="relative border-b px-6 py-4">
+              <CardTitle>
+                {t('userList')} <span className="text-muted-foreground tabular-nums">{totalUsers}</span>
+              </CardTitle>
             </CardHeader>
 
             <CardContent className="relative p-0">
               {totalUsers === 0 ? (
-                <div className="p-8 text-center space-y-4">
-                  <div className="p-6 rounded-2xl bg-gradient-to-br from-muted/30 to-muted/10 border-2 border-dashed border-muted-foreground/20 max-w-md mx-auto">
-                    <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-                    <p className="text-lg font-medium text-muted-foreground">
-                      暂无用户角色
-                    </p>
-                    <p className="text-sm text-muted-foreground/70 mt-2">
-                      点击上方按钮为用户分配角色
-                    </p>
-                  </div>
-                </div>
+                <EmptyState
+                  title={language === "zh" ? "暂无用户角色" : "No roles assigned yet"}
+                  hint={language === "zh" ? "点击右上角按钮为用户分配角色" : "Use “Add user role” to give someone access."}
+                />
               ) : (
-                <div className="overflow-hidden rounded-lg border border-border/20 shadow-inner bg-gradient-to-b from-background to-muted/10">
-                  <div className="overflow-x-auto">
-                    <div className="space-y-2 p-4">
-                      {paginatedUsers.map((userRole, index) => {
-                        const roleInfo = ROLE_INFO[userRole.role];
-                        const Icon = roleInfo.icon;
-                        return (
-                          <Card 
-                            key={userRole.userId} 
-                            className={`transition-all duration-200 hover:shadow-md ${
-                              index % 2 === 0 ? "bg-background" : "bg-muted/5"
-                            }`}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
-                                  <div className={`p-2 rounded-lg ${roleInfo.color}`}>
-                                    <Icon className="h-5 w-5" />
-                                  </div>
-                                  <div className="space-y-1">
-                                    <div className="font-medium">{userRole.email}</div>
-                                    <div className="text-sm text-muted-foreground">
-                                      ID: {userRole.userId}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      {t('assignedBy')}: {userRole.assignedBy} • {new Date(userRole.assignedAt).toLocaleDateString()}
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <Badge variant="outline" className={roleInfo.color}>
-                                    {roleInfo.label}
-                                  </Badge>
-                                  <Select
-                                    value={userRole.role}
-                                    onValueChange={(newRole: UserRole) => 
-                                      changeRole(userRole.userId, userRole.email, newRole)
-                                    }
-                                    disabled={actionLoading === userRole.userId}
-                                  >
-                                    <SelectTrigger className="w-32">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {Object.values(UserRole).map((role) => {
-                                        const info = ROLE_INFO[role];
-                                        return (
-                                          <SelectItem key={role} value={role}>
-                                            <div className="flex items-center space-x-2">
-                                              <info.icon className="h-4 w-4" />
-                                              <span>{info.label}</span>
-                                            </div>
-                                          </SelectItem>
-                                        );
-                                      })}
-                                    </SelectContent>
-                                  </Select>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => removeRole(userRole.userId, userRole.email)}
-                                    disabled={actionLoading === userRole.userId}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    {actionLoading === userRole.userId ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      t('removeRole')
-                                    )}
-                                  </Button>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[720px] text-sm">
+                    <thead>
+                      <tr className="border-b text-[13px] text-muted-foreground">
+                        <th className="h-10 px-6 text-left font-normal">{language === "zh" ? "用户" : "User"}</th>
+                        <th className="h-10 w-56 px-4 text-left font-normal">{language === "zh" ? "角色" : "Role"}</th>
+                        <th className="h-10 w-56 px-4 text-left font-normal">{t('assignedBy')}</th>
+                        <th className="h-10 w-32 px-6 text-right font-normal" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {paginatedUsers.map((userRole) => (
+                        <tr key={userRole.userId} className="hover:bg-muted/40">
+                          <td className="max-w-0 px-6 py-3">
+                            <p className="truncate font-medium">{userRole.email}</p>
+                            <p className="truncate font-mono text-[12px] text-muted-foreground">{userRole.userId}</p>
+                          </td>
+                          <td className="px-4 py-3">
+                            <Select
+                              value={userRole.role}
+                              onValueChange={(newRole: UserRole) =>
+                                changeRole(userRole.userId, userRole.email, newRole)
+                              }
+                              disabled={actionLoading === userRole.userId}
+                            >
+                              <SelectTrigger className="h-8 w-full">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.values(UserRole).map((role) => (
+                                  <SelectItem key={role} value={role}>
+                                    {ROLE_INFO[role].label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="px-4 py-3 text-[13px] text-muted-foreground">
+                            {userRole.assignedBy} · {new Date(userRole.assignedAt).toLocaleDateString(language === "zh" ? "zh-CN" : "en-US")}
+                          </td>
+                          <td className="px-6 py-3 text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeRole(userRole.userId, userRole.email)}
+                              disabled={actionLoading === userRole.userId}
+                              className="-mr-2 text-muted-foreground hover:bg-failure/10 hover:text-failure"
+                            >
+                              {actionLoading === userRole.userId ? (
+                                <Loader2 className="animate-spin" />
+                              ) : (
+                                t('removeRole')
+                              )}
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </CardContent>
@@ -545,7 +490,7 @@ export default function AdminUsersPage() {
                     size="sm"
                     onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
                     disabled={currentPage === 1}
-                    className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150 relative z-30"
+                    className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
                   >
                     <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                     <span className="hidden sm:inline">{t("previous")}</span>
@@ -642,7 +587,7 @@ export default function AdminUsersPage() {
                       setCurrentPage(Math.min(currentPage + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
-                    className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150 relative z-30"
+                    className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
                   >
                     <span className="hidden sm:inline">{t("next")}</span>
                     <ChevronRight className="h-3.5 w-3.5 ml-1" />
