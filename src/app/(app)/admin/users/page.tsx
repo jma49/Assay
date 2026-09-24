@@ -154,7 +154,7 @@ export default function AdminUsersPage() {
   }, [isLoaded, user, router]);
 
   // 加载用户角色列表
-  const loadUserRoles = async () => {
+  const loadUserRoles = useCallback(async () => {
     try {
       const response = await fetch('/api/users/roles');
       
@@ -172,20 +172,20 @@ export default function AdminUsersPage() {
     } catch (error) {
       console.error('加载用户角色失败:', error);
       setError(error instanceof Error ? error.message : '加载失败');
-      toast.error('加载用户角色列表失败');
+      toast.error(language === "zh" ? "加载用户角色列表失败" : "Could not load user roles");
     }
-  };
+   }, [language]);
 
   useEffect(() => {
     if (isLoaded && user) {
       loadUserRoles();
     }
-  }, [isLoaded, user]);
+  }, [isLoaded, user, loadUserRoles]);
 
   // 分配用户角色
   const assignRole = async () => {
     if (!newUserId || !newUserEmail || !selectedRole) {
-      toast.error('请填写所有字段');
+      toast.error(language === "zh" ? "请填写所有字段" : "Fill in every field");
       return;
     }
 
@@ -209,7 +209,7 @@ export default function AdminUsersPage() {
         throw new Error(data.message || '分配角色失败');
       }
 
-      toast.success(`用户 ${newUserEmail} 的角色已设置为 ${getRoleInfo(selectedRole, t).label}`);
+      toast.success(language === "zh" ? `用户 ${newUserEmail} 的角色已设置为 ${getRoleInfo(selectedRole, t).label}` : `${newUserEmail} is now ${getRoleInfo(selectedRole, t).label}`);
       setIsDialogOpen(false);
       setNewUserEmail('');
       setNewUserId('');
@@ -241,7 +241,7 @@ export default function AdminUsersPage() {
         throw new Error(data.message || '删除角色失败');
       }
 
-      toast.success(`用户 ${email} 的角色已删除`);
+      toast.success(language === "zh" ? `用户 ${email} 的角色已删除` : `Removed the role from ${email}`);
       loadUserRoles(); // 重新加载列表
     } catch (error) {
       console.error('删除角色失败:', error);
@@ -273,7 +273,7 @@ export default function AdminUsersPage() {
         throw new Error(data.message || '修改角色失败');
       }
 
-      toast.success(`用户 ${email} 的角色已修改为 ${getRoleInfo(newRole, t).label}`);
+      toast.success(language === "zh" ? `用户 ${email} 的角色已修改为 ${getRoleInfo(newRole, t).label}` : `${email} is now ${getRoleInfo(newRole, t).label}`);
       loadUserRoles(); // 重新加载列表
     } catch (error) {
       console.error('修改角色失败:', error);
