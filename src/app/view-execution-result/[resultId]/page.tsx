@@ -6,11 +6,7 @@ import { useLanguage } from "@/components/common/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import {
   Home,
-  Clock,
-  AlertCircle,
-  CheckCircle,
   Database,
-  Search,
   Download,
   Brain,
 } from "lucide-react";
@@ -470,11 +466,11 @@ export default function ViewExecutionResultPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+      <div className="min-h-screen    ">
         <UserHeader />
-        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 dark:border-[#89b4fa] border-r-transparent"></div>
-          <p className="mt-4 text-lg text-gray-700 dark:text-[#a5adce]">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-border border-r-transparent"></div>
+          <p className="mt-4 text-lg text-foreground ">
             {t.loading}
           </p>
         </div>
@@ -484,20 +480,20 @@ export default function ViewExecutionResultPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+      <div className="min-h-screen    ">
         <UserHeader />
-        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-red-50 dark:bg-[#f38ba8]/30 rounded-lg text-center p-8">
-            <h2 className="text-2xl font-bold text-red-700 dark:text-[#f38ba8] mb-4">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-failure/10 rounded-lg text-center p-8">
+            <h2 className="text-2xl font-bold text-failure mb-4">
               {t.loadingFailed}
             </h2>
-            <p className="text-lg text-red-600 dark:text-[#f38ba8] mb-6">
+            <p className="text-lg text-failure mb-6">
               {error}
             </p>
             <div className="flex justify-center gap-4">
               <button
                 onClick={handleRetry}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-[var(--primary)] dark:text-[var(--primary-foreground)] dark:hover:brightness-90 transition"
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-primary dark:bg-[var(--primary)] dark:text-[var(--primary-foreground)] dark:hover:brightness-90 transition"
               >
                 {t.retry}
               </button>
@@ -518,14 +514,14 @@ export default function ViewExecutionResultPage() {
 
   if (!result) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+      <div className="min-h-screen    ">
         <UserHeader />
-        <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-yellow-50 dark:bg-[#f9e2af]/30 rounded-lg text-center p-8">
-            <h2 className="text-2xl font-bold text-yellow-700 dark:text-[#f9e2af]">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-attention/10 rounded-lg text-center p-8">
+            <h2 className="text-2xl font-bold text-attention ">
               {t.notFound}
             </h2>
-            <p className="mt-4 text-gray-700 dark:text-[#a5adce]">
+            <p className="mt-4 text-foreground ">
               {t.noResultFound} {resultId} 的执行结果。
             </p>
             <Button
@@ -548,6 +544,17 @@ export default function ViewExecutionResultPage() {
     Array.isArray(result.findings) && result.findings.length > 0;
 
   if (hasTableData && Array.isArray(result.findings)) {
+    const rows = result.findings;
+    const columns = Object.keys(rows[0]);
+    // Right-align columns whose non-null values are all numbers (pg returns numerics as strings).
+    const numericColumns = new Set(
+      columns.filter((column) =>
+        rows.every((row) => {
+          const value = row[column as keyof typeof row];
+          return value === null || value === undefined || (value !== "" && !Number.isNaN(Number(value)));
+        }),
+      ),
+    );
     findingsContent = (
       <div className="space-y-4">
         <div
@@ -557,33 +564,33 @@ export default function ViewExecutionResultPage() {
         >
           <table className="min-w-full">
             <thead className="sticky top-0 z-10">
-              <tr className="bg-gradient-to-r from-muted/60 to-muted/40 border-b-2 border-border/30">
-                {Object.keys(result.findings[0]).map((header) => (
+              <tr className="border-b bg-card">
+                {columns.map((header) => (
                   <th
                     key={header}
                     scope="col"
-                    className="px-4 py-3 text-left text-xs font-semibold text-foreground uppercase tracking-wider whitespace-nowrap"
+                    className={cn(
+                      "h-10 px-4 text-[13px] font-normal whitespace-nowrap text-muted-foreground",
+                      numericColumns.has(header) ? "text-right" : "text-left",
+                    )}
                   >
                     {header.replace(/_/g, " ")}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/20">
-              {result.findings.map((row, rowIndex) => (
-                <tr
-                  key={rowIndex}
-                  className={cn(
-                    "transition-colors hover:bg-muted/20",
-                    rowIndex % 2 === 0 ? "bg-card" : "bg-muted/10"
-                  )}
-                >
-                  {Object.keys(result.findings[0]).map((header) => {
+            <tbody className="divide-y">
+              {rows.map((row, rowIndex) => (
+                <tr key={rowIndex} className="transition-colors hover:bg-muted/40">
+                  {columns.map((header) => {
                     const value = row[header as keyof typeof row];
                     return (
                       <td
                         key={`${rowIndex}-${header}`}
-                        className="px-4 py-3 text-sm text-foreground whitespace-nowrap font-mono"
+                        className={cn(
+                          "px-4 py-2.5 font-mono text-[13px] whitespace-nowrap",
+                          numericColumns.has(header) && "text-right",
+                        )}
                       >
                         {value === null || value === undefined ? (
                           <span className="text-muted-foreground italic">
@@ -609,14 +616,14 @@ export default function ViewExecutionResultPage() {
 
         {/* 自定义滚动条 */}
         {showScrollBar && (
-          <div className="relative h-3 bg-muted/20 rounded-full border border-border/20 shadow-inner mx-4">
+          <div className="relative h-3 bg-muted/20 rounded-full border border-border/20 mx-4">
             <div
               ref={scrollBarRef}
               className={cn(
-                "absolute top-0 h-full bg-gradient-to-r from-primary/60 to-primary/80 rounded-full shadow-sm cursor-grab transition-colors duration-200 border border-primary/20",
+                "absolute top-0 h-full rounded-full cursor-grab transition-colors duration-200 border border-primary/20",
                 isDragging
-                  ? "cursor-grabbing bg-primary/90 from-primary/80 to-primary/90"
-                  : "hover:from-primary/70 hover:to-primary/90 hover:shadow-md"
+                  ? "cursor-grabbing bg-primary/90  "
+                  : "  "
               )}
               style={{
                 width: `${Math.max(
@@ -671,139 +678,76 @@ export default function ViewExecutionResultPage() {
         : t.statusTexts.failure;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+    <div className="min-h-screen    ">
       <UserHeader />
-      <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-8 animate-fadeIn">
           {/* Header Section */}
-          <header className="text-center lg:text-left">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          <header className="">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="space-y-2">
-                <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+                <h1 className="text-[28px] leading-tight font-semibold">
                   {t.executionDetails}
                 </h1>
-                <p className="text-lg text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {result.scriptId}
                 </p>
               </div>
-              {/* <Button
-                onClick={handleGoToDashboard}
-                variant="outline"
-                size="lg"
-                className="group shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                <Home className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" />
-                {t.back}
-              </Button> */}
+              {result.status !== "success" && result.statusType !== "attention_needed" && (
+                <Button
+                  variant="outline"
+                  onClick={handleAnalyzeError}
+                  disabled={isAnalyzingError}
+                >
+                  <Brain />
+                  {isAnalyzingError
+                    ? language === "zh" ? "分析中…" : "Analyzing…"
+                    : language === "zh" ? "AI 分析错误" : "Analyze error with AI"}
+                </Button>
+              )}
             </div>
           </header>
 
-          {/* Execution Summary Card */}
-          <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-            <div className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40 rounded-xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-              <div className="relative p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20">
-                    <Clock className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">
-                      {t.executionTime}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {formatDate(result.executedAt)}
-                    </p>
-                  </div>
-                </div>
-              </div>
+          <dl className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-1 bg-card px-5 py-4">
+              <dt className="text-[13px] text-muted-foreground">{t.status}</dt>
+              <dd
+                className={`inline-flex items-center gap-2 font-medium ${
+                  result.statusType === "attention_needed"
+                    ? "text-attention"
+                    : result.status === "success"
+                      ? "text-success"
+                      : "text-failure"
+                }`}
+              >
+                <span
+                  aria-hidden
+                  className={`size-1.5 rounded-full ${
+                    result.statusType === "attention_needed"
+                      ? "bg-attention"
+                      : result.status === "success"
+                        ? "bg-success"
+                        : "bg-failure"
+                  }`}
+                />
+                {statusText}
+              </dd>
             </div>
-
-            <div className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40 rounded-xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-              <div className="relative p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div
-                    className={`p-3 rounded-xl ${
-                      result.statusType === "attention_needed"
-                        ? "bg-amber-100 dark:bg-amber-950/20 ring-2 ring-amber-200 dark:ring-amber-800/50"
-                        : result.status === "success"
-                          ? "bg-green-100 dark:bg-green-950/20 ring-2 ring-green-200 dark:ring-green-800/50"
-                          : "bg-red-100 dark:bg-red-950/20 ring-2 ring-red-200 dark:ring-red-800/50"
-                    }`}
-                  >
-                    {result.statusType === "attention_needed" ? (
-                      <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                    ) : result.status === "success" ? (
-                      <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">
-                      {t.status}
-                    </h3>
-                    <p
-                      className={`text-sm font-medium ${
-                        result.statusType === "attention_needed"
-                          ? "text-amber-600 dark:text-amber-400"
-                          : result.status === "success"
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                      }`}
-                    >
-                      {statusText}
-                    </p>
-                  </div>
-                  
-                  {/* AI错误分析按钮 - 仅在失败状态下显示 */}
-                  {(result.status === "failed" || (result.statusType !== "attention_needed" && result.status !== "success")) && (
-                    <Button
-                      onClick={handleAnalyzeError}
-                      disabled={isAnalyzingError}
-                      size="sm"
-                      className="bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white"
-                    >
-                      {isAnalyzingError ? (
-                        <>
-                          <div className="animate-spin h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full" />
-                          分析中...
-                        </>
-                      ) : (
-                        <>
-                          <Brain className="h-4 w-4 mr-2" />
-                          AI分析错误
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
-              </div>
+            <div className="space-y-1 bg-card px-5 py-4">
+              <dt className="text-[13px] text-muted-foreground">{t.executionTime}</dt>
+              <dd className="tabular-nums">{formatDate(result.executedAt)}</dd>
             </div>
-
-            <div className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40 rounded-xl lg:col-span-2 xl:col-span-1">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-              <div className="relative p-6">
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-foreground">{t.message}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed break-words">
-                    {result.message}
-                  </p>
-                </div>
-              </div>
+            <div className="space-y-1 bg-card px-5 py-4 sm:col-span-2">
+              <dt className="text-[13px] text-muted-foreground">{t.message}</dt>
+              <dd className="break-words">{result.message}</dd>
             </div>
-          </div>
+          </dl>
 
           {/* Script Metadata Card - 总是显示，包含基本信息 */}
-          <div className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40 rounded-xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+          <div className="relative overflow-hidden rounded-lg border bg-card">
             <div className="relative p-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20">
-                  <Database className="h-6 w-6 text-primary" />
-                </div>
-                <h2 className="text-2xl font-bold text-foreground">
+                <h2 className="text-[23px] leading-tight font-semibold">
                   {t.scriptMetadata ||
                     (language === "en" ? "Script Metadata" : "脚本元数据")}
                 </h2>
@@ -822,12 +766,6 @@ export default function ViewExecutionResultPage() {
                         className="flex items-center gap-2 hover:text-primary transition-colors duration-200 group/link"
                       >
                         <span>{result.scriptId}</span>
-                        <span 
-                          className="text-xs opacity-60 group-hover/link:opacity-100 transition-opacity duration-200" 
-                          title={language === "en" ? "Edit Script" : "编辑脚本"}
-                        >
-                          ✏️
-                        </span>
                       </Link>
                     </div>
                   </div>
@@ -898,15 +836,11 @@ export default function ViewExecutionResultPage() {
           </div>
 
           {/* Query Findings Card */}
-          <div className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40 rounded-xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+          <div className="relative overflow-hidden rounded-lg border bg-card">
             <div className="relative p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20">
-                    <Search className="h-6 w-6 text-primary" />
-                  </div>
-                  <h2 className="text-2xl font-bold text-foreground">
+                  <h2 className="text-[23px] leading-tight font-semibold">
                     {t.queryFindings}
                   </h2>
                 </div>
@@ -917,7 +851,7 @@ export default function ViewExecutionResultPage() {
                     onClick={exportToCSV}
                     variant="outline"
                     size="sm"
-                    className="group shadow-md hover:shadow-lg transition-all duration-300 h-10 px-4 gap-2"
+                    className="group transition-all duration-300 h-10 px-4 gap-2"
                     title={t.exportCsvDesc}
                   >
                     <Download className="h-4 w-4 group-hover:scale-110 transition-transform" />
@@ -925,7 +859,7 @@ export default function ViewExecutionResultPage() {
                   </Button>
                 )}
               </div>
-              <div className="overflow-hidden rounded-xl border border-border/30 shadow-md">
+              <div className="overflow-hidden rounded-lg border border-border/30 ">
                 {findingsContent}
               </div>
             </div>
@@ -935,8 +869,8 @@ export default function ViewExecutionResultPage() {
 
       {/* 版本号显示 - 固定在左下角 */}
       <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 shadow-lg hover:shadow-xl transition-all duration-300">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 transition-all duration-300">
+          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
           <span className="font-mono text-xs text-muted-foreground font-medium">
             v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.7"}
           </span>

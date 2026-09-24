@@ -262,12 +262,12 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-3">
             {type === 'explain' ? (
-              <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
-                <Lightbulb className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <div className="p-2 rounded-lg bg-success/10 ">
+                <Lightbulb className="h-5 w-5 text-success " />
               </div>
             ) : (
-              <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/40">
-                <Rocket className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              <div className="p-2 rounded-lg bg-attention/10 ">
+                <Rocket className="h-5 w-5 text-attention " />
               </div>
             )}
             <span className="text-lg">
@@ -296,7 +296,7 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
                       className="opacity-0 group-hover:opacity-100 transition-opacity h-8 px-2"
                     >
                       {copiedIndex === index ? (
-                        <Check className="h-3 w-3 text-green-500" />
+                        <Check className="h-3 w-3 text-success" />
                       ) : (
                         <Copy className="h-3 w-3" />
                       )}
