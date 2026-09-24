@@ -8,16 +8,12 @@ import { Progress } from "@/components/ui/progress";
 import {
   BarChart2,
   Filter,
-  TrendingUp,
-  Activity,
   Target,
   Clock,
-  CheckCircle,
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
   MoreHorizontal,
-  PieChart,
 } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import {
@@ -51,12 +47,12 @@ import {
   Legend,
 
 } from "recharts";
+import { cn } from "@/lib/utils/utils";
 
 // 添加进度条动画样式
 const progressAnimationStyle = `
   @keyframes progressFill {
     from {
-      width: 0;
       transform: scaleX(0);
       opacity: 0;
     }
@@ -65,145 +61,48 @@ const progressAnimationStyle = `
       opacity: 1;
     }
   }
-  
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%) skewX(-12deg);
-    }
-    100% {
-      transform: translateX(200%) skewX(-12deg);
-    }
-  }
-  
-  @keyframes glow {
-    0%, 100% {
-      box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
-    }
-    50% {
-      box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 30px rgba(59, 130, 246, 0.3);
-    }
-  }
-  
+
   @keyframes fadeInUp {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(8px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
-  
-  @keyframes slideInLeft {
-    from {
-      opacity: 0;
-      transform: translateX(-30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-  
-  @keyframes slideInRight {
-    from {
-      opacity: 0;
-      transform: translateX(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-  
-  @keyframes bounceIn {
-    0% {
-      opacity: 0;
-      transform: scale(0.3);
-    }
-    50% {
-      transform: scale(1.05);
-    }
-    70% {
-      transform: scale(0.9);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-  
+
   .trend-item {
-    animation: fadeInUp 0.6s ease-out both;
-  }
-  
-  .stat-card {
-    animation: bounceIn 0.8s ease-out both;
-  }
-  
-  .header-slide-in {
-    animation: slideInLeft 0.8s ease-out both;
-  }
-  
-  .button-slide-in {
-    animation: slideInRight 0.8s ease-out both;
-  }
-  
-  .glass-effect {
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-  
-  .gradient-text {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  
-  .floating-animation {
-    animation: float 6s ease-in-out infinite;
-  }
-  
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
+    animation: fadeInUp 0.3s ease-out both;
   }
 `;
 
-// 图表颜色配置 - 基于提供的颜色图示优化
+// Chart colors resolve to the design tokens, so they follow light and dark mode.
 const CHART_COLORS = {
-  success: "#22c55e",        // 绿色 #22c55e - 成功 (鲜绿色)
-  failed: "#ef4444",         // 红色 #ef4444 - 失败 (明亮红色)
-  attention_needed: "#f59e0b", // 橙色 #f59e0b - 需要注意 (琥珀色)
-  primary: "#3b82f6",        // 蓝色 #3b82f6 - 主色调 (明亮蓝色)
-  secondary: "#8b5cf6",      // 紫色 #8b5cf6 - 辅助色 (深紫色)
-  accent: "#06b6d4",         // 青色 #06b6d4 - 强调色 (天蓝色)
-  muted: "hsl(var(--muted-foreground))", // 静音色
-  border: "hsl(var(--border))",      // 边框色
-  background: "hsl(var(--background))", // 背景色
-  
-  // 新增细分颜色
-  lightBlue: "#dbeafe",      // 浅蓝色背景
-  lightGreen: "#dcfce7",     // 浅绿色背景  
-  lightRed: "#fee2e2",       // 浅红色背景
-  lightPurple: "#f3e8ff",    // 浅紫色背景
-  lightGray: "#f8fafc",      // 浅灰色背景
-  
-  // 图表专用色彩
-  chartBlue: "#1e40af",      // 深蓝色 - 图表主色
-  chartGreen: "#059669",     // 深绿色 - 成功数据  
-  chartRed: "#dc2626",       // 深红色 - 错误数据
-  chartPurple: "#7c3aed",    // 深紫色 - 特殊数据
-  chartOrange: "#ea580c",    // 深橙色 - 警告数据
+  success: "var(--success)",
+  failed: "var(--failure)",
+  attention_needed: "var(--attention)",
+  primary: "var(--foreground)",
+  secondary: "var(--muted-foreground)",
+  accent: "var(--info)",
+  muted: "var(--muted-foreground)",
+  border: "var(--border)",
+  background: "var(--background)",
+
+  lightBlue: "var(--muted)",
+  lightGreen: "color-mix(in srgb, var(--success) 10%, transparent)",
+  lightRed: "color-mix(in srgb, var(--failure) 10%, transparent)",
+  lightPurple: "var(--muted)",
+  lightGray: "var(--muted)",
+
+  chartBlue: "var(--foreground)",
+  chartGreen: "var(--success)",
+  chartRed: "var(--failure)",
+  chartPurple: "var(--info)",
+  chartOrange: "var(--attention)",
 };
+
 
 // 数据接口定义
 interface ExecutionRecord {
@@ -505,36 +404,6 @@ export default function DataAnalysisPage() {
       .replace("%s", String(totalPages));
   };
 
-  // 获取成功率的颜色和状态
-  const getSuccessRateStatus = useCallback(
-    (rate: number) => {
-      if (rate >= 95)
-        return {
-          color: "bg-green-500",
-          text: "text-green-700",
-          label: t("performanceExcellent"),
-        };
-      if (rate >= 85)
-        return {
-          color: "bg-blue-500",
-          text: "text-blue-700",
-          label: t("performanceGood"),
-        };
-      if (rate >= 70)
-        return {
-          color: "bg-yellow-500",
-          text: "text-yellow-700",
-          label: t("performanceAverage"),
-        };
-      return {
-        color: "bg-red-500",
-        text: "text-red-700",
-        label: t("performanceNeedsAttention"),
-      };
-    },
-    [t],
-  );
-
   // 计算当前激活的筛选条件数量
   const getActiveFiltersCount = useCallback(() => {
     let count = 0;
@@ -579,16 +448,16 @@ export default function DataAnalysisPage() {
       <style dangerouslySetInnerHTML={{ __html: progressAnimationStyle }} />
 
       <div className="relative z-10 max-w-7xl mx-auto">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
           <div className="space-y-8">
             {/* 简化的Header Section - 与主页风格统一 */}
-            <header className="text-center lg:text-left">
-              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <header className="">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div className="space-y-3">
-                  <h1 className="text-4xl lg:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent leading-tight py-1">
+                  <h1 className="text-[28px] leading-tight font-semibold">
                     {t("dataAnalysisTitle")}
                   </h1>
-                  <p className="text-lg text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground">
                     {t("dataAnalysisSubTitle")}
                   </p>
                 </div>
@@ -598,24 +467,23 @@ export default function DataAnalysisPage() {
             </header>
 
             {/* 筛选控制 - 优化展示逻辑 */}
-            <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+            <Card className="relative overflow-hidden gap-0 py-0">
 
-              <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
+              <CardHeader className="relative border-b px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
-                      <Filter className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
-                    </div>
                     <div className="space-y-1">
-                      <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
+                      <CardTitle>
                         {t("filterConditions")}
                       </CardTitle>
                       <p className="text-sm text-muted-foreground">
-                        {getActiveFiltersCount() > 0 
-                          ? `已应用 ${getActiveFiltersCount()} 个筛选条件`
-                          : "请选择筛选条件以过滤数据"
-                        }
+                        {language === "zh"
+                          ? getActiveFiltersCount() > 0
+                            ? `已应用 ${getActiveFiltersCount()} 个筛选条件`
+                            : "选择筛选条件以缩小数据范围"
+                          : getActiveFiltersCount() > 0
+                            ? `${getActiveFiltersCount()} filters applied`
+                            : "Choose filters to narrow the data"}
                       </p>
                     </div>
                   </div>
@@ -660,7 +528,7 @@ export default function DataAnalysisPage() {
                       value={selectedTimeRange}
                       onValueChange={setSelectedTimeRange}
                     >
-                      <SelectTrigger className="h-12 text-base border-2 border-border/50 bg-background/50 hover:border-primary/30 transition-colors">
+                      <SelectTrigger className="h-9 w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -694,7 +562,7 @@ export default function DataAnalysisPage() {
                       value={selectedScript}
                       onValueChange={setSelectedScript}
                     >
-                      <SelectTrigger className="h-12 text-base border-2 border-border/50 bg-background/50 hover:border-primary/30 transition-colors">
+                      <SelectTrigger className="h-9 w-full">
                         <SelectValue className="truncate">
                           {selectedScript === 'all' 
                             ? t("allScripts")
@@ -711,7 +579,7 @@ export default function DataAnalysisPage() {
                       <SelectContent className="max-w-[400px]">
                         <SelectItem value="all">
                           <div className="flex items-center gap-2">
-                            <div className="h-4 w-4 rounded border-2 border-muted-foreground"></div>
+                            <div className="h-4 w-4 rounded border border-muted-foreground"></div>
                             {t("allScripts")}
                           </div>
                         </SelectItem>
@@ -773,7 +641,7 @@ export default function DataAnalysisPage() {
                         <Filter className="h-4 w-4 flex-shrink-0" />
                         <span className="truncate">标签筛选</span>
                       </Label>
-                      <div className="h-12 border-2 border-dashed border-border/30 rounded-md flex items-center justify-center text-sm text-muted-foreground bg-muted/10">
+                      <div className="h-12 border border-dashed border-border/30 rounded-md flex items-center justify-center text-sm text-muted-foreground bg-muted/10">
                         暂无可用标签
                       </div>
                     </div>
@@ -809,181 +677,75 @@ export default function DataAnalysisPage() {
               </CardContent>
             </Card>
 
-            {/* 概览统计卡片 - 与主页风格统一 */}
             {analyticsData && (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {/* 总执行次数 */}
-                <Card className="group relative overflow-hidden border-2 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl"
-                      style={{ 
-                        borderColor: `${CHART_COLORS.chartBlue}40`,
-                        backgroundColor: CHART_COLORS.lightBlue
-                      }}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium"
-                           style={{ color: CHART_COLORS.chartBlue }}>
-                          {t("totalExecutions")}
-                        </p>
-                        <p className="text-3xl font-bold"
-                           style={{ color: CHART_COLORS.chartBlue }}>
-                          {analyticsData.totalExecutions.toLocaleString()}
-                        </p>
-                      </div>
-                      <Activity className="h-8 w-8"
-                                style={{ color: CHART_COLORS.chartBlue }} />
-                    </div>
-                    <div className="mt-4">
-                      <Badge
-                        variant="secondary"
-                        className="font-medium"
-                        style={{ 
-                          backgroundColor: `${CHART_COLORS.chartBlue}20`,
-                          color: CHART_COLORS.chartBlue
-                        }}
-                      >
-                        {analyticsData.totalScripts} {t("scriptsCount")}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* 整体成功率 */}
-                <Card className="group relative overflow-hidden border-2 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl"
-                      style={{ 
-                        borderColor: `${CHART_COLORS.chartGreen}40`,
-                        backgroundColor: CHART_COLORS.lightGreen
-                      }}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium"
-                           style={{ color: CHART_COLORS.chartGreen }}>
-                          {t("overallSuccessRate")}
-                        </p>
-                        <p className="text-3xl font-bold"
-                           style={{ color: CHART_COLORS.chartGreen }}>
-                          {analyticsData.overallSuccessRate.toFixed(1)}%
-                        </p>
-                      </div>
-                      <CheckCircle className="h-8 w-8"
-                                   style={{ color: CHART_COLORS.chartGreen }} />
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      <Progress
-                        value={analyticsData.overallSuccessRate}
-                        className="h-2"
-                      />
-                      <p className="text-xs"
-                         style={{ color: CHART_COLORS.chartGreen }}>
-                        {
-                          getSuccessRateStatus(analyticsData.overallSuccessRate)
-                            .label
-                        }
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* 成功执行 */}
-                <Card className="group relative overflow-hidden border-2 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl"
-                      style={{ 
-                        borderColor: `${CHART_COLORS.chartPurple}40`,
-                        backgroundColor: CHART_COLORS.lightPurple
-                      }}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium"
-                           style={{ color: CHART_COLORS.chartBlue }}>
-                          {t("successfulExecutions")}
-                        </p>
-                        <p className="text-3xl font-bold"
-                           style={{ color: CHART_COLORS.chartPurple }}>
-                          {analyticsData.statusDistribution.success.toLocaleString()}
-                        </p>
-                      </div>
-                      <TrendingUp className="h-8 w-8"
-                                  style={{ color: CHART_COLORS.chartPurple }} />
-                    </div>
-                    <div className="mt-4">
-                      <p className="text-xs"
-                         style={{ color: CHART_COLORS.chartBlue }}>
-                        {(
-                          (analyticsData.statusDistribution.success /
-                            analyticsData.totalExecutions) *
-                          100
-                        ).toFixed(1)}
-                        % {t("of")} {t("totalExecutions")}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* 失败/需关注 */}
-                <Card className="group relative overflow-hidden border-2 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl"
-                      style={{ 
-                        borderColor: `${CHART_COLORS.chartRed}40`,
-                        backgroundColor: CHART_COLORS.lightRed
-                      }}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium"
-                           style={{ color: CHART_COLORS.chartRed }}>
-                          {t("failedAttentionExecutions")}
-                        </p>
-                        <p className="text-3xl font-bold"
-                           style={{ color: CHART_COLORS.chartRed }}>
-                          {(
-                            analyticsData.statusDistribution.failed +
-                            analyticsData.statusDistribution.attention_needed
-                          ).toLocaleString()}
-                        </p>
-                      </div>
-                      <AlertTriangle className="h-8 w-8"
-                                     style={{ color: CHART_COLORS.chartRed }} />
-                    </div>
-                    <div className="mt-4 flex gap-2">
-                      <Badge variant="destructive" className="text-xs font-medium"
-                             style={{ 
-                               backgroundColor: CHART_COLORS.chartRed,
-                               color: 'white'
-                             }}>
-                        {analyticsData.statusDistribution.failed}{" "}
-                        {t("failedLabel")}
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className="text-xs font-medium"
-                        style={{ 
-                          color: CHART_COLORS.chartOrange,
-                          borderColor: CHART_COLORS.chartOrange
-                        }}
-                      >
-                        {analyticsData.statusDistribution.attention_needed}{" "}
-                        {t("attentionLabel")}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <dl className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-4">
+                <div className="space-y-1 bg-card px-5 py-4">
+                  <dt className="text-[13px] text-muted-foreground">{t("totalExecutions")}</dt>
+                  <dd className="font-serif text-[30px] leading-tight font-semibold tabular-nums">
+                    {analyticsData.totalExecutions.toLocaleString()}
+                  </dd>
+                  <dd className="text-[13px] text-muted-foreground">
+                    {analyticsData.totalScripts} {t("scriptsCount")}
+                  </dd>
+                </div>
+                <div className="space-y-1 bg-card px-5 py-4">
+                  <dt className="text-[13px] text-muted-foreground">{t("overallSuccessRate")}</dt>
+                  <dd
+                    className={cn(
+                      "font-serif text-[30px] leading-tight font-semibold tabular-nums",
+                      analyticsData.overallSuccessRate >= 80 ? "text-success" : "text-attention",
+                    )}
+                  >
+                    {analyticsData.overallSuccessRate.toFixed(1)}
+                    <span className="ml-0.5 text-base font-normal text-muted-foreground">%</span>
+                  </dd>
+                  <dd className="pt-1">
+                    <Progress value={analyticsData.overallSuccessRate} className="h-1" />
+                  </dd>
+                </div>
+                <div className="space-y-1 bg-card px-5 py-4">
+                  <dt className="text-[13px] text-muted-foreground">{t("successfulExecutions")}</dt>
+                  <dd className="font-serif text-[30px] leading-tight font-semibold text-success tabular-nums">
+                    {analyticsData.statusDistribution.success.toLocaleString()}
+                  </dd>
+                  <dd className="text-[13px] text-muted-foreground">
+                    {(
+                      (analyticsData.statusDistribution.success / analyticsData.totalExecutions) *
+                      100
+                    ).toFixed(1)}
+                    % {t("of")} {t("totalExecutions")}
+                  </dd>
+                </div>
+                <div className="space-y-1 bg-card px-5 py-4">
+                  <dt className="text-[13px] text-muted-foreground">{t("failedAttentionExecutions")}</dt>
+                  <dd className="font-serif text-[30px] leading-tight font-semibold text-attention tabular-nums">
+                    {(
+                      analyticsData.statusDistribution.failed +
+                      analyticsData.statusDistribution.attention_needed
+                    ).toLocaleString()}
+                  </dd>
+                  <dd className="flex gap-3 text-[13px]">
+                    <span className="text-failure">
+                      {analyticsData.statusDistribution.failed} {t("failedLabel")}
+                    </span>
+                    <span className="text-attention">
+                      {analyticsData.statusDistribution.attention_needed} {t("attentionLabel")}
+                    </span>
+                  </dd>
+                </div>
+              </dl>
             )}
 
             {/* 可视化图表区域 */}
             {analyticsData && (
               <div className="grid gap-6 lg:grid-cols-2">
                 {/* 状态分布饼状图 */}
-                <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                <Card className="relative overflow-hidden gap-0 py-0">
                   
-                  <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
+                  <CardHeader className="relative border-b px-6 py-4">
                     <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
-                        <PieChart className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
-                      </div>
                       <div className="space-y-2">
-                        <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
+                        <CardTitle>
                           {t('statusDistribution')}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground">{t('executionResultsStats')}</p>
@@ -1022,8 +784,9 @@ export default function DataAnalysisPage() {
                             outerRadius={120}
                             paddingAngle={2}
                             dataKey="value"
-                            stroke="hsl(var(--background))"
+                            stroke="var(--background)"
                             strokeWidth={2}
+                            isAnimationActive={false}
                           >
                             {[
                               { name: t('successLabel'), value: analyticsData.statusDistribution.success, color: CHART_COLORS.chartGreen },
@@ -1052,7 +815,7 @@ export default function DataAnalysisPage() {
                               border: '1px solid'
                             }}
                             labelStyle={{
-                              color: 'hsl(var(--foreground))',
+                              color: 'var(--foreground)',
                               fontWeight: '600'
                             }}
                           />
@@ -1070,16 +833,12 @@ export default function DataAnalysisPage() {
                 </Card>
 
                 {/* 趋势折线图 */}
-                <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+                <Card className="relative overflow-hidden gap-0 py-0">
                   
-                  <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
+                  <CardHeader className="relative border-b px-6 py-4">
                     <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
-                        <TrendingUp className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
-                      </div>
                       <div className="space-y-2">
-                        <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
+                        <CardTitle>
                           {t('executionTrend')}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground">{t('recent14DaysTrend')}</p>
@@ -1133,7 +892,7 @@ export default function DataAnalysisPage() {
                               border: '1px solid'
                             }}
                             labelStyle={{
-                              color: 'hsl(var(--foreground))',
+                              color: 'var(--foreground)',
                               fontWeight: '600',
                               marginBottom: '8px'
                             }}
@@ -1214,17 +973,13 @@ export default function DataAnalysisPage() {
 
             {/* 趋势图表 */}
             {analyticsData && analyticsData.dailyTrend.length > 0 && (
-              <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+              <Card className="relative overflow-hidden gap-0 py-0">
 
-                <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
+                <CardHeader className="relative border-b px-6 py-4">
                   <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
-                      <BarChart2 className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
-                    </div>
                     <div className="space-y-2">
-                      <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
-                        {t("executionTrend")}
+                      <CardTitle>
+                        {language === "zh" ? "每日明细" : "Daily breakdown"}
                       </CardTitle>
                     </div>
                   </div>
@@ -1244,16 +999,16 @@ export default function DataAnalysisPage() {
                         return (
                           <div
                             key={day.date}
-                            className="trend-item group/item relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:scale-[1.01] border border-border/30 bg-gradient-to-r from-background/60 to-background/90 hover:from-background/80 hover:to-background/95 hover:border-border/50 shadow-sm hover:shadow-md"
+                            className="trend-item group/item relative overflow-hidden rounded-lg p-4 transition-all duration-300 border border-border/30 hover:border-border/50  "
                             style={{ animationDelay: `${index * 0.1}s` }}
                           >
                             {/* 装饰性渐变背景 */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity duration-500" />
+                            <div className="absolute inset-0 opacity-0 group-hover/item:opacity-100 transition-opacity duration-500" />
 
                             <div className="relative flex items-center gap-4">
                               {/* 日期卡片 - 统一样式 */}
                               <div className="flex-none">
-                                <div className="w-16 h-14 rounded-xl flex flex-col items-center justify-center text-xs font-medium transition-all duration-300 shadow-sm group-hover/item:shadow-md bg-gradient-to-br from-muted/80 to-muted/60 text-muted-foreground border border-border/40 hover:border-border/60">
+                                <div className="w-16 h-14 rounded-lg flex flex-col items-center justify-center text-xs font-medium transition-all duration-300 group-hover/ text-muted-foreground border border-border/40 hover:border-border/60">
                                   <div className="font-mono font-bold text-sm">
                                     {formatDate(day.date, language)
                                       .split(" ")[0]
@@ -1285,14 +1040,14 @@ export default function DataAnalysisPage() {
                                     {day.executions > 0 && (
                                       <Badge
                                         variant="outline"
-                                        className={`text-xs font-medium px-3 py-1 transition-all duration-300 shadow-sm ${
+                                        className={`text-xs font-medium px-3 py-1 transition-all duration-300  ${
                                           successRate >= 95
-                                            ? "border-emerald-300 text-emerald-700 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:border-emerald-600 dark:text-emerald-300 dark:from-emerald-950/40 dark:to-emerald-950/20"
+                                            ? "border-success/30 text-success       "
                                             : successRate >= 85
-                                              ? "border-blue-300 text-blue-700 bg-gradient-to-r from-blue-50 to-blue-100 dark:border-blue-600 dark:text-blue-300 dark:from-blue-950/40 dark:to-blue-950/20"
+                                              ? "border-border text-foreground       "
                                               : successRate >= 70
-                                                ? "border-amber-300 text-amber-700 bg-gradient-to-r from-amber-50 to-amber-100 dark:border-amber-600 dark:text-amber-300 dark:from-amber-950/40 dark:to-amber-950/20"
-                                                : "border-red-300 text-red-700 bg-gradient-to-r from-red-50 to-red-100 dark:border-red-600 dark:text-red-300 dark:from-red-950/40 dark:to-red-950/20"
+                                                ? "border-attention/30 text-attention       "
+                                                : "border-failure/30 text-failure       "
                                         }`}
                                       >
                                         {successRate.toFixed(1)}%
@@ -1304,7 +1059,7 @@ export default function DataAnalysisPage() {
                                   <div className="flex items-center gap-3 text-xs font-medium">
                                                                           <div className="flex items-center gap-2 px-2 py-1 rounded-lg transition-colors"
                                            style={{ backgroundColor: CHART_COLORS.lightGreen }}>
-                                        <div className="w-2.5 h-2.5 rounded-full shadow-sm"
+                                        <div className="w-2.5 h-2.5 rounded-full "
                                              style={{ background: `linear-gradient(to bottom right, ${CHART_COLORS.chartGreen}, ${CHART_COLORS.success})` }}></div>
                                         <span className="font-semibold"
                                               style={{ color: CHART_COLORS.chartGreen }}>
@@ -1314,7 +1069,7 @@ export default function DataAnalysisPage() {
                                       {day.failures > 0 && (
                                         <div className="flex items-center gap-2 px-2 py-1 rounded-lg transition-colors"
                                              style={{ backgroundColor: CHART_COLORS.lightRed }}>
-                                          <div className="w-2.5 h-2.5 rounded-full shadow-sm"
+                                          <div className="w-2.5 h-2.5 rounded-full "
                                                style={{ background: `linear-gradient(to bottom right, ${CHART_COLORS.chartRed}, ${CHART_COLORS.failed})` }}></div>
                                           <span className="font-semibold"
                                                 style={{ color: CHART_COLORS.chartRed }}>
@@ -1327,12 +1082,12 @@ export default function DataAnalysisPage() {
 
                                 {/* 进度条 */}
                                 <div className="relative">
-                                  <div className="h-4 rounded-full bg-gradient-to-r from-gray-100 via-gray-50 to-gray-100 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 overflow-hidden shadow-inner border border-gray-200/50 dark:border-gray-600/50">
+                                  <div className="h-4 rounded-full overflow-hidden border border-border ">
                                     {day.executions > 0 && (
                                       <>
                                         {/* 成功部分 */}
                                         <div
-                                          className="absolute left-0 top-0 h-full shadow-sm transition-all duration-700 ease-out relative overflow-hidden"
+                                          className="absolute left-0 top-0 h-full transition-all duration-700 ease-out relative overflow-hidden"
                                           style={{
                                             background: `linear-gradient(to right, ${CHART_COLORS.chartGreen}, ${CHART_COLORS.success})`,
                                             width: `${(day.successes / day.executions) * 100}%`,
@@ -1340,12 +1095,12 @@ export default function DataAnalysisPage() {
                                           }}
                                         >
                                           {/* 内部光效 */}
-                                          <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-white/20 to-transparent"></div>
+                                          <div className="absolute inset-0    "></div>
                                         </div>
                                         {/* 失败部分 */}
                                         {day.failures > 0 && (
                                           <div
-                                            className="absolute top-0 h-full shadow-sm transition-all duration-700 ease-out relative overflow-hidden"
+                                            className="absolute top-0 h-full transition-all duration-700 ease-out relative overflow-hidden"
                                             style={{
                                               background: `linear-gradient(to right, ${CHART_COLORS.chartRed}, ${CHART_COLORS.failed})`,
                                               left: `${(day.successes / day.executions) * 100}%`,
@@ -1354,18 +1109,18 @@ export default function DataAnalysisPage() {
                                             }}
                                           >
                                             {/* 内部光效 */}
-                                            <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-white/20 to-transparent"></div>
+                                            <div className="absolute inset-0    "></div>
                                           </div>
                                         )}
 
                                         {/* 顶部发光效果 */}
-                                        <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-white/10 to-white/30 opacity-0 group-hover/item:opacity-100 transition-opacity duration-500"></div>
+                                        <div className="absolute inset-0 opacity-0 group-hover/item:opacity-100 transition-opacity duration-500"></div>
                                       </>
                                     )}
                                   </div>
 
                                   {/* 动态光线扫过效果 */}
-                                  <div className="absolute inset-0 h-4 rounded-full bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-0 group-hover/item:opacity-100 transition-all duration-700 transform -skew-x-12 group-hover/item:animate-pulse"></div>
+                                  <div className="absolute inset-0 h-4 rounded-full opacity-0 group-hover/item:opacity-100 transition-all duration-700 transform -skew-x-12 group-hover/item:animate-pulse"></div>
                                 </div>
                               </div>
                             </div>
@@ -1379,169 +1134,79 @@ export default function DataAnalysisPage() {
 
             {/* 脚本性能分析 - 与主页风格统一 */}
             {analyticsData && analyticsData.scriptAnalytics.length > 0 && (
-              <Card className="group relative overflow-hidden border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90 shadow-lg hover:shadow-xl transition-all duration-500 hover:border-border/40">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-transparent to-primary/5 opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
+              <Card className="relative overflow-hidden gap-0 py-0">
 
-                <CardHeader className="relative px-6 py-5 border-b border-border/30 bg-gradient-to-r from-muted/20 to-muted/10">
+                <CardHeader className="relative border-b px-6 py-4">
                   <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-primary/10 ring-2 ring-primary/20 group-hover:ring-primary/30 transition-all duration-300">
-                      <Target className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
-                    </div>
                     <div className="space-y-2">
-                      <CardTitle className="text-xl font-bold text-foreground leading-relaxed">
+                      <CardTitle>
                         {t("scriptPerformanceAnalysis")}
-                        {analyticsData && analyticsData.scriptAnalytics.length > ITEMS_PER_PAGE && (
-                          <span className="text-base font-medium text-muted-foreground ml-3">
-                            ({formatPageInfo(analyticsData.scriptAnalytics.length)})
-                          </span>
-                        )}
                       </CardTitle>
                     </div>
                   </div>
                 </CardHeader>
 
-                <CardContent className="relative px-6 py-6">
-                  <div className="space-y-6">
-                    {analyticsData.scriptAnalytics
-                      .sort((a, b) => {
-                        // 优先按成功率排序，然后按执行次数排序
-                        if (Math.abs(a.successRate - b.successRate) < 0.1) {
-                          return b.totalExecutions - a.totalExecutions;
-                        }
-                        return b.successRate - a.successRate;
-                      })
-                      .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
-                      .map((script, index) => {
-                        const successRateStatus = getSuccessRateStatus(
-                          script.successRate,
-                        );
-
-                        return (
-                          <div
-                            key={script.scriptId}
-                            className="group/script p-4 rounded-lg border border-border/20 bg-background/30 hover:bg-background/50 transition-all duration-300 hover:shadow-md hover:border-border/40"
-                          >
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <h4
-                                    className="font-semibold text-foreground truncate group-hover/script:text-primary transition-colors"
-                                    title={script.scriptName}
-                                  >
-                                    {script.scriptName}
-                                  </h4>
-                                  <Badge
-                                    className={`font-medium px-3 py-1 transition-all duration-300 ${successRateStatus.color} text-white`}
-                                  >
-                                    {script.successRate.toFixed(1)}%
-                                  </Badge>
-                                  {index < 3 && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs bg-yellow-50 border-yellow-200 text-yellow-700 dark:bg-yellow-950/30 dark:border-yellow-800 dark:text-yellow-300"
-                                    >
-                                      {t("topRanking")} {index + 1}
-                                    </Badge>
-                                  )}
-                                </div>
-                                <p className="text-sm text-muted-foreground font-mono">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[760px] text-sm">
+                      <thead>
+                        <tr className="border-b text-[13px] text-muted-foreground">
+                          <th className="h-10 px-6 text-left font-normal">{language === "zh" ? "脚本" : "Script"}</th>
+                          <th className="h-10 w-20 px-4 text-right font-normal">{t("executionsLabel")}</th>
+                          <th className="h-10 w-20 px-4 text-right font-normal">{t("successLabel")}</th>
+                          <th className="h-10 w-20 px-4 text-right font-normal">{t("attentionLabel")}</th>
+                          <th className="h-10 w-20 px-4 text-right font-normal">{t("failedLabel")}</th>
+                          <th className="h-10 w-48 px-4 text-left font-normal">{t("successRateLabel")}</th>
+                          <th className="h-10 w-56 px-6 text-right font-normal">{t("lastExecution")}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {analyticsData.scriptAnalytics
+                          .sort((a, b) => {
+                            // Pass rate first, then run count for near-equal rates.
+                            if (Math.abs(a.successRate - b.successRate) < 0.1) {
+                              return b.totalExecutions - a.totalExecutions;
+                            }
+                            return b.successRate - a.successRate;
+                          })
+                          .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                          .map((script) => (
+                            <tr key={script.scriptId} className="hover:bg-muted/40">
+                              <td className="max-w-0 px-6 py-3">
+                                <p className="truncate font-medium" title={script.scriptName}>
+                                  {script.scriptName}
+                                </p>
+                                <p className="truncate font-mono text-[12px] text-muted-foreground">
                                   {script.scriptId}
                                 </p>
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
-                              <div className="text-center p-3 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors">
-                                <div className="flex items-center justify-center gap-2 mb-1">
-                                  <Activity className="h-4 w-4 text-primary" />
-                                  <p className="text-xs font-medium text-muted-foreground">
-                                    {t("executionsLabel")}
-                                  </p>
-                                </div>
-                                <p className="font-bold text-lg text-foreground">
-                                  {script.totalExecutions}
-                                </p>
-                              </div>
-                              <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-950/20 hover:bg-green-100 dark:hover:bg-green-950/30 transition-colors">
-                                <div className="flex items-center justify-center gap-2 mb-1">
-                                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                  <p className="text-xs font-medium text-green-600 dark:text-green-400">
-                                    {t("successLabel")}
-                                  </p>
-                                </div>
-                                <p className="font-bold text-lg text-green-600">
-                                  {script.successCount}
-                                </p>
-                              </div>
-                              <div className="text-center p-3 rounded-lg bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/30 transition-colors">
-                                <div className="flex items-center justify-center gap-2 mb-1">
-                                  <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                                  <p className="text-xs font-medium text-red-600 dark:text-red-400">
-                                    {t("failedLabel")}
-                                  </p>
-                                </div>
-                                <p className="font-bold text-lg text-red-600">
-                                  {script.failedCount}
-                                </p>
-                              </div>
-                              <div className="text-center p-3 rounded-lg bg-orange-50 dark:bg-orange-950/20 hover:bg-orange-100 dark:hover:bg-orange-950/30 transition-colors">
-                                <div className="flex items-center justify-center gap-2 mb-1">
-                                  <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                                  <p className="text-xs font-medium text-orange-600 dark:text-orange-400">
-                                    {t("attentionLabel")}
-                                  </p>
-                                </div>
-                                <p className="font-bold text-lg text-orange-600">
-                                  {script.attentionCount}
-                                </p>
-                              </div>
-                            </div>
-
-                            {script.lastExecution && (
-                              <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground bg-muted/20 px-3 py-2 rounded-lg">
-                                <Clock className="h-3 w-3" />
-                                <span className="font-medium">
-                                  {t("lastExecution")}:
-                                </span>
-                                <span className="font-mono">
-                                  {formatDate(script.lastExecution, language)}
-                                </span>
-                                <div className="ml-auto flex items-center gap-2">
-                                  <div
-                                    className={`w-2 h-2 rounded-full ${
-                                      new Date(script.lastExecution) >
-                                      new Date(Date.now() - 24 * 60 * 60 * 1000)
-                                        ? "bg-green-500 animate-pulse"
-                                        : "bg-gray-400"
-                                    }`}
-                                  ></div>
-                                  <span className="text-xs">
-                                    {new Date(script.lastExecution) >
-                                    new Date(Date.now() - 24 * 60 * 60 * 1000)
-                                      ? t("recentExecution")
-                                      : t("earlierExecution")}
+                              </td>
+                              <td className="px-4 py-3 text-right tabular-nums">{script.totalExecutions}</td>
+                              <td className={cn("px-4 py-3 text-right tabular-nums", script.successCount ? "text-success" : "text-muted-foreground")}>{script.successCount}</td>
+                              <td className={cn("px-4 py-3 text-right tabular-nums", script.attentionCount ? "text-attention" : "text-muted-foreground")}>{script.attentionCount}</td>
+                              <td className={cn("px-4 py-3 text-right tabular-nums", script.failedCount ? "text-failure" : "text-muted-foreground")}>{script.failedCount}</td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                                    <div
+                                      className={cn(
+                                        "h-full rounded-full",
+                                        script.successRate >= 80 ? "bg-success" : script.successRate > 0 ? "bg-attention" : "bg-failure",
+                                      )}
+                                      style={{ width: `${Math.max(script.successRate, 2)}%` }}
+                                    />
+                                  </div>
+                                  <span className="w-12 text-right text-[13px] tabular-nums">
+                                    {script.successRate.toFixed(0)}%
                                   </span>
                                 </div>
-                              </div>
-                            )}
-
-                            <div className="relative">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-muted-foreground">
-                                  {t("successRateLabel")}
-                                </span>
-                                <span className="text-sm font-bold text-foreground">
-                                  {successRateStatus.label}
-                                </span>
-                              </div>
-                              <Progress
-                                value={script.successRate}
-                                className="h-3 transition-all duration-500 hover:h-4"
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
+                              </td>
+                              <td className="px-6 py-3 text-right text-[13px] whitespace-nowrap text-muted-foreground tabular-nums">
+                                {script.lastExecution ? formatDate(script.lastExecution, language) : "—"}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
                   </div>
                 </CardContent>
 
@@ -1557,7 +1222,7 @@ export default function DataAnalysisPage() {
                         size="sm"
                         onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
                         disabled={currentPage === 1}
-                        className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150 relative z-30"
+                        className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
                       >
                         <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                         <span className="hidden sm:inline">{t("previous")}</span>
@@ -1662,7 +1327,7 @@ export default function DataAnalysisPage() {
                           setCurrentPage(Math.min(currentPage + 1, totalPages));
                         }}
                         disabled={currentPage === Math.ceil(analyticsData.scriptAnalytics.length / ITEMS_PER_PAGE)}
-                        className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150 relative z-30"
+                        className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
                       >
                         <span className="hidden sm:inline">{t("next")}</span>
                         <ChevronRight className="h-3.5 w-3.5 ml-1" />
@@ -1675,9 +1340,9 @@ export default function DataAnalysisPage() {
 
             {/* 加载状态 */}
             {isLoading && (
-              <Card className="border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90">
+              <Card className="border border-border/20 gap-0 py-0">
                 <CardContent className="p-12 text-center">
-                  <div className="h-8 w-8 mx-auto mb-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <div className="h-8 w-8 mx-auto mb-4 border border-primary border-t-transparent rounded-full animate-spin"></div>
                   <p className="text-lg font-medium text-muted-foreground">
                     {t("loadingAnalyticsData")}
                   </p>
@@ -1687,13 +1352,13 @@ export default function DataAnalysisPage() {
 
             {/* 错误状态 */}
             {error && (
-              <Card className="border-2 border-red-200/50 dark:border-red-800/50 bg-red-50 dark:bg-red-950/20">
+              <Card className="border border-failure/30 bg-failure/10 gap-0 py-0">
                 <CardContent className="p-8 text-center">
-                  <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
-                  <p className="text-lg font-medium text-red-700 dark:text-red-400 mb-2">
+                  <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-failure" />
+                  <p className="text-lg font-medium text-failure mb-2">
                     {t("dataLoadFailed")}
                   </p>
-                  <p className="text-sm text-red-600 dark:text-red-400 mb-4">
+                  <p className="text-sm text-failure mb-4">
                     {error}
                   </p>
 
@@ -1706,7 +1371,7 @@ export default function DataAnalysisPage() {
               !error &&
               analyticsData &&
               analyticsData.totalExecutions === 0 && (
-                <Card className="border-2 border-border/20 bg-gradient-to-br from-card via-card to-card/90">
+                <Card className="border border-border/20 gap-0 py-0">
                   <CardContent className="p-12 text-center">
                     <BarChart2 className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
                     <p className="text-lg font-medium text-muted-foreground mb-2">
@@ -1724,8 +1389,8 @@ export default function DataAnalysisPage() {
 
       {/* 版本号显示 - 与主页风格统一 */}
       <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 shadow-lg hover:shadow-xl transition-all duration-300">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 transition-all duration-300">
+          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
           <span className="font-mono text-xs text-muted-foreground font-medium">
             v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.9"}
           </span>
