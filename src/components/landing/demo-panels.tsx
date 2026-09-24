@@ -39,17 +39,36 @@ export function DemoFrame({
   meta,
   children,
   bodyClassName = "h-[300px] md:h-[340px]",
+  chrome = false,
+  elevated = false,
 }: {
   title: string;
   meta?: ReactNode;
   children: ReactNode;
   bodyClassName?: string;
+  /** macOS-style window buttons in the title bar. */
+  chrome?: boolean;
+  /** Lifted shadow for a window floating over a colored background. */
+  elevated?: boolean;
 }) {
   return (
-    <div className="overflow-hidden rounded-md border border-(--l-line) bg-(--l-bg)">
-      <div className="flex h-10 items-center justify-between border-b border-(--l-line) bg-(--l-panel) px-4 text-[13px]">
-        <span className="font-medium">{title}</span>
-        {meta && <span className="text-(--l-muted)">{meta}</span>}
+    <div
+      className={`overflow-hidden rounded-lg border border-(--l-line) bg-(--l-bg) ${
+        elevated ? "shadow-[0_24px_60px_-20px_rgba(0,0,0,0.45)]" : ""
+      }`}
+    >
+      <div className="flex h-10 items-center justify-between gap-4 border-b border-(--l-line) bg-(--l-panel) px-4 text-[13px]">
+        <span className="flex min-w-0 items-center gap-3">
+          {chrome && (
+            <span className="flex shrink-0 gap-1.5" aria-hidden>
+              <span className="size-2.5 rounded-full bg-[#ff5f57]" />
+              <span className="size-2.5 rounded-full bg-[#febc2e]" />
+              <span className="size-2.5 rounded-full bg-[#28c840]" />
+            </span>
+          )}
+          <span className="truncate font-medium">{title}</span>
+        </span>
+        {meta && <span className="shrink-0 text-(--l-muted)">{meta}</span>}
       </div>
       <div className={`flex flex-col overflow-hidden ${bodyClassName}`}>{children}</div>
     </div>
