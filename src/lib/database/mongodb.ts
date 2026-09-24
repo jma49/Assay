@@ -1,4 +1,5 @@
 import { MongoClient, Db } from "mongodb";
+import { redactConnectionString } from "./redact-connection-string";
 
 /**
  * 开发环境日志辅助函数
@@ -103,11 +104,11 @@ class MongoDbClient {
         devLog(`将连接到 MongoDB 数据库: ${this.dbName}`);
         globalWithMongo._hasLoggedDbName = true;
       }
-    } catch (e) {
+    } catch {
+      // The URL parse error carries the raw URI as `input`, so it is not logged.
       if (MongoDbClient.shouldLog) {
         devWarn(
-          `无法从 URI '${this.uri}' 解析数据库名称，将使用默认值: ${this.dbName}`,
-          e
+          `无法从 URI '${redactConnectionString(this.uri)}' 解析数据库名称，将使用默认值: ${this.dbName}`
         );
       }
     }
