@@ -31,7 +31,7 @@ interface FeatureSection {
 
 interface LandingCopy {
   nav: { features: string; quickStart: string; faq: string; signIn: string; openApp: string };
-  hero: { title: string; subtitle: string; primary: string; secondary: string };
+  hero: { title: string; subtitle: string; primary: string; secondary: string; demoNote: string };
   why: { eyebrow: string; title: string; cards: { title: string; body: string }[] };
   sections: FeatureSection[];
   quickStart: { eyebrow: string; title: string; body: string; readme: string };
@@ -62,8 +62,9 @@ const en: LandingCopy = {
     title: "Catch bad data before it ships.",
     subtitle:
       "Write SQL checks once. Run them on a schedule, read-only, and see what needs attention.",
-    primary: "Get started",
+    primary: "Try the live demo",
     secondary: "View on GitHub",
+    demoNote: "Sign in with any email. New accounts join the demo workspace as viewers.",
   },
   why: {
     eyebrow: `Why ${BRAND}`,
@@ -199,8 +200,9 @@ const zh: LandingCopy = {
   hero: {
     title: "在坏数据上线之前发现它。",
     subtitle: "SQL 检查只写一次。定时运行、只读执行，需要关注的问题一目了然。",
-    primary: "开始使用",
+    primary: "体验在线 Demo",
     secondary: "在 GitHub 查看",
+    demoNote: "用任意邮箱登录即可，新账号会以查看者身份进入演示工作区。",
   },
   why: {
     eyebrow: `为什么选择 ${BRAND}`,

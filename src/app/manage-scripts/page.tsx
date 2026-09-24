@@ -1028,7 +1028,7 @@ const ManageScriptsContent = () => {
                 {t("quickCreateButton")}
               </Button>
               
-              <Link href="/">
+              <Link href="/dashboard">
                 <Button
                   variant="outline"
                   size="lg"

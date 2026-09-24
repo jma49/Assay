@@ -28,7 +28,7 @@ export default function UserHeader() {
     // z-40 keeps the header under dialogs (z-50), so it can always stay sticky.
     <header className="sticky top-0 z-40 border-b bg-background">
       <div className={cn(APP_CONTAINER, "flex h-14 items-center gap-6")}>
-        <Link href="/" className="font-serif text-[20px] font-semibold tracking-tight">
+        <Link href="/dashboard" className="font-serif text-[20px] font-semibold tracking-tight">
           {BRAND}
         </Link>
 
