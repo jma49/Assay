@@ -8,6 +8,7 @@ import { Moon, Sun } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import MainNavigation from "@/components/ui/main-navigation";
 import { APP_CONTAINER } from "@/components/layout/app-container";
+import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils/utils";
 
@@ -27,6 +28,7 @@ export default function UserHeader() {
   return (
     // z-40 keeps the header under dialogs (z-50), so it can always stay sticky.
     <header className="sticky top-0 z-40 border-b bg-background">
+      <NavigationProgress />
       <div className={cn(APP_CONTAINER, "flex h-14 items-center gap-6")}>
         <Link href="/dashboard" className="font-serif text-[20px] font-semibold tracking-tight">
           {BRAND}

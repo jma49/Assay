@@ -225,3 +225,41 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted-foreground);
 }
+
+/* Loading placeholders: a slow warm sheen instead of blinking. */
+.skeleton-shimmer {
+  --skeleton-base: color-mix(in srgb, var(--foreground) 6%, var(--background));
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 0%,
+    var(--muted) 50%,
+    var(--skeleton-base) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* Top navigation progress line. */
+@keyframes nav-progress {
+  from {
+    transform: scaleX(0.05);
+  }
+  to {
+    transform: scaleX(0.85);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none;
+  }
+}

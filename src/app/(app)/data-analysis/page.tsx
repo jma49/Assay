@@ -46,6 +46,8 @@ const TrendLineChart = dynamic(
   { ssr: false, loading: chartPlaceholder },
 );
 import { cn } from "@/lib/utils/utils";
+import { SkeletonStatStrip, SkeletonTable } from "@/components/common/PageSkeletons";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // 添加进度条动画样式
 const progressAnimationStyle = `
@@ -1141,14 +1143,14 @@ export default function DataAnalysisPage() {
 
             {/* 加载状态 */}
             {isLoading && (
-              <Card className="border border-border/20 gap-0 py-0">
-                <CardContent className="p-12 text-center">
-                  <div className="h-8 w-8 mx-auto mb-4 border border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-lg font-medium text-muted-foreground">
-                    {t("loadingAnalyticsData")}
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="space-y-6" aria-busy="true">
+                <SkeletonStatStrip />
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <Skeleton className="h-[420px] rounded-lg" />
+                  <Skeleton className="h-[420px] rounded-lg" />
+                </div>
+                <SkeletonTable rows={5} />
+              </div>
             )}
 
             {/* 错误状态 */}
