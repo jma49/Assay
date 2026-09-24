@@ -1,4 +1,4 @@
-import { QueryResult } from "pg";
+import { PoolClient, QueryResult } from "pg";
 import db from "../../src/lib/database/db"; // 调整路径
 import { saveResultToMongo } from "../services/mongo-service";
 import { sendSlackNotification } from "../services/slack-service";
@@ -388,13 +388,11 @@ function parseSql(sqlContent: string): string[] {
 }
 
 /**
- * 执行单个查询并处理超时
- * @param query SQL查询语句
- * @param queryIndex 查询索引（用于日志）
- * @param executionTimestamp 执行时间戳（用于日志）
- * @returns 查询结果
+ * Uses statement_timeout so the server cancels slow queries,
+ * instead of a client-side timer that leaves them running.
  */
-async function runQueryWithTimeout(
+async function runQuery(
+  client: PoolClient,
   query: string,
   queryIndex: number,
   executionTimestamp: number
@@ -408,19 +406,7 @@ async function runQueryWithTimeout(
     );
   }
 
-  // 创建带超时的Promise
-  const queryPromise = db.query(query);
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => {
-      reject(
-        new Error(
-          `Query timeout after ${
-            timeout / 1000
-          } seconds. Query may be too complex or processing large amounts of data.`
-        )
-      );
-    }, timeout);
-  });
+  await client.query(`SET LOCAL statement_timeout = ${timeout}`);
 
   console.log(
     `[EXEC ${executionTimestamp}] Query ${
@@ -437,15 +423,25 @@ async function runQueryWithTimeout(
     });
   }
 
-  const result = await Promise.race([queryPromise, timeoutPromise]);
-
-  console.log(
-    `[EXEC ${executionTimestamp}] Query ${
-      queryIndex + 1
-    } completed successfully, affected rows: ${result.rowCount || 0}`
-  );
-
-  return result;
+  try {
+    const result = await client.query(query);
+    console.log(
+      `[EXEC ${executionTimestamp}] Query ${
+        queryIndex + 1
+      } completed successfully, rows: ${result.rowCount || 0}`
+    );
+    return result;
+  } catch (error) {
+    // 57014 = query_canceled, raised by statement_timeout.
+    if ((error as { code?: string }).code === "57014") {
+      throw new Error(
+        `Query execution timed out after ${
+          timeout / 1000
+        } seconds. The query may be processing too much data or contain inefficient logic.`
+      );
+    }
+    throw error;
+  }
 }
 
 /**
@@ -584,200 +580,32 @@ async function validateDatabaseConnection(): Promise<boolean> {
   return true;
 }
 
-/**
- * 检查查询是否需要事务处理
- * @param queries 查询数组
- * @returns 是否需要事务
- */
-function needsTransaction(queries: string[]): boolean {
-  if (queries.length <= 1) return false;
-
-  // 检查是否包含修改数据的操作
-  const modifyingOperations = [
-    "INSERT",
-    "UPDATE",
-    "DELETE",
-    "CREATE",
-    "DROP",
-    "ALTER",
-  ];
-  let hasModifyingOps = 0;
-
-  for (const query of queries) {
-    const upperQuery = query.trim().toUpperCase();
-    if (modifyingOperations.some((op) => upperQuery.startsWith(op))) {
-      hasModifyingOps++;
-    }
-  }
-
-  // 如果有多个修改操作，建议使用事务
-  return hasModifyingOps > 1;
-}
-
-/**
- * 在事务中执行所有查询
- * @param queries 查询数组
- * @param executionTimestamp 执行时间戳
- * @returns 查询结果数组
- */
-async function executeQueriesWithTransaction(
+async function executeQueries(
   queries: string[],
   executionTimestamp: number
 ): Promise<QueryResult[]> {
-  const results: QueryResult[] = [];
-
-  // 验证数据库连接
-  await validateDatabaseConnection();
-
-  try {
-    // 开始事务
-    console.log(
-      `[EXEC ${executionTimestamp}] Starting transaction for ${queries.length} queries`
-    );
-    await db.query("BEGIN");
+  return db.withReadOnlyTransaction(async (client) => {
+    const results: QueryResult[] = [];
 
     for (let i = 0; i < queries.length; i++) {
-      const queryText = queries[i];
       console.log(
-        `[EXEC ${executionTimestamp}] Executing query ${i + 1}/${
-          queries.length
-        } in transaction`
+        `[EXEC ${executionTimestamp}] Executing query ${i + 1}/${queries.length}`
       );
-
       try {
-        // 在事务中执行查询
-        const result = await db.query(queryText);
-        results.push(result);
-
-        console.log(
-          `[EXEC ${executionTimestamp}] Query ${
-            i + 1
-          } completed successfully in transaction, affected rows: ${
-            result.rowCount || 0
-          }`
+        results.push(
+          await runQuery(client, queries[i], i, executionTimestamp)
         );
       } catch (queryError) {
         console.error(
-          `[EXEC ${executionTimestamp}] Query ${i + 1} failed in transaction:`,
+          `[EXEC ${executionTimestamp}] Query ${i + 1} failed:`,
           queryError
-        );
-
-        // 事务中的任何错误都会导致回滚
-        await db.query("ROLLBACK");
-        console.log(
-          `[EXEC ${executionTimestamp}] Transaction rolled back due to error`
         );
         throw queryError;
       }
     }
 
-    // 提交事务
-    await db.query("COMMIT");
-    console.log(
-      `[EXEC ${executionTimestamp}] Transaction committed successfully`
-    );
-  } catch (error) {
-    console.error(`[EXEC ${executionTimestamp}] Transaction error:`, error);
-    try {
-      await db.query("ROLLBACK");
-      console.log(`[EXEC ${executionTimestamp}] Transaction rolled back`);
-    } catch (rollbackError) {
-      console.error(
-        `[EXEC ${executionTimestamp}] Rollback failed:`,
-        rollbackError
-      );
-    }
-    throw error;
-  }
-
-  return results;
-}
-
-/**
- * 执行所有查询（支持事务）
- * @param queries 查询数组
- * @param executionTimestamp 执行时间戳
- * @param useTransaction 是否使用事务
- * @returns 查询结果数组
- */
-async function executeQueries(
-  queries: string[],
-  executionTimestamp: number,
-  useTransaction: boolean = false
-): Promise<QueryResult[]> {
-  if (useTransaction) {
-    return await executeQueriesWithTransaction(queries, executionTimestamp);
-  }
-
-  // 原有的非事务执行逻辑
-  const results: QueryResult[] = [];
-
-  for (let i = 0; i < queries.length; i++) {
-    const queryText = queries[i];
-    console.log(
-      `[EXEC ${executionTimestamp}] Executing query ${i + 1}/${queries.length}`
-    );
-
-    try {
-      const result = await runQueryWithTimeout(
-        queryText,
-        i,
-        executionTimestamp
-      );
-      results.push(result);
-    } catch (queryError) {
-      console.error(
-        `[EXEC ${executionTimestamp}] Query ${i + 1} failed:`,
-        queryError
-      );
-
-      // 检查是否是超时错误
-      if (
-        queryError instanceof Error &&
-        queryError.message.includes("timeout")
-      ) {
-        console.error(
-          `[EXEC ${executionTimestamp}] Query ${
-            i + 1
-          } timed out. Consider optimizing the query or breaking it into smaller parts.`
-        );
-        throw new Error(
-          `Query execution timed out. The query may be processing too much data or contain inefficient logic. Original error: ${queryError.message}`
-        );
-      }
-
-      // 对于PostgreSQL，某些类型的"错误"实际上是正常的（如DO块中的NOTICE）
-      if (queryError instanceof Error) {
-        const errorMessage = queryError.message.toLowerCase();
-
-        // 如果是PostgreSQL的NOTICE或INFO消息，不视为错误
-        if (
-          errorMessage.includes("notice:") ||
-          errorMessage.includes("info:")
-        ) {
-          console.log(
-            `[EXEC ${executionTimestamp}] Query ${
-              i + 1
-            } generated notice/info, continuing...`
-          );
-          // 创建一个假的成功结果
-          results.push({
-            command: "NOTICE",
-            rowCount: 0,
-            rows: [],
-            fields: [],
-            oid: 0,
-          } as unknown as QueryResult);
-          continue;
-        }
-      }
-
-      // 真正的错误，重新抛出
-      throw queryError;
-    }
-  }
-
-  return results;
+    return results;
+  });
 }
 
 /**
@@ -857,20 +685,7 @@ export async function executeSqlScriptFromDb(
       return await handleNoValidQueries(scriptId, executionTimestamp);
     }
 
-    // 检查是否需要事务处理
-    const shouldUseTransaction = needsTransaction(queries);
-    if (shouldUseTransaction) {
-      console.log(
-        `[EXEC ${executionTimestamp}] Multiple modifying operations detected, executing in transaction`
-      );
-    }
-
-    // 执行查询（根据需要使用事务）
-    results = await executeQueries(
-      queries,
-      executionTimestamp,
-      shouldUseTransaction
-    );
+    results = await executeQueries(queries, executionTimestamp);
 
     // 格式化结果
     findings = formatFindings(results);
