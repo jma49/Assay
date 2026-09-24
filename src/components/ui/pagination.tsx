@@ -87,7 +87,7 @@ export function Pagination({
           size="sm"
           onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
           disabled={currentPage === 1}
-          className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
+          className="h-7 px-2 text-xs"
         >
           <ChevronLeft className="h-3.5 w-3.5 mr-1" />
           <span className="hidden sm:inline">{t("previous")}</span>
@@ -189,7 +189,7 @@ export function Pagination({
           size="sm"
           onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
           disabled={currentPage === totalPages}
-          className="h-7 px-2 text-xs shadow-sm hover:shadow transition-all duration-150"
+          className="h-7 px-2 text-xs"
         >
           <span className="hidden sm:inline">{t("next")}</span>
           <ChevronRight className="h-3.5 w-3.5 ml-1" />

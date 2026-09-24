@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -10,8 +9,6 @@ import CSSErrorHandler from "@/components/error/CSSErrorHandler";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { GlobalErrorHandlerProvider } from "@/components/error/GlobalErrorHandlerProvider";
 import { DialogPortalProvider } from "@/components/common/DialogPortalProvider";
-
-const inter = Inter({ subsets: ["latin"] });
 
 // Keep metadata export here (Server Component)
 export const metadata: Metadata = {
@@ -48,7 +45,7 @@ export default function RootLayout({
         {/* 添加CSS预加载提示，减少404错误 */}
         <meta name="preload" content="styles" />
       </head>
-      <body className={inter.className}>
+      <body>
         {hasClerkKey ? (
           <ClerkProvider appearance={{ theme: shadcn }}>{content}</ClerkProvider>
         ) : (

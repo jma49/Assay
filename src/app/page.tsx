@@ -5,6 +5,7 @@ import { isValidEmailDomain } from "@/lib/auth/auth-utils";
 import Dashboard from "@/components/layout/Dashboard";
 import LandingPage from "@/components/landing/LandingPage";
 import UserHeader from "@/components/layout/UserHeader";
+import { APP_CONTAINER } from "@/components/layout/app-container";
 import { Toaster } from "@/components/ui/sonner";
 
 // 强制动态渲染，避免静态预渲染
@@ -62,20 +63,14 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-background">
       <UserHeader />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className={`${APP_CONTAINER} py-8`}>
         <Dashboard />
-      </div>
+      </main>
       <Toaster />
-      
-      {/* 版本号显示 - 固定在左下角 */}
-      <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 shadow-lg hover:shadow-xl transition-all duration-300">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="font-mono text-xs text-muted-foreground font-medium">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || "0.2.1"}
-          </span>
-        </div>
-      </div>
+
+      <span className="fixed bottom-4 left-4 z-30 font-mono text-[11px] text-muted-foreground">
+        v{process.env.NEXT_PUBLIC_APP_VERSION}
+      </span>
     </div>
   );
 }
