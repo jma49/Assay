@@ -1,4 +1,4 @@
-# UI 优化方案
+# UI 优化方案（Assay）
 
 目标：把整个应用统一成 [majincheng.com](https://www.majincheng.com/) 的克制、排版优先的风格，并新增一个参考 [inkdrop.app](https://www.inkdrop.app/) 结构的介绍页。
 

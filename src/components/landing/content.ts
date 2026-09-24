@@ -1,3 +1,7 @@
+import { BRAND } from "@/lib/brand";
+
+export { BRAND };
+
 export type Language = "en" | "zh";
 
 export type DemoKind =
@@ -34,9 +38,6 @@ interface LandingCopy {
   faq: { title: string; items: { q: string; a: string }[] };
   footer: string;
 }
-
-/** Product name; the project is still looking for a final one. */
-export const BRAND = "SQL Check";
 
 export const GITHUB_URL = "https://github.com/jma49/sql-script-depoly";
 

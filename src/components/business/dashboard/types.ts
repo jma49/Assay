@@ -667,7 +667,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     retry: "Retry Load",
     noData: "No Data",
     // Header
-    dashboardTitle: "SQL Check Dashboard",
+    dashboardTitle: "Dashboard",
     dashboardDesc:
       "Monitor automated SQL check tasks, track data quality and consistency in real-time.",
     // Stats Cards
@@ -722,7 +722,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     noMessage: "No message",
     viewFullReportButton: "View Full Report",
     // Footer
-    footerSystem: "SQL Check System",
+    footerSystem: "Assay",
     footerInfo:
       "Automated checks driven by GitHub Actions, data stored in MongoDB.",
     footerTheme: "Current Theme: %s",
@@ -787,7 +787,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     refreshingStatusText: "Refreshing...",
     refreshDataButton: "Refresh Data",
     checkHistoryTitle: "Check History",
-    footerText: "SQL Check System. All rights reserved.",
+    footerText: "Assay. All rights reserved.",
     scriptMetadataTitle: "Script Metadata",
     scriptMetadataDesc: "Provide details for the SQL script.",
     fillRequiredFieldsError:
@@ -993,7 +993,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     complete: "Complete",
     needsAttentionShort: "Attention",
     // UserHeader相关翻译键
-    systemTitle: "SQL Check System",
+    systemTitle: "Assay",
     authorizedAccess: "Authorized Access",
     changeLanguage: "Change Language",
     // 编辑历史相关翻译键
@@ -1239,7 +1239,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     retry: "重试加载",
     noData: "无数据",
     // Header
-    dashboardTitle: "SQL 检查仪表盘",
+    dashboardTitle: "仪表盘",
     dashboardDesc:
       "实时监控自动化 SQL 检查任务执行情况，追踪数据质量和一致性。",
     // Stats Cards
@@ -1292,7 +1292,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     viewGitHubAction: "查看 GitHub Action",
     noMessage: "无消息",
     // Footer
-    footerSystem: "SQL 检查系统",
+    footerSystem: "Assay",
     footerInfo: "自动化检查由 GitHub Actions 驱动，数据存储于 MongoDB。",
     footerTheme: "当前主题: %s",
     previous: "上一页",
@@ -1357,7 +1357,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     refreshingStatusText: "刷新中...",
     refreshDataButton: "刷新数据",
     checkHistoryTitle: "检查历史",
-    footerText: "SQL 检查系统。保留所有权利。",
+    footerText: "Assay。保留所有权利。",
     scriptMetadataTitle: "脚本元数据",
     scriptMetadataDesc: "请提供 SQL 脚本的详细信息。",
     fillRequiredFieldsError: "请填写所有必填项：脚本ID、名称和 SQL 内容。",
@@ -1556,7 +1556,7 @@ export const dashboardTranslations: Record<string, TranslationRecord> = {
     complete: "完成",
     needsAttentionShort: "关注",
     // UserHeader相关翻译键
-    systemTitle: "SQL脚本管理系统",
+    systemTitle: "Assay",
     authorizedAccess: "已授权访问",
     changeLanguage: "切换语言",
     // 编辑历史相关翻译键

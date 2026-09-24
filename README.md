@@ -1,4 +1,6 @@
-# SQL Script Management & Monitoring System
+# Assay
+
+Open-source SQL data checks for PostgreSQL: write read-only checks, run them on a schedule, and see what needs attention.
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black.svg)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
