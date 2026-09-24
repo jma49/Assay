@@ -5,12 +5,11 @@ import { getMongoDbClient } from "../src/lib/database/mongodb";
 import { Collection, Document } from "mongodb"; // For types
 // Import the refactored function
 import { executeSqlScriptFromDb } from "./core/sql-executor";
-import { sendSlackNotification } from "./services/slack-service";
 
 // --- 环境变量检查 (保持在此处或移至 utils/env-loader.ts) ---
 // 简单的检查，确保必要的环境变量存在
 function checkEnvVariables() {
-  const requiredVars = ["DATABASE_URL", "MONGODB_URI", "SLACK_WEBHOOK_URL"];
+  const requiredVars = ["DATABASE_URL", "MONGODB_URI"];
   let allSet = true;
   console.log("检查环境变量...");
   requiredVars.forEach((varName) => {
@@ -61,14 +60,6 @@ async function main(): Promise<void> {
 
     if (!scriptDoc) {
       console.error(`脚本 '${scriptId}' 在数据库中未找到。`);
-      await sendSlackNotification(
-        scriptId,
-        `脚本未找到: ${scriptId}`,
-        "failure",
-        undefined,
-        undefined,
-        undefined // 未找到脚本时无法获取作者信息
-      );
       process.exit(1);
     }
 
@@ -79,14 +70,6 @@ async function main(): Promise<void> {
 
     if (!sqlContent || sqlContent.trim() === "") {
       console.warn(`脚本 '${scriptId}' 没有SQL内容。`);
-      await sendSlackNotification(
-        scriptId,
-        `脚本没有SQL内容: ${scriptId}`,
-        "failure",
-        undefined,
-        scriptHashtags?.join(", "), // 传递标签信息
-        scriptAuthor // 传递作者信息
-      );
       process.exit(1);
     }
 
@@ -115,15 +98,6 @@ async function main(): Promise<void> {
     const errorMsg =
       error instanceof Error ? error.message : "发生未知的顶层错误";
     console.error(`[CLI] 执行脚本 ${scriptId} 时发生错误:`, errorMsg);
-    // Try to send Slack notification even for fetch errors
-    await sendSlackNotification(
-      scriptId,
-      `执行失败: ${errorMsg}`,
-      "failure",
-      undefined,
-      undefined,
-      undefined
-    );
     // process.exit(1); // Decide if CLI should exit on error
   } finally {
     // Ensure connections are closed

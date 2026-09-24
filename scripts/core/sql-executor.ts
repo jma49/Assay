@@ -1,7 +1,6 @@
 import { PoolClient, QueryResult } from "pg";
 import db from "../../src/lib/database/db"; // 调整路径
 import { saveResultToMongo } from "../services/mongo-service";
-import { sendSlackNotification } from "../services/slack-service";
 import { ExecutionResult, ExecutionStatusType } from "../types";
 import { validateReadOnlySql } from "../../src/lib/sql/read-only-validator";
 
@@ -469,20 +468,9 @@ function formatFindings(results: QueryResult[]): string {
 }
 
 /**
- * 格式化标签用于Slack通知
- * @param tags 标签数组
- * @returns 格式化后的标签字符串
- */
-function formatTagsForSlack(tags?: string[]): string | undefined {
-  if (!tags || tags.length === 0) return undefined;
-  return tags.join(", ");
-}
-
-/**
  * 处理空SQL内容的情况
  * @param scriptId 脚本ID
  * @param executionTimestamp 执行时间戳
- * @param slackTag Slack标签
  * @returns 执行结果
  */
 async function handleEmptySqlContent(
@@ -525,7 +513,6 @@ async function handleEmptySqlContent(
  * 处理无有效查询的情况
  * @param scriptId 脚本ID
  * @param executionTimestamp 执行时间戳
- * @param slackTag Slack标签
  * @returns 执行结果
  */
 async function handleNoValidQueries(
@@ -637,8 +624,6 @@ export async function executeSqlScriptFromDb(
   let statusType: ExecutionStatusType = "failure";
   let mongoResultId: string | undefined = undefined;
 
-  const slackTag = formatTagsForSlack(scriptHashtags);
-
   try {
     // 验证数据库连接
     await validateDatabaseConnection();
@@ -715,18 +700,6 @@ export async function executeSqlScriptFromDb(
       );
     }
 
-    // 只有在需要关注时才发送Slack通知
-    if (statusType === "attention_needed") {
-      await sendSlackNotification(
-        scriptId,
-        `${successMessage} (${findings})`,
-        statusType,
-        mongoResultId,
-        slackTag,
-        scriptAuthor
-      );
-    }
-
     return {
       success: true,
       statusType,
@@ -757,16 +730,6 @@ export async function executeSqlScriptFromDb(
         `[EXEC ${executionTimestamp}] 保存错误结果到MongoDB，ID: ${mongoResultId}`
       );
     }
-
-    // 发送Slack错误通知 - 失败时也需要发送通知
-    await sendSlackNotification(
-      scriptId,
-      errorMessage,
-      "failure",
-      mongoResultId,
-      slackTag,
-      scriptAuthor
-    );
 
     return {
       success: false,

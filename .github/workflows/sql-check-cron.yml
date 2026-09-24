@@ -24,7 +24,6 @@ on:
 
 env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
   MONGODB_URI: ${{ secrets.MONGODB_URI }}
 
 jobs:
@@ -47,7 +46,6 @@ jobs:
       - name: Create environment file
         run: |
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.local
-          echo "SLACK_WEBHOOK_URL=${{ secrets.SLACK_WEBHOOK_URL }}" >> .env.local
           echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env.local
           echo "NODE_ENV=production" >> .env.local
 
@@ -94,12 +92,6 @@ jobs:
             echo "✅ MONGODB_URI: 已设置 (长度: ${#MONGODB_URI})"
           else
             echo "❌ MONGODB_URI: 未设置"
-          fi
-          
-          if [ -n "$SLACK_WEBHOOK_URL" ]; then
-            echo "✅ SLACK_WEBHOOK_URL: 已设置 (长度: ${#SLACK_WEBHOOK_URL})"
-          else
-            echo "⚠️  SLACK_WEBHOOK_URL: 未设置 (通知功能将跳过)"
           fi
 
       - name: Run SQL Scripts from MongoDB
