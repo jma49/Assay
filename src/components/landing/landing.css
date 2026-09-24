@@ -1,0 +1,42 @@
+/* Tokens from docs/ui-redesign-plan.md, scoped to the landing page until the
+   app-wide redesign lands. */
+.landing {
+  --l-bg: #ffffff;
+  --l-fg: #282828;
+  --l-muted: #767676;
+  --l-panel: #f5f4f2;
+  --l-line: rgba(40, 40, 40, 0.1);
+  --l-code-bg: #faf9f7;
+  --l-success: #3f7d58;
+  --l-attention: #b7791f;
+  --l-failure: #b54a3c;
+  --l-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua",
+    Georgia, "Songti SC", "Noto Serif SC", serif;
+  --l-sans: ui-sans-serif, -apple-system, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  --l-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  background: var(--l-bg);
+  color: var(--l-fg);
+  font-family: var(--l-sans);
+}
+
+.dark .landing {
+  --l-bg: #1b1a19;
+  --l-fg: #e6e3de;
+  --l-muted: #8f8b85;
+  --l-panel: #252321;
+  --l-line: rgba(230, 227, 222, 0.1);
+  --l-code-bg: #211f1d;
+  --l-success: #7fb58f;
+  --l-attention: #d9a553;
+  --l-failure: #d9826f;
+}
+
+.landing .serif {
+  font-family: var(--l-serif);
+}
+
+.landing .mono {
+  font-family: var(--l-mono);
+}
