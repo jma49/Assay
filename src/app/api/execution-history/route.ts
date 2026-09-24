@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 
@@ -21,6 +23,11 @@ const COLLECTION_NAME = "result";
 
 export async function GET(request: NextRequest) {
   try {
+    const authResult = await authorizeApiRequest(Permission.HISTORY_READ);
+    if (!authResult.isValid) {
+      return authResult.response;
+    }
+
     const { searchParams } = new URL(request.url);
 
     // 解析查询参数

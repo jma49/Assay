@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document, WithId } from "mongodb";
 import { ExecutionStatusType } from "@/../scripts/types"; // 假设 @/ 解析到 src/，scripts 与 src 平级
@@ -45,6 +47,11 @@ const MAX_LIMIT = 2000; // 增加最大限制到2000
 
 export async function GET(request: NextRequest) {
   try {
+    const authResult = await authorizeApiRequest(Permission.HISTORY_READ);
+    if (!authResult.isValid) {
+      return authResult.response;
+    }
+
     const { searchParams } = new URL(request.url);
 
     // 检查是否使用优化版本
