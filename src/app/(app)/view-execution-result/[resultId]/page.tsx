@@ -11,8 +11,10 @@ import {
   Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
-import UserHeader from "@/components/layout/UserHeader";
-import AnalysisResultDialog from '@/components/business/ai/AnalysisResultDialog';
+import dynamic from 'next/dynamic';
+
+// Pulls in a syntax highlighter; only load it when an analysis is shown.
+const AnalysisResultDialog = dynamic(() => import("@/components/business/ai/AnalysisResultDialog"), { ssr: false });
 import Link from "next/link";
 
 // 基于SQL脚本实际输出的精确类型定义
@@ -467,7 +469,6 @@ export default function ViewExecutionResultPage() {
   if (loading) {
     return (
       <div className="min-h-screen    ">
-        <UserHeader />
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8 text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-border border-r-transparent"></div>
           <p className="mt-4 text-lg text-foreground ">
@@ -481,7 +482,6 @@ export default function ViewExecutionResultPage() {
   if (error) {
     return (
       <div className="min-h-screen    ">
-        <UserHeader />
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-failure/10 rounded-lg text-center p-8">
             <h2 className="text-2xl font-bold text-failure mb-4">
@@ -515,7 +515,6 @@ export default function ViewExecutionResultPage() {
   if (!result) {
     return (
       <div className="min-h-screen    ">
-        <UserHeader />
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-attention/10 rounded-lg text-center p-8">
             <h2 className="text-2xl font-bold text-attention ">
@@ -679,7 +678,6 @@ export default function ViewExecutionResultPage() {
 
   return (
     <div className="min-h-screen    ">
-      <UserHeader />
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-8 animate-fadeIn">
           {/* Header Section */}
@@ -878,13 +876,15 @@ export default function ViewExecutionResultPage() {
       </div>
 
       {/* AI错误分析结果弹窗 */}
-      <AnalysisResultDialog
-        isOpen={isErrorAnalysisDialogOpen}
-        onOpenChange={setIsErrorAnalysisDialogOpen}
-        result={errorAnalysis}
-        type="explain"
-        title="AI 错误分析结果"
-      />
+      {isErrorAnalysisDialogOpen && (
+        <AnalysisResultDialog
+          isOpen={isErrorAnalysisDialogOpen}
+          onOpenChange={setIsErrorAnalysisDialogOpen}
+          result={errorAnalysis}
+          type="explain"
+          title={language === "zh" ? "AI 错误分析结果" : "AI error analysis"}
+        />
+      )}
     </div>
   );
 }

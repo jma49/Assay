@@ -3,9 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getUserProfile, isValidEmailDomain } from "@/lib/auth/auth-utils";
 import Dashboard from "@/components/layout/Dashboard";
-import UserHeader from "@/components/layout/UserHeader";
 import { APP_CONTAINER } from "@/components/layout/app-container";
-import { Toaster } from "@/components/ui/sonner";
 
 // 强制动态渲染，避免静态预渲染
 export const dynamic = "force-dynamic";
@@ -63,11 +61,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <UserHeader />
       <main className={`${APP_CONTAINER} py-8`}>
         <Dashboard />
       </main>
-      <Toaster />
 
       <span className="fixed bottom-4 left-4 z-30 font-mono text-[11px] text-muted-foreground">
         v{process.env.NEXT_PUBLIC_APP_VERSION}

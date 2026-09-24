@@ -70,10 +70,15 @@ import {
   ScriptMetadataForm,
   ScriptFormData,
 } from "@/components/business/scripts/ScriptMetadataForm";
-import CodeMirrorEditor from "@/components/business/scripts/CodeMirrorEditor";
+import dynamic from "next/dynamic";
+
+// CodeMirror and its themes are large; load them only where the editor renders.
+const CodeMirrorEditor = dynamic(
+  () => import("@/components/business/scripts/CodeMirrorEditor"),
+  { ssr: false, loading: () => <div className="h-[480px] animate-pulse rounded-lg border bg-muted/40" /> },
+);
 import { generateSqlTemplateWithTranslation } from "@/components/business/dashboard/scriptTranslations";
 import { EditHistoryDialog } from "@/components/business/scripts/EditHistoryDialog";
-import UserHeader from "@/components/layout/UserHeader";
 import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
 import { StackedTags } from "@/components/ui/stacked-tags";
 import { LoadingOverlay } from "@/components/ui/loading";
@@ -597,7 +602,6 @@ const ManageScriptsContent = () => {
 
   return (
     <div className="min-h-screen    ">
-      <UserHeader />
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-8 animate-fadeIn">
           {/* Header Section */}

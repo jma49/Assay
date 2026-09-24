@@ -58,7 +58,6 @@ import {
 } from "@/components/business/dashboard/types";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { cn } from "@/lib/utils/utils";
-import UserHeader from "@/components/layout/UserHeader";
 import { PageHeader } from "@/components/layout/PageHeader";
 
 export default function GlobalEditHistoryPage() {
@@ -324,7 +323,6 @@ export default function GlobalEditHistoryPage() {
 
   return (
     <div className="min-h-screen    ">
-      <UserHeader />
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-6 animate-fadeIn">
           <div className="space-y-1">

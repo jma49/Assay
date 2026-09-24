@@ -6,14 +6,18 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Toaster } from "@/components/ui/sonner";
-import UserHeader from "@/components/layout/UserHeader";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import {
   ScriptMetadataForm,
   ScriptFormData,
 } from "@/components/business/scripts/ScriptMetadataForm";
-import CodeMirrorEditor from "@/components/business/scripts/CodeMirrorEditor";
+import dynamic from "next/dynamic";
+
+// CodeMirror and its themes are large; load them only where the editor renders.
+const CodeMirrorEditor = dynamic(
+  () => import("@/components/business/scripts/CodeMirrorEditor"),
+  { ssr: false, loading: () => <div className="h-[480px] animate-pulse rounded-lg border bg-muted/40" /> },
+);
 import { useLanguage } from "@/components/common/LanguageProvider";
 import {
   dashboardTranslations,
@@ -171,7 +175,6 @@ export default function NewScriptPage() {
 
   return (
     <div className="min-h-screen">
-      <UserHeader />
       <main className={`${APP_CONTAINER} space-y-8 py-8`}>
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
@@ -214,7 +217,6 @@ export default function NewScriptPage() {
           </aside>
         </div>
       </main>
-      <Toaster />
     </div>
   );
 }
