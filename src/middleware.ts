@@ -2,7 +2,10 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // 定义公开路由（不需要认证）
+// "/" is the landing page for signed-out visitors; the page itself decides
+// between landing and dashboard, so only the exact root path is public.
 const isPublicRoute = createRouteMatcher([
+  "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/unauthorized",

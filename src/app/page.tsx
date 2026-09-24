@@ -3,6 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { isValidEmailDomain } from "@/lib/auth/auth-utils";
 import Dashboard from "@/components/layout/Dashboard";
+import LandingPage from "@/components/landing/LandingPage";
 import UserHeader from "@/components/layout/UserHeader";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -31,9 +32,8 @@ export default async function Home() {
   // 服务端认证检查
   const { userId } = await auth();
 
-  // 如果用户未登录，重定向到登录页
   if (!userId) {
-    redirect("/sign-in");
+    return <LandingPage />;
   }
 
   // 获取用户信息并验证邮箱域名

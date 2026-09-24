@@ -40,6 +40,21 @@ describe("middleware", () => {
     expect(auth).not.toHaveBeenCalled();
   });
 
+  it("serves the landing page at / without a session", async () => {
+    const res = await run("/");
+
+    expect(res.headers.get("location")).toBeNull();
+    expect(auth).not.toHaveBeenCalled();
+  });
+
+  it("keeps other pages private when / is public", async () => {
+    auth.mockResolvedValue({ userId: null });
+
+    const res = await run("/manage-scripts");
+
+    expect(res.headers.get("location")).toBe("http://localhost/sign-in");
+  });
+
   it("redirects signed-out users to sign-in", async () => {
     auth.mockResolvedValue({ userId: null });
 
