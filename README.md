@@ -70,6 +70,16 @@ NODE_ENV="production"
    # The application will automatically create necessary collections
    ```
 
+   Optionally load demo data: a `demo` schema (customers, orders, payments,
+   inventory with injected data quality issues) in `DATABASE_URL`, plus 11
+   check scripts in MongoDB. It only touches the `demo` schema and scripts
+   authored by `demo-seed`, and is safe to re-run.
+
+   ```bash
+   npm run seed:demo
+   DOTENV_CONFIG_PATH=.env.local npm run sql:run-all
+   ```
+
 3. **Development Mode**
 
    ```bash
