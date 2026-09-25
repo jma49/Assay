@@ -41,10 +41,10 @@ interface LandingCopy {
   footer: string;
 }
 
-export const GITHUB_URL = "https://github.com/jma49/sql-script-depoly";
+export const GITHUB_URL = "https://github.com/jma49/Assay";
 
 export const QUICK_START = `git clone ${GITHUB_URL}.git
-cd sql-script-depoly && npm install
+cd Assay && npm install
 
 # Clerk, MongoDB, PostgreSQL and Upstash keys
 cp .env.example .env.local
