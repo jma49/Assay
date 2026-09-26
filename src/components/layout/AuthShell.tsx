@@ -6,6 +6,7 @@ import { useLanguage } from "@/components/common/LanguageProvider";
 import { BRAND } from "@/lib/brand";
 import { AquaWallpaper } from "@/components/common/AquaWallpaper";
 import { BrandMark } from "@/components/common/BrandMark";
+import { TrafficLights } from "@/components/common/TrafficLights";
 
 /** Centered window on the Aqua desktop, used by sign-in, sign-up and the error pages. */
 export function AuthShell({
@@ -43,11 +44,13 @@ export function AuthShell({
       <main className="relative flex flex-1 items-start justify-center px-4 pt-12 pb-16 sm:pt-20">
         <div className="aqua-window aqua-window-open w-full max-w-[440px] overflow-hidden rounded-[7px]">
           <div className="aqua-titlebar relative flex h-[26px] items-center justify-center px-16 text-[13px]">
-            <span className="aqua-lights absolute left-2.5" aria-hidden>
-              <i />
-              <i />
-              <i />
-            </span>
+            <TrafficLights
+              className="absolute left-2.5"
+              close={{
+                label: language === "zh" ? "关闭窗口" : "Close window",
+                onClick: () => window.location.assign("/"),
+              }}
+            />
             <span className="truncate">{BRAND}</span>
           </div>
           <div className="flex flex-col items-center gap-6 px-5 pt-7 pb-6">
