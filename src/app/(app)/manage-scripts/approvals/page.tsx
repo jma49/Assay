@@ -517,7 +517,7 @@ export default function ApprovalsPage() {
                     onChange={onPageInputChange}
                     onKeyDown={onPageInputKeyDown}
                     placeholder={t("jumpToPage")}
-                    className="w-12 h-6 px-1 text-xs text-center border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="w-12 h-6 px-1 text-xs text-center aqua-field rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                   <Button
                     type="submit"

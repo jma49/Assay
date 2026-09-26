@@ -65,7 +65,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
           onChange={(e) => setPrompt(e.target.value)}
           placeholder={t.placeholder}
           disabled={isGenerating}
-          className="h-9 bg-background"
+          className="h-9"
         />
         <Button type="submit" size="sm" className="h-9" disabled={isGenerating || !prompt.trim()}>
           {isGenerating ? <Loader2 className="animate-spin" /> : <Wand2 />}
@@ -81,7 +81,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
               type="button"
               onClick={() => setPrompt(example)}
               disabled={isGenerating}
-              className="rounded-md border bg-background px-2 py-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
+              className="rounded-md border bg-card px-2 py-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
             >
               {example}
             </button>

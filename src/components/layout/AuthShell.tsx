@@ -20,7 +20,7 @@ export function AuthShell({
   const { language, setLanguage } = useLanguage();
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col">
       <header className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="font-serif text-[20px] font-semibold tracking-tight">
           {BRAND}
@@ -52,9 +52,12 @@ export function AuthShell({
 export const clerkAppearance = {
   elements: {
     rootBox: "w-full",
-    cardBox: "w-full shadow-none border rounded-lg",
+    cardBox: "w-full aqua-window rounded-lg",
     card: "shadow-none",
     headerTitle: "hidden",
     headerSubtitle: "hidden",
+    formButtonPrimary: "aqua-gel !rounded-full !text-[#111]",
+    socialButtonsBlockButton: "aqua-pill !rounded-full",
+    formFieldInput: "aqua-field",
   },
 };

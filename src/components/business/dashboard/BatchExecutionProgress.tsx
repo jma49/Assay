@@ -138,7 +138,7 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card
-        className={`w-full max-w-6xl bg-background transition-all duration-300 ${
+        className={`w-full max-w-6xl bg-card transition-all duration-300 ${
           isMinimized ? "h-auto" : "max-h-[90vh]"
         }`}
       >
@@ -272,7 +272,7 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
                             ? "border-attention/30 bg-attention/10  "
                             : script.status === "completed"
                               ? "border-success/30 bg-success/10  "
-                              : "border-border bg-background"
+                              : "border-border bg-card"
                     }`}
                   >
                     {/* 左侧：序号和状态图标 */}
