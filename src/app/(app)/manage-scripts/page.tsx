@@ -489,7 +489,7 @@ const ManageScriptsContent = () => {
     
     // 直接跳转到主页并通过URL参数传递搜索条件
     console.log("🚀 [管理页面] 跳转到主页并传递搜索参数:", trimmedScriptId);
-    router.push(`/?search=${encodeURIComponent(trimmedScriptId)}#execution-history`);
+    router.push(`/dashboard?search=${encodeURIComponent(trimmedScriptId)}#execution-history`);
   };
 
   const filteredScripts = scripts.filter((script) => {
