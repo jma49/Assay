@@ -21,6 +21,7 @@ import { CheckHistory } from "@/components/business/dashboard/CheckHistory";
 import { LoadingError } from "@/components/business/dashboard/LoadingError";
 import { DashboardFooter } from "@/components/business/dashboard/DashboardFooter";
 import { DashboardSkeleton } from "@/components/common/PageSkeletons";
+import type { CheckStats } from "@/lib/database/check-stats";
 
 // --- Main Component ---
 const Dashboard = () => {
@@ -55,13 +56,7 @@ const Dashboard = () => {
   });
   const [isLoadingChecks, setIsLoadingChecks] = useState(false);
 
-  // 新增：分离统计数据状态
-  const [overallStats, setOverallStats] = useState<{
-    totalCount: number;
-    successCount: number;
-    failureCount: number;
-    needsAttentionCount: number;
-  }>({
+  const [overallStats, setOverallStats] = useState<CheckStats>({
     totalCount: 0,
     successCount: 0,
     failureCount: 0,
@@ -384,54 +379,14 @@ const Dashboard = () => {
     }
   }, []);
 
-  // 获取整体统计数据的函数
   const loadOverallStats = useCallback(async () => {
     try {
-      // 获取更多数据用于统计计算 (获取最近2000条数据)
-      const response = await fetch("/api/check-history?limit=2000&include_results=false", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
+      const response = await fetch("/api/check-history/stats");
       if (!response.ok) {
         throw new Error(`获取统计数据失败: ${response.status} ${response.statusText}`);
       }
-
-      const data = await response.json();
-      let statsData: Check[] = [];
-
-      if (data.data && Array.isArray(data.data)) {
-        statsData = data.data;
-      }
-
-      // 计算整体统计数据
-      const overallSuccessCount = statsData.filter(
-        (c) => c.status === "success" && c.statusType !== "attention_needed",
-      ).length;
-      const overallFailureCount = statsData.filter(
-        (c) => c.status === "failure",
-      ).length;
-      const overallNeedsAttentionCount = statsData.filter(
-        (c) => c.statusType === "attention_needed",
-      ).length;
-      const overallTotalCount = statsData.length;
-
-      setOverallStats({
-        totalCount: overallTotalCount,
-        successCount: overallSuccessCount,
-        failureCount: overallFailureCount,
-        needsAttentionCount: overallNeedsAttentionCount,
-      });
-
-      console.log("📊 整体统计数据加载完成:", {
-        totalChecks: overallTotalCount,
-        successCount: overallSuccessCount,
-        failureCount: overallFailureCount,
-        needsAttentionCount: overallNeedsAttentionCount,
-      });
-
+      const stats: CheckStats = await response.json();
+      setOverallStats(stats);
     } catch (err) {
       console.error("获取整体统计数据失败:", err);
     }
