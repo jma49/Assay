@@ -561,7 +561,7 @@ export default function ApprovalsPage() {
           <PageHeader title={t('approvalsTitle')} description={t('approvalsDescription')} />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-0">
-            <TabsList className="w-full">
+            <TabsList>
               <TabsTrigger value="pending">
                 {t('pendingApprovals')}
                 <span className="text-muted-foreground tabular-nums">{hasLoaded ? totalPendingApprovals : "–"}</span>

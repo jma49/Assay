@@ -9,7 +9,7 @@ import { useLanguage } from "@/components/common/LanguageProvider";
 import MainNavigation from "@/components/ui/main-navigation";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import { NavigationProgress } from "@/components/layout/NavigationProgress";
-import { BRAND } from "@/lib/brand";
+import { BrandMark } from "@/components/common/BrandMark";
 import { cn } from "@/lib/utils/utils";
 
 const controlButton =
@@ -30,8 +30,8 @@ export default function UserHeader() {
     <header className="aqua-menubar sticky top-0 z-40">
       <NavigationProgress />
       <div className={cn(APP_CONTAINER, "flex h-14 items-center gap-6")}>
-        <Link href="/dashboard" className="font-serif text-[21px] font-semibold tracking-tight">
-          {BRAND}
+        <Link href="/dashboard">
+          <BrandMark />
         </Link>
 
         <MainNavigation className="flex-1" />
