@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { Permission } from "@/lib/auth/rbac";
+import { guardAiRequest } from "@/lib/security/ai-guard";
 import { getCachedSchema } from "@/lib/database/db-schema";
 import { generateContentWithRetry, getAIErrorMessage } from "@/lib/utils/ai-utils";
 
@@ -12,6 +13,11 @@ export async function POST(request: NextRequest) {
     }
 
     const { sql, errorMessage } = await request.json();
+
+    const refused = await guardAiRequest(authResult.user.id, { sql, errorMessage });
+    if (refused) {
+      return refused;
+    }
 
     if (!sql || typeof sql !== "string") {
       return NextResponse.json(
