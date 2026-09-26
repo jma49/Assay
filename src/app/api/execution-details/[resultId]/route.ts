@@ -94,7 +94,6 @@ export const GET = async (
     return NextResponse.json(
       {
         message: "服务器内部错误",
-        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
