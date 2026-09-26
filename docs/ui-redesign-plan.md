@@ -9,6 +9,8 @@
 - 左右分栏保持对称或固定比例（1:1、2:1），间距只取自间距刻度；
 - 每个改动页面在 1440px、1024px、390px 三个宽度截图检查，没有错位后再提交。
 
+> **2026-09 更新：Aqua 质感。** majincheng.com 首页已改为 JM/OS（Mac OS X Aqua 桌面，源码 [jma49/jmos](https://github.com/jma49/jmos)）。Assay 随之改用 Aqua 质感，**布局不变**：窗口灰细条纹底、白色内容卡片、带条纹渐变的卡片标题栏、磨砂菜单栏、蓝色 gel 主按钮与白色 pill 次按钮、白 gel + 蓝色箭头帽的下拉框、内凹输入框、隔行浅蓝的表格、Aqua 滚动条，浅色与深色都做。Token 与 `.aqua-*` 材质类在 `src/app/globals.css`，取自 jmos 的 `src/os/styles/base.css` 与 `windows.css`。字体只写字体栈（Lucida Grande / Apple Garamond / Monaco），**不打包** jmos 里来自 ryOS 的苹果字体和图标文件。下文第 1–3 节中「去掉阴影、渐变、纹理」「几乎没有强调色」等规则已被本次更新取代，其余对齐与间距规则不变。
+
 ## 1. 参考站点提炼
 
 ### majincheng.com（风格来源）
