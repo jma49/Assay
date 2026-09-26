@@ -182,18 +182,21 @@ function FeatureSection({ lang, index }: { lang: Language; index: number }) {
   const mirrored = index % 2 === 1;
 
   return (
-    <section id={section.id} className="py-20 sm:py-28" style={{ ...theme.vars, background: "var(--l-bg)", color: "var(--l-fg)" }}>
+    <section id={section.id} className="py-20 sm:py-28">
       <div className={CONTAINER}>
         <div className="max-w-[640px]">
           <Eyebrow accent>{section.eyebrow}</Eyebrow>
-          <h2 className="serif mt-4 text-[30px] leading-tight font-semibold tracking-tight text-(--l-accent) sm:text-[38px]">
+          <h2 className="serif mt-4 text-[30px] leading-tight font-semibold tracking-tight text-(--l-fg) sm:text-[38px]">
             {section.title}
           </h2>
           <p className="mt-4 text-pretty text-[16px] leading-7 text-(--l-muted)">{section.lead}</p>
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-12 md:gap-8">
           <div className={`order-2 min-w-0 md:col-span-8 ${mirrored ? "md:order-2" : "md:order-1"}`}>
-            <Demo kind={section.items[active].demo} lang={lang} />
+            {/* The editor theme colours only the window's content, like an app on the Aqua desktop. */}
+            <div style={{ ...theme.vars, color: "var(--l-fg)" }}>
+              <Demo kind={section.items[active].demo} lang={lang} />
+            </div>
             <p className="mt-3 flex justify-center">
               <span className="rounded-full bg-(--l-panel) px-2.5 py-1 text-[12px] text-(--l-muted)">
                 {landingCopy[lang].themeLabel}: {theme.name}
@@ -211,16 +214,16 @@ function FeatureSection({ lang, index }: { lang: Language; index: number }) {
                   role="tab"
                   aria-selected={i === active}
                   onClick={() => setActive(i)}
-                  className={`w-full rounded-r-md border-l-2 py-3 pr-3 pl-4 text-left transition-colors ${
-                    i === active
-                      ? "border-(--l-accent) bg-(--l-panel)"
-                      : "border-transparent opacity-70 hover:bg-(--l-panel) hover:opacity-100"
+                  className={`group w-full rounded-[5px] py-3 pr-3 pl-4 text-left ${
+                    i === active ? "aqua-selected" : "hover:bg-(--l-panel)"
                   }`}
                 >
-                  <span className={`block text-[14px] font-medium ${i === active ? "text-(--l-accent)" : ""}`}>
+                  <span className="block text-[14px] font-medium">
                     {item.title}
                   </span>
-                  <span className="mt-1 block text-[13px] leading-5 text-(--l-muted)">{item.body}</span>
+                  <span className={`mt-1 block text-[13px] leading-5 ${i === active ? "text-white/85" : "text-(--l-muted)"}`}>
+                    {item.body}
+                  </span>
                 </button>
               </li>
             ))}
