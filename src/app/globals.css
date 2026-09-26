@@ -489,23 +489,26 @@
       0 2px 6px rgba(0, 0, 0, 0.12);
   }
 
-  /* Aqua traffic lights, decorative. */
+  /* Aqua traffic lights. */
   .aqua-lights {
     display: inline-flex;
     gap: 7px;
   }
 
-  .aqua-lights > i {
+  .aqua-lights > * {
     position: relative;
+    display: block;
     width: 12px;
     height: 12px;
+    padding: 0;
+    border: 0;
     border-radius: 50%;
     box-shadow:
       inset 0 0 0 1px rgba(0, 0, 0, 0.35),
       0 1px 1px rgba(255, 255, 255, 0.5);
   }
 
-  .aqua-lights > i::before {
+  .aqua-lights > *::before {
     content: "";
     position: absolute;
     top: 1px;
@@ -516,15 +519,46 @@
     background: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.1));
   }
 
-  .aqua-lights > i:nth-child(1) {
+  /* × – + appear while pointing at the group, as on the Mac. */
+  .aqua-lights > *::after {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font: 700 10px/1 var(--app-font-sans);
+    color: rgba(60, 0, 0, 0.7);
+    opacity: 0;
+  }
+
+  .aqua-lights:hover > *::after {
+    opacity: 1;
+  }
+
+  .aqua-lights > :nth-child(1)::after {
+    content: "×";
+  }
+
+  .aqua-lights > :nth-child(2)::after {
+    content: "–";
+  }
+
+  .aqua-lights > :nth-child(3)::after {
+    content: "+";
+  }
+
+  .aqua-lights > button:active {
+    filter: brightness(0.75);
+  }
+
+  .aqua-lights > :nth-child(1) {
     background: radial-gradient(circle at 50% 75%, #ffb6a8, #e2322a 55%, #a61a13);
   }
 
-  .aqua-lights > i:nth-child(2) {
+  .aqua-lights > :nth-child(2) {
     background: radial-gradient(circle at 50% 75%, #fff0a8, #e9a92a 55%, #a86e0c);
   }
 
-  .aqua-lights > i:nth-child(3) {
+  .aqua-lights > :nth-child(3) {
     background: radial-gradient(circle at 50% 75%, #c8f5b0, #53b43c 55%, #2c7a1d);
   }
 }
@@ -749,6 +783,145 @@ svg.lucide-loader > * {
   svg.lucide-loader-2,
   svg.lucide-loader {
     animation-duration: 2.4s;
+  }
+}
+
+/* ---------- Dock ----------
+   A translucent glass shelf at the bottom of the desktop. The icon under the
+   pointer grows and its neighbours make room, as in Mac OS X. */
+.aqua-dock-wrap {
+  position: fixed;
+  bottom: 6px;
+  left: 50%;
+  z-index: 30;
+  display: none;
+  transform: translateX(-50%);
+}
+
+@media (min-width: 768px) {
+  .aqua-dock-wrap {
+    display: block;
+  }
+}
+
+.aqua-dock {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 12px 10px;
+  list-style: none;
+  border-radius: 12px;
+  background: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.38));
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 0 0 1px rgba(0, 0, 0, 0.18),
+    0 10px 28px rgba(0, 0, 0, 0.3);
+}
+
+.dark .aqua-dock {
+  background: linear-gradient(rgba(70, 70, 70, 0.6), rgba(35, 35, 35, 0.55));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+.aqua-dock-item {
+  position: relative;
+  margin: 0;
+  transform-origin: 50% 100%;
+  transition:
+    transform 0.16s ease-out,
+    margin 0.16s ease-out;
+}
+
+.aqua-dock-item:hover {
+  z-index: 1;
+  margin: 0 12px;
+  transform: scale(1.45);
+}
+
+.aqua-dock-item:hover + .aqua-dock-item,
+.aqua-dock-item:has(+ .aqua-dock-item:hover) {
+  margin: 0 5px;
+  transform: scale(1.18);
+}
+
+.aqua-dock-tile {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 11px;
+  cursor: default;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 2px 4px rgba(0, 0, 0, 0.35);
+}
+
+.aqua-dock-tile::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 1px;
+  left: 3px;
+  right: 3px;
+  height: 50%;
+  border-radius: 10px 10px 18px 18px / 10px 10px 8px 8px;
+  background: linear-gradient(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.12));
+}
+
+.aqua-dock-tile:active {
+  filter: brightness(0.7);
+}
+
+/* The name floats above the icon while pointing at it. */
+.aqua-dock-label {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(20, 20, 22, 0.78);
+  color: #fff;
+  font-size: 9px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: opacity 0.12s;
+}
+
+.aqua-dock-item:hover .aqua-dock-label {
+  opacity: 1;
+}
+
+/* The black triangle under a running application (Mac OS X 10.0–10.4). */
+.aqua-dock-running {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-right: 4px solid transparent;
+  border-bottom: 5px solid #111;
+  border-left: 4px solid transparent;
+  transform: translateX(-50%);
+}
+
+.dark .aqua-dock-running {
+  border-bottom-color: #eee;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aqua-dock-item,
+  .aqua-dock-label {
+    transition: none;
   }
 }
 

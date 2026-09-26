@@ -1,3 +1,4 @@
+import { TrafficLights } from "@/components/common/TrafficLights";
 import type { ReactNode } from "react";
 import type { DemoKind, Language } from "./content";
 
@@ -60,11 +61,7 @@ export function DemoFrame({
       <div className="aqua-titlebar flex h-10 items-center justify-between gap-4 px-4 text-[13px] text-foreground">
         <span className="flex min-w-0 items-center gap-3">
           {chrome && (
-            <span className="aqua-lights shrink-0" aria-hidden>
-              <i />
-              <i />
-              <i />
-            </span>
+            <TrafficLights className="shrink-0" />
           )}
           <span className="truncate">{title}</span>
         </span>
