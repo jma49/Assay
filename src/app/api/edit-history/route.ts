@@ -3,9 +3,8 @@ import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { EditHistoryFilter } from "@/lib/workflows/edit-history-schema";
-import { insertEditHistory } from "@/lib/workflows/edit-history-store";
 
 // 获取编辑历史集合
 async function getEditHistoryCollection(): Promise<Collection<Document>> {
@@ -14,62 +13,9 @@ async function getEditHistoryCollection(): Promise<Collection<Document>> {
   return db.collection("edit_history");
 }
 
-// POST - 记录编辑历史
-export async function POST(request: NextRequest) {
-  try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "未授权" }, { status: 401 });
-    }
+// Edit history is written only on the server (recordEditHistoryOnServer),
+// so there is deliberately no POST: clients could otherwise forge entries.
 
-    const body = await request.json();
-    const { scriptId, operation, changes, description, scriptSnapshot } = body;
-
-    if (!scriptId || !operation) {
-      return NextResponse.json(
-        { error: "缺少必要参数：scriptId 和 operation" },
-        { status: 400 }
-      );
-    }
-
-    // 获取Clerk用户的完整信息
-    let userEmail = "";
-    let userName = "";
-    try {
-      const client = await clerkClient();
-      const clerkUserData = await client.users.getUser(userId);
-      userEmail = clerkUserData.emailAddresses[0]?.emailAddress || "";
-      // 优先使用用户设置的姓名，否则使用邮箱用户名部分
-      userName =
-        clerkUserData.firstName && clerkUserData.lastName
-          ? `${clerkUserData.firstName} ${clerkUserData.lastName}`.trim()
-          : clerkUserData.firstName ||
-            clerkUserData.lastName ||
-            userEmail.split("@")[0] ||
-            userId;
-    } catch (error) {
-      console.warn("Failed to fetch user data from Clerk:", error);
-      // 如果获取用户信息失败，使用userId作为fallback
-      userName = userId;
-    }
-
-    const historyId = await insertEditHistory({
-      scriptId,
-      operation,
-      changes: changes || [],
-      scriptSnapshot: scriptSnapshot || { scriptId, name: "", author: "" },
-      description,
-      actor: { id: userId, email: userEmail, name: userName },
-    });
-
-    return NextResponse.json({ success: true, historyId });
-  } catch (error) {
-    console.error("记录编辑历史失败:", error);
-    return NextResponse.json({ error: "记录编辑历史失败" }, { status: 500 });
-  }
-}
-
-// GET - 查询编辑历史（支持筛选）
 export async function GET(request: NextRequest) {
   try {
     const authResult = await authorizeApiRequest(Permission.HISTORY_READ);

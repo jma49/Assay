@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { Permission } from "@/lib/auth/rbac";
+import { guardAiRequest } from "@/lib/security/ai-guard";
 import { getCachedSchema } from "@/lib/database/db-schema";
 import {
   generateContentWithRetry,
@@ -16,6 +17,11 @@ export async function POST(request: NextRequest) {
     }
 
     const { prompt } = await request.json();
+
+    const refused = await guardAiRequest(authResult.user.id, { prompt });
+    if (refused) {
+      return refused;
+    }
 
     if (!prompt || typeof prompt !== "string") {
       return NextResponse.json(
@@ -62,7 +68,6 @@ SQL:`;
     return NextResponse.json(
       {
         error: errorMessage,
-        details: error instanceof Error ? error.message : "未知错误",
       },
       { status: 500 }
     );

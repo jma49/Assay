@@ -167,14 +167,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     devError("[API 路由 /run-all-scripts] API异常:", error);
 
-    const errorMessage =
-      error instanceof Error ? error.message : "批量执行脚本时发生未知错误";
-
     return NextResponse.json(
       {
         success: false,
-        message: errorMessage,
-        localizedMessage: `批量执行失败: ${errorMessage}`,
+        message: "批量执行脚本时发生内部错误",
+        localizedMessage: "批量执行失败，请稍后重试",
       },
       { status: 500 }
     );
