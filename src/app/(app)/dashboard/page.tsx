@@ -14,7 +14,7 @@ export default async function DashboardPage() {
   // 在构建时或没有Clerk配置时，显示配置提示
   if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
     return (
-      <div className="min-h-screen bg-background flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="text-center">
             <h1 className="text-3xl font-extrabold text-foreground">
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <main className={`${APP_CONTAINER} py-8`}>
         <Dashboard />
       </main>
