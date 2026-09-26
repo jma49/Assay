@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { escapeHtml, formatInlineMarkdown } from "@/lib/utils/inline-markdown";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Lightbulb, Rocket, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -237,17 +238,12 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
   const formatTextStyles = (text: string): React.ReactNode => {
     if (!text) return null;
     
-    // 处理粗体和斜体的组合
-    const formatted = text
-      .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>') // 粗斜体
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-foreground">$1</strong>') // 粗体
-      .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>') // 斜体
-      .replace(/~~(.*?)~~/g, '<del class="line-through opacity-75">$1</del>'); // 删除线
-
-    if (formatted !== text) {
+    // Escaped before formatting; see formatInlineMarkdown.
+    const formatted = formatInlineMarkdown(text);
+    if (formatted !== escapeHtml(text)) {
       return <span dangerouslySetInnerHTML={{ __html: formatted }} />;
     }
-    
+
     return text;
   };
 
