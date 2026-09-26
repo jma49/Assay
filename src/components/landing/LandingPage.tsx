@@ -9,7 +9,8 @@ import { CalendarClock, GitPullRequest, Moon, ShieldCheck, Sparkles, Sun } from 
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { BRAND, GITHUB_URL, QUICK_START, landingCopy, type Language } from "./content";
 import { Demo, DemoFrame, RECENT_RUNS, StatusDot } from "./demo-panels";
-import { HeroBackdrop } from "./HeroBackdrop";
+import { AquaWallpaper } from "@/components/common/AquaWallpaper";
+import { BrandMark } from "@/components/common/BrandMark";
 import { SECTION_THEMES } from "./themes";
 
 /** Shared horizontal frame: every section aligns to the same left and right edges. */
@@ -18,7 +19,7 @@ const CONTAINER = "mx-auto w-full max-w-[1120px] px-4 sm:px-6";
 const secondaryButton =
   "aqua-pill inline-flex h-10 items-center justify-center px-5 text-[14px] font-medium hover:brightness-[1.02]";
 const heroPrimaryButton =
-  "aqua-gel inline-flex h-11 items-center justify-center px-6 text-[14px] font-medium hover:brightness-105";
+  "aqua-gel aqua-default inline-flex h-11 items-center justify-center px-6 text-[14px] font-medium hover:brightness-105";
 // The hero is always dark, so its secondary button keeps the light Aqua pill.
 const heroSecondaryButton =
   "aqua-pill inline-flex h-11 items-center justify-center px-6 text-[14px] font-medium [background:linear-gradient(#ffffff,#f1f1f1_45%,#dedede_50%,#f4f4f4)] text-[#111] hover:brightness-[1.02]";
@@ -62,8 +63,8 @@ function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void
   return (
     <header className="aqua-menubar sticky top-0 z-20">
       <nav className={`${CONTAINER} flex h-14 items-center justify-between`}>
-        <Link href="/" className="serif text-[20px] font-semibold tracking-tight">
-          {BRAND}
+        <Link href="/">
+          <BrandMark />
         </Link>
         <div className="flex items-center gap-1 sm:gap-2">
           <div className="hidden items-center gap-6 pr-4 text-[14px] text-foreground/80 md:flex">
@@ -240,16 +241,16 @@ export default function LandingPage() {
 
       <main>
         <section className="relative pt-20 sm:pt-28">
-          {/* The dark backdrop stops partway down so the product window overlaps into the next section. */}
+          {/* The desktop picture stops partway down so the product window overlaps into the next section. */}
           <div className="absolute inset-x-0 top-0 bottom-40 sm:bottom-56">
-            <HeroBackdrop />
+            <AquaWallpaper />
           </div>
           <div className={`${CONTAINER} relative`}>
             <div className="mx-auto max-w-[780px] text-center">
-              <h1 className="serif text-balance text-[40px] leading-[1.08] font-semibold tracking-tight text-[#f3efe8] sm:text-[60px]">
+              <h1 className="serif text-balance text-[40px] leading-[1.08] font-semibold tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,20,70,0.45)] sm:text-[60px]">
                 {t.hero.title}
               </h1>
-              <p className="mx-auto mt-5 max-w-[560px] text-pretty text-[17px] leading-7 text-[#bdb5a9]">
+              <p className="mx-auto mt-5 max-w-[560px] text-pretty text-[17px] leading-7 text-white/85 [text-shadow:0_1px_4px_rgba(0,20,70,0.4)]">
                 {t.hero.subtitle}
               </p>
               <div className="mt-8 flex justify-center gap-3">
@@ -261,7 +262,7 @@ export default function LandingPage() {
                 </a>
               </div>
               <SignedOut>
-                <p className="mt-4 text-[13px] text-[#9d958a]">{t.hero.demoNote}</p>
+                <p className="mt-4 text-[13px] text-white/75">{t.hero.demoNote}</p>
               </SignedOut>
             </div>
             <div className="mt-14 sm:mt-16">
@@ -348,12 +349,12 @@ export default function LandingPage() {
           </div>
         </section>
         <section className="relative overflow-hidden py-24 sm:py-28">
-          <HeroBackdrop />
+          <AquaWallpaper />
           <div className={`${CONTAINER} relative text-center`}>
-            <h2 className="serif mx-auto max-w-[640px] text-balance text-[32px] leading-tight font-semibold tracking-tight text-[#f3efe8] sm:text-[42px]">
+            <h2 className="serif mx-auto max-w-[640px] text-balance text-[32px] leading-tight font-semibold tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,20,70,0.45)] sm:text-[42px]">
               {t.cta.title}
             </h2>
-            <p className="mx-auto mt-4 max-w-[520px] text-pretty text-[16px] leading-7 text-[#bdb5a9]">{t.cta.body}</p>
+            <p className="mx-auto mt-4 max-w-[520px] text-pretty text-[16px] leading-7 text-white/85">{t.cta.body}</p>
             <div className="mt-8 flex justify-center gap-3">
               <Link href="/dashboard" className={heroPrimaryButton}>
                 {t.hero.primary}

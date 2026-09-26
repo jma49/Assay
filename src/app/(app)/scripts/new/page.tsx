@@ -191,7 +191,7 @@ export default function NewScriptPage() {
             <Button variant="outline" onClick={() => router.push("/manage-scripts")} disabled={isSaving}>
               {c.cancel}
             </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button className="aqua-default" onClick={handleSave} disabled={isSaving}>
               {isSaving ? c.saving : c.save}
             </Button>
           </div>
