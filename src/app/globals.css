@@ -4,99 +4,163 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Design tokens: see docs/ui-redesign-plan.md */
+/* Design tokens: Mac OS X Aqua, after JM/OS (github.com/jma49/jmos,
+   src/os/styles/base.css). Font files are not bundled; the stacks fall back
+   to what the system has. See docs/ui-redesign-plan.md. */
 :root {
   --app-font-sans:
-    ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    "Lucida Grande", "LucidaGrande", ui-sans-serif, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --app-font-serif:
-    "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia,
+    "Apple Garamond", "EB Garamond", Garamond, "Iowan Old Style", Georgia,
     "Songti SC", "Noto Serif SC", serif;
-  --app-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --app-font-mono: Monaco, ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   --radius: 0.375rem;
 
-  --background: #ffffff;
-  --foreground: #282828;
+  /* The page is window grey; cards, fields and popovers are white content. */
+  --background: #ececec;
+  --foreground: #1a1a1a;
   --card: #ffffff;
-  --card-foreground: #282828;
+  --card-foreground: #1a1a1a;
   --popover: #ffffff;
-  --popover-foreground: #282828;
-  --primary: #282828;
+  --popover-foreground: #1a1a1a;
+  --primary: #3875d7;
   --primary-foreground: #ffffff;
-  --secondary: #f5f4f2;
-  --secondary-foreground: #282828;
-  --muted: #f5f4f2;
-  --muted-foreground: #767676;
-  --accent: #f5f4f2;
-  --accent-foreground: #282828;
-  --destructive: #b54a3c;
+  --secondary: #f2f2f2;
+  --secondary-foreground: #1a1a1a;
+  --muted: #f2f2f2;
+  --muted-foreground: #6b6b6b;
+  --accent: #e3e9ef;
+  --accent-foreground: #1a1a1a;
+  --destructive: #c7342b;
   --destructive-foreground: #ffffff;
-  --border: rgba(40, 40, 40, 0.1);
-  --input: rgba(40, 40, 40, 0.16);
-  --ring: rgba(40, 40, 40, 0.35);
+  --border: #c9c9c9;
+  --input: #a8a8a8;
+  --ring: color-mix(in srgb, #3875d7 55%, transparent);
 
-  --success: #3f7d58;
-  --attention: #b7791f;
-  --failure: #b54a3c;
-  --info: #4a6a8a;
+  --success: #2f8a2a;
+  --attention: #b8740b;
+  --failure: #c7342b;
+  --info: #3875d7;
 
-  --chart-1: #282828;
-  --chart-2: #3f7d58;
-  --chart-3: #b7791f;
-  --chart-4: #b54a3c;
-  --chart-5: #8f8b85;
+  --chart-1: #3875d7;
+  --chart-2: #2f8a2a;
+  --chart-3: #b8740b;
+  --chart-4: #c7342b;
+  --chart-5: #8a8a8a;
 
-  --sidebar: #faf9f7;
-  --sidebar-foreground: #282828;
-  --sidebar-primary: #282828;
+  --sidebar: #e3e9ef;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #3875d7;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f5f4f2;
-  --sidebar-accent-foreground: #282828;
-  --sidebar-border: rgba(40, 40, 40, 0.1);
-  --sidebar-ring: rgba(40, 40, 40, 0.35);
+  --sidebar-accent: #d4dde8;
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: #c9c9c9;
+  --sidebar-ring: color-mix(in srgb, #3875d7 55%, transparent);
+
+  /* Aqua materials. */
+  --aqua-accent: #3875d7;
+  --aqua-gel: linear-gradient(
+    color-mix(in srgb, var(--aqua-accent) 30%, white),
+    color-mix(in srgb, var(--aqua-accent) 75%, white) 45%,
+    var(--aqua-accent) 50%,
+    color-mix(in srgb, var(--aqua-accent) 55%, white)
+  );
+  --aqua-gel-pressed: linear-gradient(
+    color-mix(in srgb, var(--aqua-accent) 25%, white),
+    color-mix(in srgb, var(--aqua-accent) 48%, white) 50%,
+    color-mix(in srgb, var(--aqua-accent) 62%, white) 50%,
+    color-mix(in srgb, var(--aqua-accent) 33%, white)
+  );
+  --aqua-gel-red: linear-gradient(#f6b5ad, #e2594e 45%, #c7342b 50%, #eb8177);
+  --aqua-accent-rim: color-mix(in srgb, var(--aqua-accent) 55%, black);
+  --aqua-white: linear-gradient(#ffffff, #f1f1f1 45%, #dedede 50%, #f4f4f4);
+  --aqua-white-rim: rgba(0, 0, 0, 0.35);
+  --aqua-gloss: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.25));
+  --aqua-title: linear-gradient(#ebebeb, #cbcbcb);
+  --aqua-title-line: #9c9c9c;
+  --aqua-bar: linear-gradient(rgba(255, 255, 255, 0.9), rgba(230, 230, 230, 0.9));
+  --aqua-pinstripe: repeating-linear-gradient(
+    0deg,
+    transparent 0 1.5px,
+    rgba(255, 255, 255, 0.62) 1.5px 4px
+  );
+  --aqua-pinstripe-soft: repeating-linear-gradient(
+    0deg,
+    transparent 0 1.5px,
+    rgba(255, 255, 255, 0.3) 1.5px 4px
+  );
+  --aqua-window-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.12);
+  --aqua-field-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+  --aqua-selection: #b5d5ff;
+  --aqua-select: linear-gradient(
+    color-mix(in srgb, var(--aqua-accent) 70%, white),
+    var(--aqua-accent)
+  );
 }
 
 .dark {
-  --background: #1b1a19;
-  --foreground: #e6e3de;
-  --card: #1b1a19;
-  --card-foreground: #e6e3de;
-  --popover: #232120;
-  --popover-foreground: #e6e3de;
-  --primary: #e6e3de;
-  --primary-foreground: #1b1a19;
-  --secondary: #252321;
-  --secondary-foreground: #e6e3de;
-  --muted: #252321;
-  --muted-foreground: #8f8b85;
-  --accent: #2b2927;
-  --accent-foreground: #e6e3de;
-  --destructive: #d9826f;
-  --destructive-foreground: #1b1a19;
-  --border: rgba(230, 227, 222, 0.1);
-  --input: rgba(230, 227, 222, 0.16);
-  --ring: rgba(230, 227, 222, 0.35);
+  --background: #2e2e2e;
+  --foreground: #ececec;
+  --card: #232323;
+  --card-foreground: #ececec;
+  --popover: #2a2a2a;
+  --popover-foreground: #ececec;
+  --primary: #4a8ae8;
+  --primary-foreground: #ffffff;
+  --secondary: #3a3a3a;
+  --secondary-foreground: #ececec;
+  --muted: #333333;
+  --muted-foreground: #a0a0a0;
+  --accent: #34383e;
+  --accent-foreground: #ececec;
+  --destructive: #e0645a;
+  --destructive-foreground: #ffffff;
+  --border: #474747;
+  --input: #5a5a5a;
+  --ring: color-mix(in srgb, #4a8ae8 60%, transparent);
 
-  --success: #7fb58f;
-  --attention: #d9a553;
-  --failure: #d9826f;
-  --info: #8fa9c4;
+  --success: #6cc05f;
+  --attention: #e3a33c;
+  --failure: #e0645a;
+  --info: #6fa3ef;
 
-  --chart-1: #e6e3de;
-  --chart-2: #7fb58f;
-  --chart-3: #d9a553;
-  --chart-4: #d9826f;
-  --chart-5: #8f8b85;
+  --chart-1: #6fa3ef;
+  --chart-2: #6cc05f;
+  --chart-3: #e3a33c;
+  --chart-4: #e0645a;
+  --chart-5: #8a8a8a;
 
-  --sidebar: #1f1e1c;
-  --sidebar-foreground: #e6e3de;
-  --sidebar-primary: #e6e3de;
-  --sidebar-primary-foreground: #1b1a19;
-  --sidebar-accent: #2b2927;
-  --sidebar-accent-foreground: #e6e3de;
-  --sidebar-border: rgba(230, 227, 222, 0.1);
-  --sidebar-ring: rgba(230, 227, 222, 0.35);
+  --sidebar: #2e3136;
+  --sidebar-foreground: #ececec;
+  --sidebar-primary: #4a8ae8;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #3a3f46;
+  --sidebar-accent-foreground: #ececec;
+  --sidebar-border: #474747;
+  --sidebar-ring: color-mix(in srgb, #4a8ae8 60%, transparent);
+
+  --aqua-accent: #3f7fdf;
+  --aqua-white: linear-gradient(#6a6a6a, #575757 45%, #4a4a4a 50%, #5a5a5a);
+  --aqua-white-rim: rgba(0, 0, 0, 0.6);
+  --aqua-gloss: linear-gradient(rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.04));
+  --aqua-title: linear-gradient(#565656, #3c3c3c);
+  --aqua-title-line: #1a1a1a;
+  --aqua-bar: linear-gradient(rgba(60, 60, 60, 0.92), rgba(40, 40, 40, 0.92));
+  --aqua-pinstripe: repeating-linear-gradient(
+    0deg,
+    transparent 0 1.5px,
+    rgba(255, 255, 255, 0.028) 1.5px 4px
+  );
+  --aqua-pinstripe-soft: repeating-linear-gradient(
+    0deg,
+    transparent 0 1.5px,
+    rgba(255, 255, 255, 0.02) 1.5px 4px
+  );
+  --aqua-window-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.35);
+  --aqua-field-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+  --aqua-selection: #3a5a8c;
 }
 
 @theme inline {
@@ -161,7 +225,18 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply text-foreground font-sans;
+    background: var(--aqua-pinstripe), var(--background);
+  }
+
+  ::selection {
+    background: var(--aqua-selection);
+  }
+
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"] {
+    accent-color: var(--aqua-accent);
   }
 
   /* Page and section titles use the serif face; UI text stays sans. */
@@ -207,23 +282,263 @@
   }
 }
 
+/* Aqua controls. The gloss sits under the label (isolation + z-index: -1)
+   so text stays crisp. */
+@layer components {
+  .aqua-pill,
+  .aqua-gel,
+  .aqua-gel-red {
+    position: relative;
+    isolation: isolate;
+    border-radius: 999px;
+    box-shadow:
+      inset 0 0 0 1px var(--aqua-white-rim),
+      0 1px 1px rgba(0, 0, 0, 0.15);
+  }
+
+  .aqua-pill {
+    background: var(--aqua-white);
+    color: var(--foreground);
+  }
+
+  .aqua-gel {
+    background: var(--aqua-gel);
+    color: #111;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--aqua-accent-rim) 70%, transparent),
+      0 1px 1px rgba(0, 0, 0, 0.2);
+  }
+
+  .aqua-gel-red {
+    background: var(--aqua-gel-red);
+    color: #111;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+    box-shadow:
+      inset 0 0 0 1px rgba(120, 20, 15, 0.55),
+      0 1px 1px rgba(0, 0, 0, 0.2);
+  }
+
+  .aqua-pill::before,
+  .aqua-gel::before,
+  .aqua-gel-red::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 1px;
+    left: 8px;
+    right: 8px;
+    height: 48%;
+    border-radius: 999px 999px 6px 6px / 999px 999px 4px 4px;
+    background: var(--aqua-gloss);
+    pointer-events: none;
+  }
+
+  .aqua-pill::after,
+  .aqua-gel::after,
+  .aqua-gel-red::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    bottom: 0;
+    left: 14%;
+    right: 14%;
+    height: 45%;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.55), transparent 70%);
+    pointer-events: none;
+  }
+
+  .aqua-pill:active {
+    background: var(--aqua-gel-pressed);
+  }
+
+  .aqua-gel:active,
+  .aqua-gel-red:active {
+    filter: brightness(0.9);
+  }
+
+  /* A selected row or menu item: the accent gradient with white text. */
+  .aqua-selected {
+    background: var(--aqua-select);
+    color: #fff;
+  }
+
+  /* Recessed text field. */
+  .aqua-field {
+    background-color: var(--card);
+    border: 1px solid var(--input);
+    box-shadow: var(--aqua-field-shadow);
+  }
+
+  .aqua-field:focus-visible {
+    border-color: var(--aqua-accent);
+  }
+
+  /* Pop-up menu: a white gel with the accent's cap on the right. */
+  .aqua-popup {
+    background:
+      var(--aqua-gel) right / 30px 100% no-repeat,
+      linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.2) 48%, transparent 50%),
+      var(--aqua-white);
+    box-shadow:
+      inset 0 0 0 1px var(--aqua-white-rim),
+      0 1px 1px rgba(0, 0, 0, 0.15);
+  }
+
+  .dark .aqua-popup {
+    background:
+      var(--aqua-gel) right / 30px 100% no-repeat,
+      var(--aqua-white);
+  }
+
+  .aqua-popup .aqua-popup-arrow {
+    color: #fff;
+    opacity: 1;
+    filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.3));
+  }
+
+  /* Section cards whose header is a bordered strip at the very top get a
+     window title bar. */
+  [data-slot="card"] > [data-slot="card-header"].border-b:first-child {
+    background: var(--aqua-pinstripe-soft), var(--aqua-title);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    border-bottom-color: var(--aqua-title-line);
+  }
+
+  .dark [data-slot="card"] > [data-slot="card-header"].border-b:first-child {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* Aqua lists stripe alternate rows. */
+  [data-slot="table-body"] > [data-slot="table-row"]:nth-child(even) {
+    background-color: color-mix(in srgb, var(--aqua-accent) 6%, var(--card));
+  }
+
+  /* Window chrome: a grey gradient title bar with soft pinstripes. */
+  .aqua-titlebar {
+    background: var(--aqua-pinstripe-soft), var(--aqua-title);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    border-bottom: 1px solid var(--aqua-title-line);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+
+  .dark .aqua-titlebar {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    text-shadow: none;
+  }
+
+  .aqua-window {
+    background-color: var(--card);
+    box-shadow: var(--aqua-window-shadow);
+  }
+
+  /* Menu bar: frosted light gradient across the top of the page. */
+  .aqua-menubar {
+    background: var(--aqua-pinstripe-soft), var(--aqua-bar);
+    backdrop-filter: blur(18px) saturate(1.3);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    box-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.32),
+      0 2px 6px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Aqua traffic lights, decorative. */
+  .aqua-lights {
+    display: inline-flex;
+    gap: 7px;
+  }
+
+  .aqua-lights > i {
+    position: relative;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+      0 1px 1px rgba(255, 255, 255, 0.5);
+  }
+
+  .aqua-lights > i::before {
+    content: "";
+    position: absolute;
+    top: 1px;
+    left: 3px;
+    right: 3px;
+    height: 5px;
+    border-radius: 50%;
+    background: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.1));
+  }
+
+  .aqua-lights > i:nth-child(1) {
+    background: radial-gradient(circle at 50% 75%, #ffb6a8, #e2322a 55%, #a61a13);
+  }
+
+  .aqua-lights > i:nth-child(2) {
+    background: radial-gradient(circle at 50% 75%, #fff0a8, #e9a92a 55%, #a86e0c);
+  }
+
+  .aqua-lights > i:nth-child(3) {
+    background: radial-gradient(circle at 50% 75%, #c8f5b0, #53b43c 55%, #2c7a1d);
+  }
+}
+
+/* Unlayered so it beats the badge's own colour utilities: a count badge
+   sitting on a blue gel button must stay readable. */
+.aqua-gel [data-slot="badge"] {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.15);
+  color: #111;
+}
+
+.dark .aqua-pill::after,
+.dark .aqua-popup::after {
+  background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.12), transparent 70%);
+}
+
+/* Aqua scrollbars: a grooved track and a glossy blue thumb. */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 14px;
+  height: 14px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: linear-gradient(90deg, #d8d8d8, #f3f3f3 40%, #f3f3f3 60%, #e2e2e2);
+  box-shadow: inset 1px 0 0 #c4c4c4;
+}
+
+::-webkit-scrollbar-track:horizontal {
+  background: linear-gradient(#d8d8d8, #f3f3f3 40%, #f3f3f3 60%, #e2e2e2);
+  box-shadow: inset 0 1px 0 #c4c4c4;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 999px;
-  border: 2px solid var(--background);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #3b7fe0, #8ec0f8 45%, #5f9ef0 55%, #3070d8) padding-box;
+  box-shadow: inset 0 0 0 1px rgba(20, 60, 130, 0.45);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
+::-webkit-scrollbar-thumb:horizontal {
+  background: linear-gradient(#3b7fe0, #8ec0f8 45%, #5f9ef0 55%, #3070d8) padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: #ececec;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: linear-gradient(90deg, #2a2a2a, #363636 50%, #2a2a2a);
+  box-shadow: inset 1px 0 0 #1a1a1a;
+}
+
+.dark ::-webkit-scrollbar-track:horizontal {
+  background: linear-gradient(#2a2a2a, #363636 50%, #2a2a2a);
+  box-shadow: inset 0 1px 0 #1a1a1a;
+}
+
+.dark ::-webkit-scrollbar-corner {
+  background: #2e2e2e;
 }
 
 /* Loading placeholders: a slow warm sheen instead of blinking. */
