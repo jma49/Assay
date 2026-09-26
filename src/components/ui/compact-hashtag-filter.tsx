@@ -93,12 +93,9 @@ export function CompactHashtagFilter({
               size="sm"
               disabled={disabled}
               className={cn(
-                "h-10 px-4 justify-between gap-2 text-sm font-medium flex-1",
-                "border border-border/50 bg-background/80 backdrop-blur-sm",
-                "hover:border-primary/30 focus:border-primary/50",
-                "  transition-all duration-300",
-                "group relative overflow-hidden",
-                selectedHashtags.length > 0 && "border-primary/40 bg-primary/5"
+                // Opens a menu, so it reads as an Aqua pop-up rather than a pill.
+                "h-10 px-4 justify-between gap-2 text-sm font-medium flex-1 rounded-[6px]",
+                "group relative"
               )}
             >
               {/* 背景装饰 */}

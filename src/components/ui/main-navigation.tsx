@@ -69,14 +69,17 @@ export default function MainNavigation({ className }: { className?: string }) {
     const className = isMobile
       ? cn(
           "flex w-full items-center px-6 py-3 text-left text-sm transition-colors",
-          isActive ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:text-foreground",
+          isActive
+            ? "aqua-selected font-medium"
+            : "text-foreground/80 hover:text-foreground",
         )
       : cn(
-          // The underline sits on the header's bottom border.
-          "relative flex h-14 items-center text-sm transition-colors after:absolute after:inset-x-0 after:-bottom-px after:h-0.5",
+          // Negative margin keeps the labels where they were; the padding is
+          // room for the Aqua selection highlight behind the active label.
+          "relative isolate -mx-2.5 flex h-14 items-center px-2.5 text-sm transition-colors before:absolute before:inset-x-0 before:inset-y-[15px] before:-z-10 before:rounded-[5px]",
           isActive
-            ? "text-foreground after:bg-foreground"
-            : "text-muted-foreground hover:text-foreground",
+            ? "text-white before:bg-[image:var(--aqua-select)] [text-shadow:0_1px_1px_rgba(0,0,0,0.25)]"
+            : "text-foreground/80 hover:text-foreground",
         );
     const label = t(item.labelKey);
 
