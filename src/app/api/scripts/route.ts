@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document, ObjectId } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache/cache-utils";
-import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { authorizeApiRequest, validateApiAuth } from "@/lib/auth/auth-utils";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
 import {
@@ -306,6 +306,13 @@ export async function POST(request: Request) {
 // 未来可以添加 GET (获取列表或单个), PUT (更新), DELETE (删除) 方法
 export async function GET(_request: Request) {
   try {
+    // The middleware only guarantees a signed-in user; reading scripts (and
+    // their SQL) also needs script:read, as on the other script routes.
+    const authResult = await authorizeApiRequest(Permission.SCRIPT_READ);
+    if (!authResult.isValid) {
+      return authResult.response;
+    }
+
     console.log("API: GET /api/scripts - 请求已收到");
 
     const collection = await getSqlScriptsCollection();
