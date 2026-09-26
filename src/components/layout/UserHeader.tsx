@@ -13,7 +13,7 @@ import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils/utils";
 
 const controlButton =
-  "inline-flex h-8 items-center justify-center rounded-md px-2 text-[13px] text-muted-foreground transition-colors hover:text-foreground";
+  "inline-flex h-8 items-center justify-center rounded-md px-2 text-[13px] text-foreground/75 transition-colors hover:text-foreground";
 
 export default function UserHeader() {
   const { user, isLoaded } = useUser();
@@ -27,10 +27,10 @@ export default function UserHeader() {
 
   return (
     // z-40 keeps the header under dialogs (z-50), so it can always stay sticky.
-    <header className="sticky top-0 z-40 border-b bg-background">
+    <header className="aqua-menubar sticky top-0 z-40">
       <NavigationProgress />
       <div className={cn(APP_CONTAINER, "flex h-14 items-center gap-6")}>
-        <Link href="/dashboard" className="font-serif text-[20px] font-semibold tracking-tight">
+        <Link href="/dashboard" className="font-serif text-[21px] font-semibold tracking-tight">
           {BRAND}
         </Link>
 
@@ -57,7 +57,7 @@ export default function UserHeader() {
             )}
           </button>
 
-          <div className="ml-2 flex items-center gap-2.5 border-l pl-3">
+          <div className="ml-2 flex items-center gap-2.5 border-l border-foreground/15 pl-3">
             {isLoaded && user ? (
               <>
                 <span className="hidden text-[13px] text-muted-foreground lg:inline">

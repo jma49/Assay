@@ -628,13 +628,13 @@ const ManageScriptsContent = () => {
                 <div className="flex items-center gap-3">
                   {/* 搜索框 */}
                   <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <Search className="absolute left-3 top-3 z-10 h-4 w-4 text-muted-foreground pointer-events-none" />
                     <Input
                       type="text"
                       placeholder={t("searchPlaceholder")}
                       value={searchTerm}
                       onChange={(e) => handleSearchChange(e.target.value)}
-                      className="pl-9 pr-10 h-10 w-80 text-sm border border-border/50 bg-background/80 backdrop-blur-sm focus:border-primary/50 transition-all duration-300"
+                      className="pl-9 pr-10 h-10 w-80 text-sm"
                     />
                     {searchTerm && (
                       <Button
@@ -920,7 +920,7 @@ const ManageScriptsContent = () => {
                             onChange={handlePageInputChange}
                             onKeyDown={handlePageInputKeyDown}
                             placeholder={t("jumpToPage")}
-                            className="w-12 h-6 px-1 text-xs text-center border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
+                            className="w-12 h-6 px-1 text-xs text-center aqua-field rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
                             style={{ pointerEvents: "auto" }}
                           />
                           <Button

@@ -169,7 +169,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
         <div className="pt-3 space-y-3">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Button
-              variant="outline"
+              variant={filterStatus === null ? "default" : "outline"}
               size="sm"
               onClick={() => {
                 setFilterStatus(null);
@@ -177,8 +177,6 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               }}
               className={cn(
                 "h-10 px-3 gap-2 text-sm transition-all duration-300 group/filter",
-                filterStatus === null &&
-                  "ring-2 ring-primary/50 ring-offset-1 border-primary/30 bg-primary/5 text-primary shadow-primary/10",
               )}
             >
               <Filter
@@ -195,7 +193,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
             </Button>
 
             <Button
-              variant="outline"
+              variant={filterStatus === "success" ? "default" : "outline"}
               size="sm"
               onClick={() => {
                 setFilterStatus("success");
@@ -203,8 +201,6 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               }}
               className={cn(
                 "h-10 px-3 gap-2 text-sm transition-all duration-300 group/filter",
-                filterStatus === "success" &&
-                  "ring-2 ring-success/30 ring-offset-1 border-success/30 bg-success/10 text-success    ",
               )}
             >
               <CheckCircle
@@ -221,7 +217,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
             </Button>
 
             <Button
-              variant="outline"
+              variant={filterStatus === "attention_needed" ? "default" : "outline"}
               size="sm"
               onClick={() => {
                 setFilterStatus("attention_needed");
@@ -229,8 +225,6 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               }}
               className={cn(
                 "h-10 px-3 gap-2 text-sm transition-all duration-300 group/filter",
-                filterStatus === "attention_needed" &&
-                  "ring-2 ring-attention/30 ring-offset-1 border-attention/30 bg-attention/10 text-attention    ",
               )}
             >
               <AlertCircle
@@ -247,7 +241,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
             </Button>
 
             <Button
-              variant="outline"
+              variant={filterStatus === "failure" ? "default" : "outline"}
               size="sm"
               onClick={() => {
                 setFilterStatus("failure");
@@ -255,8 +249,6 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               }}
               className={cn(
                 "h-10 px-3 gap-2 text-sm transition-all duration-300 group/filter",
-                filterStatus === "failure" &&
-                  "ring-2 ring-failure/30 ring-offset-1 border-failure/30 bg-failure/10 text-failure    ",
               )}
             >
               <AlertCircle
@@ -275,13 +267,13 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div className="relative sm:col-span-3">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Search className="absolute left-3 top-3 z-10 h-4 w-4 text-muted-foreground pointer-events-none" />
               <input
                 type="text"
                 placeholder={t("searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-10 pl-9 pr-9 text-sm rounded-lg border border-border/50 bg-background/80 backdrop-blur-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus:ring-offset-1 focus:border-primary/50 transition-all duration-300 placeholder:text-muted-foreground/60"
+                className="aqua-field h-10 w-full rounded-[4px] pl-9 pr-9 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-[3px] focus-visible:ring-ring"
               />
               {searchTerm && (
                 <Button
@@ -567,7 +559,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                       onChange={handlePageInputChange}
                       onKeyDown={handlePageInputKeyDown}
                       placeholder={t("jumpToPage")}
-                      className="w-12 h-6 px-1 text-xs text-center border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
+                      className="w-12 h-6 px-1 text-xs text-center aqua-field rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
                       style={{ pointerEvents: "auto" }}
                     />
                     <Button

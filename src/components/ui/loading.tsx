@@ -65,7 +65,7 @@ interface PageLoadingProps {
 
 export function PageLoading({ text = "加载中..." }: PageLoadingProps) {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <LoadingSpinner size="lg" />
         <p className="text-muted-foreground font-medium">

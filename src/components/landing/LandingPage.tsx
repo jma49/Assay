@@ -16,11 +16,12 @@ import { SECTION_THEMES } from "./themes";
 const CONTAINER = "mx-auto w-full max-w-[1120px] px-4 sm:px-6";
 
 const secondaryButton =
-  "inline-flex h-10 items-center justify-center rounded-md border border-(--l-line) px-5 text-[14px] font-medium transition-colors hover:bg-(--l-panel)";
+  "aqua-pill inline-flex h-10 items-center justify-center px-5 text-[14px] font-medium hover:brightness-[1.02]";
 const heroPrimaryButton =
-  "inline-flex h-11 items-center justify-center rounded-md bg-[#f3efe8] px-6 text-[14px] font-medium text-[#1b1a19] transition-opacity hover:opacity-90";
+  "aqua-gel inline-flex h-11 items-center justify-center px-6 text-[14px] font-medium hover:brightness-105";
+// The hero is always dark, so its secondary button keeps the light Aqua pill.
 const heroSecondaryButton =
-  "inline-flex h-11 items-center justify-center rounded-md border border-white/20 px-6 text-[14px] font-medium text-[#f3efe8] transition-colors hover:bg-white/10";
+  "aqua-pill inline-flex h-11 items-center justify-center px-6 text-[14px] font-medium [background:linear-gradient(#ffffff,#f1f1f1_45%,#dedede_50%,#f4f4f4)] text-[#111] hover:brightness-[1.02]";
 
 const WHY_ICONS = [
   { Icon: ShieldCheck, color: "#3f7d58" },
@@ -59,17 +60,17 @@ function ThemeToggle() {
 function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void }) {
   const t = landingCopy[lang].nav;
   return (
-    <header className="sticky top-0 z-20 border-b border-(--l-line) bg-(--l-bg)/90 backdrop-blur">
+    <header className="aqua-menubar sticky top-0 z-20">
       <nav className={`${CONTAINER} flex h-14 items-center justify-between`}>
         <Link href="/" className="serif text-[20px] font-semibold tracking-tight">
           {BRAND}
         </Link>
         <div className="flex items-center gap-1 sm:gap-2">
-          <div className="hidden items-center gap-6 pr-4 text-[14px] text-(--l-muted) md:flex">
-            <a href="#features" className="hover:text-(--l-fg)">{t.features}</a>
-            <a href="#self-host" className="hover:text-(--l-fg)">{t.quickStart}</a>
-            <a href="#faq" className="hover:text-(--l-fg)">{t.faq}</a>
-            <a href={GITHUB_URL} className="hover:text-(--l-fg)">GitHub</a>
+          <div className="hidden items-center gap-6 pr-4 text-[14px] text-foreground/80 md:flex">
+            <a href="#features" className="hover:text-foreground">{t.features}</a>
+            <a href="#self-host" className="hover:text-foreground">{t.quickStart}</a>
+            <a href="#faq" className="hover:text-foreground">{t.faq}</a>
+            <a href={GITHUB_URL} className="hover:text-foreground">GitHub</a>
           </div>
           <button
             type="button"
@@ -109,18 +110,20 @@ function ProductPreview({ lang }: { lang: Language }) {
       chrome
       elevated
     >
-      <div className="grid h-full grid-cols-12">
-        <aside className="col-span-4 hidden border-r border-(--l-line) md:block">
+      <div className="grid h-full grid-cols-12 bg-card">
+        <aside className="col-span-4 hidden border-r border-(--l-line) bg-sidebar md:block">
           <p className="px-4 pt-4 pb-2 text-[12px] text-(--l-muted) uppercase">{zh ? "最近执行" : "Recent runs"}</p>
           <ul className="text-[13px]">
             {RECENT_RUNS.map((run, i) => (
               <li
                 key={run.en}
-                className={`flex items-center gap-2.5 px-4 py-2 ${i === 0 ? "bg-(--l-panel)" : ""}`}
+                className={`flex items-center gap-2.5 px-4 py-2 ${i === 0 ? "aqua-selected" : ""}`}
               >
                 <StatusDot status={run.status} />
                 <span className="flex-1 truncate">{run[lang]}</span>
-                <span className="text-(--l-muted) tabular-nums">{run.status === "failed" ? "—" : run.found}</span>
+                <span className={`tabular-nums ${i === 0 ? "text-white/80" : "text-(--l-muted)"}`}>
+                  {run.status === "failed" ? "—" : run.found}
+                </span>
               </li>
             ))}
           </ul>
@@ -275,11 +278,11 @@ export default function LandingPage() {
                 {t.why.title}
               </h2>
             </div>
-            <div className="mt-10 grid gap-px overflow-hidden rounded-md border border-(--l-line) bg-(--l-line) sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-10 grid gap-px overflow-hidden rounded-[7px] bg-(--l-line) shadow-[var(--aqua-window-shadow)] sm:grid-cols-2 lg:grid-cols-4">
               {t.why.cards.map((card, i) => {
                 const { Icon, color } = WHY_ICONS[i % WHY_ICONS.length];
                 return (
-                <div key={card.title} className="bg-(--l-bg) p-6">
+                <div key={card.title} className="bg-card p-6">
                   <span
                     className="mb-4 inline-flex size-9 items-center justify-center rounded-md"
                     style={{ color, background: `color-mix(in srgb, ${color} 12%, transparent)` }}
@@ -369,7 +372,7 @@ export default function LandingPage() {
             <span className="serif text-[15px] font-semibold text-(--l-fg)">{BRAND}</span> · {t.footer}
           </span>
           <span className="flex gap-6">
-            <a href={GITHUB_URL} className="hover:text-(--l-fg)">GitHub</a>
+            <a href={GITHUB_URL} className="hover:text-foreground">GitHub</a>
             <SignedOut>
               <Link href="/sign-in?redirect_url=/dashboard" className="hover:text-(--l-fg)">{t.nav.signIn}</Link>
             </SignedOut>
