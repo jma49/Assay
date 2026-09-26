@@ -169,7 +169,8 @@ export function getAIErrorMessage(error: unknown): string {
     return "AI服务配置错误，请联系管理员检查API密钥。";
   }
 
-  return `AI服务暂时不可用: ${aiError.message || "未知错误"}`;
+  // The raw message can carry provider internals; it is logged, not shown.
+  return "AI服务暂时不可用，请稍后重试。";
 }
 
 /**

@@ -98,10 +98,8 @@ export async function GET(
     return NextResponse.json(scriptDocument, { status: 200 });
   } catch (error) {
     console.error("Error fetching script by ID:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
-      { message: "Internal server error", error: errorMessage },
+      { message: "Internal server error" },
       { status: 500 }
     );
   }
@@ -395,10 +393,8 @@ export async function PUT(
         { status: 400 }
       );
     }
-    const errorMessage =
-      error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
-      { message: "Internal server error", error: errorMessage },
+      { message: "Internal server error" },
       { status: 500 }
     );
   }
@@ -541,10 +537,8 @@ export async function DELETE(
     return NextResponse.json({ success: true, message }, { status: 200 });
   } catch (error) {
     console.error("Error deleting script:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
-      { message: "Internal server error", error: errorMessage },
+      { message: "Internal server error" },
       { status: 500 }
     );
   }
