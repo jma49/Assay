@@ -88,7 +88,7 @@ export function HashtagInput({
       
       <div
         className={cn(
-          "min-h-[2.5rem] rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors",
+          "aqua-field min-h-[2.5rem] rounded-[4px] px-3 py-2 text-sm transition-colors",
           "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
           isFocused && "ring-2 ring-ring ring-offset-2",
           disabled && "cursor-not-allowed opacity-50",
@@ -131,7 +131,7 @@ export function HashtagInput({
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               placeholder={placeholder}
-              className="border-0 px-0 py-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="border-0 bg-transparent shadow-none px-0 py-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
               disabled={disabled}
             />
             {inputValue.trim() && (
