@@ -43,7 +43,7 @@ const COLLECTION_NAME = "result";
 const SCRIPTS_COLLECTION_NAME = "sql_scripts";
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 50;
-const MAX_LIMIT = 2000; // 增加最大限制到2000
+const MAX_LIMIT = 200;
 
 export async function GET(request: NextRequest) {
   try {
