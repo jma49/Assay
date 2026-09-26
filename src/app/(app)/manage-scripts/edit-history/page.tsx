@@ -584,7 +584,7 @@ export default function GlobalEditHistoryPage() {
                             key={history._id?.toString() || index}
                             className={cn(
                               "group/row transition-all duration-200    ",
-                              index % 2 === 0 ? "bg-background" : "bg-muted/5",
+                              index % 2 === 0 ? "bg-card" : "bg-muted/5",
                             )}
                           >
                             <TableCell className="px-6 py-3">
@@ -748,7 +748,7 @@ export default function GlobalEditHistoryPage() {
                             onChange={handlePageInputChange}
                             onKeyDown={handlePageInputKeyDown}
                             placeholder={t("jumpToPage")}
-                            className="w-12 h-6 px-1 text-xs text-center border border-input rounded bg-background focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
+                            className="w-12 h-6 px-1 text-xs text-center aqua-field rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
                             style={{ pointerEvents: "auto" }}
                           />
                           <Button
