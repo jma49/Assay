@@ -79,7 +79,6 @@ ${errorMessage}
     return NextResponse.json(
       {
         error: errorMessage,
-        details: error instanceof Error ? error.message : "未知错误",
       },
       { status: 500 }
     );

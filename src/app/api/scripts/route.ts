@@ -296,10 +296,8 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const errorMessage =
-      error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json(
-      { message: "Internal server error", error: errorMessage },
+      { message: "Internal server error" },
       { status: 500 }
     );
   }
@@ -372,11 +370,9 @@ export async function GET(_request: Request) {
   } catch (error) {
     console.error("API: GET /api/scripts - 获取脚本列表时出错:", error);
 
-    const errorMessage =
-      error instanceof Error ? error.message : "获取脚本列表时发生未知错误。";
 
     return NextResponse.json(
-      { message: `获取脚本列表失败: ${errorMessage}`, error: String(error) },
+      { message: "获取脚本列表失败" },
       { status: 500 }
     );
   }

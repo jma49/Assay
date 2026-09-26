@@ -150,7 +150,6 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         message: "无法获取脚本列表",
-        error: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
