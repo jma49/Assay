@@ -14,7 +14,8 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-10 items-stretch justify-start gap-5 border-b text-muted-foreground",
+      // Aqua segmented control; my-1 keeps the old 40px row height.
+      "aqua-segmented my-1 inline-flex h-8 items-stretch justify-start rounded-full text-foreground",
       className
     )}
     {...props}
@@ -29,7 +30,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "-mb-px inline-flex items-center justify-center gap-1.5 whitespace-nowrap border-b-2 border-transparent px-0.5 text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-primary data-[state=active]:text-foreground",
+      "aqua-segment inline-flex items-center justify-center gap-1.5 whitespace-nowrap px-4 text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
       className
     )}
     {...props}

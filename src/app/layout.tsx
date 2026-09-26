@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { EB_Garamond } from "next/font/google";
 import "./globals.css";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -9,6 +10,15 @@ import CSSErrorHandler from "@/components/error/CSSErrorHandler";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { GlobalErrorHandlerProvider } from "@/components/error/GlobalErrorHandlerProvider";
 import { DialogPortalProvider } from "@/components/common/DialogPortalProvider";
+
+// Aqua's display face is Apple Garamond; EB Garamond is the closest open
+// licensed match, self-hosted by next/font.
+const garamond = EB_Garamond({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  display: "swap",
+  variable: "--font-garamond",
+});
 
 // Keep metadata export here (Server Component)
 export const metadata: Metadata = {
@@ -40,7 +50,7 @@ export default function RootLayout({
   );
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={garamond.variable} suppressHydrationWarning>
       <head>
         {/* 添加CSS预加载提示，减少404错误 */}
         <meta name="preload" content="styles" />
