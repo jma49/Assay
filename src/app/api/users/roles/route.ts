@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { validateApiAuth } from "@/lib/auth/auth-utils";
 import {
   UserRole,
@@ -8,12 +9,14 @@ import {
   removeUserRole,
   requirePermission,
   canManageRole,
+  getUserRole,
 } from "@/lib/auth/rbac";
 
 // 设置角色的请求体接口
 interface SetUserRoleRequest {
   targetUserId: string;
-  targetEmail: string;
+  /** Ignored: the email is read from Clerk. Still sent by older clients. */
+  targetEmail?: string;
   role: UserRole;
 }
 
@@ -96,14 +99,14 @@ export async function POST(request: NextRequest) {
 
     // 解析请求体
     const body: SetUserRoleRequest = await request.json();
-    const { targetUserId, targetEmail, role } = body;
+    const { targetUserId, role } = body;
 
     // 验证请求参数
-    if (!targetUserId || !targetEmail || !role) {
+    if (!targetUserId || !role) {
       return NextResponse.json(
         {
           success: false,
-          message: "缺少必要参数：targetUserId, targetEmail, role",
+          message: "缺少必要参数：targetUserId, role",
         },
         { status: 400 }
       );
@@ -134,6 +137,35 @@ export async function POST(request: NextRequest) {
           message: `权限不足：${currentUserRole} 角色无法分配 ${role} 角色`,
         },
         { status: 403 }
+      );
+    }
+
+    // The caller must also be allowed to manage the role the target holds
+    // now, or a manager could demote an admin by "assigning" them viewer.
+    const existingRole = await getUserRole(targetUserId);
+    if (existingRole && !canManageRole(currentUserRole, existingRole)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `权限不足：${currentUserRole} 角色无法修改 ${existingRole} 用户的角色`,
+        },
+        { status: 403 }
+      );
+    }
+
+    // The email comes from Clerk, not the request, so it cannot be spoofed.
+    let targetEmail: string;
+    try {
+      const client = await clerkClient();
+      const targetUser = await client.users.getUser(targetUserId);
+      const primary = targetUser.emailAddresses.find(
+        (address) => address.id === targetUser.primaryEmailAddressId
+      );
+      targetEmail = (primary ?? targetUser.emailAddresses[0])?.emailAddress ?? "";
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "目标用户不存在" },
+        { status: 404 }
       );
     }
 
