@@ -49,16 +49,3 @@ export function AuthShell({
     </div>
   );
 }
-
-export const clerkAppearance = {
-  elements: {
-    rootBox: "w-full",
-    cardBox: "w-full !shadow-none !border-0 !rounded-none",
-    card: "!shadow-none !border-0 !p-0",
-    headerTitle: "hidden",
-    headerSubtitle: "hidden",
-    formButtonPrimary: "!bg-primary !text-primary-foreground !rounded-md !shadow-xs hover:!brightness-110",
-    socialButtonsBlockButton: "!rounded-md !border-border-strong",
-    formFieldInput: "!rounded-md !border-input",
-  },
-};

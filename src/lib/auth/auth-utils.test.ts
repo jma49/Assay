@@ -3,17 +3,14 @@ import { Permission, UserRole } from "@/lib/auth/rbac";
 import { authorizeApiRequest } from "./auth-utils";
 
 const mocks = vi.hoisted(() => ({
-  auth: vi.fn(),
-  getUser: vi.fn(),
+  getSession: vi.fn(),
   getUserRole: vi.fn(),
   setUserRole: vi.fn(),
   requirePermission: vi.fn(),
 }));
 
-vi.mock("@clerk/nextjs/server", () => ({
-  auth: mocks.auth,
-  clerkClient: async () => ({ users: { getUser: mocks.getUser } }),
-}));
+vi.mock("next/headers", () => ({ headers: async () => new Headers(), cookies: async () => ({ get: () => undefined }) }));
+vi.mock("@/lib/auth/server", () => ({ auth: { api: { getSession: mocks.getSession } } }));
 
 vi.mock("@/lib/auth/rbac", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/auth/rbac")>()),
@@ -22,14 +19,9 @@ vi.mock("@/lib/auth/rbac", async (importOriginal) => ({
   requirePermission: mocks.requirePermission,
 }));
 
-// The profile cache lives for the whole test file, so each test uses its own user id.
 const signedInAs = (email: string) => {
   const userId = `user_${email}`;
-  mocks.auth.mockResolvedValue({ userId });
-  mocks.getUser.mockResolvedValue({
-    id: userId,
-    emailAddresses: [{ emailAddress: email }],
-  });
+  mocks.getSession.mockResolvedValue({ user: { id: userId, email, name: email.split("@")[0] }, session: {} });
   mocks.getUserRole.mockResolvedValue(UserRole.VIEWER);
   return userId;
 };
@@ -41,7 +33,7 @@ describe("authorizeApiRequest", () => {
   });
 
   it("returns 401 when not signed in", async () => {
-    mocks.auth.mockResolvedValue({ userId: null });
+    mocks.getSession.mockResolvedValue(null);
 
     const result = await authorizeApiRequest(Permission.SCRIPT_EXECUTE);
 
@@ -85,14 +77,13 @@ describe("authorizeApiRequest", () => {
     expect(result.isValid && result.userEmail).toBe("dev@example.com");
   });
 
-  it("fetches the Clerk profile once for repeated requests", async () => {
-    signedInAs("repeat@example.com");
+  it("assigns a first-time user the viewer role", async () => {
+    const userId = signedInAs("new@example.com");
+    mocks.getUserRole.mockResolvedValue(null);
     mocks.requirePermission.mockResolvedValue({ authorized: true, userRole: UserRole.VIEWER });
 
     await authorizeApiRequest(Permission.HISTORY_READ);
-    await authorizeApiRequest(Permission.HISTORY_READ);
 
-    expect(mocks.auth).toHaveBeenCalledTimes(2);
-    expect(mocks.getUser).toHaveBeenCalledTimes(1);
+    expect(mocks.setUserRole).toHaveBeenCalledWith(userId, "new@example.com", UserRole.VIEWER, "system");
   });
 });

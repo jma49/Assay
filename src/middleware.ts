@@ -1,13 +1,19 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { getSessionCookie } from "better-auth/cookies";
+import { NextResponse, type NextRequest } from "next/server";
 import { GUEST_COOKIE, guestIdFromToken } from "@/lib/auth/guest";
 
-// 定义公开路由（不需要认证）
-// "/" is the public landing page; only the exact root path is public.
-const isPublicRoute = createRouteMatcher([
+/** Exact paths, or a prefix ending in "(.*)" for everything under it. */
+function matcher(patterns: string[]) {
+  const regexes = patterns.map((p) => new RegExp(`^${p}$`));
+  return (pathname: string) => regexes.some((regex) => regex.test(pathname));
+}
+
+// Pages and endpoints anyone may open.
+const isPublicRoute = matcher([
+  // "/" is the public landing page; only the exact root path is public.
   "/",
-  "/sign-in(.*)",
-  "/sign-up(.*)",
+  "/sign-in",
+  "/sign-up",
   "/unauthorized",
   // Public, static documentation: exactly /docs and pages under it, so a
   // future route like /docs-admin does not become public by accident.
@@ -19,6 +25,8 @@ const isPublicRoute = createRouteMatcher([
   // Icons generated at build time have no file extension for the matcher to skip.
   "/apple-icon(.*)",
   "/icon(.*)",
+  // Sign-in itself: OAuth redirects, callbacks and session reads.
+  "/api/auth/(.*)",
   // Machine callers that authenticate with their own shared secrets.
   "/api/notifications/dispatch",
   "/api/integrations/telegram/webhook",
@@ -26,7 +34,7 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 // Pages a demo guest can open; every API route still checks the guest itself.
-const isGuestRoute = createRouteMatcher([
+const isGuestRoute = matcher([
   "/dashboard",
   "/checks",
   "/checks/(.*)",
@@ -39,51 +47,37 @@ const isGuestRoute = createRouteMatcher([
   "/api/(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
-  // Fail closed: a missing key must not disable authentication.
-  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
-    return new NextResponse("Authentication is not configured", {
-      status: 503,
-    });
+/**
+ * An optimistic gate: it only checks that a session cookie is present, so
+ * signed-out visitors are sent to sign in without a database call. Every
+ * page and API route verifies the session itself before showing data.
+ */
+export default function middleware(req: NextRequest) {
+  // Fail closed: without a secret no session can be trusted anywhere.
+  if (!process.env.BETTER_AUTH_SECRET) {
+    return new NextResponse("Authentication is not configured", { status: 503 });
   }
 
-  // 如果是公开路由，直接通过
-  if (isPublicRoute(req)) {
-    return NextResponse.next();
-  }
+  const { pathname } = req.nextUrl;
+  if (isPublicRoute(pathname) || getSessionCookie(req)) return NextResponse.next();
 
-  // 检查用户是否已认证
-  const { userId } = await auth();
-
-  if (!userId && guestIdFromToken(req.cookies.get(GUEST_COOKIE)?.value)) {
-    if (isGuestRoute(req)) return NextResponse.next();
+  if (guestIdFromToken(req.cookies.get(GUEST_COOKIE)?.value)) {
+    if (isGuestRoute(pathname)) return NextResponse.next();
     // Anything that needs an account: offer to create one, then come back here.
     const signUpUrl = new URL("/sign-up", req.url);
-    signUpUrl.searchParams.set("redirect_url", req.nextUrl.pathname);
+    signUpUrl.searchParams.set("redirect_url", pathname);
     return NextResponse.redirect(signUpUrl);
   }
 
-  if (!userId) {
-    // 未认证用户重定向到登录页
-    // Only the path is carried over, so the redirect cannot leave this origin.
-    const signInUrl = new URL("/sign-in", req.url);
-    signInUrl.searchParams.set(
-      "redirect_url",
-      req.nextUrl.pathname + req.nextUrl.search,
-    );
-    return NextResponse.redirect(signInUrl);
-  }
-
-  // 已认证用户直接通过，邮箱域名验证在页面级别进行
-  return NextResponse.next();
-});
+  // Only the path is carried over, so the redirect cannot leave this origin.
+  const signInUrl = new URL("/sign-in", req.url);
+  signInUrl.searchParams.set("redirect_url", pathname + req.nextUrl.search);
+  return NextResponse.redirect(signInUrl);
+}
 
 export const config = {
   matcher: [
-    // 跳过Next.js内部文件和静态文件，但包含CSS文件以便处理404
+    // Everything except Next.js internals and static files.
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)).*)",
-    // 总是运行在API路由上
-    "/(api|trpc)(.*)",
-    "/__clerk/:path*",
   ],
 };

@@ -1,6 +1,6 @@
 # Deployment
 
-Assay is a Next.js app. You bring a Clerk application, MongoDB, the PostgreSQL database to check and an Upstash Redis cache.
+Assay is a Next.js app. You bring a Google or GitHub OAuth app for sign-in, MongoDB, the PostgreSQL database to check and an Upstash Redis cache.
 
 ## Prerequisites
 
@@ -8,7 +8,7 @@ Assay is a Next.js app. You bring a Clerk application, MongoDB, the PostgreSQL d
 - A PostgreSQL database for the checks to read (a read-only user is recommended)
 - MongoDB (Atlas works)
 - Upstash Redis
-- A Clerk application
+- A Google OAuth client or a GitHub OAuth app (sign-in; users are stored in MongoDB)
 
 ## Run it locally
 
