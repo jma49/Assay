@@ -44,5 +44,8 @@ export function createHistoryLoader(fetchImpl: Fetch = (input, init) => fetch(in
     return query ? load(query) : Promise.resolve({ kind: "stale" });
   };
 
-  return { load, reload };
+  /** Whether any page was requested yet, whichever path asked for it. */
+  const hasRequested = () => requests.latestParams() !== null;
+
+  return { load, reload, hasRequested };
 }

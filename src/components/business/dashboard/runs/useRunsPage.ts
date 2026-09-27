@@ -21,9 +21,8 @@ export function useRunsPage(language: string) {
   const [overallStats, setOverallStats] = useState<CheckStats>(EMPTY_STATS);
   const history = useRunHistory(setError);
 
-  // A View-menu filter that arrives before the first history load is applied
-  // by that load, which would otherwise reset it to "all".
-  const initialHistoryLoadedRef = useRef(false);
+  // A View-menu filter that arrives before the first history request is applied
+  // by that request, which would otherwise reset it to "all".
   const initialFilterRef = useRef<string | null>(null);
 
   const loadScripts = useCallback(async () => {
@@ -59,7 +58,6 @@ export function useRunsPage(language: string) {
       setIsFetchingScripts(true);
       try {
         await Promise.all([loadScripts(), loadHistory(), loadOverallStats()]);
-        initialHistoryLoadedRef.current = true;
         setIsFetchingScripts(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : "数据加载失败");
@@ -96,15 +94,14 @@ export function useRunsPage(language: string) {
   // effect below so a filter chosen on another page reaches the first load.
   useAppCommand((command) => {
     if (command.type !== "history-filter") return false;
-    const beforeFirstLoad = !initialHistoryLoadedRef.current;
-    if (beforeFirstLoad) {
+    if (!history.hasRequested()) {
       initialFilterRef.current = command.status;
       history.presetFilters({ status: command.status });
     } else {
       history.changeStatus(command.status);
     }
     // Wait for the page to lay out before scrolling when it is still loading.
-    setTimeout(scrollToHistory, beforeFirstLoad ? 800 : 0);
+    setTimeout(scrollToHistory, document.getElementById("execution-history") ? 0 : 800);
     return true;
   });
 
