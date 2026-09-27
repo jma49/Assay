@@ -29,7 +29,7 @@ async function getSqlScriptsCollection(): Promise<Collection<Document>> {
 }
 
 /**
- * 获取脚本列表数据的核心逻辑
+ * The checks list from MongoDB; GET caches it.
  */
 async function fetchScriptsData(
   sortBy: string,
@@ -40,13 +40,11 @@ async function fetchScriptsData(
 
   const collection = await getSqlScriptsCollection();
 
-  // 构建查询条件
   const query: Record<string, unknown> = {};
   if (includeScheduledOnly) {
     query.isScheduled = true;
   }
 
-  // 构建排序条件
   const sortCondition: Record<string, 1 | -1> = {};
   if (sortBy === "createdAt") {
     sortCondition.createdAt = sortOrder === "desc" ? -1 : 1;
@@ -54,7 +52,6 @@ async function fetchScriptsData(
     sortCondition.name = sortOrder === "desc" ? -1 : 1;
   }
 
-  // 查询数据库
   const scripts = await collection
     .find(query, {
       projection: {
@@ -76,7 +73,6 @@ async function fetchScriptsData(
     .sort(sortCondition)
     .toArray();
 
-  // 转换数据格式
   return scripts.map((script) => ({
     scriptId: script.scriptId,
     name: script.name || "",
@@ -104,13 +100,11 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
 
-    // 获取查询参数
     // Only known values, so arbitrary query strings cannot mint new cache keys.
     const sortBy = searchParams.get("sort_by") === "createdAt" ? "createdAt" : "name";
     const sortOrder = searchParams.get("sort_order") === "desc" ? "desc" : "asc";
     const includeScheduledOnly = searchParams.get("scheduled_only") === "true";
 
-    // 生成缓存键
     const key = cacheKey("scripts:list", {
       sortBy,
       sortOrder,

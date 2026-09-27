@@ -10,14 +10,13 @@ import {
 } from "@/lib/workflows/version-control";
 
 /**
- * GET - 获取脚本版本列表、版本详情、版本比较或统计信息
+ * GET: a check's versions, one version, a comparison of two, or statistics, depending on the query.
  */
 export async function GET(
   request: NextRequest,
   { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
 ) {
   try {
-    // 验证用户认证
     const authResult = await validateApiAuth("zh");
     if (!authResult.isValid) {
       return authResult.response!;
@@ -25,7 +24,6 @@ export async function GET(
 
     const { user } = authResult;
 
-    // 检查权限：需要 SCRIPT_READ 权限
     const permissionCheck = await requirePermission(
       user.id,
       Permission.SCRIPT_READ
@@ -45,7 +43,6 @@ export async function GET(
 
     switch (action) {
       case "detail": {
-        // 获取特定版本详情
         const version = searchParams.get("version");
         if (!version) {
           return NextResponse.json(
@@ -70,7 +67,6 @@ export async function GET(
       }
 
       case "compare": {
-        // 比较两个版本
         const fromVersion = searchParams.get("from");
         const toVersion = searchParams.get("to");
 
@@ -101,7 +97,6 @@ export async function GET(
       }
 
       case "stats": {
-        // 获取版本统计信息
         const stats = await getVersionStatistics(scriptId);
 
         return NextResponse.json({
@@ -113,7 +108,6 @@ export async function GET(
 
       case "list":
       default: {
-        // 获取版本列表
         const limit = Math.min(
           100,
           Math.max(1, parseInt(searchParams.get("limit") || "50"))
@@ -139,14 +133,13 @@ export async function GET(
 }
 
 /**
- * POST - 执行版本回滚操作
+ * POST: rolls a check back to an earlier version.
  */
 export async function POST(
   request: NextRequest,
   { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
 ) {
   try {
-    // 验证用户认证
     const authResult = await validateApiAuth("zh");
     if (!authResult.isValid) {
       return authResult.response!;
@@ -154,7 +147,6 @@ export async function POST(
 
     const { user, userEmail } = authResult;
 
-    // 检查权限：需要 SCRIPT_UPDATE 权限才能回滚
     const permissionCheck = await requirePermission(
       user.id,
       Permission.SCRIPT_UPDATE
@@ -169,11 +161,9 @@ export async function POST(
     const params = await paramsPromise;
     const { scriptId } = params;
 
-    // 解析请求体
     const body = await request.json();
     const { action, targetVersion, reason } = body;
 
-    // 验证请求参数
     if (action !== "rollback") {
       return NextResponse.json(
         { success: false, message: "无效的操作类型，只支持 rollback" },
@@ -188,7 +178,6 @@ export async function POST(
       );
     }
 
-    // 执行回滚操作
     const result = await rollbackToVersion(
       scriptId,
       targetVersion,

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 
 /**
- * 开发模式下CSS文件的fallback处理
- * 返回空的CSS内容，防止404错误
+ * An empty stylesheet for CSS requests that would 404 in development.
  */
 export async function GET() {
   return new NextResponse(
