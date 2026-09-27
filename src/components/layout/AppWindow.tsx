@@ -27,6 +27,7 @@ const SECTIONS: [string, DashboardTranslationKeys][] = [
   ["/data-analysis", "navigationAnalysis"],
   ["/admin/users", "navigationUsers"],
   ["/dashboard", "navigationDashboard"],
+  ["/view-execution-result", "navigationResults"],
 ];
 
 /**

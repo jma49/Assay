@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { cleanRunMessage } from "@/lib/utils/run-message";
 import { useParams, useRouter } from "next/navigation";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { Button } from "@/components/ui/button";
@@ -737,7 +738,7 @@ export default function ViewExecutionResultPage() {
             </div>
             <div className="space-y-1 bg-card px-5 py-4 sm:col-span-2">
               <dt className="text-[13px] text-muted-foreground">{t.message}</dt>
-              <dd className="break-words">{result.message}</dd>
+              <dd className="break-words">{cleanRunMessage(result.message)}</dd>
             </div>
           </dl>
 
@@ -865,15 +866,6 @@ export default function ViewExecutionResultPage() {
         </div>
       </div>
 
-      {/* 版本号显示 - 固定在左下角 */}
-      <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 transition-all duration-300">
-          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-          <span className="font-mono text-xs text-muted-foreground font-medium">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.7"}
-          </span>
-        </div>
-      </div>
 
       {/* AI错误分析结果弹窗 */}
       {isErrorAnalysisDialogOpen && (

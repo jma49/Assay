@@ -273,6 +273,26 @@
     box-shadow: inset 0 0 0 1px var(--aqua-accent-rim);
   }
 
+  /* Date fields: the native picker, tuned to the Aqua field and theme. */
+  input[type="date"],
+  input[type="datetime-local"] {
+    color-scheme: light;
+  }
+
+  .dark input[type="date"],
+  .dark input[type="datetime-local"] {
+    color-scheme: dark;
+  }
+
+  input::-webkit-calendar-picker-indicator {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  input::-webkit-calendar-picker-indicator:hover {
+    opacity: 0.85;
+  }
+
   /* Aqua controls use the arrow cursor, as on the Mac. */
   button,
   [role="button"],

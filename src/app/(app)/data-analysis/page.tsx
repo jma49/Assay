@@ -1190,15 +1190,6 @@ export default function DataAnalysisPage() {
         </div>
       </div>
 
-      {/* 版本号显示 - 与主页风格统一 */}
-      <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 transition-all duration-300">
-          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-          <span className="font-mono text-xs text-muted-foreground font-medium">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.9"}
-          </span>
-        </div>
-      </div>
     </div>
   );
 }
