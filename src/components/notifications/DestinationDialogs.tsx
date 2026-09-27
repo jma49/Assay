@@ -9,8 +9,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { sendJson } from "@/client/send-json";
 import type { DestinationDto, TelegramLinkDto, TelegramLinkStatus } from "@/contracts/notifications";
+import type { DigestSettings } from "@/domain/digest";
 import { ALERT_KINDS, type AlertKind, type ChannelKind } from "@/domain/notify";
 import { cn } from "@/lib/utils/utils";
 import { ALERT_LABEL, CHANNEL_META, ChannelIcon } from "./channels";
@@ -31,7 +33,10 @@ const COPY = {
     connect: "Connect",
     save: "Save",
     saving: "Saving…",
-    needOneAlert: "Pick at least one kind of alert",
+    needOneAlert: "Pick at least one kind of alert, or turn on the daily summary",
+    digest: "Daily summary",
+    digestHint: "What is broken or has issues, and what changed in the last 24 hours.",
+    digestAt: "at",
     secretTitle: "Save the signing secret",
     secretBody: "Your endpoint verifies X-Assay-Signature with this secret. It is shown only once.",
     copy: "Copy",
@@ -62,7 +67,10 @@ const COPY = {
     connect: "连接",
     save: "保存",
     saving: "保存中…",
-    needOneAlert: "至少选择一种告警",
+    needOneAlert: "至少选择一种告警，或开启每日汇总",
+    digest: "每日汇总",
+    digestHint: "出错和有问题的检查，以及过去 24 小时的变化。",
+    digestAt: "时间",
     secretTitle: "保存签名密钥",
     secretBody: "你的服务用这个密钥校验 X-Assay-Signature。它只显示这一次。",
     copy: "复制",
@@ -85,6 +93,12 @@ interface Subscription {
   alerts: AlertKind[];
   tags: string;
   language: "en" | "zh";
+  digest: DigestSettings;
+}
+
+/** New summaries go out at 09:00 in the browser's own time zone. */
+function defaultDigest(): DigestSettings {
+  return { enabled: false, hour: 9, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" };
 }
 
 const parseTags = (text: string) => [...new Set(text.split(/[,，]/).map((t) => t.trim()).filter(Boolean))];
@@ -143,6 +157,36 @@ function SubscriptionFields({ value, onChange }: { value: Subscription; onChange
           </div>
         </div>
       </div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg p-3 shadow-border">
+        <Switch
+          checked={value.digest.enabled}
+          onCheckedChange={(enabled) => onChange({ ...value, digest: { ...value.digest, enabled } })}
+          aria-labelledby="digest-label"
+        />
+        <span className="grid min-w-0 flex-1 gap-0.5">
+          <span id="digest-label" className="text-[13px] font-medium">
+            {t.digest}
+          </span>
+          <span className="text-[12px] text-muted-foreground">{t.digestHint}</span>
+        </span>
+        {value.digest.enabled && (
+          <label className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
+            {t.digestAt}
+            <select
+              value={value.digest.hour}
+              onChange={(e) => onChange({ ...value, digest: { ...value.digest, hour: Number(e.target.value) } })}
+              className="h-8 rounded-md bg-card px-2 text-[13px] text-foreground shadow-border tabular-nums"
+            >
+              {Array.from({ length: 24 }, (_, hour) => (
+                <option key={hour} value={hour}>
+                  {String(hour).padStart(2, "0")}:00
+                </option>
+              ))}
+            </select>
+            <span className="text-subtle-foreground">{value.digest.timeZone}</span>
+          </label>
+        )}
+      </div>
     </>
   );
 }
@@ -184,7 +228,7 @@ export function PasteDestinationDialog({
   const { language } = useLanguage();
   const t = COPY[language];
   const meta = kind ? CHANNEL_META[kind] : null;
-  const [subscription, setSubscription] = useState<Subscription>({ name: "", alerts: [...ALERT_KINDS], tags: "", language });
+  const [subscription, setSubscription] = useState<Subscription>({ name: "", alerts: [...ALERT_KINDS], tags: "", language, digest: defaultDigest() });
   const [url, setUrl] = useState("");
   const [signingSecret, setSigningSecret] = useState("");
   const [saving, setSaving] = useState(false);
@@ -194,7 +238,7 @@ export function PasteDestinationDialog({
   useEffect(() => {
     if (!kind) return;
     const channel = CHANNEL_META[kind].name[language];
-    setSubscription({ name: language === "zh" ? `${channel}告警` : `${channel} alerts`, alerts: [...ALERT_KINDS], tags: "", language });
+    setSubscription({ name: language === "zh" ? `${channel}告警` : `${channel} alerts`, alerts: [...ALERT_KINDS], tags: "", language, digest: defaultDigest() });
     setUrl("");
     setSigningSecret("");
     setError(null);
@@ -204,7 +248,7 @@ export function PasteDestinationDialog({
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!kind) return;
-    if (subscription.alerts.length === 0) return setError(t.needOneAlert);
+    if (subscription.alerts.length === 0 && !subscription.digest.enabled) return setError(t.needOneAlert);
     setSaving(true);
     setError(null);
     try {
@@ -216,6 +260,7 @@ export function PasteDestinationDialog({
         language: subscription.language,
         alerts: subscription.alerts,
         tags: parseTags(subscription.tags),
+        digest: subscription.digest,
       });
       onCreated();
       if (result.signingSecret) setCreatedSecret(result.signingSecret);
@@ -303,26 +348,33 @@ export function EditDestinationDialog({
 }) {
   const { language } = useLanguage();
   const t = COPY[language];
-  const [subscription, setSubscription] = useState<Subscription>({ name: "", alerts: [], tags: "", language: "en" });
+  const [subscription, setSubscription] = useState<Subscription>({ name: "", alerts: [], tags: "", language: "en", digest: defaultDigest() });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!destination) return;
-    setSubscription({ name: destination.name, alerts: destination.alerts, tags: destination.tags.join(", "), language: destination.language });
+    setSubscription({
+      name: destination.name,
+      alerts: destination.alerts,
+      tags: destination.tags.join(", "),
+      language: destination.language,
+      digest: destination.digest ?? defaultDigest(),
+    });
     setError(null);
   }, [destination]);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!destination) return;
-    if (subscription.alerts.length === 0) return setError(t.needOneAlert);
+    if (subscription.alerts.length === 0 && !subscription.digest.enabled) return setError(t.needOneAlert);
     setSaving(true);
     try {
       await sendJson(`/api/notifications/destinations/${destination.id}`, "PATCH", {
         name: subscription.name,
         alerts: subscription.alerts,
         tags: parseTags(subscription.tags),
+        digest: subscription.digest,
         language: subscription.language,
       });
       onSaved();

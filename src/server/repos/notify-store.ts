@@ -25,6 +25,8 @@ export function toDestination(doc: Document): Destination {
     createdAt: new Date(doc.createdAt),
     createdBy: doc.createdBy ?? { id: "", name: "" },
     lastDelivery: doc.lastDelivery ?? null,
+    digest: doc.digest ?? null,
+    lastDigestAt: doc.lastDigestAt ? new Date(doc.lastDigestAt) : null,
   };
 }
 
@@ -140,6 +142,38 @@ export function mongoNotifyStore(db: Db): NotifyStore {
 
     async sentSince(destinationId, since) {
       return deliveries.countDocuments({ destinationId, sentAt: { $gte: since } });
+    },
+
+    async digestDestinations() {
+      return (await destinations.find({ enabled: { $ne: false }, "digest.enabled": true }).toArray()).map(toDestination);
+    },
+
+    async claimDigest(destinationId, slot, now) {
+      const _id = toId(destinationId);
+      if (!_id) return false;
+      const result = await destinations.updateOne(
+        { _id, $or: [{ lastDigestAt: { $lt: slot } }, { lastDigestAt: null, createdAt: { $lt: slot } }] },
+        { $set: { lastDigestAt: now } },
+      );
+      return result.modifiedCount === 1;
+    },
+
+    async digestSummary(workspaceId, tags, since) {
+      // Checks carry no workspaceId yet; they all belong to the default workspace.
+      const checkFilter = tags.length ? { hashtags: { $in: [...tags] } } : {};
+      const docs = workspaceId === DEFAULT_WORKSPACE_ID
+        ? await checks.find(checkFilter, { projection: { scriptId: 1, name: 1, cnName: 1, state: 1 } }).toArray()
+        : [];
+      const broken = docs.filter((d) => d.state?.outcome === "error").map((d) => ({ name: String(d.name ?? d.scriptId) }));
+      const issues = docs
+        .filter((d) => d.state?.outcome === "issues")
+        .map((d) => ({ name: String(d.name ?? d.scriptId), rowCount: Number(d.state.rowCount ?? 0) }))
+        .sort((a, b) => b.rowCount - a.rowCount);
+      const ids = docs.map((d) => String(d.scriptId));
+      const recent = await events
+        .find({ checkId: { $in: ids }, at: { $gte: since } }, { projection: { to: 1 } })
+        .toArray();
+      return { total: docs.length, broken, issues, changes: recent.length, recovered: recent.filter((e) => e.to === "clean").length };
     },
 
     async recordLastDelivery(destinationId, result) {

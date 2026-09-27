@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { ObjectId, type Db } from "mongodb";
 import type { CreateDestinationInput, DestinationDto, UpdateDestinationInput } from "@/contracts/notifications";
 import { ALERT_KINDS, buildTestMessage, type AlertKind, type ChannelKind, type MessageLanguage } from "@/domain/notify";
+import type { DigestSettings } from "@/domain/digest";
 import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
 import { open, seal } from "@/server/crypto/secret-box";
 import { ApiError } from "@/server/http/route";
@@ -26,6 +27,7 @@ export function toDestinationDto(destination: Destination): DestinationDto {
     createdAt: destination.createdAt.toISOString(),
     createdBy: destination.createdBy.name,
     lastDelivery: last ? { at: new Date(last.at).toISOString(), ok: last.ok, error: last.error } : null,
+    digest: destination.digest ?? null,
   };
 }
 
@@ -50,6 +52,7 @@ export interface NewDestination {
   language?: MessageLanguage;
   alerts?: AlertKind[];
   tags?: string[];
+  digest?: DigestSettings | null;
 }
 
 /** Saves a destination; every way of adding one (paste, OAuth, Telegram) ends here. */
@@ -69,6 +72,7 @@ export async function saveDestination(
     language: input.language ?? "en",
     alerts: input.alerts ?? [...ALERT_KINDS],
     tags: input.tags ?? [],
+    digest: input.digest ?? null,
     enabled: true,
     createdAt: now,
     createdBy: by,
@@ -112,6 +116,7 @@ export async function createPastedDestination(
     language: input.language,
     alerts: input.alerts,
     tags: input.tags,
+    digest: input.digest,
   });
   return { destination, signingSecret };
 }

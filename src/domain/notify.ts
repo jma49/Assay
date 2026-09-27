@@ -1,3 +1,4 @@
+import { digestContent, type DigestSummary } from "./digest";
 import type { RowDiff, RunOutcome } from "./run";
 
 /** What happened to a check, as people subscribe to it. */
@@ -33,7 +34,7 @@ const TONE: Record<AlertKind, Tone> = { broken: "failure", issues: "attention", 
 
 /** A channel-neutral alert; each channel turns it into its own payload. */
 export interface AlertMessage {
-  kind: AlertKind;
+  kind: AlertKind | "digest";
   tone: Tone;
   title: string;
   /** Plain text, one fact per line. */
@@ -142,6 +143,21 @@ export function buildTestMessage(options: { language: MessageLanguage; url: stri
     checkName: "Assay",
     url: options.url,
     linkLabel: t.open,
+    at: options.at.toISOString(),
+  });
+}
+
+/** The daily summary as a message, linking to the checks list. */
+export function buildDigestMessage(summary: DigestSummary, options: { language: MessageLanguage; url: string; at: Date }): AlertMessage {
+  const content = digestContent(summary, options.language);
+  return withText({
+    kind: "digest",
+    tone: content.tone,
+    title: content.title,
+    lines: content.lines,
+    checkName: "Assay",
+    url: options.url,
+    linkLabel: content.linkLabel,
     at: options.at.toISOString(),
   });
 }

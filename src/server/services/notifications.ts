@@ -1,6 +1,8 @@
+import { digestSlot, type DigestSettings, type DigestSummary } from "@/domain/digest";
 import {
   alertKindOf,
   buildAlertMessage,
+  buildDigestMessage,
   wantsAlert,
   type AlertKind,
   type ChannelKind,
@@ -29,6 +31,8 @@ export interface Destination {
   createdAt: Date;
   createdBy: { id: string; name: string };
   lastDelivery?: { at: Date; ok: boolean; error?: string } | null;
+  digest?: DigestSettings | null;
+  lastDigestAt?: Date | null;
 }
 
 export interface StoredEvent {
@@ -84,6 +88,11 @@ export interface NotifyStore {
   finishDelivery(delivery: ClaimedDelivery, update: DeliveryUpdate): Promise<void>;
   sentSince(destinationId: string, since: Date): Promise<number>;
   recordLastDelivery(destinationId: string, result: { at: Date; ok: boolean; error?: string }): Promise<void>;
+  /** Enabled destinations with a daily summary, in every workspace. */
+  digestDestinations(): Promise<Destination[]>;
+  /** Atomically marks the digest for `slot` as taken; false when another dispatcher already sent it. */
+  claimDigest(destinationId: string, slot: Date, now: Date): Promise<boolean>;
+  digestSummary(workspaceId: string, tags: readonly string[], since: Date): Promise<DigestSummary>;
 }
 
 export interface DispatchDeps {
@@ -187,6 +196,39 @@ export interface DispatchReport {
   sent: number;
   retrying: number;
   failed: number;
+  digests: number;
+}
+
+/**
+ * Sends each destination's daily summary once its hour has come. The claim
+ * moves lastDigestAt forward first, so a digest is sent at most once per
+ * day even with several dispatchers; one that fails is not retried until
+ * the next day.
+ */
+async function sendDigests(deps: DispatchDeps): Promise<number> {
+  const now = deps.now();
+  let sent = 0;
+  for (const destination of await deps.store.digestDestinations()) {
+    const digest = destination.digest!;
+    const slot = digestSlot(now, digest.hour, digest.timeZone);
+    // A new destination starts with the next slot, not one that passed before it existed.
+    const last = destination.lastDigestAt ?? destination.createdAt;
+    if (last >= slot) continue;
+    if (!(await deps.store.claimDigest(destination.id, slot, now))) continue;
+
+    const summary = await deps.store.digestSummary(destination.workspaceId, destination.tags, new Date(now.getTime() - EVENT_FRESHNESS_MS));
+    const message = buildDigestMessage(summary, { language: destination.language, url: `${deps.appUrl.replace(/\/+$/, "")}/checks`, at: now });
+    const channel = CHANNELS[destination.kind];
+    let outcome: DeliveryOutcome;
+    try {
+      outcome = await deps.send(channel, channel.request(message, deps.openSecret(destination.sealed), { now, env: deps.env }));
+    } catch (error) {
+      outcome = { kind: "failed", error: error instanceof Error ? error.message : String(error) };
+    }
+    await deps.store.recordLastDelivery(destination.id, { at: deps.now(), ok: outcome.kind === "sent", error: outcome.kind === "sent" ? undefined : outcome.error });
+    if (outcome.kind === "sent") sent++;
+  }
+  return sent;
 }
 
 /**
@@ -196,7 +238,7 @@ export interface DispatchReport {
  * dispatcher that dies after sending but before recording may send again.
  */
 export async function dispatchNotifications(deps: DispatchDeps, maxSends = 50): Promise<DispatchReport> {
-  const report: DispatchReport = { queued: await fanOut(deps), sent: 0, retrying: 0, failed: 0 };
+  const report: DispatchReport = { queued: await fanOut(deps), sent: 0, retrying: 0, failed: 0, digests: 0 };
   for (let i = 0; i < maxSends; i++) {
     const delivery = await deps.store.claimDelivery(deps.now(), LEASE_MS);
     if (!delivery) break;
@@ -206,5 +248,6 @@ export async function dispatchNotifications(deps: DispatchDeps, maxSends = 50): 
     else if (update.status === "failed") report.failed++;
     else report.retrying++;
   }
+  report.digests = await sendDigests(deps);
   return report;
 }

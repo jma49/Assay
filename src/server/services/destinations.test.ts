@@ -22,7 +22,7 @@ function fakeDb() {
 }
 
 const by = { id: "u1", name: "Ada" };
-const base = { name: "Alerts", language: "en" as const, alerts: ["broken" as const], tags: [] };
+const base = { name: "Alerts", language: "en" as const, alerts: ["broken" as const], tags: [], digest: null };
 
 describe("createPastedDestination", () => {
   it("stores the URL sealed and shows only a masked label", async () => {
@@ -54,5 +54,16 @@ describe("createPastedDestination", () => {
     await expect(
       createPastedDestination(db, "default", by, { ...base, kind: "webhook", url: "https://internal.example/in" }),
     ).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe("CreateDestination", () => {
+  it("needs an alert kind or the daily summary", async () => {
+    const { CreateDestination } = await import("@/contracts/notifications");
+    const url = "https://hooks.slack.com/services/x";
+    expect(CreateDestination.safeParse({ kind: "slack", name: "A", url, alerts: [] }).success).toBe(false);
+    expect(CreateDestination.safeParse({ kind: "slack", name: "A", url, alerts: [], digest: { enabled: true, hour: 9, timeZone: "Asia/Shanghai" } }).success).toBe(true);
+    expect(CreateDestination.safeParse({ kind: "slack", name: "A", url, digest: { enabled: true, hour: 9, timeZone: "Nowhere/City" } }).success).toBe(false);
+    expect(CreateDestination.safeParse({ kind: "slack", name: "A", url, digest: { enabled: true, hour: 24, timeZone: "UTC" } }).success).toBe(false);
   });
 });
