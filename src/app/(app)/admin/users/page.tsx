@@ -112,9 +112,9 @@ export default function AdminUsersPage() {
 
             {page.totalPages > 1 && (
               <MembersPagination
-                currentPage={currentPage}
+                currentPage={page.page}
                 totalPages={page.totalPages}
-                pageInfo={formatPageInfo(t("pageInfo"), [page.start, page.end, totalUsers, currentPage, page.totalPages])}
+                pageInfo={formatPageInfo(t("pageInfo"), [page.start, page.end, totalUsers, page.page, page.totalPages])}
                 t={t}
                 onPageChange={setCurrentPage}
               />
