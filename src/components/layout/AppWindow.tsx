@@ -62,7 +62,7 @@ export function AppWindow({ children }: { children: ReactNode }) {
           zoomed && "max-w-none",
         )}
       >
-        <div className="aqua-window overflow-hidden rounded-[7px]">
+        <div className="aqua-window aqua-app overflow-hidden rounded-[7px]">
           <div
             className="aqua-titlebar relative flex h-[26px] items-center justify-center px-20 text-[13px] select-none"
             onDoubleClick={toggleShade}
