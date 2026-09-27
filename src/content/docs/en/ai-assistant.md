@@ -6,9 +6,13 @@ When the workspace sets `AI_ENABLED=true`, three helpers are available; otherwis
 |---|---|---|
 | **Generate SQL** | Editor toolbar, **AI** | Developers and above |
 | **Explain / optimise SQL** | Editor toolbar, **AI** | Developers and above |
-| **Explain an error** | Full report of a failed run | Everyone |
+| **Triage** | Full report of a failed or flagged run | Everyone |
 
 The AI sees your question, the SQL and the table structure of the database, never the data rows.
+
+## Triage
+
+**Triage with AI** on a run's full report says whether the rows look like a real data problem or a mistake in the check, the likely causes, and what to do next; for a broken query it suggests a corrected one. It describes the returned rows to the model only by column: type, how many are empty, how many distinct values. The values themselves are not sent. Each run is triaged once; opening it again shows the saved answer without another request.
 
 ## How Generate SQL checks its work
 
