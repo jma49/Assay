@@ -6,7 +6,7 @@ Run your first data check on the live demo in a few minutes.
 
 Open [the demo](https://assay-sql.vercel.app) and choose **Try the live demo**. Sign in with any email address or with Google. New accounts join the demo workspace as **viewers**: you can read every check and every result, but not change them.
 
-> A viewer cannot run or edit checks. To try the whole flow, [host your own copy](/docs/deployment) or ask an admin of your workspace for the developer role.
+> On the demo, viewers can run the sample checks (up to 20 runs an hour) but not edit them. To try the whole flow, [host your own copy](/docs/deployment) or ask an admin for the developer role.
 
 ## Step 2 — Look around the dashboard
 
@@ -20,10 +20,8 @@ The Dock at the bottom of the screen takes you to the other sections: Scripts, N
 
 ## Step 3 — Run a check
 
-With a developer role or higher:
-
-1. In **Manual Trigger Check**, pick a check such as *Duplicate orders*.
-2. Choose **Run Check**.
+1. Choose **Run a Check…** in the window toolbar.
+2. Pick a check such as *Duplicate orders* and choose **Run Check**.
 3. When it finishes, the new run appears at the top of **Check History**.
 
 ## Step 4 — Read the result
