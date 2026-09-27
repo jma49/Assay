@@ -7,7 +7,7 @@ import { createAuthClient } from "better-auth/react";
 /** Same-origin client: the routes live at /api/auth on this app. */
 export const authClient = createAuthClient({ plugins: [apiKeyClient(), lastLoginMethodClient()] });
 
-export const { useSession, signIn, signOut } = authClient;
+export const { useSession, signOut } = authClient;
 
 export interface CurrentUser {
   id: string;

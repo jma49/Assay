@@ -28,7 +28,7 @@ The status line under the editor tells you straight away whether the SQL is allo
 ## Writing a good check
 
 - **Return the rows someone must fix**, with the columns they need to find them (ids, dates, amounts).
-- **Keep it fast.** A check has 30 seconds (five minutes for queries that look long-running) before the database cancels it.
+- **Keep it fast.** The whole script has 30 seconds by default (`CHECK_TIMEOUT_MS`) before the database cancels it.
 - **Only read.** Anything that writes, locks or changes settings is rejected; see [SQL safety rules](/docs/sql-safety).
 
 ```sql

@@ -3,7 +3,7 @@ import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache/cache-utils";
-import { authorizeApiRequest, validateApiAuth } from "@/lib/auth/auth-utils";
+import { validateApiAuth } from "@/lib/auth/auth-utils";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
 import { authorProblem, ownsCheck, readVersion, versionFilter } from "@/lib/workflows/check-fields";
@@ -43,54 +43,11 @@ interface UpdateScriptData {
   // scriptId is from URL param, not body for update
 }
 
-// GET a single script by scriptId
-export async function GET(
-  request: NextRequest,
-  { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
-) {
-  try {
-    const authResult = await authorizeApiRequest(Permission.SCRIPT_READ);
-    if (!authResult.isValid) {
-      return authResult.response;
-    }
-
-    const params = await paramsPromise; // Await the promise
-    const { scriptId } = params;
-
-    if (!scriptId) {
-      return NextResponse.json(
-        { message: "scriptId parameter is required" },
-        { status: 400 }
-      );
-    }
-
-    const collection = await getSqlScriptsCollection();
-    const scriptDocument = await collection.findOne({ scriptId });
-
-    if (!scriptDocument) {
-      return NextResponse.json(
-        { message: `Script with ID '${scriptId}' not found` },
-        { status: 404 }
-      );
-    }
-
-    // Convert ObjectId to string if you are returning _id
-    // const responseDocument = {
-    //   ...scriptDocument,
-    //   _id: scriptDocument._id.toString(),
-    // };
-    // For now, returning the document as is, assuming frontend handles ObjectId if necessary
-    // or that scriptId is the primary way to identify and _id is not explicitly needed by client for this call.
-
-    return NextResponse.json(scriptDocument, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching script by ID:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
+const CONFLICT = () =>
+  NextResponse.json(
+    { code: "conflict", message: "Someone else changed this check while you were editing it. Reload to see their changes." },
+    { status: 409 },
+  );
 
 // PUT (update) a script by scriptId
 export async function PUT(
@@ -140,6 +97,15 @@ export async function PUT(
       );
     }
 
+    // Saves without the version they started from would silently overwrite a concurrent edit.
+    const expectedVersion = readVersion((body as { version?: unknown }).version);
+    if (expectedVersion === undefined) {
+      return NextResponse.json(
+        { code: "version_required", message: "Send the check's version you edited (its current `version`, 0 if it has none)." },
+        { status: 428 },
+      );
+    }
+
     // Validate that at least one field is being updated
     if (Object.keys(body).length === 0) {
       return NextResponse.json(
@@ -179,6 +145,8 @@ export async function PUT(
         { status: 404 }
       );
     }
+
+    if ((existingScript.version ?? 0) !== expectedVersion) return CONFLICT();
 
     // Changing someone else's check needs approval unless you are an admin.
     const scriptAuthor = existingScript.author;
@@ -239,7 +207,7 @@ export async function PUT(
                 ? cronSchedule
                 : existingScript.cronSchedule,
             // The version this change was made against; applying it later onto a newer one is refused.
-            baseVersion: existingScript.version ?? 0,
+            baseVersion: expectedVersion,
           }
         );
 
@@ -301,19 +269,15 @@ export async function PUT(
     updateData.updatedAt = new Date(); // Always update the timestamp
     (updateData as Record<string, unknown>).updatedBy = { id: user.id, email: userEmail };
 
-    // Only onto the version the editor started from, if it said which.
-    const expectedVersion = readVersion((body as { version?: unknown }).version);
+    // Only onto the version the editor started from.
     const result = await collection.updateOne(
       { scriptId, ...versionFilter(expectedVersion) },
       { $set: updateData, $inc: { version: 1 } }
     );
 
     if (result.matchedCount === 0) {
-      if (expectedVersion !== undefined && (await collection.countDocuments({ scriptId }, { limit: 1 }))) {
-        return NextResponse.json(
-          { code: "conflict", message: "Someone else changed this check while you were editing it. Reload to see their changes." },
-          { status: 409 }
-        );
+      if (await collection.countDocuments({ scriptId }, { limit: 1 })) {
+        return CONFLICT();
       }
       return NextResponse.json(
         { message: `Script with ID '${scriptId}' not found` },

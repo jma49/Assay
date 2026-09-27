@@ -5,7 +5,7 @@ import { authorizeApiRequest } from "./auth-utils";
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   getUserRole: vi.fn(),
-  setUserRole: vi.fn(),
+  ensureDefaultRole: vi.fn(),
   requirePermission: vi.fn(),
 }));
 
@@ -15,7 +15,7 @@ vi.mock("@/lib/auth/server", () => ({ auth: { api: { getSession: mocks.getSessio
 vi.mock("@/lib/auth/rbac", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/auth/rbac")>()),
   getUserRole: mocks.getUserRole,
-  setUserRole: mocks.setUserRole,
+  ensureDefaultRole: mocks.ensureDefaultRole,
   requirePermission: mocks.requirePermission,
 }));
 
@@ -84,6 +84,6 @@ describe("authorizeApiRequest", () => {
 
     await authorizeApiRequest(Permission.HISTORY_READ);
 
-    expect(mocks.setUserRole).toHaveBeenCalledWith(userId, "new@example.com", UserRole.VIEWER, "system");
+    expect(mocks.ensureDefaultRole).toHaveBeenCalledWith(userId, "new@example.com");
   });
 });

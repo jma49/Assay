@@ -2,13 +2,19 @@
 
 ## Workflow
 
-- Never commit directly to `main`. Create a branch from `main` (e.g. `fix/...`, `feat/...`, `chore/...`).
+- Never commit directly to `main` or `develop`. Branch from `develop` (e.g. `fix/...`, `feat/...`, `chore/...`) and open the PR against `develop`.
+- `main` is production: every push deploys to Vercel. Promote `develop` to `main` with a PR once a batch of work is verified.
 - Keep commits small and focused: one logical change per commit.
 - Before every commit, make sure these pass:
   - `npm run typecheck`
   - `npm run lint`
   - `npm test`
 - Add or update tests alongside behavior changes, especially for security-sensitive code (SQL validation, auth, RBAC).
+- Tests never touch real services: mock MongoDB, PostgreSQL, Redis, AI and chat APIs. The local `.env.local` may point at a shared database.
+
+## Code Layout
+
+- Keep files small: a page is a shell over a data hook and section components; pure logic lives in a `.ts` module with tests. See `docs/architecture.md`.
 
 ## Commit Messages
 

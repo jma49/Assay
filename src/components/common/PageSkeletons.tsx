@@ -1,5 +1,4 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { APP_CONTAINER } from "@/components/layout/app-container";
 import { cn } from "@/lib/utils/utils";
 
 /**
@@ -107,16 +106,5 @@ export function DashboardSkeleton() {
       </div>
       <SkeletonTable rows={8} withTitle={false} />
     </div>
-  );
-}
-
-/** Generic signed-in page, used by the route-level loading UI. */
-export function AppPageSkeleton() {
-  return (
-    <main className={`${APP_CONTAINER} space-y-6 py-8`} aria-busy="true">
-      <SkeletonPageHeader withAction />
-      <SkeletonStatStrip />
-      <SkeletonTable rows={7} />
-    </main>
   );
 }

@@ -242,39 +242,3 @@ ${this.state.errorInfo?.componentStack}
     return this.props.children;
   }
 }
-
-export function withErrorBoundary<P extends object>(
-  Component: React.ComponentType<P>,
-  errorBoundaryProps?: Omit<Props, 'children'>
-) {
-  const WrappedComponent = (props: P) => (
-    <ErrorBoundary {...errorBoundaryProps}>
-      <Component {...props} />
-    </ErrorBoundary>
-  );
-
-  WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
-  
-  return WrappedComponent;
-}
-
-export function SimpleErrorBoundary({ 
-  children, 
-  message = "组件加载失败" 
-}: { 
-  children: ReactNode; 
-  message?: string;
-}) {
-  return (
-    <ErrorBoundary
-      fallback={
-        <Alert className="m-4">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{message}</AlertDescription>
-        </Alert>
-      }
-    >
-      {children}
-    </ErrorBoundary>
-  );
-} 

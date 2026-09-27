@@ -1,6 +1,8 @@
 import type { PoolClient } from "pg";
 import { withReadOnlyTransaction } from "@/lib/database/db";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
+import { singleStatement } from "@/lib/sql/single-statement";
+import { splitStatements } from "@/lib/sql/statements";
 
 export const DRY_RUN_TIMEOUT_MS = 10_000;
 export const DRY_RUN_SAMPLE_ROWS = 5;
@@ -37,7 +39,7 @@ export async function dryRunCheck(sql: string, run: Runner = withReadOnlyTransac
   if (!validation.isValid) {
     return { ok: false, error: validation.reasonEn ?? validation.reason ?? "Not a read-only query" };
   }
-  if (!/^(SELECT|WITH)\b/i.test(sql.replace(LEADING_COMMENTS, ""))) {
+  if (!/^(SELECT|WITH)\b/i.test(sql.replace(LEADING_COMMENTS, "")) || splitStatements(sql).length !== 1) {
     return { ok: false, error: "A check must be a single SELECT or WITH query" };
   }
 
@@ -45,8 +47,8 @@ export async function dryRunCheck(sql: string, run: Runner = withReadOnlyTransac
   try {
     return await run(async (client) => {
       await client.query(`SET LOCAL statement_timeout = ${DRY_RUN_TIMEOUT_MS}`);
-      const counted = await client.query<{ n: number }>(count);
-      const sampled = await client.query(sample);
+      const counted = await client.query<{ n: number }>(singleStatement(count));
+      const sampled = await client.query(singleStatement(sample));
       return { ok: true as const, rowCount: counted.rows[0]?.n ?? 0, sample: sampled.rows };
     });
   } catch (error) {

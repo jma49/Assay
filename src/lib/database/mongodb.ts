@@ -38,5 +38,3 @@ const instance = new MongoDbClient();
 export function getMongoDbClient(): MongoDbClient {
   return instance;
 }
-
-export default getMongoDbClient;

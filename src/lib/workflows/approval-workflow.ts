@@ -49,20 +49,6 @@ export interface ApprovalRequest {
   sqlContent?: string; // kept separately so reviewers can read it
 }
 
-export interface ApprovalHistory {
-  historyId: string;
-  requestId: string;
-  scriptId: string;
-  action: "submit" | "approve" | "reject" | "withdraw" | "request_changes";
-  actionBy: string;
-  actionByEmail: string;
-  actionAt: Date;
-  previousStatus: ApprovalStatus;
-  newStatus: ApprovalStatus;
-  comment?: string;
-  metadata?: Record<string, unknown>;
-}
-
 let cachedDb: Db | null = null;
 
 async function getDb(): Promise<Db> {
@@ -78,21 +64,10 @@ async function getApprovalRequestsCollection(): Promise<Collection<Document>> {
   return db.collection("approval_requests");
 }
 
-async function getApprovalHistoryCollection(): Promise<Collection<Document>> {
-  const db = await getDb();
-  return db.collection("approval_history");
-}
-
 function generateRequestId(): string {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2);
   return `req_${timestamp}_${random}`;
-}
-
-function generateHistoryId(): string {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2);
-  return `hist_${timestamp}_${random}`;
 }
 
 /**
@@ -232,60 +207,12 @@ export async function createApprovalRequest(
 
     const result = await collection.insertOne(approvalRequest);
 
-    if (result.acknowledged) {
-      await recordApprovalHistory(
-        requestId,
-        scriptId,
-        autoApprovalEligible ? "approve" : "submit",
-        autoApprovalEligible ? "system" : requesterId,
-        autoApprovalEligible ? "system@auto-approval" : requesterEmail,
-        ApprovalStatus.DRAFT,
-        autoApprovalEligible ? ApprovalStatus.APPROVED : ApprovalStatus.PENDING,
-        autoApprovalEligible ? "自动审批通过" : undefined
-      );
-
-      console.log(
-        `[Approval] 审批请求已创建: ${requestId}, 状态: ${approvalRequest.status}, 操作类型: ${operationType}`
-      );
-      return requestId;
-    }
+    if (result.acknowledged) return requestId;
 
     return null;
   } catch (error) {
     console.error("[Approval] 创建审批请求失败:", error);
     return null;
-  }
-}
-
-async function recordApprovalHistory(
-  requestId: string,
-  scriptId: string,
-  action: ApprovalHistory["action"],
-  actionBy: string,
-  actionByEmail: string,
-  previousStatus: ApprovalStatus,
-  newStatus: ApprovalStatus,
-  comment?: string
-): Promise<void> {
-  try {
-    const collection = await getApprovalHistoryCollection();
-
-    const history: ApprovalHistory = {
-      historyId: generateHistoryId(),
-      requestId,
-      scriptId,
-      action,
-      actionBy,
-      actionByEmail,
-      actionAt: new Date(),
-      previousStatus,
-      newStatus,
-      comment,
-    };
-
-    await collection.insertOne(history);
-  } catch (error) {
-    console.error("[Approval] 记录审批历史失败:", error);
   }
 }
 
@@ -344,16 +271,6 @@ export async function approveScript(
     );
 
     if (updateResult.modifiedCount > 0) {
-      await recordApprovalHistory(
-        requestId,
-        request.scriptId,
-        "approve",
-        approverId,
-        approverEmail,
-        ApprovalStatus.PENDING,
-        ApprovalStatus.APPROVED,
-        comment
-      );
 
       try {
         await executeApprovedOperation(request as unknown as ApprovalRequest);
@@ -422,16 +339,6 @@ export async function rejectScript(
     );
 
     if (updateResult.modifiedCount > 0) {
-      await recordApprovalHistory(
-        requestId,
-        request.scriptId,
-        "reject",
-        reviewerId,
-        reviewerEmail,
-        ApprovalStatus.PENDING,
-        ApprovalStatus.REJECTED,
-        comment
-      );
 
       console.log(`[Approval] 脚本已被拒绝: ${requestId} by ${reviewerEmail}`);
       return { success: true, message: "脚本已被拒绝" };
@@ -519,41 +426,6 @@ export async function getPendingApprovals(
       data: [],
       pagination: { page, limit, total: 0, totalPages: 0 },
     };
-  }
-}
-
-export async function getApprovalHistory(
-  scriptId?: string,
-  requestId?: string
-): Promise<ApprovalHistory[]> {
-  try {
-    const collection = await getApprovalHistoryCollection();
-
-    const query: Record<string, unknown> = {};
-    if (scriptId) query.scriptId = scriptId;
-    if (requestId) query.requestId = requestId;
-
-    const history = await collection
-      .find(query)
-      .sort({ actionAt: -1 })
-      .toArray();
-
-    return history.map((doc) => ({
-      historyId: doc.historyId,
-      requestId: doc.requestId,
-      scriptId: doc.scriptId,
-      action: doc.action,
-      actionBy: doc.actionBy,
-      actionByEmail: doc.actionByEmail,
-      actionAt: doc.actionAt,
-      previousStatus: doc.previousStatus,
-      newStatus: doc.newStatus,
-      comment: doc.comment,
-      metadata: doc.metadata,
-    })) as ApprovalHistory[];
-  } catch (error) {
-    console.error("[Approval] 获取审批历史失败:", error);
-    return [];
   }
 }
 
