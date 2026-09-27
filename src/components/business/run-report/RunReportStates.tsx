@@ -75,7 +75,7 @@ export function RunNotFound({
             {t.notFound}
           </h2>
           <p className="mt-4 text-foreground ">
-            {t.noResultFound} {resultId} 的执行结果。
+            {t.noResultFound(resultId ?? "")}
           </p>
           <Button
             onClick={onBack}

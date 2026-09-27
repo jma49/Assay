@@ -34,7 +34,7 @@ export default function ViewExecutionResultPage() {
   // Demo viewers may run the sample checks too; the API has the final say.
   const canRunAgain = !!me && (me.permissions.includes("script:execute") || !!me.demo);
 
-  const { result, loading, error, retry } = useRunResult(resultId);
+  const { result, loading, error, retry } = useRunResult(resultId, t.missingResultId);
   const actions = useRunActions(result, language);
 
   if (loading) return <RunReportSkeleton />;
