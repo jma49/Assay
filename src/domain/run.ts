@@ -95,3 +95,33 @@ export function isNotable(previous: CheckState | null | undefined, outcome: RunO
   if (previous.outcome !== outcome) return true;
   return outcome === "issues" && !!diff && diff.added > 0;
 }
+
+export interface HistoricalRun {
+  runId: string;
+  outcome: RunOutcome;
+  rowCount: number;
+  finishedAt: Date;
+}
+
+/**
+ * A check's state rebuilt from its past runs, newest first: the latest
+ * outcome, when that streak began, and the row count before the latest run.
+ * Used to back-fill checks that ran before state was kept.
+ */
+export function stateFromHistory(runsNewestFirst: readonly HistoricalRun[]): CheckState | null {
+  const [latest, ...older] = runsNewestFirst;
+  if (!latest) return null;
+  let since = latest.finishedAt;
+  for (const run of older) {
+    if (run.outcome !== latest.outcome) break;
+    since = run.finishedAt;
+  }
+  return {
+    outcome: latest.outcome,
+    rowCount: latest.rowCount,
+    previousRowCount: older[0]?.rowCount ?? null,
+    since,
+    lastRunId: latest.runId,
+    lastRunAt: latest.finishedAt,
+  };
+}
