@@ -209,32 +209,6 @@ export function beetleVoxels(resolution: number = BEETLE_RESOLUTION): Voxel[] {
 }
 
 /**
- * The side view as a pixel grid: for every (x, y), the voxel nearest the
- * viewer. Rows run top to bottom; empty cells are null.
- */
-export function beetleSideView(voxels: Voxel[] = beetleVoxels()) {
-  const xs = voxels.map((v) => v.x);
-  const ys = voxels.map((v) => v.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const front = new Map<string, Voxel>();
-  for (const voxel of voxels) {
-    const key = `${voxel.x},${voxel.y}`;
-    const current = front.get(key);
-    if (!current || voxel.z > current.z) front.set(key, voxel);
-  }
-  const rows: (string | null)[][] = [];
-  for (let y = maxY; y >= minY; y--) {
-    const row: (string | null)[] = [];
-    for (let x = minX; x <= maxX; x++) row.push(front.get(`${x},${y}`)?.color ?? null);
-    rows.push(row);
-  }
-  return rows;
-}
-
-/**
  * The pixel icon, drawn for small sizes rather than projected from the 3D
  * model: a projected side view flattens the domed back into a line. It keeps
  * what makes the beetle readable at 16px: a high dome, the forked horn

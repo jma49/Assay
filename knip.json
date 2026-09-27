@@ -1,5 +1,13 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["scripts/**/*.ts"],
-  "ignoreDependencies": ["eslint", "eslint-config-next"]
+  "entry": [
+    "scripts/**/*.ts"
+  ],
+  "ignoreDependencies": [
+    "eslint",
+    "eslint-config-next"
+  ],
+  "ignore": [
+    ".claude/**"
+  ]
 }
