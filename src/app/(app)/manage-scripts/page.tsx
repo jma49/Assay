@@ -43,6 +43,7 @@ import {
 } from "@/components/business/dashboard/types";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
+import { scheduleProblem } from "@/lib/scheduling/schedule";
 import {
   ScriptMetadataForm,
   ScriptFormData,
@@ -240,6 +241,12 @@ const ManageScriptsContent = () => {
       return;
     }
     
+    const badSchedule = scheduleProblem(currentFormScript.isScheduled, currentFormScript.cronSchedule, language);
+    if (badSchedule) {
+      toast.error(badSchedule);
+      return;
+    }
+
     // 严格的安全检查 - 只允许查询操作
     const securityCheck = validateReadOnlySql(currentSqlContent);
     if (!securityCheck.isValid) {
@@ -550,9 +557,11 @@ const ManageScriptsContent = () => {
           <DialogHeader>
             <DialogTitle>{dialogTitle}</DialogTitle>
             <DialogDescription>
-              {dialogMode === "add"
-                ? t("scriptMetadataDesc")
-                : t("editScriptTitle")}
+              {dialogMode === "add" ? (
+                t("scriptMetadataDesc")
+              ) : (
+                <span className="font-mono">{formMetadata.scriptId}</span>
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="flex-grow overflow-y-auto pr-2 space-y-4 py-2">

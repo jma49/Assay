@@ -25,6 +25,7 @@ import {
   DashboardTranslationKeys,
 } from "@/components/business/dashboard/types";
 import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
+import { scheduleProblem } from "@/lib/scheduling/schedule";
 
 const SCRIPT_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -159,6 +160,11 @@ export default function NewScriptPage() {
     }
     if (!SCRIPT_ID_PATTERN.test(formData.scriptId)) {
       toast.error(c.badId);
+      return;
+    }
+    const badSchedule = scheduleProblem(formData.isScheduled, formData.cronSchedule, language);
+    if (badSchedule) {
+      toast.error(badSchedule);
       return;
     }
     const validation = validateReadOnlySql(sqlContent);
