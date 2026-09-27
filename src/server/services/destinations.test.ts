@@ -22,7 +22,7 @@ function fakeDb() {
 }
 
 const by = { id: "u1", name: "Ada" };
-const base = { name: "Alerts", language: "en" as const, alerts: ["broken" as const], tags: [], digest: null };
+const base = { name: "Alerts", language: "en" as const, alerts: ["broken" as const], tags: [], digest: null, remind: null };
 
 describe("createPastedDestination", () => {
   it("stores the URL sealed and shows only a masked label", async () => {
@@ -65,5 +65,7 @@ describe("CreateDestination", () => {
     expect(CreateDestination.safeParse({ kind: "slack", name: "A", url, alerts: [], digest: { enabled: true, hour: 9, timeZone: "Asia/Shanghai" } }).success).toBe(true);
     expect(CreateDestination.safeParse({ kind: "slack", name: "A", url, digest: { enabled: true, hour: 9, timeZone: "Nowhere/City" } }).success).toBe(false);
     expect(CreateDestination.safeParse({ kind: "slack", name: "A", url, digest: { enabled: true, hour: 24, timeZone: "UTC" } }).success).toBe(false);
+    expect(CreateDestination.safeParse({ kind: "slack", name: "A", url, remind: { afterHours: 4 } }).success).toBe(true);
+    expect(CreateDestination.safeParse({ kind: "slack", name: "A", url, remind: { afterHours: 0.01 } }).success).toBe(false);
   });
 });

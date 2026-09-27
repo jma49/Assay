@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isValidTimeZone, type DigestSettings } from "@/domain/digest";
+import { REMIND_AFTER_HOURS } from "@/domain/reminders";
 import { ALERT_KINDS, type AlertKind, type ChannelKind } from "@/domain/notify";
 
 /** A destination as the settings page sees it: never its secret. */
@@ -16,6 +17,7 @@ export interface DestinationDto {
   createdBy: string;
   lastDelivery: { at: string; ok: boolean; error?: string } | null;
   digest: DigestSettings | null;
+  remind: { afterHours: number } | null;
 }
 
 /** Which one-click connections this deployment has credentials for. */
@@ -39,6 +41,10 @@ const Digest = z.object({
   hour: z.number().int().min(0).max(23),
   timeZone: z.string().max(64).refine(isValidTimeZone, "Unknown time zone"),
 });
+const Remind = z.object({
+  afterHours: z.number().refine((hours) => (REMIND_AFTER_HOURS as readonly number[]).includes(hours), "Unsupported reminder interval"),
+});
+
 /** A destination with no alert kinds is only useful for its daily summary. */
 const hearsSomething = (value: { alerts?: AlertKind[]; digest?: DigestSettings | null }) =>
   value.alerts === undefined || value.alerts.length > 0 || value.digest?.enabled === true;
@@ -58,11 +64,12 @@ export const CreateDestination = z.object({
   alerts: Alerts.default([...ALERT_KINDS]),
   tags: Tags.default([]),
   digest: Digest.nullable().default(null),
+  remind: Remind.nullable().default(null),
 }).refine(hearsSomething, NOTHING);
 export type CreateDestinationInput = z.infer<typeof CreateDestination>;
 
 export const UpdateDestination = z
-  .object({ name: Name, language: Language, alerts: Alerts, tags: Tags, enabled: z.boolean(), digest: Digest.nullable() })
+  .object({ name: Name, language: Language, alerts: Alerts, tags: Tags, enabled: z.boolean(), digest: Digest.nullable(), remind: Remind.nullable() })
   .partial()
   .refine((value) => Object.keys(value).length > 0, "Nothing to update")
   // Only checkable when both are sent together, as the edit form does.

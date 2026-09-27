@@ -4,13 +4,15 @@ import {
   alertKindOf,
   buildAlertMessage,
   buildDigestMessage,
+  buildReminderMessage,
   withActions,
   wantsAlert,
   type AlertKind,
   type ChannelKind,
   type MessageLanguage,
 } from "@/domain/notify";
-import { suppressionFor, type Alerting, type Suppression } from "@/domain/alerting";
+import { isAcknowledged, isMuted, suppressionFor, type Alerting, type Suppression } from "@/domain/alerting";
+import { reminderContent, reminderDue } from "@/domain/reminders";
 import type { CheckState, RowDiff, RunOutcome } from "@/domain/run";
 import { CHANNELS } from "@/server/notify/channels";
 import type { DeliveryOutcome, DestinationSecret, OutgoingRequest, Channel } from "@/server/notify/types";
@@ -37,6 +39,18 @@ export interface Destination {
   lastDigestAt?: Date | null;
   /** How it was connected; an OAuth-installed Slack app is the only Slack destination that can take button clicks. */
   source?: "oauth" | "paste" | "telegram";
+  /** Remind every this many hours while a problem stays open and unacknowledged. */
+  remind?: { afterHours: number } | null;
+}
+
+export interface OpenProblem {
+  checkId: string;
+  name: string;
+  cnName?: string;
+  outcome: "error" | "issues";
+  rowCount: number;
+  since: Date;
+  alerting?: Alerting | null;
 }
 
 export interface StoredEvent {
@@ -103,6 +117,15 @@ export interface NotifyStore {
   /** Atomically marks the digest for `slot` as taken; false when another dispatcher already sent it. */
   claimDigest(destinationId: string, slot: Date, now: Date): Promise<boolean>;
   digestSummary(workspaceId: string, tags: readonly string[], since: Date): Promise<DigestSummary>;
+  /** Enabled destinations that want reminders, in every workspace. */
+  reminderDestinations(): Promise<Destination[]>;
+  /** Checks that are broken or have issues, optionally only those with one of the tags. */
+  openProblems(workspaceId: string, tags: readonly string[]): Promise<OpenProblem[]>;
+  remindersSent(destinationId: string, checkId: string, since: Date): Promise<number>;
+  /** Atomically counts one more reminder; false when another dispatcher sent it first. */
+  claimReminder(destinationId: string, checkId: string, since: Date, sent: number, now: Date): Promise<boolean>;
+  /** Button token of the latest event of this problem, if it has one. */
+  problemToken(checkId: string, since: Date): Promise<string | null>;
 }
 
 export interface DispatchDeps {
@@ -214,6 +237,60 @@ export interface DispatchReport {
   retrying: number;
   failed: number;
   digests: number;
+  reminders: number;
+}
+
+const MAX_REMINDERS_PER_DISPATCH = 20;
+
+/**
+ * Reminds destinations of problems that stay open with nobody on them.
+ * Acknowledging or muting stops the reminders; each destination gets at
+ * most MAX_REMINDERS per problem, counted in a store row per problem so
+ * concurrent dispatchers cannot double up.
+ */
+async function sendReminders(deps: DispatchDeps): Promise<number> {
+  const now = deps.now();
+  let sent = 0;
+  for (const destination of await deps.store.reminderDestinations()) {
+    const afterHours = destination.remind!.afterHours;
+    for (const problem of await deps.store.openProblems(destination.workspaceId, destination.tags)) {
+      if (sent >= MAX_REMINDERS_PER_DISPATCH) return sent;
+      const kind = problem.outcome === "error" ? "broken" : "issues";
+      if (!destination.alerts.includes(kind)) continue;
+      const state = { since: problem.since, outcome: problem.outcome };
+      if (isMuted(problem.alerting, now) || isAcknowledged(problem.alerting, state)) continue;
+      const already = await deps.store.remindersSent(destination.id, problem.checkId, problem.since);
+      if (!reminderDue(problem.since, destination.createdAt, now, afterHours, already)) continue;
+      if (!(await deps.store.claimReminder(destination.id, problem.checkId, problem.since, already, now))) continue;
+
+      const name = (destination.language === "zh" ? problem.cnName || problem.name : problem.name) ?? problem.checkId;
+      const openHours = Math.floor((now.getTime() - problem.since.getTime()) / 3_600_000);
+      const content = reminderContent(
+        { name, outcome: problem.outcome, rowCount: problem.rowCount, owner: problem.alerting?.owner?.name },
+        openHours,
+        destination.language,
+      );
+      const reminder = buildReminderMessage(content, {
+        tone: problem.outcome === "error" ? "failure" : "attention",
+        checkName: name,
+        language: destination.language,
+        url: checkUrl(deps.appUrl, problem.checkId),
+        at: now,
+      });
+      const token = canTakeClicks(destination, deps.env) ? await deps.store.problemToken(problem.checkId, problem.since) : null;
+      const message = token ? withActions(reminder, token, destination.language) : reminder;
+      const channel = CHANNELS[destination.kind];
+      let outcome: DeliveryOutcome;
+      try {
+        outcome = await deps.send(channel, channel.request(message, deps.openSecret(destination.sealed), { now, env: deps.env }));
+      } catch (error) {
+        outcome = { kind: "failed", error: error instanceof Error ? error.message : String(error) };
+      }
+      await deps.store.recordLastDelivery(destination.id, { at: deps.now(), ok: outcome.kind === "sent", error: outcome.kind === "sent" ? undefined : outcome.error });
+      if (outcome.kind === "sent") sent++;
+    }
+  }
+  return sent;
 }
 
 /**
@@ -255,7 +332,7 @@ async function sendDigests(deps: DispatchDeps): Promise<number> {
  * dispatcher that dies after sending but before recording may send again.
  */
 export async function dispatchNotifications(deps: DispatchDeps, maxSends = 50): Promise<DispatchReport> {
-  const report: DispatchReport = { queued: await fanOut(deps), sent: 0, retrying: 0, failed: 0, digests: 0 };
+  const report: DispatchReport = { queued: await fanOut(deps), sent: 0, retrying: 0, failed: 0, digests: 0, reminders: 0 };
   for (let i = 0; i < maxSends; i++) {
     const delivery = await deps.store.claimDelivery(deps.now(), LEASE_MS);
     if (!delivery) break;
@@ -266,5 +343,6 @@ export async function dispatchNotifications(deps: DispatchDeps, maxSends = 50): 
     else report.retrying++;
   }
   report.digests = await sendDigests(deps);
+  report.reminders = await sendReminders(deps);
   return report;
 }

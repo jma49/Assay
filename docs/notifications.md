@@ -17,6 +17,14 @@ A destination can also get a **daily summary** at an hour of its choosing,
 in its own time zone: what is broken or has issues, and how many changes the
 last 24 hours had. A destination may take only the summary.
 
+A destination can also **remind** people of a problem that stays open with
+nobody on it: every 1, 4 or 24 hours while a check is broken or has issues
+and is neither acknowledged nor muted, at most three times per problem. The
+reminder names the owner and carries the same buttons as the alert.
+Reminders count from when the problem began, or from when the destination
+was made if that is later, so adding a destination does not replay old
+problems.
+
 ## Acknowledge, mute, owner
 
 On a check's page, the **Alerts** menu (for people who can run checks):

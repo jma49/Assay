@@ -57,6 +57,7 @@ const COPY = {
     removed: "Destination removed",
     paused: "Paused",
     digestAt: (time: string) => `Daily summary ${time}`,
+    remindEvery: (h: number) => `Reminds after ${h < 24 ? `${h} h` : "1 day"}`,
     connected: "Channel connected. Send a test to see how alerts look.",
     oauthError: {
       cancelled: "Connection cancelled.",
@@ -96,6 +97,7 @@ const COPY = {
     removed: "已移除通知渠道",
     paused: "已暂停",
     digestAt: (time: string) => `每日汇总 ${time}`,
+    remindEvery: (h: number) => `${h < 24 ? `${h} 小时` : "1 天"}未处理提醒`,
     connected: "渠道已连接。发送一条测试看看告警的样子。",
     oauthError: {
       cancelled: "已取消连接。",
@@ -276,6 +278,9 @@ function DestinationRow({
             <span className="rounded-md bg-primary-soft px-1.5 py-0.5 text-primary" title={destination.digest.timeZone}>
               {t.digestAt(`${String(destination.digest.hour).padStart(2, "0")}:00`)}
             </span>
+          )}
+          {destination.remind && (
+            <span className="rounded-md bg-muted px-1.5 py-0.5 text-muted-foreground">{t.remindEvery(destination.remind.afterHours)}</span>
           )}
           <span className="text-subtle-foreground">·</span>
           <span className="text-muted-foreground">{destination.tags.length ? t.tagged(destination.tags.join(", ")) : t.everyCheck}</span>
