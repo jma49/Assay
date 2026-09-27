@@ -172,7 +172,7 @@ export default function NewScriptPage() {
       } else {
         toast.success(c.saved);
       }
-      router.push("/manage-scripts");
+      router.push("/checks/manage");
     } catch (error) {
       toast.error(c.failed, {
         description: error instanceof Error ? error.message : String(error),
@@ -191,11 +191,11 @@ export default function NewScriptPage() {
         </header>
         <WindowToolbar>
           <Button asChild variant="outline" size="sm">
-            <Link href="/manage-scripts">‹ {c.breadcrumb}</Link>
+            <Link href="/checks/manage">‹ {c.breadcrumb}</Link>
           </Button>
           <p className="text-[13px] text-foreground/70 max-md:hidden">{c.lead}</p>
           <div className="ml-auto flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => router.push("/manage-scripts")} disabled={isSaving}>
+            <Button variant="outline" size="sm" onClick={() => router.push("/checks/manage")} disabled={isSaving}>
               {c.cancel}
             </Button>
             <Button size="sm" className="" onClick={handleSave} disabled={isSaving}>

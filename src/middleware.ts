@@ -37,11 +37,11 @@ const isPublicRoute = matcher([
 
 // Pages a demo guest can open; every API route still checks the guest itself.
 const isGuestRoute = matcher([
-  "/dashboard",
+  "/runs",
+  "/runs/(.*)",
   "/checks",
-  "/checks/(.*)",
-  "/manage-scripts",
-  "/view-execution-result/(.*)",
+  // A check's page and the manage list, but not /checks/new or edit history.
+  "/checks/(?!new$)[^/]+",
   "/data-analysis",
   "/coverage",
   "/activity",

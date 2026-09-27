@@ -24,9 +24,9 @@ import { FindingsPanel } from "@/components/business/run-report/FindingsPanel";
 import { RunInfoPanel } from "@/components/business/run-report/RunInfoPanel";
 import { RunTriageDialog } from "@/components/business/run-report/RunTriageDialog";
 
-export default function ViewExecutionResultPage() {
+export default function RunReportPage() {
   const params = useParams() || {};
-  const resultId = params.resultId as string | undefined;
+  const runId = params.runId as string | undefined;
   const { language } = useLanguage();
   const t = runReportMessages[language];
   const me = useMe();
@@ -34,12 +34,12 @@ export default function ViewExecutionResultPage() {
   // Demo viewers may run the sample checks too; the API has the final say.
   const canRunAgain = !!me && (me.permissions.includes("script:execute") || !!me.demo);
 
-  const { result, loading, error, retry } = useRunResult(resultId, t.missingResultId);
+  const { result, loading, error, retry } = useRunResult(runId, t.missingResultId);
   const actions = useRunActions(result, language);
 
   if (loading) return <RunReportSkeleton />;
   if (error) return <RunLoadError error={error} t={t} onRetry={retry} onBack={actions.goBack} />;
-  if (!result) return <RunNotFound resultId={resultId} t={t} onBack={actions.goBack} />;
+  if (!result) return <RunNotFound resultId={runId} t={t} onBack={actions.goBack} />;
 
   const rows = tableRows(result.findings);
   const outcome = outcomeOf(result);
