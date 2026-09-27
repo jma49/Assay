@@ -51,8 +51,8 @@
     "seed:demo": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/demo/seed-demo.ts"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.39.7",
-    "@clerk/themes": "^2.4.64",
+    "@better-auth/api-key": "^1.7.6",
+    "@better-auth/mcp": "^1.7.6",
     "@codemirror/lang-sql": "^6.8.0",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@radix-ui/react-alert-dialog": "^1.1.13",
@@ -81,6 +81,7 @@
     "@uiw/react-codemirror": "^4.23.12",
     "@upstash/redis": "^1.35.0",
     "ai": "^7.0.116",
+    "better-auth": "^1.7.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cron-parser": "^5.3.0",

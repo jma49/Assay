@@ -6,12 +6,10 @@ Copy `.env.example` to `.env.local` for local work, or add these to your host.
 
 | Variable | Purpose |
 |---|---|
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (public). |
-| `CLERK_SECRET_KEY` | Clerk secret key. |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | `/sign-in` |
-| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | `/sign-up` |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | `/dashboard` |
-| `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | `/dashboard` |
+| `BETTER_AUTH_SECRET` | Signs session cookies; 32+ random bytes. |
+| `BETTER_AUTH_URL` | Public URL of the app, e.g. `https://assay.example.com`. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth client; callback `/api/auth/callback/google`. |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth app; callback `/api/auth/callback/github`. |
 | `MONGODB_URI` | MongoDB connection string. The database name defaults to `sql_script_monitoring`. |
 | `DATABASE_URL` | The PostgreSQL database checks run against. |
 | `UPSTASH_REDIS_REST_URL` | Upstash Redis REST URL. |

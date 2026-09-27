@@ -1,21 +1,6 @@
-import { auth, clerkClient, type User } from "@clerk/nextjs/server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { GUEST_COOKIE, guestIdFromToken } from "@/lib/auth/guest";
-import { TtlCache } from "@/lib/cache/ttl-cache";
-
-// Fetching the Clerk profile is an HTTP call (~120ms) made on every API
-// request just to read the email. The session itself is still verified by
-// auth() each time; only the profile is reused for a few minutes.
-const userProfileCache = new TtlCache<User>(5 * 60_000);
-
-export async function getUserProfile(userId: string): Promise<User | null> {
-  const cached = userProfileCache.get(userId);
-  if (cached) return cached;
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId).catch(() => null);
-  if (user) userProfileCache.set(userId, user);
-  return user;
-}
+import { emailAllowed } from "@/lib/auth/legacy-accounts";
 import { NextResponse } from "next/server";
 import {
   getUserRole,
@@ -49,27 +34,14 @@ export const authMessages = {
   },
 };
 
-/**
- * 验证邮箱域名是否为允许的域名
- */
-export function isValidEmailDomain(email: string): boolean {
-  // 配置允许的域名列表，如果未配置则允许所有邮箱
-  const allowedDomains = process.env.ALLOWED_EMAIL_DOMAINS?.split(",") || [];
+/** Whether the email may use this workspace, per ALLOWED_EMAIL_DOMAINS. */
+export const isValidEmailDomain = (email: string) => emailAllowed(email);
 
-  // 如果没有配置允许的域名，则允许所有（依赖 Clerk 邀请制控制）
-  if (allowedDomains.length === 0) {
-    return true;
-  }
-
-  // 检查邮箱是否属于允许的域名
-  return allowedDomains.some((domain) => email.endsWith(`@${domain.trim()}`));
+/** The caller of an API route: a signed-in user, or a demo guest. */
+export interface AuthUser {
+  id: string;
+  fullName: string | null;
 }
-
-/**
- * 验证API请求的用户认证和邮箱域名
- */
-/** The caller of an API route: a Clerk user, or a demo guest. */
-export type AuthUser = Pick<User, "id" | "fullName">;
 
 /** Only these read permissions are open to demo guests. */
 export const GUEST_PERMISSIONS: readonly Permission[] = [Permission.SCRIPT_READ, Permission.HISTORY_READ];
@@ -89,10 +61,13 @@ export async function validateApiAuth(
   options: { allowGuest?: boolean } = {},
 ) {
   try {
-    const { userId } = await auth();
+    // Loaded on first use: the module opens a MongoDB client, which modules
+    // that only import helpers from here (and their tests) should not do.
+    const { auth } = await import("@/lib/auth/server");
+    const session = await auth.api.getSession({ headers: await headers() });
     const messages = authMessages[language];
 
-    if (!userId && options.allowGuest) {
+    if (!session && options.allowGuest) {
       const guestId = await currentGuestId();
       if (guestId) {
         const user: AuthUser = { id: guestId, fullName: "Guest" };
@@ -100,8 +75,7 @@ export async function validateApiAuth(
       }
     }
 
-    // 检查用户是否已认证
-    if (!userId) {
+    if (!session) {
       return {
         isValid: false,
         response: NextResponse.json(
@@ -111,20 +85,8 @@ export async function validateApiAuth(
       } as const;
     }
 
-    const user = await getUserProfile(userId);
-
-    if (!user) {
-      return {
-        isValid: false,
-        response: NextResponse.json(
-          { success: false, message: messages.unauthorizedUserNotFound },
-          { status: 401 }
-        ),
-      } as const;
-    }
-
-    // 获取用户邮箱
-    const userEmail = user.emailAddresses?.[0]?.emailAddress;
+    const user: AuthUser = { id: session.user.id, fullName: session.user.name || null };
+    const userEmail = session.user.email;
 
     if (!userEmail) {
       return {
@@ -162,7 +124,7 @@ export async function validateApiAuth(
 
     return {
       isValid: true,
-      user: user as AuthUser,
+      user,
       userEmail,
       isGuest: false,
     } as const;

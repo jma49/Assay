@@ -4,7 +4,7 @@ import "./landing.css";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
-import { ClerkLoading, SignedIn, SignedOut } from "@clerk/nextjs";
+import { useCurrentUser } from "@/lib/auth/client";
 import { CalendarClock, Check, GitPullRequest, Moon, ShieldCheck, Sparkles, Sun } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { BRAND, GITHUB_URL, QUICK_START, landingCopy, type Language } from "./content";
@@ -49,6 +49,7 @@ function ThemeToggle() {
 
 function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void }) {
   const t = landingCopy[lang].nav;
+  const session = useCurrentUser();
   return (
     <header className="sticky top-0 z-20 border-b bg-card/90 backdrop-blur">
       <nav className={`${CONTAINER} flex h-14 items-center justify-between`}>
@@ -71,20 +72,18 @@ function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void
             {lang === "en" ? "中文" : "EN"}
           </button>
           <ThemeToggle />
-          {/* Holds the button's width while Clerk loads so the nav does not shift. */}
-          <ClerkLoading>
+          {/* Holds the button's width while the session loads so the nav does not shift. */}
+          {!session.isLoaded ? (
             <span className="ml-1 inline-block h-8 w-[118px]" aria-hidden />
-          </ClerkLoading>
-          <SignedOut>
-            <Link href="/sign-in?redirect_url=/checks" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
-              {t.signIn}
-            </Link>
-          </SignedOut>
-          <SignedIn>
+          ) : session.user ? (
             <Link href="/checks" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
               {t.openApp}
             </Link>
-          </SignedIn>
+          ) : (
+            <Link href="/sign-in?redirect_url=/checks" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
+              {t.signIn}
+            </Link>
+          )}
         </div>
       </nav>
     </header>
@@ -251,6 +250,7 @@ function FeatureSection({ lang, index }: { lang: Language; index: number }) {
 export default function LandingPage({ demo = false }: { demo?: boolean }) {
   const { language, setLanguage } = useLanguage();
   const t = landingCopy[language];
+  const session = useCurrentUser();
 
   return (
     <div className="landing min-h-screen">
@@ -277,9 +277,9 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
                   {t.hero.secondary}
                 </a>
               </div>
-              <SignedOut>
+              {session.isLoaded && !session.user && (
                 <p className="mt-4 text-[13px] text-(--l-muted)">{demo ? t.hero.guestNote : t.hero.demoNote}</p>
-              </SignedOut>
+              )}
             </div>
             <div className="mt-14 sm:mt-16">
               <ProductPreview lang={language} />
@@ -371,12 +371,11 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
           </span>
           <span className="flex gap-6">
             <a href={GITHUB_URL} className="hover:text-foreground">GitHub</a>
-            <SignedOut>
-              <Link href="/sign-in?redirect_url=/checks" className="hover:text-(--l-fg)">{t.nav.signIn}</Link>
-            </SignedOut>
-            <SignedIn>
+            {session.user ? (
               <Link href="/checks" className="hover:text-(--l-fg)">{t.nav.openApp}</Link>
-            </SignedIn>
+            ) : (
+              <Link href="/sign-in?redirect_url=/checks" className="hover:text-(--l-fg)">{t.nav.signIn}</Link>
+            )}
           </span>
         </div>
       </footer>

@@ -16,7 +16,7 @@ describe("guestIdFromToken", () => {
     }
   });
 
-  it("never collides with Clerk user ids", () => {
+  it("never collides with user ids", () => {
     expect(isGuestId(guestIdFromToken(newGuestToken(), demo)!)).toBe(true);
     expect(isGuestId("user_2abc")).toBe(false);
   });
