@@ -6,6 +6,7 @@ import { clearScriptsCache } from "@/lib/cache/cache-utils";
 import { authorizeApiRequest, validateApiAuth } from "@/lib/auth/auth-utils";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
+import { authorProblem, ownsCheck } from "@/lib/workflows/check-fields";
 import { createScriptVersion } from "@/lib/workflows/version-control";
 import {
   createApprovalRequest,
@@ -183,10 +184,13 @@ export async function PUT(
     }
 
     // 检查是否是修改别人的脚本
-    const currentUserEmail = userEmail.split("@")[0]; // 提取用户名部分
     const scriptAuthor = existingScript.author;
-    const isModifyingOthersScript =
-      scriptAuthor && scriptAuthor !== currentUserEmail;
+    const isModifyingOthersScript = !ownsCheck(existingScript, { id: user.id, email: userEmail });
+
+    const badAuthor = authorProblem(author);
+    if (badAuthor) {
+      return NextResponse.json({ message: badAuthor }, { status: 400 });
+    }
 
     // 如果修改别人的脚本，需要提交审批申请
     if (isModifyingOthersScript) {
@@ -297,6 +301,7 @@ export async function PUT(
     }
 
     updateData.updatedAt = new Date(); // Always update the timestamp
+    (updateData as Record<string, unknown>).updatedBy = { id: user.id, email: userEmail };
 
     const result = await collection.updateOne(
       { scriptId }, // Filter by scriptId

@@ -112,3 +112,7 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 - [ ] 用 Claude Code 连接（`claude mcp add --transport http assay https://<域名>/api/mcp --header "Authorization: Bearer ..."`），`/mcp` 里显示 assay 已连接，能列出检查。
 - [ ] 查看者的密钥只看到 4 个只读工具；开发者以上能执行检查、确认处理、静音。
 - [ ] 吊销密钥后，代理立即得到 401。
+
+## 审计修复（#53 起）
+
+- [ ] 生产库执行 `DOTENV_CONFIG_PATH=<生产环境变量文件> npx tsx -r dotenv/config scripts/migrations/mark-demo-seed.ts`，确认列表后加 `--apply`。之后演示访客仍能执行示例检查（现在依据 `demoSeed` 标记，而不是作者名）。
