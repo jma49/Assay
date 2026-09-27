@@ -118,7 +118,7 @@ export class ErrorBoundary extends Component<Props, State> {
    * 回到首页
    */
   private handleGoHome = () => {
-    window.location.href = '/dashboard';
+    window.location.href = '/checks';
   };
 
   /**

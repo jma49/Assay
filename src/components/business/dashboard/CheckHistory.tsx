@@ -336,7 +336,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                         title={check.script_name}
                       >
                         <Link
-                          href={`/manage-scripts?scriptId=${encodeURIComponent(check.script_name)}`}
+                          href={`/checks/${encodeURIComponent(check.script_name)}`}
                           className="block truncate underline-offset-4 hover:underline"
                         >
                           {displayNames.get(check.script_name) ?? check.script_name}

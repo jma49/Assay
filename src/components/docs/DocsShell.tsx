@@ -199,7 +199,7 @@ export function DocsShell({ index, children }: { index: DocsSearchEntry[]; child
               {mounted && resolvedTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </button>
             <Link
-              href="/manage-scripts"
+              href="/checks"
               className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground shadow-xs hover:brightness-110 transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]"
             >
               {t.openApp}

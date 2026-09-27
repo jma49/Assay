@@ -18,7 +18,7 @@ export function CoverageView() {
           scripts={[]}
           searchTerm=""
           language={language}
-          onOpenCheck={(scriptId) => router.push(`/manage-scripts?scriptId=${encodeURIComponent(scriptId)}`)}
+          onOpenCheck={(scriptId) => router.push(`/checks/${encodeURIComponent(scriptId)}`)}
         />
       </div>
     </div>
