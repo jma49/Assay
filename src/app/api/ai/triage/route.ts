@@ -1,7 +1,7 @@
 import { toLegacyStatus } from "@/domain/run";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
-import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { withAuth } from "@/server/http/route";
 import { Permission } from "@/lib/auth/rbac";
 import { guardAiRequest } from "@/lib/security/ai-guard";
 import { getMongoDbClient } from "@/lib/database/mongodb";
@@ -18,12 +18,7 @@ import { COLLECTIONS } from "@/lib/database/collections";
  * prompt cannot be filled with arbitrary text. Each run is triaged once per
  * language and the answer is stored on the run.
  */
-export async function POST(request: NextRequest) {
-  const authResult = await authorizeApiRequest(Permission.HISTORY_READ);
-  if (!authResult.isValid) {
-    return authResult.response;
-  }
-
+export const POST = withAuth(Permission.HISTORY_READ, async (request, { principal }) => {
   const body = await request.json().catch(() => ({}));
   const resultId = typeof body.resultId === "string" ? body.resultId : "";
   const language: "en" | "zh" = body.language === "zh" ? "zh" : "en";
@@ -48,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Guests may read saved triage but never start a model call.
-    if (authResult.isGuest) {
+    if (principal.isGuest) {
       return NextResponse.json({ error: "Sign up to run AI triage" }, { status: 403 });
     }
 
@@ -59,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     const message = typeof run.message === "string" ? run.message : "";
-    const refused = await guardAiRequest(authResult.user.id, { errorMessage: message });
+    const refused = await guardAiRequest(principal.id, { errorMessage: message });
     if (refused) {
       return refused;
     }
@@ -77,7 +72,7 @@ export async function POST(request: NextRequest) {
         schema: await getCachedSchema(),
         language,
       },
-      { userId: authResult.user.id },
+      { userId: principal.id },
     );
 
     await results.updateOne(
@@ -89,4 +84,4 @@ export async function POST(request: NextRequest) {
     console.error("[AI Triage] error:", error);
     return NextResponse.json({ error: getAIErrorMessage(error) }, { status: 500 });
   }
-}
+});

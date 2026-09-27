@@ -193,28 +193,22 @@ queue can replace the inline runner later without changing services.
 These are the target conventions. The routes built on `server/` follow them;
 the legacy routes are still being migrated and keep their own shapes.
 
-- **Auth.** Target: every route declares its permission through `withAuth`
-  (`src/server/http/route.ts`); guests are opt-in per route. Today there are
-  three styles:
-  - `withAuth`: `activity`, `batch-execution-status`, `checks`,
-    `checks/[scriptId]`, `checks/[scriptId]/alerting`, `coverage`,
-    `members`, `notifications/destinations` (and `[id]`, `[id]/test`),
-    `integrations/[provider]/install` and `callback`,
-    `integrations/telegram/links` (and `[id]`), `run-all-scripts`.
-  - `authorizeApiRequest` (legacy): `ai/analyze-sql`, `ai/generate-sql`,
-    `ai/triage`, `check-history`, `check-history/stats`, `edit-history`,
-    `execution-details/[resultId]`, `execution-history`, `list-scripts`,
-    and the GET of `scripts`.
-  - `validateApiAuth` + `requirePermission` (legacy): `approvals`, `me`,
-    `run-check`, `scripts` (writes), `scripts/[scriptId]` (PUT, DELETE),
-    `users/roles`.
-  - Their own check: `auth/[...all]` (Better Auth), `mcp` (API key),
-    `notifications/dispatch` (`CRON_SECRET`), the Slack and Telegram
-    callbacks (signatures).
+- **Auth.** Every route declares who may call it through `withAuth`
+  (`src/server/http/route.ts`): a permission, `{ anyOf: [...] }` (e.g.
+  `approvals`, the GET of `users/roles`), or `{ signedIn: true }` for any
+  signed-in user (`me`, `run-check`, which checks `script:execute` itself
+  because demo mode widens it). Guests are opt-in: a permission lets them in
+  only when it is in `GUEST_PERMISSIONS` (`script:read`, `history:read`),
+  `signedIn` only with `allowGuest` (`me`, `run-check`). Refusals answer
+  `{ success: false, message }` with 401 or 403. Routes with their own
+  check: `auth/[...all]` (Better Auth), `mcp` (API key),
+  `notifications/dispatch` (`CRON_SECRET`), the Slack and Telegram callbacks
+  (signatures).
 - **Input.** Target: parsed with a zod schema at the edge (`parseJson`).
   Only the alerting and notifications contracts are zod today.
 - **Errors.** Target: `{ error: { code, message } }` with the matching HTTP
-  status (`errorResponse`). The `withAuth` routes use it; legacy routes
+  status (`errorResponse`). Errors thrown out of a handler get it; the
+  routes carried over from the first version still catch their own and
   answer `{ error: "..." }`, `{ message: "..." }` or
   `{ success: false, ... }`.
 - **Paging.** Target: cursor pagination, as `activity` does. `check-history`,

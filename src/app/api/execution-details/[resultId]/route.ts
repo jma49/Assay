@@ -1,22 +1,13 @@
 import { toLegacyStatus } from "@/domain/run";
-import { NextRequest, NextResponse } from "next/server";
-import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/server/http/route";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { ObjectId } from "mongodb";
 import { COLLECTIONS } from "@/lib/database/collections";
 
-export const GET = async (
-  request: NextRequest,
-  { params }: { params: Promise<{ resultId: string }> }
-) => {
-  const authResult = await authorizeApiRequest(Permission.HISTORY_READ);
-  if (!authResult.isValid) {
-    return authResult.response;
-  }
-
-  const awaitedParams = await params; // <--- await params
-  const resultId = awaitedParams.resultId;
+export const GET = withAuth<{ resultId: string }>(Permission.HISTORY_READ, async (_request, { params }) => {
+  const { resultId } = params;
 
   if (!resultId || !ObjectId.isValid(resultId)) {
     return NextResponse.json({ message: "无效的 Result ID" }, { status: 400 });
@@ -69,4 +60,4 @@ export const GET = async (
       { status: 500 }
     );
   }
-};
+});

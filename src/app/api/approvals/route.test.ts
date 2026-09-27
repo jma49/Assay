@@ -10,7 +10,8 @@ const mocks = vi.hoisted(() => ({
   scriptsInsert: vi.fn(async () => ({ insertedId: "mongo_1" })),
 }));
 
-vi.mock("@/lib/auth/auth-utils", () => ({
+vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth/auth-utils")>()),
   validateApiAuth: async () =>
     mocks.denied
       ? { isValid: false, response: mocks.denied }
@@ -42,7 +43,7 @@ vi.mock("@/lib/workflows/edit-history-store", () => ({ recordEditHistoryOnServer
 import { POST } from "./route";
 
 const decide = (body: unknown) =>
-  POST(new NextRequest("http://localhost/api/approvals", { method: "POST", body: JSON.stringify(body) }));
+  POST(new NextRequest("http://localhost/api/approvals", { method: "POST", body: JSON.stringify(body) }), { params: Promise.resolve({}) });
 
 const pendingCreate = {
   requestId: "req_1",

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 const mocks = vi.hoisted(() => ({
   denied: null as Response | null,
   permissions: [] as string[],
+  authorized: true,
   taggedChecks: [] as { scriptId: string; hashtags?: string[] }[],
   runs: [] as Record<string, unknown>[],
   total: 0,
@@ -15,10 +16,16 @@ const mocks = vi.hoisted(() => ({
   countDocuments: vi.fn(),
 }));
 
-vi.mock("@/lib/auth/auth-utils", () => ({
-  authorizeApiRequest: async (permission: string) => {
+vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth/auth-utils")>()),
+  validateApiAuth: async () =>
+    mocks.denied ? { isValid: false, response: mocks.denied } : { isValid: true, user: { id: "user_viewer", fullName: null }, userEmail: "v@example.com", isGuest: false },
+}));
+vi.mock("@/lib/auth/rbac", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth/rbac")>()),
+  requirePermission: async (_userId: string, permission: string) => {
     mocks.permissions.push(permission);
-    return mocks.denied ? { isValid: false, response: mocks.denied } : { isValid: true, user: { id: "user_viewer" }, userEmail: "v@example.com", isGuest: false };
+    return { authorized: mocks.authorized };
   },
 }));
 vi.mock("@/lib/database/mongodb", () => {
@@ -45,7 +52,7 @@ vi.mock("@/lib/database/mongodb", () => {
 
 import { GET } from "./route";
 
-const history = (query = "") => GET(new NextRequest(`http://localhost/api/check-history${query}`));
+const history = (query = "") => GET(new NextRequest(`http://localhost/api/check-history${query}`), { params: Promise.resolve({}) });
 
 const run = {
   _id: "run_1",
@@ -62,15 +69,22 @@ describe("GET /api/check-history", () => {
   beforeEach(() => {
     mocks.denied = null;
     mocks.permissions = [];
+    mocks.authorized = true;
     mocks.taggedChecks = [];
     mocks.runs = [run];
     mocks.total = 1;
     for (const fn of [mocks.checksFind, mocks.runsFind, mocks.sort, mocks.skip, mocks.limit, mocks.countDocuments]) fn.mockClear();
   });
 
-  it("needs history:read and returns the auth response when refused", async () => {
-    mocks.denied = NextResponse.json({ message: "forbidden" }, { status: 403 });
+  it("returns the auth response when the caller is not signed in", async () => {
+    mocks.denied = NextResponse.json({ message: "sign in" }, { status: 401 });
     expect(await history()).toBe(mocks.denied);
+    expect(mocks.runsFind).not.toHaveBeenCalled();
+  });
+
+  it("needs history:read", async () => {
+    mocks.authorized = false;
+    expect((await history()).status).toBe(403);
     expect(mocks.permissions).toEqual(["history:read"]);
     expect(mocks.runsFind).not.toHaveBeenCalled();
   });

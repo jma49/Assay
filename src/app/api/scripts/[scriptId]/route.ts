@@ -1,10 +1,10 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
-import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { withAuth } from "@/server/http/route";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
-import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
+import { Permission, getUserRole } from "@/lib/auth/rbac";
 import { authorProblem, ownsCheck, readVersion } from "@/lib/workflows/check-fields";
 import {
   createApprovalRequest,
@@ -49,30 +49,10 @@ const CONFLICT = () =>
   );
 
 // PUT (update) a script by scriptId
-export async function PUT(
-  request: NextRequest,
-  { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
-) {
+export const PUT = withAuth<{ scriptId: string }>(Permission.SCRIPT_UPDATE, async (request, { principal, params }) => {
   try {
-    const authResult = await validateApiAuth("zh");
-    if (!authResult.isValid) {
-      return authResult.response!;
-    }
+    const userEmail = principal.email;
 
-    const { user, userEmail } = authResult;
-
-    const permissionCheck = await requirePermission(
-      user.id,
-      Permission.SCRIPT_UPDATE
-    );
-    if (!permissionCheck.authorized) {
-      return NextResponse.json(
-        { success: false, message: "权限不足：无法更新脚本" },
-        { status: 403 }
-      );
-    }
-
-    const params = await paramsPromise; // Await the promise
     const { scriptId } = params;
     const body = await request.json();
     const {
@@ -149,7 +129,7 @@ export async function PUT(
 
     // Changing someone else's check needs approval unless you are an admin.
     const scriptAuthor = existingScript.author;
-    const isModifyingOthersScript = !ownsCheck(existingScript, { id: user.id, email: userEmail });
+    const isModifyingOthersScript = !ownsCheck(existingScript, { id: principal.id, email: userEmail });
 
     const badAuthor = authorProblem(author);
     if (badAuthor) {
@@ -157,7 +137,7 @@ export async function PUT(
     }
 
     if (isModifyingOthersScript) {
-      const userRole = await getUserRole(user.id);
+      const userRole = await getUserRole(principal.id);
       // Without a role we cannot tell whether approval is needed: refuse instead of applying directly.
       if (!userRole) {
         return NextResponse.json({ success: false, message: "无法获取用户角色信息" }, { status: 500 });
@@ -171,7 +151,7 @@ export async function PUT(
 
         const requestId = await createApprovalRequest(
           scriptId,
-          user.id,
+          principal.id,
           userEmail,
           userRole,
           sqlContent || "",
@@ -270,7 +250,7 @@ export async function PUT(
       scriptId,
       updateData,
       expectedVersion,
-      { id: user.id, email: userEmail },
+      { id: principal.id, email: userEmail },
       "脚本更新",
     );
     if (updated.kind === "conflict") return CONFLICT();
@@ -284,14 +264,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, message }, { status: 200 });
   } catch (error) {
-    // It's tricky to get paramsPromise reliably here if the above await failed.
-    // For logging, it might be better to extract it from the request URL if possible or log a generic message.
-    // However, if paramsPromise itself is the issue, this won't work.
-    // For now, we'll assume params.scriptId might not be available if the promise itself rejects.
-    console.error(
-      `Error updating script (ID might be unavailable if promise rejected):`,
-      error
-    );
+    console.error(`Error updating script '${params.scriptId}':`, error);
     if (error instanceof SyntaxError) {
       // JSON parsing error
       return NextResponse.json(
@@ -304,33 +277,13 @@ export async function PUT(
       { status: 500 }
     );
   }
-}
+});
 
 // DELETE a script by scriptId
-export async function DELETE(
-  request: NextRequest,
-  { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
-) {
+export const DELETE = withAuth<{ scriptId: string }>(Permission.SCRIPT_DELETE, async (request, { principal, params }) => {
   try {
-    const authResult = await validateApiAuth("zh");
-    if (!authResult.isValid) {
-      return authResult.response!;
-    }
+    const userEmail = principal.email;
 
-    const { user, userEmail } = authResult;
-
-    const permissionCheck = await requirePermission(
-      user.id,
-      Permission.SCRIPT_DELETE
-    );
-    if (!permissionCheck.authorized) {
-      return NextResponse.json(
-        { success: false, message: "权限不足：无法删除脚本" },
-        { status: 403 }
-      );
-    }
-
-    const params = await paramsPromise;
     const { scriptId } = params;
 
     if (!scriptId) {
@@ -351,7 +304,7 @@ export async function DELETE(
     }
 
     // Deleting any check needs approval unless you are an admin.
-    const userRole = await getUserRole(user.id);
+    const userRole = await getUserRole(principal.id);
     // Without a role we cannot tell whether approval is needed: refuse instead of deleting directly.
     if (!userRole) {
       return NextResponse.json({ success: false, message: "无法获取用户角色信息" }, { status: 500 });
@@ -365,7 +318,7 @@ export async function DELETE(
 
       const requestId = await createApprovalRequest(
         scriptId,
-        user.id,
+        principal.id,
         userEmail,
         userRole,
         existingScript.sqlContent || "SELECT 1",
@@ -402,7 +355,7 @@ export async function DELETE(
       }
     }
 
-    if (!(await deleteCheck(await getMongoDbClient().getDb(), scriptId, { id: user.id, email: userEmail }))) {
+    if (!(await deleteCheck(await getMongoDbClient().getDb(), scriptId, { id: principal.id, email: userEmail }))) {
       return NextResponse.json({ message: `Script with ID '${scriptId}' not found or already deleted` }, { status: 404 });
     }
 
@@ -424,4 +377,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
+});
