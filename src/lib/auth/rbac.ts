@@ -117,6 +117,29 @@ export async function getUserRole(userId: string): Promise<UserRole | null> {
   }
 }
 
+const DUPLICATE_KEY = 11000;
+
+/**
+ * Gives a signed-in user the default viewer role unless they hold an active
+ * one. It never replaces an active role, so a failed read (which looks like
+ * "no role") cannot demote an admin: the filter skips active documents and
+ * the unique userId index turns the upsert into a no-op.
+ */
+export async function ensureDefaultRole(userId: string, email: string): Promise<void> {
+  const collection = await getUserRolesCollection();
+  const now = new Date();
+  try {
+    await collection.updateOne(
+      { userId, isActive: { $ne: true } },
+      { $set: { userId, email, role: UserRole.VIEWER, assignedBy: "system", assignedAt: now, updatedAt: now, isActive: true } },
+      { upsert: true },
+    );
+    roleCache.delete(userId);
+  } catch (error) {
+    if ((error as { code?: number }).code !== DUPLICATE_KEY) throw error;
+  }
+}
+
 /** Gives someone a role, replacing any they had. */
 export async function setUserRole(
   userId: string,
