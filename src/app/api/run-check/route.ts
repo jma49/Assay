@@ -5,7 +5,7 @@ import redis from "@/lib/cache/redis";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { consumeQuota } from "@/lib/security/ai-guard";
 import { clientIp, demoRunBudgets, isDemoMode, runAccess } from "@/lib/security/demo-sandbox";
-import { executeScriptAndNotify } from "@/lib/utils/script-executor";
+import { runCheckNow, toExecutionResult } from "@/server/services/run-check-deps";
 
 const DEMO_WINDOW_SECONDS = 60 * 60;
 
@@ -81,9 +81,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`[API] 用户 ${userInfo.name} (${userInfo.email}) 手动执行脚本: ${scriptId}`);
-    const result = await executeScriptAndNotify(scriptId);
-    console.log(`[API] 脚本 ${scriptId} 执行完成，状态: ${result.success ? "成功" : "失败"}`);
+    const result = toExecutionResult(
+      await runCheckNow(scriptId, { kind: "manual", by: { id: user.id, name: userInfo.name } }),
+    );
+    if (result.alreadyRunning) {
+      return NextResponse.json(result, { status: 409 });
+    }
 
     return NextResponse.json({
       ...result,
@@ -94,7 +97,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error(`[API] 用户 ${userInfo.name} 执行脚本失败:`, error);
+    console.error(`[API] Running a check for ${userInfo.name} failed:`, error);
     return NextResponse.json(
       { success: false, message: "Failed to execute script" },
       { status: 500 },

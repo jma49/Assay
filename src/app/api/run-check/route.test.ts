@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
   quotaThrows: false,
   isGuest: false,
   quotaSubjects: [] as string[],
-  execute: vi.fn(async () => ({ success: true, statusType: "success" })),
+  execute: vi.fn(async (_scriptId: string) => ({ success: true, statusType: "success" }) as Record<string, unknown>),
 }));
 
 vi.mock("@/lib/auth/auth-utils", () => ({
@@ -42,7 +42,10 @@ vi.mock("@/lib/security/ai-guard", () => ({
     return { allowed: mocks.quotaAllowed, retryAfterSeconds: 60 };
   },
 }));
-vi.mock("@/lib/utils/script-executor", () => ({ executeScriptAndNotify: mocks.execute }));
+vi.mock("@/server/services/run-check-deps", () => ({
+  runCheckNow: (scriptId: string) => mocks.execute(scriptId),
+  toExecutionResult: (result: unknown) => result,
+}));
 
 import { POST } from "./route";
 
@@ -124,6 +127,12 @@ describe("POST /api/run-check", () => {
     mocks.scriptAuthor = "alice";
     expect((await run({ scriptId: "private-check" })).status).toBe(403);
     expect(mocks.execute).not.toHaveBeenCalled();
+  });
+
+  it("answers 409 while the check is already running", async () => {
+    mocks.canExecute = true;
+    mocks.execute.mockResolvedValueOnce({ success: false, statusType: "failure", alreadyRunning: true });
+    expect((await run({ scriptId: "x" })).status).toBe(409);
   });
 
   it("rejects a missing or non-string scriptId", async () => {

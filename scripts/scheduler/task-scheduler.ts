@@ -15,7 +15,7 @@
 import express from "express";
 import * as cron from "node-cron";
 import { getMongoDbClient } from "../../src/lib/database/mongodb";
-import { executeSqlScriptFromDb } from "../core/sql-executor";
+import { runCheckNow } from "@/server/services/run-check-deps";
 import { Collection, Document } from "mongodb";
 import { createApiTokenGuard } from "./api-auth";
 
@@ -344,18 +344,13 @@ class TaskScheduler {
         return;
       }
 
-      // 执行脚本
-      const result = await executeSqlScriptFromDb(
-        scriptId,
-        script.sqlContent,
-        script.hashtags,
-        script.author
-      );
-
-      if (result.success) {
-        console.log(`✅ 脚本执行成功: ${scriptId} - ${result.statusType}`);
+      const result = await runCheckNow(scriptId, { kind: "schedule" });
+      if (result.kind === "busy") {
+        console.log(`${scriptId} is already running; skipped.`);
+      } else if (result.kind === "completed" && result.outcome !== "error") {
+        console.log(`${scriptId}: ${result.outcome}, ${result.rowCount} rows`);
       } else {
-        console.log(`⚠️  脚本执行需要关注: ${scriptId} - ${result.message}`);
+        console.log(`${scriptId} failed: ${result.kind === "completed" ? result.message : "not found"}`);
         taskInfo.errorCount++;
       }
     } catch (error) {
