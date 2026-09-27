@@ -4,7 +4,7 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { SkeletonCardList } from "@/components/common/PageSkeletons";
 import { ApprovalCard } from "./ApprovalCard";
 import { ApprovalsPagination } from "./ApprovalsPagination";
-import type { ApprovalAction, ApprovalRequest, Translate } from "./approvals";
+import type { ApprovalAction, ApprovalRequest, Language, Translate } from "./approvals";
 import type { ApprovalPage } from "./useApprovals";
 
 interface ApprovalListProps {
@@ -12,7 +12,7 @@ interface ApprovalListProps {
   hasLoaded: boolean;
   emptyTitle: string;
   emptyHint: string;
-  language: "en" | "zh";
+  language: Language;
   t: Translate;
   actionLoading: string | null;
   onDecide: (approval: ApprovalRequest, action: ApprovalAction) => void;

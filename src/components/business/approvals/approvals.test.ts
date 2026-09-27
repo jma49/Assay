@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApprovalStatus } from "@/lib/types/approval";
-import { clampPage, formatPageInfo, isPageInputKeyAllowed, pageCount, pageSlice, parsePageInput, statusTone } from "./approvals";
+import { approvalMessages, clampPage, decisionToast, formatPageInfo, isPageInputKeyAllowed, pageCount, pageSlice, parsePageInput, statusTone } from "./approvals";
 
 describe("statusTone", () => {
   it("colours approved green, rejected red and everything else as needing attention", () => {
@@ -57,5 +57,19 @@ describe("pagination helpers", () => {
     expect(isPageInputKeyAllowed("ArrowLeft")).toBe(true);
     expect(isPageInputKeyAllowed("e")).toBe(false);
     expect(isPageInputKeyAllowed("-")).toBe(false);
+  });
+});
+
+describe("messages", () => {
+  it("confirms a decision in the reader's language", () => {
+    expect(decisionToast("approve", "Dup orders", "en")).toBe("Approved Dup orders");
+    expect(decisionToast("reject", "Dup orders", "en")).toBe("Rejected Dup orders");
+    expect(decisionToast("approve", "Dup orders", "zh")).toBe("脚本 Dup orders 已批准");
+    expect(decisionToast("reject", "Dup orders", "zh")).toBe("脚本 Dup orders 已拒绝");
+  });
+
+  it("keeps English error text free of Chinese", () => {
+    const { forbidden, decisionFailed } = approvalMessages("en");
+    expect(`${forbidden}${decisionFailed}`).not.toMatch(/[\u4e00-\u9fff]/);
   });
 });

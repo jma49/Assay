@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import type { ApprovalAction, ApprovalRequest, Translate } from "./approvals";
+import type { ApprovalAction, ApprovalRequest, Language, Translate } from "./approvals";
 
 interface ApprovalDecisionDialogProps {
   open: boolean;
@@ -15,7 +15,7 @@ interface ApprovalDecisionDialogProps {
   onCommentChange: (comment: string) => void;
   submitting: boolean;
   onSubmit: () => void;
-  language: "en" | "zh";
+  language: Language;
   t: Translate;
 }
 

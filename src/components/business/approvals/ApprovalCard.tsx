@@ -9,12 +9,13 @@ import {
   statusTone,
   type ApprovalAction,
   type ApprovalRequest,
+  type Language,
   type Translate,
 } from "./approvals";
 
 interface ApprovalCardProps {
   approval: ApprovalRequest;
-  language: "en" | "zh";
+  language: Language;
   t: Translate;
   busy: boolean;
   onDecide: (approval: ApprovalRequest, action: ApprovalAction) => void;

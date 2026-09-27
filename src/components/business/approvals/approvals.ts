@@ -3,6 +3,7 @@ import type { DashboardTranslationKeys } from "@/components/business/dashboard/t
 
 export type ApprovalRequest = ApprovalRequestDto;
 export type ApprovalAction = "approve" | "reject";
+export type Language = "en" | "zh";
 export type Translate = (key: DashboardTranslationKeys) => string;
 
 export const STATUS_LABEL_KEYS: Record<ApprovalStatus, DashboardTranslationKeys> = {
@@ -66,4 +67,28 @@ const PAGE_INPUT_EDIT_KEYS = ["ArrowLeft", "ArrowRight", "Delete", "Backspace", 
 /** Whether a key press may reach the numeric page-jump box. */
 export function isPageInputKeyAllowed(key: string): boolean {
   return /[\d\b]/.test(key) || PAGE_INPUT_EDIT_KEYS.includes(key);
+}
+
+const MESSAGES = {
+  en: {
+    forbidden: "Permission denied: you cannot view approval requests",
+    decisionFailed: "Could not record the decision",
+    approved: (scriptName: string) => `Approved ${scriptName}`,
+    rejected: (scriptName: string) => `Rejected ${scriptName}`,
+  },
+  zh: {
+    forbidden: "权限不足：无法查看审批列表",
+    decisionFailed: "审批操作失败",
+    approved: (scriptName: string) => `脚本 ${scriptName} 已批准`,
+    rejected: (scriptName: string) => `脚本 ${scriptName} 已拒绝`,
+  },
+};
+
+export function approvalMessages(language: Language) {
+  return MESSAGES[language] ?? MESSAGES.en;
+}
+
+export function decisionToast(action: ApprovalAction, scriptName: string, language: Language): string {
+  const messages = approvalMessages(language);
+  return action === "approve" ? messages.approved(scriptName) : messages.rejected(scriptName);
 }
