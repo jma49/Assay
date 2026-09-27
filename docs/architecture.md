@@ -77,7 +77,7 @@ migration; new fields are added alongside old ones and back-filled.
 { checkId, trigger: schedule | manual | batch | api, triggeredBy,
   startedAt, finishedAt, durationMs,
   status: error | issues | clean, rowCount,
-  sample: first 200 rows, columns,
+  sample: first 500 rows, columns,
   rowKeys: fingerprints of up to 5,000 rows,  // for new / still / fixed
   error, aiTriage }
 ```
@@ -175,9 +175,12 @@ queue can replace the inline runner later without changing services.
 
 1. **Design system and shell.** Tokens from the prototype, sidebar layout,
    new routes with redirects. Existing features keep working inside it.
+   *Done (PRs #34, #35).*
 2. **Server foundation.** `server/` layout, `withAuth`, contracts, the
    `DataSource` interface; move the executor into `runCheck` with the
    lease, row cap and fingerprints; migrate runs and back-fill check state.
+   *In progress: domain rules, `withAuth` and the statement splitter (#36);
+   `runCheck`, `runChecks` and the MongoDB store; back-fill and batches next.*
 3. **Checks list and detail on real state.** Status groups, 30-run history,
    new / still / fixed diffs.
 4. **Events and notifications.** Activity feed, Slack notifier, outbox
