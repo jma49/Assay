@@ -29,12 +29,12 @@ Assay 本身不常驻一个时钟，需要有东西去启动定时执行器。�
 DOTENV_CONFIG_PATH=.env.local npx tsx -r dotenv/config scripts/run-all-scripts.ts scheduled --dry-run
 ```
 
-### 一台常驻的小服务器
+### 自己的服务器
 
-运行独立的定时器，它会从 MongoDB 读取每个检查的时间表，并按各自的时间执行：
+用系统 cron 每 5 分钟调用同一个命令即可。无论调用多频繁，每个定时检查在每个时间槽只执行一次：
 
-```bash
-npm run scheduler
+```cron
+*/5 * * * * cd /srv/assay && npm run sql:run-scheduled >> /var/log/assay-checks.log 2>&1
 ```
 
 ## 手动执行定时检查

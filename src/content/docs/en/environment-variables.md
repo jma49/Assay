@@ -28,7 +28,6 @@ Copy `.env.example` to `.env.local` for local work, or add these to your host.
 | `CHECK_CONCURRENCY` | How many checks one server instance runs at the same time. Default 4. |
 | `ALLOWED_EMAIL_DOMAINS` | Comma-separated email domains allowed to sign in. Empty allows everyone. |
 | `CA_CERT_BLOB_URL` | CA certificate URL when PostgreSQL requires one for SSL. |
-| `SCHEDULER_API_TOKEN` | Token for the standalone scheduler's management API. |
 
 > Only variables starting with `NEXT_PUBLIC_` reach the browser. Never give a secret that prefix.
 

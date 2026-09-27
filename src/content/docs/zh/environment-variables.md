@@ -28,7 +28,6 @@
 | `CHECK_CONCURRENCY` | 每个服务器实例同时执行的检查数量。默认 4。 |
 | `ALLOWED_EMAIL_DOMAINS` | 允许登录的邮箱域名，用逗号分隔。留空表示允许所有人。 |
 | `CA_CERT_BLOB_URL` | PostgreSQL 的 SSL 需要 CA 证书时，填证书地址。 |
-| `SCHEDULER_API_TOKEN` | 独立定时器管理接口的令牌。 |
 
 > 只有以 `NEXT_PUBLIC_` 开头的变量会被发送到浏览器。千万不要给私密值加这个前缀。
 
