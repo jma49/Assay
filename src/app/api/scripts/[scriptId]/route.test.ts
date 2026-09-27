@@ -96,13 +96,29 @@ describe("PUT /api/scripts/[scriptId]", () => {
   });
 
   it("treats version 0 as a check saved before versions existed", async () => {
+    mocks.existing = { ...ownCheck, version: undefined };
     await update({ name: "Renamed", version: 0 });
     expect(lastUpdate()[0]).toEqual({ scriptId: "orders-check", $or: [{ version: { $exists: false } }, { version: 0 }] });
   });
 
+  it("requires the version the edit started from", async () => {
+    const res = await update({ name: "Renamed" });
+    expect(res.status).toBe(428);
+    expect((await res.json()).code).toBe("version_required");
+    expect(mocks.updateOne).not.toHaveBeenCalled();
+  });
+
+  it("refuses a stale version before writing or asking for approval", async () => {
+    mocks.existing = othersCheck;
+    const res = await update({ name: "Renamed", version: 2 });
+    expect(res.status).toBe(409);
+    expect(mocks.updateOne).not.toHaveBeenCalled();
+    expect(mocks.createApprovalRequest).not.toHaveBeenCalled();
+  });
+
   it("answers 409 conflict when someone saved in between", async () => {
     mocks.matchedCount = 0;
-    const res = await update({ name: "Renamed", version: 2 });
+    const res = await update({ name: "Renamed", version: 3 });
     expect(res.status).toBe(409);
     expect((await res.json()).code).toBe("conflict");
   });
@@ -110,12 +126,13 @@ describe("PUT /api/scripts/[scriptId]", () => {
   it("answers 404, not a conflict, when the check vanished meanwhile", async () => {
     mocks.matchedCount = 0;
     mocks.stillExists = 0;
-    expect((await update({ name: "Renamed", version: 2 })).status).toBe(404);
+    expect((await update({ name: "Renamed", version: 3 })).status).toBe(404);
   });
 
   it("ignores server-owned fields", async () => {
     await update({
       name: "Renamed",
+      version: 3,
       demoSeed: true,
       createdBy: { id: "user_mallory" },
       updatedBy: { id: "user_mallory" },
@@ -128,17 +145,17 @@ describe("PUT /api/scripts/[scriptId]", () => {
   });
 
   it("refuses a body with only server-owned fields", async () => {
-    expect((await update({ demoSeed: true, createdBy: { id: "user_mallory" } })).status).toBe(400);
+    expect((await update({ version: 3, demoSeed: true, createdBy: { id: "user_mallory" } })).status).toBe(400);
     expect(mocks.updateOne).not.toHaveBeenCalled();
   });
 
   it("refuses the reserved demo author", async () => {
-    expect((await update({ author: "demo-seed" })).status).toBe(400);
+    expect((await update({ version: 3, author: "demo-seed" })).status).toBe(400);
     expect(mocks.updateOne).not.toHaveBeenCalled();
   });
 
   it("refuses SQL that is not read-only", async () => {
-    expect((await update({ sqlContent: "DROP TABLE orders" })).status).toBe(403);
+    expect((await update({ version: 3, sqlContent: "DROP TABLE orders" })).status).toBe(403);
     expect(mocks.updateOne).not.toHaveBeenCalled();
   });
 

@@ -154,8 +154,11 @@ MongoDB, so any instance can report it.
 
 - **One run per check at a time:** the lease above. Leases expire, so a
   crashed instance never blocks a check for long.
-- **No lost updates on edits:** saving a check sends the `version` it was
-  based on; a stale version gets `409 Conflict` and the UI offers to reload.
+- **No lost updates on edits:** saving a check must send the `version` it was
+  based on (`428` without one); a stale version gets `409 Conflict` before
+  anything is written or sent for approval, and the UI offers to reload.
+  Because only one save per version succeeds, version records
+  (`script_versions`) are created one at a time too.
 - **Idempotent side effects:** events are unique per run, and deliveries
   record what was sent, so retries never notify twice.
 - **Bounded work per instance:** a semaphore around query execution, and
