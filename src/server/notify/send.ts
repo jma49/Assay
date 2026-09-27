@@ -1,4 +1,5 @@
 import type { Channel, DeliveryOutcome, OutgoingRequest } from "./types";
+import { pinnedFetch } from "./pinned-fetch";
 import { assertPublicHost, dnsResolver, type Resolver } from "./safe-url";
 
 const TIMEOUT_MS = 10_000;
@@ -9,7 +10,7 @@ export interface SendDeps {
   resolve: Resolver;
 }
 
-export const defaultSendDeps: SendDeps = { fetch: (...args) => fetch(...args), resolve: dnsResolver };
+export const defaultSendDeps: SendDeps = { fetch: pinnedFetch, resolve: dnsResolver };
 
 function retryAfterMs(header: string | null): number | undefined {
   if (!header) return undefined;
@@ -52,7 +53,9 @@ export async function sendRequest(channel: Channel, request: OutgoingRequest, de
     return { kind: "failed", error };
   } catch (error) {
     const message = describeError(error, request);
-    if (message === "Webhook host is not public") return { kind: "failed", error: message };
+    if (message === "Webhook host is not public" || (error as { cause?: { code?: string } })?.cause?.code === "ENOTPUBLIC") {
+      return { kind: "failed", error: "Webhook host is not public" };
+    }
     return { kind: "retry", error: message };
   }
 }
