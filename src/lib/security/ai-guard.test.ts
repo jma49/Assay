@@ -57,6 +57,13 @@ describe("consumeQuota", () => {
     expect((await consumeQuota(store, "user_1", nextHour, 1)).allowed).toBe(true);
   });
 
+  it("keeps separate budgets per scope", async () => {
+    const store = memoryStore();
+    await consumeQuota(store, "user_1", now, 1, 3600, "ai");
+    expect((await consumeQuota(store, "user_1", now, 1, 3600, "demo-run")).allowed).toBe(true);
+    expect((await consumeQuota(store, "user_1", now, 1, 3600, "ai")).allowed).toBe(false);
+  });
+
   it("reports the seconds until the window resets", async () => {
     const { retryAfterSeconds } = await consumeQuota(memoryStore(), "user_1", now);
     expect(retryAfterSeconds).toBe(45 * 60);

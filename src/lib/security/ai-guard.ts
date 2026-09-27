@@ -30,16 +30,20 @@ export interface CounterStore {
   expire(key: string, seconds: number): Promise<unknown>;
 }
 
-/** Fixed-window counter: counts this request and says whether it is within the limit. */
+/**
+ * Fixed-window counter: counts this request and says whether it is within
+ * the limit. `scope` keeps separate budgets (AI requests, demo runs) apart.
+ */
 export async function consumeQuota(
   store: CounterStore,
   userId: string,
   now: number,
   limit = AI_REQUESTS_PER_HOUR,
   windowSeconds = WINDOW_SECONDS,
+  scope = "ai",
 ): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
   const windowStart = Math.floor(now / 1000 / windowSeconds) * windowSeconds;
-  const key = `ratelimit:ai:${userId}:${windowStart}`;
+  const key = `ratelimit:${scope}:${userId}:${windowStart}`;
   const count = await store.incr(key);
   if (count === 1) await store.expire(key, windowSeconds);
   const retryAfterSeconds = windowStart + windowSeconds - Math.floor(now / 1000);
