@@ -6,7 +6,7 @@ import { clearScriptsCache } from "@/lib/cache/cache-utils";
 import { authorizeApiRequest, validateApiAuth } from "@/lib/auth/auth-utils";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
-import { authorProblem, ownsCheck } from "@/lib/workflows/check-fields";
+import { authorProblem, ownsCheck, readVersion, versionFilter } from "@/lib/workflows/check-fields";
 import { createScriptVersion } from "@/lib/workflows/version-control";
 import {
   createApprovalRequest,
@@ -239,6 +239,8 @@ export async function PUT(
               cronSchedule !== undefined
                 ? cronSchedule
                 : existingScript.cronSchedule,
+            // The version this change was made against; applying it later onto a newer one is refused.
+            baseVersion: existingScript.version ?? 0,
           }
         );
 
@@ -303,27 +305,23 @@ export async function PUT(
     updateData.updatedAt = new Date(); // Always update the timestamp
     (updateData as Record<string, unknown>).updatedBy = { id: user.id, email: userEmail };
 
+    // Only onto the version the editor started from, if it said which.
+    const expectedVersion = readVersion((body as { version?: unknown }).version);
     const result = await collection.updateOne(
-      { scriptId }, // Filter by scriptId
-      { $set: updateData } // Update specified fields
+      { scriptId, ...versionFilter(expectedVersion) },
+      { $set: updateData, $inc: { version: 1 } }
     );
 
     if (result.matchedCount === 0) {
+      if (expectedVersion !== undefined && (await collection.countDocuments({ scriptId }, { limit: 1 }))) {
+        return NextResponse.json(
+          { code: "conflict", message: "Someone else changed this check while you were editing it. Reload to see their changes." },
+          { status: 409 }
+        );
+      }
       return NextResponse.json(
         { message: `Script with ID '${scriptId}' not found` },
         { status: 404 }
-      );
-    }
-
-    if (result.modifiedCount === 0 && result.matchedCount === 1) {
-      // This can happen if the submitted data is identical to the existing data
-      return NextResponse.json(
-        {
-          message:
-            "Script data is identical to the existing data, no update performed.",
-          scriptId,
-        },
-        { status: 200 }
       );
     }
 
