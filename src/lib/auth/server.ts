@@ -6,7 +6,9 @@ import { lastLoginMethod } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { ObjectId } from "mongodb";
 import { mongoDatabaseName, sharedMongoClient } from "@/lib/database/mongo-connection";
+import redis from "@/lib/cache/redis";
 import { claimLegacyRole, emailAllowed } from "./legacy-accounts";
+import { redisRateLimitStorage, upstashCounterStore } from "./rate-limit-storage";
 import { enabledProviders } from "./providers";
 
 /**
@@ -65,6 +67,11 @@ export const auth = betterAuth({
     cookieCache: { enabled: true, maxAge: 5 * 60 },
   },
   telemetry: { enabled: false },
+  // Counts shared by every instance through Redis when it is configured;
+  // otherwise Better Auth's per-instance memory counts.
+  rateLimit: process.env.UPSTASH_REDIS_REST_URL
+    ? { enabled: process.env.NODE_ENV === "production", customStorage: redisRateLimitStorage(upstashCounterStore(redis)) }
+    : undefined,
   databaseHooks: {
     user: {
       create: {
