@@ -63,7 +63,7 @@ ${errorMessage}
 请用Markdown格式回复，使用中文，提供详细且实用的建议。如果错误信息不够明确，也请说明需要更多信息来进行准确诊断。`;
 
     // 调用AI服务分析错误，带重试机制
-    const analysis = await generateContentWithRetry(aiPrompt);
+    const analysis = await generateContentWithRetry(aiPrompt, { feature: "analyze-error", userId: authResult.user.id });
 
     return NextResponse.json({
       analysis,
