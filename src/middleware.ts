@@ -33,6 +33,8 @@ const isGuestRoute = createRouteMatcher([
   "/view-execution-result/(.*)",
   "/data-analysis",
   "/coverage",
+  "/activity",
+  "/settings/notifications",
   "/api/(.*)",
 ]);
 
