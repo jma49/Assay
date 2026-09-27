@@ -1,4 +1,6 @@
 import { auth, clerkClient, type User } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
+import { GUEST_COOKIE, guestIdFromToken } from "@/lib/auth/guest";
 import { TtlCache } from "@/lib/cache/ttl-cache";
 
 // Fetching the Clerk profile is an HTTP call (~120ms) made on every API
@@ -66,10 +68,36 @@ export function isValidEmailDomain(email: string): boolean {
 /**
  * 验证API请求的用户认证和邮箱域名
  */
-export async function validateApiAuth(language: "en" | "zh" = "en") {
+/** The caller of an API route: a Clerk user, or a demo guest. */
+export type AuthUser = Pick<User, "id" | "fullName">;
+
+/** Only these read permissions are open to demo guests. */
+export const GUEST_PERMISSIONS: readonly Permission[] = [Permission.SCRIPT_READ, Permission.HISTORY_READ];
+
+async function currentGuestId(): Promise<string | null> {
+  const store = await cookies();
+  return guestIdFromToken(store.get(GUEST_COOKIE)?.value);
+}
+
+/**
+ * 验证API请求的用户认证和邮箱域名
+ * Guests are refused unless the route opts in with allowGuest.
+ */
+export async function validateApiAuth(
+  language: "en" | "zh" = "en",
+  options: { allowGuest?: boolean } = {},
+) {
   try {
     const { userId } = await auth();
     const messages = authMessages[language];
+
+    if (!userId && options.allowGuest) {
+      const guestId = await currentGuestId();
+      if (guestId) {
+        const user: AuthUser = { id: guestId, fullName: "Guest" };
+        return { isValid: true, user, userEmail: "", isGuest: true } as const;
+      }
+    }
 
     // 检查用户是否已认证
     if (!userId) {
@@ -133,8 +161,9 @@ export async function validateApiAuth(language: "en" | "zh" = "en") {
 
     return {
       isValid: true,
-      user,
+      user: user as AuthUser,
       userEmail,
+      isGuest: false,
     } as const;
   } catch (error) {
     console.error("API auth validation error:", error);
@@ -153,8 +182,12 @@ export async function authorizeApiRequest(
   permission: Permission,
   language: "en" | "zh" = "zh"
 ) {
-  const authResult = await validateApiAuth(language);
+  const authResult = await validateApiAuth(language, { allowGuest: GUEST_PERMISSIONS.includes(permission) });
   if (!authResult.isValid) {
+    return authResult;
+  }
+  // A guest only got this far for a permission in GUEST_PERMISSIONS.
+  if (authResult.isGuest) {
     return authResult;
   }
 
@@ -175,11 +208,11 @@ export async function authorizeApiRequest(
 /**
  * 获取当前用户信息（用于日志记录）
  */
-export function getUserInfo(user: User, userEmail: string) {
+export function getUserInfo(user: AuthUser, userEmail: string) {
   return {
     userId: user.id,
     email: userEmail,
-    name: user.fullName || userEmail.split("@")[0],
+    name: user.fullName || userEmail.split("@")[0] || user.id,
     timestamp: new Date().toISOString(),
   };
 }

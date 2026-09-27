@@ -13,10 +13,12 @@ vi.mock("@clerk/nextjs/server", () => ({
     patterns.some((p) => new RegExp(`^${p}$`).test(req.nextUrl.pathname)),
 }));
 
-const run = (path: string) =>
+const run = (path: string, cookie?: string) =>
   (middleware as unknown as (req: NextRequest) => Promise<Response>)(
-    new NextRequest(`http://localhost${path}`)
+    new NextRequest(`http://localhost${path}`, cookie ? { headers: { cookie } } : undefined)
   );
+
+const GUEST = `assay_guest=${"a".repeat(32)}`;
 
 describe("middleware", () => {
   beforeEach(() => {
@@ -103,5 +105,31 @@ describe("middleware", () => {
     const res = await run("/manage-scripts");
 
     expect(res.headers.get("location")).toBeNull();
+  });
+
+  describe("demo guests", () => {
+    beforeEach(() => {
+      auth.mockResolvedValue({ userId: null });
+      process.env.DEMO_MODE = "true";
+    });
+
+    it("lets a guest open the read-only pages and the APIs", async () => {
+      for (const path of ["/dashboard", "/manage-scripts", "/view-execution-result/abc", "/api/list-scripts"]) {
+        expect((await run(path, GUEST)).headers.get("location"), path).toBeNull();
+      }
+    });
+
+    it("sends a guest to sign-up for pages that need an account", async () => {
+      for (const path of ["/admin/users", "/scripts/new", "/manage-scripts/approvals"]) {
+        expect(new URL((await run(path, GUEST)).headers.get("location")!).pathname, path).toBe("/sign-up");
+      }
+    });
+
+    it("ignores the guest cookie outside demo mode or when malformed", async () => {
+      delete process.env.DEMO_MODE;
+      expect(new URL((await run("/dashboard", GUEST)).headers.get("location")!).pathname).toBe("/sign-in");
+      process.env.DEMO_MODE = "true";
+      expect(new URL((await run("/dashboard", "assay_guest=nope")).headers.get("location")!).pathname).toBe("/sign-in");
+    });
   });
 });
