@@ -2,18 +2,14 @@ import { useEffect, useState } from "react";
 import type { ExecutionResult } from "./run-report";
 
 /** Loads one run from /api/execution-details; `retry` loads it again. */
-export function useRunResult(resultId: string | undefined) {
+export function useRunResult(resultId: string | undefined, missingIdMessage: string) {
   const [result, setResult] = useState<ExecutionResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    if (!resultId) {
-      setError("缺少结果ID参数");
-      setLoading(false);
-      return;
-    }
+    if (!resultId) return;
     fetch(`/api/execution-details/${resultId}`)
       .then(async (res) => {
         if (!res.ok) {
@@ -39,5 +35,6 @@ export function useRunResult(resultId: string | undefined) {
     setRetryCount((count) => count + 1);
   };
 
+  if (!resultId) return { result: null, loading: false, error: missingIdMessage, retry };
   return { result, loading, error, retry };
 }

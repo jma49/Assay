@@ -32,6 +32,14 @@ describe("runTone", () => {
   });
 });
 
+describe("not-found message", () => {
+  it("reads as one sentence in each language, with no Chinese in English", () => {
+    expect(runReportMessages.en.noResultFound("abc")).toBe("Could not find execution result with ID abc.");
+    expect(runReportMessages.zh.noResultFound("abc")).toBe("无法找到ID为 abc 的执行结果。");
+    expect(runReportMessages.en.missingResultId).toMatch(/^[\x20-\x7e]+$/);
+  });
+});
+
 describe("findings shape", () => {
   it("only treats a non-empty array as table rows", () => {
     expect(tableRows([{ a: 1 }])).toEqual([{ a: 1 }]);
