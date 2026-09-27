@@ -66,34 +66,22 @@ export function toSummary(check: Document, historyNewestFirst: (RunPoint & { run
 }
 
 /**
- * The last runs of every listed check in one query: runs are narrowed to
- * the fields the list needs before a window function ranks them per check,
- * so no stored rows are ever loaded.
+ * The last runs of every listed check: one query per check on the
+ * (checkId, finishedAt) index, each reading at most `limit` runs. A single
+ * aggregation over all checks would rank every retained run on each load.
  */
 async function recentRuns(db: Db, scriptIds: string[], limit: number) {
-  const docs = await db
-    .collection("result")
-    .aggregate([
-      { $match: { checkId: { $in: scriptIds } } },
-      { $project: { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, trigger: 1, diff: 1, durationMs: 1 } },
-      {
-        $setWindowFields: {
-          partitionBy: "$checkId",
-          sortBy: { finishedAt: -1 },
-          output: { rank: { $documentNumber: {} } },
-        },
-      },
-      { $match: { rank: { $lte: limit } } },
-      { $sort: { checkId: 1, finishedAt: -1 } },
-    ])
-    .toArray();
-  const byCheck = new Map<string, Document[]>();
-  for (const doc of docs) {
-    const list = byCheck.get(doc.checkId) ?? [];
-    list.push(doc);
-    byCheck.set(doc.checkId, list);
-  }
-  return byCheck;
+  const runs = db.collection("result");
+  const lists = await Promise.all(
+    scriptIds.map((checkId) =>
+      runs
+        .find({ checkId }, { projection: { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, trigger: 1, diff: 1, durationMs: 1 } })
+        .sort({ finishedAt: -1 })
+        .limit(limit)
+        .toArray(),
+    ),
+  );
+  return new Map<string, Document[]>(scriptIds.map((checkId, index) => [checkId, lists[index]]));
 }
 
 export async function listChecks(db: Db): Promise<CheckSummary[]> {
