@@ -34,7 +34,6 @@ interface EditorThemeSettingsProps {
   t?: (key: string) => string;
 }
 
-// 浅色主题配置
 const LIGHT_THEMES = [
   { value: "eclipse", label: "Eclipse", icon: Sun },
   { value: "githubLight", label: "GitHub Light", icon: Sun },
@@ -43,7 +42,6 @@ const LIGHT_THEMES = [
   { value: "solarizedLight", label: "Solarized Light", icon: Sun },
 ];
 
-// 暗色主题配置
 const DARK_THEMES = [
   { value: "tokyoNight", label: "Tokyo Night", icon: Moon },
   { value: "okaidia", label: "Okaidia Dark", icon: Moon },
@@ -52,7 +50,6 @@ const DARK_THEMES = [
   { value: "solarizedDark", label: "Solarized Dark", icon: Moon },
 ];
 
-// 可用的字体家族
 const FONT_FAMILIES = [
   { value: "fira-code", label: "Fira Code", style: "'Fira Code', monospace" },
   { value: "jetbrains-mono", label: "JetBrains Mono", style: "'JetBrains Mono', monospace" },
@@ -71,23 +68,19 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
   const [fontFamily, setFontFamily] = useState("fira-code");
   const [fontSize, setFontSize] = useState([14]);
 
-  // 根据系统主题获取默认编辑器主题
   const getDefaultTheme = useCallback(() => {
     return systemTheme === "dark" ? "tokyoNight" : "eclipse";
   }, [systemTheme]);
 
-  // 根据系统主题获取可用主题列表
   const getAvailableThemes = useCallback(() => {
     return systemTheme === "dark" ? DARK_THEMES : LIGHT_THEMES;
   }, [systemTheme]);
 
-  // 从localStorage读取设置
   useEffect(() => {
     const savedEditorTheme = localStorage.getItem("editor-theme");
     const savedFontFamily = localStorage.getItem("editor-font-family") || "fira-code";
     const savedFontSize = localStorage.getItem("editor-font-size") || "14";
 
-    // 如果没有保存的主题或保存的主题不在当前可用主题列表中，使用默认主题
     const availableThemes = getAvailableThemes();
     const themeExists = savedEditorTheme && availableThemes.some(theme => theme.value === savedEditorTheme);
     
@@ -96,7 +89,6 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
     setFontSize([parseInt(savedFontSize)]);
   }, [systemTheme, getAvailableThemes, getDefaultTheme]);
 
-  // 监听系统主题变化，自动切换到对应的默认主题
   useEffect(() => {
     const currentTheme = localStorage.getItem("editor-theme");
     const availableThemes = getAvailableThemes();
@@ -107,21 +99,18 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
       setEditorTheme(defaultTheme);
       localStorage.setItem("editor-theme", defaultTheme);
       
-      // 触发主题变更事件
       window.dispatchEvent(new CustomEvent('editorThemeChange', { 
         detail: { theme: defaultTheme } 
       }));
     }
   }, [systemTheme, getAvailableThemes, getDefaultTheme]);
 
-  // 保存设置到localStorage
   const saveSettings = () => {
     localStorage.setItem("editor-theme", editorTheme);
     localStorage.setItem("editor-font-family", fontFamily);
     localStorage.setItem("editor-font-size", fontSize[0].toString());
   };
 
-  // 重置为默认值
   const resetToDefaults = () => {
     const defaultTheme = getDefaultTheme();
     setEditorTheme(defaultTheme);
@@ -132,21 +121,17 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
     localStorage.removeItem("editor-font-size");
   };
 
-  // 应用设置
   const applySettings = () => {
     saveSettings();
 
-    // 应用字体样式到编辑器
     const selectedFont = FONT_FAMILIES.find(f => f.value === fontFamily);
     if (selectedFont) {
       document.documentElement.style.setProperty("--editor-font-family", selectedFont.style);
     }
     document.documentElement.style.setProperty("--editor-font-size", `${fontSize[0]}px`);
     
-    // 应用编辑器主题
     document.documentElement.style.setProperty("--editor-theme", editorTheme);
 
-    // 触发自定义事件通知编辑器主题变更
     window.dispatchEvent(new CustomEvent('editorThemeChange', { 
       detail: { theme: editorTheme } 
     }));
@@ -190,7 +175,6 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* 主题选择 */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Palette className="h-4 w-4 text-primary" />
@@ -221,7 +205,6 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
             </p>
           </div>
 
-          {/* 字体家族 */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Type className="h-4 w-4 text-primary" />
@@ -241,7 +224,6 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
             </Select>
           </div>
 
-          {/* 字体大小 */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-primary" />
@@ -265,7 +247,6 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
             </div>
           </div>
 
-          {/* 当前设置预览 */}
           <div className="space-y-3 p-4 bg-muted/40 rounded-lg border">
             <h4 className="font-medium text-sm">{t("currentSettings") || "当前设置"}</h4>
             <div className="flex flex-wrap gap-2">
@@ -282,7 +263,6 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
           </div>
         </div>
 
-        {/* 操作按钮 */}
         <div className="flex justify-between pt-4 border-t">
           <Button
             variant="outline"
