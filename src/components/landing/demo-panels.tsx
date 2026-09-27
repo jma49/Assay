@@ -53,8 +53,8 @@ export function DemoFrame({
 }) {
   return (
     <div
-      className={`overflow-hidden rounded-xl border bg-(--l-bg) ${
-        elevated ? "shadow-[0_24px_60px_-24px_rgba(22,27,38,0.35)]" : "shadow-xs"
+      className={`overflow-hidden rounded-xl bg-(--l-bg) shadow-border ${
+        elevated ? "shadow-[var(--shadow-border),0_24px_60px_-24px_rgba(22,27,38,0.35)]" : ""
       }`}
     >
       <div className="flex h-10 items-center justify-between gap-4 border-b bg-card px-4 text-[13px] text-foreground">

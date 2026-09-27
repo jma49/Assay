@@ -98,7 +98,7 @@ export function DashboardSkeleton() {
     <div className="space-y-6" aria-busy="true">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
-          <div key={i} className="rounded-xl border bg-card shadow-xs space-y-2  px-4 py-3">
+          <div key={i} className="rounded-xl bg-card shadow-border space-y-2  px-4 py-3">
             <Skeleton className="h-3 w-20" />
             <Skeleton className="h-7 w-12" />
             <Skeleton className="h-3 w-16" />

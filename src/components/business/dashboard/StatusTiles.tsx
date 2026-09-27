@@ -46,7 +46,7 @@ export function StatusTiles({ total, success, attention, failure, active, onSele
             aria-pressed={selected}
             onClick={() => onSelect(selected && tile.key !== null ? null : tile.key)}
             className={cn(
-              "rounded-xl border bg-card shadow-xs flex flex-col items-start  px-4 py-3 text-left transition-shadow",
+              "rounded-xl bg-card shadow-border flex flex-col items-start  px-4 py-3 text-left transition-shadow",
               selected && "ring-2 ring-primary",
             )}
           >

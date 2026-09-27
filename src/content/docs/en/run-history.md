@@ -19,7 +19,7 @@ Click a run to open it:
 
 - the status, time and message;
 - for **needs attention**, every row the query returned, with **Export CSV**;
-- **Run Again** runs the same check now and opens the new result, handy after fixing the data;
+- **Run again** runs the same check now and opens the new result, handy after fixing the data;
 - **Triage with AI**, when AI is switched on, for failed and flagged runs (see [AI assistant](/docs/ai-assistant)).
 
 ## Keyboard

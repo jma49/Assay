@@ -141,7 +141,7 @@ export function Sidebar() {
             <p className="mt-0.5">{t.guestBody}</p>
             <Link
               href="/sign-up?redirect_url=/manage-scripts"
-              className="mt-2 flex h-7 items-center justify-center rounded-md bg-primary text-[12.5px] font-medium text-primary-foreground hover:brightness-110"
+              className="mt-2 flex h-7 items-center justify-center rounded-md bg-primary text-[12.5px] font-medium text-primary-foreground transition-[filter,scale] duration-150 ease-out hover:brightness-110 active:scale-[0.96]"
             >
               {t.signUp}
             </Link>

@@ -138,7 +138,7 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card
-        className={`w-full max-w-6xl bg-card transition-all duration-300 ${
+        className={`w-full max-w-6xl bg-card transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300 ${
           isMinimized ? "h-auto" : "max-h-[90vh]"
         }`}
       >
@@ -263,7 +263,7 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
                 {scripts.map((script, index) => (
                   <div
                     key={script.scriptId}
-                    className={`flex items-center gap-3 p-4 rounded-lg border transition-all duration-200 ${
+                    className={`flex items-center gap-3 p-4 rounded-lg border transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200 ${
                       script.status === "running"
                         ? "border-border bg-muted  "
                         : script.status === "failed"

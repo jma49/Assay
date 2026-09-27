@@ -44,7 +44,7 @@ function TopBar() {
       {canCreate && (
         <Link
           href="/scripts/new"
-          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground shadow-xs hover:brightness-110 [:empty+&]:ml-auto"
+          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground shadow-xs hover:brightness-110 transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96] [:empty+&]:ml-auto"
         >
           <Plus className="size-4" />
           {language === "zh" ? "新建检查" : "New check"}
@@ -73,12 +73,20 @@ function GuestBanner() {
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <AppShellStateProvider>
+      <a
+        href="#content"
+        className="fixed top-2 left-2 z-50 -translate-y-16 rounded-md bg-primary px-3 py-2 text-[13px] font-medium text-primary-foreground focus-visible:translate-y-0"
+      >
+        Skip to content
+      </a>
       <div className="grid h-dvh grid-cols-[236px_minmax(0,1fr)] max-md:grid-cols-1 max-md:grid-rows-[auto_minmax(0,1fr)]">
         <Sidebar />
         <div className="flex min-h-0 min-w-0 flex-col">
           <GuestBanner />
           <TopBar />
-          <main className="min-h-0 flex-1 overflow-y-auto px-7 pb-16 max-md:px-4">{children}</main>
+          <main id="content" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto px-7 pb-16 outline-none max-md:px-4">
+            {children}
+          </main>
         </div>
       </div>
     </AppShellStateProvider>

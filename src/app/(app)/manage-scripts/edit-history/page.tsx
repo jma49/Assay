@@ -430,7 +430,7 @@ export default function GlobalEditHistoryPage() {
                       onClick={() => fetchHistories()}
                       variant="outline"
                       size="sm"
-                      className="transition-all duration-300"
+                      className="transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300"
                     >
                       <RotateCcw className="mr-2 h-4 w-4" />
                       {t("retry")}
@@ -492,7 +492,7 @@ export default function GlobalEditHistoryPage() {
                           <TableRow
                             key={history._id?.toString() || index}
                             className={cn(
-                              "group/row transition-all duration-200    ",
+                              "group/row transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200    ",
                               index % 2 === 0 ? "bg-card" : "bg-muted/5",
                             )}
                           >
@@ -591,7 +591,7 @@ export default function GlobalEditHistoryPage() {
                     size="sm"
                     onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
                     disabled={currentPage === 1 || loading}
-                    className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
+                    className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150 relative z-30"
                   >
                     <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                     <span className="hidden sm:inline">{t("previous")}</span>
@@ -686,7 +686,7 @@ export default function GlobalEditHistoryPage() {
                     size="sm"
                     onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
                     disabled={currentPage === totalPages || loading}
-                    className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
+                    className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150 relative z-30"
                   >
                     <span className="hidden sm:inline">{t("next")}</span>
                     <ChevronRight className="h-3.5 w-3.5 ml-1" />

@@ -72,7 +72,7 @@ export function PriorityBadge({
     <Badge
       variant="outline"
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-all duration-200",
+        "inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200",
         colors.bg,
         colors.text,
         colors.border,
@@ -86,7 +86,7 @@ export function PriorityBadge({
         <span
           role="button"
           tabIndex={0}
-          className="inline-flex items-center justify-center w-4 h-4 ml-0.5 opacity-60 group-hover:opacity-100 hover:bg-current/20 rounded-sm transition-all duration-200 cursor-pointer"
+          className="inline-flex items-center justify-center w-4 h-4 ml-0.5 opacity-60 group-hover:opacity-100 hover:bg-current/20 rounded-sm transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200 cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
             onRemove();
