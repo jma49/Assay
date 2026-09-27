@@ -7,16 +7,12 @@ import { cn } from "@/lib/utils/utils";
  * edges and paddings) so content lands in place instead of shifting.
  */
 
-export function SkeletonPageHeader({ withAction = false }: { withAction?: boolean }) {
-  return (
-    <div className="flex items-end justify-between gap-4">
-      <div className="space-y-2.5">
-        <Skeleton className="h-7 w-52" />
-        <Skeleton className="h-3.5 w-80 max-w-[70vw]" />
-      </div>
-      {withAction && <Skeleton className="hidden h-9 w-32 sm:block" />}
-    </div>
-  );
+/**
+ * Page headings now live in the window title bar and toolbar, so the page
+ * itself reserves no space for one. Kept so skeletons stay in step with pages.
+ */
+export function SkeletonPageHeader(_props: { withAction?: boolean }) {
+  return null;
 }
 
 export function SkeletonStatStrip({ count = 4, className }: { count?: number; className?: string }) {
