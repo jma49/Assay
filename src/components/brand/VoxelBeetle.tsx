@@ -73,7 +73,7 @@ export function VoxelBeetle({ className }: { className?: string }) {
       const zs = voxels.map((v) => v.z);
       const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), Math.max(...zs) - Math.min(...zs));
       const aspect = width / height;
-      const half = (span * 0.58) / Math.min(1, aspect);
+      const half = (span * 0.5) / Math.min(1, aspect);
       const camera = new THREE.OrthographicCamera(-half * aspect, half * aspect, half, -half, 0.1, 500);
       // The camera circles the beetle; theta = 0 looks at its side, π/2 at its face.
       const radius = 40;
@@ -96,10 +96,11 @@ export function VoxelBeetle({ className }: { className?: string }) {
         const box = container.getBoundingClientRect();
         const nx = ((event.clientX - box.left) / box.width) * 2 - 1;
         const ny = ((event.clientY - box.top) / box.height) * 2 - 1;
-        const facing = Math.PI / 2 + nx * 1.1;
+        // Pointer to the right turns the head to the right, by up to about 100°.
+        const facing = Math.PI / 2 - nx * 1.75;
         // Take the nearest equivalent angle, so the beetle never spins the long way round.
         const turns = Math.round((theta - facing) / (2 * Math.PI));
-        hover = { theta: facing + turns * 2 * Math.PI, y: baseY - ny * 12 };
+        hover = { theta: facing + turns * 2 * Math.PI, y: baseY - ny * 16 };
       };
       const onPointerLeave = () => {
         hover = null;
