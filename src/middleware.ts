@@ -16,6 +16,9 @@ const isPublicRoute = createRouteMatcher([
   // Starts and ends a demo guest session; both check DEMO_MODE themselves.
   "/demo",
   "/demo/exit",
+  // Icons generated at build time have no file extension for the matcher to skip.
+  "/apple-icon(.*)",
+  "/icon(.*)",
 ]);
 
 // Pages a demo guest can open; every API route still checks the guest itself.

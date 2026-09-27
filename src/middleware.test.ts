@@ -35,6 +35,12 @@ describe("middleware", () => {
     expect(auth).not.toHaveBeenCalled();
   });
 
+  it("serves the generated icons without a session", async () => {
+    for (const path of ["/apple-icon", "/icon.svg"]) {
+      expect((await run(path)).headers.get("location"), path).toBeNull();
+    }
+  });
+
   it("lets public routes through without a session", async () => {
     const res = await run("/sign-in");
 

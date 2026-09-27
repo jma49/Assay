@@ -11,6 +11,7 @@ import { BRAND, GITHUB_URL, QUICK_START, landingCopy, type Language } from "./co
 import { Demo, DemoFrame, RECENT_RUNS, StatusDot } from "./demo-panels";
 import { BrandMark } from "@/components/common/BrandMark";
 import { SECTION_THEMES } from "./themes";
+import { VoxelBeetle } from "@/components/brand/VoxelBeetle";
 
 /** Shared horizontal frame: every section aligns to the same left and right edges. */
 const CONTAINER = "mx-auto w-full max-w-[1120px] px-4 sm:px-6";
@@ -248,6 +249,8 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
           <div aria-hidden className="absolute inset-x-0 top-0 bottom-40 bg-[radial-gradient(ellipse_at_top,var(--primary-soft),transparent_70%)] sm:bottom-56" />
           <div className={`${CONTAINER} relative`}>
             <div className="mx-auto max-w-[780px] text-center">
+              <VoxelBeetle className="mx-auto -mt-10 h-[240px] w-full max-w-[420px] sm:h-[300px]" />
+              <p className="mb-4 text-[12px] text-(--l-muted)">{t.hero.mascotHint}</p>
               <h1 className="serif text-balance text-[40px] leading-[1.08] font-semibold tracking-tight sm:text-[60px]">
                 {t.hero.title}
               </h1>
