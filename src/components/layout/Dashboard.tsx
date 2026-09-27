@@ -26,6 +26,7 @@ import { Play } from "lucide-react";
 import { DashboardSkeleton } from "@/components/common/PageSkeletons";
 import type { CheckStats } from "@/lib/database/check-stats";
 import { useAppCommand } from "@/lib/commands/use-app-command";
+import { useMe } from "@/lib/auth/use-me";
 
 // --- Main Component ---
 const Dashboard = () => {
@@ -50,6 +51,11 @@ const Dashboard = () => {
     "success" | "error" | null
   >(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Offer only what this user may do; the run API enforces it regardless.
+  const me = useMe();
+  const canExecute = me?.permissions.includes("script:execute") ?? false;
+  const demoRuns = !canExecute && me?.demo ? me.demo.runsPerHour : null;
 
   // The Run sheet, opened from the toolbar or the File menu.
   const [runSheetOpen, setRunSheetOpen] = useState(false);
@@ -858,15 +864,24 @@ const Dashboard = () => {
     <div className="space-y-6 animate-fadeIn">
           <h1 className="sr-only">{t("dashboardTitle")}</h1>
 
-          <WindowToolbar>
-            <Button size="sm" className="aqua-default" onClick={() => openRunSheet("single")}>
-              <Play className="size-3.5" />
-              {language === "zh" ? "执行检查…" : "Run a Check…"}
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => openRunSheet("bulk")}>
-              {language === "zh" ? "批量执行…" : "Run in Bulk…"}
-            </Button>
-          </WindowToolbar>
+          {(canExecute || demoRuns !== null) && (
+            <WindowToolbar>
+              <Button size="sm" className="aqua-default" onClick={() => openRunSheet("single")}>
+                <Play className="size-3.5" />
+                {language === "zh" ? "执行检查…" : "Run a Check…"}
+              </Button>
+              {canExecute && (
+                <Button size="sm" variant="outline" onClick={() => openRunSheet("bulk")}>
+                  {language === "zh" ? "批量执行…" : "Run in Bulk…"}
+                </Button>
+              )}
+              {demoRuns !== null && (
+                <span className="text-[12px] text-foreground/70">
+                  {language === "zh" ? "演示：可以执行示例检查" : "Demo: you can run the sample checks"}
+                </span>
+              )}
+            </WindowToolbar>
+          )}
 
           <WindowStatusBar>
             <span>
@@ -901,7 +916,15 @@ const Dashboard = () => {
           >
             <ManualTrigger
               key={runSheetMode}
-              initialMode={runSheetMode}
+              initialMode={canExecute ? runSheetMode : "single"}
+              allowBulk={canExecute}
+              demoNote={
+                demoRuns === null
+                  ? undefined
+                  : language === "zh"
+                    ? `演示工作区：查看者可以执行示例检查，每小时最多 ${demoRuns} 次。`
+                    : `Demo workspace: viewers can run the sample checks, up to ${demoRuns} times an hour.`
+              }
               availableScripts={availableScripts}
               selectedScriptId={selectedScriptId}
               selectedScript={selectedScript}
