@@ -81,4 +81,12 @@ describe("createHistoryLoader", () => {
     expect(await createHistoryLoader(fetchImpl).reload()).toEqual({ kind: "stale" });
     expect(fetchImpl).not.toHaveBeenCalled();
   });
+
+  it("counts any request as the first one, including a filtered one from a search link", () => {
+    const { fetchImpl } = controlledFetch();
+    const loader = createHistoryLoader(fetchImpl);
+    expect(loader.hasRequested()).toBe(false);
+    loader.load(query("orders"));
+    expect(loader.hasRequested()).toBe(true);
+  });
 });

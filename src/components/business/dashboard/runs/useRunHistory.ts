@@ -92,6 +92,7 @@ export function useRunHistory(onError: (message: string) => void) {
     currentPage,
     loadPage,
     reload,
+    hasRequested: loader.hasRequested,
     requestSort,
     changePage,
     changeStatus,
