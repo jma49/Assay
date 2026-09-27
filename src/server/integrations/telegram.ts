@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { ObjectId, type Db } from "mongodb";
-import type { TelegramLinkDto, TelegramLinkStatus } from "@/contracts/notifications";
+import type { DestinationDto, TelegramLinkDto, TelegramLinkStatus } from "@/contracts/notifications";
 import { escapeHtml, telegramApi } from "@/server/notify/channels/telegram";
 import { ACTION_IDS } from "@/server/notify/types";
 import { buttonReply, handleAlertButton, type ButtonAction } from "@/server/services/alert-buttons";
@@ -148,14 +148,21 @@ export async function handleUpdate(db: Db, update: TelegramUpdate, env: Env = pr
   if (!link) return false;
 
   const label = chatLabel(message.chat);
-  const destination = await saveDestination(db, link.workspaceId, link.createdBy, {
-    kind: "telegram",
-    name: `Telegram ${label}`,
-    label,
-    secret: { chatId: String(message.chat.id) },
-    language: link.language === "zh" ? "zh" : "en",
-    source: "telegram",
-  });
+  let destination: DestinationDto;
+  try {
+    destination = await saveDestination(db, link.workspaceId, link.createdBy, {
+      kind: "telegram",
+      name: `Telegram ${label}`,
+      label,
+      secret: { chatId: String(message.chat.id) },
+      language: link.language === "zh" ? "zh" : "en",
+      source: "telegram",
+    });
+  } catch (error) {
+    // Nothing was bound: free the code so opening the link again can retry.
+    await db.collection(LINKS).updateOne({ _id: link._id, destinationId: "pending" }, { $set: { destinationId: null } });
+    throw error;
+  }
   await db.collection(LINKS).updateOne({ _id: link._id }, { $set: { destinationId: destination.id } });
   await telegramCall("sendMessage", { chat_id: message.chat.id, text: CONFIRM[destination.language](label), parse_mode: "HTML" }, env, fetcher).catch(() => undefined);
   return true;
