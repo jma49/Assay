@@ -1,6 +1,8 @@
 import type { Db, IndexDescription } from "mongodb";
 import { COLLECTIONS } from "./collections";
 
+const ACTIVITY_RETENTION_SECONDS = 180 * 24 * 60 * 60;
+
 /** Indexes for the lookups every request makes; createIndexes is a no-op when they exist. */
 export const INDEXES: Record<string, IndexDescription[]> = {
   [COLLECTIONS.userRoles]: [{ key: { userId: 1 }, unique: true }],
@@ -12,8 +14,11 @@ export const INDEXES: Record<string, IndexDescription[]> = {
   // One record per version number; a concurrent second "1.0.5" fails instead of being stored twice.
   [COLLECTIONS.scriptVersions]: [{ key: { scriptId: 1, createdAt: -1 } }, { key: { scriptId: 1, version: 1 }, unique: true }],
   // One event per run at most, so retried runs never notify twice.
-  [COLLECTIONS.events]: [{ key: { runId: 1 }, unique: true }, { key: { at: -1 } }, { key: { checkId: 1, at: -1 } }],
-  [COLLECTIONS.checkActions]: [{ key: { checkId: 1, at: -1 } }],
+  // The activity feed and alert-control log keep half a year; the current
+  // state lives on the check, so nothing depends on older entries. Edit
+  // history, approvals and version records are kept as the audit trail.
+  [COLLECTIONS.events]: [{ key: { runId: 1 }, unique: true }, { key: { at: 1 }, expireAfterSeconds: ACTIVITY_RETENTION_SECONDS }, { key: { checkId: 1, at: -1 } }],
+  [COLLECTIONS.checkActions]: [{ key: { checkId: 1, at: -1 } }, { key: { at: 1 }, expireAfterSeconds: ACTIVITY_RETENTION_SECONDS }],
   [COLLECTIONS.notificationDestinations]: [{ key: { workspaceId: 1, createdAt: 1 } }],
   // One delivery per event and destination, so fan-out can run anywhere, any number of times.
   [COLLECTIONS.notificationDeliveries]: [
