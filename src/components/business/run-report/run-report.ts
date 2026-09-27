@@ -24,7 +24,17 @@ export interface ExecutionResult {
   author?: string;
 }
 
-export type RunTone = "attention_needed" | "success" | "failure";
+/**
+ * Reads /api/execution-details; a failure becomes an Error with the API's
+ * message, or the HTTP status when the body is not JSON (e.g. a proxy page).
+ */
+export async function readRunResponse(res: Response): Promise<ExecutionResult> {
+  if (res.ok) return res.json();
+  const body: { message?: string } | null = await res.json().catch(() => null);
+  throw new Error(body?.message || `Error: ${res.status}`);
+}
+
+export type RunTone ="attention_needed" | "success" | "failure";
 
 export function runTone(result: Pick<ExecutionResult, "status" | "statusType">): RunTone {
   if (result.statusType === "attention_needed") return "attention_needed";

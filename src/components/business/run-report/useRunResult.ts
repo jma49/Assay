@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ExecutionResult } from "./run-report";
+import { readRunResponse, type ExecutionResult } from "./run-report";
 
 /** Loads one run from /api/execution-details; `retry` loads it again. */
 export function useRunResult(resultId: string | undefined, missingIdMessage: string) {
@@ -11,14 +11,8 @@ export function useRunResult(resultId: string | undefined, missingIdMessage: str
   useEffect(() => {
     if (!resultId) return;
     fetch(`/api/execution-details/${resultId}`)
-      .then(async (res) => {
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || `Error: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data: ExecutionResult) => {
+      .then(readRunResponse)
+      .then((data) => {
         setResult(data);
         setLoading(false);
       })
