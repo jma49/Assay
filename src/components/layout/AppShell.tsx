@@ -16,7 +16,8 @@ type Label = { en: string; zh: string };
 const TITLES: [string, Label][] = [
   ["/manage-scripts/approvals", { en: "Approvals", zh: "审批" }],
   ["/manage-scripts/edit-history", { en: "Edit history", zh: "编辑历史" }],
-  ["/manage-scripts", { en: "Checks", zh: "检查" }],
+  ["/manage-scripts", { en: "Manage checks", zh: "管理检查" }],
+  ["/checks", { en: "Checks", zh: "检查" }],
   ["/scripts/new", { en: "New check", zh: "新建检查" }],
   ["/dashboard", { en: "Runs", zh: "执行记录" }],
   ["/view-execution-result", { en: "Run", zh: "执行结果" }],
@@ -31,7 +32,9 @@ function TopBar() {
   const { setToolbarSlot, setStatusSlot } = useAppShellState();
   const me = useMe();
   const title = TITLES.find(([prefix]) => pathname.startsWith(prefix))?.[1][language] ?? "";
-  const canCreate = me?.permissions.includes("script:create") && !pathname.startsWith("/scripts/new");
+  // One filled action per view: a check's own page and a run's report lead with their own.
+  const pageHasOwnAction = pathname.startsWith("/scripts/new") || pathname.startsWith("/checks/") || pathname.startsWith("/view-execution-result");
+  const canCreate = me?.permissions.includes("script:create") && !pageHasOwnAction;
 
   return (
     <header className="relative flex min-h-[52px] items-center gap-3 border-b bg-card px-7 py-2.5 max-md:flex-wrap max-md:px-4">

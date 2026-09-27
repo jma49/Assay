@@ -703,7 +703,7 @@ export default function ViewExecutionResultPage() {
       label: t.scriptId,
       mono: true,
       value: (
-        <Link href={`/manage-scripts?scriptId=${encodeURIComponent(result.scriptId)}`} className="text-primary hover:underline">
+        <Link href={`/checks/${encodeURIComponent(result.scriptId)}`} className="text-primary hover:underline">
           {result.scriptId}
         </Link>
       ),
