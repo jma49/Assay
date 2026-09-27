@@ -153,6 +153,14 @@ describe("PUT /api/scripts/[scriptId]", () => {
     expect(originalData.name).toBe("Renamed");
   });
 
+  it("fails closed when the role of someone editing another's check cannot be read", async () => {
+    mocks.existing = othersCheck;
+    mocks.role = null;
+    expect((await update({ name: "Renamed", version: 3 })).status).toBe(500);
+    expect(mocks.updateOne).not.toHaveBeenCalled();
+    expect(mocks.createApprovalRequest).not.toHaveBeenCalled();
+  });
+
   it("lets admins change someone else's check directly", async () => {
     mocks.existing = othersCheck;
     mocks.role = "admin";
@@ -201,6 +209,12 @@ describe("DELETE /api/scripts/[scriptId]", () => {
   it("files an approval request for non-admins, even on their own check", async () => {
     const res = await remove();
     expect((await res.json()).requiresApproval).toBe(true);
+    expect(mocks.deleteOne).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when the caller's role cannot be read", async () => {
+    mocks.role = null;
+    expect((await remove()).status).toBe(500);
     expect(mocks.deleteOne).not.toHaveBeenCalled();
   });
 
