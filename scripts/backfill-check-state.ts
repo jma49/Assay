@@ -7,7 +7,7 @@
  */
 import db from "@/lib/database/db";
 import { getMongoDbClient } from "@/lib/database/mongodb";
-import { fromLegacyStatus, stateFromHistory, type HistoricalRun } from "@/domain/run";
+import { stateFromHistory, type HistoricalRun } from "@/domain/run";
 
 // Enough runs to find when the current streak began for any realistic schedule.
 const HISTORY_LIMIT = 500;
@@ -23,17 +23,17 @@ async function main() {
   let updated = 0;
   for (const { scriptId } of pending) {
     const history = await runs
-      .find({ script_name: scriptId }, { projection: { statusType: 1, outcome: 1, rowCount: 1, raw_results: 1, execution_time: 1 } })
-      .sort({ execution_time: -1 })
+      .find({ checkId: scriptId }, { projection: { outcome: 1, rowCount: 1, finishedAt: 1 } })
+      .sort({ finishedAt: -1 })
       .limit(HISTORY_LIMIT)
       .toArray();
     const state = stateFromHistory(
       history.map(
         (run): HistoricalRun => ({
           runId: run._id.toString(),
-          outcome: run.outcome ?? fromLegacyStatus(run.statusType),
-          rowCount: typeof run.rowCount === "number" ? run.rowCount : Array.isArray(run.raw_results) ? run.raw_results.length : 0,
-          finishedAt: new Date(run.execution_time),
+          outcome: run.outcome,
+          rowCount: Number(run.rowCount ?? 0),
+          finishedAt: new Date(run.finishedAt),
         }),
       ),
     );

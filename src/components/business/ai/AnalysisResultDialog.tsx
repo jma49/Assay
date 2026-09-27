@@ -48,12 +48,11 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
       setCopiedIndex(index);
       setTimeout(() => setCopiedIndex(null), 2000);
     } catch (error) {
-      console.error('复制失败:', error);
+      console.error('Copy failed:', error);
     }
   };
 
   const parseAnalysisResult = (text: string) => {
-    // 分割文本，查找代码块
     const sections: Array<{ type: 'text' | 'code', content: string, language?: string }> = [];
     const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
     
@@ -61,7 +60,6 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
     let match;
     
     while ((match = codeBlockRegex.exec(text)) !== null) {
-      // 添加代码块前的文本
       if (match.index > lastIndex) {
         const textContent = text.slice(lastIndex, match.index).trim();
         if (textContent) {
@@ -69,7 +67,6 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
         }
       }
       
-      // 添加代码块
       const language = match[1] || 'sql';
       const code = match[2].trim();
       if (code) {
@@ -79,7 +76,6 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
       lastIndex = match.index + match[0].length;
     }
     
-    // 添加最后的文本
     if (lastIndex < text.length) {
       const textContent = text.slice(lastIndex).trim();
       if (textContent) {
@@ -122,13 +118,11 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
     lines.forEach((line) => {
       const trimmedLine = line.trim();
       
-      // 空行处理
       if (!trimmedLine) {
         finishCurrentList();
         return;
       }
       
-      // 检查是否是标题（以#开头）
       if (trimmedLine.startsWith('#')) {
         finishCurrentList();
         const level = trimmedLine.match(/^#{1,6}/)?.[0].length || 1;
@@ -144,7 +138,6 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
         return;
       }
       
-      // 检查是否是无序列表项
       if (trimmedLine.match(/^[-*+]\s+/)) {
         if (currentListType !== 'ul') {
           finishCurrentList();
@@ -162,7 +155,6 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
         return;
       }
       
-      // 检查是否是有序列表项
       if (trimmedLine.match(/^\d+\.\s+/)) {
         if (currentListType !== 'ol') {
           finishCurrentList();
@@ -184,7 +176,6 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
         return;
       }
       
-      // 普通段落
       finishCurrentList();
       if (trimmedLine) {
         result.push(
@@ -195,15 +186,12 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
       }
     });
     
-    // 处理最后的列表
     finishCurrentList();
     
     return result;
   };
 
-  // 处理行内格式化（粗体、斜体、代码等）
   const formatInlineText = (text: string): React.ReactNode => {
-    // 处理行内代码 `code`
     const codeRegex = /`([^`]+)`/g;
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
@@ -211,7 +199,6 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
     let codeCounter = 0;
 
     while ((match = codeRegex.exec(text)) !== null) {
-      // 添加代码前的文本
       if (match.index > lastIndex) {
         const beforeCode = text.slice(lastIndex, match.index);
         const beforeCodeFormatted = formatTextStyles(beforeCode);
@@ -224,7 +211,6 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
         }
       }
       
-      // 添加行内代码
       parts.push(
         <code key={`code-${++codeCounter}`} className="px-1.5 py-0.5 bg-muted/60 text-foreground rounded text-sm font-mono border">
           {match[1]}
@@ -234,7 +220,6 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
       lastIndex = match.index + match[0].length;
     }
     
-    // 添加剩余文本
     if (lastIndex < text.length) {
       const remainingText = formatTextStyles(text.slice(lastIndex));
       if (remainingText) {
@@ -249,7 +234,6 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
     return parts.length > 1 ? <>{parts}</> : (parts.length === 1 ? parts[0] : formatTextStyles(text));
   };
 
-  // 处理文本样式（粗体、斜体）
   const formatTextStyles = (text: string): React.ReactNode => {
     if (!text) return null;
     

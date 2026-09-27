@@ -27,22 +27,7 @@ import { useMe } from "@/lib/auth/use-me";
 import { cellText } from "@/lib/utils/cells";
 import { triageToMarkdown } from "@/lib/ai/triage-format";
 
-// 基于SQL脚本实际输出的精确类型定义
-interface OrderDuplicateDetail {
-  external_order_id: string;
-  count: number;
-}
-
-interface OrderSyncDetail {
-  order_date: string;
-  external_order_count: number;
-}
-
-// 通用类型，覆盖所有可能的结果类型
-type FindingDetail =
-  | OrderDuplicateDetail
-  | OrderSyncDetail
-  | Record<string, string | number | boolean | null>;
+type FindingDetail = Record<string, string | number | boolean | null>;
 
 interface ExecutionResult {
   scriptId: string;
@@ -387,15 +372,6 @@ export default function ViewExecutionResultPage() {
           return res.json();
         })
         .then((data: ExecutionResult) => {
-          // 特定脚本状态调整
-          if (
-            data.scriptId === "orders-sync-daily" &&
-            data.status === "success" &&
-            Array.isArray(data.findings) &&
-            data.findings.length > 0
-          ) {
-            data.statusType = "attention_needed";
-          }
           setResult(data);
           setLoading(false);
         })

@@ -33,15 +33,13 @@ export function HashtagInput({
   const [isFocused, setIsFocused] = useState(false);
 
   const validateHashtag = (tag: string): boolean => {
-    // 移除首位空格，转为小写
     const cleaned = tag.trim().toLowerCase();
     
-    // 检查是否为空或重复
     if (!cleaned || hashtags.includes(cleaned)) {
       return false;
     }
     
-    // 检查格式：只允许字母、数字、中文和连字符
+    // Letters, digits, CJK characters and hyphens only.
     const validFormat = /^[a-zA-Z0-9\u4e00-\u9fa5-]+$/.test(cleaned);
     
     return validFormat && cleaned.length <= 20;
@@ -71,7 +69,6 @@ export function HashtagInput({
         addHashtag(inputValue);
       }
     } else if (e.key === "Backspace" && !inputValue && hashtags.length > 0) {
-      // 当输入框为空且按退格键时，删除最后一个标签
       removeHashtag(hashtags.length - 1);
     }
   };
@@ -95,7 +92,6 @@ export function HashtagInput({
           className
         )}
       >
-        {/* 显示现有标签 */}
         <div className="flex flex-wrap gap-1.5 mb-2">
           {hashtags.map((tag, index) => (
             <Badge
@@ -120,7 +116,6 @@ export function HashtagInput({
           ))}
         </div>
 
-        {/* 输入框和添加按钮 */}
         {!disabled && hashtags.length < maxTags && (
           <div className="flex items-center gap-2">
             <Input
@@ -150,7 +145,6 @@ export function HashtagInput({
         )}
       </div>
 
-      {/* 辅助文本和计数 */}
       <div className="flex justify-between items-center text-xs text-muted-foreground">
         <span>
           {helperText || "按 Enter 或逗号添加标签，支持中英文、数字和连字符"}

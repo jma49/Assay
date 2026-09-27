@@ -4,7 +4,7 @@ import { Collection, Document } from "mongodb";
 import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { nextRunAt } from "@/lib/scheduling/due-slot";
 import { Permission } from "@/lib/auth/rbac";
-import { withSmartCache, generateCacheKey } from "@/lib/cache/cache-strategies";
+import { cached, cacheKey } from "@/lib/cache/cached";
 
 interface ScriptInfo {
   scriptId: string;
@@ -19,6 +19,7 @@ interface ScriptInfo {
   isScheduled?: boolean;
   cronSchedule?: string;
   hashtags?: string[];
+  version?: number;
 }
 
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
@@ -28,7 +29,7 @@ async function getSqlScriptsCollection(): Promise<Collection<Document>> {
 }
 
 /**
- * 获取脚本列表数据的核心逻辑
+ * The checks list from MongoDB; GET caches it.
  */
 async function fetchScriptsData(
   sortBy: string,
@@ -39,13 +40,11 @@ async function fetchScriptsData(
 
   const collection = await getSqlScriptsCollection();
 
-  // 构建查询条件
   const query: Record<string, unknown> = {};
   if (includeScheduledOnly) {
     query.isScheduled = true;
   }
 
-  // 构建排序条件
   const sortCondition: Record<string, 1 | -1> = {};
   if (sortBy === "createdAt") {
     sortCondition.createdAt = sortOrder === "desc" ? -1 : 1;
@@ -53,7 +52,6 @@ async function fetchScriptsData(
     sortCondition.name = sortOrder === "desc" ? -1 : 1;
   }
 
-  // 查询数据库
   const scripts = await collection
     .find(query, {
       projection: {
@@ -69,12 +67,12 @@ async function fetchScriptsData(
         isScheduled: 1,
         cronSchedule: 1,
         hashtags: 1,
+        version: 1,
       },
     })
     .sort(sortCondition)
     .toArray();
 
-  // 转换数据格式
   return scripts.map((script) => ({
     scriptId: script.scriptId,
     name: script.name || "",
@@ -88,6 +86,8 @@ async function fetchScriptsData(
     isScheduled: Boolean(script.isScheduled),
     cronSchedule: typeof script.cronSchedule === "string" ? script.cronSchedule : undefined,
     hashtags: Array.isArray(script.hashtags) ? script.hashtags : [],
+    // Checks from before versions have none; editing them starts from 0.
+    version: typeof script.version === "number" ? script.version : 0,
   }));
 }
 
@@ -100,28 +100,21 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
 
-    // 获取查询参数
-    const sortBy = searchParams.get("sort_by") || "name";
-    const sortOrder = searchParams.get("sort_order") || "asc";
+    // Only known values, so arbitrary query strings cannot mint new cache keys.
+    const sortBy = searchParams.get("sort_by") === "createdAt" ? "createdAt" : "name";
+    const sortOrder = searchParams.get("sort_order") === "desc" ? "desc" : "asc";
     const includeScheduledOnly = searchParams.get("scheduled_only") === "true";
 
-    // 生成缓存键
-    const cacheKey = generateCacheKey("scripts:list", {
+    const key = cacheKey("scripts:list", {
       sortBy,
       sortOrder,
       scheduledOnly: includeScheduledOnly,
-      // v2 adds cronSchedule; bumping it skips list entries cached before.
-      v: 2,
+      // Bumped when list entries gain fields (v3: version), so older cached lists are skipped.
+      v: 3,
     });
 
-    // 使用智能缓存管理器
-    const scriptsData = await withSmartCache(
-      cacheKey,
-      "SCRIPT_LIST",
-      async () => {
-        return await fetchScriptsData(sortBy, sortOrder, includeScheduledOnly);
-      }
-    );
+    // Ten minutes; every create, edit and delete clears it.
+    const scriptsData = await cached(key, 600, () => fetchScriptsData(sortBy, sortOrder, includeScheduledOnly));
 
     // The dashboard shows when the next scheduled check will run; computed here
     // so the cron parser never ships to the browser.
@@ -137,8 +130,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       data: scriptsData,
       nextScheduledAt,
-      cached: true, // withSmartCache 会处理缓存逻辑
-      cacheKey,
       query_info: {
         sort_by: sortBy,
         sort_order: sortOrder,
@@ -147,7 +138,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("[API] 获取脚本列表失败:", error);
+    console.error("[API] Listing checks failed:", error);
 
     return NextResponse.json(
       {

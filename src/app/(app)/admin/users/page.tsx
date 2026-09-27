@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { WindowStatusBar } from "@/components/layout/WindowChrome";
-import { useUser } from '@clerk/nextjs';
+import { useCurrentUser } from "@/lib/auth/client";
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -70,7 +70,7 @@ interface UserRoleInfo {
 }
 
 export default function AdminUsersPage() {
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useCurrentUser();
   const router = useRouter();
   const { language } = useLanguage();
   const [userRoles, setUserRoles] = useState<UserRoleInfo[]>([]);
@@ -183,7 +183,7 @@ export default function AdminUsersPage() {
     }
   }, [language]);
 
-  // No need to wait for Clerk's client: the middleware already guarantees a
+  // No need to wait for the session: the middleware already guarantees a
   // signed-in user and the API checks the admin permission on the server.
   useEffect(() => {
     loadUserRoles();

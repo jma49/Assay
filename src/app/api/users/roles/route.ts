@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { clerkClient } from "@clerk/nextjs/server";
+import { findUser } from "@/lib/auth/server";
 import { validateApiAuth } from "@/lib/auth/auth-utils";
 import {
   UserRole,
@@ -12,20 +12,18 @@ import {
   getUserRole,
 } from "@/lib/auth/rbac";
 
-// 设置角色的请求体接口
 interface SetUserRoleRequest {
-  targetUserId: string;
-  /** Ignored: the email is read from Clerk. Still sent by older clients. */
+  /** Who gets the role: their user id, or the email they signed up with. */
+  targetUserId?: string;
   targetEmail?: string;
   role: UserRole;
 }
 
 /**
- * GET - 获取所有用户角色信息
+ * GET: every active member and their role.
  */
 export async function GET() {
   try {
-    // 验证用户认证
     const authResult = await validateApiAuth("zh");
     if (!authResult.isValid) {
       return authResult.response!;
@@ -33,14 +31,13 @@ export async function GET() {
 
     const { user } = authResult;
 
-    // 检查权限：需要 USER_MANAGE 或 USER_ROLE_ASSIGN 权限
+    // Admins (user:manage) and managers (user:role:assign) may read the list.
     const permissionCheck = await requirePermission(
       user.id,
       Permission.USER_MANAGE
     );
 
     if (!permissionCheck.authorized) {
-      // 如果没有 USER_MANAGE 权限，检查是否有 USER_ROLE_ASSIGN 权限
       const roleAssignCheck = await requirePermission(
         user.id,
         Permission.USER_ROLE_ASSIGN
@@ -54,7 +51,6 @@ export async function GET() {
       }
     }
 
-    // 获取所有用户角色
     const userRoles = await getAllUserRoles();
 
     return NextResponse.json({
@@ -72,11 +68,10 @@ export async function GET() {
 }
 
 /**
- * POST - 设置用户角色
+ * POST: gives a signed-up person a role.
  */
 export async function POST(request: NextRequest) {
   try {
-    // 验证用户认证
     const authResult = await validateApiAuth("zh");
     if (!authResult.isValid) {
       return authResult.response!;
@@ -84,7 +79,6 @@ export async function POST(request: NextRequest) {
 
     const { user, userEmail } = authResult;
 
-    // 检查权限：需要 USER_ROLE_ASSIGN 权限
     const permissionCheck = await requirePermission(
       user.id,
       Permission.USER_ROLE_ASSIGN
@@ -97,22 +91,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 解析请求体
     const body: SetUserRoleRequest = await request.json();
-    const { targetUserId, role } = body;
+    const { role } = body;
 
-    // 验证请求参数
-    if (!targetUserId || !role) {
+    if ((!body.targetUserId && !body.targetEmail) || !role) {
       return NextResponse.json(
         {
           success: false,
-          message: "缺少必要参数：targetUserId, role",
+          message: "缺少必要参数：targetUserId 或 targetEmail, role",
         },
         { status: 400 }
       );
     }
 
-    // 验证角色是否有效
+    // The person must have signed up; their id and email come from the user store.
+    const target = await findUser({ id: body.targetUserId, email: body.targetEmail });
+    if (!target) {
+      return NextResponse.json(
+        { success: false, message: "目标用户不存在：请先让对方登录一次" },
+        { status: 404 }
+      );
+    }
+    const targetUserId = target.id;
+
     if (!Object.values(UserRole).includes(role)) {
       return NextResponse.json(
         { success: false, message: "无效的角色类型" },
@@ -120,7 +121,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 获取当前用户的角色
     const currentUserRole = permissionCheck.userRole;
     if (!currentUserRole) {
       return NextResponse.json(
@@ -129,7 +129,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 检查是否可以管理目标角色
     if (!canManageRole(currentUserRole, role)) {
       return NextResponse.json(
         {
@@ -153,23 +152,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // The email comes from Clerk, not the request, so it cannot be spoofed.
-    let targetEmail: string;
-    try {
-      const client = await clerkClient();
-      const targetUser = await client.users.getUser(targetUserId);
-      const primary = targetUser.emailAddresses.find(
-        (address) => address.id === targetUser.primaryEmailAddressId
-      );
-      targetEmail = (primary ?? targetUser.emailAddresses[0])?.emailAddress ?? "";
-    } catch {
-      return NextResponse.json(
-        { success: false, message: "目标用户不存在" },
-        { status: 404 }
-      );
-    }
+    const targetEmail = target.email;
 
-    // 防止用户修改自己的角色（除非是管理员）
+    // Only admins may change their own role.
     if (targetUserId === user.id && currentUserRole !== UserRole.ADMIN) {
       return NextResponse.json(
         { success: false, message: "不能修改自己的角色" },
@@ -177,7 +162,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 设置用户角色
     const success = await setUserRole(
       targetUserId,
       targetEmail,
@@ -207,11 +191,10 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * DELETE - 删除用户角色
+ * DELETE: removes someone's role. Admins only.
  */
 export async function DELETE(request: NextRequest) {
   try {
-    // 验证用户认证
     const authResult = await validateApiAuth("zh");
     if (!authResult.isValid) {
       return authResult.response!;
@@ -219,7 +202,6 @@ export async function DELETE(request: NextRequest) {
 
     const { user } = authResult;
 
-    // 检查权限：需要 USER_MANAGE 权限（只有管理员可以删除角色）
     const permissionCheck = await requirePermission(
       user.id,
       Permission.USER_MANAGE
@@ -232,7 +214,6 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // 获取要删除的用户ID
     const { searchParams } = new URL(request.url);
     const targetUserId = searchParams.get("userId");
 
@@ -243,7 +224,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // 防止删除自己的角色
+    // Nobody removes their own role.
     if (targetUserId === user.id) {
       return NextResponse.json(
         { success: false, message: "不能删除自己的角色" },
@@ -251,7 +232,6 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // 删除用户角色
     const success = await removeUserRole(targetUserId);
 
     if (success) {

@@ -49,8 +49,8 @@ export async function POST(request: NextRequest) {
       const db = await getMongoDbClient().getDb();
       const script = await db
         .collection("sql_scripts")
-        .findOne({ scriptId }, { projection: { author: 1 } });
-      const access = runAccess({ canExecute, demoMode, scriptAuthor: script?.author as string | undefined });
+        .findOne({ scriptId }, { projection: { demoSeed: 1 } });
+      const access = runAccess({ canExecute, demoMode, demoSeed: script?.demoSeed });
       if (access === "forbidden") {
         return NextResponse.json(
           { success: false, message: "In the demo, viewers can run the sample checks only." },

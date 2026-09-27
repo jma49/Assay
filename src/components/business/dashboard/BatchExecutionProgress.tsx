@@ -52,7 +52,6 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
 }) => {
   const [isMinimized, setIsMinimized] = useState(false);
 
-  // 计算统计信息
   const stats = {
     total: scripts.length,
     pending: scripts.filter((s) => s.status === "pending").length,
@@ -67,7 +66,6 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
   const isExecuting = stats.running > 0 || stats.pending > 0;
   const isCompleted = stats.pending === 0 && stats.running === 0;
 
-  // 获取状态图标和颜色
   const getStatusIcon = (status: ScriptExecutionStatus["status"]) => {
     switch (status) {
       case "pending":
@@ -275,7 +273,6 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
                               : "border-border bg-card"
                     }`}
                   >
-                    {/* 左侧：序号和状态图标 */}
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <span className="text-sm font-mono text-muted-foreground w-8 text-center">
                         #{index + 1}
@@ -283,7 +280,6 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
                       {getStatusIcon(script.status)}
                     </div>
 
-                    {/* 中间：脚本信息 */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-medium text-foreground truncate max-w-md">
@@ -311,7 +307,6 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
                       )}
                     </div>
 
-                    {/* 右侧：状态和时间 */}
                     <div className="flex flex-col items-end gap-2 flex-shrink-0 min-w-[120px]">
                       <Badge
                         variant={getStatusColor(script.status)}

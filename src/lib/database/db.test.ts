@@ -77,3 +77,42 @@ describe("withReadOnlyTransaction", () => {
     expect(client.release).toHaveBeenCalledOnce();
   });
 });
+
+describe("tlsOptions", () => {
+  const read = vi.fn(async (url: string) => Buffer.from(`cert:${url}`));
+  beforeEach(() => read.mockClear());
+
+  it("verifies the server against the configured CA", async () => {
+    const { tlsOptions } = await import("./db");
+    const ssl = await tlsOptions({ CA_CERT_BLOB_URL: "https://blob.example/ca.pem" }, read);
+    expect(ssl?.rejectUnauthorized).toBe(true);
+    expect(String(ssl?.ca)).toBe("cert:https://blob.example/ca.pem");
+    expect(ssl?.cert).toBeUndefined();
+  });
+
+  it("adds a client certificate only when both halves are given", async () => {
+    const { tlsOptions } = await import("./db");
+    const both = await tlsOptions({ CA_CERT_BLOB_URL: "https://b/ca", CLIENT_CERT_BLOB_URL: "https://b/c", CLIENT_KEY_BLOB_URL: "https://b/k" }, read);
+    expect(String(both?.cert)).toBe("cert:https://b/c");
+    expect(String(both?.key)).toBe("cert:https://b/k");
+    const half = await tlsOptions({ CA_CERT_BLOB_URL: "https://b/ca", CLIENT_CERT_BLOB_URL: "https://b/c" }, read);
+    expect(half?.cert).toBeUndefined();
+  });
+
+  it("leaves TLS to DATABASE_URL without a CA, and refuses certificates over plain http", async () => {
+    const { tlsOptions } = await import("./db");
+    expect(await tlsOptions({}, read)).toBeUndefined();
+    await expect(tlsOptions({ CA_CERT_BLOB_URL: "http://blob.example/ca.pem" })).rejects.toThrow(/https/);
+  });
+});
+
+describe("pool", () => {
+  it("is created once even when the first calls race", async () => {
+    const pg = await import("pg");
+    const created = vi.spyOn(pg, "Pool");
+    const db = await import("./db");
+    await db.closePool();
+    await Promise.all([db.withReadOnlyTransaction(async () => 1), db.withReadOnlyTransaction(async () => 2), db.query("SELECT 1")]);
+    expect(created.mock.calls.length).toBeLessThanOrEqual(1);
+  });
+});

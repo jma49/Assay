@@ -29,12 +29,12 @@ To see what would run without running anything:
 DOTENV_CONFIG_PATH=.env.local npx tsx -r dotenv/config scripts/run-all-scripts.ts scheduled --dry-run
 ```
 
-### A small always-on server
+### Your own server
 
-Run the standalone scheduler, which reads the schedules from MongoDB and runs each check at its own time:
+Call the same command from cron every five minutes. Each scheduled check runs once per cron slot, however often the command is called:
 
-```bash
-npm run scheduler
+```cron
+*/5 * * * * cd /srv/assay && npm run sql:run-scheduled >> /var/log/assay-checks.log 2>&1
 ```
 
 ## Running scheduled checks by hand

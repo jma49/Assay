@@ -1,497 +1,105 @@
-import { Pool, PoolClient, QueryResult, PoolConfig } from "pg";
-
-// 配置 pg 库处理 BigInt - 将其转换为字符串而不是 BigInt 类型
-// 这可以避免 JSON.stringify 时出现错误
-import pg from "pg";
-pg.types.setTypeParser(20, function (val: string) {
-  // 20 是 PostgreSQL 中 BIGINT 的 OID
-  return val; // 返回字符串而不是 BigInt
-});
-import dotenv from "dotenv";
-import fs from "fs";
-import path from "path";
-import https from "https";
-import { ConnectionOptions } from "tls";
+import fs from "node:fs";
+import https from "node:https";
+import type { ConnectionOptions } from "node:tls";
+import pg, { Pool, type PoolClient, type PoolConfig, type QueryResult } from "pg";
 import { redactConnectionString } from "./redact-connection-string";
 
-// Loading environment variables
-dotenv.config({ path: ".env.local" });
+// BIGINT (OID 20) as strings: JavaScript numbers lose precision past 2^53 and JSON cannot hold BigInt.
+pg.types.setTypeParser(20, (value: string) => value);
 
-// 下载文件内容的函数
-const downloadFile = (url: string): Promise<Buffer> => {
+type Env = Record<string, string | undefined>;
+
+/**
+ * Reads a certificate from https://… (e.g. a private blob) or, for local
+ * development, file://…. Plain http is refused: a certificate fetched in
+ * the clear could be swapped on the way.
+ */
+function readCertificate(url: string): Promise<Buffer> {
+  if (url.startsWith("file://")) return fs.promises.readFile(url.slice("file://".length));
+  if (!url.startsWith("https://")) return Promise.reject(new Error("Certificate URLs must use https:// (or file:// locally)"));
   return new Promise((resolve, reject) => {
-    // 处理file://协议（仅用于本地测试）
-    if (url.startsWith("file://")) {
-      let localFilePath = "unknown"; // Default value
-      try {
-        localFilePath = url.replace("file://", "");
-        const fileContent = fs.readFileSync(localFilePath);
-        resolve(fileContent);
-      } catch (error) {
-        // 在错误对象中附加更多上下文信息
-        reject(
-          new Error(
-            `Failed to read local file ${localFilePath}: ${
-              error instanceof Error ? error.message : String(error)
-            }`
-          )
-        );
-      }
-      return;
-    }
-
-    // 处理https://协议
     https
       .get(url, (response) => {
         if (response.statusCode !== 200) {
-          reject(
-            new Error(
-              `Failed to download file from ${url}. Status: ${
-                response.statusCode
-              } ${response.statusMessage || ""}`
-            )
-          );
-          response.resume(); // 消耗响应数据以释放内存
+          response.resume();
+          reject(new Error(`Downloading a certificate failed with HTTP ${response.statusCode}`));
           return;
         }
         const chunks: Buffer[] = [];
-        response.on("data", (chunk: Buffer) => {
-          chunks.push(chunk);
-        });
-        response.on("end", () => {
-          const buffer = Buffer.concat(chunks);
-          resolve(buffer);
-        });
-        response.on("error", (error) => {
-          reject(
-            new Error(
-              `Error during HTTPS response from ${url}: ${error.message}`
-            )
-          );
-        });
+        response.on("data", (chunk: Buffer) => chunks.push(chunk));
+        response.on("end", () => resolve(Buffer.concat(chunks)));
+        response.on("error", reject);
       })
-      .on("error", (error) => {
-        reject(
-          new Error(
-            `Error initiating HTTPS request to ${url}: ${error.message}`
-          )
-        );
-      });
+      .on("error", reject);
   });
-};
-
-/**
- * 数据库连接池单例类
- * 确保应用全局只有一个连接池实例，避免连接资源浪费
- */
-class DatabasePool {
-  private static instance: DatabasePool;
-  private pool: Pool | null = null;
-
-  private constructor() {}
-
-  /**
-   * 获取数据库连接池单例实例
-   * @returns DatabasePool实例
-   */
-  public static getInstance(): DatabasePool {
-    if (!DatabasePool.instance) {
-      DatabasePool.instance = new DatabasePool();
-    }
-    return DatabasePool.instance;
-  }
-
-  /**
-   * 获取连接池，如果不存在则创建
-   * @returns 数据库连接池
-   */
-  public async getPool(): Promise<Pool> {
-    if (!this.pool) {
-      this.pool = await createPool();
-    }
-    return this.pool;
-  }
-
-  /**
-   * 关闭连接池
-   */
-  public async closePool(): Promise<void> {
-    if (this.pool) {
-      await this.pool.end();
-      this.pool = null;
-    }
-  }
 }
 
-// 准备SSL文件
-const prepareSSLFiles = async () => {
-  const tmpDir = "/tmp";
-  if (!fs.existsSync(tmpDir)) {
-    try {
-      fs.mkdirSync(tmpDir, { recursive: true });
-      console.log(`[prepareSSLFiles] Created directory: ${tmpDir}`);
-    } catch (error) {
-      console.error(
-        `[prepareSSLFiles] Failed to create directory ${tmpDir}:`,
-        error
-      );
-      throw new Error(
-        `[prepareSSLFiles] Critical setup failure: unable to create directory ${tmpDir}. ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
-    }
+/**
+ * TLS options from CA_CERT_BLOB_URL (and, for client certificates, both
+ * CLIENT_CERT_BLOB_URL and CLIENT_KEY_BLOB_URL). The server's certificate
+ * is verified against that CA. Without a CA, TLS follows DATABASE_URL
+ * (e.g. sslmode=require).
+ */
+export async function tlsOptions(env: Env = process.env, read = readCertificate): Promise<ConnectionOptions | undefined> {
+  if (!env.CA_CERT_BLOB_URL) return undefined;
+  const ssl: ConnectionOptions = { ca: await read(env.CA_CERT_BLOB_URL), rejectUnauthorized: true };
+  if (env.CLIENT_CERT_BLOB_URL && env.CLIENT_KEY_BLOB_URL) {
+    const [cert, key] = await Promise.all([read(env.CLIENT_CERT_BLOB_URL), read(env.CLIENT_KEY_BLOB_URL)]);
+    Object.assign(ssl, { cert, key });
   }
+  return ssl;
+}
 
-  const clientKeyUrl = process.env.CLIENT_KEY_BLOB_URL;
-  const clientCertUrl = process.env.CLIENT_CERT_BLOB_URL;
-  const caCertUrl = process.env.CA_CERT_BLOB_URL;
-
-  // 至少需要CA证书URL
-  if (!caCertUrl) {
-    console.warn(
-      "[prepareSSLFiles] CA_CERT_BLOB_URL is required for SSL connection. Other SSL URLs (CLIENT_KEY_BLOB_URL, CLIENT_CERT_BLOB_URL) are optional."
-    );
-    return null;
-  }
-
-  // 检查是否有完整的客户端证书配置
-  const hasClientCerts = clientKeyUrl && clientCertUrl;
-  if ((clientKeyUrl && !clientCertUrl) || (!clientKeyUrl && clientCertUrl)) {
-    console.warn(
-      "[prepareSSLFiles] Client certificates require both CLIENT_KEY_BLOB_URL and CLIENT_CERT_BLOB_URL. Proceeding with CA-only SSL."
-    );
-  }
-
-  let caCertBuffer: Buffer;
-  let clientKey: Buffer | undefined;
-  let clientCert: Buffer | undefined;
-
-  try {
-    if (hasClientCerts) {
-      console.log(
-        "[prepareSSLFiles] Starting download of SSL files (Key, Cert, CA)..."
-      );
-      const [downloadedClientKey, downloadedClientCert, downloadedCaCert] =
-        await Promise.all([
-          downloadFile(clientKeyUrl!),
-          downloadFile(clientCertUrl!),
-          downloadFile(caCertUrl),
-        ]);
-      clientKey = downloadedClientKey;
-      clientCert = downloadedClientCert;
-      caCertBuffer = downloadedCaCert;
-      console.log(
-        "[prepareSSLFiles] SSL files (Key, Cert, CA) downloaded successfully."
-      );
-    } else {
-      console.log(
-        "[prepareSSLFiles] Starting download of CA certificate only..."
-      );
-      caCertBuffer = await downloadFile(caCertUrl);
-      console.log("[prepareSSLFiles] CA certificate downloaded successfully.");
-    }
-
-    // ---- 更详细的 CA 证书内容检查 ----
-    console.log(
-      `[prepareSSLFiles] CA Cert Buffer downloaded. Byte length: ${caCertBuffer.length}`
-    );
-    const caCertString = caCertBuffer.toString("utf-8");
-    console.log(
-      `[prepareSSLFiles] CA Cert converted to string. String length: ${caCertString.length}`
-    );
-
-    const startsWithPemHeader = caCertString.startsWith(
-      "-----BEGIN CERTIFICATE-----"
-    );
-    // 检查时去除可能的尾部空白和换行符
-    const endsWithPemFooter = caCertString
-      .trimEnd()
-      .endsWith("-----END CERTIFICATE-----");
-    console.log(
-      `[prepareSSLFiles] CA Cert string starts with '-----BEGIN CERTIFICATE-----': ${startsWithPemHeader}`
-    );
-    console.log(
-      `[prepareSSLFiles] CA Cert string (trimmed) ends with '-----END CERTIFICATE-----': ${endsWithPemFooter}`
-    );
-
-    if (!startsWithPemHeader || !endsWithPemFooter) {
-      console.error(
-        "[prepareSSLFiles] CRITICAL DIAGNOSTIC: Downloaded CA certificate content does NOT appear to have correct PEM start/end markers."
-      );
-      // 记录部分内容帮助分析
-      console.log(
-        `[prepareSSLFiles] CA Cert Content (first 200 chars): ${caCertString
-          .substring(0, 200)
-          .replace(/\n/g, "\\n")}...`
-      );
-      console.log(
-        `[prepareSSLFiles] CA Cert Content (last 200 chars): ...${caCertString
-          .substring(Math.max(0, caCertString.length - 200))
-          .replace(/\n/g, "\\n")}`
-      );
-      // 即使标记不正确，也继续尝试，但这个日志非常重要
-    } else {
-      console.log(
-        "[prepareSSLFiles] Downloaded CA certificate content appears to have correct PEM start/end markers."
-      );
-      // 记录完整内容到日志 - Vercel可能会截断，但尽力而为
-      // console.log("[prepareSSLFiles] Full CA Cert String (may be truncated by logger):\n", caCertString);
-    }
-    // ---- 检查结束 ----
-
-    const caCertPath = path.join(tmpDir, "ca-cert.pem");
-    fs.writeFileSync(caCertPath, caCertBuffer);
-
-    const result: { key?: Buffer; cert?: Buffer; ca: Buffer } = {
-      ca: caCertBuffer,
-    };
-
-    if (hasClientCerts && clientKey && clientCert) {
-      const clientKeyPath = path.join(tmpDir, "client-key.pem");
-      const clientCertPath = path.join(tmpDir, "client-cert.pem");
-      fs.writeFileSync(clientKeyPath, clientKey);
-      fs.writeFileSync(clientCertPath, clientCert);
-      result.key = clientKey;
-      result.cert = clientCert;
-      console.log(
-        `[prepareSSLFiles] SSL files written to /tmp for debugging: ${clientKeyPath}, ${clientCertPath}, ${caCertPath}`
-      );
-    } else {
-      console.log(
-        `[prepareSSLFiles] CA certificate written to /tmp for debugging: ${caCertPath}`
-      );
-    }
-
-    return result;
-  } catch (error) {
-    console.error(
-      "[prepareSSLFiles] Failed to prepare SSL files (download, content check, or write):",
-      error
-    );
-    throw new Error(
-      `[prepareSSLFiles] Failed to prepare SSL files: ${
-        error instanceof Error ? error.message : String(error)
-      }`
-    );
-  }
-};
-
-// 创建数据库连接池
-const createPool = async (): Promise<Pool> => {
-  let sslFiles = null; // Initialize to null
-  let sslPreparationAttempted = false;
-  let sslPreparationError = null;
-
-  // Check if environment variables for SSL blob URLs are set
-  const caCertUrl = process.env.CA_CERT_BLOB_URL;
-
-  // 尝试准备SSL文件，至少需要CA证书
-  if (caCertUrl) {
-    sslPreparationAttempted = true;
-    try {
-      console.log(
-        "[createPool] Attempting to prepare SSL files from BLOB URLs..."
-      );
-      sslFiles = await prepareSSLFiles();
-      if (!sslFiles) {
-        // This case should ideally be handled within prepareSSLFiles by throwing an error if URLs are present but download fails.
-        // However, if prepareSSLFiles returns null despite URLs being present, we log it.
-        console.warn(
-          "[createPool] prepareSSLFiles returned null despite CA_CERT_BLOB_URL being provided. This might indicate an issue in prepareSSLFiles logic or file content."
-        );
-        // We will proceed without these sslFiles, allowing pg to use connection string params.
-      } else {
-        console.log(
-          "[createPool] SSL files successfully prepared from BLOB URLs."
-        );
-      }
-    } catch (error) {
-      sslPreparationError = error;
-      console.error(
-        "[createPool] Error during SSL file preparation from BLOB URLs:",
-        error
-      );
-      // Do not throw here, let it fallback to connection string if possible
-    }
-  } else {
-    console.log(
-      "[createPool] CA_CERT_BLOB_URL not provided. Will rely on DATABASE_URL parameters for SSL if required."
-    );
-  }
-
-  const poolConfig: PoolConfig = {
-    connectionString: process.env.DATABASE_URL,
-  };
-
-  const dbUrl = process.env.DATABASE_URL || "";
-  const sslRequiredByUrlParams =
-    dbUrl.includes("sslmode=require") ||
-    dbUrl.includes("sslmode=verify-ca") ||
-    dbUrl.includes("sslmode=verify-full");
-
-  if (sslFiles && sslFiles.ca) {
-    // If SSL files were successfully prepared from URLs, use them.
-    const sslOptions: ConnectionOptions = {
-      rejectUnauthorized: false, // 暂时设置为false以测试连接
-      ca: sslFiles.ca,
-    };
-
-    // 如果有客户端证书，也添加它们
-    if (sslFiles.key && sslFiles.cert) {
-      sslOptions.key = sslFiles.key;
-      sslOptions.cert = sslFiles.cert;
-      console.log(
-        "[createPool] SSL configuration applied from downloaded certs (key, cert, ca Buffers)."
-      );
-    } else {
-      console.log(
-        "[createPool] SSL configuration applied from downloaded CA certificate (ca-only mode)."
-      );
-    }
-
-    poolConfig.ssl = sslOptions;
-  } else if (sslPreparationAttempted && sslPreparationError) {
-    // If preparation was attempted from URLs but failed, and SSL is required by URL params,
-    // it's a critical issue because the primary SSL method (URL download) failed.
-    // However, we still allow pg to try with connection string if possible.
-    console.warn(
-      `[createPool] SSL file preparation from BLOB URLs failed. Error: ${
-        sslPreparationError instanceof Error
-          ? sslPreparationError.message
-          : String(sslPreparationError)
-      }. ` +
-        "Proceeding to let pg library attempt connection using DATABASE_URL parameters."
-    );
-    // No explicit poolConfig.ssl is set here, pg will use connection string.
-  } else if (!sslPreparationAttempted && sslRequiredByUrlParams) {
-    // If SSL URLs were not provided, but DATABASE_URL indicates SSL is needed (e.g. sslmode=verify-full and sslrootcert is present)
-    // Log that we are relying on pg to handle SSL via connection string.
-    console.log(
-      "[createPool] SSL BLOB URLs not provided. Relying on pg library to handle SSL based on DATABASE_URL parameters (e.g., sslmode, sslrootcert)."
-    );
-    // No explicit poolConfig.ssl is set here, pg will use connection string.
-  } else if (!sslRequiredByUrlParams && !sslFiles) {
-    // Neither URL params require SSL nor were files prepared.
-    // This could be a non-SSL connection or SSL configured entirely by connection string without explicit sslmode=require/verify-*
-    console.log(
-      "[createPool] Attempting database connection. SSL not explicitly required by sslmode in DATABASE_URL and no SSL files prepared via BLOB URLs. " +
-        "If SSL is needed, it must be fully specified in DATABASE_URL."
-    );
-  }
-
+async function createPool(): Promise<Pool> {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) throw new Error("DATABASE_URL is not set");
+  const config: PoolConfig = { connectionString };
+  const ssl = await tlsOptions();
+  if (ssl) config.ssl = ssl;
   console.log(
-    "[createPool] Final poolConfig before creating Pool:",
-    JSON.stringify(
-      {
-        ...poolConfig,
-        connectionString: redactConnectionString(
-          poolConfig.connectionString ?? ""
-        ),
-        ssl: poolConfig.ssl
-          ? {
-              ...Object.fromEntries(
-                Object.entries(poolConfig.ssl).map(([k, v]) => [
-                  k,
-                  typeof v === "boolean"
-                    ? v
-                    : `Buffer(length:${(v as Buffer).length})`,
-                ])
-              ),
-            }
-          : undefined,
-      },
-      null,
-      2
-    )
+    `[db] Pool for ${redactConnectionString(connectionString)}${ssl ? ` with TLS verified against the configured CA${ssl.cert ? " and a client certificate" : ""}` : ""}`,
   );
+  return new Pool(config);
+}
 
-  try {
-    const pool = new Pool(poolConfig);
-    console.log(
-      "[createPool] Database pool configured and new Pool() called. Attempting to connect..."
-    );
-    return pool;
-  } catch (poolError) {
-    console.error(
-      "[createPool] Failed to create database pool (new Pool(poolConfig) threw error):",
-      poolError
-    );
-    throw poolError;
-  }
-};
+const shared = globalThis as unknown as { assayPgPool?: Promise<Pool> | null };
 
-// 获取连接池 - 使用单例模式
-const getPool = async (): Promise<Pool> => {
-  const dbPool = DatabasePool.getInstance();
-  return await dbPool.getPool();
-};
-
-// Test database connection
-export const testConnection = async () => {
-  try {
-    const pool = await getPool();
-    const client = await pool.connect();
-    console.log("Database connection successful");
-    client.release();
-    return true;
-  } catch (error) {
-    console.error("Database connection failed:", error);
-    return false;
-  }
-};
-
-// Execute SQL query
-export const query = async (
-  text: string,
-  params?: unknown[]
-): Promise<QueryResult> => {
-  try {
-    const pool = await getPool();
-    const result = await pool.query(text, params);
-    return result;
-  } catch (error) {
-    console.error("Query execution failed:", error);
+/** The process's one pool. The promise is shared, so concurrent first calls cannot create two. */
+function getPool(): Promise<Pool> {
+  shared.assayPgPool ??= createPool().catch((error) => {
+    shared.assayPgPool = null;
     throw error;
-  }
-};
+  });
+  return shared.assayPgPool;
+}
+
+export async function query(text: string, params?: unknown[]): Promise<QueryResult> {
+  return (await getPool()).query(text, params);
+}
 
 /** Runs fn on a single connection inside a READ ONLY transaction; the database rejects any write. */
-export const withReadOnlyTransaction = async <T>(
-  fn: (client: PoolClient) => Promise<T>
-): Promise<T> => {
-  const pool = await getPool();
-  const client = await pool.connect();
+export async function withReadOnlyTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client = await (await getPool()).connect();
   try {
     await client.query("BEGIN READ ONLY");
     const result = await fn(client);
     await client.query("COMMIT");
     return result;
   } catch (error) {
-    await client.query("ROLLBACK").catch((rollbackError) => {
-      console.error("Rollback failed:", rollbackError);
-    });
+    await client.query("ROLLBACK").catch((rollbackError) => console.error("[db] Rollback failed:", rollbackError));
     throw error;
   } finally {
     client.release();
   }
-};
+}
 
-// Close connection pool
-export const closePool = async () => {
-  try {
-    const dbPool = DatabasePool.getInstance();
-    await dbPool.closePool();
-  } catch (error) {
-    console.error("Error closing pool:", error);
-  }
-};
+/** Closes the pool, for scripts that must exit. */
+export async function closePool(): Promise<void> {
+  const pool = shared.assayPgPool;
+  shared.assayPgPool = null;
+  if (pool) await (await pool.catch(() => null))?.end();
+}
 
-const db = {
-  query,
-  withReadOnlyTransaction,
-  testConnection,
-  closePool,
-};
+const db = { query, withReadOnlyTransaction, closePool };
 
 export default db;

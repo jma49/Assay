@@ -46,7 +46,7 @@ export { GITHUB_URL };
 export const QUICK_START = `git clone ${GITHUB_URL}.git
 cd Assay && npm install
 
-# Clerk, MongoDB, PostgreSQL and Upstash keys
+# Google/GitHub OAuth, MongoDB, PostgreSQL and Upstash keys
 cp .env.example .env.local
 
 npm run seed:demo   # optional demo dataset
@@ -165,7 +165,7 @@ const en: LandingCopy = {
   quickStart: {
     eyebrow: "Open source",
     title: "Run it on your own stack",
-    body: `${BRAND} is a Next.js app. Bring a Clerk app, MongoDB for scripts and history, the PostgreSQL database you want to check, and Upstash Redis for caching.`,
+    body: `${BRAND} is a Next.js app. Bring a Google or GitHub OAuth app for sign-in, MongoDB for users, scripts and history, the PostgreSQL database you want to check, and Upstash Redis for caching.`,
     readme: "Read the setup guide",
   },
   faq: {
@@ -304,7 +304,7 @@ const zh: LandingCopy = {
   quickStart: {
     eyebrow: "开源",
     title: "部署在你自己的环境里",
-    body: `${BRAND} 是一个 Next.js 应用。准备好 Clerk 应用、存放脚本和历史的 MongoDB、要检查的 PostgreSQL，以及用于缓存的 Upstash Redis 即可。`,
+    body: `${BRAND} 是一个 Next.js 应用。准备好用于登录的 Google 或 GitHub OAuth 应用、存放用户、脚本和历史的 MongoDB、要检查的 PostgreSQL，以及用于缓存的 Upstash Redis 即可。`,
     readme: "查看部署文档",
   },
   faq: {

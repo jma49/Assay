@@ -1,4 +1,3 @@
-// 编辑历史帮助函数
 import { ScriptSnapshot } from "./edit-history-schema";
 
 export interface ChangeDetail {
@@ -15,22 +14,16 @@ export interface RecordEditHistoryParams {
   description?: string;
 }
 
-/**
- * 比较两个对象，返回变更的字段列表
- */
+/** The tracked fields that differ between two versions of a check. */
 export function getObjectChanges(
   oldObj: Record<string, unknown> | null | undefined,
   newObj: Record<string, unknown> | null | undefined,
 ): ChangeDetail[] {
   const changes: ChangeDetail[] = [];
-
-  // 获取所有可能的键
   const allKeys = new Set([
     ...Object.keys(oldObj || {}),
     ...Object.keys(newObj || {}),
   ]);
-
-  // 需要跟踪的字段
   const trackedFields = [
     "name",
     "cnName",
@@ -45,13 +38,10 @@ export function getObjectChanges(
   ];
 
   for (const key of allKeys) {
-    // 只跟踪指定的字段
     if (!trackedFields.includes(key)) continue;
 
     const oldValue = oldObj?.[key];
     const newValue = newObj?.[key];
-
-    // 比较值，处理空值和未定义值
     if (normalizeValue(oldValue) !== normalizeValue(newValue)) {
       changes.push({
         field: key,
@@ -64,9 +54,6 @@ export function getObjectChanges(
   return changes;
 }
 
-/**
- * 规范化值用于比较
- */
 function normalizeValue(value: unknown): string {
   if (value === null || value === undefined) {
     return "";
@@ -77,9 +64,6 @@ function normalizeValue(value: unknown): string {
   return String(value).trim();
 }
 
-/**
- * 创建脚本快照
- */
 function createScriptSnapshot(
   scriptData: Record<string, unknown>,
 ): ScriptSnapshot {

@@ -32,7 +32,7 @@ interface LanguageProviderProps {
 const LANGUAGE_KEY = "assay-language";
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
-  const [language, setLanguageState] = useState<"en" | "zh">("en"); // 默认英文
+  const [language, setLanguageState] = useState<"en" | "zh">("en");
 
   // The choice is remembered per browser. It is read after mount so the
   // server-rendered English page and the first client render still match.
@@ -55,11 +55,9 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   }, []);
 
   useEffect(() => {
-    // 设置页面语言属性
     document.documentElement.lang = language === "zh" ? "zh-CN" : "en";
   }, [language]);
 
-  // 使用useMemo避免value对象每次都重新创建
   const value = useMemo(
     () => ({
       language,
