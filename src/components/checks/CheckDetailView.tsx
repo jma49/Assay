@@ -66,7 +66,7 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
         {canAlert && <AlertMenu scriptId={check.scriptId} alerting={check.alerting} state={check.state} onChanged={reload} />}
         {canEdit && (
           <Button asChild size="sm" variant="outline">
-            <Link href={`/manage-scripts?scriptId=${encodeURIComponent(check.scriptId)}`}>
+            <Link href={`/checks/manage?scriptId=${encodeURIComponent(check.scriptId)}`}>
               <Pencil />
               {t.edit}
             </Link>

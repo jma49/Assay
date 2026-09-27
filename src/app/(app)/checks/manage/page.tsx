@@ -56,7 +56,7 @@ const ManageScriptsContent = () => {
       description: language === "zh" ? `将搜索脚本: ${trimmed}` : `Filtering by ${trimmed}`,
       duration: 2000,
     });
-    router.push(`/dashboard?search=${encodeURIComponent(trimmed)}#execution-history`);
+    router.push(`/runs?search=${encodeURIComponent(trimmed)}#execution-history`);
   };
 
   return (
