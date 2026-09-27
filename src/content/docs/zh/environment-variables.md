@@ -11,6 +11,7 @@
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth 客户端，回调地址 `/api/auth/callback/google`。 |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth 应用，回调地址 `/api/auth/callback/github`。 |
 | `MONGODB_URI` | MongoDB 连接串。数据库名取连接串路径中的名字，其次是 `MONGODB_DB_NAME`，默认为 `sql_script_monitoring`；用户、角色、检查和执行记录都在这个库里。 |
+| `RUN_RETENTION_DAYS` | 执行记录保留天数（默认 90；`0` 表示永久保留）。 |
 | `DATABASE_URL` | 检查要读取的 PostgreSQL 数据库。 |
 | `UPSTASH_REDIS_REST_URL` | Upstash Redis REST 地址。 |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST 令牌。 |

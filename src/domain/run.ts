@@ -29,6 +29,34 @@ export function fromLegacyStatus(status: string | undefined): RunOutcome {
 export const SAMPLE_ROWS = 500;
 /** Rows fingerprinted to tell new, still-open and fixed rows apart between runs. */
 export const FINGERPRINT_ROWS = 5_000;
+/** Bytes of sample rows kept on a run, well under MongoDB's 16 MB document limit even with wide rows. */
+export const SAMPLE_BYTES = 2 * 1024 * 1024;
+
+/**
+ * The rows kept for display: at most SAMPLE_ROWS, and fewer when they are
+ * wide, so a run document stays small. The row count is kept separately.
+ */
+export function sampleRows(rows: readonly Record<string, unknown>[], maxRows = SAMPLE_ROWS, maxBytes = SAMPLE_BYTES): Record<string, unknown>[] {
+  const kept: Record<string, unknown>[] = [];
+  let bytes = 0;
+  for (const row of rows.slice(0, maxRows)) {
+    bytes += JSON.stringify(row).length;
+    if (bytes > maxBytes) break;
+    kept.push(row);
+  }
+  return kept;
+}
+
+/** Days a run is kept (RUN_RETENTION_DAYS, 90 by default); 0 keeps runs forever. */
+export function runRetentionDays(env: Record<string, string | undefined> = process.env): number {
+  const days = Number(env.RUN_RETENTION_DAYS ?? 90);
+  return Number.isFinite(days) && days >= 0 ? days : 90;
+}
+
+/** When a run finished at `finishedAt` may be deleted, or null to keep it. */
+export function runExpiresAt(finishedAt: Date, days: number): Date | null {
+  return days > 0 ? new Date(finishedAt.getTime() + days * 86_400_000) : null;
+}
 
 /** A JSON-safe copy of a database row: bigints become strings, dates ISO strings. */
 export function normalizeRow(row: Record<string, unknown>): Record<string, unknown> {
