@@ -2,6 +2,7 @@ import type { Db } from "mongodb";
 import { dueSlot } from "@/lib/scheduling/due-slot";
 import { createSemaphore } from "@/server/concurrency/semaphore";
 import type { RunCheckResult, RunTrigger } from "./run-check";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export type RunMode = "all" | "scheduled";
 
@@ -105,7 +106,7 @@ async function release(deps: RunChecksDeps, check: CheckCandidate, slot: Date): 
 
 /** listChecks, claimSlot and releaseSlot over the sql_scripts collection. */
 export function mongoRunChecksStore(db: Db): Pick<RunChecksDeps, "listChecks" | "claimSlot" | "releaseSlot"> {
-  const checks = db.collection("sql_scripts");
+  const checks = db.collection(COLLECTIONS.checks);
   return {
     async listChecks(mode) {
       const docs = await checks

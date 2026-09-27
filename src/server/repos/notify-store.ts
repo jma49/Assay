@@ -2,10 +2,7 @@ import { randomUUID } from "node:crypto";
 import { ObjectId, type Db, type Document } from "mongodb";
 import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
 import type { Destination, NotifyStore, StoredEvent } from "@/server/services/notifications";
-
-export const DESTINATIONS = "notification_destinations";
-export const DELIVERIES = "notification_deliveries";
-export const REMINDERS = "notification_reminders";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 const DUPLICATE_KEY = 11000;
 
@@ -52,11 +49,11 @@ export function toStoredEvent(doc: Document): StoredEvent {
 }
 
 export function mongoNotifyStore(db: Db): NotifyStore {
-  const events = db.collection("events");
-  const checks = db.collection("sql_scripts");
-  const destinations = db.collection(DESTINATIONS);
-  const deliveries = db.collection(DELIVERIES);
-  const reminders = db.collection(REMINDERS);
+  const events = db.collection(COLLECTIONS.events);
+  const checks = db.collection(COLLECTIONS.checks);
+  const destinations = db.collection(COLLECTIONS.notificationDestinations);
+  const deliveries = db.collection(COLLECTIONS.notificationDeliveries);
+  const reminders = db.collection(COLLECTIONS.notificationReminders);
 
   return {
     async pendingEvents(since, limit) {

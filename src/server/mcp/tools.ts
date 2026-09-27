@@ -11,6 +11,7 @@ import { applyAlertingAction } from "@/server/services/alert-controls";
 import { getCheckDetail, listChecks } from "@/server/services/checks-read";
 import type { RunCheckResult } from "@/server/services/run-check";
 import type { McpCaller } from "./caller";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export interface ToolDeps {
   db(): Promise<Db>;
@@ -158,7 +159,7 @@ export function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
       }),
       async handler({ run_id, max_rows }) {
         const run = await (await deps.db())
-          .collection("result")
+          .collection(COLLECTIONS.runs)
           .findOne({ _id: new ObjectId(run_id) }, { projection: { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, columns: 1, raw_results: 1, error: 1 } });
         if (!run) throw new Error(`No run with id ${run_id}`);
         const rows: Record<string, unknown>[] = Array.isArray(run.raw_results) ? run.raw_results : [];

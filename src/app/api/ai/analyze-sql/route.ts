@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/server/http/route";
 import { Permission } from "@/lib/auth/rbac";
 import { guardAiRequest } from "@/lib/security/ai-guard";
 import { getCachedSchema } from "@/lib/database/db-schema";
@@ -9,16 +9,11 @@ import {
   logTokenUsage,
 } from "@/lib/utils/ai-utils";
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(Permission.SCRIPT_CREATE, async (request, { principal }) => {
   try {
-    const authResult = await authorizeApiRequest(Permission.SCRIPT_CREATE);
-    if (!authResult.isValid) {
-      return authResult.response;
-    }
-
     const { sql, analysisType } = await request.json();
 
-    const refused = await guardAiRequest(authResult.user.id, { sql });
+    const refused = await guardAiRequest(principal.id, { sql });
     if (refused) {
       return refused;
     }
@@ -70,7 +65,7 @@ ${sql}
 用Markdown格式，中文回复。`;
     }
 
-    const analysis = await generateContentWithRetry(aiPrompt, { feature: "analyze-sql", userId: authResult.user.id });
+    const analysis = await generateContentWithRetry(aiPrompt, { feature: "analyze-sql", userId: principal.id });
 
     logTokenUsage(aiPrompt, analysis, `分析SQL-${analysisType}`);
 
@@ -91,4 +86,4 @@ ${sql}
       { status: 500 }
     );
   }
-}
+});

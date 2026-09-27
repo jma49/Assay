@@ -2,6 +2,7 @@ import { ObjectId, type Db, type Document } from "mongodb";
 import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
 import { runExpiresAt, runRetentionDays, stateFromHistory } from "@/domain/run";
 import { type CheckEvent, type RunCheckStore, type RunDocument } from "@/server/services/run-check";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 // Enough runs to find when the current streak began for any realistic schedule.
 const HISTORY_LIMIT = 500;
@@ -13,9 +14,9 @@ const DUPLICATE_KEY = 11000;
  * taking it is one atomic findOneAndUpdate.
  */
 export function mongoRunCheckStore(db: Db): RunCheckStore {
-  const checks = db.collection("sql_scripts");
-  const runs = db.collection("result");
-  const events = db.collection("events");
+  const checks = db.collection(COLLECTIONS.checks);
+  const runs = db.collection(COLLECTIONS.runs);
+  const events = db.collection(COLLECTIONS.events);
 
   return {
     async acquireLease(scriptId, runId, until, now) {

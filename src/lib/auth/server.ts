@@ -10,6 +10,7 @@ import redis from "@/lib/cache/redis";
 import { claimLegacyRole, emailAllowed } from "./legacy-accounts";
 import { redisRateLimitStorage, upstashCounterStore } from "./rate-limit-storage";
 import { enabledProviders } from "./providers";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 /**
  * Sign-in for Assay: Google and GitHub through Better Auth, with users,
@@ -30,7 +31,7 @@ const db = client.db(mongoDatabaseName());
  * the request.
  */
 export async function findUser(by: { id?: string; email?: string }): Promise<{ id: string; email: string; name: string } | null> {
-  const users = db.collection("user");
+  const users = db.collection(COLLECTIONS.users);
   let doc = null;
   if (by.id && ObjectId.isValid(by.id)) doc = await users.findOne({ _id: new ObjectId(by.id) });
   if (!doc && by.email) {
