@@ -52,9 +52,9 @@ export function useRunsPage(language: string) {
     }
   }, []);
 
-  const { loadPage, isBusy } = history;
+  const { loadPage } = history;
   const loadInitialData = useCallback(async () => {
-    if (isBusy() || isSearchMode) return;
+    if (isSearchMode) return;
     setLoading(true);
     setIsFetchingScripts(true);
     try {
@@ -71,7 +71,7 @@ export function useRunsPage(language: string) {
     } finally {
       setLoading(false);
     }
-  }, [isBusy, isSearchMode, loadScripts, loadPage, loadOverallStats]);
+  }, [isSearchMode, loadScripts, loadPage, loadOverallStats]);
 
   const openFilteredBySearch = (search: string) => {
     setIsSearchMode(true);
@@ -84,7 +84,7 @@ export function useRunsPage(language: string) {
     setTimeout(scrollToHistory, 1000);
     setLoading(true);
     setIsFetchingScripts(true);
-    // The history itself loads once the search term is set, below.
+    loadPage({ page: 1, status: null, search, hashtags: [], sort: DEFAULT_SORT });
     Promise.all([loadScripts(), loadOverallStats()])
       .catch((err) => setError(err instanceof Error ? err.message : "数据加载失败"))
       .finally(() => {
@@ -120,11 +120,6 @@ export function useRunsPage(language: string) {
     // Runs once on mount; later loads come from the filters and the Run sheet.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (history.searchTerm.trim() !== "") loadPage(history.current({ page: 1 }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [history.searchTerm]);
 
   return {
     loading,

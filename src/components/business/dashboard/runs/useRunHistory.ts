@@ -1,15 +1,7 @@
-import { useCallback, useRef, useState } from "react";
-import { CHECK_HISTORY_ITEMS_PER_PAGE, type Check } from "../types";
-import {
-  DEFAULT_SORT,
-  EMPTY_PAGINATION,
-  buildCheckHistoryQuery,
-  nextSort,
-  parseChecks,
-  parsePagination,
-  type HistoryQuery,
-  type SortConfig,
-} from "./runs";
+import { useCallback, useState } from "react";
+import type { Check } from "../types";
+import { createHistoryLoader } from "./history-loader";
+import { DEFAULT_SORT, EMPTY_PAGINATION, nextSort, type HistoryQuery, type SortConfig } from "./runs";
 
 /** One page of run history plus the filters, sort and pager that pick it. */
 export function useRunHistory(onError: (message: string) => void) {
@@ -21,36 +13,23 @@ export function useRunHistory(onError: (message: string) => void) {
   const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<SortConfig>(DEFAULT_SORT);
   const [currentPage, setCurrentPage] = useState(1);
-  const isLoadingRef = useRef(false);
+  const [loader] = useState(createHistoryLoader);
 
   const loadPage = useCallback(
     async (query: HistoryQuery) => {
-      if (isLoadingRef.current) return;
-      isLoadingRef.current = true;
       setIsLoadingChecks(true);
-      try {
-        const response = await fetch(`/api/check-history?${buildCheckHistoryQuery(query, CHECK_HISTORY_ITEMS_PER_PAGE)}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-        if (!response.ok) {
-          console.error("[runs] Loading run history failed:", await response.text());
-          throw new Error(`获取检查历史失败: ${response.status} ${response.statusText}`);
-        }
-        const body = await response.json();
-        setChecks(parseChecks(body) ?? []);
-        const nextPagination = parsePagination(body);
-        if (nextPagination) setPagination(nextPagination);
-      } catch (err) {
-        console.error("[runs] Loading run history failed:", err);
-        onError(err instanceof Error ? err.message : "数据加载失败");
+      const result = await loader.load(query);
+      if (result.kind === "stale") return;
+      if (result.kind === "error") {
+        onError(result.message);
         setChecks([]);
-      } finally {
-        setIsLoadingChecks(false);
-        isLoadingRef.current = false;
+      } else {
+        setChecks(result.checks);
+        if (result.pagination) setPagination(result.pagination);
       }
+      setIsLoadingChecks(false);
     },
-    [onError],
+    [loader, onError],
   );
 
   const current = (overrides: Partial<HistoryQuery>): HistoryQuery => ({
@@ -109,9 +88,7 @@ export function useRunHistory(onError: (message: string) => void) {
     selectedHashtags,
     sortConfig,
     currentPage,
-    isBusy: () => isLoadingRef.current,
     loadPage,
-    current,
     requestSort,
     changePage,
     changeStatus,

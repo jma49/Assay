@@ -64,13 +64,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
           onSearchChange={setSearchTerm}
           availableHashtags={availableHashtags}
           selectedHashtags={selectedHashtags}
-          onHashtagsChange={
-            setSelectedHashtags &&
-            ((hashtags) => {
-              setSelectedHashtags(hashtags);
-              setCurrentPage(1);
-            })
-          }
+          onHashtagsChange={setSelectedHashtags}
         />
       </CardHeader>
 
