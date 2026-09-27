@@ -11,8 +11,8 @@ Indexes live in `src/lib/database/indexes.ts` and are created on start-up
 
 ## Conventions
 
-- **New fields are camelCase**; runs still carry older snake_case fields,
-  written but no longer read (see [Legacy fields](#legacy-fields)).
+- **New fields are camelCase**; older runs may still carry retired
+  snake_case fields (see [Legacy fields](#legacy-fields)).
 - **Who and when** come from the server, never the request: `createdBy`,
   `updatedBy`, `by` are `{ id, email }` or `{ id, name }` of the session.
 - **Workspaces:** documents written since phase 4 carry `workspaceId`;
@@ -119,26 +119,28 @@ source (web | slack | telegram | mcp), at }`. Index `(checkId, at)`.
 
 ## Legacy fields
 
-Runs still carry older fields, written next to the new ones by
-`legacyRunFields`. Nothing reads them any more: the history, analysis and
-report APIs read the new fields and map them to the old response shape in
-`src/server/runs/legacy-view.ts`.
+Runs saved before 2026-09-27 also carry the fields the old pages read.
+New runs no longer write them, and nothing reads them: the history,
+analysis and report APIs read the new fields and map them to the old
+response shape in `src/server/runs/legacy-view.ts`.
 
-| Legacy | New |
+| Retired | Read instead |
 | --- | --- |
 | `script_name` | `checkId` |
 | `execution_time` | `finishedAt` |
 | `statusType` (`success` / `attention_needed` / `failure`), `status` | `outcome` |
-| `raw_results` | (the sample; kept under this name) |
-| `github_run_id` | `trigger` |
 
-Runs saved before the run pipeline only have the legacy fields;
-`scripts/migrations/backfill-run-fields.ts` derives the new ones (dry run,
-then `--apply`; idempotent).
+Still written under their original names, because pages read them:
+`raw_results` (the sample), `message`, `findings`, `github_run_id`.
 
-Plan (issue #62): readers moved and old runs back-filled (done); stop
-writing the legacy fields; drop them and the `execution_time` /
-`(script_name, execution_time)` indexes, which `ensureIndexes` no longer
-creates. Renaming the collections (`sql_scripts` → `checks`,
+Runs saved before the run pipeline only had the legacy fields;
+`scripts/migrations/backfill-run-fields.ts` derived the new ones (dry run,
+then `--apply`; idempotent; applied to production).
+
+The retired fields disappear with their runs through the retention TTL
+(`RUN_RETENTION_DAYS`, 90 days by default), so no data migration is needed.
+The indexes `execution_time_-1` and `script_name_1_execution_time_-1` are no
+longer created by `ensureIndexes`; drop them by hand once they are unused
+(issue #62). Renaming the collections (`sql_scripts` → `checks`,
 `result` → `runs`) comes last, behind a migration script, because every
 deployment's data lives under the old names.

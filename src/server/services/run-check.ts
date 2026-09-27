@@ -5,7 +5,6 @@ import {
   nextCheckState,
   normalizeRow,
   sampleRows,
-  toLegacyStatus,
   type CheckState,
   type RowDiff,
   type RunOutcome,
@@ -208,19 +207,4 @@ export async function runCheck(scriptId: string, trigger: RunTrigger, deps: RunC
   } finally {
     if (!committed) await deps.store.releaseLease(scriptId, runId);
   }
-}
-
-/** The fields older pages read from a run, derived from the outcome. */
-export function legacyRunFields(run: RunDocument, githubRunId?: string) {
-  const statusType = toLegacyStatus(run.outcome);
-  return {
-    script_name: run.checkId,
-    execution_time: run.finishedAt,
-    status: statusType === "failure" ? "failure" : "success",
-    statusType,
-    message: run.message,
-    findings: run.findings,
-    raw_results: run.sample,
-    github_run_id: githubRunId,
-  };
 }
