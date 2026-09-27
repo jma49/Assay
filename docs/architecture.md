@@ -228,13 +228,16 @@ the legacy routes are still being migrated and keep their own shapes.
 
 ## Front end
 
-- Routes: `/checks`, `/checks/[scriptId]`, `/scripts/new` (new check),
-  `/activity`, `/dashboard` (the Runs page), `/coverage`, `/data-analysis`,
-  `/settings/notifications`, `/settings/api-keys`, `/admin/users`. The
-  older pages `/manage-scripts` (Manage, with `/approvals` and
-  `/edit-history` under it) and `/view-execution-result/[resultId]` (a run's
-  full report) are still live, without redirects; the sidebar treats them as
-  part of Checks and Runs. The only redirect is `/docs/menu-bar-and-dock`.
+- Routes: `/checks`, `/checks/[scriptId]`, `/checks/new` (new check),
+  `/checks/manage` (Manage, with `/checks/manage/history` for edit history),
+  `/approvals`, `/activity`, `/runs` (accepts `?search=`), `/runs/[runId]`
+  (a run's full report), `/coverage`, `/data-analysis`,
+  `/settings/notifications`, `/settings/api-keys`, `/admin/users`. Static
+  segments win over `[scriptId]`, so `/checks/new` and `/checks/manage` are
+  their own pages. The old URLs (`/dashboard`, `/view-execution-result/:id`,
+  `/scripts/new`, `/manage-scripts`, `/manage-scripts/edit-history`,
+  `/manage-scripts/approvals`) and `/docs/menu-bar-and-dock` redirect
+  permanently; the list is `src/lib/legacy-redirects.mjs`.
 - Server components render the shell; interactive views are client
   components. They fetch with `useApi` (`src/client/use-api.ts`), a plain
   `useEffect` fetch with abort and `reload()`: no cache, deduplication or
