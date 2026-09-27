@@ -38,5 +38,11 @@ export function createHistoryLoader(fetchImpl: Fetch = (input, init) => fetch(in
     return requests.isLatest(token) ? result : { kind: "stale" };
   };
 
-  return { load };
+  /** Loads the last requested page again, with the filters it was requested with. */
+  const reload = (): Promise<HistoryLoadResult> => {
+    const query = requests.latestParams();
+    return query ? load(query) : Promise.resolve({ kind: "stale" });
+  };
+
+  return { load, reload };
 }

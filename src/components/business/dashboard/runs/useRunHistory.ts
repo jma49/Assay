@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import type { Check } from "../types";
-import { createHistoryLoader } from "./history-loader";
+import { createHistoryLoader, type HistoryLoadResult } from "./history-loader";
 import { DEFAULT_SORT, EMPTY_PAGINATION, nextSort, type HistoryQuery, type SortConfig } from "./runs";
 
 /** One page of run history plus the filters, sort and pager that pick it. */
@@ -15,10 +15,10 @@ export function useRunHistory(onError: (message: string) => void) {
   const [currentPage, setCurrentPage] = useState(1);
   const [loader] = useState(createHistoryLoader);
 
-  const loadPage = useCallback(
-    async (query: HistoryQuery) => {
+  const showResult = useCallback(
+    async (request: Promise<HistoryLoadResult>) => {
       setIsLoadingChecks(true);
-      const result = await loader.load(query);
+      const result = await request;
       if (result.kind === "stale") return;
       if (result.kind === "error") {
         onError(result.message);
@@ -29,8 +29,10 @@ export function useRunHistory(onError: (message: string) => void) {
       }
       setIsLoadingChecks(false);
     },
-    [loader, onError],
+    [onError],
   );
+  const loadPage = useCallback((query: HistoryQuery) => showResult(loader.load(query)), [loader, showResult]);
+  const reload = useCallback(() => showResult(loader.reload()), [loader, showResult]);
 
   const current = (overrides: Partial<HistoryQuery>): HistoryQuery => ({
     page: 1,
@@ -89,6 +91,7 @@ export function useRunHistory(onError: (message: string) => void) {
     sortConfig,
     currentPage,
     loadPage,
+    reload,
     requestSort,
     changePage,
     changeStatus,
