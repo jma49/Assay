@@ -58,13 +58,14 @@ export function AppWindow({ children }: { children: ReactNode }) {
       <div
         className={cn(
           APP_CONTAINER,
-          "relative max-sm:px-2 pt-5 pb-24 sm:pt-8 md:pb-28",
+          // Phones: no desktop around the page, like an iOS app (full-bleed).
+          "relative max-sm:px-0 max-sm:pt-0 pt-5 pb-24 sm:pt-8 md:pb-28",
           zoomed && "max-w-none",
         )}
       >
-        <div className="aqua-window aqua-app overflow-hidden rounded-[7px]">
+        <div className="aqua-window aqua-app overflow-hidden rounded-[7px] max-sm:rounded-none max-sm:shadow-none">
           <div
-            className="aqua-titlebar relative flex h-[26px] items-center justify-center px-20 text-[13px] select-none"
+            className="aqua-titlebar relative flex h-[26px] items-center justify-center px-20 text-[13px] select-none max-sm:hidden"
             onDoubleClick={toggleShade}
           >
             <TrafficLights
