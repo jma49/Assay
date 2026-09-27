@@ -48,6 +48,14 @@
   --info: #2350c8;
 
   --code-bg: #f4f5f8;
+  /* Syntax colours for code samples: the accent for keywords, the rest kept
+     off the status hues so a string never reads as a failure. */
+  --syntax-keyword: #2350c8;
+  --syntax-string: #a1452b;
+  --syntax-number: #7c3fc4;
+  --syntax-function: #0b7285;
+  --syntax-comment: #7a8394;
+  --syntax-punctuation: #5b6474;
   /* Surfaces lift with a transparent ring instead of a solid border, so they
      read the same on any background. Dividers and inputs keep real borders. */
   --shadow-border:
@@ -106,6 +114,12 @@
   --info: #6f95f2;
 
   --code-bg: #12161c;
+  --syntax-keyword: #8ea9f5;
+  --syntax-string: #f0a58a;
+  --syntax-number: #c4a5f5;
+  --syntax-function: #67c8da;
+  --syntax-comment: #7e8898;
+  --syntax-punctuation: #9aa3b2;
   --shadow-border: 0 0 0 1px oklch(1 0 0 / 0.08);
   --shadow-border-hover: 0 0 0 1px oklch(1 0 0 / 0.13);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -472,4 +486,27 @@
 .status-dot-failure {
   background: var(--failure);
   box-shadow: 0 0 0 3px var(--failure-soft);
+}
+
+/* Highlighted code (src/lib/highlight.ts). */
+.tok-keyword {
+  color: var(--syntax-keyword);
+  font-weight: 500;
+}
+.tok-string {
+  color: var(--syntax-string);
+}
+.tok-number,
+.tok-flag {
+  color: var(--syntax-number);
+}
+.tok-function {
+  color: var(--syntax-function);
+}
+.tok-comment {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+.tok-punctuation {
+  color: var(--syntax-punctuation);
 }
