@@ -157,8 +157,8 @@ UPDATE demo.products SET cost = price + 5.00 WHERE id IN (12, 35);
 -- (docs/architecture.md, "Read-only, in layers") its access back.
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'assay_reader') THEN
-    GRANT USAGE ON SCHEMA demo TO assay_reader;
-    GRANT SELECT ON ALL TABLES IN SCHEMA demo TO assay_reader;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'assay_readonly') THEN
+    GRANT USAGE ON SCHEMA demo TO assay_readonly;
+    GRANT SELECT ON ALL TABLES IN SCHEMA demo TO assay_readonly;
   END IF;
 END $$;
