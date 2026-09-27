@@ -27,7 +27,7 @@
 | `CHECK_TIMEOUT_MS` | 检查里单条语句最多运行多久，超时由 PostgreSQL 终止。默认 30000（30 秒），最多 300000。 |
 | `CHECK_CONCURRENCY` | 每个服务器实例同时执行的检查数量。默认 4。 |
 | `ALLOWED_EMAIL_DOMAINS` | 允许登录的邮箱域名，用逗号分隔。留空表示允许所有人。 |
-| `CA_CERT_BLOB_URL` | PostgreSQL 的 SSL 需要 CA 证书时，填证书地址。 |
+| `CA_CERT_BLOB_URL` | CA 证书的 https:// 地址，用来校验 PostgreSQL 服务器的证书。同时提供 `CLIENT_CERT_BLOB_URL` 和 `CLIENT_KEY_BLOB_URL` 时，还会使用客户端证书。 |
 
 > 只有以 `NEXT_PUBLIC_` 开头的变量会被发送到浏览器。千万不要给私密值加这个前缀。
 
