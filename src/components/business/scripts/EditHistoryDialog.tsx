@@ -24,6 +24,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { formatDateTime } from "@/lib/utils/datetime";
+import { useLanguage } from "@/components/common/LanguageProvider";
 import { DashboardTranslationKeys } from "@/components/business/dashboard/types";
 
 interface EditHistoryItem {
@@ -58,6 +59,7 @@ export function EditHistoryDialog({
   scriptId,
   t,
 }: EditHistoryDialogProps) {
+  const { language } = useLanguage();
   const [histories, setHistories] = useState<EditHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -256,7 +258,7 @@ export function EditHistoryDialog({
                             <div className="flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
                               <span>
-                                {formatDateTime(history.operationTime, "en")}
+                                {formatDateTime(history.operationTime, language)}
                               </span>
                             </div>
                           </div>
