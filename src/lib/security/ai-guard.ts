@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import redis from "@/lib/cache/redis";
+import { aiEnabled } from "@/lib/ai/model";
 
 /**
  * Sign-up is public, so every AI endpoint is reachable by anyone who makes an
@@ -59,6 +60,10 @@ export async function guardAiRequest(
   userId: string,
   fields: Partial<Record<LimitedField, unknown>>,
 ): Promise<NextResponse | null> {
+  if (!aiEnabled()) {
+    return NextResponse.json({ error: "AI 功能尚未开启（AI_ENABLED）" }, { status: 503 });
+  }
+
   const oversized = findOversizedField(fields);
   if (oversized) {
     return NextResponse.json(
