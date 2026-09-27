@@ -8,6 +8,7 @@ import {
   findingColumns,
   localized,
   numericColumns,
+  readRunResponse,
   rowCount,
   runHeadline,
   runTone,
@@ -29,6 +30,22 @@ describe("runTone", () => {
     expect(statusLabel("attention_needed", statusTexts)).toBe("Issues");
     expect(statusLabel("success", statusTexts)).toBe("Clean");
     expect(statusLabel("failure", statusTexts)).toBe("Broken");
+  });
+});
+
+describe("readRunResponse", () => {
+  it("returns the run on success", async () => {
+    const run = { _id: "r1", scriptId: "s", status: "success" };
+    await expect(readRunResponse(Response.json(run))).resolves.toEqual(run);
+  });
+
+  it("uses the API's message on failure", async () => {
+    await expect(readRunResponse(Response.json({ message: "Not allowed" }, { status: 403 }))).rejects.toThrow("Not allowed");
+  });
+
+  it("falls back to the status when the error body is not JSON", async () => {
+    const res = new Response("<html>Bad gateway</html>", { status: 502 });
+    await expect(readRunResponse(res)).rejects.toThrow("Error: 502");
   });
 });
 
