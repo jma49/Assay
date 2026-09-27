@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useRef, Suspense } from "react";
+import { WindowStatusBar } from "@/components/layout/WindowChrome";
+import { PageHeader } from "@/components/layout/PageHeader";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -597,18 +599,20 @@ const ManageScriptsContent = () => {
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-8 animate-fadeIn">
           {/* Header Section */}
-          <header className="">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="space-y-3">
-                <h1 className="text-[28px] leading-tight font-semibold">
-                  {t("manageScriptsPageTitle")}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  {t("manageScriptsPageDescription")}
-                </p>
-              </div>
-            </div>
-          </header>
+          <WindowStatusBar>
+            {language === "zh"
+              ? `${scripts.length} 个检查 · ${scripts.filter((script) => script.isScheduled).length} 个定时执行`
+              : `${scripts.length} checks · ${scripts.filter((script) => script.isScheduled).length} scheduled`}
+          </WindowStatusBar>
+          <PageHeader
+            title={t("manageScriptsPageTitle")}
+            description={t("manageScriptsPageDescription")}
+            actions={
+              <Button asChild size="sm">
+                <Link href="/scripts/new">{language === "zh" ? "新建检查" : "New Check"}</Link>
+              </Button>
+            }
+          />
 
           {/* Scripts Table */}
           <Card className="relative gap-0 overflow-hidden py-0">
@@ -1101,15 +1105,6 @@ const ManageScriptsContent = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 版本号显示 - 固定在左下角 */}
-      <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 transition-all duration-300">
-          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-          <span className="font-mono text-xs text-muted-foreground font-medium">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.7"}
-          </span>
-        </div>
-      </div>
 
       {/* 编辑历史对话框 */}
       {isEditHistoryOpen && selectedScriptForHistory && (

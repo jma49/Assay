@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
+import { cleanRunMessage } from "@/lib/utils/run-message";
 import { useParams, useRouter } from "next/navigation";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { Button } from "@/components/ui/button";
@@ -667,211 +669,114 @@ export default function ViewExecutionResultPage() {
     );
   }
 
-  // 状态显示逻辑
-  // Catppuccin Mocha theme colors: Yellow (#f9e2af), Green (#a6e3a1), Red (#f38ba8)
+  const tone: "attention_needed" | "success" | "failure" =
+    result.statusType === "attention_needed" ? "attention_needed" : result.status === "success" ? "success" : "failure";
   const statusText =
-    result.statusType === "attention_needed"
+    tone === "attention_needed"
       ? t.statusTexts.attentionNeeded
-      : result.status === "success"
+      : tone === "success"
         ? t.statusTexts.success
         : t.statusTexts.failure;
+  const rowCount = Array.isArray(result.findings) ? result.findings.length : null;
+  const zh = language === "zh";
+  // One sentence that says what happened, before any detail.
+  const headline =
+    tone === "attention_needed"
+      ? rowCount !== null
+        ? zh ? `${rowCount} 行需要关注` : `${rowCount} ${rowCount === 1 ? "row needs" : "rows need"} attention`
+        : zh ? "发现需要关注的问题" : "Needs attention"
+      : tone === "success"
+        ? zh ? "通过：没有返回任何行" : "Passed: no rows returned"
+        : zh ? "执行失败" : "The check could not run";
+  const scriptName = zh ? result.cnName || result.name : result.name;
+  const toneText = { attention_needed: "text-attention", success: "text-success", failure: "text-failure" }[tone];
+
+  // "Get Info"-style facts about the run and its check.
+  const info: { label: string; value: React.ReactNode; mono?: boolean }[] = [
+    { label: t.status, value: <span className={cn("inline-flex items-center gap-1.5", toneText)}><span className={cn("aqua-gem", `aqua-gem-${tone}`)} aria-hidden />{statusText}</span> },
+    { label: t.executionTime, value: <span className="tabular-nums">{formatDate(result.executedAt)}</span> },
+    { label: t.message, value: cleanRunMessage(result.message) },
+    {
+      label: t.scriptId,
+      mono: true,
+      value: (
+        <Link href={`/manage-scripts?scriptId=${encodeURIComponent(result.scriptId)}`} className="text-primary hover:underline">
+          {result.scriptId}
+        </Link>
+      ),
+    },
+    ...(scriptName ? [{ label: t.name, value: scriptName }] : []),
+    ...((result.description || result.cnDescription)
+      ? [{ label: t.description, value: zh ? result.cnDescription || result.description : result.description }]
+      : []),
+    ...((result.scope || result.cnScope) ? [{ label: t.scope, value: zh ? result.cnScope || result.scope : result.scope }] : []),
+    ...(result.author ? [{ label: t.author, value: result.author }] : []),
+    { label: t.resultId, value: result._id, mono: true },
+  ];
 
   return (
-    <div className="min-h-screen    ">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        <div className="space-y-8 animate-fadeIn">
-          {/* Header Section */}
-          <header className="">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="space-y-2">
-                <h1 className="text-[28px] leading-tight font-semibold">
-                  {t.executionDetails}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  {result.scriptId}
+    <div className="min-h-screen">
+      <h1 className="sr-only">{t.executionDetails}</h1>
+      <WindowToolbar>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/dashboard">‹ {zh ? "仪表盘" : "Dashboard"}</Link>
+        </Button>
+        <div className="ml-auto flex items-center gap-2">
+          {tone === "failure" && (
+            <Button size="sm" variant="outline" onClick={handleAnalyzeError} disabled={isAnalyzingError}>
+              <Brain />
+              {isAnalyzingError ? (zh ? "分析中…" : "Analyzing…") : zh ? "AI 分析错误" : "Analyze error with AI"}
+            </Button>
+          )}
+          {hasTableData && (
+            <Button size="sm" variant="outline" onClick={exportToCSV} title={t.exportCsvDesc}>
+              <Download />
+              {t.exportCsv}
+            </Button>
+          )}
+        </div>
+      </WindowToolbar>
+      <WindowStatusBar>
+        {scriptName ?? result.scriptId} · {formatDate(result.executedAt)}
+        {rowCount !== null && ` · ${zh ? `${rowCount} 行` : `${rowCount} rows`}`}
+      </WindowStatusBar>
+
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div className="grid gap-6 lg:grid-cols-12 animate-fadeIn">
+          {/* What happened, then the rows that prove it. */}
+          <section className="min-w-0 space-y-5 lg:col-span-8">
+            <header className="aqua-window flex items-start gap-3 rounded-[7px] px-5 py-4">
+              <span className={cn("aqua-gem mt-2", `aqua-gem-${tone}`)} aria-hidden />
+              <div className="min-w-0">
+                <p className={cn("font-serif text-[26px] leading-tight font-semibold", toneText)}>{headline}</p>
+                <p className="mt-1 text-[13px] text-muted-foreground">
+                  {scriptName ?? result.scriptId} · {formatDate(result.executedAt)}
                 </p>
-              </div>
-              {result.status !== "success" && result.statusType !== "attention_needed" && (
-                <Button
-                  variant="outline"
-                  onClick={handleAnalyzeError}
-                  disabled={isAnalyzingError}
-                >
-                  <Brain />
-                  {isAnalyzingError
-                    ? language === "zh" ? "分析中…" : "Analyzing…"
-                    : language === "zh" ? "AI 分析错误" : "Analyze error with AI"}
-                </Button>
-              )}
-            </div>
-          </header>
-
-          <dl className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-4">
-            <div className="space-y-1 bg-card px-5 py-4">
-              <dt className="text-[13px] text-muted-foreground">{t.status}</dt>
-              <dd
-                className={`inline-flex items-center gap-2 font-medium ${
-                  result.statusType === "attention_needed"
-                    ? "text-attention"
-                    : result.status === "success"
-                      ? "text-success"
-                      : "text-failure"
-                }`}
-              >
-                <span
-                  aria-hidden
-                  className={`size-1.5 rounded-full ${
-                    result.statusType === "attention_needed"
-                      ? "bg-attention"
-                      : result.status === "success"
-                        ? "bg-success"
-                        : "bg-failure"
-                  }`}
-                />
-                {statusText}
-              </dd>
-            </div>
-            <div className="space-y-1 bg-card px-5 py-4">
-              <dt className="text-[13px] text-muted-foreground">{t.executionTime}</dt>
-              <dd className="tabular-nums">{formatDate(result.executedAt)}</dd>
-            </div>
-            <div className="space-y-1 bg-card px-5 py-4 sm:col-span-2">
-              <dt className="text-[13px] text-muted-foreground">{t.message}</dt>
-              <dd className="break-words">{result.message}</dd>
-            </div>
-          </dl>
-
-          {/* Script Metadata Card - 总是显示，包含基本信息 */}
-          <div className="relative overflow-hidden rounded-lg border bg-card">
-            <div className="relative p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <h2 className="text-[23px] leading-tight font-semibold">
-                  {t.scriptMetadata ||
-                    (language === "en" ? "Script Metadata" : "脚本元数据")}
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* 左侧列 */}
-                <div className="space-y-6">
-                  {/* Script ID */}
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                      {t.scriptId}
-                    </p>
-                    <div className="text-base text-foreground bg-muted/20 rounded-lg p-3 font-mono">
-                      <Link 
-                        href={`/manage-scripts?scriptId=${encodeURIComponent(result.scriptId)}`}
-                        className="flex items-center gap-2 hover:text-primary transition-colors duration-200 group/link"
-                      >
-                        <span>{result.scriptId}</span>
-                      </Link>
-                    </div>
-                  </div>
-
-                  {/* Script Name */}
-                  {(result.name || result.cnName) && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                        {t.name}
-                      </p>
-                      <p className="text-base text-foreground bg-muted/20 rounded-lg p-3">
-                        {language === "en" ? result.name : (result.cnName || result.name)}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Description */}
-                  {(result.description || result.cnDescription) && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                        {t.description}
-                      </p>
-                      <p className="text-base text-foreground bg-muted/20 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
-                        {language === "en" ? result.description : (result.cnDescription || result.description)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* 右侧列 */}
-                <div className="space-y-6">
-                  {/* Author */}
-                  {result.author && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                        {t.author}
-                      </p>
-                      <p className="text-base text-foreground bg-muted/20 rounded-lg p-3">
-                        {result.author}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Result ID */}
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                      {t.resultId}
-                    </p>
-                    <p className="text-xs text-muted-foreground bg-muted/20 rounded-lg p-3 font-mono break-all">
-                      {result._id}
-                    </p>
-                  </div>
-
-                  {/* Scope */}
-                  {(result.scope || result.cnScope) && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                        {t.scope}
-                      </p>
-                      <p className="text-base text-foreground bg-muted/20 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
-                        {language === "en" ? result.scope : (result.cnScope || result.scope)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Query Findings Card */}
-          <div className="relative overflow-hidden rounded-lg border bg-card">
-            <div className="relative p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-[23px] leading-tight font-semibold">
-                    {t.queryFindings}
-                  </h2>
-                </div>
-
-                {/* CSV 导出按钮 */}
-                {hasTableData && (
-                  <Button
-                    onClick={exportToCSV}
-                    variant="outline"
-                    size="sm"
-                    className="group transition-all duration-300 h-10 px-4 gap-2"
-                    title={t.exportCsvDesc}
-                  >
-                    <Download className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                    <span className="hidden sm:inline">{t.exportCsv}</span>
-                  </Button>
+                {tone === "failure" && result.message && (
+                  <p className="mt-2 font-mono text-[13px] break-words">{cleanRunMessage(result.message)}</p>
                 )}
               </div>
-              <div className="overflow-hidden rounded-lg border border-border/30 ">
-                {findingsContent}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+            </header>
 
-      {/* 版本号显示 - 固定在左下角 */}
-      <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 transition-all duration-300">
-          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-          <span className="font-mono text-xs text-muted-foreground font-medium">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.7"}
-          </span>
+            <div className="aqua-window overflow-hidden rounded-[7px]" aria-label={t.queryFindings}>
+              {findingsContent}
+            </div>
+          </section>
+
+          {/* A Get Info inspector: everything else about the run. */}
+          <aside className="lg:col-span-4">
+            <div className="aqua-window overflow-hidden rounded-[7px] lg:sticky lg:top-16">
+              <p className="aqua-titlebar px-4 py-1.5 text-[13px] font-medium">{zh ? "简介" : "Info"}</p>
+              <dl className="divide-y text-[13px]">
+                {info.map((item) => (
+                  <div key={item.label} className="grid grid-cols-[7.5rem_1fr] gap-3 px-4 py-2">
+                    <dt className="text-muted-foreground">{item.label}</dt>
+                    <dd className={cn("min-w-0 break-words", item.mono && "font-mono text-[12px]")}>{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </aside>
         </div>
       </div>
 

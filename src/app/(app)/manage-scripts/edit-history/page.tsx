@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -325,184 +327,91 @@ export default function GlobalEditHistoryPage() {
     <div className="min-h-screen    ">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-6 animate-fadeIn">
-          <div className="space-y-1">
-            <p className="text-[13px] text-muted-foreground">
-              <Link href="/manage-scripts" className="hover:text-foreground">
-                {language === "zh" ? "脚本" : "Scripts"}
-              </Link>{" "}
-              / {t("allScriptsHistory")}
-            </p>
-            <PageHeader
-              title={t("allScriptsHistory")}
-              description={
-                <>
-                  {t("editHistoryDescGlobal")} · {t("totalChanges")}:{" "}
-                  <span className="text-foreground tabular-nums">{totalRecords}</span>
-                </>
-              }
-            />
-          </div>
+          <PageHeader title={t("allScriptsHistory")} description={t("editHistoryDescGlobal")} />
+          <WindowStatusBar>
+            {language === "zh" ? `共 ${totalRecords} 次修改` : `${totalRecords} changes`}
+          </WindowStatusBar>
 
-          {/* Filters Section */}
-          <Card className="relative overflow-hidden gap-0 py-0">
-
-            <CardHeader className="relative border-b px-6 py-4">
-              <div className="flex items-center gap-4">
-                <CardTitle>
-                  {t("searchHistoryWithFilters")}
-                </CardTitle>
-              </div>
-            </CardHeader>
-
-            <CardContent className="relative p-6 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Script Name Filter */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="script-name-filter"
-                    className="flex items-center gap-2 text-[13px] font-medium"
-                  >
-                    {t("scriptName")}
-                  </Label>
-                  <Input
-                    id="script-name-filter"
-                    type="text"
-                    placeholder={t("searchScriptsPlaceholder")}
-                    value={scriptNameFilter}
-                    onChange={(e) => setScriptNameFilter(e.target.value)}
-                    className="h-9 w-full"
-                  />
-                </div>
-
-                {/* Author Filter */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="author-filter"
-                    className="flex items-center gap-2 text-[13px] font-medium"
-                  >
-                    {t("author")}
-                  </Label>
-                  <Input
-                    id="author-filter"
-                    type="text"
-                    placeholder={t("author")}
-                    value={authorFilter}
-                    onChange={(e) => setAuthorFilter(e.target.value)}
-                    className="h-9 w-full"
-                  />
-                </div>
-
-                {/* Operation Type Filter */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="operation-filter"
-                    className="flex items-center gap-2 text-[13px] font-medium"
-                  >
-                    {t("operationType")}
-                  </Label>
-                  <Select
-                    value={operationFilter}
-                    onValueChange={(value) =>
-                      setOperationFilter(
-                        value as EditHistoryFilter["operation"],
-                      )
-                    }
-                  >
-                    <SelectTrigger className="h-9 w-full">
-                      <SelectValue
-                        placeholder={t("selectOperationPlaceholder")}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("operationAll")}</SelectItem>
-                      <SelectItem value="create">
-                        {t("operationCreate")}
-                      </SelectItem>
-                      <SelectItem value="update">
-                        {t("operationUpdate")}
-                      </SelectItem>
-                      <SelectItem value="delete">
-                        {t("operationDelete")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Date From Filter */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="date-from-filter"
-                    className="flex items-center gap-2 text-[13px] font-medium"
-                  >
-                    {t("dateFrom")}
-                  </Label>
-                  <Input
-                    id="date-from-filter"
-                    type="date"
-                    value={dateFromFilter}
-                    onChange={(e) => setDateFromFilter(e.target.value)}
-                    className="h-9 w-full"
-                  />
-                </div>
-
-                {/* Date To Filter */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="date-to-filter"
-                    className="flex items-center gap-2 text-[13px] font-medium"
-                  >
-                    {t("dateTo")}
-                  </Label>
-                  <Input
-                    id="date-to-filter"
-                    type="date"
-                    value={dateToFilter}
-                    onChange={(e) => setDateToFilter(e.target.value)}
-                    className="h-9 w-full"
-                  />
-                </div>
-              </div>
-
-              {/* Filter Buttons */}
-              <div className="flex gap-3 pt-4">
-                <Button
-                  onClick={applyFilters}
-                  size="default"
-                  className="group flex items-center gap-2 transition-all duration-300"
-                  disabled={loading}
-                >
-                  <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  {t("searchEditHistory")}
-                </Button>
-                <Button
-                  onClick={resetFilters}
-                  variant="outline"
-                  size="default"
-                  className="group flex items-center gap-2 transition-all duration-300"
-                  disabled={loading}
-                >
-                  <RotateCcw className="w-4 h-4 group-hover:rotate-45 transition-transform" />
-                  {t("resetFilters")}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Filters live in the toolbar: search, operation, and the rest in a popover. */}
+          <WindowToolbar>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/manage-scripts">‹ {language === "zh" ? "脚本" : "Scripts"}</Link>
+            </Button>
+            <div className="relative w-56 max-sm:w-full">
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 z-10 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                aria-label={t("scriptName")}
+                placeholder={t("searchScriptsPlaceholder")}
+                value={scriptNameFilter}
+                onChange={(e) => setScriptNameFilter(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && applyFilters()}
+                className="h-7 rounded-full pl-8 text-[13px]"
+              />
+            </div>
+            <Select
+              value={operationFilter}
+              onValueChange={(value) => {
+                const operation = value as EditHistoryFilter["operation"];
+                setOperationFilter(operation);
+                fetchHistories({
+                  scriptName: scriptNameFilter || undefined,
+                  author: authorFilter || undefined,
+                  operation,
+                  dateFrom: dateFromFilter ? new Date(dateFromFilter) : undefined,
+                  dateTo: dateToFilter ? new Date(dateToFilter) : undefined,
+                  page: 1,
+                });
+              }}
+            >
+              <SelectTrigger size="sm" className="h-7 w-36 text-[13px]" aria-label={t("operationType")}>
+                <SelectValue placeholder={t("selectOperationPlaceholder")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("operationAll")}</SelectItem>
+                <SelectItem value="create">{t("operationCreate")}</SelectItem>
+                <SelectItem value="update">{t("operationUpdate")}</SelectItem>
+                <SelectItem value="delete">{t("operationDelete")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="ml-auto flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button size="sm" variant="outline">
+                    {language === "zh" ? "更多筛选…" : "More Filters…"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-72 space-y-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="author-filter" className="text-[13px]">{t("author")}</Label>
+                    <Input id="author-filter" value={authorFilter} onChange={(e) => setAuthorFilter(e.target.value)} className="h-8" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="date-from-filter" className="text-[13px]">{t("dateFrom")}</Label>
+                      <Input id="date-from-filter" type="date" value={dateFromFilter} onChange={(e) => setDateFromFilter(e.target.value)} className="h-8" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="date-to-filter" className="text-[13px]">{t("dateTo")}</Label>
+                      <Input id="date-to-filter" type="date" value={dateToFilter} onChange={(e) => setDateToFilter(e.target.value)} className="h-8" />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-1">
+                    <Button size="sm" variant="outline" onClick={resetFilters} disabled={loading}>
+                      {t("resetFilters")}
+                    </Button>
+                    <Button size="sm" onClick={applyFilters} disabled={loading}>
+                      {t("searchEditHistory")}
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </WindowToolbar>
 
           {/* History Records Table */}
           <Card className="relative overflow-hidden gap-0 py-0">
 
-            <CardHeader className="relative border-b px-6 py-4">
-              <div className="flex items-center gap-4">
-                <div className="space-y-2">
-                  <CardTitle>
-                    Edit History
-                  </CardTitle>
-                  <div className="text-sm text-muted-foreground">
-                    {totalPages > 1 ? formatPageInfo() : totalRecords > 0 ? language === "zh" ? `共 ${totalRecords} 条` : `${totalRecords} records` : ""}
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
 
             <CardContent className="relative p-0">
               {loading ? (
@@ -957,15 +866,6 @@ export default function GlobalEditHistoryPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Version Display - Fixed Bottom Left */}
-      <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 transition-all duration-300">
-          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-          <span className="font-mono text-xs text-muted-foreground font-medium">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.7"}
-          </span>
-        </div>
-      </div>
     </div>
   );
 }
