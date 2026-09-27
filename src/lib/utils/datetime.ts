@@ -17,7 +17,7 @@ function toDate(value: Date | string | number | null | undefined): Date | null {
 export function formatDateTime(value: Date | string | number | null | undefined, language: string, timeZone?: string): string {
   const date = toDate(value);
   if (!date) return EMPTY;
-  return date.toLocaleString(localeOf(language), {
+  const dateTime = date.toLocaleString(localeOf(language), {
     timeZone,
     year: "numeric",
     month: "2-digit",
@@ -26,8 +26,12 @@ export function formatDateTime(value: Date | string | number | null | undefined,
     minute: "2-digit",
     second: "2-digit",
     hour12: !language.startsWith("zh"),
-    timeZoneName: "short",
   });
+  // The zone goes last in every language; zh-CN would otherwise put it between date and time.
+  const zone = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "short" })
+    .formatToParts(date)
+    .find((part) => part.type === "timeZoneName")?.value;
+  return zone ? `${dateTime} ${zone}` : dateTime;
 }
 
 /** "Sep 24, 4:57 AM"; the year only when it is not the current one. */

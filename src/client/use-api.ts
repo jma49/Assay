@@ -34,7 +34,8 @@ export function useApi<T>(url: string | null): ApiState<T> {
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
-    return () => controller.abort();
+    // A reason marks this as a deliberate cancel (unmount or a newer request), not a failure.
+    return () => controller.abort(new DOMException("Superseded", "AbortError"));
   }, [url, version]);
 
   const reload = useCallback(() => setVersion((v) => v + 1), []);

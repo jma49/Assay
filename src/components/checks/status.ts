@@ -1,5 +1,5 @@
 import type { RunOutcome } from "@/domain/run";
-import { cronForPreset, presetForCron, SCHEDULE_PRESETS } from "@/lib/scheduling/schedule";
+import { describeCron } from "@/lib/scheduling/schedule";
 
 export const OUTCOME_LABEL: Record<RunOutcome, { en: string; zh: string }> = {
   error: { en: "Broken", zh: "出错" },
@@ -26,10 +26,8 @@ export const OUTCOME_PILL: Record<RunOutcome, string> = {
   clean: "bg-success-soft text-success",
 };
 
-/** A schedule in words when it matches a preset, otherwise the cron itself. */
+/** A schedule in words where it has a common shape, otherwise the cron itself. */
 export function scheduleLabel(cron: string | null, language: "en" | "zh"): string {
   if (!cron) return language === "zh" ? "手动" : "Manual";
-  const preset = presetForCron(cron);
-  const match = SCHEDULE_PRESETS.find((p) => p.value === preset && cronForPreset(p.value));
-  return match ? match.label[language] : `${cron} UTC`;
+  return describeCron(cron, language) ?? `${cron} UTC`;
 }

@@ -8,7 +8,7 @@ import { APP_CONTAINER } from "@/components/layout/app-container";
 // 强制动态渲染，避免静态预渲染
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Dashboard" };
+export const metadata = { title: "Runs" };
 
 export default async function DashboardPage() {
   // 在构建时或没有Clerk配置时，显示配置提示

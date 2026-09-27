@@ -181,7 +181,7 @@ function ProductPreview({ lang }: { lang: Language }) {
                     <tr key={String(row[0])} className="border-b border-(--l-line) last:border-0">
                       {row.map((cell, i) => (
                         <td key={i} className={`px-5 py-2.5 whitespace-nowrap ${run.numeric?.includes(i) ? "text-right" : ""}`}>
-                          {cell}
+                          {typeof cell === "object" ? cell[lang] : cell}
                         </td>
                       ))}
                     </tr>
