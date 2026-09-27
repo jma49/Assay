@@ -9,35 +9,16 @@ import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { AppShellStateProvider, useAppShellState } from "@/components/layout/app-shell-state";
 import { useMe } from "@/lib/auth/use-me";
-
-type Label = { en: string; zh: string };
-
-// Longest prefix first, so nested pages resolve to their own title.
-const TITLES: [string, Label][] = [
-  ["/manage-scripts/approvals", { en: "Approvals", zh: "审批" }],
-  ["/manage-scripts/edit-history", { en: "Edit history", zh: "编辑历史" }],
-  ["/manage-scripts", { en: "Manage checks", zh: "管理检查" }],
-  ["/checks", { en: "Checks", zh: "检查" }],
-  ["/scripts/new", { en: "New check", zh: "新建检查" }],
-  ["/activity", { en: "Activity", zh: "动态" }],
-  ["/settings/notifications", { en: "Notifications", zh: "通知" }],
-  ["/settings/api-keys", { en: "API keys", zh: "API 密钥" }],
-  ["/dashboard", { en: "Runs", zh: "执行记录" }],
-  ["/view-execution-result", { en: "Run", zh: "执行结果" }],
-  ["/coverage", { en: "Coverage", zh: "覆盖情况" }],
-  ["/data-analysis", { en: "Analysis", zh: "分析" }],
-  ["/admin/users", { en: "Members", zh: "成员" }],
-];
+import { pageHasOwnAction, pageTitle } from "@/components/layout/app-shell-routes";
 
 function TopBar() {
   const pathname = usePathname() ?? "";
   const { language } = useLanguage();
   const { setToolbarSlot, setStatusSlot } = useAppShellState();
   const me = useMe();
-  const title = TITLES.find(([prefix]) => pathname.startsWith(prefix))?.[1][language] ?? "";
-  // One filled action per view: a check's own page and a run's report lead with their own.
-  const pageHasOwnAction = pathname.startsWith("/scripts/new") || pathname.startsWith("/checks/") || pathname.startsWith("/view-execution-result");
-  const canCreate = me?.permissions.includes("script:create") && !pageHasOwnAction;
+  const title = pageTitle(pathname)?.[language] ?? "";
+  // One filled action per view.
+  const canCreate = me?.permissions.includes("script:create") && !pageHasOwnAction(pathname);
 
   return (
     <header className="relative flex min-h-[52px] items-center gap-3 border-b bg-card px-7 py-2.5 max-md:flex-wrap max-md:px-4">
@@ -49,7 +30,7 @@ function TopBar() {
       <div ref={setToolbarSlot} className="ml-auto flex min-w-0 items-center justify-end gap-2 empty:hidden max-md:flex-wrap" />
       {canCreate && (
         <Link
-          href="/scripts/new"
+          href="/checks/new"
           className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground shadow-xs hover:brightness-110 transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96] [:empty+&]:ml-auto"
         >
           <Plus className="size-4" />
