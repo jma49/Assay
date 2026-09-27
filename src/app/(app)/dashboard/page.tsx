@@ -65,9 +65,6 @@ export default async function DashboardPage() {
         <Dashboard />
       </main>
 
-      <span className="fixed bottom-4 left-4 z-30 font-mono text-[11px] text-muted-foreground">
-        v{process.env.NEXT_PUBLIC_APP_VERSION}
-      </span>
     </div>
   );
 }

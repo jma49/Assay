@@ -7,16 +7,12 @@ import { cn } from "@/lib/utils/utils";
  * edges and paddings) so content lands in place instead of shifting.
  */
 
-export function SkeletonPageHeader({ withAction = false }: { withAction?: boolean }) {
-  return (
-    <div className="flex items-end justify-between gap-4">
-      <div className="space-y-2.5">
-        <Skeleton className="h-7 w-52" />
-        <Skeleton className="h-3.5 w-80 max-w-[70vw]" />
-      </div>
-      {withAction && <Skeleton className="hidden h-9 w-32 sm:block" />}
-    </div>
-  );
+/**
+ * Page headings now live in the window title bar and toolbar, so the page
+ * itself reserves no space for one. Kept so skeletons stay in step with pages.
+ */
+export function SkeletonPageHeader(_props: { withAction?: boolean }) {
+  return null;
 }
 
 export function SkeletonStatStrip({ count = 4, className }: { count?: number; className?: string }) {
@@ -97,24 +93,19 @@ export function SkeletonCardList({ count = 3 }: { count?: number }) {
 
 /** Dashboard: header, 8/4 grid (manual run + stats), then run history. */
 export function DashboardSkeleton() {
+  // Mirrors the dashboard: a row of four status tiles, then the run history.
   return (
-    <div className="space-y-10">
-      <SkeletonPageHeader />
-      <div className="grid gap-6 lg:grid-cols-12">
-        <div className="space-y-5 rounded-lg border bg-card p-6 lg:col-span-8">
-          <Skeleton className="h-5 w-44" />
-          <Skeleton className="h-3 w-64" />
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </div>
-        <SkeletonStatStrip className="lg:col-span-4 lg:grid-cols-1 lg:grid-rows-4" />
+    <div className="space-y-6" aria-busy="true">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div key={i} className="aqua-window space-y-2 rounded-[7px] px-4 py-3">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-7 w-12" />
+            <Skeleton className="h-3 w-16" />
+          </div>
+        ))}
       </div>
-      <div className="space-y-4">
-        <Skeleton className="h-6 w-36" />
-        <SkeletonTable rows={6} withTitle={false} />
-      </div>
+      <SkeletonTable rows={8} withTitle={false} />
     </div>
   );
 }

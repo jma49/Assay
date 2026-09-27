@@ -1,6 +1,5 @@
 /** @jsxImportSource react */
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useAppCommand } from "@/lib/commands/use-app-command";
 import {
   Database,
   Loader2,
@@ -79,6 +78,8 @@ interface ManualTriggerProps {
   t: (key: DashboardTranslationKeys) => string;
   setSelectedScriptId: (id: string) => void;
   handleTriggerCheck: () => void;
+  /** Which tab the panel opens on (the File menu can ask for bulk). */
+  initialMode?: "single" | "bulk";
 }
 
 export const ManualTrigger: React.FC<ManualTriggerProps> = ({
@@ -94,21 +95,10 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
   t,
   setSelectedScriptId,
   handleTriggerCheck,
+  initialMode = "single",
 }) => {
   // 状态管理
-  const [executionMode, setExecutionMode] = useState<"single" | "bulk">(
-    "single",
-  );
-
-  // File menu: "Run a check" / "Run in bulk".
-  useAppCommand((command) => {
-    if (command.type !== "run-mode") return false;
-    setExecutionMode(command.mode);
-    requestAnimationFrame(() =>
-      document.getElementById("manual-trigger")?.scrollIntoView({ behavior: "smooth" }),
-    );
-    return true;
-  });
+  const [executionMode, setExecutionMode] = useState<"single" | "bulk">(initialMode);
   const [bulkMode, setBulkMode] = useState<"all" | "scheduled">("scheduled");
   const [searchTerm, setSearchTerm] = useState("");
   const [showBatchDialog, setShowBatchDialog] = useState(false);

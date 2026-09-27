@@ -27,6 +27,7 @@ const SECTIONS: [string, DashboardTranslationKeys][] = [
   ["/data-analysis", "navigationAnalysis"],
   ["/admin/users", "navigationUsers"],
   ["/dashboard", "navigationDashboard"],
+  ["/view-execution-result", "navigationResults"],
 ];
 
 /**
@@ -45,7 +46,7 @@ export function AppWindow({ children }: { children: ReactNode }) {
   const title = key ? `${BRAND} — ${labels[key as keyof typeof labels] ?? key}` : BRAND;
   const lightLabels = LIGHT_LABELS[language] ?? LIGHT_LABELS.en;
 
-  const { shaded, zoomed, toggleShade, toggleZoom } = useAppWindowState();
+  const { shaded, zoomed, toggleShade, toggleZoom, setToolbarSlot, setStatusSlot } = useAppWindowState();
 
   // A full page load, so pages that guard unsaved work can still ask first.
   const close = () => window.location.assign("/");
@@ -75,8 +76,11 @@ export function AppWindow({ children }: { children: ReactNode }) {
             <span className="truncate">{title}</span>
           </div>
           {/* Hidden rather than unmounted, so a collapsed page keeps its state. */}
-          <div className="[background:var(--aqua-pinstripe),var(--background)] pb-10" hidden={shaded}>
-            {children}
+          <div hidden={shaded}>
+            {/* Filled by WindowToolbar / WindowStatusBar; hidden while empty. */}
+            <div ref={setToolbarSlot} className="aqua-toolbar empty:hidden" />
+            <div className="[background:var(--aqua-pinstripe),var(--background)] pb-10">{children}</div>
+            <div ref={setStatusSlot} className="aqua-statusbar empty:hidden" />
           </div>
         </div>
       </div>

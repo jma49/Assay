@@ -1,6 +1,7 @@
 "use client"; // Assuming client-side interactions might be added later
 
 import React, { useCallback, useState, useEffect, useMemo } from "react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -427,20 +428,7 @@ export default function DataAnalysisPage() {
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
           <div className="space-y-8">
             {/* 简化的Header Section - 与主页风格统一 */}
-            <header className="">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div className="space-y-3">
-                  <h1 className="text-[28px] leading-tight font-semibold">
-                    {t("dataAnalysisTitle")}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    {t("dataAnalysisSubTitle")}
-                  </p>
-                </div>
-
-
-              </div>
-            </header>
+            <PageHeader title={t("dataAnalysisTitle")} description={t("dataAnalysisSubTitle")} />
 
             {/* 筛选控制 - 优化展示逻辑 */}
             <Card className="relative overflow-hidden gap-0 py-0">
@@ -1190,15 +1178,6 @@ export default function DataAnalysisPage() {
         </div>
       </div>
 
-      {/* 版本号显示 - 与主页风格统一 */}
-      <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 transition-all duration-300">
-          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-          <span className="font-mono text-xs text-muted-foreground font-medium">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.9"}
-          </span>
-        </div>
-      </div>
     </div>
   );
 }
