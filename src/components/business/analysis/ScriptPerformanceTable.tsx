@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
-import { formatDate } from "@/components/business/dashboard/utils";
+import { formatDateTime } from "@/lib/utils/datetime";
 import { cn } from "@/lib/utils/utils";
 import type { ScriptAnalytics } from "./analytics";
 
@@ -99,7 +99,7 @@ export function ScriptPerformanceTable({ scripts, language, t }: { scripts: Scri
                       </div>
                     </td>
                     <td className="px-6 py-3 text-right text-[13px] whitespace-nowrap text-muted-foreground tabular-nums">
-                      {script.lastExecution ? formatDate(script.lastExecution, language) : "—"}
+                      {script.lastExecution ? formatDateTime(script.lastExecution, language) : "—"}
                     </td>
                   </tr>
                 ))}

@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { UserRole } from "@/lib/types/approval";
+import { formatDate } from "@/lib/utils/datetime";
 import type { DashboardTranslationKeys } from "@/components/business/dashboard/types";
 import { ALL_ROLES, getRoleInfo, type MemberRole } from "./members";
 
@@ -57,7 +58,7 @@ export function MembersTable({ members, language, t, actionLoading, onChangeRole
                 </Select>
               </td>
               <td className="px-4 py-3 text-[13px] text-muted-foreground">
-                {userRole.assignedBy} · {new Date(userRole.assignedAt).toLocaleDateString(language === "zh" ? "zh-CN" : "en-US")}
+                {userRole.assignedBy} · {formatDate(userRole.assignedAt, language)}
               </td>
               <td className="px-6 py-3 text-right">
                 <Button
