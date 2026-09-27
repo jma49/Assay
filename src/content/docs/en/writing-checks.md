@@ -1,6 +1,6 @@
 # Writing checks
 
-Choose **New Check** in the Dock (or **File → New Check** in the menu bar).
+Choose **New check** at the right of the top bar.
 
 ## The editor
 
@@ -48,7 +48,7 @@ If you are not an admin, a new check waits for approval before it runs. Every sa
 
 ## Finding what is not checked yet
 
-**Coverage**, in the Scripts window's library, lists every table in the database and how many checks read it. Tables without a check come first; choose one and **New check for this table** opens the editor with a starting query. A table shown as *missing* is read by a check but no longer exists, so that check will fail until it is updated.
+**Coverage**, in the sidebar, lists every table in the database and how many checks read it. Tables without a check come first; choose one and **New check for this table** opens the editor with a starting query. A table shown as *missing* is read by a check but no longer exists, so that check will fail until it is updated.
 
 Coverage reads the `FROM` and `JOIN` clauses of each check. It is an overview, not a guarantee: a table used only inside a function call is not counted.
 
