@@ -228,7 +228,7 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
           <div aria-hidden className="absolute inset-x-0 top-0 bottom-40 bg-[radial-gradient(ellipse_at_top,var(--primary-soft),transparent_70%)] sm:bottom-56" />
           <div className={`${CONTAINER} relative`}>
             <div className="mx-auto max-w-[780px] text-center">
-              <VoxelBeetle className="mx-auto -mt-10 mb-2 h-[240px] w-full max-w-[420px] sm:h-[300px]" />
+              <VoxelBeetle className="mx-auto -mt-6 mb-4 h-[260px] w-full max-w-[440px] sm:h-[320px]" />
               <h1 className="serif text-balance text-[40px] leading-[1.08] font-semibold tracking-tight sm:text-[60px]">
                 {t.hero.title}
               </h1>

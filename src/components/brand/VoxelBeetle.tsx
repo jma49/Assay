@@ -17,7 +17,7 @@ const FOLLOW = 0.08;
  * with one instanced mesh. It spins in on load and then turns slowly; under
  * a mouse it turns to follow the pointer. three.js loads only when the
  * component mounts, so it never weighs on pages that do not show it. With
- * reduced motion it stays still.
+ * reduced motion there is no spin-in or idle turn; it still follows the mouse.
  */
 export function VoxelBeetle({ className }: { className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -69,9 +69,11 @@ export function VoxelBeetle({ className }: { className?: string }) {
       rim.position.set(-14, 8, -10);
       scene.add(rim);
 
-      const span = Math.max(...xs) - Math.min(...xs);
-      const half = span * 0.46;
+      // Frame the whole figure whichever way it faces: its longest side, with room to turn.
+      const zs = voxels.map((v) => v.z);
+      const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), Math.max(...zs) - Math.min(...zs));
       const aspect = width / height;
+      const half = (span * 0.58) / Math.min(1, aspect);
       const camera = new THREE.OrthographicCamera(-half * aspect, half * aspect, half, -half, 0.1, 500);
       // The camera circles the beetle; theta = 0 looks at its side, π/2 at its face.
       const radius = 40;
@@ -89,7 +91,8 @@ export function VoxelBeetle({ className }: { className?: string }) {
       place();
 
       const onPointerMove = (event: PointerEvent) => {
-        if (event.pointerType !== "mouse" || reducedMotion) return;
+        // Following the pointer is motion the visitor asks for, so it stays on with reduced motion.
+        if (event.pointerType !== "mouse") return;
         const box = container.getBoundingClientRect();
         const nx = ((event.clientX - box.left) / box.width) * 2 - 1;
         const ny = ((event.clientY - box.top) / box.height) * 2 - 1;
