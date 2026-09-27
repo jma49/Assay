@@ -1,6 +1,6 @@
 /**
  * Seeds demo data: recreates the `demo` schema in DATABASE_URL and upserts the
- * demo check scripts into MongoDB. Only the `demo` schema and scripts authored
+ * demo check scripts into MongoDB. Only the `demo` schema and scripts marked demoSeed
  * by DEMO_AUTHOR are touched.
  * Usage: npm run seed:demo
  */
@@ -52,6 +52,8 @@ async function seedScripts(): Promise<void> {
             scope: "demo",
             cnScope: "演示",
             author: DEMO_AUTHOR,
+            // What lets demo viewers run it; no API writes this field.
+            demoSeed: true,
             approvalStatus: APPROVED,
             approvalRequestId: null,
             updatedAt: now,
@@ -63,7 +65,7 @@ async function seedScripts(): Promise<void> {
     }
 
     const { deletedCount } = await scripts.deleteMany({
-      author: DEMO_AUTHOR,
+      demoSeed: true,
       scriptId: { $nin: demoChecks.map((c) => c.scriptId) },
     });
     console.log(

@@ -1,3 +1,4 @@
+import { pickEditable } from "./check-fields";
 import { getMongoDbClient } from "../database/mongodb";
 import { Collection, Document, Db } from "mongodb";
 import { UserRole, Permission, hasPermission } from "../auth/rbac";
@@ -721,8 +722,12 @@ async function executeApprovedOperation(
         }
 
         // 执行创建操作
+        // Only the fields people may set; the requester is recorded from the request, not the payload.
         const createData = {
-          ...request.originalData,
+          ...pickEditable(request.originalData as Record<string, unknown>),
+          scriptId: request.scriptId,
+          createdBy: { id: request.requesterId, email: request.requesterEmail },
+          updatedBy: { id: request.requesterId, email: request.requesterEmail },
           createdAt: new Date(),
           updatedAt: new Date(),
           approvalStatus: ApprovalStatus.APPROVED,
@@ -792,15 +797,12 @@ async function executeApprovedOperation(
 
         // 执行更新操作
         const updateData = {
-          ...request.originalData,
+          ...pickEditable(request.originalData as Record<string, unknown>),
+          updatedBy: { id: request.requesterId, email: request.requesterEmail },
           updatedAt: new Date(),
           approvalStatus: ApprovalStatus.APPROVED,
           approvalRequestId: request.requestId,
         };
-
-        // 移除 scriptId 和 _id 字段避免冲突
-        delete (updateData as Record<string, unknown>).scriptId;
-        delete (updateData as Record<string, unknown>)._id;
 
         const updateResult = await collection.updateOne(
           { scriptId: request.scriptId },
