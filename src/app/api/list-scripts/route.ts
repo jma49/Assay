@@ -5,6 +5,7 @@ import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { nextRunAt } from "@/lib/scheduling/due-slot";
 import { Permission } from "@/lib/auth/rbac";
 import { cached, cacheKey } from "@/lib/cache/cached";
+import { SCRIPTS_CACHE_GENERATION_KEY } from "@/lib/cache/cache-utils";
 
 interface ScriptInfo {
   scriptId: string;
@@ -114,7 +115,9 @@ export async function GET(request: NextRequest) {
     });
 
     // Ten minutes; every create, edit and delete clears it.
-    const scriptsData = await cached(key, 600, () => fetchScriptsData(sortBy, sortOrder, includeScheduledOnly));
+    const scriptsData = await cached(key, 600, () => fetchScriptsData(sortBy, sortOrder, includeScheduledOnly), {
+      generationKey: SCRIPTS_CACHE_GENERATION_KEY,
+    });
 
     // The dashboard shows when the next scheduled check will run; computed here
     // so the cron parser never ships to the browser.
