@@ -18,7 +18,7 @@ A **check** is a read-only SQL query whose returned rows are problems: duplicate
 - **Clean** — no rows. **Issues** — rows that need attention, each marked new, still open or fixed since the last run. **Broken** — the query itself fails.
 - **Alerts** go to Slack, Discord, Telegram, Feishu, WeCom or a signed webhook when a check breaks, finds rows, gets new rows or recovers; with acknowledge, mute, owners, a daily summary and reminders.
 - **Agents** (Claude Code, Cursor, …) can list, read and run checks through the MCP server with personal API keys.
-- **Review**: changes by non-admins go through approval; every edit is versioned and audited.
+- **Review**: changes by non-admins go through approval; every edit is recorded in the edit history.
 
 ## Stack
 
