@@ -47,3 +47,19 @@ export function ownsCheck(check: Record<string, unknown>, actor: Actor): boolean
   if (typeof createdBy?.id === "string") return createdBy.id === actor.id;
   return typeof check.author === "string" && check.author !== "" && check.author === actor.email.split("@")[0];
 }
+
+/**
+ * Checks carry a version that every edit increments. A save states the
+ * version it started from; if someone saved in between, the filter matches
+ * nothing and the save is refused instead of overwriting their change.
+ * Checks from before versions have none, which counts as 0.
+ */
+export function versionFilter(expected: number | undefined): Record<string, unknown> {
+  if (expected === undefined) return {};
+  return expected === 0 ? { $or: [{ version: { $exists: false } }, { version: 0 }] } : { version: expected };
+}
+
+/** The version a client sent: a whole number ≥ 0, or undefined when it sent none. */
+export function readVersion(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : undefined;
+}

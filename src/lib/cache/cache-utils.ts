@@ -6,15 +6,20 @@ const CHECK_HISTORY_STATS_KEY = "check_history:stats";
 const CHECK_HISTORY_QUERY_PREFIX = "check_history:query:";
 
 /**
- * 清除脚本列表的 Redis 缓存
- * 供其他 API 路由调用，当脚本被创建、更新或删除时
+ * Drops every cached checks list. The list is cached per sort and filter
+ * (scripts:list:<params>), so deleting the bare prefix, as this used to,
+ * removed nothing and lists stayed stale after every create, edit or delete.
  */
 export async function clearScriptsCache(): Promise<void> {
   try {
-    await redis.del(SCRIPTS_CACHE_KEY);
-    console.log("[API] 脚本列表缓存已清除");
+    let cursor: string | number = 0;
+    do {
+      const [next, keys]: [string | number, string[]] = await redis.scan(cursor, { match: `${SCRIPTS_CACHE_KEY}*`, count: 100 });
+      if (keys.length) await redis.del(...keys);
+      cursor = next;
+    } while (String(cursor) !== "0");
   } catch (error) {
-    console.error("[API] 清除 Redis 缓存失败:", error);
+    console.error("[Cache] Could not clear the checks list cache:", error);
   }
 }
 
