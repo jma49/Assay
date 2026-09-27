@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { Permission } from "@/lib/auth/rbac";
 import getMongoDbClient from "@/lib/database/mongodb";
-import { executeScriptAndNotify } from "@/lib/utils/script-executor";
+import { runCheckNow, toExecutionResult } from "@/server/services/run-check-deps";
 import batchExecutionCache from "@/services/batch-execution-cache";
 import { Collection, Document } from "mongodb";
 import { v4 as uuidv4 } from "uuid";
@@ -232,7 +232,7 @@ async function executeBatchScripts(scripts: Document[], executionId: string) {
       }
 
       try {
-        const result = await executeScriptAndNotify(scriptId);
+        const result = toExecutionResult(await runCheckNow(scriptId, { kind: "batch" }));
 
         let finalStatus: "completed" | "failed" | "attention_needed";
         if (result.success) {

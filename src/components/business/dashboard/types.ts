@@ -1,4 +1,4 @@
-import { ExecutionStatusType } from "../../../../scripts/types";
+import type { LegacyStatusType as ExecutionStatusType } from "@/domain/run";
 
 // 类型定义
 export type DashboardTranslationKeys =
