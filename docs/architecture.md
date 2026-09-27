@@ -19,7 +19,7 @@ today's code. Each phase ships on its own and keeps the app working.
 
 | Today | Problem | Target |
 |---|---|---|
-| The executor (`scripts/core/sql-executor.ts`, 980 lines) lives in the CLI folder and mixes parsing, status rules and persistence | Hard to test, reused by path hacks, one change touches everything | `server/services/run-check.ts` over a `DataSource` interface; `scripts/` only holds CLIs that call services |
+| The executor (a 980-line module in the CLI folder, since deleted) mixed parsing, status rules and persistence | Hard to test, reused by path hacks, one change touches everything | `server/services/run-check.ts` over a `DataSource` interface; `scripts/` only holds CLIs that call services |
 | Route handlers of 250–540 lines hold business logic | Logic is duplicated across routes and untestable without HTTP | Routes are thin adapters: parse input, call a service, map errors |
 | A check's current state is rebuilt from run history on each request | The checks list, alerts and diffs all need it; rebuilding is slow and racy | The check stores its state (status, rows, since, last run), updated when a run finishes |
 | Nothing stops the same check running twice at once | Manual and scheduled runs can overlap and write conflicting state | A per-check lease with a fencing token |
@@ -50,8 +50,11 @@ src/
   lib/           Older shared code: auth (Better Auth, RBAC), database
                  (Mongo client, indexes, Postgres pool), SQL validation,
                  approval and version workflows, cache, utilities.
-  contracts/     zod schemas for API input and output, shared with the client.
-  client/        Typed fetch helpers and hooks.
+  contracts/     API input and output types shared with the client; the
+                 alerting and notifications contracts are zod schemas, the
+                 others (activity, checks) plain TypeScript types.
+  client/        Typed fetch helpers and `useApi`, a plain fetch hook
+                 (no cache or deduplication).
   app/           Routes. API routes are thin adapters over services.
   components/
     ui/          Primitives (button, dialog, table...).
@@ -73,41 +76,45 @@ server. `domain` imports nothing from the app.
 MongoDB collections. Existing names are kept where a rename would only add a
 migration; new fields are added alongside old ones and back-filled.
 
-**checks** (today `sql_scripts`)
+**checks** (collection `sql_scripts`)
 
 ```
-{ scriptId, name, description, sql, tags, schedule,
-  workspaceId, connectionId,          // "default" / "primary" until multi-tenant
+{ scriptId, name, description, sqlContent, hashtags, scope,
+  isScheduled, cronSchedule,           // cron, UTC
+  author, createdBy, updatedBy,
   version,                            // optimistic concurrency for edits
-  state: { status, rowCount, since, lastRunId, lastRunAt, previousRowCount },
-  lease: { runId, until } | null }
+  state: { outcome, rowCount, previousRowCount, since, lastRunId, lastRunAt },
+  lease: { runId, until } | null,
+  alerting: { owner, mutedUntil, mutedBy, ack } }
 ```
 
-**runs** (today `result`)
+**runs** (collection `result`)
 
 ```
-{ checkId, trigger: schedule | manual | batch | api, triggeredBy,
+{ checkId, trigger: { kind: schedule | manual | batch | api, by },
   startedAt, finishedAt, durationMs,
-  status: error | issues | clean, rowCount,
-  sample: first 500 rows, columns,
+  outcome: error | issues | clean, rowCount, columns,
+  raw_results: sample of at most 500 rows and 2 MB,
   rowKeys: fingerprints of up to 5,000 rows,  // for new / still / fixed
-  error, aiTriage }
+  diff, error, message, findings, expiresAt }
 ```
 
-Indexes: `{ checkId: 1, startedAt: -1 }`, `{ startedAt: -1 }`, and a TTL on
-`startedAt` for retention (configurable, 90 days by default).
+Indexes: `finishedAt`, `(checkId, finishedAt)`, `(outcome, finishedAt)`, and
+a TTL on `expiresAt` (`RUN_RETENTION_DAYS`, 90 days by default).
 
-**events**: the activity feed and the notification outbox in one.
+**events**: the activity feed and the notification outbox's source.
 
 ```
-{ _id, type: check.status_changed | check.edited | check.approved | ...,
-  checkId, runId, from, to, at, actor,
-  deliveries: { slack: { at, ok } } }
+{ type: check.outcome_changed | check.new_rows, checkId, runId,
+  from, to, rowCount, diff, error, at, workspaceId }
 ```
 
-A unique index on `(type, runId)` makes writing an event idempotent.
+A unique index on `runId` makes writing an event idempotent.
 
-**batches**: `{ requestedBy, checkIds, done, failed, startedAt, finishedAt }`.
+**batches**: `{ executionId, requestedBy, scripts: [{ scriptId, status, ... }],
+totalScripts, startedAt, completedAt, isActive }`.
+
+[database.md](database.md) lists every collection, field and index.
 
 ## Running a check
 
@@ -117,11 +124,18 @@ started by a person, the schedule, a batch, or an agent.
 1. **Lease.** `findOneAndUpdate` sets `lease = { runId, until }` only when
    there is no live lease. If a run is already in progress, the caller gets
    that run's id instead of starting a second one.
-2. **Execute** through the check's `DataSource`: a read-only transaction,
-   `statement_timeout`, and a row cap. Each instance limits concurrent
-   executions (a small semaphore) so a burst cannot exhaust the PostgreSQL
-   connection pool.
-3. **Record** the run: count, capped sample, row fingerprints, duration.
+2. **Execute** through the check's `DataSource` in a read-only transaction.
+   Each instance limits concurrent executions (a semaphore of
+   `CHECK_CONCURRENCY`, 4 by default) so a burst cannot exhaust the
+   PostgreSQL connection pool. When a slot frees up the lease is renewed,
+   so time spent queueing does not eat into it; a run whose lease was taken
+   meanwhile stops without querying. `CHECK_TIMEOUT_MS` (30 s by default,
+   clamped to 1 s – 5 min) is one deadline for the whole script: each
+   statement gets `statement_timeout` set to the time left. Rows are read
+   through a cursor; at most 5,000 are kept per run and the rest are only
+   counted, so the row count stays exact.
+3. **Record** the run: exact count, a sample (500 rows, 2 MB at most),
+   fingerprints of the kept rows, duration.
 4. **Transition.** Compare with the check's previous state and update it
    with the lease's `runId` as a fencing token: a run whose lease expired
    cannot overwrite a newer result. When the status or the set of rows
@@ -176,26 +190,56 @@ queue can replace the inline runner later without changing services.
 
 ## API conventions
 
-- Input and output are zod schemas in `src/contracts`, parsed at the edge of
-  every route and reused by the client for types.
-- Errors are `{ error: { code, message } }` with the matching HTTP status.
-- Lists use cursor pagination.
-- Every route declares its permission through `withAuth`; guests are opt-in
-  per route.
+These are the target conventions. The routes built on `server/` follow them;
+the legacy routes are still being migrated and keep their own shapes.
+
+- **Auth.** Target: every route declares its permission through `withAuth`
+  (`src/server/http/route.ts`); guests are opt-in per route. Today there are
+  three styles:
+  - `withAuth`: `activity`, `batch-execution-status`, `checks`,
+    `checks/[scriptId]`, `checks/[scriptId]/alerting`, `coverage`,
+    `members`, `notifications/destinations` (and `[id]`, `[id]/test`),
+    `integrations/[provider]/install` and `callback`,
+    `integrations/telegram/links` (and `[id]`), `run-all-scripts`.
+  - `authorizeApiRequest` (legacy): `ai/analyze-sql`, `ai/generate-sql`,
+    `ai/triage`, `check-history`, `check-history/stats`, `edit-history`,
+    `execution-details/[resultId]`, `execution-history`, `list-scripts`,
+    and the GET of `scripts`.
+  - `validateApiAuth` + `requirePermission` (legacy): `approvals`, `me`,
+    `run-check`, `scripts` (writes), `scripts/[scriptId]`,
+    `scripts/[scriptId]/versions`, `users/roles`.
+  - Their own check: `auth/[...all]` (Better Auth), `mcp` (API key),
+    `notifications/dispatch` (`CRON_SECRET`), the Slack and Telegram
+    callbacks (signatures).
+- **Input.** Target: parsed with a zod schema at the edge (`parseJson`).
+  Only the alerting and notifications contracts are zod today.
+- **Errors.** Target: `{ error: { code, message } }` with the matching HTTP
+  status (`errorResponse`). The `withAuth` routes use it; legacy routes
+  answer `{ error: "..." }`, `{ message: "..." }` or
+  `{ success: false, ... }`.
+- **Paging.** Target: cursor pagination, as `activity` does. `check-history`,
+  `edit-history` and `approvals` page by `page` and `limit`;
+  `execution-history` returns up to `limit` rows with no paging.
 
 ## Front end
 
-- Routes follow the information architecture: `/checks`, `/checks/[id]`,
-  `/checks/new`, `/activity`, `/coverage`, `/settings/*`. Old routes redirect.
+- Routes: `/checks`, `/checks/[scriptId]`, `/scripts/new` (new check),
+  `/activity`, `/dashboard` (the Runs page), `/coverage`, `/data-analysis`,
+  `/settings/notifications`, `/settings/api-keys`, `/admin/users`. The
+  older pages `/manage-scripts` (Manage, with `/approvals` and
+  `/edit-history` under it) and `/view-execution-result/[resultId]` (a run's
+  full report) are still live, without redirects; the sidebar treats them as
+  part of Checks and Runs. The only redirect is `/docs/menu-bar-and-dock`.
 - Server components render the shell; interactive views are client
-  components that fetch through query hooks, with caching and revalidation
-  instead of hand-written effects.
+  components. They fetch with `useApi` (`src/client/use-api.ts`), a plain
+  `useEffect` fetch with abort and `reload()`: no cache, deduplication or
+  revalidation. A query library is a later step.
 - One set of design tokens (CSS variables) for light and dark, and a small
   set of primitives: button, pill, table, tabs, sparkline, empty state.
 
 ## Extension points
 
-- **DataSource:** `runReadOnly(sql, { timeoutMs, maxRows })`. PostgreSQL
+- **DataSource:** `runReadOnly(statements, { timeoutMs, maxRows })`. PostgreSQL
   today; MySQL, BigQuery or Snowflake later as adapters.
 - **Channel:** `request(message, secret)` and `interpretOk(body)` in
   `src/server/notify/channels/`. A new service is one file and an entry in
