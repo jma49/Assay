@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Assay Dock icon: a small monitor watching a pulse. Original artwork. -->
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f5f7"/><stop offset="0.5" stop-color="#d9dde3"/><stop offset="1" stop-color="#b9bfc8"/></linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10284f"/><stop offset="1" stop-color="#061226"/></linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="stand" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9aa1ab"/><stop offset="0.5" stop-color="#e6e9ee"/><stop offset="1" stop-color="#8a919b"/></linearGradient>
+    <radialGradient id="shadow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#000" stop-opacity="0.35"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="1.4"/></filter>
+  </defs>
+  <ellipse cx="64" cy="118" rx="40" ry="6" fill="url(#shadow)"/>
+  <path d="M50 92 h28 l6 18 h-40 z" fill="url(#stand)" stroke="#6f7680" stroke-width="1.5" stroke-linejoin="round"/>
+  <ellipse cx="64" cy="111" rx="26" ry="5" fill="url(#stand)" stroke="#6f7680" stroke-width="1.5"/>
+  <rect x="10" y="14" width="108" height="80" rx="10" fill="url(#body)" stroke="#6f7680" stroke-width="2"/>
+  <rect x="18" y="21" width="92" height="64" rx="4" fill="url(#screen)" stroke="#3b4350" stroke-width="1.5"/>
+  <polyline points="22,60 38,60 45,48 52,70 60,34 68,66 74,56 82,56 88,50 94,58 106,58" fill="none" stroke="#5dff8a" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.45" filter="url(#glow)"/>
+  <polyline points="22,60 38,60 45,48 52,70 60,34 68,66 74,56 82,56 88,50 94,58 106,58" fill="none" stroke="#9dffb6" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="86" cy="77" r="3" fill="#4be070"/>
+  <circle cx="95" cy="77" r="3" fill="#ffc53d"/>
+  <circle cx="104" cy="77" r="3" fill="#ff5a4e"/>
+  <path d="M18 25 a4 4 0 0 1 4 -4 h84 a4 4 0 0 1 4 4 v14 c-30 10 -62 -2 -92 8 z" fill="url(#gloss)"/>
+  <path d="M14 18 h100" stroke="#fff" stroke-opacity="0.8" stroke-width="1.2" stroke-linecap="round"/>
+</svg>
