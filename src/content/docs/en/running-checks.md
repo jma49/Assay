@@ -14,7 +14,7 @@ The result appears in **Check History** when the run finishes.
 
 Choose **Bulk Execution**, then either **Execute All Scripts** or **Execute Scheduled Scripts** (only checks with a schedule turned on). A progress panel shows each check as it runs.
 
-The menu bar has shortcuts for both: **File → Run a Check…** and **File → Run in Bulk…** open the dashboard in the right mode from any page.
+Both buttons are in the top bar of the **Runs** page.
 
 ## Limits
 

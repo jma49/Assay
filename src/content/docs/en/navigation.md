@@ -1,35 +1,28 @@
-# Menu bar and Dock
+# Finding your way around
 
-Assay borrows the Mac OS X layout: the **Dock** at the bottom takes you somewhere, the **menu bar** at the top does something.
+The **sidebar** on the left takes you to each part of Assay. The **top bar** shows where you are and the actions for that page.
 
-## The Dock
+## Sidebar
 
-| Icon | Opens |
+| Item | What it is for |
 |---|---|
-| Gauges | Dashboard |
-| Database | Scripts |
-| Database with + | New Check |
-| Pie chart | Analysis |
-| Green tick | Approvals |
-| Person | Users |
+| **Checks** | Every check, grouped by tag and scope, with its query and actions |
+| **Runs** | Every run, newest first, with totals per status and the run buttons |
+| **Coverage** | Which tables in your database have a check watching them |
+| **Analysis** | How results change over time |
+| **Approvals** | Changes waiting for review (admins and managers) |
+| **Members** | Who has access and with which role (admins and managers) |
+| **Docs** | These pages |
 
-The triangle under an icon marks where you are. With a keyboard, use **Tab** to reach the Dock and **← →**, **Home** and **End** to move along it.
+Items you do not have permission for are hidden. At the bottom of the sidebar are your account, the language switch and the dark mode switch. On a phone the sidebar becomes a row along the top.
 
-## The menu bar
+## Top bar
 
-| Menu | Commands |
-|---|---|
-| **Assay** | About Assay, Appearance (light, dark, same as system), Language, Sign Out |
-| **File** | New Check, Run a Check…, Run in Bulk…, Run History |
-| **View** | Show all results, passed, needs attention or failed; Reload |
-| **Window** | Collapse or expand the window, Zoom |
-| **Help** | These docs, GitHub, Report an Issue |
+The page title comes first, then the page's own controls: search, filters, **Run a Check…** on the Runs page, and so on. **New check** is always at the right if you can write checks.
 
-Commands that belong to the dashboard, like filtering the history, open the dashboard first when you are elsewhere.
+## Keyboard
 
-## The window
-
-The red, yellow and green buttons at the top left of the window close it (back to the home page), collapse it to its title bar, and zoom it to the full width of the screen. Double-clicking the title bar also collapses it.
+In the Checks and Coverage lists, **↑** and **↓** move the selection, **Home** and **End** jump to either end, and **Return** opens the selected check for editing.
 
 ## See also
 

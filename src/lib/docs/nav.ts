@@ -45,7 +45,7 @@ export const DOCS_NAV: DocsGroup[] = [
     title: { en: "Reference", zh: "参考" },
     pages: [
       { slug: "sql-safety", title: { en: "SQL safety rules", zh: "SQL 安全规则" } },
-      { slug: "menu-bar-and-dock", title: { en: "Menu bar and Dock", zh: "菜单栏与 Dock" } },
+      { slug: "navigation", title: { en: "Finding your way around", zh: "界面导航" } },
       { slug: "faq", title: { en: "FAQ", zh: "常见问题" } },
     ],
   },
