@@ -27,9 +27,8 @@ describe("ownsCheck", () => {
     expect(ownsCheck({ createdBy: { id: "u1" }, author: "someone" }, ada)).toBe(true);
     expect(ownsCheck({ createdBy: { id: "u2" }, author: "ada" }, ada)).toBe(false);
   });
-  it("falls back to the author label for checks made before createdBy", () => {
-    expect(ownsCheck({ author: "ada" }, ada)).toBe(true);
-    expect(ownsCheck({ author: "bob" }, ada)).toBe(false);
+  it("gives checks made before createdBy no owner, whatever their author label", () => {
+    expect(ownsCheck({ author: "ada" }, ada)).toBe(false);
     expect(ownsCheck({}, ada)).toBe(false);
   });
 });
