@@ -10,6 +10,8 @@ export const INDEXES: Record<string, IndexDescription[]> = {
   script_versions: [{ key: { scriptId: 1, createdAt: -1 } }],
   // One event per run at most, so retried runs never notify twice.
   events: [{ key: { runId: 1 }, unique: true }, { key: { at: -1 } }, { key: { checkId: 1, at: -1 } }],
+  // Batches only matter while someone watches their progress; keep a week.
+  batches: [{ key: { executionId: 1 }, unique: true }, { key: { startedAt: 1 }, expireAfterSeconds: 7 * 24 * 60 * 60 }],
 };
 
 export async function ensureIndexes(db: Db): Promise<void> {
