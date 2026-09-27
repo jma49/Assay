@@ -11,6 +11,7 @@ import { BRAND, GITHUB_URL, QUICK_START, landingCopy, type Language } from "./co
 import { Demo, DemoFrame, RECENT_RUNS, StatusDot } from "./demo-panels";
 import { BrandMark } from "@/components/common/BrandMark";
 import { VoxelBeetle } from "@/components/brand/VoxelBeetle";
+import { HighlightedLine } from "./HighlightedLine";
 
 /** Shared horizontal frame: every section aligns to the same left and right edges. */
 const CONTAINER = "mx-auto w-full max-w-[1120px] px-4 sm:px-6";
@@ -223,12 +224,12 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
       <Nav lang={language} setLang={setLanguage} />
 
       <main>
-        <section className="relative pt-20 sm:pt-28">
+        <section className="relative pt-14 sm:pt-16">
           {/* A quiet wash of the accent behind the headline, fading out before the product preview ends. */}
           <div aria-hidden className="absolute inset-x-0 top-0 bottom-40 bg-[radial-gradient(ellipse_at_top,var(--primary-soft),transparent_70%)] sm:bottom-56" />
           <div className={`${CONTAINER} relative`}>
             <div className="mx-auto max-w-[780px] text-center">
-              <VoxelBeetle className="mx-auto -mt-6 mb-4 h-[260px] w-full max-w-[440px] sm:h-[320px]" />
+              <VoxelBeetle className="mx-auto -mt-8 mb-2 h-[190px] w-full max-w-[340px] sm:h-[220px]" />
               <h1 className="serif text-balance text-[40px] leading-[1.08] font-semibold tracking-tight sm:text-[60px]">
                 {t.hero.title}
               </h1>
@@ -301,8 +302,8 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
             <DemoFrame title="Terminal" bodyClassName="" chrome>
               <pre className="mono overflow-x-auto bg-(--l-code-bg) px-4 py-4 text-[13px] leading-6">
                 {QUICK_START.split("\n").map((line, i) => (
-                  <div key={i} className={line.startsWith("#") ? "text-(--l-muted)" : ""}>
-                    {line || " "}
+                  <div key={i} className="whitespace-pre">
+                    {line ? <HighlightedLine text={line} language="shell" /> : " "}
                   </div>
                 ))}
               </pre>

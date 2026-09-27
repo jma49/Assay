@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { HighlightedLine } from "./HighlightedLine";
 import type { DemoKind, Language } from "./content";
 
 type Status = "passed" | "attention" | "failed";
@@ -82,7 +83,9 @@ function Code({ lines }: { lines: string[] }) {
       {lines.map((line, i) => (
         <div key={i} className="flex gap-4">
           <span className="w-4 shrink-0 text-right text-(--l-muted) select-none">{i + 1}</span>
-          <span className="whitespace-pre">{line}</span>
+          <span className="whitespace-pre">
+            <HighlightedLine text={line} language="sql" />
+          </span>
         </div>
       ))}
     </pre>
