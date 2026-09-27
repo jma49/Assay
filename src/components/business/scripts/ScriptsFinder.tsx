@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { SqlScript } from "@/components/business/dashboard/types";
 import { cn } from "@/lib/utils/utils";
 import { CoveragePanes, useCoverage } from "./CoveragePanes";
+import { listKeyHandler } from "./list-keys";
 
 type Source =
   | { kind: "all" }
@@ -189,7 +190,19 @@ export function ScriptsFinder({
       ) : (
         <>
           {/* Checks in the chosen group */}
-          <ul role="listbox" aria-label={t.all} className="w-80 shrink-0 overflow-y-auto border-r max-lg:max-h-72 max-lg:w-full max-lg:border-r-0 max-lg:border-b">
+          <ul
+            role="listbox"
+            aria-label={t.all}
+            onKeyDown={listKeyHandler(
+              visible.map((script) => script.scriptId),
+              selectedId,
+              setSelectedId,
+              (id) => {
+                const script = visible.find((s) => s.scriptId === id);
+                if (script) onEdit(script);
+              },
+            )}
+            className="w-80 shrink-0 overflow-y-auto border-r max-lg:max-h-72 max-lg:w-full max-lg:border-r-0 max-lg:border-b">
             {visible.length === 0 ? (
               <li className="p-6 text-center text-[13px] text-muted-foreground">{t.empty}</li>
             ) : (
@@ -199,6 +212,8 @@ export function ScriptsFinder({
                   <li key={script.scriptId} role="option" aria-selected={active}>
                     <button
                       type="button"
+                      data-list-id={script.scriptId}
+                      tabIndex={active || (!selectedId && index === 0) ? 0 : -1}
                       onClick={() => setSelectedId(script.scriptId)}
                       onDoubleClick={() => onEdit(script)}
                       className={cn(
