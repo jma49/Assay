@@ -1,3 +1,4 @@
+import { intParam } from "@/lib/utils/query-params";
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { Permission } from "@/lib/auth/rbac";
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
     const scriptId = searchParams.get("scriptId");
-    const limit = Math.min(500, parseInt(searchParams.get("limit") || "500"));
+    const limit = intParam(searchParams.get("limit"), 500, 1, 500);
 
     const mongoDbClient = getMongoDbClient();
     const db = await mongoDbClient.getDb();
