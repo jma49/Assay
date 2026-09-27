@@ -44,5 +44,8 @@ The beetle uses the cobalt ramp of the interface accent:
 
 ## Type
 
-Geist for the interface, Geist Mono for code and ids, EB Garamond for page
-titles only.
+Manrope for everything readable: interface text at 400–600, headings at
+600–700 with slightly tight letter-spacing (`font-display`). Its round forms
+suit the chibi mascot and stay clear in dense tables. JetBrains Mono for
+code, ids and cron expressions. Chinese falls back to the system face
+(PingFang SC, Microsoft YaHei).

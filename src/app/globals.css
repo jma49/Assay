@@ -9,10 +9,11 @@
    everywhere: error = the check itself broke, issues = it found rows,
    clean = it found none. */
 :root {
-  --app-font-sans: var(--font-geist), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+  --app-font-sans: var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
-  --app-font-serif: var(--font-garamond), "Iowan Old Style", Georgia, "Songti SC", "Noto Serif SC", serif;
-  --app-font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* Headings use the same family, heavier and tighter. */
+  --app-font-display: var(--app-font-sans);
+  --app-font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
   --radius: 0.4rem;
 
@@ -143,7 +144,7 @@
 
 @theme inline {
   --font-sans: var(--app-font-sans);
-  --font-serif: var(--app-font-serif);
+  --font-display: var(--app-font-display);
   --font-mono: var(--app-font-mono);
 
   --color-background: var(--background);
@@ -234,9 +235,10 @@
     color-scheme: dark;
   }
 
-  /* Page titles use the serif face; everything else stays sans. */
+  /* Titles: the display face, tighter as it gets larger. */
   h1 {
-    @apply font-serif;
+    @apply font-display;
+    letter-spacing: -0.02em;
     text-wrap: balance;
   }
 
@@ -329,6 +331,7 @@
 
 .docs-prose h2 {
   margin-top: 2.5rem;
+  letter-spacing: -0.015em;
   scroll-margin-top: 4rem;
   font-size: 20px;
   font-weight: 600;
@@ -509,4 +512,9 @@
 }
 .tok-punctuation {
   color: var(--syntax-punctuation);
+}
+
+/* The display face runs tight at heading sizes. */
+.font-display {
+  letter-spacing: -0.02em;
 }

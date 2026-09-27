@@ -54,7 +54,7 @@ export function DocsArticle({
   return (
     <div className="flex">
       <article className="min-w-0 flex-1 px-5 py-8 sm:px-10 lg:px-12" lang={language === "zh" ? "zh-CN" : "en"}>
-        <h1 className="font-serif text-[34px] leading-tight font-semibold tracking-tight">{page.title[language]}</h1>
+        <h1 className="font-display text-[34px] leading-tight font-semibold tracking-tight">{page.title[language]}</h1>
         <div className="docs-prose mt-6">{content[language]}</div>
 
         <nav className="mt-14 grid gap-3 border-t pt-6 sm:grid-cols-2" aria-label="Previous and next">
