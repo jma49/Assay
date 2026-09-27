@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { AquaWallpaper } from "@/components/common/AquaWallpaper";
 import { TrafficLights } from "@/components/common/TrafficLights";
@@ -10,10 +10,9 @@ import {
   type DashboardTranslationKeys,
 } from "@/components/business/dashboard/types";
 import { APP_CONTAINER } from "@/components/layout/app-container";
+import { useAppWindowState } from "@/components/layout/app-window-state";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils/utils";
-
-const ZOOM_KEY = "assay-window-zoomed";
 
 const LIGHT_LABELS = {
   en: { close: "Close window", minimize: "Collapse window", zoom: "Zoom window" },
@@ -46,28 +45,7 @@ export function AppWindow({ children }: { children: ReactNode }) {
   const title = key ? `${BRAND} — ${labels[key as keyof typeof labels] ?? key}` : BRAND;
   const lightLabels = LIGHT_LABELS[language] ?? LIGHT_LABELS.en;
 
-  const [shaded, setShaded] = useState(false);
-  const [zoomed, setZoomed] = useState(false);
-
-  useEffect(() => {
-    try {
-      setZoomed(localStorage.getItem(ZOOM_KEY) === "1");
-    } catch {
-      // Storage blocked: the window just starts unzoomed.
-    }
-  }, []);
-
-  const toggleZoom = () => {
-    setZoomed((current) => {
-      const next = !current;
-      try {
-        localStorage.setItem(ZOOM_KEY, next ? "1" : "0");
-      } catch {
-        // Storage blocked: the zoom still applies to this visit.
-      }
-      return next;
-    });
-  };
+  const { shaded, zoomed, toggleShade, toggleZoom } = useAppWindowState();
 
   // A full page load, so pages that guard unsaved work can still ask first.
   const close = () => window.location.assign("/");
@@ -75,23 +53,23 @@ export function AppWindow({ children }: { children: ReactNode }) {
   return (
     <div className="relative">
       <AquaWallpaper className="fixed" />
-      {/* md:pb-28 leaves room so the Dock never covers the end of the window. */}
+      {/* pb-24/md:pb-28 leave room so the Dock never covers the end of the window. */}
       <div
         className={cn(
           APP_CONTAINER,
-          "relative max-sm:px-2 py-5 sm:py-8 md:pb-28",
+          "relative max-sm:px-2 pt-5 pb-24 sm:pt-8 md:pb-28",
           zoomed && "max-w-none",
         )}
       >
         <div className="aqua-window overflow-hidden rounded-[7px]">
           <div
             className="aqua-titlebar relative flex h-[26px] items-center justify-center px-20 text-[13px] select-none"
-            onDoubleClick={() => setShaded((value) => !value)}
+            onDoubleClick={toggleShade}
           >
             <TrafficLights
               className="absolute left-2.5"
               close={{ label: lightLabels.close, onClick: close }}
-              minimize={{ label: lightLabels.minimize, onClick: () => setShaded((value) => !value) }}
+              minimize={{ label: lightLabels.minimize, onClick: toggleShade }}
               zoom={{ label: lightLabels.zoom, onClick: toggleZoom }}
             />
             <span className="truncate">{title}</span>

@@ -628,6 +628,12 @@
     0 10px 26px rgba(0, 0, 0, 0.35);
 }
 
+/* A menu dropping from the menu bar hangs square off it. */
+.aqua-menu-dropdown {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
 .aqua-menu-item {
   border-radius: 3px;
 }
@@ -791,17 +797,10 @@ svg.lucide-loader > * {
    pointer grows and its neighbours make room, as in Mac OS X. */
 .aqua-dock-wrap {
   position: fixed;
-  bottom: 6px;
+  bottom: max(6px, env(safe-area-inset-bottom));
   left: 50%;
   z-index: 30;
-  display: none;
   transform: translateX(-50%);
-}
-
-@media (min-width: 768px) {
-  .aqua-dock-wrap {
-    display: block;
-  }
 }
 
 .aqua-dock {
@@ -838,16 +837,41 @@ svg.lucide-loader > * {
     margin 0.16s ease-out;
 }
 
-.aqua-dock-item:hover {
-  z-index: 1;
-  margin: 0 12px;
-  transform: scale(1.45);
+@media (hover: hover) and (min-width: 768px) {
+  .aqua-dock-item:hover {
+    z-index: 1;
+    margin: 0 12px;
+    transform: scale(1.45);
+  }
+
+  .aqua-dock-item:hover + .aqua-dock-item,
+  .aqua-dock-item:has(+ .aqua-dock-item:hover) {
+    margin: 0 5px;
+    transform: scale(1.18);
+  }
+
+  .aqua-dock-item:hover .aqua-dock-label {
+    opacity: 1;
+  }
 }
 
-.aqua-dock-item:hover + .aqua-dock-item,
-.aqua-dock-item:has(+ .aqua-dock-item:hover) {
-  margin: 0 5px;
-  transform: scale(1.18);
+/* Phones: a smaller, iOS-like row of tiles without magnification. */
+@media (max-width: 767px) {
+  .aqua-dock {
+    gap: 8px;
+    padding: 6px 10px 9px;
+  }
+
+  .aqua-dock-tile {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+  }
+
+  .aqua-dock-tile svg {
+    width: 22px;
+    height: 22px;
+  }
 }
 
 .aqua-dock-tile {
@@ -895,10 +919,6 @@ svg.lucide-loader > * {
   pointer-events: none;
   transform: translateX(-50%);
   transition: opacity 0.12s;
-}
-
-.aqua-dock-item:hover .aqua-dock-label {
-  opacity: 1;
 }
 
 /* The black triangle under a running application (Mac OS X 10.0–10.4). */

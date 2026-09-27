@@ -22,6 +22,7 @@ import { LoadingError } from "@/components/business/dashboard/LoadingError";
 import { DashboardFooter } from "@/components/business/dashboard/DashboardFooter";
 import { DashboardSkeleton } from "@/components/common/PageSkeletons";
 import type { CheckStats } from "@/lib/database/check-stats";
+import { useAppCommand } from "@/lib/commands/use-app-command";
 
 // --- Main Component ---
 const Dashboard = () => {
@@ -46,6 +47,11 @@ const Dashboard = () => {
     "success" | "error" | null
   >(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // A View-menu filter that arrives before the first history load is applied
+  // by that load, which would otherwise reset it to "all".
+  const initialHistoryLoadedRef = useRef(false);
+  const initialFilterRef = useRef<string | null>(null);
 
   // 新增：后端分页相关状态
   const [paginationInfo, setPaginationInfo] = useState({
@@ -283,6 +289,25 @@ const Dashboard = () => {
     loadPaginatedChecks(1, status, searchTerm, selectedHashtags, sortBy, sortOrder);
   }, [loadPaginatedChecks, searchTerm, selectedHashtags, sortConfig]);
 
+  // View menu: filter the run history by status.
+  useAppCommand((command) => {
+    if (command.type !== "history-filter") return false;
+    const beforeFirstLoad = !initialHistoryLoadedRef.current;
+    if (beforeFirstLoad) {
+      initialFilterRef.current = command.status;
+      setFilterStatus(command.status);
+      setCurrentPage(1);
+    } else {
+      handleFilterStatusChange(command.status);
+    }
+    // Wait for the page to lay out before scrolling when it is still loading.
+    setTimeout(
+      () => document.getElementById("execution-history")?.scrollIntoView({ behavior: "smooth" }),
+      beforeFirstLoad ? 800 : 0,
+    );
+    return true;
+  });
+
   // 处理搜索变化
   const handleSearchChange = useCallback((search: string) => {
     setSearchTerm(search);
@@ -428,9 +453,10 @@ const Dashboard = () => {
       isLoadingRef.current = false;
       const [scriptsResult] = await Promise.all([
         scriptsRequest,
-        loadPaginatedChecks(1, null, "", [], "execution_time", "desc"),
+        loadPaginatedChecks(1, initialFilterRef.current, "", [], "execution_time", "desc"),
         loadOverallStats(),
       ]);
+      initialHistoryLoadedRef.current = true;
 
       console.log(`✅ API响应完成 ${requestId}:`, {
         scriptsOk: scriptsResult.ok,
