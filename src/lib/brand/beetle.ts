@@ -23,6 +23,9 @@ export const BEETLE_COLORS = {
   hornTip: "#2B4FA8",
   leg: "#0F2257",
   eye: "#EAF0FD",
+  gloss: "#8FAEF2",
+  shine: "#DCE6FD",
+  pupil: "#0B1636",
 } as const;
 
 type Shape = (x: number, y: number, z: number) => boolean;
@@ -57,127 +60,132 @@ function tube(points: [number, number, number][], radius: number): Set<string> {
 }
 
 /** Voxels per design unit: the shapes below are in design units and sampled this finely. */
-export const BEETLE_RESOLUTION = 2;
+export const BEETLE_RESOLUTION = 3;
 
+/**
+ * A chibi beetle, like a vinyl toy: one round shell with a glossy patch,
+ * a big head with big eyes, a thick horn that forks at the top, and short
+ * legs. Few parts and a clear silhouette read better than anatomy.
+ */
 export function beetleVoxels(resolution: number = BEETLE_RESOLUTION): Voxel[] {
   const R = resolution;
   const grid = new Map<string, string>();
   const put = (x: number, y: number, z: number, color: string) => grid.set(`${x},${y},${z}`, color);
   const has = (x: number, y: number, z: number) => grid.has(`${x},${y},${z}`);
-  /** Voxels along a polyline given in design units. */
-  const line = (points: [number, number, number][], radius: number, colorAt: (y: number) => string, under = false) => {
-    const scaled = points.map(([x, y, z]) => [x * R, y * R, z * R] as [number, number, number]);
-    for (const key of tube(scaled, Math.max(0, Math.round(radius * R)))) {
-      const [x, y, z] = key.split(",").map(Number);
-      if (!under || !has(x, y, z)) put(x, y, z, colorAt(y / R));
-    }
-  };
-  /** A small ball in design units, for eyes and horn tips. */
-  const dot = (cx: number, cy: number, cz: number, radius: number, color: string) => {
-    const r = radius * R;
-    for (let x = Math.floor(cx * R - r); x <= Math.ceil(cx * R + r); x++) {
-      for (let y = Math.floor(cy * R - r); y <= Math.ceil(cy * R + r); y++) {
-        for (let z = Math.floor(cz * R - r); z <= Math.ceil(cz * R + r); z++) {
-          if ((x - cx * R) ** 2 + (y - cy * R) ** 2 + (z - cz * R) ** 2 <= r * r) put(x, y, z, color);
+  /** Fills a shape given in design units; `color` sees each voxel's design position. */
+  const fill = (
+    bounds: [number, number, number, number, number, number],
+    inside: Shape,
+    color: (x: number, y: number, z: number) => string,
+    overwrite = true,
+  ) => {
+    const [x0, x1, y0, y1, z0, z1] = bounds;
+    for (let x = Math.floor(x0 * R); x <= Math.ceil(x1 * R); x++) {
+      for (let y = Math.floor(y0 * R); y <= Math.ceil(y1 * R); y++) {
+        for (let z = Math.floor(z0 * R); z <= Math.ceil(z1 * R); z++) {
+          const [dx, dy, dz] = [x / R, y / R, z / R];
+          if (inside(dx, dy, dz) && (overwrite || !has(x, y, z))) put(x, y, z, color(dx, dy, dz));
         }
       }
     }
   };
-
-  // Elytra (wing cases): a full dome, flattened underneath.
-  const elytra = ellipsoid(-1, 2.2, 0, 8.4, 6.2, 6);
-  // Pronotum: the domed shield behind the head.
-  const pronotum = ellipsoid(8, 3.4, 0, 3.8, 4.2, 5);
-  const head = ellipsoid(11.6, 2.6, 0, 2.2, 1.9, 2.4);
-
-  for (let x = -10 * R; x <= 14 * R; x++) {
-    for (let y = 1 * R; y <= 9 * R; y++) {
-      for (let z = -6 * R; z <= 6 * R; z++) {
-        const [dx, dy, dz] = [x / R, y / R, z / R];
-        if (elytra(dx, dy, dz) || pronotum(dx, dy, dz)) put(x, y, z, BEETLE_COLORS.shell);
-        else if (head(dx, dy, dz)) put(x, y, z, BEETLE_COLORS.shellDark);
-      }
+  const ball = (cx: number, cy: number, cz: number, r: number, color: string, overwrite = true) =>
+    fill([cx - r, cx + r, cy - r, cy + r, cz - r, cz + r], ellipsoid(cx, cy, cz, r, r, r), () => color, overwrite);
+  /** A tube along a polyline in design units. */
+  const line = (points: [number, number, number][], radius: number, color: string, overwrite = true) => {
+    const scaled = points.map(([x, y, z]) => [x * R, y * R, z * R] as [number, number, number]);
+    for (const key of tube(scaled, Math.max(0, Math.round(radius * R)))) {
+      const [x, y, z] = key.split(",").map(Number);
+      if (overwrite || !has(x, y, z)) put(x, y, z, color);
     }
-  }
+  };
 
-  // Light catches the top of the shell; the seam between the wing cases runs down the back.
+  // The shell: one round dome, cut flat underneath, darker towards the belly.
+  const shell = ellipsoid(0, 3, 0, 6.6, 4.4, 5.3);
+  fill([-7, 7, 1.2, 7.5, -5.5, 5.5], (x, y, z) => y >= 1.2 && shell(x, y, z), (_x, y) =>
+    y < 2.2 ? BEETLE_COLORS.shellDark : BEETLE_COLORS.shell,
+  );
+
+  // A toy-like gloss: one soft patch high on the shell, with a small bright spot.
+  const glossAt = (x: number, y: number, z: number, cx: number, cy: number, cz: number, r: number) =>
+    (x - cx) ** 2 + (y - cy) ** 2 + (z - cz) ** 2 <= r * r;
   for (const key of [...grid.keys()]) {
     const [x, y, z] = key.split(",").map(Number);
-    if (!has(x, y + 1, z) && grid.get(key) === BEETLE_COLORS.shell) put(x, y, z, BEETLE_COLORS.shellLight);
-  }
-  for (let x = -9 * R; x <= 4 * R; x++) {
-    for (let y = 9 * R; y >= R; y--) {
-      if (has(x, y, 0)) {
-        put(x, y, 0, BEETLE_COLORS.seam);
-        break;
-      }
-    }
+    const [dx, dy, dz] = [x / R, y / R, z / R];
+    if (grid.get(key) !== BEETLE_COLORS.shell) continue;
+    if (glossAt(dx, dy, dz, -1.6, 6.4, 2.6, 1.1)) put(x, y, z, BEETLE_COLORS.shine);
+    else if (glossAt(dx, dy, dz, -1.4, 6.2, 2.4, 2.6)) put(x, y, z, BEETLE_COLORS.gloss);
   }
 
-  // The long head horn sweeps forward, rises and curls back, forking at the tip.
-  const hornColor = (y: number) => (y >= 11 ? BEETLE_COLORS.hornTip : BEETLE_COLORS.horn);
+  // Grooves: down the middle of the wing cases, and across where the shield behind the head begins.
+  for (const key of [...grid.keys()]) {
+    const [x, y, z] = key.split(",").map(Number);
+    const [dx, dy, dz] = [x / R, y / R, z / R];
+    const surface = !has(x, y + 1, z) || !has(x, y, z + 1) || !has(x, y, z - 1) || !has(x + 1, y, z);
+    if (!surface || dy < 2.2) continue;
+    if ((Math.abs(dz) < 0.2 && dx < 2.6) || (dx >= 2.6 && dx < 3.05)) put(x, y, z, BEETLE_COLORS.seam);
+  }
+
+  // The head: big and dark, pushed forward under the shield.
+  fill([4.6, 9.6, 0.8, 5, -3, 3], ellipsoid(7.2, 2.8, 0, 2.3, 2, 2.6), () => BEETLE_COLORS.shellDark);
+
+  // Big eyes: white with a dark pupil looking forward.
+  for (const side of [-1, 1]) {
+    ball(8.4, 3.4, side * 1.7, 0.95, BEETLE_COLORS.eye);
+    ball(9.05, 3.5, side * 1.75, 0.5, BEETLE_COLORS.pupil);
+  }
+
+  // The horn: thick from the forehead, rising and forking at the top.
   line(
     [
-      [13, 3, 0],
-      [16, 4, 0],
-      [18, 6, 0],
-      [19, 9, 0],
-      [19, 12, 0],
-      [18, 14, 0],
+      [8.6, 4, 0],
+      [9.9, 6, 0],
+      [10.3, 8.6, 0],
+      [9.8, 10.6, 0],
     ],
     1,
-    hornColor,
+    BEETLE_COLORS.horn,
   );
   line(
     [
-      [18, 14, 0],
-      [16.5, 15.5, 0],
+      [9.8, 10.6, 0],
+      [8.7, 12, 0],
     ],
-    0.5,
-    hornColor,
+    0.55,
+    BEETLE_COLORS.hornTip,
   );
   line(
     [
-      [18, 14, 0],
-      [19.8, 15.6, 0],
+      [9.8, 10.6, 0],
+      [11, 12.1, 0],
     ],
-    0.5,
-    hornColor,
+    0.55,
+    BEETLE_COLORS.hornTip,
   );
 
-  // The shorter thorax horn leans forward over the head, forked at its end.
+  // A short horn on the shield, pointing forward.
   line(
     [
-      [9, 6, 0],
-      [11, 7, 0],
-      [13, 7, 0],
+      [3.8, 6.8, 0],
+      [5.6, 7.3, 0],
+      [6.6, 6.9, 0],
     ],
-    0.5,
-    () => BEETLE_COLORS.horn,
+    0.55,
+    BEETLE_COLORS.horn,
   );
-  dot(14, 6.5, -0.8, 0.6, BEETLE_COLORS.hornTip);
-  dot(14, 6.5, 0.8, 0.6, BEETLE_COLORS.hornTip);
 
-  // Eyes on either side of the head.
-  dot(12.2, 3, -2, 0.6, BEETLE_COLORS.eye);
-  dot(12.2, 3, 2, 0.6, BEETLE_COLORS.eye);
-
-  // Three legs a side: out from the body, then down to the ground.
-  for (const [hipX, footX] of [
-    [9, 12],
-    [3, 3],
-    [-3, -6],
-  ] as const) {
+  // Six short legs, splayed a little.
+  for (const legX of [4.6, 0.6, -3.6]) {
     for (const side of [-1, 1]) {
       line(
         [
-          [hipX, 2, side * 3],
-          [hipX + (footX - hipX) / 2, 3, side * 6],
-          [footX, 0, side * 8],
+          [legX, 1.8, side * 3.8],
+          [legX + 0.4, 1.2, side * 5.6],
+          [legX + 0.9, 0.1, side * 6.1],
         ],
         0.5,
-        () => BEETLE_COLORS.leg,
-        true,
+        BEETLE_COLORS.leg,
+        false,
       );
     }
   }
@@ -243,40 +251,46 @@ export function beetleIconGrid(): (string | null)[][] {
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      // Wing cases: a high dome, cut flat underneath.
-      if (y <= 17 && inEllipse(x, y, 9, 18.5, 8, 8.5)) paint(x, y, BEETLE_COLORS.shell);
-      // Pronotum, then the head in front of it.
-      else if (y <= 17 && inEllipse(x, y, 16, 15.5, 3, 3.2)) paint(x, y, BEETLE_COLORS.shellDark);
-      else if (y <= 17 && inEllipse(x, y, 19, 16, 1.8, 1.6)) paint(x, y, BEETLE_COLORS.horn);
+      // A round shell, cut flat underneath, darker along the belly.
+      if (y <= 18 && inEllipse(x, y, 9, 15.5, 7.6, 7)) paint(x, y, y === 18 ? BEETLE_COLORS.shellDark : BEETLE_COLORS.shell);
     }
   }
-  // Highlight along the top of the dome, and the seam between the wing cases.
-  for (let x = 0; x < size; x++) {
-    const top = grid.findIndex((row) => row[x] === BEETLE_COLORS.shell);
-    if (top >= 0) paint(x, top, BEETLE_COLORS.shellLight);
+  // The head, big and dark, in front of the shell.
+  for (let y = 0; y < size; y++) {
+    for (let x = 14; x < size; x++) {
+      if (y <= 18 && inEllipse(x, y, 18.6, 16, 2.9, 2.7)) paint(x, y, BEETLE_COLORS.shellDark);
+    }
   }
-  for (let y = 11; y <= 15; y++) paint(12, y, BEETLE_COLORS.seam);
+  // Gloss: a soft patch high on the shell with a bright spot.
+  for (const [x, y] of [[6, 11], [7, 11], [8, 11], [5, 12], [6, 12], [9, 11], [5, 13]]) paint(x, y, BEETLE_COLORS.gloss);
+  for (const [x, y] of [[6, 12], [7, 12]]) paint(x, y, BEETLE_COLORS.shine);
+  // The groove where the shield behind the head begins.
+  for (let y = 10; y <= 17; y++) paint(13, y, BEETLE_COLORS.seam);
 
-  // Head horn: forward from the head, up, then forked at the top.
-  for (const [x, y] of [
-    [20, 15], [20, 14], [21, 13], [21, 12], [21, 11], [21, 10], [21, 9], [21, 8], [21, 7],
-    [20, 6], [22, 6], [19, 5], [23, 5],
-  ]) {
-    paint(x, y, y <= 8 ? BEETLE_COLORS.hornTip : BEETLE_COLORS.horn);
-  }
-  // Thorax horn leaning over the head.
-  for (const [x, y] of [[16, 12], [17, 11], [18, 11], [19, 12]]) paint(x, y, BEETLE_COLORS.horn);
-  paint(18, 15, BEETLE_COLORS.eye);
+  // A big eye looking forward.
+  for (const [x, y] of [[19, 15], [20, 15], [19, 16], [20, 16]]) paint(x, y, "#FFFFFF");
+  paint(20, 16, BEETLE_COLORS.pupil);
 
-  // Legs: three visible on the near side.
-  for (const [x, y] of [
-    [5, 18], [4, 19], [3, 20],
-    [10, 18], [10, 19], [10, 20],
-    [16, 18], [17, 19], [18, 20],
-  ]) {
-    paint(x, y, BEETLE_COLORS.leg);
-  }
-  return grid;
+  // The horn: up from the forehead, forking at the top.
+  for (const [x, y] of [[20, 13], [21, 13], [21, 12], [21, 11], [21, 10], [21, 9], [21, 8], [21, 7]]) paint(x, y, BEETLE_COLORS.horn);
+  for (const [x, y] of [[20, 6], [19, 5], [22, 6], [23, 5]]) paint(x, y, BEETLE_COLORS.hornTip);
+
+  // Three short legs on the near side.
+  for (const [x, y] of [[4, 19], [3, 20], [9, 19], [9, 20], [14, 19], [15, 20]]) paint(x, y, BEETLE_COLORS.leg);
+  return centered(grid);
+}
+
+/** Moves the drawing so its bounding box sits in the middle of the grid. */
+function centered(grid: (string | null)[][]): (string | null)[][] {
+  const size = grid.length;
+  const cells = grid.flatMap((row, y) => row.flatMap((color, x) => (color ? [[x, y]] : [])));
+  const xs = cells.map(([x]) => x);
+  const ys = cells.map(([, y]) => y);
+  const dx = Math.floor((size - (Math.max(...xs) - Math.min(...xs) + 1)) / 2) - Math.min(...xs);
+  const dy = Math.floor((size - (Math.max(...ys) - Math.min(...ys) + 1)) / 2) - Math.min(...ys);
+  const out: (string | null)[][] = Array.from({ length: size }, () => Array<string | null>(size).fill(null));
+  grid.forEach((row, y) => row.forEach((color, x) => color && (out[y + dy][x + dx] = color)));
+  return out;
 }
 
 /** The icon as SVG, on a rounded tile unless `tile` is null. */
@@ -289,6 +303,9 @@ export function beetleIconSvg({ size = 64, tile = "#EAF0FD" }: { size?: number; 
       if (color) rects.push(`<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${color}"/>`);
     }),
   );
-  const background = tile ? `<rect width="${n}" height="${n}" rx="${n * 0.22}" fill="${tile}"/>` : "";
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" width="${size}" height="${size}" shape-rendering="crispEdges">${background}${rects.join("")}</svg>`;
+  // A margin so the horn and shell never touch the tile's rounded edge.
+  const pad = 2.5;
+  const side = n + pad * 2;
+  const background = tile ? `<rect x="${-pad}" y="${-pad}" width="${side}" height="${side}" rx="${side * 0.22}" fill="${tile}"/>` : "";
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-pad} ${-pad} ${side} ${side}" width="${size}" height="${size}" shape-rendering="crispEdges">${background}${rects.join("")}</svg>`;
 }
