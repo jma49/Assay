@@ -2,18 +2,16 @@ import { NextResponse, NextRequest } from "next/server";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
-import { clearScriptsCache } from "@/lib/cache/cache-utils";
 import { validateApiAuth } from "@/lib/auth/auth-utils";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
-import { authorProblem, ownsCheck, readVersion, versionFilter } from "@/lib/workflows/check-fields";
-import { createScriptVersion } from "@/lib/workflows/version-control";
+import { authorProblem, ownsCheck, readVersion } from "@/lib/workflows/check-fields";
 import {
   createApprovalRequest,
   isAutoApprovalEligible,
   analyzeScriptType,
 } from "@/lib/workflows/approval-workflow";
-import { recordEditHistoryOnServer } from "@/lib/workflows/edit-history-store";
+import { deleteCheck, updateCheck } from "@/server/services/check-writes";
 
 // Helper function to get the MongoDB collection
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
@@ -266,62 +264,18 @@ export async function PUT(
       );
     }
 
-    updateData.updatedAt = new Date(); // Always update the timestamp
-    (updateData as Record<string, unknown>).updatedBy = { id: user.id, email: userEmail };
-
-    // Only onto the version the editor started from.
-    const result = await collection.updateOne(
-      { scriptId, ...versionFilter(expectedVersion) },
-      { $set: updateData, $inc: { version: 1 } }
+    const updated = await updateCheck(
+      await getMongoDbClient().getDb(),
+      scriptId,
+      updateData,
+      expectedVersion,
+      { id: user.id, email: userEmail },
+      "脚本更新",
     );
-
-    if (result.matchedCount === 0) {
-      if (await collection.countDocuments({ scriptId }, { limit: 1 })) {
-        return CONFLICT();
-      }
-      return NextResponse.json(
-        { message: `Script with ID '${scriptId}' not found` },
-        { status: 404 }
-      );
+    if (updated.kind === "conflict") return CONFLICT();
+    if (updated.kind === "missing") {
+      return NextResponse.json({ message: `Script with ID '${scriptId}' not found` }, { status: 404 });
     }
-
-    const updatedScript = await collection.findOne({ scriptId });
-    if (updatedScript) {
-      await recordEditHistoryOnServer(
-        {
-          scriptId,
-          operation: "update",
-          oldData: existingScript as unknown as Record<string, unknown>,
-          newData: updatedScript as unknown as Record<string, unknown>,
-        },
-        { id: user.id, email: userEmail, name: userEmail.split("@")[0] }
-      );
-
-      const userRole = await getUserRole(user.id);
-      if (userRole) {
-        await createScriptVersion(
-          scriptId,
-          {
-            name: updatedScript.name,
-            cnName: updatedScript.cnName,
-            description: updatedScript.description,
-            cnDescription: updatedScript.cnDescription,
-            scope: updatedScript.scope,
-            cnScope: updatedScript.cnScope,
-            author: updatedScript.author,
-            hashtags: updatedScript.hashtags,
-            sqlContent: updatedScript.sqlContent,
-          },
-          user.id,
-          userEmail,
-          "update",
-          "脚本更新",
-          "patch"
-        );
-      }
-    }
-
-    await clearScriptsCache();
 
     const message = isModifyingOthersScript
       ? `脚本 '${scriptId}' 更新成功（管理员自动审批通过），已创建新版本`
@@ -447,27 +401,9 @@ export async function DELETE(
       }
     }
 
-    const deleteResult = await collection.deleteOne({ scriptId });
-
-    if (deleteResult.deletedCount === 0) {
-      return NextResponse.json(
-        {
-          message: `Script with ID '${scriptId}' not found or already deleted`,
-        },
-        { status: 404 }
-      );
+    if (!(await deleteCheck(await getMongoDbClient().getDb(), scriptId, { id: user.id, email: userEmail }))) {
+      return NextResponse.json({ message: `Script with ID '${scriptId}' not found or already deleted` }, { status: 404 });
     }
-
-    await recordEditHistoryOnServer(
-      {
-        scriptId,
-        operation: "delete",
-        oldData: existingScript as unknown as Record<string, unknown>,
-      },
-      { id: user.id, email: userEmail, name: userEmail.split("@")[0] }
-    );
-
-    await clearScriptsCache();
 
     const message =
       userRole &&
