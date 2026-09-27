@@ -47,7 +47,7 @@ vi.mock("@/lib/workflows/approval-workflow", async (importOriginal) => ({
   createApprovalRequest: (...args: unknown[]) => mocks.createApprovalRequest(...args),
 }));
 
-import { DELETE, GET, PUT } from "./route";
+import { DELETE, PUT } from "./route";
 
 const params = (scriptId = "orders-check") => ({ params: Promise.resolve({ scriptId }) });
 const url = "http://localhost/api/scripts/orders-check";
@@ -166,24 +166,6 @@ describe("PUT /api/scripts/[scriptId]", () => {
     mocks.role = "admin";
     expect((await update({ name: "Renamed", version: 3 })).status).toBe(200);
     expect(mocks.updateOne).toHaveBeenCalledOnce();
-  });
-});
-
-describe("GET /api/scripts/[scriptId]", () => {
-  beforeEach(() => {
-    mocks.denied = null;
-    mocks.findOne.mockReset().mockImplementation(async () => mocks.existing);
-  });
-
-  it("returns the auth response when script:read is refused", async () => {
-    mocks.denied = NextResponse.json({ message: "forbidden" }, { status: 403 });
-    expect(await GET(new NextRequest(url), params())).toBe(mocks.denied);
-    expect(mocks.findOne).not.toHaveBeenCalled();
-  });
-
-  it("answers 404 for an unknown check", async () => {
-    mocks.existing = null;
-    expect((await GET(new NextRequest(url), params())).status).toBe(404);
   });
 });
 

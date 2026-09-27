@@ -312,17 +312,11 @@ export async function GET(_request: Request) {
       return authResult.response;
     }
 
-    console.log("API: GET /api/scripts - 请求已收到");
-
     const collection = await getSqlScriptsCollection();
     const scriptsFromDb = await collection
       .find({})
       .sort({ createdAt: -1 })
       .toArray();
-
-    console.log(
-      `API: GET /api/scripts - 从数据库中找到 ${scriptsFromDb.length} 个脚本`
-    );
 
     interface ScriptDocumentFromDb extends Document {
       _id: ObjectId;
@@ -344,9 +338,11 @@ export async function GET(_request: Request) {
 
     const scripts = scriptsFromDb.map((docUncasted) => {
       const doc = docUncasted as ScriptDocumentFromDb;
-      const { _id, createdAt, updatedAt, ...rest } = doc;
+      const { _id, createdAt, updatedAt } = doc;
+      // Listed field by field: the document also holds who created it (with
+      // their email), the run lease and alerting state, which readers,
+      // including demo guests, must not receive.
       return {
-        ...rest,
         _id: _id.toString(),
         scriptId: doc.scriptId,
         name: doc.name,
@@ -360,6 +356,7 @@ export async function GET(_request: Request) {
         sqlContent: doc.sqlContent,
         isScheduled: doc.isScheduled || false,
         cronSchedule: doc.cronSchedule || "",
+        version: typeof doc.version === "number" ? doc.version : undefined,
         createdAt:
           createdAt instanceof Date
             ? createdAt.toISOString()
@@ -373,7 +370,7 @@ export async function GET(_request: Request) {
 
     return NextResponse.json(scripts, { status: 200 });
   } catch (error) {
-    console.error("API: GET /api/scripts - 获取脚本列表时出错:", error);
+    console.error("[scripts] Listing checks failed:", error);
 
 
     return NextResponse.json(

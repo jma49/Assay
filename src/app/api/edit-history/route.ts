@@ -111,18 +111,11 @@ export async function GET(request: NextRequest) {
       },
     ];
 
-    console.log(`API: 查询编辑历史，查询条件:`, JSON.stringify(query));
-    const startTime = Date.now();
-
     const result = await collection.aggregate(aggregationPipeline).toArray();
-
-    const queryTime = Date.now() - startTime;
-    console.log(`API: 编辑历史查询完成，耗时 ${queryTime}ms`);
-
-    const historyList = result[0]?.data || [];
+    const rows: Document[] = result[0]?.data || [];
     const total = result[0]?.count?.[0]?.total || 0;
-
-    console.log(`API: 返回 ${historyList.length} 条记录，总计 ${total} 条`);
+    // Demo guests see who made a change by name, never their email or id.
+    const historyList = authResult.isGuest ? rows.map(({ userEmail: _email, userId: _id, ...row }) => row) : rows;
 
     return NextResponse.json({
       histories: historyList,
@@ -134,7 +127,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("查询编辑历史失败:", error);
+    console.error("[edit-history] Query failed:", error);
     return NextResponse.json({ error: "查询编辑历史失败" }, { status: 500 });
   }
 }
