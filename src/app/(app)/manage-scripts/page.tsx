@@ -181,20 +181,8 @@ const ManageScriptsContent = () => {
     fetchScripts();
   }, [fetchScripts]);
 
-  // 处理URL参数中的scriptId，自动打开编辑对话框
-  useEffect(() => {
-    const scriptIdFromUrl = searchParams.get('scriptId');
-    if (scriptIdFromUrl && scripts.length > 0 && !isDialogOpen) {
-      const targetScript = scripts.find(script => script.scriptId === scriptIdFromUrl);
-      if (targetScript) {
-        handleOpenDialog('edit', targetScript);
-        // 清除URL参数，避免重复触发
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.delete('scriptId');
-        window.history.replaceState({}, '', newUrl.toString());
-      }
-    }
-  }, [scripts, searchParams, isDialogOpen, handleOpenDialog]);
+  // Links from runs and coverage select a check (?scriptId=); editing stays one click away.
+  const linkedScriptId = searchParams.get("scriptId");
 
   const handleMetadataChange = (
     fieldName: keyof ScriptFormData,
@@ -516,7 +504,7 @@ const ManageScriptsContent = () => {
                 placeholder={t("searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
-                className="h-7 rounded-full pl-8 text-[13px]"
+                className="h-8 pl-8 text-[13px]"
               />
             </div>
             <Button asChild size="sm" variant="outline">
@@ -525,15 +513,12 @@ const ManageScriptsContent = () => {
                 {t("allScriptsHistory")}
               </Link>
             </Button>
-            <Button asChild size="sm" className="ml-auto">
-              <Link href="/scripts/new">{language === "zh" ? "新建检查" : "New Check"}</Link>
-            </Button>
           </WindowToolbar>
 
           {isLoading && scripts.length === 0 ? (
             <SkeletonTable rows={8} withTitle={false} />
           ) : error ? (
-            <div className="aqua-window rounded-[7px] p-8 text-center">
+            <div className="rounded-xl border bg-card shadow-xs  p-8 text-center">
               <AlertTriangle className="mx-auto mb-3 size-10 text-failure" />
               <p className="font-medium">{t("errorTitle")}</p>
               <p className="mt-1 text-[13px] text-muted-foreground">{error}</p>
@@ -547,6 +532,7 @@ const ManageScriptsContent = () => {
               onEditHistory={handleViewEditHistory}
               onRunHistory={handleViewExecutionHistory}
               onDelete={handleDeleteClick}
+              initialSelectedId={linkedScriptId}
             />
           )}
         </div>

@@ -20,7 +20,7 @@ import { ManualTrigger } from "@/components/business/dashboard/ManualTrigger";
 import { CheckHistory } from "@/components/business/dashboard/CheckHistory";
 import { LoadingError } from "@/components/business/dashboard/LoadingError";
 import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
-import { AquaSheet } from "@/components/ui/aqua-sheet";
+import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
 import { DashboardSkeleton } from "@/components/common/PageSkeletons";
@@ -866,7 +866,7 @@ const Dashboard = () => {
 
           {(canExecute || demoRuns !== null) && (
             <WindowToolbar>
-              <Button size="sm" className="aqua-default" onClick={() => openRunSheet("single")}>
+              <Button size="sm" className="" onClick={() => openRunSheet("single")}>
                 <Play className="size-3.5" />
                 {language === "zh" ? "执行检查…" : "Run a Check…"}
               </Button>
@@ -909,7 +909,7 @@ const Dashboard = () => {
           />
 
           {/* Running a check is an occasional action, so it lives in a sheet. */}
-          <AquaSheet
+          <Modal
             open={runSheetOpen}
             onOpenChange={setRunSheetOpen}
             title={language === "zh" ? "执行检查" : "Run a check"}
@@ -938,7 +938,7 @@ const Dashboard = () => {
               setSelectedScriptId={stableSetSelectedScriptId}
               handleTriggerCheck={handleTriggerCheck}
             />
-          </AquaSheet>
+          </Modal>
 
           {/* Check History Section */}
           <section id="execution-history" className="scroll-mt-20" aria-label={t("checkHistoryTitle")}>
