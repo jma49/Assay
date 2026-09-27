@@ -1,9 +1,11 @@
 "use client";
 
 import { EmptyState } from "@/components/common/EmptyState";
+import { Pagination } from "@/components/common/Pagination";
 import { SkeletonCardList } from "@/components/common/PageSkeletons";
+import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
+import { describePage } from "@/lib/utils/pagination";
 import { ApprovalCard } from "./ApprovalCard";
-import { ApprovalsPagination } from "./ApprovalsPagination";
 import type { ApprovalAction, ApprovalRequest, Language, Translate } from "./approvals";
 import type { ApprovalPage } from "./useApprovals";
 
@@ -38,13 +40,21 @@ export function ApprovalList({ list, hasLoaded, emptyTitle, emptyHint, language,
           />
         ))
       )}
-      <ApprovalsPagination
-        page={list.page}
-        totalPages={list.totalPages}
-        totalItems={list.totalItems}
-        onPageChange={list.setPage}
-        t={t}
-      />
+      {list.totalPages > 1 && (
+        <Pagination
+          page={list.page}
+          totalPages={list.totalPages}
+          pageInfo={describePage(t("pageInfo"), {
+            page: list.page,
+            totalPages: list.totalPages,
+            totalItems: list.totalItems,
+            pageSize: ITEMS_PER_PAGE,
+          })}
+          t={t}
+          onPageChange={list.setPage}
+          layered={false}
+        />
+      )}
     </>
   );
 }

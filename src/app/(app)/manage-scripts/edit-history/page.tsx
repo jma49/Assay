@@ -5,12 +5,12 @@ import { WindowStatusBar } from "@/components/layout/WindowChrome";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import { dashboardTranslations } from "@/components/business/dashboard/types";
+import { Pagination } from "@/components/common/Pagination";
+import { dashboardTranslations, ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
 import { EditHistoryDetailDialog } from "@/components/business/edit-history/EditHistoryDetailDialog";
-import { EditHistoryPagination } from "@/components/business/edit-history/EditHistoryPagination";
 import { EditHistoryTable } from "@/components/business/edit-history/EditHistoryTable";
 import { EditHistoryToolbar } from "@/components/business/edit-history/EditHistoryToolbar";
-import { EMPTY_FILTERS, type HistoryFilters, type OperationFilter } from "@/components/business/edit-history/edit-history";
+import { EMPTY_FILTERS, formatPageInfo, type HistoryFilters, type OperationFilter } from "@/components/business/edit-history/edit-history";
 import { useEditHistory } from "@/components/business/edit-history/useEditHistory";
 import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
 
@@ -77,13 +77,13 @@ export default function GlobalEditHistoryPage() {
               />
             </CardContent>
             {totalPages > 1 && !loading && histories.length > 0 && (
-              <EditHistoryPagination
-                currentPage={currentPage}
+              <Pagination
+                page={currentPage}
                 totalPages={totalPages}
-                totalRecords={totalRecords}
-                loading={loading}
+                pageInfo={formatPageInfo(t, { currentPage, totalPages, totalRecords, pageSize: ITEMS_PER_PAGE })}
                 t={t}
                 onPageChange={(page) => fetchHistories(filters, page)}
+                disabled={loading}
               />
             )}
           </Card>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { UserRole } from "@/lib/types/approval";
-import { countByRole, formatPageInfo, getRoleInfo, isPageJumpKey, pageSlice, parsePageJump, type MemberRole } from "./members";
+import { countByRole, getRoleInfo, pageSlice, type MemberRole } from "./members";
 
 const member = (userId: string, role: UserRole): MemberRole => ({
   userId,
@@ -47,28 +47,3 @@ describe("pageSlice", () => {
   });
 });
 
-describe("formatPageInfo", () => {
-  it("fills the placeholders in order", () => {
-    expect(formatPageInfo("%s-%s of %s (%s/%s)", [11, 20, 23, 2, 3])).toBe("11-20 of 23 (2/3)");
-  });
-});
-
-describe("parsePageJump", () => {
-  it("accepts only whole pages in range", () => {
-    expect(parsePageJump("2", 3)).toBe(2);
-    expect(parsePageJump("", 3)).toBeNull();
-    expect(parsePageJump("0", 3)).toBeNull();
-    expect(parsePageJump("4", 3)).toBeNull();
-    expect(parsePageJump("x", 3)).toBeNull();
-  });
-});
-
-describe("isPageJumpKey", () => {
-  it("allows digits and editing keys only", () => {
-    expect(isPageJumpKey("7")).toBe(true);
-    expect(isPageJumpKey("Backspace")).toBe(true);
-    expect(isPageJumpKey("Tab")).toBe(true);
-    expect(isPageJumpKey("e")).toBe(false);
-    expect(isPageJumpKey("-")).toBe(false);
-  });
-});
