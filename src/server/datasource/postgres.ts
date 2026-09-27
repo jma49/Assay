@@ -1,4 +1,5 @@
 import { withReadOnlyTransaction } from "@/lib/database/db";
+import { singleStatement } from "@/lib/sql/single-statement";
 import { QueryTimeoutError, type DataSource, type StatementResult } from "./types";
 
 // 57014 query_canceled: what PostgreSQL raises when statement_timeout fires.
@@ -13,7 +14,7 @@ export const postgresDataSource: DataSource = {
       const results: StatementResult[] = [];
       for (const statement of statements) {
         try {
-          const result = await client.query(statement);
+          const result = await client.query(singleStatement(statement));
           results.push({ command: result.command, rows: result.rows ?? [] });
         } catch (error) {
           if ((error as { code?: string }).code === QUERY_CANCELED) throw new QueryTimeoutError(timeoutMs);
