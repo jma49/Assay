@@ -15,7 +15,7 @@ Managers and admins can approve or reject.
 
 ## Reviewing
 
-Open **Approvals** in the Dock. **Pending Approvals** lists each request with the requester, the time, the check and a note. Choose **Approve** or **Reject** and add a comment. **Approval History** keeps every decision.
+Open **Approvals** in the sidebar. **Pending Approvals** lists each request with the requester, the time, the check and a note. Choose **Approve** or **Reject** and add a comment. **Approval History** keeps every decision.
 
 ## See also
 

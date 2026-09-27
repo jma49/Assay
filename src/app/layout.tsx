@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { EB_Garamond } from "next/font/google";
+import { EB_Garamond, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -11,8 +11,10 @@ import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { GlobalErrorHandlerProvider } from "@/components/error/GlobalErrorHandlerProvider";
 import { DialogPortalProvider } from "@/components/common/DialogPortalProvider";
 
-// Aqua's display face is Apple Garamond; EB Garamond is the closest open
-// licensed match, self-hosted by next/font.
+// Self-hosted by next/font. Geist for the interface and code; EB Garamond
+// only for page titles, the one brand accent in the type.
+const geist = Geist({ subsets: ["latin"], display: "swap", variable: "--font-geist" });
+const geistMono = Geist_Mono({ subsets: ["latin"], display: "swap", variable: "--font-geist-mono" });
 const garamond = EB_Garamond({
   subsets: ["latin"],
   weight: ["500", "600"],
@@ -50,11 +52,7 @@ export default function RootLayout({
   );
 
   return (
-    <html lang="en" className={garamond.variable} suppressHydrationWarning>
-      <head>
-        {/* 添加CSS预加载提示，减少404错误 */}
-        <meta name="preload" content="styles" />
-      </head>
+    <html lang="en" className={`${geist.variable} ${geistMono.variable} ${garamond.variable}`} suppressHydrationWarning>
       <body>
         {hasClerkKey ? (
           <ClerkProvider appearance={{ theme: shadcn }}>{content}</ClerkProvider>

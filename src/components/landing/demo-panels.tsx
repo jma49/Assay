@@ -1,4 +1,3 @@
-import { TrafficLights } from "@/components/common/TrafficLights";
 import type { ReactNode } from "react";
 import type { DemoKind, Language } from "./content";
 
@@ -47,21 +46,25 @@ export function DemoFrame({
   meta?: ReactNode;
   children: ReactNode;
   bodyClassName?: string;
-  /** Aqua traffic lights in the title bar. */
+  /** Window dots in the title bar, marking the frame as a product screenshot. */
   chrome?: boolean;
   /** Lifted shadow for a window floating over a colored background. */
   elevated?: boolean;
 }) {
   return (
     <div
-      className={`overflow-hidden rounded-[7px] bg-(--l-bg) shadow-[var(--aqua-window-shadow)] ${
-        elevated ? "shadow-[0_0_0_1px_rgba(0,0,0,0.3),0_24px_60px_-20px_rgba(0,0,0,0.55)]" : ""
+      className={`overflow-hidden rounded-xl border bg-(--l-bg) ${
+        elevated ? "shadow-[0_24px_60px_-24px_rgba(22,27,38,0.35)]" : "shadow-xs"
       }`}
     >
-      <div className="aqua-titlebar flex h-10 items-center justify-between gap-4 px-4 text-[13px] text-foreground">
+      <div className="flex h-10 items-center justify-between gap-4 border-b bg-card px-4 text-[13px] text-foreground">
         <span className="flex min-w-0 items-center gap-3">
           {chrome && (
-            <TrafficLights className="shrink-0" />
+            <span aria-hidden className="flex shrink-0 gap-1.5">
+              <span className="size-2.5 rounded-full bg-border-strong" />
+              <span className="size-2.5 rounded-full bg-border-strong" />
+              <span className="size-2.5 rounded-full bg-border-strong" />
+            </span>
           )}
           <span className="truncate">{title}</span>
         </span>

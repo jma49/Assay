@@ -117,11 +117,11 @@ export function CoveragePanes({
           selectedTable,
           setSelectedTable,
         )}
-        className="w-80 shrink-0 overflow-y-auto border-r max-lg:max-h-72 max-lg:w-full max-lg:border-r-0 max-lg:border-b">
+        className="w-80 shrink-0 overflow-y-auto border-r max-xl:max-h-72 max-xl:w-full max-xl:border-r-0 max-xl:border-b">
         {notice ? (
           <li className="p-6 text-center text-[13px] text-muted-foreground">{notice}</li>
         ) : (
-          rows.map((row, index) => {
+          rows.map((row) => {
             const active = row.table === selectedTable;
             const tone = row.missing ? "failure" : row.checks.length > 0 ? "success" : "attention_needed";
             return (
@@ -134,12 +134,12 @@ export function CoveragePanes({
                   onClick={() => setSelectedTable(row.table)}
                   className={cn(
                     "flex w-full items-center gap-2 px-4 py-2 text-left",
-                    active ? "aqua-selected" : index % 2 === 1 && "bg-[color-mix(in_srgb,var(--aqua-accent)_6%,var(--card))]",
+                    active ? "bg-primary-soft" : "hover:bg-muted",
                   )}
                 >
-                  <span className={cn("aqua-gem shrink-0", `aqua-gem-${tone}`)} aria-hidden />
+                  <span className={cn("status-dot shrink-0", `status-dot-${tone}`)} aria-hidden />
                   <span className="min-w-0 flex-1 truncate font-mono text-[12.5px]">{row.table}</span>
-                  <span className={cn("shrink-0 text-[11px] tabular-nums", active ? "text-white/80" : "text-muted-foreground")}>
+                  <span className={cn("shrink-0 text-[11px] tabular-nums", "text-muted-foreground")}>
                     {row.missing ? t.missing : row.checks.length}
                   </span>
                 </button>
@@ -164,7 +164,7 @@ export function CoveragePanes({
             </header>
 
             {selected.checks.length > 0 && (
-              <ul className="divide-y rounded-[6px] border">
+              <ul className="divide-y rounded-lg border">
                 {selected.checks.map((check) => (
                   <li key={check.scriptId}>
                     <button type="button" onClick={() => onOpenCheck(check.scriptId)} className="block w-full px-4 py-2 text-left hover:bg-foreground/[0.04]">

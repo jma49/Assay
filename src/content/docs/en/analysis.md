@@ -1,6 +1,6 @@
 # Analysis
 
-**Analysis** in the Dock shows how your data quality changes over time.
+**Analysis** in the sidebar shows how your data quality changes over time.
 
 ## Filters
 

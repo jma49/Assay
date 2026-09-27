@@ -696,7 +696,7 @@ export default function ViewExecutionResultPage() {
 
   // "Get Info"-style facts about the run and its check.
   const info: { label: string; value: React.ReactNode; mono?: boolean }[] = [
-    { label: t.status, value: <span className={cn("inline-flex items-center gap-1.5", toneText)}><span className={cn("aqua-gem", `aqua-gem-${tone}`)} aria-hidden />{statusText}</span> },
+    { label: t.status, value: <span className={cn("inline-flex items-center gap-1.5", toneText)}><span className={cn("status-dot", `status-dot-${tone}`)} aria-hidden />{statusText}</span> },
     { label: t.executionTime, value: <span className="tabular-nums">{formatDate(result.executedAt)}</span> },
     { label: t.message, value: cleanRunMessage(result.message) },
     {
@@ -754,8 +754,8 @@ export default function ViewExecutionResultPage() {
         <div className="grid gap-6 lg:grid-cols-12 animate-fadeIn">
           {/* What happened, then the rows that prove it. */}
           <section className="min-w-0 space-y-5 lg:col-span-8">
-            <header className="aqua-window flex items-start gap-3 rounded-[7px] px-5 py-4">
-              <span className={cn("aqua-gem mt-2", `aqua-gem-${tone}`)} aria-hidden />
+            <header className="rounded-xl border bg-card shadow-xs flex items-start gap-3  px-5 py-4">
+              <span className={cn("status-dot mt-2", `status-dot-${tone}`)} aria-hidden />
               <div className="min-w-0">
                 <p className={cn("font-serif text-[26px] leading-tight font-semibold", toneText)}>{headline}</p>
                 <p className="mt-1 text-[13px] text-muted-foreground">
@@ -767,15 +767,15 @@ export default function ViewExecutionResultPage() {
               </div>
             </header>
 
-            <div className="aqua-window overflow-hidden rounded-[7px]" aria-label={t.queryFindings}>
+            <div className="rounded-xl border bg-card shadow-xs overflow-hidden " aria-label={t.queryFindings}>
               {findingsContent}
             </div>
           </section>
 
           {/* A Get Info inspector: everything else about the run. */}
           <aside className="lg:col-span-4">
-            <div className="aqua-window overflow-hidden rounded-[7px] lg:sticky lg:top-16">
-              <p className="aqua-titlebar px-4 py-1.5 text-[13px] font-medium">{zh ? "简介" : "Info"}</p>
+            <div className="rounded-xl border bg-card shadow-xs overflow-hidden  lg:sticky lg:top-16">
+              <p className="border-b bg-muted px-4 py-2 text-[12px] font-medium text-muted-foreground">{zh ? "简介" : "Info"}</p>
               <dl className="divide-y text-[13px]">
                 {info.map((item) => (
                   <div key={item.label} className="grid grid-cols-[7.5rem_1fr] gap-3 px-4 py-2">

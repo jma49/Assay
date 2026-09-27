@@ -5,9 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Search, Sun } from "lucide-react";
-import { AquaWallpaper } from "@/components/common/AquaWallpaper";
 import { BrandMark } from "@/components/common/BrandMark";
-import { TrafficLights } from "@/components/common/TrafficLights";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { DOCS_NAV } from "@/lib/docs/nav";
 import type { DocsSearchEntry } from "@/lib/docs/content";
@@ -90,10 +88,10 @@ function DocsSearch({ index }: { index: DocsSearchEntry[] }) {
           else return;
           event.preventDefault();
         }}
-        className="aqua-field h-7 w-full rounded-full pr-3 pl-8 text-[13px] outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+        className="h-8 w-full rounded-md border border-input bg-card pr-3 pl-8 text-[13px] shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
       />
       {query.trim() && (
-        <ul className="aqua-menu absolute top-full right-0 z-50 mt-1.5 w-[340px] p-1 text-popover-foreground" role="listbox">
+        <ul className="absolute top-full right-0 z-50 mt-1.5 w-[340px] rounded-lg border bg-popover p-1 text-popover-foreground shadow-md" role="listbox">
           {results.length === 0 ? (
             <li className="px-3 py-2 text-[13px] text-muted-foreground">{t.noResults}</li>
           ) : (
@@ -105,11 +103,11 @@ function DocsSearch({ index }: { index: DocsSearchEntry[] }) {
                   onClick={() => go(result.href)}
                   className={cn(
                     "block w-full rounded-[3px] px-3 py-1.5 text-left",
-                    i === active && "aqua-selected",
+                    i === active && "bg-muted",
                   )}
                 >
                   <span className="block truncate text-[13px] font-medium">{result.title}</span>
-                  <span className={cn("block truncate text-[12px]", i === active ? "text-white/80" : "text-muted-foreground")}>
+                  <span className={cn("block truncate text-[12px]", "text-muted-foreground")}>
                     {result.context}
                   </span>
                 </button>
@@ -144,7 +142,7 @@ function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
                     aria-current={current ? "page" : undefined}
                     className={cn(
                       "block rounded-[4px] px-3 py-1 text-[13px]",
-                      current ? "aqua-selected" : "text-foreground/85 hover:bg-foreground/[0.06]",
+                      current ? "bg-primary-soft font-medium text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
                     {page.title[language]}
@@ -159,10 +157,7 @@ function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-/**
- * Docs as a Mac OS X Help Viewer: a window on the Aqua desktop with a
- * source-list sidebar, a search field in the toolbar and the page beside it.
- */
+/** Docs: a top bar with search, the table of contents on the left, the page beside it. */
 export function DocsShell({ index, children }: { index: DocsSearchEntry[]; children: ReactNode }) {
   const { language, setLanguage } = useLanguage();
   const { resolvedTheme, setTheme } = useTheme();
@@ -172,24 +167,25 @@ export function DocsShell({ index, children }: { index: DocsSearchEntry[]; child
   const t = COPY[language];
 
   return (
-    <div className="relative min-h-screen">
-      <AquaWallpaper className="fixed" />
-
-      <header className="aqua-menubar sticky top-0 z-40">
-        <div className="mx-auto flex h-10 w-full max-w-7xl items-center gap-5 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur">
+        <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-5 px-4 sm:px-6 lg:px-8">
           <Link href="/">
-            <BrandMark className="[&_img]:size-[18px] [&_span:last-child]:text-[18px]" />
+            <BrandMark />
           </Link>
-          <Link href="/docs" className="text-[14px] font-semibold whitespace-nowrap max-sm:hidden">
+          <Link href="/docs" className="text-[13.5px] font-medium whitespace-nowrap max-sm:hidden">
             {t.help}
           </Link>
-          <a href={GITHUB_URL} className="text-[14px] text-foreground/80 hover:text-foreground max-sm:hidden">
+          <a href={GITHUB_URL} className="text-[13.5px] text-muted-foreground hover:text-foreground max-sm:hidden">
             GitHub
           </a>
-          <div className="ml-auto flex items-center gap-3 whitespace-nowrap text-foreground/85">
+          <div className="ml-auto flex items-center gap-2 whitespace-nowrap">
+            <div className="max-md:hidden">
+              <DocsSearch index={index} />
+            </div>
             <button
               type="button"
-              className="h-8 px-1 text-[13px] hover:text-foreground"
+              className="h-8 rounded-md px-2 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
             >
               {language === "zh" ? "EN" : "中文"}
@@ -197,52 +193,45 @@ export function DocsShell({ index, children }: { index: DocsSearchEntry[]; child
             <button
               type="button"
               aria-label="Toggle color theme"
-              className="grid size-8 place-items-center hover:text-foreground"
+              className="grid size-8 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
             >
               {mounted && resolvedTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </button>
-            <Link href="/dashboard" className="aqua-pill inline-flex h-7 items-center px-3 text-[13px] whitespace-nowrap">
+            <Link
+              href="/manage-scripts"
+              className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground shadow-xs hover:brightness-110"
+            >
               {t.openApp}
             </Link>
           </div>
         </div>
       </header>
 
-      <div className="relative mx-auto w-full max-w-7xl px-2 pt-5 pb-16 sm:px-6 sm:pt-8 lg:px-8">
-        <div className="aqua-window overflow-hidden rounded-[7px]">
-          <div className="aqua-titlebar relative flex h-[26px] items-center justify-center px-20 text-[13px] select-none">
-            <TrafficLights
-              className="absolute left-2.5"
-              close={{ label: t.close, onClick: () => window.location.assign("/") }}
-            />
-            <span className="truncate">{t.help}</span>
-          </div>
-          {/* Unified toolbar under the title bar, as in the Help Viewer. */}
-          <div className="flex h-11 items-center gap-3 border-b border-[var(--aqua-title-line)] bg-[image:var(--aqua-title)] px-3">
+      <div className="mx-auto flex w-full max-w-7xl gap-8 px-4 sm:px-6 lg:px-8">
+        <aside
+          className={cn(
+            "sticky top-14 h-[calc(100dvh-3.5rem)] w-56 shrink-0 overflow-y-auto py-8 max-lg:fixed max-lg:inset-y-14 max-lg:left-0 max-lg:z-30 max-lg:h-auto max-lg:border-r max-lg:bg-card max-lg:px-3 max-lg:shadow-md",
+            !contentsOpen && "max-lg:hidden",
+          )}
+        >
+          <DocsSidebar onNavigate={() => setContentsOpen(false)} />
+        </aside>
+        <div className="min-w-0 flex-1 py-6">
+          <div className="mb-4 flex items-center gap-2 lg:hidden">
             <button
               type="button"
-              className="aqua-pill inline-flex h-7 items-center px-3 text-[13px] lg:hidden"
+              className="inline-flex h-8 items-center rounded-md border border-border-strong bg-card px-3 text-[13px] shadow-xs"
               aria-expanded={contentsOpen}
               onClick={() => setContentsOpen((open) => !open)}
             >
               {t.contents}
             </button>
-            <div className="ml-auto flex w-full justify-end">
+            <div className="ml-auto md:hidden">
               <DocsSearch index={index} />
             </div>
           </div>
-          <div className="relative flex min-h-[70vh] bg-card">
-            <aside
-              className={cn(
-                "w-60 shrink-0 border-r bg-sidebar px-2 py-5 max-lg:absolute max-lg:z-30 max-lg:h-full max-lg:shadow-xl",
-                !contentsOpen && "max-lg:hidden",
-              )}
-            >
-              <DocsSidebar onNavigate={() => setContentsOpen(false)} />
-            </aside>
-            <div className="min-w-0 flex-1">{children}</div>
-          </div>
+          {children}
         </div>
       </div>
     </div>

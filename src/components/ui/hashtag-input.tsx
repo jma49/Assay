@@ -88,7 +88,7 @@ export function HashtagInput({
       
       <div
         className={cn(
-          "aqua-field min-h-[2.5rem] rounded-[4px] px-3 py-2 text-sm transition-colors",
+          "min-h-[2.25rem] rounded-md border border-input bg-card px-2.5 py-1.5 text-[13px] shadow-xs transition-colors",
           "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
           isFocused && "ring-2 ring-ring ring-offset-2",
           disabled && "cursor-not-allowed opacity-50",

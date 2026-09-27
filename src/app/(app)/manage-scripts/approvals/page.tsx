@@ -363,10 +363,10 @@ export default function ApprovalsPage() {
           : 'text-attention';
     const statusGem =
       approval.status === ApprovalStatus.APPROVED
-        ? 'aqua-gem-success'
+        ? 'status-dot-clean'
         : approval.status === ApprovalStatus.REJECTED
-          ? 'aqua-gem-failure'
-          : 'aqua-gem-attention_needed';
+          ? 'status-dot-error'
+          : 'status-dot-issues';
 
     return (
       <article className="rounded-lg border bg-card p-5">
@@ -376,7 +376,7 @@ export default function ApprovalsPage() {
               <h3 className="font-medium">{approval.scriptName}</h3>
               <Badge variant="secondary">{typeInfo.label}</Badge>
               <span className={`inline-flex items-center gap-1.5 text-[13px] ${statusTone}`}>
-                <span className={`aqua-gem ${statusGem}`} aria-hidden />
+                <span className={`status-dot ${statusGem}`} aria-hidden />
                 {statusInfo.label}
               </span>
             </div>
@@ -524,7 +524,7 @@ export default function ApprovalsPage() {
                     onChange={onPageInputChange}
                     onKeyDown={onPageInputKeyDown}
                     placeholder={t("jumpToPage")}
-                    className="w-12 h-6 px-1 text-xs text-center aqua-field rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="w-12 h-6 px-1 text-xs text-center border border-input bg-card rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                   <Button
                     type="submit"
@@ -641,7 +641,7 @@ export default function ApprovalsPage() {
 
       {/* 审批对话框 */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent variant="sheet">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>
               {approvalAction === 'approve' ? t('approveScript') : t('rejectScript')}

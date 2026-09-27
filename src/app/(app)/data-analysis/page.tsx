@@ -646,7 +646,7 @@ export default function DataAnalysisPage() {
               <dl className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-1 bg-card px-5 py-4">
                   <dt className="text-[13px] text-muted-foreground">{t("totalExecutions")}</dt>
-                  <dd className="font-serif text-[30px] leading-tight font-semibold tabular-nums">
+                  <dd className="text-[24px] leading-tight font-semibold tabular-nums">
                     {analyticsData.totalExecutions.toLocaleString()}
                   </dd>
                   <dd className="text-[13px] text-muted-foreground">
@@ -657,7 +657,7 @@ export default function DataAnalysisPage() {
                   <dt className="text-[13px] text-muted-foreground">{t("overallSuccessRate")}</dt>
                   <dd
                     className={cn(
-                      "font-serif text-[30px] leading-tight font-semibold tabular-nums",
+                      "text-[24px] leading-tight font-semibold tabular-nums",
                       analyticsData.overallSuccessRate >= 80 ? "text-success" : "text-attention",
                     )}
                   >
@@ -670,7 +670,7 @@ export default function DataAnalysisPage() {
                 </div>
                 <div className="space-y-1 bg-card px-5 py-4">
                   <dt className="text-[13px] text-muted-foreground">{t("successfulExecutions")}</dt>
-                  <dd className="font-serif text-[30px] leading-tight font-semibold text-success tabular-nums">
+                  <dd className="text-[24px] leading-tight font-semibold text-success tabular-nums">
                     {analyticsData.statusDistribution.success.toLocaleString()}
                   </dd>
                   <dd className="text-[13px] text-muted-foreground">
@@ -683,7 +683,7 @@ export default function DataAnalysisPage() {
                 </div>
                 <div className="space-y-1 bg-card px-5 py-4">
                   <dt className="text-[13px] text-muted-foreground">{t("failedAttentionExecutions")}</dt>
-                  <dd className="font-serif text-[30px] leading-tight font-semibold text-attention tabular-nums">
+                  <dd className="text-[24px] leading-tight font-semibold text-attention tabular-nums">
                     {(
                       analyticsData.statusDistribution.failed +
                       analyticsData.statusDistribution.attention_needed
@@ -1073,7 +1073,7 @@ export default function DataAnalysisPage() {
                                       onChange={handlePageInputChange}
                                       onKeyDown={handlePageInputKeyDown}
                                       placeholder={t("jumpToPage")}
-                                      className="w-12 h-6 px-1 text-xs text-center aqua-field rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
+                                      className="w-12 h-6 px-1 text-xs text-center border border-input bg-card rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
                                       style={{ pointerEvents: "auto" }}
                                     />
                                     <Button

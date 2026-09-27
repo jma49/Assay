@@ -4,7 +4,7 @@
 
 The dashboard lists every run, newest first. You can:
 
-- filter by status with the four tiles at the top (all runs, passed, needs attention, failed), or from the menu bar with **View → Passed / Needs Attention / Failed**; choosing the active tile again clears the filter;
+- filter by status with the four tiles at the top (all runs, passed, needs attention, failed); choosing the active tile again clears the filter;
 - search by check name or message, or by `#tag`;
 - sort by name or time;
 - page through older runs.
@@ -24,7 +24,7 @@ Click a run to open it:
 
 ## Keyboard
 
-In the Scripts window, **↑** and **↓** move through the list, **Home** and **End** jump to either end, and **Return** opens the selected check for editing. The same keys move through the tables in **Coverage**.
+In the Checks list, **↑** and **↓** move through the list, **Home** and **End** jump to either end, and **Return** opens the selected check for editing. The same keys move through the tables in **Coverage**.
 
 ## See also
 

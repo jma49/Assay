@@ -46,15 +46,15 @@ export function StatusTiles({ total, success, attention, failure, active, onSele
             aria-pressed={selected}
             onClick={() => onSelect(selected && tile.key !== null ? null : tile.key)}
             className={cn(
-              "aqua-window flex flex-col items-start rounded-[7px] px-4 py-3 text-left transition-shadow",
-              selected && "shadow-[0_0_0_2px_var(--aqua-accent),var(--aqua-window-shadow)]",
+              "rounded-xl border bg-card shadow-xs flex flex-col items-start  px-4 py-3 text-left transition-shadow",
+              selected && "ring-2 ring-primary",
             )}
           >
             <span className="flex items-center gap-2 text-[12px] text-muted-foreground">
-              {tile.key && <span className={cn("aqua-gem", `aqua-gem-${tile.key}`)} aria-hidden />}
+              {tile.key && <span className={cn("status-dot", `status-dot-${tile.key}`)} aria-hidden />}
               {tile.label}
             </span>
-            <span className={cn("mt-1 font-serif text-[30px] leading-none font-semibold tabular-nums", tile.tone)}>
+            <span className={cn("mt-1 text-[24px] leading-none font-semibold tabular-nums", tile.tone)}>
               {tile.value}
             </span>
             <span className="mt-1 h-4 text-[12px] text-muted-foreground tabular-nums">

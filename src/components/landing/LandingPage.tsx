@@ -9,7 +9,6 @@ import { CalendarClock, GitPullRequest, Moon, ShieldCheck, Sparkles, Sun } from 
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { BRAND, GITHUB_URL, QUICK_START, landingCopy, type Language } from "./content";
 import { Demo, DemoFrame, RECENT_RUNS, StatusDot } from "./demo-panels";
-import { AquaWallpaper } from "@/components/common/AquaWallpaper";
 import { BrandMark } from "@/components/common/BrandMark";
 import { SECTION_THEMES } from "./themes";
 
@@ -17,12 +16,11 @@ import { SECTION_THEMES } from "./themes";
 const CONTAINER = "mx-auto w-full max-w-[1120px] px-4 sm:px-6";
 
 const secondaryButton =
-  "aqua-pill inline-flex h-10 items-center justify-center px-5 text-[14px] font-medium hover:brightness-[1.02]";
+  "inline-flex h-9 items-center justify-center rounded-md border border-border-strong bg-card px-4 text-[13.5px] font-medium shadow-xs hover:bg-muted";
 const heroPrimaryButton =
-  "aqua-gel aqua-default inline-flex h-11 items-center justify-center px-6 text-[14px] font-medium hover:brightness-105";
-// The hero is always dark, so its secondary button keeps the light Aqua pill.
+  "inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-[14px] font-medium text-primary-foreground shadow-xs hover:brightness-110";
 const heroSecondaryButton =
-  "aqua-pill inline-flex h-11 items-center justify-center px-6 text-[14px] font-medium [background:linear-gradient(#ffffff,#f1f1f1_45%,#dedede_50%,#f4f4f4)] text-[#111] hover:brightness-[1.02]";
+  "inline-flex h-11 items-center justify-center rounded-md border border-border-strong bg-card px-6 text-[14px] font-medium shadow-xs hover:bg-muted";
 
 const WHY_ICONS = [
   { Icon: ShieldCheck, color: "#3f7d58" },
@@ -61,7 +59,7 @@ function ThemeToggle() {
 function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void }) {
   const t = landingCopy[lang].nav;
   return (
-    <header className="aqua-menubar sticky top-0 z-20">
+    <header className="sticky top-0 z-20 border-b bg-card/90 backdrop-blur">
       <nav className={`${CONTAINER} flex h-14 items-center justify-between`}>
         <Link href="/">
           <BrandMark />
@@ -119,11 +117,11 @@ function ProductPreview({ lang }: { lang: Language }) {
             {RECENT_RUNS.map((run, i) => (
               <li
                 key={run.en}
-                className={`flex items-center gap-2.5 px-4 py-2 ${i === 0 ? "aqua-selected" : ""}`}
+                className={`flex items-center gap-2.5 px-4 py-2 ${i === 0 ? "bg-primary-soft" : ""}`}
               >
                 <StatusDot status={run.status} />
                 <span className="flex-1 truncate">{run[lang]}</span>
-                <span className={`tabular-nums ${i === 0 ? "text-white/80" : "text-(--l-muted)"}`}>
+                <span className="tabular-nums text-(--l-muted)">
                   {run.status === "failed" ? "—" : run.found}
                 </span>
               </li>
@@ -216,13 +214,13 @@ function FeatureSection({ lang, index }: { lang: Language; index: number }) {
                   aria-selected={i === active}
                   onClick={() => setActive(i)}
                   className={`group w-full rounded-[5px] py-3 pr-3 pl-4 text-left ${
-                    i === active ? "aqua-selected" : "hover:bg-(--l-panel)"
+                    i === active ? "bg-primary-soft" : "hover:bg-(--l-panel)"
                   }`}
                 >
                   <span className="block text-[14px] font-medium">
                     {item.title}
                   </span>
-                  <span className={`mt-1 block text-[13px] leading-5 ${i === active ? "text-white/85" : "text-(--l-muted)"}`}>
+                  <span className="mt-1 block text-[13px] leading-5 text-(--l-muted)">
                     {item.body}
                   </span>
                 </button>
@@ -246,16 +244,14 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
 
       <main>
         <section className="relative pt-20 sm:pt-28">
-          {/* The desktop picture stops partway down so the product window overlaps into the next section. */}
-          <div className="absolute inset-x-0 top-0 bottom-40 sm:bottom-56">
-            <AquaWallpaper />
-          </div>
+          {/* A quiet wash of the accent behind the headline, fading out before the product preview ends. */}
+          <div aria-hidden className="absolute inset-x-0 top-0 bottom-40 bg-[radial-gradient(ellipse_at_top,var(--primary-soft),transparent_70%)] sm:bottom-56" />
           <div className={`${CONTAINER} relative`}>
             <div className="mx-auto max-w-[780px] text-center">
-              <h1 className="serif text-balance text-[40px] leading-[1.08] font-semibold tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,20,70,0.45)] sm:text-[60px]">
+              <h1 className="serif text-balance text-[40px] leading-[1.08] font-semibold tracking-tight sm:text-[60px]">
                 {t.hero.title}
               </h1>
-              <p className="mx-auto mt-5 max-w-[560px] text-pretty text-[17px] leading-7 text-white/85 [text-shadow:0_1px_4px_rgba(0,20,70,0.4)]">
+              <p className="mx-auto mt-5 max-w-[560px] text-pretty text-[17px] leading-7 text-(--l-muted)">
                 {t.hero.subtitle}
               </p>
               <div className="mt-8 flex justify-center gap-3">
@@ -267,7 +263,7 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
                 </a>
               </div>
               <SignedOut>
-                <p className="mt-4 text-[13px] text-white/75">{demo ? t.hero.guestNote : t.hero.demoNote}</p>
+                <p className="mt-4 text-[13px] text-(--l-muted)">{demo ? t.hero.guestNote : t.hero.demoNote}</p>
               </SignedOut>
             </div>
             <div className="mt-14 sm:mt-16">
@@ -284,7 +280,7 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
                 {t.why.title}
               </h2>
             </div>
-            <div className="mt-10 grid gap-px overflow-hidden rounded-[7px] bg-(--l-line) shadow-[var(--aqua-window-shadow)] sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-10 grid gap-px overflow-hidden rounded-xl border bg-(--l-line) sm:grid-cols-2 lg:grid-cols-4">
               {t.why.cards.map((card, i) => {
                 const { Icon, color } = WHY_ICONS[i % WHY_ICONS.length];
                 return (
@@ -353,13 +349,12 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
             </div>
           </div>
         </section>
-        <section className="relative overflow-hidden py-24 sm:py-28">
-          <AquaWallpaper />
+        <section className="relative overflow-hidden border-t bg-[radial-gradient(ellipse_at_bottom,var(--primary-soft),transparent_70%)] py-24 sm:py-28">
           <div className={`${CONTAINER} relative text-center`}>
-            <h2 className="serif mx-auto max-w-[640px] text-balance text-[32px] leading-tight font-semibold tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,20,70,0.45)] sm:text-[42px]">
+            <h2 className="serif mx-auto max-w-[640px] text-balance text-[32px] leading-tight font-semibold tracking-tight sm:text-[42px]">
               {t.cta.title}
             </h2>
-            <p className="mx-auto mt-4 max-w-[520px] text-pretty text-[16px] leading-7 text-white/85">{t.cta.body}</p>
+            <p className="mx-auto mt-4 max-w-[520px] text-pretty text-[16px] leading-7 text-(--l-muted)">{t.cta.body}</p>
             <div className="mt-8 flex justify-center gap-3">
               <Link href={demo ? "/demo" : "/dashboard"} prefetch={false} className={heroPrimaryButton}>
                 {t.hero.primary}
