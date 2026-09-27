@@ -19,6 +19,10 @@ Self-hosted workspaces can limit sign-up to company domains with `ALLOWED_EMAIL_
 | Assign any role, manage users | | | | ✓ |
 | Clear caches and maintenance | | | | ✓ |
 
+## The public demo
+
+When a workspace runs with `DEMO_MODE=true`, viewers can also run the seeded sample checks, up to 20 runs an hour, so visitors can watch a check find problems. They still cannot run anyone else's checks or change anything.
+
 ## Changes that need approval
 
 Admins' changes take effect at once. For everyone else, creating a check, editing someone else's check and deleting a check wait for approval. Editing your own check does not. See [Approvals](/docs/approvals).
