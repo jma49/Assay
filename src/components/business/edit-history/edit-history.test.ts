@@ -1,0 +1,174 @@
+import { describe, expect, it } from "vitest";
+import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
+import {
+  EMPTY_FILTERS,
+  buildHistoryQuery,
+  changesPreview,
+  formatChangeValue,
+  formatPageInfo,
+  historyDescription,
+  isJumpInputKey,
+  operationBadgeClass,
+  operationLabel,
+  operationTimeIso,
+  parseJumpPage,
+  type FieldChange,
+} from "./edit-history";
+
+const t = (key: string) =>
+  ({
+    noResults: "No results",
+    pageInfo: "Showing %s-%s of %s results (Page %s of %s)",
+    operationCreate: "Create",
+    noData: "No data",
+    scheduled: "Scheduled",
+    manual: "Manual",
+    noChanges: "No changes",
+    fieldChangesCount: "{count} changes",
+  })[key] ?? key;
+
+const change = (overrides: Partial<FieldChange> = {}): FieldChange => ({
+  field: "name",
+  fieldDisplayName: "Name",
+  fieldDisplayNameCn: "名称",
+  oldValue: "a",
+  newValue: "b",
+  ...overrides,
+});
+
+const record = (overrides: Partial<EditHistoryRecord> = {}): EditHistoryRecord => ({
+  operation: "update",
+  operationTime: new Date("2026-09-27T10:00:00Z"),
+  userId: "u1",
+  scriptSnapshot: { scriptId: "s1", name: "Check", author: "ann" },
+  searchableAuthor: "ann",
+  searchableScriptName: "check",
+  searchableScriptNameCn: "",
+  operationType: "update",
+  ...overrides,
+});
+
+describe("buildHistoryQuery", () => {
+  it("sends only the paging and sort params when no filter is set", () => {
+    expect(buildHistoryQuery(EMPTY_FILTERS, 1, 10)).toBe("page=1&limit=10&sortBy=operationTime&sortOrder=desc");
+  });
+
+  it("trims text filters and skips the 'all' operation", () => {
+    const query = new URLSearchParams(
+      buildHistoryQuery({ ...EMPTY_FILTERS, scriptName: "  orders ", author: " ann ", operation: "all" }, 3, 10),
+    );
+    expect(query.get("scriptName")).toBe("orders");
+    expect(query.get("author")).toBe("ann");
+    expect(query.has("operation")).toBe(false);
+    expect(query.get("page")).toBe("3");
+  });
+
+  it("drops text filters that are only whitespace and keeps a specific operation", () => {
+    const query = new URLSearchParams(buildHistoryQuery({ ...EMPTY_FILTERS, scriptName: "   ", operation: "delete" }, 1, 10));
+    expect(query.has("scriptName")).toBe(false);
+    expect(query.get("operation")).toBe("delete");
+  });
+
+  it("sends date filters as ISO timestamps", () => {
+    const query = new URLSearchParams(buildHistoryQuery({ ...EMPTY_FILTERS, dateFrom: "2026-09-01", dateTo: "2026-09-27" }, 1, 10));
+    expect(Number.isNaN(Date.parse(query.get("dateFrom")!))).toBe(false);
+    expect(Number.isNaN(Date.parse(query.get("dateTo")!))).toBe(false);
+  });
+});
+
+describe("parseJumpPage", () => {
+  it("accepts pages within range", () => {
+    expect(parseJumpPage("1", 5)).toBe(1);
+    expect(parseJumpPage("5", 5)).toBe(5);
+  });
+
+  it("rejects empty, non-numeric and out-of-range input", () => {
+    expect(parseJumpPage("", 5)).toBeNull();
+    expect(parseJumpPage("x", 5)).toBeNull();
+    expect(parseJumpPage("0", 5)).toBeNull();
+    expect(parseJumpPage("6", 5)).toBeNull();
+  });
+});
+
+describe("isJumpInputKey", () => {
+  it("allows digits and editing keys only", () => {
+    expect(isJumpInputKey("7")).toBe(true);
+    expect(isJumpInputKey("Backspace")).toBe(true);
+    expect(isJumpInputKey("Tab")).toBe(true);
+    expect(isJumpInputKey("e")).toBe(false);
+    expect(isJumpInputKey("-")).toBe(false);
+  });
+});
+
+describe("formatPageInfo", () => {
+  it("fills the range, total and page numbers in order", () => {
+    expect(formatPageInfo(t, { currentPage: 2, totalPages: 3, totalRecords: 25, pageSize: 10 })).toBe(
+      "Showing 11-20 of 25 results (Page 2 of 3)",
+    );
+  });
+
+  it("caps the range at the total on the last page", () => {
+    expect(formatPageInfo(t, { currentPage: 3, totalPages: 3, totalRecords: 25, pageSize: 10 })).toBe(
+      "Showing 21-25 of 25 results (Page 3 of 3)",
+    );
+  });
+
+  it("says there are no results when the total is zero", () => {
+    expect(formatPageInfo(t, { currentPage: 1, totalPages: 0, totalRecords: 0, pageSize: 10 })).toBe("No results");
+  });
+});
+
+describe("operation display", () => {
+  it("maps known operations to their label and colors", () => {
+    expect(operationLabel("create", t)).toBe("Create");
+    expect(operationBadgeClass("delete")).toContain("text-failure");
+  });
+
+  it("falls back to the raw name and neutral colors for unknown operations", () => {
+    expect(operationLabel("archive", t)).toBe("archive");
+    expect(operationBadgeClass("archive")).toBe(operationBadgeClass("update"));
+  });
+});
+
+describe("formatChangeValue", () => {
+  it("shows missing values as no data and booleans as the schedule mode", () => {
+    expect(formatChangeValue(null, t)).toBe("No data");
+    expect(formatChangeValue(undefined, t)).toBe("No data");
+    expect(formatChangeValue(true, t)).toBe("Scheduled");
+    expect(formatChangeValue(false, t)).toBe("Manual");
+  });
+
+  it("shortens long strings to 50 characters", () => {
+    expect(formatChangeValue("x".repeat(60), t)).toBe("x".repeat(50) + "...");
+    expect(formatChangeValue("x".repeat(50), t)).toBe("x".repeat(50));
+  });
+
+  it("stringifies other values", () => {
+    expect(formatChangeValue(0, t)).toBe("0");
+  });
+});
+
+describe("changesPreview", () => {
+  it("says there are no changes for an empty or missing list", () => {
+    expect(changesPreview(undefined, t)).toBe("No changes");
+    expect(changesPreview([], t)).toBe("No changes");
+  });
+
+  it("names a single changed field and counts several", () => {
+    expect(changesPreview([change({ fieldDisplayNameCn: "" })], t)).toBe("Name");
+    expect(changesPreview([change(), change()], t)).toBe("2 changes");
+  });
+});
+
+describe("record accessors", () => {
+  it("returns the operation time as an ISO string whether it arrived as a Date or a string", () => {
+    expect(operationTimeIso(record())).toBe("2026-09-27T10:00:00.000Z");
+    const fromJson = record({ operationTime: "2026-09-27T10:00:00Z" as unknown as Date });
+    expect(operationTimeIso(fromJson)).toBe("2026-09-27T10:00:00Z");
+  });
+
+  it("returns undefined when the record has no description", () => {
+    expect(historyDescription(record())).toBeUndefined();
+    expect(historyDescription(record({ description: "Renamed" }))).toBe("Renamed");
+  });
+});
