@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  runExpiresAt,
+  runRetentionDays,
+  sampleRows,
   diffRowKeys,
   fromLegacyStatus,
   isNotable,
@@ -94,5 +97,25 @@ describe("stateFromHistory", () => {
     const { stateFromHistory } = await import("./run");
     expect(stateFromHistory([run("r1", "clean", 0, 1)])).toMatchObject({ previousRowCount: null, since: new Date(Date.UTC(2026, 8, 1)) });
     expect(stateFromHistory([])).toBeNull();
+  });
+});
+
+describe("sampleRows", () => {
+  it("keeps at most maxRows rows and stops before the byte budget", () => {
+    const rows = Array.from({ length: 10 }, (_, i) => ({ i, text: "x".repeat(100) }));
+    expect(sampleRows(rows, 5)).toHaveLength(5);
+    expect(sampleRows(rows, 10, 360)).toHaveLength(3); // each row is 117 bytes
+    expect(sampleRows([{ huge: "x".repeat(1000) }], 10, 100)).toHaveLength(0);
+  });
+});
+
+describe("run retention", () => {
+  it("defaults to 90 days, 0 keeps forever", () => {
+    expect(runRetentionDays({})).toBe(90);
+    expect(runRetentionDays({ RUN_RETENTION_DAYS: "30" })).toBe(30);
+    expect(runRetentionDays({ RUN_RETENTION_DAYS: "abc" })).toBe(90);
+    const at = new Date("2026-09-27T00:00:00Z");
+    expect(runExpiresAt(at, 30)?.toISOString()).toBe("2026-10-27T00:00:00.000Z");
+    expect(runExpiresAt(at, 0)).toBeNull();
   });
 });
