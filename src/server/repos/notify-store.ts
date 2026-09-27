@@ -120,11 +120,14 @@ export function mongoNotifyStore(db: Db): NotifyStore {
       }
     },
 
-    async markFannedOut(eventId, now, suppressed, actionKey) {
+    async assignActionKey(eventId, actionKey) {
       const _id = toId(eventId);
-      if (!_id) return;
-      await events.updateOne({ _id }, { $set: { fannedOutAt: now, ...(suppressed && { suppressed }) } });
-      await events.updateOne({ _id, actionKey: { $exists: false } }, { $set: { actionKey } });
+      if (_id) await events.updateOne({ _id, actionKey: { $exists: false } }, { $set: { actionKey } });
+    },
+
+    async markFannedOut(eventId, now, suppressed) {
+      const _id = toId(eventId);
+      if (_id) await events.updateOne({ _id }, { $set: { fannedOutAt: now, ...(suppressed && { suppressed }) } });
     },
 
     async claimDelivery(now, leaseMs) {
@@ -147,8 +150,19 @@ export function mongoNotifyStore(db: Db): NotifyStore {
       await deliveries.updateOne({ _id: new ObjectId(delivery.id), claim: delivery.claim }, { $set: set, $inc: inc });
     },
 
-    async sentSince(destinationId, since) {
-      return deliveries.countDocuments({ destinationId, sentAt: { $gte: since } });
+    async takeSendSlot(destinationId, now, limit) {
+      const _id = toId(destinationId);
+      if (!_id) return false;
+      // The destination keeps the times of its sends in the last hour. One
+      // conditional update both checks the count and records the send, so
+      // no two dispatchers can take the last slot.
+      const since = new Date(now.getTime() - 3_600_000);
+      const recent = { $filter: { input: { $ifNull: ["$recentSends", []] }, cond: { $gte: ["$$this", since] } } };
+      const result = await destinations.updateOne(
+        { _id, $expr: { $lt: [{ $size: recent }, limit] } },
+        [{ $set: { recentSends: { $concatArrays: [recent, [now]] } } }],
+      );
+      return result.modifiedCount === 1;
     },
 
     async digestDestinations() {
