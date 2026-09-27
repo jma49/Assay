@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { WindowStatusBar } from "@/components/layout/WindowChrome";
-import { useUser } from '@clerk/nextjs';
+import { useCurrentUser } from "@/lib/auth/client";
 import { useRouter } from 'next/navigation';
 import { CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -78,7 +78,7 @@ const getScriptTypeInfo = (scriptType: ScriptType, t: (key: DashboardTranslation
 type ApprovalRequest = ApprovalRequestDto;
 
 export default function ApprovalsPage() {
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useCurrentUser();
   const router = useRouter();
   const { language } = useLanguage();
   
@@ -267,7 +267,7 @@ export default function ApprovalsPage() {
     }
   }, [loadPendingApprovals, loadApprovalHistory, currentPageHistory]);
 
-  // No need to wait for Clerk's client: the middleware already guarantees a
+  // No need to wait for the session: the middleware already guarantees a
   // signed-in user and each API call checks permissions on the server.
   useEffect(() => {
     loadData();

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { SignOutButton } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { AuthShell } from "@/components/layout/AuthShell";
+import { signOut } from "@/lib/auth/client";
 
 const copy = {
   en: {
@@ -24,6 +25,7 @@ const copy = {
 export default function UnauthorizedPage() {
   const { language } = useLanguage();
   const t = copy[language];
+  const router = useRouter();
 
   return (
     <AuthShell title={t.title} description={t.description}>
@@ -31,9 +33,7 @@ export default function UnauthorizedPage() {
         <Button asChild variant="outline">
           <Link href="/">{t.home}</Link>
         </Button>
-        <SignOutButton redirectUrl="/sign-in">
-          <Button>{t.signOut}</Button>
-        </SignOutButton>
+        <Button onClick={() => signOut().then(() => router.push("/sign-in"))}>{t.signOut}</Button>
       </div>
     </AuthShell>
   );
