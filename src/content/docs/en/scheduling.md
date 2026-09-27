@@ -39,7 +39,7 @@ Call the same command from cron every five minutes. Each scheduled check runs on
 
 ## Running scheduled checks by hand
 
-**Bulk Execution → Execute Scheduled Scripts** on the dashboard runs every scheduled check now, whatever the time.
+On the **Runs** page, choose **Run in bulk…** and pick the scheduled checks only: every scheduled check runs now, whatever the time.
 
 ## See also
 
