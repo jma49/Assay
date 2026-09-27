@@ -116,22 +116,17 @@ function generateNextVersion(
   }
 }
 
+/** Throws when the read fails: guessing "no versions yet" would start a second 1.0.0. */
 async function getLatestVersion(scriptId: string): Promise<string | null> {
-  try {
-    const collection = await getScriptVersionsCollection();
-    const latestVersion = await collection.findOne(
-      { scriptId },
-      {
-        projection: { version: 1 },
-        sort: { majorVersion: -1, minorVersion: -1, patchVersion: -1 },
-      }
-    );
-
-    return latestVersion ? latestVersion.version : null;
-  } catch (error) {
-    console.error("[VersionControl] 获取最新版本失败:", error);
-    return null;
-  }
+  const collection = await getScriptVersionsCollection();
+  const latestVersion = await collection.findOne(
+    { scriptId },
+    {
+      projection: { version: 1 },
+      sort: { majorVersion: -1, minorVersion: -1, patchVersion: -1 },
+    }
+  );
+  return latestVersion ? latestVersion.version : null;
 }
 
 /**
