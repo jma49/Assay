@@ -168,8 +168,9 @@ queue can replace the inline runner later without changing services.
 - **Channel:** `request(message, secret)` and `interpretOk(body)` in
   `src/server/notify/channels/`. A new service is one file and an entry in
   `CHANNELS`; the outbox, retries and settings page need no change.
-- **Agents:** an MCP server exposes the same services (list checks, run,
-  draft, triage) with the same permissions.
+- **Agents:** the MCP server (`/api/mcp`, [mcp.md](mcp.md)) exposes the same
+  services with the same permissions: each tool declares the permission it
+  needs, and a request only sees the tools its API key's owner may use.
 - **Workspaces:** new documents (events, destinations, deliveries) carry
   `workspaceId`; older ones without it belong to the default workspace.
   Routes resolve the workspace through `workspaceOf(principal)` and pass it
@@ -195,5 +196,10 @@ queue can replace the inline runner later without changing services.
    Slack, Discord, Telegram, Feishu, WeCom and signed webhooks; one-click
    Slack and Discord through OAuth and Telegram through a deep link; secrets
    sealed with AES-256-GCM. See [notifications.md](notifications.md).*
-5. **Clean-up.** Remove legacy modules and pages, add end-to-end tests for
+5. **Own sign-in.** Better Auth with Google and GitHub, users in MongoDB;
+   Clerk roles move over on the first verified sign-in. *Done
+   ([authentication.md](authentication.md)).*
+6. **MCP server.** Personal API keys and `/api/mcp` with read, run and
+   alert tools. *Done ([mcp.md](mcp.md)).*
+7. **Clean-up.** Remove legacy modules and pages, add end-to-end tests for
    the main flows.
