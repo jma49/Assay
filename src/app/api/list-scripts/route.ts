@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { nextRunAt } from "@/lib/scheduling/due-slot";
 import { Permission, requirePermission } from "@/lib/auth/rbac";
 import { withSmartCache, generateCacheKey } from "@/lib/cache/cache-strategies";
 
@@ -16,6 +17,7 @@ interface ScriptInfo {
   cnDescription?: string;
   cnScope?: string;
   isScheduled?: boolean;
+  cronSchedule?: string;
   hashtags?: string[];
 }
 
@@ -65,6 +67,7 @@ async function fetchScriptsData(
         author: 1,
         createdAt: 1,
         isScheduled: 1,
+        cronSchedule: 1,
         hashtags: 1,
       },
     })
@@ -83,6 +86,7 @@ async function fetchScriptsData(
     author: script.author || "",
     createdAt: script.createdAt,
     isScheduled: Boolean(script.isScheduled),
+    cronSchedule: typeof script.cronSchedule === "string" ? script.cronSchedule : undefined,
     hashtags: Array.isArray(script.hashtags) ? script.hashtags : [],
   }));
 }
@@ -121,6 +125,8 @@ export async function GET(request: NextRequest) {
       sortBy,
       sortOrder,
       scheduledOnly: includeScheduledOnly,
+      // v2 adds cronSchedule; bumping it skips list entries cached before.
+      v: 2,
     });
 
     // 使用智能缓存管理器
@@ -132,8 +138,20 @@ export async function GET(request: NextRequest) {
       }
     );
 
+    // The dashboard shows when the next scheduled check will run; computed here
+    // so the cron parser never ships to the browser.
+    const now = new Date();
+    const nextRuns = scriptsData
+      .filter((script) => script.isScheduled && script.cronSchedule)
+      .map((script) => nextRunAt(script.cronSchedule!, now))
+      .filter((date): date is Date => date !== null);
+    const nextScheduledAt = nextRuns.length
+      ? new Date(Math.min(...nextRuns.map((date) => date.getTime()))).toISOString()
+      : null;
+
     return NextResponse.json({
       data: scriptsData,
+      nextScheduledAt,
       cached: true, // withSmartCache 会处理缓存逻辑
       cacheKey,
       query_info: {

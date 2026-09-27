@@ -11,11 +11,19 @@ Turn on **Run on a schedule** when editing a check and give it a cron expression
 
 ## What starts scheduled runs
 
-Assay itself does not keep a clock running. Something has to start the scheduled runner, which then runs every check whose cron expression matches the current time (within 30 minutes). A self-hosted workspace has two options:
+Assay itself does not keep a clock running. Something starts the scheduled runner, which runs each check **once per slot**: the latest time its cron expression fired, if the check has not run for it yet. Late triggers still catch the slot, repeated triggers never run it twice, and slots more than two hours old are skipped rather than all run at once.
 
-### GitHub Actions
+A self-hosted workspace has two options:
 
-The repository includes `.github/workflows/sql-check-cron.yml`. Add `DATABASE_URL` and `MONGODB_URI` as repository secrets and enable its `schedule:` trigger. You can also start it by hand from the Actions tab and choose a mode (`scheduled`, `all` or `backup`).
+### GitHub Actions (recommended)
+
+`.github/workflows/sql-check-cron.yml` starts the runner every 30 minutes. Add `DATABASE_URL` and `MONGODB_URI` as repository secrets and it begins on the default branch; without them it skips quietly. You can also start it by hand from the Actions tab, choosing `scheduled` (checks that are due) or `all` (every check now).
+
+To see what would run without running anything:
+
+```bash
+DOTENV_CONFIG_PATH=.env.local npx ts-node -r dotenv/config scripts/run-all-scripts.ts scheduled --dry-run
+```
 
 ### A small always-on server
 
