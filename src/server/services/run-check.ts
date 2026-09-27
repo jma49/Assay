@@ -56,6 +56,8 @@ export interface CheckEvent {
   to: RunOutcome;
   rowCount: number;
   diff: RowDiff | null;
+  /** The query error when the check broke, shortened for alerts. */
+  error: string | null;
   at: Date;
 }
 
@@ -102,6 +104,8 @@ export type RunCheckResult =
     }
   | { kind: "busy"; runId: string }
   | { kind: "missing" };
+
+const MAX_EVENT_ERROR = 1_000;
 
 // Extra lease time on top of the query timeouts, for connecting and saving.
 const LEASE_MARGIN_MS = 60_000;
@@ -185,7 +189,6 @@ export async function runCheck(scriptId: string, trigger: RunTrigger, deps: RunC
     committed = await deps.store.commitState(scriptId, runId, state);
     if (committed && isNotable(previous, outcome, diff)) {
       // The run and state are already saved; a lost event must not fail the run.
-      // Phase 4 writes state and event in one transaction.
       await deps.store
         .recordEvent({
           type: previous && previous.outcome === outcome ? "check.new_rows" : "check.outcome_changed",
@@ -195,6 +198,7 @@ export async function runCheck(scriptId: string, trigger: RunTrigger, deps: RunC
           to: outcome,
           rowCount: rows.length,
           diff,
+          error: error ? error.slice(0, MAX_EVENT_ERROR) : null,
           at: finishedAt,
         })
         .catch((cause) => console.error(`[runCheck] Could not record the event for run ${runId}:`, cause));

@@ -1,4 +1,5 @@
 import { ObjectId, type Db, type Document } from "mongodb";
+import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
 import { fromLegacyStatus, stateFromHistory } from "@/domain/run";
 import { legacyRunFields, type CheckEvent, type RunCheckStore, type RunDocument } from "@/server/services/run-check";
 
@@ -88,7 +89,7 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
 
     async recordEvent(event: CheckEvent) {
       try {
-        await events.insertOne({ ...event });
+        await events.insertOne({ ...event, workspaceId: DEFAULT_WORKSPACE_ID });
       } catch (error) {
         if ((error as { code?: number }).code !== DUPLICATE_KEY) throw error;
       }
