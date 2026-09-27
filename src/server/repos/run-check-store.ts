@@ -86,6 +86,11 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
       return result.matchedCount > 0;
     },
 
+    async renewLease(scriptId, runId, until) {
+      const result = await checks.updateOne({ scriptId, "lease.runId": runId }, { $set: { "lease.until": until } });
+      return result.matchedCount > 0;
+    },
+
     async releaseLease(scriptId, runId) {
       await checks.updateOne({ scriptId, "lease.runId": runId }, { $unset: { lease: "" } });
     },

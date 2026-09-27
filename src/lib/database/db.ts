@@ -53,13 +53,22 @@ export async function tlsOptions(env: Env = process.env, read = readCertificate)
 async function createPool(): Promise<Pool> {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) throw new Error("DATABASE_URL is not set");
-  const config: PoolConfig = { connectionString };
+  const config: PoolConfig = {
+    connectionString,
+    // Never wait forever for a free connection (checks are bounded by a semaphore, dry runs are not).
+    max: Number(process.env.PG_POOL_MAX) || 10,
+    connectionTimeoutMillis: 10_000,
+    idleTimeoutMillis: 30_000,
+  };
   const ssl = await tlsOptions();
   if (ssl) config.ssl = ssl;
   console.log(
     `[db] Pool for ${redactConnectionString(connectionString)}${ssl ? ` with TLS verified against the configured CA${ssl.cert ? " and a client certificate" : ""}` : ""}`,
   );
-  return new Pool(config);
+  const pool = new Pool(config);
+  // An idle client dropped by the server emits 'error' on the pool; unhandled, it would crash the process.
+  pool.on("error", (error) => console.error("[db] Idle PostgreSQL client error:", error.message));
+  return pool;
 }
 
 const shared = globalThis as unknown as { assayPgPool?: Promise<Pool> | null };
@@ -80,16 +89,21 @@ export async function query(text: string, params?: unknown[]): Promise<QueryResu
 /** Runs fn on a single connection inside a READ ONLY transaction; the database rejects any write. */
 export async function withReadOnlyTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
   const client = await (await getPool()).connect();
+  let broken: Error | undefined;
   try {
     await client.query("BEGIN READ ONLY");
     const result = await fn(client);
     await client.query("COMMIT");
     return result;
   } catch (error) {
-    await client.query("ROLLBACK").catch((rollbackError) => console.error("[db] Rollback failed:", rollbackError));
+    await client.query("ROLLBACK").catch((rollbackError) => {
+      // A connection that cannot roll back is discarded instead of going back to the pool.
+      broken = rollbackError instanceof Error ? rollbackError : new Error(String(rollbackError));
+      console.error("[db] Rollback failed:", rollbackError);
+    });
     throw error;
   } finally {
-    client.release();
+    client.release(broken);
   }
 }
 
