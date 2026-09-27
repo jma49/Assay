@@ -1,5 +1,5 @@
 /**
- * Assay's mascot: a rhinoceros beetle (独角仙) built from voxels in the
+ * Assay's mascot: a rhinoceros beetle built from voxels in the
  * brand's cobalt. One model feeds both the 3D figure on the landing page
  * and the pixel icon (a side view of the same voxels), so they always match.
  *
