@@ -66,8 +66,8 @@ One per run that changed something: `{ type, checkId, runId, from, to,
 rowCount, diff, error, at, workspaceId, fannedOutAt, suppressed, actionKey }`.
 The activity feed and the notification outbox read it.
 
-Indexes: `runId` unique (a retried run never notifies twice); `at`;
-`(checkId, at)`.
+Indexes: `runId` unique (a retried run never notifies twice); `(checkId, at)`;
+TTL on `at`: kept 180 days.
 
 ### `batches`
 
@@ -76,7 +76,11 @@ Progress of "run all" requests. TTL: 7 days after `startedAt`.
 ### `check_actions`
 
 Audit of acknowledge / mute / assign: `{ checkId, action, detail, by,
-source (web | slack | telegram | mcp), at }`. Index `(checkId, at)`.
+source (web | slack | telegram | mcp), at }`. Index `(checkId, at)`; TTL on
+`at`: kept 180 days. The current acknowledge / mute / owner live on the check.
+
+Kept without expiry, as the audit trail: `edit_history`, `approval_requests`,
+`script_versions`.
 
 ## Alerts
 
