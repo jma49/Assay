@@ -6,11 +6,11 @@ import { getMongoDbClient } from "@/lib/database/mongodb";
 import { ObjectId } from "mongodb";
 
 const MONGO_COLLECTION_NAME = process.env.MONGO_COLLECTION_NAME || "result";
-const SQL_SCRIPTS_COLLECTION_NAME = "sql_scripts"; // 假设 sql_scripts 集合的名称
+const SQL_SCRIPTS_COLLECTION_NAME = "sql_scripts";
 
 export const GET = async (
   request: NextRequest,
-  { params }: { params: Promise<{ resultId: string }> } // <--- 注意这里的 Promise
+  { params }: { params: Promise<{ resultId: string }> }
 ) => {
   const authResult = await authorizeApiRequest(Permission.HISTORY_READ);
   if (!authResult.isValid) {
@@ -19,7 +19,6 @@ export const GET = async (
 
   const awaitedParams = await params; // <--- await params
   const resultId = awaitedParams.resultId;
-  // 或者直接解构: const { resultId } = await params;
 
   if (!resultId || !ObjectId.isValid(resultId)) {
     return NextResponse.json({ message: "无效的 Result ID" }, { status: 400 });

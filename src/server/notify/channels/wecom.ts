@@ -11,7 +11,7 @@ function clip(text: string): string {
   return bytes.length <= MAX_BYTES ? text : `${bytes.subarray(0, MAX_BYTES).toString("utf8").replace(/�+$/, "")}…`;
 }
 
-/** WeCom (企业微信) group robots: a markdown message. */
+/** WeCom group robots: a markdown message. */
 export const wecom: Channel = {
   kind: "wecom",
   validateUrl: (url) =>
