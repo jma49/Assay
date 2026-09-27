@@ -6,6 +6,7 @@ import {
   HOURLY_LIMIT,
   MAX_ATTEMPTS,
   type CheckInfo,
+  type OpenProblem,
   type ClaimedDelivery,
   type Destination,
   type DispatchDeps,
@@ -61,7 +62,8 @@ interface MemoryDelivery {
   error?: string;
 }
 
-function memoryStore(events: StoredEvent[], destinations: Destination[], checkExtras: Partial<CheckInfo> = {}) {
+function memoryStore(events: StoredEvent[], destinations: Destination[], checkExtras: Partial<CheckInfo> = {}, problems: OpenProblem[] = []) {
+  const reminderCounts = new Map<string, number>();
   const fanned = new Map<string, string | null>();
   const deliveries: MemoryDelivery[] = [];
   let claims = 0;
@@ -127,6 +129,24 @@ function memoryStore(events: StoredEvent[], destinations: Destination[], checkEx
     async digestSummary() {
       return { total: 3, broken: [], issues: [{ name: "Orders", rowCount: 3 }], changes: 1, recovered: 0 };
     },
+    async reminderDestinations() {
+      return destinations.filter((d) => d.enabled && d.remind);
+    },
+    async openProblems() {
+      return problems;
+    },
+    async remindersSent(destinationId, checkId, since) {
+      return reminderCounts.get(`${destinationId}|${checkId}|${since.toISOString()}`) ?? 0;
+    },
+    async claimReminder(destinationId, checkId, since, sent) {
+      const key = `${destinationId}|${checkId}|${since.toISOString()}`;
+      if ((reminderCounts.get(key) ?? 0) !== sent) return false;
+      reminderCounts.set(key, sent + 1);
+      return true;
+    },
+    async problemToken() {
+      return "65f000000000000000000001.abcdefghijklmn_-";
+    },
   };
   return { store, deliveries, fanned };
 }
@@ -151,13 +171,13 @@ describe("dispatchNotifications", () => {
       [destination(), destination({ id: "d2", alerts: ["broken"] }), destination({ id: "d3", tags: ["ops"] }), destination({ id: "d4", enabled: false })],
     );
     const { deps: d, send } = deps(store);
-    expect(await dispatchNotifications(d)).toEqual({ queued: 1, sent: 1, retrying: 0, failed: 0, digests: 0 });
+    expect(await dispatchNotifications(d)).toEqual({ queued: 1, sent: 1, retrying: 0, failed: 0, digests: 0, reminders: 0 });
     expect(deliveries.map((x) => x.destinationId)).toEqual(["d1"]);
     const request = (send.mock.calls[0] as unknown[])[1] as { body: string };
     expect(request.body).toContain("https://assay.example/checks/orders");
 
     // Running again (or concurrently) sends nothing more.
-    expect(await dispatchNotifications(d)).toEqual({ queued: 0, sent: 0, retrying: 0, failed: 0, digests: 0 });
+    expect(await dispatchNotifications(d)).toEqual({ queued: 0, sent: 0, retrying: 0, failed: 0, digests: 0, reminders: 0 });
     expect(send).toHaveBeenCalledTimes(1);
   });
 
@@ -297,5 +317,40 @@ describe("dispatchNotifications", () => {
     d.env = { TELEGRAM_BOT_TOKEN: "1:x" };
     await dispatchNotifications(d);
     expect(((send.mock.calls[0] as unknown[])[1] as { body: string }).body).not.toContain("reply_markup");
+  });
+
+  it("reminds of problems nobody acknowledged, every afterHours, up to three times", async () => {
+    const since = new Date(t0.getTime() - 60_000);
+    const problem: OpenProblem = { checkId: "orders", name: "Orders", outcome: "error", rowCount: 0, since, alerting: { owner: { id: "u", name: "ada" } } };
+    const dest = destination({ remind: { afterHours: 4 }, kind: "telegram", sealed: JSON.stringify({ chatId: "-1" }), createdAt: new Date(t0.getTime() - 86_400_000) });
+    const { store } = memoryStore([], [dest], {}, [problem]);
+    const clock = { now: new Date(since.getTime() + 3 * 3_600_000) };
+    const { deps: d, send } = deps(store, [{ kind: "sent" }], clock);
+    d.env = { TELEGRAM_BOT_TOKEN: "1:x" };
+
+    expect((await dispatchNotifications(d)).reminders).toBe(0);
+    clock.now = new Date(since.getTime() + 4 * 3_600_000);
+    expect((await dispatchNotifications(d)).reminders).toBe(1);
+    const body = JSON.parse(((send.mock.calls[0] as unknown[])[1] as { body: string }).body);
+    expect(body.text).toContain("Still broken after 4 h: Orders");
+    expect(body.text).toContain("Owner: ada");
+    expect(body.reply_markup.inline_keyboard[0][0].callback_data).toContain("assay_ack:");
+    // Not again until the next interval, and never more than three times.
+    expect((await dispatchNotifications(d)).reminders).toBe(0);
+    for (const hours of [8, 12, 16, 20]) {
+      clock.now = new Date(since.getTime() + hours * 3_600_000);
+      await dispatchNotifications(d);
+    }
+    expect(send).toHaveBeenCalledTimes(3);
+  });
+
+  it("stops reminding once the problem is acknowledged or muted, or the kind is not wanted", async () => {
+    const since = new Date(t0.getTime() - 10 * 3_600_000);
+    const created = new Date(t0.getTime() - 86_400_000);
+    const acked: OpenProblem = { checkId: "a", name: "A", outcome: "issues", rowCount: 2, since, alerting: { ack: { since, by: { id: "u", name: "ada" }, at: t0 } } };
+    const muted: OpenProblem = { checkId: "b", name: "B", outcome: "issues", rowCount: 2, since, alerting: { mutedUntil: new Date(t0.getTime() + 3_600_000) } };
+    const broken: OpenProblem = { checkId: "c", name: "C", outcome: "error", rowCount: 0, since };
+    const { store } = memoryStore([], [destination({ remind: { afterHours: 1 }, alerts: ["issues"], createdAt: created })], {}, [acked, muted, broken]);
+    expect((await dispatchNotifications(deps(store).deps)).reminders).toBe(0);
   });
 });

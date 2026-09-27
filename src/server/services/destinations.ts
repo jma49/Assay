@@ -28,6 +28,7 @@ export function toDestinationDto(destination: Destination): DestinationDto {
     createdBy: destination.createdBy.name,
     lastDelivery: last ? { at: new Date(last.at).toISOString(), ok: last.ok, error: last.error } : null,
     digest: destination.digest ?? null,
+    remind: destination.remind ?? null,
   };
 }
 
@@ -53,6 +54,7 @@ export interface NewDestination {
   alerts?: AlertKind[];
   tags?: string[];
   digest?: DigestSettings | null;
+  remind?: { afterHours: number } | null;
   source: "oauth" | "paste" | "telegram";
 }
 
@@ -74,6 +76,7 @@ export async function saveDestination(
     alerts: input.alerts ?? [...ALERT_KINDS],
     tags: input.tags ?? [],
     digest: input.digest ?? null,
+    remind: input.remind ?? null,
     source: input.source,
     enabled: true,
     createdAt: now,
@@ -119,6 +122,7 @@ export async function createPastedDestination(
     alerts: input.alerts,
     tags: input.tags,
     digest: input.digest,
+    remind: input.remind,
     source: "paste",
   });
   return { destination, signingSecret };
