@@ -25,6 +25,15 @@ export const INDEXES: Record<string, IndexDescription[]> = {
     { key: { destinationId: 1, checkId: 1, since: 1 }, unique: true },
     { key: { lastAt: 1 }, expireAfterSeconds: 30 * 24 * 60 * 60 },
   ],
+  // Sign-in (Better Auth, whose MongoDB adapter creates no indexes). Lookups by
+  // session token and API key run on every request; uniqueness stops
+  // concurrent first sign-ins from creating duplicate users or accounts;
+  // expired sessions and verifications go away on their own.
+  user: [{ key: { email: 1 }, unique: true }],
+  session: [{ key: { token: 1 }, unique: true }, { key: { userId: 1 } }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
+  account: [{ key: { userId: 1 } }, { key: { providerId: 1, accountId: 1 }, unique: true }],
+  verification: [{ key: { identifier: 1 } }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
+  apikey: [{ key: { key: 1 }, unique: true }, { key: { referenceId: 1 } }],
   // Pending Telegram links expire on their own.
   telegram_links: [{ key: { codeHash: 1 }, unique: true }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
   // Batches only matter while someone watches their progress; keep a week.
