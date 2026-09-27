@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document, ObjectId } from "mongodb";
-import { clearScriptsCache } from "@/lib/cache/cache-utils";
 import { authorizeApiRequest, validateApiAuth } from "@/lib/auth/auth-utils";
 import { authorProblem } from "@/lib/workflows/check-fields";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
@@ -13,8 +12,7 @@ import {
   isAutoApprovalEligible,
   analyzeScriptType,
 } from "@/lib/workflows/approval-workflow";
-import { createScriptVersion } from "@/lib/workflows/version-control";
-import { recordEditHistoryOnServer } from "@/lib/workflows/edit-history-store";
+import { createCheck } from "@/server/services/check-writes";
 
 interface NewScriptData {
   scriptId: string;
@@ -230,65 +228,30 @@ export async function POST(request: Request) {
       version: 1,
     };
 
-    const result = await collection.insertOne(newScriptDocument);
+    const mongoId = await createCheck(await getMongoDbClient().getDb(), newScriptDocument, { id: user.id, email: userEmail }, "脚本创建", "major");
+    const message = autoApprovalEligible
+      ? "查询脚本创建成功（管理员自动审批通过）"
+      : "查询脚本创建成功";
 
-    if (result.insertedId) {
-      await createScriptVersion(
-        scriptId,
-        {
-          name: newScriptDocument.name,
-          cnName: newScriptDocument.cnName,
-          description: newScriptDocument.description,
-          cnDescription: newScriptDocument.cnDescription,
-          scope: newScriptDocument.scope,
-          cnScope: newScriptDocument.cnScope,
-          author: newScriptDocument.author,
-          hashtags: newScriptDocument.hashtags,
-          sqlContent: newScriptDocument.sqlContent,
-        },
-        user.id,
-        userEmail,
-        "create",
-        "脚本创建",
-        "major"
-      );
-
-      await recordEditHistoryOnServer(
-        {
-          scriptId,
-          operation: "create",
-          newData: newScriptDocument as unknown as Record<string, unknown>,
-        },
-        { id: user.id, email: userEmail, name: userEmail.split("@")[0] }
-      );
-
-      await clearScriptsCache();
-
-      const message = autoApprovalEligible
-        ? "查询脚本创建成功（管理员自动审批通过）"
-        : "查询脚本创建成功";
-
-      return NextResponse.json(
-        {
-          success: true,
-          message,
-          scriptId: newScriptDocument.scriptId,
-          mongoId: result.insertedId,
-          approvalStatus: newScriptDocument.approvalStatus,
-          securityPolicy: "系统已确认这是安全的查询操作",
-          policy: autoApprovalEligible
-            ? "管理员创建脚本，自动审批通过"
-            : "脚本创建成功",
-        },
-        { status: 201 }
-      );
-    } else {
-      return NextResponse.json(
-        { success: false, message: "创建脚本失败" },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json(
+      {
+        success: true,
+        message,
+        scriptId: newScriptDocument.scriptId,
+        mongoId,
+        approvalStatus: newScriptDocument.approvalStatus,
+        securityPolicy: "系统已确认这是安全的查询操作",
+        policy: autoApprovalEligible
+          ? "管理员创建脚本，自动审批通过"
+          : "脚本创建成功",
+      },
+      { status: 201 }
+    );
   } catch (error) {
+    // Two creates with the same id at once: the unique index lets one through.
+    if ((error as { code?: number }).code === 11000) {
+      return NextResponse.json({ message: "A check with this ID already exists" }, { status: 409 });
+    }
     console.error("Error creating script:", error);
     if (error instanceof SyntaxError) {
       return NextResponse.json(
