@@ -224,7 +224,7 @@ export function ScriptsFinder({
         ) : (
           <div className="space-y-5 p-6">
             <header className="space-y-1">
-              <h2 className="font-serif text-[24px] leading-tight font-semibold">{name(selected)}</h2>
+              <h2 className="font-display text-[24px] leading-tight font-semibold">{name(selected)}</h2>
               <p className="font-mono text-[12px] text-muted-foreground">{selected.scriptId}</p>
               {(zh ? selected.cnDescription || selected.description : selected.description) && (
                 <p className="pt-1 text-[13px] leading-relaxed">
