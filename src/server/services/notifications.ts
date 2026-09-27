@@ -1,8 +1,10 @@
+import { randomBytes } from "node:crypto";
 import { digestSlot, type DigestSettings, type DigestSummary } from "@/domain/digest";
 import {
   alertKindOf,
   buildAlertMessage,
   buildDigestMessage,
+  withActions,
   wantsAlert,
   type AlertKind,
   type ChannelKind,
@@ -33,6 +35,8 @@ export interface Destination {
   lastDelivery?: { at: Date; ok: boolean; error?: string } | null;
   digest?: DigestSettings | null;
   lastDigestAt?: Date | null;
+  /** How it was connected; an OAuth-installed Slack app is the only Slack destination that can take button clicks. */
+  source?: "oauth" | "paste" | "telegram";
 }
 
 export interface StoredEvent {
@@ -48,6 +52,8 @@ export interface StoredEvent {
   error?: string | null;
   at: Date;
   suppressed?: Suppression | null;
+  /** Secret half of the token in the alert's buttons. */
+  actionKey?: string | null;
 }
 
 export interface CheckInfo {
@@ -80,8 +86,12 @@ export interface NotifyStore {
   event(id: string): Promise<StoredEvent | null>;
   /** Idempotent: one delivery per event and destination. */
   createDeliveries(deliveries: { eventId: string; destinationId: string; workspaceId: string }[], now: Date): Promise<void>;
-  /** Records that the event was handled, and why it went nowhere if it was held back. */
-  markFannedOut(eventId: string, now: Date, suppressed: Suppression | null): Promise<void>;
+  /**
+   * Records that the event was handled, and why it went nowhere if it was
+   * held back. The action key is only set if the event has none, so every
+   * message for the event carries the same one.
+   */
+  markFannedOut(eventId: string, now: Date, suppressed: Suppression | null, actionKey: string): Promise<void>;
   /** Atomically takes the next due delivery for `leaseMs`, so no two dispatchers send it. */
   claimDelivery(now: Date, leaseMs: number): Promise<ClaimedDelivery | null>;
   /** Applies the update only while the claim is still this dispatcher's. */
@@ -118,6 +128,12 @@ export function backoffMs(attempts: number, retryAfterMs?: number): number {
   return Math.max(base, retryAfterMs ?? 0);
 }
 
+/** Whether a click on a button in this destination's messages would reach Assay. */
+export function canTakeClicks(destination: Pick<Destination, "kind" | "source">, env: Record<string, string | undefined>): boolean {
+  if (destination.kind === "telegram") return true;
+  return destination.kind === "slack" && destination.source === "oauth" && Boolean(env.SLACK_SIGNING_SECRET);
+}
+
 export function checkUrl(appUrl: string, checkId: string): string {
   return `${appUrl.replace(/\/+$/, "")}/checks/${encodeURIComponent(checkId)}`;
 }
@@ -149,7 +165,7 @@ async function fanOut(deps: DispatchDeps): Promise<number> {
       );
       created += targets.length;
     }
-    await deps.store.markFannedOut(event.id, now, suppressed);
+    await deps.store.markFannedOut(event.id, now, suppressed, randomBytes(12).toString("base64url"));
   }
   return created;
 }
@@ -165,7 +181,8 @@ async function deliver(delivery: ClaimedDelivery, deps: DispatchDeps): Promise<D
 
   const check = (await deps.store.checkInfo([event.checkId])).get(event.checkId);
   const name = (destination.language === "zh" ? check?.cnName || check?.name : check?.name) ?? event.checkId;
-  const message = buildAlertMessage(event, { name }, { language: destination.language, url: checkUrl(deps.appUrl, event.checkId) });
+  const alert = buildAlertMessage(event, { name }, { language: destination.language, url: checkUrl(deps.appUrl, event.checkId) });
+  const message = event.actionKey && canTakeClicks(destination, deps.env) ? withActions(alert, `${event.id}.${event.actionKey}`, destination.language) : alert;
   const channel = CHANNELS[destination.kind];
   let outcome: DeliveryOutcome;
   try {

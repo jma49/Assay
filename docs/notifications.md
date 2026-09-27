@@ -13,6 +13,29 @@ Each destination chooses which of these it wants, optionally only for checks
 with certain tags, and the language of its messages (English or Chinese).
 Managers and admins set them up under **Settings → Notifications**.
 
+A destination can also get a **daily summary** at an hour of its choosing,
+in its own time zone: what is broken or has issues, and how many changes the
+last 24 hours had. A destination may take only the summary.
+
+## Acknowledge, mute, owner
+
+On a check's page, the **Alerts** menu (for people who can run checks):
+
+- **Acknowledge**: someone is on it. No more alerts for new rows of this
+  problem; a new failure or the recovery still alert. It lapses by itself
+  when the outcome changes.
+- **Mute** for 1 hour to 7 days: no alerts at all until then.
+- **Owner**: who looks after the check; shown in the checks list.
+
+Held-back alerts still appear in Activity, marked as muted or acknowledged.
+Every action is kept in `check_actions` with who did it and from where.
+
+Slack and Telegram alerts carry **Acknowledge** and **Mute 24 h** buttons.
+A button only acts on the check its alert was about (each event has its own
+random key), stops working after a week, and refuses to acknowledge a problem
+that has already ended. The person clicking is whoever Slack or Telegram says
+they are, so anyone in the channel can press them.
+
 ## How delivery works
 
 1. A run that changes a check's state writes an event (unique per run).
@@ -56,12 +79,18 @@ oauth_config:
     bot:
       - incoming-webhook
 settings:
+  interactivity:
+    is_enabled: true
+    request_url: https://assay.example.com/api/integrations/slack/interactions
   org_deploy_enabled: false
   socket_mode_enabled: false
   token_rotation_enabled: false
 ```
 
-Set `SLACK_CLIENT_ID` and `SLACK_CLIENT_SECRET` from **Basic Information**.
+Set `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET` and `SLACK_SIGNING_SECRET`
+from **Basic Information**. Buttons appear only in channels connected with
+"Add to Slack" while the signing secret is set; a pasted webhook may belong
+to another Slack app, whose clicks would never reach Assay.
 To let other workspaces install it, enable **Manage Distribution**.
 "Add to Slack" then opens Slack's channel picker; Assay keeps only the
 webhook for the chosen channel, not a bot token.
@@ -80,7 +109,8 @@ add the redirect `<APP_URL>/api/integrations/discord/callback` under
 2. In production, set `TELEGRAM_WEBHOOK_SECRET` (letters, digits, `_`, `-`)
    and run `npm run telegram:webhook` once so Telegram pushes updates to
    `/api/integrations/telegram/webhook`. Without it (for example locally)
-   the settings page polls Telegram while someone is linking a chat.
+   the settings page polls Telegram while someone is linking a chat, and
+   button clicks are only picked up then; use the webhook in production.
 
 Linking: **Connect** shows two links carrying a one-time code, valid for 15
 minutes. Opening one adds the bot to a group or starts a direct chat; the

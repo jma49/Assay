@@ -53,6 +53,7 @@ export interface NewDestination {
   alerts?: AlertKind[];
   tags?: string[];
   digest?: DigestSettings | null;
+  source: "oauth" | "paste" | "telegram";
 }
 
 /** Saves a destination; every way of adding one (paste, OAuth, Telegram) ends here. */
@@ -73,6 +74,7 @@ export async function saveDestination(
     alerts: input.alerts ?? [...ALERT_KINDS],
     tags: input.tags ?? [],
     digest: input.digest ?? null,
+    source: input.source,
     enabled: true,
     createdAt: now,
     createdBy: by,
@@ -117,6 +119,7 @@ export async function createPastedDestination(
     alerts: input.alerts,
     tags: input.tags,
     digest: input.digest,
+    source: "paste",
   });
   return { destination, signingSecret };
 }

@@ -27,6 +27,7 @@ export function toDestination(doc: Document): Destination {
     lastDelivery: doc.lastDelivery ?? null,
     digest: doc.digest ?? null,
     lastDigestAt: doc.lastDigestAt ? new Date(doc.lastDigestAt) : null,
+    source: doc.source ?? "paste",
   };
 }
 
@@ -44,6 +45,7 @@ export function toStoredEvent(doc: Document): StoredEvent {
     error: doc.error ?? null,
     at: new Date(doc.at),
     suppressed: doc.suppressed ?? null,
+    actionKey: doc.actionKey ?? null,
   };
 }
 
@@ -115,9 +117,11 @@ export function mongoNotifyStore(db: Db): NotifyStore {
       }
     },
 
-    async markFannedOut(eventId, now, suppressed) {
+    async markFannedOut(eventId, now, suppressed, actionKey) {
       const _id = toId(eventId);
-      if (_id) await events.updateOne({ _id }, { $set: { fannedOutAt: now, ...(suppressed && { suppressed }) } });
+      if (!_id) return;
+      await events.updateOne({ _id }, { $set: { fannedOutAt: now, ...(suppressed && { suppressed }) } });
+      await events.updateOne({ _id, actionKey: { $exists: false } }, { $set: { actionKey } });
     },
 
     async claimDelivery(now, leaseMs) {

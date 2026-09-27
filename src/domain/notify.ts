@@ -45,6 +45,25 @@ export interface AlertMessage {
   at: string;
   /** Plain-text fallback for notification previews. */
   text: string;
+  /** Tokens for acknowledge / mute buttons, on channels that can take a click back. */
+  actions?: AlertActions;
+}
+
+export interface AlertActions {
+  token: string;
+  acknowledge: string;
+  mute: string;
+}
+
+const ACTION_LABELS = {
+  en: { acknowledge: "Acknowledge", mute: "Mute 24 h" },
+  zh: { acknowledge: "确认处理", mute: "静音 24 小时" },
+};
+
+/** Buttons make sense while there is a problem to act on, not for a recovery or a digest. */
+export function withActions(message: AlertMessage, token: string, language: MessageLanguage): AlertMessage {
+  if (message.kind === "recovered" || message.kind === "digest") return message;
+  return { ...message, actions: { token, ...ACTION_LABELS[language] } };
 }
 
 const EMOJI: Record<Tone, string> = { failure: "🔴", attention: "🟠", success: "🟢" };
