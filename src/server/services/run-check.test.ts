@@ -45,6 +45,12 @@ function memoryStore(checks: CheckToRun[]) {
       const doc = docs.get(scriptId)!;
       if (doc.lease?.runId === runId) doc.lease = null;
     },
+    async renewLease(scriptId, runId, until) {
+      const doc = docs.get(scriptId)!;
+      if (doc.lease?.runId !== runId) return false;
+      doc.lease.until = until;
+      return true;
+    },
     async recordEvent(event) {
       if (!events.some((e) => e.runId === event.runId)) events.push(event);
     },
@@ -57,7 +63,7 @@ function rowsSource(rowsByCall: Record<string, unknown>[][]): DataSource & { cal
     calls: 0,
     async runReadOnly(): Promise<StatementResult[]> {
       const rows = rowsByCall[Math.min(source.calls++, rowsByCall.length - 1)];
-      return [{ command: "SELECT", rows }];
+      return [{ rows, rowCount: rows.length }];
     },
   };
   return source;
@@ -119,7 +125,7 @@ describe("runCheck", () => {
       async runReadOnly() {
         // While this run is still executing, its lease expires and a newer run takes the check.
         docs.get(CHECK.scriptId)!.lease = { runId: "newer", until: new Date(Date.UTC(2030, 0, 1)) };
-        return [{ command: "SELECT", rows: [{ id: 9 }] }];
+        return [{ rows: [{ id: 9 }], rowCount: 1 }];
       },
     };
     const result = await runCheck(CHECK.scriptId, { kind: "schedule" }, deps(store, slow));
@@ -178,5 +184,56 @@ describe("runCheck", () => {
   it("reports an unknown check", async () => {
     const { store } = memoryStore([]);
     expect(await runCheck("nope", { kind: "manual" }, deps(store, rowsSource([[]])))).toEqual({ kind: "missing" });
+  });
+});
+
+describe("large results", () => {
+  it("counts every row but keeps only what fingerprints need", async () => {
+    const { store, runs } = memoryStore([CHECK]);
+    const big: DataSource = {
+      async runReadOnly(_statements, { maxRows }) {
+        expect(maxRows).toBe(5_000);
+        return [{ rows: Array.from({ length: maxRows }, (_, id) => ({ id })), rowCount: 2_000_000 }];
+      },
+    };
+    const result = await runCheck(CHECK.scriptId, { kind: "schedule" }, deps(store, big));
+    expect(result).toMatchObject({ kind: "completed", outcome: "issues", rowCount: 2_000_000 });
+    expect(runs[0]).toMatchObject({ rowCount: 2_000_000, message: expect.stringContaining("Found 2000000 records") });
+    expect(runs[0].rowKeys).toHaveLength(5_000);
+  });
+});
+
+describe("waiting for a free slot", () => {
+  it("gives up without querying when another run took the check while it waited", async () => {
+    const { store, docs, runs } = memoryStore([CHECK]);
+    const source = rowsSource([[{ id: 1 }]]);
+    const d = deps(store, source);
+    d.executions = {
+      run: async <T>(fn: () => Promise<T>) => {
+        docs.get(CHECK.scriptId)!.lease = { runId: "newer", until: new Date(Date.UTC(2030, 0, 1)) };
+        return fn();
+      },
+    } as RunCheckDeps["executions"];
+    expect(await runCheck(CHECK.scriptId, { kind: "schedule" }, d)).toEqual({ kind: "busy", runId: "" });
+    expect(source.calls).toBe(0);
+    expect(runs).toHaveLength(0);
+    expect(docs.get(CHECK.scriptId)!.lease?.runId).toBe("newer");
+  });
+
+  it("restarts the lease clock once a slot is free", async () => {
+    const { store, docs } = memoryStore([CHECK]);
+    let leaseWhenQuerying: Date | undefined;
+    const source: DataSource = {
+      async runReadOnly() {
+        leaseWhenQuerying = docs.get(CHECK.scriptId)!.lease?.until;
+        return [{ rows: [], rowCount: 0 }];
+      },
+    };
+    const d = deps(store, source);
+    const clock = { t: d.now().getTime() };
+    d.now = () => new Date(clock.t);
+    d.executions = { run: async <T>(fn: () => Promise<T>) => ((clock.t += 45_000), fn()) } as RunCheckDeps["executions"];
+    await runCheck(CHECK.scriptId, { kind: "schedule" }, d);
+    expect(leaseWhenQuerying!.getTime()).toBe(clock.t + d.timeoutMs + 60_000);
   });
 });
