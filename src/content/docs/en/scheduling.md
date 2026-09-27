@@ -1,13 +1,17 @@
 # Scheduling
 
-Turn on **Run on a schedule** when editing a check and give it a cron expression. Times are in **UTC**.
+Turn on **Run on a schedule** when editing a check. It defaults to every day at 09:00 UTC; choose another time under **Repeat**, or **Custom (cron)…** to type a five-field cron expression. Times are in **UTC**, and the form shows the next run in your own time zone.
 
-| Expression | Runs |
+| Preset | Cron |
 |---|---|
-| `0 * * * *` | Every hour, on the hour |
-| `*/30 * * * *` | Every 30 minutes |
-| `0 8 * * *` | Every day at 08:00 UTC |
-| `0 8 * * 1` | Every Monday at 08:00 UTC |
+| Every 30 minutes | `*/30 * * * *` |
+| Every hour | `0 * * * *` |
+| Every day at 00:00 / 09:00 UTC | `0 0 * * *` / `0 9 * * *` |
+| Weekdays at 09:00 UTC | `0 9 * * 1-5` |
+| Mondays at 09:00 UTC | `0 9 * * 1` |
+| The 1st of each month at 09:00 UTC | `0 9 1 * *` |
+
+An invalid expression cannot be saved. With the GitHub Actions runner below, a check runs at most every 30 minutes, whatever its expression.
 
 ## What starts scheduled runs
 
