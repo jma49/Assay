@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserButton, useClerk, useUser } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
@@ -14,6 +15,7 @@ import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { AboutDialog } from "@/components/layout/AboutDialog";
 import { useSendAppCommand } from "@/lib/commands/use-app-command";
 import { GITHUB_URL } from "@/lib/brand";
+import { useMe } from "@/lib/auth/use-me";
 import { cn } from "@/lib/utils/utils";
 
 const COPY = {
@@ -29,6 +31,9 @@ const COPY = {
     system: "Same as system",
     language: "Language",
     signOut: "Sign Out",
+    exitDemo: "Leave Demo",
+    guest: "Guest",
+    signUp: "Sign Up",
     newCheck: "New Check",
     runCheck: "Run a Check…",
     runBulk: "Run in Bulk…",
@@ -58,6 +63,9 @@ const COPY = {
     system: "跟随系统",
     language: "语言",
     signOut: "退出登录",
+    exitDemo: "退出演示",
+    guest: "访客",
+    signUp: "注册",
     newCheck: "新建检查",
     runCheck: "执行检查…",
     runBulk: "批量执行…",
@@ -145,6 +153,7 @@ function Clock({ language }: { language: "en" | "zh" }) {
 export default function UserHeader() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const guest = useMe()?.guest === true;
   const { signOut } = useClerk();
   const { language, setLanguage } = useLanguage();
   const { theme, resolvedTheme, setTheme } = useTheme();
@@ -197,7 +206,11 @@ export default function UserHeader() {
               </Menubar.Portal>
             </Menubar.Sub>
             <Divider />
-            <Item onSelect={() => signOut({ redirectUrl: "/" })}>{t.signOut}</Item>
+            {guest ? (
+              <Item onSelect={() => (window.location.href = "/demo/exit")}>{t.exitDemo}</Item>
+            ) : (
+              <Item onSelect={() => signOut({ redirectUrl: "/" })}>{t.signOut}</Item>
+            )}
           </Menu>
 
           <Menu title={t.file} className="max-md:hidden">
@@ -255,7 +268,14 @@ export default function UserHeader() {
           </button>
           <Clock language={language} />
           <div className="flex items-center gap-2 border-l border-foreground/15 pl-3">
-            {isLoaded && user ? (
+            {isLoaded && !user && guest ? (
+              <>
+                <span className="hidden text-[13px] text-foreground/70 lg:inline">{t.guest}</span>
+                <Link href="/sign-up?redirect_url=/dashboard" className="aqua-pill h-6 px-2.5 text-[12px] leading-6">
+                  {t.signUp}
+                </Link>
+              </>
+            ) : isLoaded && user ? (
               <>
                 <span className="hidden text-[13px] lg:inline">{displayName}</span>
                 <UserButton appearance={{ elements: { avatarBox: "size-6" } }} afterSignOutUrl="/" />
