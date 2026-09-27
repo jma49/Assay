@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env -S npx tsx
 
 /**
  * 数据库索引优化执行脚本
@@ -6,7 +6,7 @@
  *
  * 使用方法:
  * npm run optimize:db
- * 或者直接运行: ts-node scripts/optimize-database-indexes.ts
+ * 或者直接运行: tsx scripts/optimize-database-indexes.ts
  *
  * @author AI Assistant
  * @version 1.0.0
@@ -107,7 +107,7 @@ function showHelp() {
 数据库索引优化工具
 
 使用方法:
-  ts-node scripts/optimize-database-indexes.ts [选项]
+  tsx scripts/optimize-database-indexes.ts [选项]
 
 选项:
   --help, -h           显示此帮助信息
@@ -118,16 +118,16 @@ function showHelp() {
 
 示例:
   # 完整优化（推荐）
-  ts-node scripts/optimize-database-indexes.ts
+  tsx scripts/optimize-database-indexes.ts
   
   # 预览模式
-  ts-node scripts/optimize-database-indexes.ts --dry-run
+  tsx scripts/optimize-database-indexes.ts --dry-run
   
   # 只生成报告
-  ts-node scripts/optimize-database-indexes.ts --report-only
+  tsx scripts/optimize-database-indexes.ts --report-only
   
   # 只处理特定集合
-  ts-node scripts/optimize-database-indexes.ts --collection execution_results
+  tsx scripts/optimize-database-indexes.ts --collection execution_results
 
 环境要求:
   - MONGODB_URI: MongoDB连接字符串

@@ -10,11 +10,10 @@ import { Client } from "pg";
 import { getMongoDbClient } from "../../src/lib/database/mongodb";
 import { redactConnectionString } from "../../src/lib/database/redact-connection-string";
 import { clearScriptsCache } from "../../src/lib/cache/cache-utils";
+import { ApprovalStatus } from "@/lib/workflows/approval-workflow";
 import { DEMO_AUTHOR, demoApprovals, demoChecks } from "./checks";
 
-// ApprovalStatus.APPROVED; importing the enum pulls in modules that use the
-// "@/" path alias, which ts-node cannot resolve.
-const APPROVED = "approved";
+const APPROVED = ApprovalStatus.APPROVED;
 
 async function seedPostgres(databaseUrl: string): Promise<void> {
   const client = new Client({ connectionString: databaseUrl });

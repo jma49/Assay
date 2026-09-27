@@ -26,7 +26,7 @@ Assay 本身不常驻一个时钟，需要有东西去启动定时执行器。�
 想只看会执行哪些检查、而不真正执行：
 
 ```bash
-DOTENV_CONFIG_PATH=.env.local npx ts-node -r dotenv/config scripts/run-all-scripts.ts scheduled --dry-run
+DOTENV_CONFIG_PATH=.env.local npx tsx -r dotenv/config scripts/run-all-scripts.ts scheduled --dry-run
 ```
 
 ### 一台常驻的小服务器

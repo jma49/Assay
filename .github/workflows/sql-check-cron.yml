@@ -54,4 +54,4 @@ jobs:
             echo "::notice::DATABASE_URL or MONGODB_URI is not set; skipping scheduled checks."
             exit 0
           fi
-          npx ts-node scripts/run-all-scripts.ts "$EXECUTION_MODE"
+          npx tsx scripts/run-all-scripts.ts "$EXECUTION_MODE"
