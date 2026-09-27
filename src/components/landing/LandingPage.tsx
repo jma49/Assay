@@ -12,7 +12,7 @@ import { Demo, DemoFrame, StatusDot } from "./demo-panels";
 import { PREVIEW_RUNS } from "./preview-runs";
 import { BrandMark } from "@/components/common/BrandMark";
 import { VoxelBeetle } from "@/components/brand/VoxelBeetle";
-import { HighlightedLine } from "./HighlightedLine";
+import { HighlightedLine } from "@/components/code/HighlightedLine";
 
 /** Shared horizontal frame: every section aligns to the same left and right edges. */
 const CONTAINER = "mx-auto w-full max-w-[1120px] px-4 sm:px-6";
@@ -76,12 +76,12 @@ function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void
             <span className="ml-1 inline-block h-8 w-[118px]" aria-hidden />
           </ClerkLoading>
           <SignedOut>
-            <Link href="/sign-in?redirect_url=/dashboard" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
+            <Link href="/sign-in?redirect_url=/checks" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
               {t.signIn}
             </Link>
           </SignedOut>
           <SignedIn>
-            <Link href="/dashboard" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
+            <Link href="/checks" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
               {t.openApp}
             </Link>
           </SignedIn>
@@ -261,16 +261,16 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
           {/* A quiet wash of the accent behind the headline, fading out before the product preview ends. */}
           <div aria-hidden className="absolute inset-x-0 top-0 bottom-40 bg-[radial-gradient(ellipse_at_top,var(--primary-soft),transparent_70%)] sm:bottom-56" />
           <div className={`${CONTAINER} relative`}>
-            <div className="mx-auto max-w-[780px] text-center">
+            <div className="mx-auto max-w-[980px] text-center">
               <VoxelBeetle className="mx-auto -mt-8 mb-2 h-[190px] w-full max-w-[340px] sm:h-[220px]" />
-              <h1 className="display text-balance text-[40px] leading-[1.08] font-bold tracking-tight sm:text-[60px]">
+              <h1 className="display text-balance text-[38px] leading-[1.08] font-bold tracking-tight sm:text-[46px] lg:text-[52px] lg:whitespace-nowrap">
                 {t.hero.title}
               </h1>
               <p className="mx-auto mt-5 max-w-[560px] text-pretty text-[17px] leading-7 text-(--l-muted)">
                 {t.hero.subtitle}
               </p>
               <div className="mt-8 flex justify-center gap-3">
-                <Link href={demo ? "/demo" : "/dashboard"} prefetch={false} className={heroPrimaryButton}>
+                <Link href={demo ? "/demo" : "/checks"} prefetch={false} className={heroPrimaryButton}>
                   {t.hero.primary}
                 </Link>
                 <a href={GITHUB_URL} className={heroSecondaryButton}>
@@ -372,10 +372,10 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
           <span className="flex gap-6">
             <a href={GITHUB_URL} className="hover:text-foreground">GitHub</a>
             <SignedOut>
-              <Link href="/sign-in?redirect_url=/dashboard" className="hover:text-(--l-fg)">{t.nav.signIn}</Link>
+              <Link href="/sign-in?redirect_url=/checks" className="hover:text-(--l-fg)">{t.nav.signIn}</Link>
             </SignedOut>
             <SignedIn>
-              <Link href="/dashboard" className="hover:text-(--l-fg)">{t.nav.openApp}</Link>
+              <Link href="/checks" className="hover:text-(--l-fg)">{t.nav.openApp}</Link>
             </SignedIn>
           </span>
         </div>
