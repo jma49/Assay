@@ -1,4 +1,4 @@
-import { pickEditable } from "./check-fields";
+import { pickEditable, readVersion, versionFilter } from "./check-fields";
 import { getMongoDbClient } from "../database/mongodb";
 import { Collection, Document, Db } from "mongodb";
 import { UserRole, Permission, hasPermission } from "../auth/rbac";
@@ -728,6 +728,7 @@ async function executeApprovedOperation(
           scriptId: request.scriptId,
           createdBy: { id: request.requesterId, email: request.requesterEmail },
           updatedBy: { id: request.requesterId, email: request.requesterEmail },
+          version: 1,
           createdAt: new Date(),
           updatedAt: new Date(),
           approvalStatus: ApprovalStatus.APPROVED,
@@ -804,13 +805,19 @@ async function executeApprovedOperation(
           approvalRequestId: request.requestId,
         };
 
+        const baseVersion = readVersion((request.originalData as Record<string, unknown>).baseVersion);
         const updateResult = await collection.updateOne(
-          { scriptId: request.scriptId },
-          { $set: updateData }
+          { scriptId: request.scriptId, ...versionFilter(baseVersion) },
+          { $set: updateData, $inc: { version: 1 } }
         );
 
         if (updateResult.matchedCount === 0) {
-          throw new Error(`脚本不存在: ${request.scriptId}`);
+          const stillThere = await collection.countDocuments({ scriptId: request.scriptId }, { limit: 1 });
+          throw new Error(
+            stillThere
+              ? "The check changed after this request was made; submit the change again against the current version"
+              : `脚本不存在: ${request.scriptId}`,
+          );
         }
 
         // 创建版本记录

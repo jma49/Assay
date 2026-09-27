@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { authorProblem, ownsCheck, pickEditable } from "./check-fields";
+import { authorProblem, ownsCheck, pickEditable, readVersion, versionFilter } from "./check-fields";
 
 describe("pickEditable", () => {
   it("drops everything the server owns", () => {
@@ -31,5 +31,18 @@ describe("ownsCheck", () => {
     expect(ownsCheck({ author: "ada" }, ada)).toBe(true);
     expect(ownsCheck({ author: "bob" }, ada)).toBe(false);
     expect(ownsCheck({}, ada)).toBe(false);
+  });
+});
+
+describe("versionFilter / readVersion", () => {
+  it("matches only the version the save started from", () => {
+    expect(versionFilter(undefined)).toEqual({});
+    expect(versionFilter(0)).toEqual({ $or: [{ version: { $exists: false } }, { version: 0 }] });
+    expect(versionFilter(3)).toEqual({ version: 3 });
+  });
+
+  it("accepts only whole non-negative numbers", () => {
+    expect(readVersion(2)).toBe(2);
+    for (const value of [undefined, null, "2", -1, 1.5, { $gt: 0 }]) expect(readVersion(value)).toBeUndefined();
   });
 });
