@@ -290,10 +290,22 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
       if (data.success && data.sql) {
         onChange(data.sql);
-        toast.success(isZh ? "AI已成功生成SQL语句" : "Query generated", {
-          description: isZh ? "SQL已插入到编辑器中" : "It is now in the editor.",
-          duration: 3000,
-        });
+        const dryRun = data.dryRun as { ok: true; rowCount: number } | { ok: false; error: string } | undefined;
+        if (dryRun && !dryRun.ok) {
+          toast.warning(isZh ? "已生成查询，但试运行失败" : "Query drafted, but its dry run failed", {
+            description: dryRun.error,
+            duration: 6000,
+          });
+        } else {
+          toast.success(isZh ? "AI已成功生成SQL语句" : "Query generated", {
+            description: dryRun
+              ? isZh
+                ? `试运行通过：当前会标出 ${dryRun.rowCount} 行`
+                : `Dry run passed: it flags ${dryRun.rowCount} rows today`
+              : isZh ? "SQL已插入到编辑器中" : "It is now in the editor.",
+            duration: 4000,
+          });
+        }
       } else {
         throw new Error('AI返回数据格式错误');
       }
