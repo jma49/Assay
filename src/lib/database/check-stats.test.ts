@@ -32,10 +32,10 @@ describe("toCheckStats", () => {
 });
 
 describe("CHECK_STATS_PIPELINE", () => {
-  it("keeps attention_needed results out of the success bucket", () => {
+  it("counts each run once, by outcome", () => {
     const group = CHECK_STATS_PIPELINE[0].$group;
-    expect(JSON.stringify(group.successCount)).toContain(
-      '{"$ne":["$statusType","attention_needed"]}',
-    );
+    expect(JSON.stringify(group.successCount)).toContain('["$outcome","clean"]');
+    expect(JSON.stringify(group.needsAttentionCount)).toContain('["$outcome","issues"]');
+    expect(JSON.stringify(group.failureCount)).toContain('["$outcome","error"]');
   });
 });

@@ -4,6 +4,7 @@ import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document, ObjectId } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache/cache-utils";
 import { authorizeApiRequest, validateApiAuth } from "@/lib/auth/auth-utils";
+import { authorProblem } from "@/lib/workflows/check-fields";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
 import {
@@ -15,7 +16,6 @@ import {
 import { createScriptVersion } from "@/lib/workflows/version-control";
 import { recordEditHistoryOnServer } from "@/lib/workflows/edit-history-store";
 
-// 定义脚本数据的接口
 interface NewScriptData {
   scriptId: string;
   name: string;
@@ -31,7 +31,6 @@ interface NewScriptData {
   cronSchedule?: string;
 }
 
-// 帮助函数：验证 scriptId 格式
 function isValidScriptId(scriptId: string): boolean {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(scriptId);
 }
@@ -46,7 +45,6 @@ async function getSqlScriptsCollection(): Promise<Collection<Document>> {
 
 export async function POST(request: Request) {
   try {
-    // 验证用户认证
     const authResult = await validateApiAuth("zh");
     if (!authResult.isValid) {
       return authResult.response!;
@@ -54,7 +52,6 @@ export async function POST(request: Request) {
 
     const { user, userEmail } = authResult;
 
-    // 检查权限：需要 SCRIPT_CREATE 权限
     const permissionCheck = await requirePermission(
       user.id,
       Permission.SCRIPT_CREATE
@@ -82,7 +79,6 @@ export async function POST(request: Request) {
       cronSchedule,
     } = body as NewScriptData;
 
-    // 1. 验证 scriptId
     if (!scriptId) {
       return NextResponse.json(
         { message: "scriptId is required" },
@@ -110,6 +106,10 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    const badAuthor = authorProblem(author);
+    if (badAuthor) {
+      return NextResponse.json({ message: badAuthor }, { status: 400 });
+    }
     // An invalid cron would be saved and then silently never run.
     const badSchedule = scheduleProblem(isScheduled, cronSchedule ?? (isScheduled ? "" : undefined));
     if (badSchedule) {
@@ -118,7 +118,6 @@ export async function POST(request: Request) {
 
     const collection = await getSqlScriptsCollection();
 
-    // 2. 检查 scriptId 唯一性
     const existingScript = await collection.findOne({ scriptId });
     if (existingScript) {
       return NextResponse.json(
@@ -127,7 +126,7 @@ export async function POST(request: Request) {
       ); // 409 Conflict
     }
 
-    // 3. 严格的安全检查 - 只允许查询操作
+    // Only read-only SQL may be saved.
     const securityCheck = validateReadOnlySql(sqlContent);
     if (!securityCheck.isValid) {
       return NextResponse.json(
@@ -142,7 +141,6 @@ export async function POST(request: Request) {
       ); // 403 Forbidden
     }
 
-    // 4. 检查是否需要审批
     const userRole = await getUserRole(user.id);
     if (!userRole) {
       return NextResponse.json(
@@ -151,14 +149,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // 检查是否符合自动审批条件
     const autoApprovalEligible = isAutoApprovalEligible(
       analyzeScriptType(sqlContent),
       userRole,
       "create"
     );
 
-    // 如果需要审批，先创建审批请求
+    // Everyone but admins goes through approval.
     if (!autoApprovalEligible) {
       const requestId = await createApprovalRequest(
         scriptId,
@@ -208,10 +205,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // 如果符合自动审批条件（管理员），直接创建脚本
     console.log(`[Script] 管理员创建脚本，自动审批通过，直接创建: ${scriptId}`);
 
-    // 5. 准备要插入的数据
     const newScriptDocument = {
       scriptId,
       name,
@@ -220,22 +215,24 @@ export async function POST(request: Request) {
       cnDescription: cnDescription || "",
       scope: scope || "",
       cnScope: cnScope || "",
-      author: author || userEmail.split("@")[0], // 如果没有提供作者，使用当前用户
+      author: author || userEmail.split("@")[0],
       hashtags: hashtags || [],
       sqlContent,
-      isScheduled: isScheduled || false, // 默认不启用定时任务
-      cronSchedule: cronSchedule || "", // 默认 Cron 表达式为空
+      isScheduled: isScheduled || false,
+      cronSchedule: cronSchedule || "",
       createdAt: new Date(),
       updatedAt: new Date(),
-      approvalStatus: ApprovalStatus.APPROVED, // 自动审批通过
+      approvalStatus: ApprovalStatus.APPROVED,
       approvalRequestId: null,
+      // Who made it, from the session: ownership and audit never trust the author label.
+      createdBy: { id: user.id, email: userEmail },
+      updatedBy: { id: user.id, email: userEmail },
+      version: 1,
     };
 
-    // 6. 插入数据到 MongoDB
     const result = await collection.insertOne(newScriptDocument);
 
     if (result.insertedId) {
-      // 创建版本记录
       await createScriptVersion(
         scriptId,
         {
@@ -256,7 +253,6 @@ export async function POST(request: Request) {
         "major"
       );
 
-      // 记录创建历史
       await recordEditHistoryOnServer(
         {
           scriptId,
@@ -266,7 +262,6 @@ export async function POST(request: Request) {
         { id: user.id, email: userEmail, name: userEmail.split("@")[0] }
       );
 
-      // 清除 Redis 缓存
       await clearScriptsCache();
 
       const message = autoApprovalEligible
@@ -296,7 +291,6 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Error creating script:", error);
     if (error instanceof SyntaxError) {
-      // JSON 解析错误
       return NextResponse.json(
         { message: "Invalid JSON in request body" },
         { status: 400 }
@@ -309,7 +303,6 @@ export async function POST(request: Request) {
   }
 }
 
-// 未来可以添加 GET (获取列表或单个), PUT (更新), DELETE (删除) 方法
 export async function GET(_request: Request) {
   try {
     // The middleware only guarantees a signed-in user; reading scripts (and
@@ -331,7 +324,6 @@ export async function GET(_request: Request) {
       `API: GET /api/scripts - 从数据库中找到 ${scriptsFromDb.length} 个脚本`
     );
 
-    // 明确定义从数据库获取的文档类型
     interface ScriptDocumentFromDb extends Document {
       _id: ObjectId;
       scriptId: string;

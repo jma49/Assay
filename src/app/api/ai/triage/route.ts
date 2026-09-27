@@ -1,3 +1,4 @@
+import { toLegacyStatus } from "@/domain/run";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { authorizeApiRequest } from "@/lib/auth/auth-utils";
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
     const results = db.collection(RESULTS_COLLECTION);
     const run = await results.findOne(
       { _id: new ObjectId(resultId) },
-      { projection: { script_name: 1, scriptId: 1, status: 1, statusType: 1, message: 1, findings: 1, raw_results: 1, aiTriage: 1 } },
+      { projection: { checkId: 1, outcome: 1, message: 1, raw_results: 1, aiTriage: 1 } },
     );
     if (!run) {
       return NextResponse.json({ error: "Run not found" }, { status: 404 });
@@ -52,7 +53,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Sign up to run AI triage" }, { status: 403 });
     }
 
-    const status = String(run.statusType || run.status || "");
+    // The model's prompt speaks of the older status names.
+    const status = toLegacyStatus(run.outcome ?? "clean");
     if (status === "success") {
       return NextResponse.json({ error: "This run passed; there is nothing to triage" }, { status: 400 });
     }
@@ -63,11 +65,11 @@ export async function POST(request: NextRequest) {
       return refused;
     }
 
-    const scriptId = String(run.script_name || run.scriptId || "");
+    const scriptId = String(run.checkId ?? "");
     const script = await db
       .collection("sql_scripts")
       .findOne({ scriptId }, { projection: { name: 1, description: 1, sqlContent: 1 } });
-    const rows = Array.isArray(run.findings) ? run.findings : Array.isArray(run.raw_results) ? run.raw_results : [];
+    const rows = Array.isArray(run.raw_results) ? run.raw_results : [];
 
     const triage = await triageRun(
       {

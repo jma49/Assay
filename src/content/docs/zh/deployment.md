@@ -1,6 +1,6 @@
 # 部署
 
-Assay 是一个 Next.js 应用。你需要准备一个 Clerk 应用、MongoDB、要检查的 PostgreSQL 数据库，以及 Upstash Redis 缓存。
+Assay 是一个 Next.js 应用。你需要准备用于登录的 Google 或 GitHub OAuth 应用、MongoDB、要检查的 PostgreSQL 数据库，以及 Upstash Redis 缓存。
 
 ## 准备
 
@@ -8,7 +8,7 @@ Assay 是一个 Next.js 应用。你需要准备一个 Clerk 应用、MongoDB、
 - 供检查读取的 PostgreSQL 数据库（建议使用只读账号）
 - MongoDB（Atlas 即可）
 - Upstash Redis
-- 一个 Clerk 应用
+- 一个 Google OAuth 客户端或 GitHub OAuth 应用（用于登录，用户数据存放在 MongoDB）
 
 ## 本地运行
 

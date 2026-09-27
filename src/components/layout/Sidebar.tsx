@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ComponentType } from "react";
-import { UserButton, useUser } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
 import {
   Activity,
@@ -12,14 +11,17 @@ import {
   BookOpen,
   CheckCircle2,
   History,
+  KeyRound,
   ListChecks,
   Moon,
   Sun,
   Table2,
   Users,
 } from "lucide-react";
+import { UserMenu } from "@/components/auth/UserMenu";
 import { BrandMark } from "@/components/common/BrandMark";
 import { useLanguage } from "@/components/common/LanguageProvider";
+import { useCurrentUser } from "@/lib/auth/client";
 import { useMe } from "@/lib/auth/use-me";
 import { cn } from "@/lib/utils/utils";
 
@@ -66,6 +68,7 @@ const SECTIONS: { title: Label; items: NavItem[] }[] = [
         requires: "script:approve",
       },
       { href: "/settings/notifications", label: { en: "Notifications", zh: "通知" }, icon: BellRing },
+      { href: "/settings/api-keys", label: { en: "API keys", zh: "API 密钥" }, icon: KeyRound },
       { href: "/admin/users", label: { en: "Members", zh: "成员" }, icon: Users, requires: "user:manage" },
       { href: "/docs", label: { en: "Docs", zh: "文档" }, icon: BookOpen },
     ],
@@ -93,7 +96,7 @@ export function Sidebar() {
   const pathname = usePathname() ?? "";
   const { language, setLanguage } = useLanguage();
   const { resolvedTheme, setTheme } = useTheme();
-  const { user, isLoaded } = useUser();
+  const { user, isLoaded } = useCurrentUser();
   const me = useMe();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -162,10 +165,7 @@ export function Sidebar() {
         <div className="flex items-center gap-1 px-1">
           {isLoaded && user && (
             <div className="mr-auto flex min-w-0 items-center gap-2 max-md:mr-0">
-              <UserButton appearance={{ elements: { avatarBox: "size-6" } }} afterSignOutUrl="/" />
-              <span className="truncate text-[13px] text-muted-foreground max-md:hidden">
-                {user.fullName || user.primaryEmailAddress?.emailAddress?.split("@")[0]}
-              </span>
+              <UserMenu user={user} />
             </div>
           )}
           <button

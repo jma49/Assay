@@ -21,6 +21,7 @@ const TITLES: [string, Label][] = [
   ["/scripts/new", { en: "New check", zh: "新建检查" }],
   ["/activity", { en: "Activity", zh: "动态" }],
   ["/settings/notifications", { en: "Notifications", zh: "通知" }],
+  ["/settings/api-keys", { en: "API keys", zh: "API 密钥" }],
   ["/dashboard", { en: "Runs", zh: "执行记录" }],
   ["/view-execution-result", { en: "Run", zh: "执行结果" }],
   ["/coverage", { en: "Coverage", zh: "覆盖情况" }],

@@ -40,19 +40,13 @@ export function getAIErrorMessage(error: unknown): string {
   return "AI服务暂时不可用，请稍后重试。";
 }
 
-/**
- * 简单的token估算函数
- * 英文: ~4个字符=1token, 中文: ~1.5个字符=1token
- */
+/** A rough token count: about 4 characters per token in English, 1.5 in Chinese. */
 export function estimateTokens(text: string): number {
   const chineseChars = (text.match(/[一-鿿]/g) || []).length;
   const englishChars = text.length - chineseChars;
   return Math.ceil(chineseChars / 1.5 + englishChars / 4);
 }
 
-/**
- * 记录token使用情况
- */
 export function logTokenUsage(prompt: string, response: string, operation: string) {
   const promptTokens = estimateTokens(prompt);
   const responseTokens = estimateTokens(response);

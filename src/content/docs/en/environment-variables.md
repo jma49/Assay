@@ -6,13 +6,12 @@ Copy `.env.example` to `.env.local` for local work, or add these to your host.
 
 | Variable | Purpose |
 |---|---|
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (public). |
-| `CLERK_SECRET_KEY` | Clerk secret key. |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | `/sign-in` |
-| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | `/sign-up` |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | `/dashboard` |
-| `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | `/dashboard` |
-| `MONGODB_URI` | MongoDB connection string. The database name defaults to `sql_script_monitoring`. |
+| `BETTER_AUTH_SECRET` | Signs session cookies; 32+ random bytes. |
+| `BETTER_AUTH_URL` | Public URL of the app, e.g. `https://assay.example.com`. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth client; callback `/api/auth/callback/google`. |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth app; callback `/api/auth/callback/github`. |
+| `MONGODB_URI` | MongoDB connection string. The database is the one named in its path, else `MONGODB_DB_NAME`, else `sql_script_monitoring`; users, roles, checks and runs all live there. |
+| `RUN_RETENTION_DAYS` | Days a run is kept (default 90; `0` keeps runs forever). |
 | `DATABASE_URL` | The PostgreSQL database checks run against. |
 | `UPSTASH_REDIS_REST_URL` | Upstash Redis REST URL. |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token. |
@@ -28,8 +27,7 @@ Copy `.env.example` to `.env.local` for local work, or add these to your host.
 | `CHECK_TIMEOUT_MS` | How long one statement of a check may run before PostgreSQL stops it. Default 30000 (30 s), at most 300000. |
 | `CHECK_CONCURRENCY` | How many checks one server instance runs at the same time. Default 4. |
 | `ALLOWED_EMAIL_DOMAINS` | Comma-separated email domains allowed to sign in. Empty allows everyone. |
-| `CA_CERT_BLOB_URL` | CA certificate URL when PostgreSQL requires one for SSL. |
-| `SCHEDULER_API_TOKEN` | Token for the standalone scheduler's management API. |
+| `CA_CERT_BLOB_URL` | https:// URL of the CA certificate PostgreSQL's server certificate is verified against. With `CLIENT_CERT_BLOB_URL` and `CLIENT_KEY_BLOB_URL`, also a client certificate. |
 
 > Only variables starting with `NEXT_PUBLIC_` reach the browser. Never give a secret that prefix.
 

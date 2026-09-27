@@ -10,7 +10,6 @@ interface PriorityBadgeProps {
   onRemove?: () => void;
 }
 
-// 优先级标签颜色映射
 const getPriorityColor = (tag: string) => {
   const lowerTag = tag.toLowerCase();
   

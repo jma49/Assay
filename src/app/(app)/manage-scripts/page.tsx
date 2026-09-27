@@ -55,7 +55,7 @@ const CodeMirrorEditor = dynamic(
   () => import("@/components/business/scripts/CodeMirrorEditor"),
   { ssr: false, loading: () => <div className="h-[480px] animate-pulse rounded-lg border bg-muted/40" /> },
 );
-import { generateSqlTemplateWithTranslation } from "@/components/business/dashboard/scriptTranslations";
+import { newCheckTemplate } from "@/components/business/scripts/sql-template";
 import { EditHistoryDialog } from "@/components/business/scripts/EditHistoryDialog";
 import { SkeletonTable } from "@/components/common/PageSkeletons";
 
@@ -138,13 +138,7 @@ const ManageScriptsContent = () => {
     setDialogMode(mode);
     if (mode === "add") {
       const newScriptId = `new-script-${Date.now().toString().slice(-6)}`;
-      const templateSql = generateSqlTemplateWithTranslation(
-        newScriptId,
-        "",
-        "",
-        "",
-        "",
-      );
+      const templateSql = newCheckTemplate();
       setCurrentFormScript({
         scriptId: newScriptId,
         name: "",
@@ -291,6 +285,8 @@ const ManageScriptsContent = () => {
           hashtags: currentPayload.hashtags,
           isScheduled: currentPayload.isScheduled,
           cronSchedule: currentPayload.cronSchedule,
+          // The version this edit started from; the server refuses the save if someone saved since.
+          version: currentFormScript.version ?? 0,
         };
 
         if (currentSqlContent !== initialSqlContentForEdit) {
@@ -318,6 +314,15 @@ const ManageScriptsContent = () => {
           .json()
           .catch(() => ({ message: t(errorMessageKey) }));
         
+        if (response.status === 409) {
+          toast.error(language === "zh" ? "这个检查已被其他人修改" : "Someone else changed this check", {
+            description: language === "zh" ? "你的修改没有保存。已刷新列表，请重新打开后再编辑。" : "Your change was not saved. The list has been reloaded; open the check again to edit it.",
+            duration: 8000,
+          });
+          fetchScripts();
+          return;
+        }
+
         // 检查是否是需要审批的情况
         if (errorData.requiresApproval) {
           toast.success(language === "zh" ? "申请已提交" : "Submitted for approval", {

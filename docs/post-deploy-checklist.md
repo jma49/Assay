@@ -13,16 +13,16 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 ## PR #13 安全修复
 
 - [ ] 响应头：`curl -sI https://assay.majincheng.com/` 能看到 `X-Frame-Options: DENY`、`Content-Security-Policy: frame-ancestors 'none'`、`X-Content-Type-Options`、`Referrer-Policy`、`Permissions-Policy`、`Strict-Transport-Security`。
-- [ ] 加了响应头后，Clerk 登录、注册（含 Google 登录）仍然正常。
+- [ ] 加了响应头后，登录、注册（Google、GitHub）仍然正常。
 - [ ] AI 配额：线上 Upstash 正常计数，同一账号一小时内第 31 次 AI 请求返回 429；超长输入返回 413。
-- [ ] 管理员在 User Management 给用户分配角色仍然成功，列表里的邮箱来自 Clerk。
+- [ ] 管理员在成员页给用户分配角色仍然成功，邮箱来自系统里已登录过的用户。
 - [ ] 项目经理账号不能修改管理员或其他经理的角色（403）。
 - [ ] 故意触发一次服务器错误时，前端只看到通用提示，Vercel 日志里有完整错误。
 
 ## PR #14 性能修复
 
-- [ ] 线上 Dashboard 首次打开：数据请求在页面加载后约 0.1–0.3 秒内发出，不再等 Clerk（浏览器 Performance 面板或 Network 瀑布图确认）。
-- [ ] Approvals、User Management 页面同样不等 Clerk 就加载数据。
+- [ ] 线上 Dashboard 首次打开：数据请求在页面加载后约 0.1–0.3 秒内发出，不再等登录组件（浏览器 Performance 面板或 Network 瀑布图确认）。
+- [ ] Approvals、成员页面同样不等登录状态就加载数据。
 - [ ] 应用内切换页面时（点侧边栏），顶栏下方进度条正常，没有长时间空白。
 - [ ] AI 分析结果里的 SQL 代码仍有语法高亮。
 
@@ -96,3 +96,25 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 - [ ] 渠道开启「每日汇总」，到设定的时间（按渠道的时区）收到一条汇总，同一天只收到一次。
 - [ ] Slack App 开启 Interactivity（Request URL 指向 `/api/integrations/slack/interactions`）并设置 `SLACK_SIGNING_SECRET`；Slack 和 Telegram 告警里的「确认处理」「静音 24 小时」按钮可用，点击后消息更新为谁做了什么。
 - [ ] 渠道设置「无人处理时提醒」（例如每 1 小时）：一个检查出错且无人确认，1 小时后收到提醒，最多 3 次；确认处理或静音后不再提醒。
+
+## 登录（阶段 5：Better Auth 替换 Clerk）
+
+- [ ] Vercel 环境变量：`BETTER_AUTH_SECRET`（`openssl rand -base64 32`）、`BETTER_AUTH_URL`（生产地址）、`GOOGLE_CLIENT_ID/SECRET`、`GITHUB_CLIENT_ID/SECRET`；删除所有 `CLERK_*` 和 `NEXT_PUBLIC_CLERK_*`。
+- [ ] Google Cloud 的 OAuth 客户端加上回调 `https://assay.majincheng.com/api/auth/callback/google`；线上 GitHub OAuth App 的回调 `https://assay.majincheng.com/api/auth/callback/github`。`BETTER_AUTH_URL` 和 `APP_URL` 都设为 `https://assay.majincheng.com`。
+- [ ] 用原来的管理员邮箱通过 Google 登录：成员页里原角色自动转到新账号（`legacyUserId` 保留旧 Clerk ID）。
+- [ ] 用同一邮箱的 GitHub 登录，应当是同一个用户。
+- [ ] 退出登录后访问 /checks 跳转到登录页；访客演示 /demo 仍可用。
+- [ ] 生产环境登录页没有「开发环境登录」表单。
+
+## MCP（阶段 6）
+
+- [ ] 设置 → API 密钥：新建密钥，弹窗里的 Claude Code 命令和 JSON 地址是生产域名。
+- [ ] 用 Claude Code 连接（`claude mcp add --transport http assay https://<域名>/api/mcp --header "Authorization: Bearer ..."`），`/mcp` 里显示 assay 已连接，能列出检查。
+- [ ] 查看者的密钥只看到 4 个只读工具；开发者以上能执行检查、确认处理、静音。
+- [ ] 吊销密钥后，代理立即得到 401。
+
+## 审计修复（#53 起）
+
+- [ ] 生产库执行 `DOTENV_CONFIG_PATH=<生产环境变量文件> npx tsx -r dotenv/config scripts/migrations/mark-demo-seed.ts`，确认列表后加 `--apply`。之后演示访客仍能执行示例检查（现在依据 `demoSeed` 标记，而不是作者名）。
+- [ ] 生产库执行 `scripts/migrations/backfill-run-fields.ts`（先预览，再加 `--apply`；幂等），为旧执行记录补上 `checkId` / `finishedAt` / `outcome` / `rowCount`。执行记录、分析页的数字与部署前一致。部署前已跑过一次；部署后再跑一次，覆盖期间旧代码写入的记录。
+- [ ] 生产库执行 `scripts/migrations/set-run-expiry.ts`（先不加参数预览，再加 `--apply`），旧执行记录按 `RUN_RETENTION_DAYS`（默认 90 天）设置过期时间。MongoDB 里 `result` 集合出现 `expiresAt_1` TTL 索引。

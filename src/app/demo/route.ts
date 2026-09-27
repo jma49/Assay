@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { getSessionCookie } from "better-auth/cookies";
 import { NextRequest, NextResponse } from "next/server";
 import { GUEST_COOKIE, GUEST_COOKIE_MAX_AGE, guestIdFromToken, newGuestToken } from "@/lib/auth/guest";
 import { isDemoMode } from "@/lib/security/demo-sandbox";
@@ -9,8 +9,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
   const response = NextResponse.redirect(new URL("/checks", request.url));
-  const { userId } = await auth();
-  if (userId || guestIdFromToken(request.cookies.get(GUEST_COOKIE)?.value)) {
+  // Someone signed in needs no guest session. The cookie is only a hint here; it is not trusted for access.
+  if (getSessionCookie(request) || guestIdFromToken(request.cookies.get(GUEST_COOKIE)?.value)) {
     return response;
   }
   response.cookies.set(GUEST_COOKIE, newGuestToken(), {

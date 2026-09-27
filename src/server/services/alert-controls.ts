@@ -5,7 +5,7 @@ import { isAcknowledged, isMuted, type Actor, type Alerting } from "@/domain/ale
 import type { CheckState } from "@/domain/run";
 import { ApiError } from "@/server/http/route";
 
-export type ActionSource = "web" | "slack" | "telegram";
+export type ActionSource = "web" | "slack" | "telegram" | "mcp";
 
 export function toAlertingDto(alerting: Alerting | null | undefined, state: Pick<CheckState, "since" | "outcome"> | null | undefined, now = new Date()): AlertingDto {
   const muted = isMuted(alerting, now);

@@ -20,10 +20,6 @@ interface State {
   errorId: string;
 }
 
-/**
- * React 错误边界组件
- * 捕获子组件中的 JavaScript 错误，记录错误并显示友好的错误界面
- */
 export class ErrorBoundary extends Component<Props, State> {
   private static errorCount = 0;
 
@@ -45,8 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // 记录错误到控制台
-    console.error('[ErrorBoundary] 捕获到错误:', {
+    console.error('[ErrorBoundary] Caught an error:', {
       error: {
         name: error.name,
         message: error.message,
@@ -61,26 +56,19 @@ export class ErrorBoundary extends Component<Props, State> {
       url: window.location.href,
     });
 
-    // 更新状态以包含错误信息
     this.setState({ errorInfo });
 
-    // 调用自定义错误处理回调
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
 
-    // 在生产环境中，可以发送错误到监控服务
     if (process.env.NODE_ENV === 'production') {
       this.reportError(error, errorInfo);
     }
   }
 
-  /**
-   * 上报错误到监控服务
-   */
   private reportError(_error: Error, _errorInfo: ErrorInfo) {
-    // 这里可以集成 Sentry, LogRocket 等错误监控服务
-    // 例如：
+    // Placeholder for an error monitoring service such as Sentry, e.g.:
     // Sentry.captureException(error, {
     // contexts: {
     // react: {
@@ -92,12 +80,9 @@ export class ErrorBoundary extends Component<Props, State> {
     //   },
     // });
 
-    console.warn('[ErrorBoundary] 错误已上报到监控服务');
+    console.warn('[ErrorBoundary] Error reported to the monitoring service');
   }
 
-  /**
-   * 重置错误状态
-   */
   private handleReset = () => {
     this.setState({
       hasError: false,
@@ -107,23 +92,14 @@ export class ErrorBoundary extends Component<Props, State> {
     });
   };
 
-  /**
-   * 刷新页面
-   */
   private handleRefresh = () => {
     window.location.reload();
   };
 
-  /**
-   * 回到首页
-   */
   private handleGoHome = () => {
     window.location.href = '/checks';
   };
 
-  /**
-   * 复制错误信息
-   */
   private handleCopyError = async () => {
     const errorText = `
 错误ID: ${this.state.errorId}
@@ -143,8 +119,8 @@ ${this.state.errorInfo?.componentStack}
       await navigator.clipboard.writeText(errorText);
       alert('错误信息已复制到剪贴板');
     } catch (err) {
-      console.error('复制失败:', err);
-      // 降级方案：选择文本
+      console.error('Copy failed:', err);
+      // Fallback for browsers without the async Clipboard API.
       const textarea = document.createElement('textarea');
       textarea.value = errorText;
       document.body.appendChild(textarea);
@@ -157,12 +133,10 @@ ${this.state.errorInfo?.componentStack}
 
   render() {
     if (this.state.hasError) {
-      // 如果提供了自定义 fallback，使用它
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
-      // 默认错误界面
       return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-muted">
           <Card className="w-full max-w-2xl">
@@ -194,7 +168,6 @@ ${this.state.errorInfo?.componentStack}
                 </AlertDescription>
               </Alert>
 
-              {/* 开发环境或显示详情模式下展示详细错误信息 */}
               {(process.env.NODE_ENV === 'development' || this.props.showDetails) && 
                this.state.error && (
                 <Alert className="bg-failure/10 border-failure/30">
@@ -270,10 +243,6 @@ ${this.state.errorInfo?.componentStack}
   }
 }
 
-/**
- * 错误边界 Hook 版本
- * 用于函数组件中的错误处理
- */
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
   errorBoundaryProps?: Omit<Props, 'children'>
@@ -289,10 +258,6 @@ export function withErrorBoundary<P extends object>(
   return WrappedComponent;
 }
 
-/**
- * 简单的错误边界组件
- * 用于包装单个组件或页面
- */
 export function SimpleErrorBoundary({ 
   children, 
   message = "组件加载失败" 
