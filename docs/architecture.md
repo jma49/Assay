@@ -128,6 +128,23 @@ started by a person, the schedule, a batch, or an agent.
    changes, write an event.
 5. **Release** the lease.
 
+**Read-only, in layers.** A check's SQL passes the static validator
+(`src/lib/sql/read-only-validator.ts`): no write or DDL keywords, no
+side-effecting functions (also when their names are quoted), and every
+statement must start with SELECT, WITH, EXPLAIN or DO, so a bare `END` cannot
+close the transaction. Each statement is then sent on its own over the
+extended protocol, where PostgreSQL refuses a second statement, inside
+`BEGIN READ ONLY` with a `statement_timeout`. The strongest layer is the
+database itself: point `DATABASE_URL` at a role that can only SELECT, e.g.
+
+```sql
+CREATE ROLE assay_reader LOGIN PASSWORD '...';
+GRANT USAGE ON SCHEMA public TO assay_reader;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO assay_reader;
+ALTER ROLE assay_reader SET default_transaction_read_only = on;
+ALTER ROLE assay_reader SET statement_timeout = '60s';
+```
+
 `runDueChecks` claims each due slot atomically (already in place) and runs
 the claimed checks with bounded concurrency. `runBatch` records a batch
 document and processes its checks the same way; progress is read from
