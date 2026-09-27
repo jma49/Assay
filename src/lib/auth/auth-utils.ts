@@ -10,7 +10,6 @@ import {
   UserRole,
 } from "@/lib/auth/rbac";
 
-// 国际化文本
 export const authMessages = {
   en: {
     unauthorizedSignIn: "Unauthorized: Please sign in",
@@ -53,7 +52,7 @@ export async function currentGuestId(): Promise<string | null> {
 }
 
 /**
- * 验证API请求的用户认证和邮箱域名
+ * The signed-in caller of an API route, checked against ALLOWED_EMAIL_DOMAINS.
  * Guests are refused unless the route opts in with allowGuest.
  */
 export async function validateApiAuth(
@@ -97,8 +96,6 @@ export async function validateApiAuth(
         ),
       } as const;
     }
-
-    // 验证邮箱域名
     if (!isValidEmailDomain(userEmail)) {
       return {
         isValid: false,
@@ -109,17 +106,16 @@ export async function validateApiAuth(
       } as const;
     }
 
-    // 检查用户是否有角色，如果没有则分配默认角色
+    // Everyone who signs in starts as a viewer.
     try {
       const existingRole = await getUserRole(user.id);
       if (!existingRole) {
-        // 为新用户分配默认角色（VIEWER）
         console.log(`[Auth] 为新用户分配默认角色: ${userEmail}`);
         await setUserRole(user.id, userEmail, UserRole.VIEWER, "system");
       }
     } catch (error) {
       console.error("[Auth] 分配默认角色失败:", error);
-      // 不阻断认证流程，但记录错误
+      // A failed role write must not block the request.
     }
 
     return {
@@ -168,9 +164,7 @@ export async function authorizeApiRequest(
   return authResult;
 }
 
-/**
- * 获取当前用户信息（用于日志记录）
- */
+/** Who made a request, for logs and audit fields. */
 export function getUserInfo(user: AuthUser, userEmail: string) {
   return {
     userId: user.id,

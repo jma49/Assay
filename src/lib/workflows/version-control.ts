@@ -3,7 +3,6 @@ import { Collection, Document } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache/cache-utils";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 
-// 版本状态枚举
 export enum VersionStatus {
   DRAFT = "draft", // 草稿版本
   ACTIVE = "active", // 当前活跃版本
@@ -11,18 +10,16 @@ export enum VersionStatus {
   DEPRECATED = "deprecated", // 已废弃版本
 }
 
-// 脚本版本接口
 export interface ScriptVersion {
   versionId: string;
   scriptId: string;
-  version: string; // 版本号，如 "1.0.0", "1.1.0"
-  majorVersion: number; // 主版本号
-  minorVersion: number; // 次版本号
-  patchVersion: number; // 修订版本号
+  version: string; // semantic, e.g. "1.1.0"; unrelated to sql_scripts.version
+  majorVersion: number;
+  minorVersion: number;
+  patchVersion: number;
   status: VersionStatus;
-  isCurrentVersion: boolean; // 是否为当前版本
+  isCurrentVersion: boolean;
 
-  // 脚本内容
   name: string;
   cnName?: string;
   description?: string;
@@ -33,26 +30,22 @@ export interface ScriptVersion {
   hashtags?: string[];
   sqlContent: string;
 
-  // 版本元数据
   createdBy: string;
   createdByEmail: string;
   createdAt: Date;
   approvalStatus?: string;
   approvalRequestId?: string;
 
-  // 变更信息
   changeType: "create" | "update" | "rollback" | "merge";
   changeDescription?: string;
   previousVersionId?: string;
-  compareWith?: string; // 与哪个版本比较
+  compareWith?: string; // the version this one was compared with
 
-  // 统计信息
   executionCount?: number;
   lastExecutedAt?: Date;
   rollbackCount?: number;
 }
 
-// 版本比较结果接口
 export interface VersionDiff {
   scriptId: string;
   fromVersion: string;
@@ -71,32 +64,24 @@ export interface VersionDiff {
   };
 }
 
-// 获取脚本版本集合
 async function getScriptVersionsCollection(): Promise<Collection<Document>> {
   const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
   return db.collection("script_versions");
 }
 
-// 获取主脚本集合
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
   const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
   return db.collection("sql_scripts");
 }
 
-/**
- * 生成唯一的版本ID
- */
 function generateVersionId(): string {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2);
   return `ver_${timestamp}_${random}`;
 }
 
-/**
- * 解析版本号
- */
 function parseVersion(version: string): {
   major: number;
   minor: number;
@@ -110,9 +95,6 @@ function parseVersion(version: string): {
   };
 }
 
-/**
- * 生成下一个版本号
- */
 function generateNextVersion(
   lastVersion: string | null,
   changeType: "major" | "minor" | "patch" = "patch"
@@ -134,9 +116,6 @@ function generateNextVersion(
   }
 }
 
-/**
- * 获取脚本的最新版本号
- */
 async function getLatestVersion(scriptId: string): Promise<string | null> {
   try {
     const collection = await getScriptVersionsCollection();
@@ -156,7 +135,7 @@ async function getLatestVersion(scriptId: string): Promise<string | null> {
 }
 
 /**
- * 创建脚本版本
+ * Records a new version of a check and makes it the current one.
  */
 export async function createScriptVersion(
   scriptId: string,
@@ -180,7 +159,6 @@ export async function createScriptVersion(
   try {
     const collection = await getScriptVersionsCollection();
 
-    // 获取最新版本号
     const latestVersion = await getLatestVersion(scriptId);
     const newVersion = generateNextVersion(latestVersion, versionType);
     const { major, minor, patch } = parseVersion(newVersion);
@@ -188,7 +166,7 @@ export async function createScriptVersion(
     const versionId = generateVersionId();
     const now = new Date();
 
-    // 如果不是第一个版本，先将其他版本设为非当前版本
+    // Only one version is current; a first version has none to demote.
     if (latestVersion) {
       await collection.updateMany(
         { scriptId, isCurrentVersion: true },
@@ -206,7 +184,6 @@ export async function createScriptVersion(
       status: VersionStatus.ACTIVE,
       isCurrentVersion: true,
 
-      // 脚本内容
       name: scriptData.name,
       cnName: scriptData.cnName,
       description: scriptData.description,
@@ -217,19 +194,16 @@ export async function createScriptVersion(
       hashtags: scriptData.hashtags || [],
       sqlContent: scriptData.sqlContent,
 
-      // 版本元数据
       createdBy,
       createdByEmail,
       createdAt: now,
 
-      // 变更信息
       changeType,
       changeDescription,
       previousVersionId: latestVersion
         ? (await getVersionId(scriptId, latestVersion)) || undefined
         : undefined,
 
-      // 统计信息
       executionCount: 0,
       rollbackCount: 0,
     };
@@ -241,7 +215,6 @@ export async function createScriptVersion(
         `[VersionControl] 脚本版本已创建: ${scriptId} v${newVersion}`
       );
 
-      // 更新主脚本表的当前版本信息
       await updateMainScriptVersion(scriptId, versionId, newVersion);
 
       return versionId;
@@ -254,9 +227,6 @@ export async function createScriptVersion(
   }
 }
 
-/**
- * 获取版本ID
- */
 async function getVersionId(
   scriptId: string,
   version: string
@@ -275,9 +245,6 @@ async function getVersionId(
   }
 }
 
-/**
- * 更新主脚本表的版本信息
- */
 async function updateMainScriptVersion(
   scriptId: string,
   versionId: string,
@@ -300,9 +267,6 @@ async function updateMainScriptVersion(
   }
 }
 
-/**
- * 获取脚本的所有版本
- */
 export async function getScriptVersions(
   scriptId: string,
   limit: number = 50
@@ -356,9 +320,6 @@ export async function getScriptVersions(
   }
 }
 
-/**
- * 获取特定版本的脚本
- */
 export async function getScriptVersion(
   scriptId: string,
   version: string
@@ -413,7 +374,7 @@ export async function getScriptVersion(
 }
 
 /**
- * 回滚到指定版本
+ * Restores a check to an earlier version by saving that version's content as a new one.
  */
 export async function rollbackToVersion(
   scriptId: string,
@@ -423,7 +384,6 @@ export async function rollbackToVersion(
   rollbackReason?: string
 ): Promise<{ success: boolean; message: string; newVersionId?: string }> {
   try {
-    // 获取目标版本
     const targetVersionData = await getScriptVersion(scriptId, targetVersion);
     if (!targetVersionData) {
       return { success: false, message: "目标版本不存在" };
@@ -438,7 +398,6 @@ export async function rollbackToVersion(
       };
     }
 
-    // 创建新版本（基于目标版本的内容）
     const newVersionId = await createScriptVersion(
       scriptId,
       {
@@ -460,14 +419,12 @@ export async function rollbackToVersion(
     );
 
     if (newVersionId) {
-      // 更新目标版本的回滚计数
       const collection = await getScriptVersionsCollection();
       await collection.updateOne(
         { scriptId, version: targetVersion },
         { $inc: { rollbackCount: 1 } }
       );
 
-      // 清除缓存
       await clearScriptsCache();
 
       console.log(
@@ -488,9 +445,6 @@ export async function rollbackToVersion(
   }
 }
 
-/**
- * 比较两个版本的差异
- */
 export async function compareVersions(
   scriptId: string,
   fromVersion: string,
@@ -508,7 +462,6 @@ export async function compareVersions(
 
     const differences: VersionDiff["differences"] = [];
 
-    // 比较字段
     const fieldsToCompare = [
       { field: "name", label: "脚本名称" },
       { field: "cnName", label: "中文名称" },
@@ -550,7 +503,6 @@ export async function compareVersions(
       });
     }
 
-    // SQL 内容的详细差异分析（简单实现）
     const sqlDiff = analyzeSqlDiff(
       fromVersionData.sqlContent,
       toVersionData.sqlContent
@@ -570,7 +522,8 @@ export async function compareVersions(
 }
 
 /**
- * 分析SQL内容差异（简单实现）
+ * Lines only in the new SQL (additions) and only in the old one (deletions), compared as
+ * trimmed sets; order and changed lines are not detected, so modifications stays empty.
  */
 function analyzeSqlDiff(
   oldSql: string,
@@ -589,7 +542,6 @@ function analyzeSqlDiff(
   const deletions: string[] = [];
   const modifications: string[] = [];
 
-  // 简单的行级差异分析
   oldLines.forEach((oldLine) => {
     if (!newLines.includes(oldLine)) {
       deletions.push(oldLine);
@@ -605,13 +557,10 @@ function analyzeSqlDiff(
   return {
     additions,
     deletions,
-    modifications, // 这里简化处理，实际可以用更复杂的算法
+    modifications,
   };
 }
 
-/**
- * 获取版本统计信息
- */
 export async function getVersionStatistics(scriptId: string): Promise<{
   totalVersions: number;
   currentVersion: string;
