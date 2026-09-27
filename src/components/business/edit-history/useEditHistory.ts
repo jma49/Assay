@@ -12,11 +12,11 @@ export function useEditHistory() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
-  const requests = useRef(createLatestRequest());
+  const requests = useRef(createLatestRequest({ filters: EMPTY_FILTERS, page: 1 }));
 
   // A newer request supersedes one still in flight, so the table always matches the latest filters.
   const fetchHistories = useCallback(async (filters: HistoryFilters = EMPTY_FILTERS, page = 1) => {
-    const token = requests.current.start();
+    const token = requests.current.start({ filters, page });
     const isStale = () => !requests.current.isLatest(token);
     setLoading(true);
     setError(null);
@@ -46,9 +46,14 @@ export function useEditHistory() {
     }
   }, []);
 
+  const retry = useCallback(() => {
+    const { filters, page } = requests.current.latestParams();
+    fetchHistories(filters, page);
+  }, [fetchHistories]);
+
   useEffect(() => {
     fetchHistories();
   }, [fetchHistories]);
 
-  return { histories, loading, error, currentPage, totalPages, totalRecords, fetchHistories };
+  return { histories, loading, error, currentPage, totalPages, totalRecords, fetchHistories, retry };
 }
