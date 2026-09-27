@@ -21,7 +21,7 @@ export default function GlobalEditHistoryPage() {
     [language],
   );
 
-  const { histories, loading, error, currentPage, totalPages, totalRecords, fetchHistories } = useEditHistory();
+  const { histories, loading, error, currentPage, totalPages, totalRecords, fetchHistories, retry } = useEditHistory();
   const [filters, setFilters] = useState<HistoryFilters>(EMPTY_FILTERS);
   const [selectedHistory, setSelectedHistory] = useState<EditHistoryRecord | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
@@ -72,7 +72,7 @@ export default function GlobalEditHistoryPage() {
                 error={error}
                 language={language}
                 t={t}
-                onRetry={() => fetchHistories()}
+                onRetry={retry}
                 onViewDetails={viewDetails}
               />
             </CardContent>
