@@ -32,29 +32,41 @@ today's code. Each phase ships on its own and keeps the app working.
 
 ```
 src/
-  domain/        Pure types and rules: check status, run outcome, diffs,
-                 schedules, permissions. No I/O, fully unit-tested.
+  domain/        Pure types and rules: run outcome, check state, diffs,
+                 schedules, notifications, digests. No I/O, unit-tested.
   server/
-    db/          MongoDB client, Redis client, data sources (PostgreSQL).
-    repos/       The only code that reads or writes MongoDB collections.
-    services/    Use cases: runCheck, runDueChecks, runBatch, saveCheck,
-                 approve, draftCheck, triage, coverage, notify.
-    jobs/        Background work: an inline runner today, a queue adapter later.
-    auth/        Principal (user or demo guest) and permission checks.
-    http/        Route helpers: withAuth, input parsing (zod), error mapping.
+    services/    Use cases: runCheck, batches, checks read model,
+                 notifications dispatcher, alert controls, destinations.
+    repos/       MongoDB access for runs, checks state and the outbox.
+    runs/        Run history queries and the legacy response shape.
+    datasource/  The checked database (PostgreSQL), read-only.
+    notify/      Channels (Slack, Discord, Telegram, Feishu, WeCom, webhook),
+                 SSRF guard, sending.
+    integrations/ OAuth installs and chat-app callbacks.
+    mcp/         MCP server: caller, tools, permissions.
+    http/        withAuth and route helpers.
+    crypto/      Sealed secrets (AES-256-GCM).
+    concurrency/ Semaphore for bounded parallel runs.
+  lib/           Older shared code: auth (Better Auth, RBAC), database
+                 (Mongo client, indexes, Postgres pool), SQL validation,
+                 approval and version workflows, cache, utilities.
   contracts/     zod schemas for API input and output, shared with the client.
-  app/           Routes. Pages follow the information architecture below;
-                 API routes are thin adapters over services.
-  ui/            Design system: tokens, primitives, data display.
-  features/      Feature components (checks list, check detail, activity...).
-  client/        Typed API client and query hooks.
-scripts/         CLIs only (seed, run due checks, migrate), calling services.
+  client/        Typed fetch helpers and hooks.
+  app/           Routes. API routes are thin adapters over services.
+  components/
+    ui/          Primitives (button, dialog, table...).
+    layout/      App shell, sidebar, page header, the Runs page.
+    checks/ activity/ notifications/ settings/ auth/   Feature views.
+    business/    Views carried over from the first version, each split into
+                 a pure module (tested), a data hook and section components:
+                 analysis, approvals, dashboard (run panel), edit-history,
+                 scripts, users, ai.
+scripts/         CLIs (seed, run checks, migrations) calling the same code.
 ```
 
-Dependencies point inward: `app → features → client` on the browser side,
+Dependencies point inward: pages → components → client on the browser side,
 `app/api → server/http → server/services → server/repos, domain` on the
-server. `domain` imports nothing from the app. A lint rule enforces the
-boundaries once the folders exist.
+server. `domain` imports nothing from the app.
 
 ## Data model
 
@@ -202,4 +214,8 @@ queue can replace the inline runner later without changing services.
 6. **MCP server.** Personal API keys and `/api/mcp` with read, run and
    alert tools. *Done ([mcp.md](mcp.md)).*
 7. **Clean-up.** Remove legacy modules and pages, add end-to-end tests for
-   the main flows.
+   the main flows. *In progress: dead code removed (#61); the oversized
+   legacy pages split into tested modules, hooks and sections (#82, #84,
+   #87–#89, #91); run readers moved to the new fields and the retired
+   fields no longer written (#80, #90); API route tests (#83). End-to-end
+   tests remain.*
