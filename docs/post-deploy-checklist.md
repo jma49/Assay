@@ -71,8 +71,15 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 
 ## 执行管线（阶段 2）
 
-- [ ] 部署后在生产库执行一次回填（幂等，只补没有 state 的检查）：`DOTENV_CONFIG_PATH=<生产环境变量文件> npx tsx -r dotenv/config scripts/backfill-check-state.ts --dry-run`，确认列表后去掉 `--dry-run` 再跑。
+- [ ] 部署后在生产库执行一次回填，加 `--recompute` 让所有检查都按完整历史重算状态（幂等）：`DOTENV_CONFIG_PATH=<生产环境变量文件> npx tsx -r dotenv/config scripts/backfill-check-state.ts --dry-run`，确认列表后去掉 `--dry-run` 再跑。
 - [ ] 连续点两次「执行检查」：第二次提示正在执行（409），不会跑两遍。
 - [ ] 「批量执行」进度条正常推进并结束；Vercel 函数日志里没有 `[Batch ...] failed`。
 - [ ] Actions 里「Scheduled SQL checks」用 tsx 运行成功（日志里是 `Done: N ran, 0 failed ...`）。
 - [ ] MongoDB 里 `events`、`batches` 集合和索引已自动创建（`batches` 有 7 天 TTL）。
+
+## 检查列表与详情（阶段 3）
+
+- [ ] 侧边栏「检查」打开 /checks：摘要卡片数字正确，点击可筛选；「24 小时内变化」只统计真正变化了状态的检查。
+- [ ] 打开一个有问题的检查：30 格执行状态条、新增 / 仍未解决 / 已修复标记、执行历史链接到报告、查询高亮、下次执行时间。
+- [ ] 对出错的检查点「立即执行」出现红色提示；有问题的是黄色提示，正常的是绿色提示。
+- [ ] 登录后、进入演示后都落在 /checks。

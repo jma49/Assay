@@ -69,3 +69,51 @@ export function scheduleProblem(isScheduled: unknown, cronSchedule: unknown, lan
   }
   return cron?.trim() ? cronError(cron, language) : null;
 }
+
+const WEEKDAYS = {
+  en: ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"],
+  zh: ["每周日", "每周一", "每周二", "每周三", "每周四", "每周五", "每周六"],
+};
+
+/**
+ * A cron expression in words for the common shapes (every N minutes, hourly,
+ * daily, weekdays, a weekday, a day of the month); null for anything else,
+ * which is then shown as the expression itself.
+ */
+export function describeCron(cron: string, language: "en" | "zh"): string | null {
+  const zh = language === "zh";
+  const fields = normalize(cron).split(" ");
+  if (fields.length !== 5) return null;
+  const [minute, hour, day, month, weekday] = fields;
+  const num = (v: string) => (/^\d+$/.test(v) ? Number(v) : null);
+  if (month !== "*") return null;
+
+  const every = /^\*\/(\d+)$/.exec(minute);
+  if (every && hour === "*" && day === "*" && weekday === "*") {
+    return zh ? `每 ${every[1]} 分钟` : `Every ${every[1]} minutes`;
+  }
+  const m = num(minute);
+  if (m === null) return null;
+  if (hour === "*" && day === "*" && weekday === "*") {
+    if (m === 0) return zh ? "每小时" : "Every hour";
+    return zh ? `每小时第 ${m} 分` : `Every hour at :${String(m).padStart(2, "0")}`;
+  }
+  const h = num(hour);
+  if (h === null) return null;
+  const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} UTC`;
+  if (day === "*" && weekday === "*") return zh ? `每天 ${time}` : `Every day at ${time}`;
+  if (day === "*" && weekday === "1-5") return zh ? `工作日 ${time}` : `Weekdays at ${time}`;
+  const w = num(weekday);
+  if (day === "*" && w !== null && w <= 7) {
+    const name = WEEKDAYS[language][w % 7];
+    return zh ? `${name} ${time}` : `${name} at ${time}`;
+  }
+  const d = num(day);
+  if (d !== null && weekday === "*") return zh ? `每月 ${d} 日 ${time}` : `The ${d}${ordinal(d)} of each month at ${time}`;
+  return null;
+}
+
+function ordinal(n: number): string {
+  if (n % 100 >= 11 && n % 100 <= 13) return "th";
+  return ["th", "st", "nd", "rd"][n % 10] ?? "th";
+}

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { HighlightedLine } from "./HighlightedLine";
+import { HighlightedLine } from "@/components/code/HighlightedLine";
 import type { DemoKind, Language } from "./content";
 
 type Status = "passed" | "attention" | "failed";

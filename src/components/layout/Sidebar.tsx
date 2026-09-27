@@ -38,10 +38,10 @@ const SECTIONS: { title: Label; items: NavItem[] }[] = [
     title: { en: "Monitor", zh: "监控" },
     items: [
       {
-        href: "/manage-scripts",
+        href: "/checks",
         label: { en: "Checks", zh: "检查" },
         icon: ListChecks,
-        matches: ["/scripts", "/manage-scripts/edit-history"],
+        matches: ["/scripts", "/manage-scripts"],
       },
       {
         href: "/dashboard",
@@ -73,11 +73,16 @@ const COPY = {
   zh: { workspace: "工作区", guestTitle: "你正在以访客身份浏览", guestBody: "可以随意查看并执行示例检查。注册后可以编写自己的检查。", signUp: "注册", leave: "退出演示", theme: "切换深色模式" },
 };
 
-function isActive(pathname: string, item: NavItem, all: NavItem[]): boolean {
+/** How specifically an item matches the path: its longest owning prefix, or 0. */
+function matchLength(pathname: string, item: NavItem): number {
   const owns = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
-  if (!owns(item.href) && !item.matches?.some(owns)) return false;
-  // A longer href elsewhere (e.g. /manage-scripts/approvals) wins over its parent.
-  return !all.some((other) => other !== item && other.href.startsWith(item.href) && owns(other.href));
+  return Math.max(0, ...[item.href, ...(item.matches ?? [])].filter(owns).map((path) => path.length));
+}
+
+/** Only the most specific match is active, so /manage-scripts/approvals lights Approvals, not Checks. */
+function isActive(pathname: string, item: NavItem, all: NavItem[]): boolean {
+  const length = matchLength(pathname, item);
+  return length > 0 && all.every((other) => other === item || matchLength(pathname, other) < length);
 }
 
 export function Sidebar() {
@@ -96,7 +101,7 @@ export function Sidebar() {
 
   return (
     <aside className="flex min-h-0 flex-col gap-5 border-r border-sidebar-border bg-sidebar px-2.5 py-3.5 max-md:flex-row max-md:items-center max-md:gap-3 max-md:overflow-x-auto max-md:border-r-0 max-md:border-b max-md:px-4 max-md:py-2">
-      <Link href="/manage-scripts" className="flex items-center px-2 py-1 max-md:px-0">
+      <Link href="/checks" className="flex items-center px-2 py-1 max-md:px-0">
         <BrandMark className="max-md:[&>span:last-child]:hidden" />
       </Link>
 
@@ -140,7 +145,7 @@ export function Sidebar() {
             <p className="font-medium text-foreground">{t.guestTitle}</p>
             <p className="mt-0.5">{t.guestBody}</p>
             <Link
-              href="/sign-up?redirect_url=/manage-scripts"
+              href="/sign-up?redirect_url=/checks"
               className="mt-2 flex h-7 items-center justify-center rounded-md bg-primary text-[12.5px] font-medium text-primary-foreground transition-[filter,scale] duration-150 ease-out hover:brightness-110 active:scale-[0.96]"
             >
               {t.signUp}

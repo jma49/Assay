@@ -6,7 +6,7 @@ The **sidebar** on the left takes you to each part of Assay. The **top bar** sho
 
 | Item | What it is for |
 |---|---|
-| **Checks** | Every check, grouped by tag and scope, with its query and actions |
+| **Checks** | Every check and how it stands now: broken first, then those with issues, then clean ones, with the change since the last run and a trend. Open one for its run history, latest result (new, still-open and fixed rows), query and schedule. **Manage** (tags, scopes, edits) is one click away from a check. |
 | **Runs** | Every run, newest first, with totals per status and the run buttons |
 | **Coverage** | Which tables in your database have a check watching them |
 | **Analysis** | How results change over time |

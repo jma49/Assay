@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   if (!isDemoMode()) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
-  const response = NextResponse.redirect(new URL("/dashboard", request.url));
+  const response = NextResponse.redirect(new URL("/checks", request.url));
   const { userId } = await auth();
   if (userId || guestIdFromToken(request.cookies.get(GUEST_COOKIE)?.value)) {
     return response;

@@ -1,5 +1,9 @@
 import { ObjectId, type Db, type Document } from "mongodb";
+import { fromLegacyStatus, stateFromHistory } from "@/domain/run";
 import { legacyRunFields, type CheckEvent, type RunCheckStore, type RunDocument } from "@/server/services/run-check";
+
+// Enough runs to find when the current streak began for any realistic schedule.
+const HISTORY_LIMIT = 500;
 
 const DUPLICATE_KEY = 11000;
 
@@ -33,6 +37,25 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
       if (!ObjectId.isValid(runId)) return null;
       const run = await runs.findOne({ _id: new ObjectId(runId) }, { projection: { rowKeys: 1 } });
       return Array.isArray(run?.rowKeys) ? (run.rowKeys as string[]) : null;
+    },
+
+    async historicalState(scriptId) {
+      const history = await runs
+        .find(
+          { script_name: scriptId },
+          { projection: { outcome: 1, statusType: 1, rowCount: 1, execution_time: 1, legacyRowCount: { $size: { $ifNull: ["$raw_results", []] } } } },
+        )
+        .sort({ execution_time: -1 })
+        .limit(HISTORY_LIMIT)
+        .toArray();
+      return stateFromHistory(
+        history.map((run) => ({
+          runId: run._id.toString(),
+          outcome: run.outcome ?? fromLegacyStatus(run.statusType),
+          rowCount: typeof run.rowCount === "number" ? run.rowCount : Number(run.legacyRowCount ?? 0),
+          finishedAt: new Date(run.execution_time),
+        })),
+      );
     },
 
     async saveRun(run: RunDocument) {

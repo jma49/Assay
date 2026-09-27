@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { formatDateTime } from "@/lib/utils/datetime";
 import { useMe } from "@/lib/auth/use-me";
+import { cellText } from "@/lib/utils/cells";
 import { triageToMarkdown } from "@/lib/ai/triage-format";
 
 // 基于SQL脚本实际输出的精确类型定义
@@ -66,7 +67,7 @@ const viewResultTranslations = {
     loading: "Loading...",
     loadingFailed: "Loading Failed",
     retry: "Retry",
-    back: "Back to Dashboard",
+    back: "Back",
     notFound: "Result Not Found",
     noResultFound: "Could not find execution result with ID",
     executionDetails: "Execution Result Details",
@@ -98,16 +99,16 @@ const viewResultTranslations = {
       other: "Other",
     },
     statusTexts: {
-      success: "Success",
-      attentionNeeded: "Attention Needed",
-      failure: "Failed",
+      success: "Clean",
+      attentionNeeded: "Issues",
+      failure: "Broken",
     },
   },
   zh: {
     loading: "加载中...",
     loadingFailed: "加载失败",
     retry: "重试",
-    back: "返回仪表盘",
+    back: "返回",
     notFound: "未找到结果",
     noResultFound: "无法找到ID为",
     executionDetails: "执行结果详情",
@@ -139,9 +140,9 @@ const viewResultTranslations = {
       other: "其他",
     },
     statusTexts: {
-      success: "成功",
-      attentionNeeded: "需要关注",
-      failure: "失败",
+      success: "正常",
+      attentionNeeded: "有问题",
+      failure: "出错",
     },
   },
 };
@@ -417,9 +418,10 @@ export default function ViewExecutionResultPage() {
     setRetryCount((prev) => prev + 1);
   };
 
-  const handleGoToDashboard = () => {
-    // 直接导航到仪表盘
-    router.push("/dashboard");
+  // Back where the visitor came from (a check, the runs list), or to the checks.
+  const goBack = () => {
+    if (window.history.length > 1) router.back();
+    else router.push("/checks");
   };
 
   // Triage runs on the server from the run id; the answer is cached on the run.
@@ -503,7 +505,7 @@ export default function ViewExecutionResultPage() {
                 {t.retry}
               </button>
               <Button
-                onClick={handleGoToDashboard}
+                onClick={goBack}
                 variant="outline"
                 className="dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10"
               >
@@ -529,7 +531,7 @@ export default function ViewExecutionResultPage() {
               {t.noResultFound} {resultId} 的执行结果。
             </p>
             <Button
-              onClick={handleGoToDashboard}
+              onClick={goBack}
               className="mt-6 dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10"
               variant="outline"
             >
@@ -606,7 +608,7 @@ export default function ViewExecutionResultPage() {
                           </span>
                         ) : (
                           <span className="tabular-nums">
-                            {String(value)}
+                            {cellText(value)}
                           </span>
                         )}
                       </td>
@@ -689,8 +691,8 @@ export default function ViewExecutionResultPage() {
         ? zh ? `${rowCount} 行需要关注` : `${rowCount} ${rowCount === 1 ? "row needs" : "rows need"} attention`
         : zh ? "发现需要关注的问题" : "Needs attention"
       : tone === "success"
-        ? zh ? "通过：没有返回任何行" : "Passed: no rows returned"
-        : zh ? "执行失败" : "The check could not run";
+        ? zh ? "正常：没有返回任何行" : "Clean: no rows returned"
+        : zh ? "查询出错" : "The query failed";
   const scriptName = zh ? result.cnName || result.name : result.name;
   const toneText = { attention_needed: "text-attention", success: "text-success", failure: "text-failure" }[tone];
 
@@ -703,7 +705,7 @@ export default function ViewExecutionResultPage() {
       label: t.scriptId,
       mono: true,
       value: (
-        <Link href={`/manage-scripts?scriptId=${encodeURIComponent(result.scriptId)}`} className="text-primary hover:underline">
+        <Link href={`/checks/${encodeURIComponent(result.scriptId)}`} className="text-primary hover:underline">
           {result.scriptId}
         </Link>
       ),
@@ -721,8 +723,8 @@ export default function ViewExecutionResultPage() {
     <div className="min-h-screen">
       <h1 className="sr-only">{t.executionDetails}</h1>
       <WindowToolbar>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/dashboard">‹ {zh ? "仪表盘" : "Dashboard"}</Link>
+        <Button variant="outline" size="sm" onClick={goBack}>
+          ‹ {zh ? "返回" : "Back"}
         </Button>
         <div className="ml-auto flex items-center gap-2">
           {(tone === "failure" || tone === "attention_needed") && aiAvailable && (

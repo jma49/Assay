@@ -44,11 +44,14 @@ export interface ExecutionResult {
   findings: string;
   mongoResultId?: string;
   alreadyRunning?: boolean;
+  notFound?: boolean;
+  /** Rows the query returned; 0 for a failed run. */
+  rowCount?: number;
 }
 
 export function toExecutionResult(result: Awaited<ReturnType<typeof runCheck>>): ExecutionResult {
   if (result.kind === "missing") {
-    return { success: false, statusType: "failure", message: "No check with this id", findings: "Script not found" };
+    return { success: false, statusType: "failure", message: "No check with this id", findings: "Script not found", notFound: true };
   }
   if (result.kind === "busy") {
     return {
@@ -65,5 +68,6 @@ export function toExecutionResult(result: Awaited<ReturnType<typeof runCheck>>):
     message: result.message,
     findings: result.findings,
     mongoResultId: result.runId,
+    rowCount: result.rowCount,
   };
 }

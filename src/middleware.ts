@@ -24,6 +24,8 @@ const isPublicRoute = createRouteMatcher([
 // Pages a demo guest can open; every API route still checks the guest itself.
 const isGuestRoute = createRouteMatcher([
   "/dashboard",
+  "/checks",
+  "/checks/(.*)",
   "/manage-scripts",
   "/view-execution-result/(.*)",
   "/data-analysis",

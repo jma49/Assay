@@ -82,13 +82,14 @@ export function CoveragePanes({
   scripts,
   searchTerm,
   language,
-  onOpenCheck,
+  checkHref,
 }: {
   coverage: CoverageState;
   scripts: SqlScript[];
   searchTerm: string;
   language: string;
-  onOpenCheck: (scriptId: string) => void;
+  /** Where a check listed under a table links to. */
+  checkHref: (scriptId: string) => string;
 }) {
   const zh = language === "zh";
   const t = zh ? COPY.zh : COPY.en;
@@ -167,10 +168,10 @@ export function CoveragePanes({
               <ul className="divide-y rounded-lg border">
                 {selected.checks.map((check) => (
                   <li key={check.scriptId}>
-                    <button type="button" onClick={() => onOpenCheck(check.scriptId)} className="block w-full px-4 py-2 text-left hover:bg-foreground/[0.04]">
+                    <Link href={checkHref(check.scriptId)} className="block w-full px-4 py-2 text-left hover:bg-foreground/[0.04]">
                       <span className="block text-[13px] font-medium">{zh ? check.cnName || check.name : check.name}</span>
                       <span className="block font-mono text-[11px] text-muted-foreground">{check.scriptId}</span>
-                    </button>
+                    </Link>
                   </li>
                 ))}
               </ul>

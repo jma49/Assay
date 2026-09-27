@@ -10,8 +10,7 @@ import { runCheckNow, toExecutionResult } from "@/server/services/run-check-deps
 const DEMO_WINDOW_SECONDS = 60 * 60;
 
 /**
- * 处理手动触发 SQL 脚本检查的 API 请求。
- * Needs script:execute, except in demo mode, where viewers and guests may
+ * Runs one check now. Needs script:execute, except in demo mode, where viewers and guests may
  * run the seeded demo checks within an hourly budget.
  */
 export async function POST(request: NextRequest) {
@@ -86,6 +85,9 @@ export async function POST(request: NextRequest) {
     );
     if (result.alreadyRunning) {
       return NextResponse.json(result, { status: 409 });
+    }
+    if (result.notFound) {
+      return NextResponse.json(result, { status: 404 });
     }
 
     return NextResponse.json({

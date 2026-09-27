@@ -16,8 +16,8 @@ interface StatusTilesProps {
 }
 
 const LABELS = {
-  en: { total: "All runs", success: "Passed", attention: "Needs attention", failure: "Failed", ofRuns: "of runs" },
-  zh: { total: "全部执行", success: "通过", attention: "需关注", failure: "失败", ofRuns: "占比" },
+  en: { total: "All runs", success: "Clean", attention: "Issues", failure: "Broken", ofRuns: "of runs" },
+  zh: { total: "全部执行", success: "正常", attention: "有问题", failure: "出错", ofRuns: "占比" },
 };
 
 /**
