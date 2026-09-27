@@ -93,7 +93,6 @@ source (web | slack | telegram | mcp), at }`. Index `(checkId, at)`.
 | Collection | Holds |
 | --- | --- |
 | `approval_requests` | A change waiting for review: `requestId`, `scriptId`, `requesterId`, `operationType`, `originalData` (only editable fields are applied), `status` (moves from `pending` once), `reviewedBy`, `applyError`. Indexes: `requestId` unique; `(status, requestedAt)` |
-| `approval_history` | Every approve / reject |
 | `edit_history` | Every create / update / delete with a snapshot and field changes. Indexes: `operationTime`; `(scriptSnapshot.scriptId, operationTime)` |
 | `script_versions` | Full copies per version (`version` here is a semantic string like `1.2.0`, unrelated to `sql_scripts.version`). Index `(scriptId, createdAt)` |
 

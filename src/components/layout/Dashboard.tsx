@@ -16,7 +16,6 @@ import { RunsHeader } from "@/components/business/dashboard/runs/RunsHeader";
 import { pageRange, passRate } from "@/components/business/dashboard/runs/runs";
 import { useRunsPage } from "@/components/business/dashboard/runs/useRunsPage";
 import { useTriggerCheck } from "@/components/business/dashboard/runs/useTriggerCheck";
-import { useAppCommand } from "@/lib/commands/use-app-command";
 import { useMe } from "@/lib/auth/use-me";
 
 /** Keeps the page's slower fade-in while it is mounted. */
@@ -50,20 +49,13 @@ const Dashboard = () => {
   const canExecute = me?.permissions.includes("script:execute") ?? false;
   const demoRuns = !canExecute && me?.demo ? me.demo.runsPerHour : null;
 
-  // The Run sheet, opened from the toolbar or the File menu.
+  // The Run sheet, opened from the toolbar.
   const [runSheetOpen, setRunSheetOpen] = useState(false);
   const [runSheetMode, setRunSheetMode] = useState<"single" | "bulk">("single");
   const openRunSheet = useCallback((mode: "single" | "bulk") => {
     setRunSheetMode(mode);
     setRunSheetOpen(true);
   }, []);
-
-  // Commands from elsewhere: "Run a check…" / "Run in bulk…".
-  useAppCommand((command) => {
-    if (command.type !== "run-mode") return false;
-    openRunSheet(command.mode);
-    return true;
-  });
 
   const runs = useRunsPage(language);
   const { history, overallStats, availableScripts, loading, isFetchingScripts } = runs;

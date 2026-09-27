@@ -11,7 +11,7 @@ import { triageRun, type Triage } from "@/lib/ai/triage";
 import { aiModel } from "@/lib/ai/model";
 import { getAIErrorMessage } from "@/lib/utils/ai-utils";
 
-const RESULTS_COLLECTION = process.env.MONGO_COLLECTION_NAME || "result";
+const RESULTS_COLLECTION = "result";
 
 /**
  * Triage of one flagged or failed run. The client sends only the run id:
