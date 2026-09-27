@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getUserInfo, validateApiAuth } from "@/lib/auth/auth-utils";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/server/http/route";
 import { Permission, requirePermission } from "@/lib/auth/rbac";
 import redis from "@/lib/cache/redis";
 import { getMongoDbClient } from "@/lib/database/mongodb";
@@ -15,15 +15,7 @@ const DEMO_WINDOW_SECONDS = 60 * 60;
  * Runs one check now. Needs script:execute, except in demo mode, where viewers and guests may
  * run the seeded demo checks within an hourly budget.
  */
-export async function POST(request: NextRequest) {
-  const authResult = await validateApiAuth("en", { allowGuest: true });
-  if (!authResult.isValid) {
-    return authResult.response!;
-  }
-
-  const { user, userEmail } = authResult;
-  const userInfo = getUserInfo(user, userEmail);
-
+export const POST = withAuth({ signedIn: true, allowGuest: true }, async (request, { principal }) => {
   try {
     const body = await request.json();
     const { scriptId } = body;
@@ -35,9 +27,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const canExecute = authResult.isGuest
+    const canExecute = principal.isGuest
       ? false
-      : (await requirePermission(user.id, Permission.SCRIPT_EXECUTE)).authorized;
+      : (await requirePermission(principal.id, Permission.SCRIPT_EXECUTE)).authorized;
     const demoMode = isDemoMode();
     if (!canExecute && !demoMode) {
       return NextResponse.json(
@@ -62,7 +54,7 @@ export async function POST(request: NextRequest) {
       let quota = { allowed: true, retryAfterSeconds: 0 };
       let limit = 0;
       try {
-        for (const budget of demoRunBudgets({ id: user.id, isGuest: authResult.isGuest }, clientIp(request.headers))) {
+        for (const budget of demoRunBudgets({ id: principal.id, isGuest: principal.isGuest }, clientIp(request.headers))) {
           quota = await consumeQuota(redis, budget.subject, Date.now(), budget.limit, DEMO_WINDOW_SECONDS, "demo-run");
           limit = budget.limit;
           if (!quota.allowed) break;
@@ -83,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = toExecutionResult(
-      await runCheckNow(scriptId, { kind: "manual", by: { id: user.id, name: userInfo.name } }),
+      await runCheckNow(scriptId, { kind: "manual", by: { id: principal.id, name: principal.name } }),
     );
     if (result.alreadyRunning) {
       return NextResponse.json(result, { status: 409 });
@@ -96,16 +88,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ...result,
       executedBy: {
-        email: userInfo.email,
-        name: userInfo.name,
-        timestamp: userInfo.timestamp,
+        email: principal.email,
+        name: principal.name,
+        timestamp: new Date().toISOString(),
       },
     });
   } catch (error) {
-    console.error(`[API] Running a check for ${userInfo.name} failed:`, error);
+    console.error(`[API] Running a check for ${principal.name} failed:`, error);
     return NextResponse.json(
       { success: false, message: "Failed to execute script" },
       { status: 500 },
     );
   }
-}
+});

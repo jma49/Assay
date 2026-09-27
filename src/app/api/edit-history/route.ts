@@ -1,6 +1,6 @@
 import { containsText, intParam } from "@/lib/utils/query-params";
-import { NextRequest, NextResponse } from "next/server";
-import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/server/http/route";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
@@ -16,13 +16,8 @@ async function getEditHistoryCollection(): Promise<Collection<Document>> {
 // Edit history is written only on the server (recordEditHistoryOnServer),
 // so there is deliberately no POST: clients could otherwise forge entries.
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(Permission.HISTORY_READ, async (request, { principal }) => {
   try {
-    const authResult = await authorizeApiRequest(Permission.HISTORY_READ);
-    if (!authResult.isValid) {
-      return authResult.response;
-    }
-
     const { searchParams } = new URL(request.url);
 
     const filter: EditHistoryFilter = {
@@ -116,7 +111,7 @@ export async function GET(request: NextRequest) {
     const rows: Document[] = result[0]?.data || [];
     const total = result[0]?.count?.[0]?.total || 0;
     // Demo guests see who made a change by name, never their email or id.
-    const historyList = authResult.isGuest ? rows.map(({ userEmail: _email, userId: _id, ...row }) => row) : rows;
+    const historyList = principal.isGuest ? rows.map(({ userEmail: _email, userId: _id, ...row }) => row) : rows;
 
     return NextResponse.json({
       histories: historyList,
@@ -131,4 +126,4 @@ export async function GET(request: NextRequest) {
     console.error("[edit-history] Query failed:", error);
     return NextResponse.json({ error: "查询编辑历史失败" }, { status: 500 });
   }
-}
+});

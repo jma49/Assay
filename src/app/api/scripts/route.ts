@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document, ObjectId } from "mongodb";
-import { authorizeApiRequest, validateApiAuth } from "@/lib/auth/auth-utils";
+import { withAuth } from "@/server/http/route";
 import { authorProblem } from "@/lib/workflows/check-fields";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
-import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
+import { Permission, getUserRole } from "@/lib/auth/rbac";
 import {
   ApprovalStatus,
   createApprovalRequest,
@@ -42,25 +42,9 @@ async function getSqlScriptsCollection(): Promise<Collection<Document>> {
   return db.collection(COLLECTIONS.checks);
 }
 
-export async function POST(request: Request) {
+export const POST = withAuth(Permission.SCRIPT_CREATE, async (request, { principal }) => {
   try {
-    const authResult = await validateApiAuth("zh");
-    if (!authResult.isValid) {
-      return authResult.response!;
-    }
-
-    const { user, userEmail } = authResult;
-
-    const permissionCheck = await requirePermission(
-      user.id,
-      Permission.SCRIPT_CREATE
-    );
-    if (!permissionCheck.authorized) {
-      return NextResponse.json(
-        { success: false, message: "权限不足：无法创建脚本" },
-        { status: 403 }
-      );
-    }
+    const userEmail = principal.email;
 
     const body = await request.json();
     const {
@@ -140,7 +124,7 @@ export async function POST(request: Request) {
       ); // 403 Forbidden
     }
 
-    const userRole = await getUserRole(user.id);
+    const userRole = await getUserRole(principal.id);
     if (!userRole) {
       return NextResponse.json(
         { success: false, message: "无法获取用户角色信息" },
@@ -158,7 +142,7 @@ export async function POST(request: Request) {
     if (!autoApprovalEligible) {
       const requestId = await createApprovalRequest(
         scriptId,
-        user.id,
+        principal.id,
         userEmail,
         userRole,
         sqlContent,
@@ -224,12 +208,12 @@ export async function POST(request: Request) {
       approvalStatus: ApprovalStatus.APPROVED,
       approvalRequestId: null,
       // Who made it, from the session: ownership and audit never trust the author label.
-      createdBy: { id: user.id, email: userEmail },
-      updatedBy: { id: user.id, email: userEmail },
+      createdBy: { id: principal.id, email: userEmail },
+      updatedBy: { id: principal.id, email: userEmail },
       version: 1,
     };
 
-    const mongoId = await createCheck(await getMongoDbClient().getDb(), newScriptDocument, { id: user.id, email: userEmail }, "脚本创建", "major");
+    const mongoId = await createCheck(await getMongoDbClient().getDb(), newScriptDocument, { id: principal.id, email: userEmail }, "脚本创建", "major");
     const message = autoApprovalEligible
       ? "查询脚本创建成功（管理员自动审批通过）"
       : "查询脚本创建成功";
@@ -265,17 +249,12 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function GET(_request: Request) {
+// The middleware only guarantees a signed-in user; reading scripts (and
+// their SQL) also needs script:read, as on the other script routes.
+export const GET = withAuth(Permission.SCRIPT_READ, async () => {
   try {
-    // The middleware only guarantees a signed-in user; reading scripts (and
-    // their SQL) also needs script:read, as on the other script routes.
-    const authResult = await authorizeApiRequest(Permission.SCRIPT_READ);
-    if (!authResult.isValid) {
-      return authResult.response;
-    }
-
     const collection = await getSqlScriptsCollection();
     const scriptsFromDb = await collection
       .find({})
@@ -342,4 +321,4 @@ export async function GET(_request: Request) {
       { status: 500 }
     );
   }
-}
+});

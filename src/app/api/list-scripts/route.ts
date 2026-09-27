@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
-import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { withAuth } from "@/server/http/route";
 import { nextRunAt } from "@/lib/scheduling/due-slot";
 import { Permission } from "@/lib/auth/rbac";
 import { cached, cacheKey } from "@/lib/cache/cached";
@@ -93,13 +93,8 @@ async function fetchScriptsData(
   }));
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(Permission.SCRIPT_READ, async (request) => {
   try {
-    const authResult = await authorizeApiRequest(Permission.SCRIPT_READ);
-    if (!authResult.isValid) {
-      return authResult.response;
-    }
-
     const { searchParams } = new URL(request.url);
 
     // Only known values, so arbitrary query strings cannot mint new cache keys.
@@ -152,4 +147,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

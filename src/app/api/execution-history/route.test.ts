@@ -10,10 +10,16 @@ const mocks = vi.hoisted(() => ({
   limit: vi.fn(),
 }));
 
-vi.mock("@/lib/auth/auth-utils", () => ({
-  authorizeApiRequest: async (permission: string) => {
+vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth/auth-utils")>()),
+  validateApiAuth: async () =>
+    mocks.denied ? { isValid: false, response: mocks.denied } : { isValid: true, user: { id: "user_viewer", fullName: null }, userEmail: "v@example.com", isGuest: false },
+}));
+vi.mock("@/lib/auth/rbac", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth/rbac")>()),
+  requirePermission: async (_userId: string, permission: string) => {
     mocks.permissions.push(permission);
-    return mocks.denied ? { isValid: false, response: mocks.denied } : { isValid: true, user: { id: "user_viewer" }, userEmail: "v@example.com", isGuest: false };
+    return { authorized: true };
   },
 }));
 vi.mock("@/lib/database/mongodb", () => {
@@ -31,7 +37,7 @@ vi.mock("@/lib/database/mongodb", () => {
 
 import { GET } from "./route";
 
-const executions = (query = "") => GET(new NextRequest(`http://localhost/api/execution-history${query}`));
+const executions = (query = "") => GET(new NextRequest(`http://localhost/api/execution-history${query}`), { params: Promise.resolve({}) });
 const lastQuery = () => mocks.find.mock.calls.at(-1)?.[0];
 
 describe("GET /api/execution-history", () => {
@@ -47,8 +53,10 @@ describe("GET /api/execution-history", () => {
   it("needs history:read and returns the auth response when refused", async () => {
     mocks.denied = NextResponse.json({ message: "forbidden" }, { status: 403 });
     expect(await executions()).toBe(mocks.denied);
-    expect(mocks.permissions).toEqual(["history:read"]);
     expect(mocks.find).not.toHaveBeenCalled();
+    mocks.denied = null;
+    await executions();
+    expect(mocks.permissions).toEqual(["history:read"]);
   });
 
   it("reads the newest runs, 500 by default", async () => {

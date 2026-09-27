@@ -1,6 +1,6 @@
 import { intParam } from "@/lib/utils/query-params";
-import { NextRequest, NextResponse } from "next/server";
-import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/server/http/route";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { LEGACY_VIEW_FIELDS, toLegacyRunView } from "@/server/runs/legacy-view";
@@ -26,11 +26,8 @@ function parseDate(value: string | null): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(Permission.HISTORY_READ, async (request) => {
   try {
-    const authResult = await authorizeApiRequest(Permission.HISTORY_READ);
-    if (!authResult.isValid) return authResult.response;
-
     const { searchParams } = new URL(request.url);
     const startDate = parseDate(searchParams.get("startDate"));
     const endDate = parseDate(searchParams.get("endDate"));
@@ -66,4 +63,4 @@ export async function GET(request: NextRequest) {
     console.error("API Error fetching execution history:", error);
     return NextResponse.json({ message: "Internal Server Error fetching execution history" }, { status: 500 });
   }
-}
+});

@@ -2,12 +2,7 @@ import { cookies, headers } from "next/headers";
 import { GUEST_COOKIE, guestIdFromToken } from "@/lib/auth/guest";
 import { emailAllowed } from "@/lib/auth/legacy-accounts";
 import { NextResponse } from "next/server";
-import {
-  getUserRole,
-  Permission,
-  requirePermission,
-  ensureDefaultRole,
-} from "@/lib/auth/rbac";
+import { getUserRole, Permission, ensureDefaultRole } from "@/lib/auth/rbac";
 
 export const authMessages = {
   en: {
@@ -36,7 +31,7 @@ export const authMessages = {
 export const isValidEmailDomain = (email: string) => emailAllowed(email);
 
 /** The caller of an API route: a signed-in user, or a demo guest. */
-export interface AuthUser {
+interface AuthUser {
   id: string;
   fullName: string | null;
 }
@@ -52,7 +47,8 @@ export async function currentGuestId(): Promise<string | null> {
 
 /**
  * The signed-in caller of an API route, checked against ALLOWED_EMAIL_DOMAINS.
- * Guests are refused unless the route opts in with allowGuest.
+ * Guests are refused unless the route opts in with allowGuest. Routes use it
+ * through withAuth (server/http/route.ts), which also checks permissions.
  */
 export async function validateApiAuth(
   language: "en" | "zh" = "en",
@@ -130,41 +126,4 @@ export async function validateApiAuth(
       ),
     } as const;
   }
-}
-
-export async function authorizeApiRequest(
-  permission: Permission,
-  language: "en" | "zh" = "zh"
-) {
-  const authResult = await validateApiAuth(language, { allowGuest: GUEST_PERMISSIONS.includes(permission) });
-  if (!authResult.isValid) {
-    return authResult;
-  }
-  // A guest only got this far for a permission in GUEST_PERMISSIONS.
-  if (authResult.isGuest) {
-    return authResult;
-  }
-
-  const { authorized } = await requirePermission(authResult.user.id, permission);
-  if (!authorized) {
-    return {
-      isValid: false,
-      response: NextResponse.json(
-        { success: false, message: authMessages[language].forbidden },
-        { status: 403 }
-      ),
-    } as const;
-  }
-
-  return authResult;
-}
-
-/** Who made a request, for logs and audit fields. */
-export function getUserInfo(user: AuthUser, userEmail: string) {
-  return {
-    userId: user.id,
-    email: userEmail,
-    name: user.fullName || userEmail.split("@")[0] || user.id,
-    timestamp: new Date().toISOString(),
-  };
 }
