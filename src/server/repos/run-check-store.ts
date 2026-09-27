@@ -1,6 +1,6 @@
 import { ObjectId, type Db, type Document } from "mongodb";
 import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
-import { fromLegacyStatus, runExpiresAt, runRetentionDays, stateFromHistory } from "@/domain/run";
+import { runExpiresAt, runRetentionDays, stateFromHistory } from "@/domain/run";
 import { legacyRunFields, type CheckEvent, type RunCheckStore, type RunDocument } from "@/server/services/run-check";
 
 // Enough runs to find when the current streak began for any realistic schedule.
@@ -42,19 +42,16 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
 
     async historicalState(scriptId) {
       const history = await runs
-        .find(
-          { script_name: scriptId },
-          { projection: { outcome: 1, statusType: 1, rowCount: 1, execution_time: 1, legacyRowCount: { $size: { $ifNull: ["$raw_results", []] } } } },
-        )
-        .sort({ execution_time: -1 })
+        .find({ checkId: scriptId }, { projection: { outcome: 1, rowCount: 1, finishedAt: 1 } })
+        .sort({ finishedAt: -1 })
         .limit(HISTORY_LIMIT)
         .toArray();
       return stateFromHistory(
         history.map((run) => ({
           runId: run._id.toString(),
-          outcome: run.outcome ?? fromLegacyStatus(run.statusType),
-          rowCount: typeof run.rowCount === "number" ? run.rowCount : Number(run.legacyRowCount ?? 0),
-          finishedAt: new Date(run.execution_time),
+          outcome: run.outcome,
+          rowCount: Number(run.rowCount ?? 0),
+          finishedAt: new Date(run.finishedAt),
         })),
       );
     },

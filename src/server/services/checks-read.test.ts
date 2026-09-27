@@ -4,16 +4,12 @@ import { runPoint, toSummary } from "./checks-read";
 const at = (day: number) => new Date(Date.UTC(2026, 8, day, 9));
 
 describe("runPoint", () => {
-  it("reads new runs and derives outcome and row count from older ones", () => {
-    expect(runPoint({ _id: "r1", outcome: "issues", rowCount: 4, finishedAt: at(26), execution_time: at(26) })).toEqual({
+  it("reads a run's outcome, row count and finish time", () => {
+    expect(runPoint({ _id: "r1", outcome: "issues", rowCount: 4, finishedAt: at(26) })).toEqual({
       runId: "r1",
       outcome: "issues",
       rowCount: 4,
       at: at(26).toISOString(),
-    });
-    expect(runPoint({ _id: "r0", statusType: "failure", legacyRowCount: 0, execution_time: at(20) })).toMatchObject({
-      outcome: "error",
-      rowCount: 0,
     });
   });
 });
