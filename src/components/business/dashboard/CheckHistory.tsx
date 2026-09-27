@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
   Database,
-  ExternalLink,
   Search,
   X,
   MoreHorizontal,
@@ -30,6 +30,7 @@ import {
 import { cn } from "@/lib/utils/utils";
 import { Check, DashboardTranslationKeys } from "./types";
 import { formatDate } from "./utils";
+import { formatRelative } from "@/lib/utils/datetime";
 import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
 
 interface CheckHistoryProps {
@@ -52,7 +53,7 @@ interface CheckHistoryProps {
   requestSort: (key: keyof Check) => void;
   startIndex: number;
   endIndex: number;
-  availableScripts?: { scriptId: string; hashtags?: string[] }[];
+  availableScripts?: { scriptId: string; name?: string; cnName?: string; hashtags?: string[] }[];
   isLoading?: boolean;
 }
 
@@ -107,6 +108,17 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
   availableScripts = [],
   isLoading = false,
 }) => {
+  const router = useRouter();
+  const displayNames = useMemo(
+    () =>
+      new Map(
+        availableScripts.map((script) => [
+          script.scriptId,
+          (language === "zh" ? script.cnName || script.name : script.name) || script.scriptId,
+        ]),
+      ),
+    [availableScripts, language],
+  );
   const [pageInput, setPageInput] = useState("");
 
   const availableHashtags = useMemo(() => {
@@ -308,7 +320,14 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                 ) : (
                   paginatedChecks.map((check) => (
                   <React.Fragment key={check._id}>
-                    <TableRow className="group/row">
+                    <TableRow
+                      className="group/row cursor-pointer"
+                      onClick={(event) => {
+                        // Links and buttons inside the row keep their own action.
+                        if ((event.target as HTMLElement).closest("a, button")) return;
+                        router.push(`/view-execution-result/${check._id}`);
+                      }}
+                    >
                       <TableCell className="px-6 py-3">
                         <StatusLabel check={check} t={t} />
                       </TableCell>
@@ -320,13 +339,17 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                           href={`/manage-scripts?scriptId=${encodeURIComponent(check.script_name)}`}
                           className="block truncate underline-offset-4 hover:underline"
                         >
-                          {check.script_name}
+                          {displayNames.get(check.script_name) ?? check.script_name}
                         </Link>
                       </TableCell>
                       <TableCell className="hidden max-w-52 px-4 py-3 text-[13px] text-muted-foreground tabular-nums lg:table-cell">
-                        <div className="truncate">
-                          {formatDate(check.execution_time, language)}
-                        </div>
+                        <time
+                          className="block truncate"
+                          dateTime={check.execution_time}
+                          title={formatDate(check.execution_time, language)}
+                        >
+                          {formatRelative(check.execution_time, language)}
+                        </time>
                       </TableCell>
                       <TableCell
                         className="hidden px-4 py-3 text-sm md:table-cell"
@@ -352,7 +375,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                             <span className="hidden sm:inline">
                               {t("viewFullReportButton") || "View Report"}
                             </span>
-                            <ExternalLink className="size-3.5" />
+                            <ChevronRight className="size-3.5" />
                           </Link>
                         </Button>
                       </TableCell>
