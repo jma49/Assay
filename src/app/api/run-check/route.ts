@@ -5,6 +5,7 @@ import redis from "@/lib/cache/redis";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { consumeQuota } from "@/lib/security/ai-guard";
 import { clientIp, demoRunBudgets, isDemoMode, runAccess } from "@/lib/security/demo-sandbox";
+import { dispatchAfterResponse } from "@/server/services/notify-deps";
 import { runCheckNow, toExecutionResult } from "@/server/services/run-check-deps";
 
 const DEMO_WINDOW_SECONDS = 60 * 60;
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
     if (result.notFound) {
       return NextResponse.json(result, { status: 404 });
     }
+    dispatchAfterResponse();
 
     return NextResponse.json({
       ...result,

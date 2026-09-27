@@ -37,6 +37,7 @@ export enum Permission {
 
   // 系统管理权限
   SYSTEM_MANAGE = "system:manage",
+  NOTIFICATION_MANAGE = "notification:manage",
   CACHE_MANAGE = "cache:manage",
 }
 
@@ -56,6 +57,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.USER_MANAGE,
     Permission.USER_ROLE_ASSIGN,
     Permission.SYSTEM_MANAGE,
+    Permission.NOTIFICATION_MANAGE,
     Permission.CACHE_MANAGE,
   ],
   [UserRole.MANAGER]: [
@@ -69,6 +71,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.SCRIPT_REJECT,
     Permission.HISTORY_READ,
     Permission.USER_ROLE_ASSIGN, // 可以分配开发者和查看者角色
+    Permission.NOTIFICATION_MANAGE,
   ],
   [UserRole.DEVELOPER]: [
     // 开发者权限
