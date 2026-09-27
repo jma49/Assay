@@ -10,4 +10,6 @@ export function downloadTextFile(content: string, fileName: string, mimeType: st
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  // Release the blob once the click has handed it to the browser.
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
