@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env -S npx tsx
 
 import { Pool } from "pg";
 import dotenv from "dotenv";

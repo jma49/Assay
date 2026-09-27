@@ -44,7 +44,7 @@ async function main(): Promise<void> {
 
   if (args.length === 0) {
     console.error("错误: 请提供要执行的 SQL 脚本的 ID。"); // Updated message
-    console.log("用法: ts-node scripts/run-sql.ts <scriptId>");
+    console.log("用法: tsx scripts/run-sql.ts <scriptId>");
     process.exit(1);
   }
 
