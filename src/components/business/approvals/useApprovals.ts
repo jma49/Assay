@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
-import { clampPage, pageCount, pageSlice, type ApprovalAction, type ApprovalRequest } from "./approvals";
-
-type Language = "en" | "zh";
+import {
+  approvalMessages,
+  clampPage,
+  decisionToast,
+  pageCount,
+  pageSlice,
+  type ApprovalAction,
+  type ApprovalRequest,
+  type Language,
+} from "./approvals";
 
 /**
  * Loads pending requests (paged here) and decided ones (paged by the server),
@@ -27,7 +34,7 @@ export function useApprovals(language: Language) {
       const response = await fetch("/api/approvals?action=pending");
       if (!response.ok) {
         if (response.status === 403) {
-          setError("权限不足：无法查看审批列表");
+          setError(approvalMessages(language).forbidden);
           return;
         }
         throw new Error("Failed to fetch pending approvals");
@@ -94,14 +101,14 @@ export function useApprovals(language: Language) {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || "审批操作失败");
+        throw new Error(data.message || approvalMessages(language).decisionFailed);
       }
-      toast.success(action === "approve" ? `脚本 ${approval.scriptName} 已批准` : `脚本 ${approval.scriptName} 已拒绝`);
+      toast.success(decisionToast(action, approval.scriptName, language));
       onAccepted();
       await Promise.all([loadPendingApprovals(), loadApprovalHistory(historyPage)]);
     } catch (err) {
       console.error("[approvals] Decision failed:", err);
-      toast.error(err instanceof Error ? err.message : "审批操作失败");
+      toast.error(err instanceof Error ? err.message : approvalMessages(language).decisionFailed);
     } finally {
       setActionLoading(null);
     }
