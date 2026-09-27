@@ -1,4 +1,4 @@
-import type { Document } from "mongodb";
+import type { Collection, Document } from "mongodb";
 
 export interface CheckStats {
   totalCount: number;
@@ -7,25 +7,14 @@ export interface CheckStats {
   needsAttentionCount: number;
 }
 
-/** Runs counted by outcome: clean (success), issues (needs attention) and error (failure). */
-export const CHECK_STATS_PIPELINE: Document[] = [
-  {
-    $group: {
-      _id: null,
-      totalCount: { $sum: 1 },
-      successCount: { $sum: { $cond: [{ $eq: ["$outcome", "clean"] }, 1, 0] } },
-      needsAttentionCount: { $sum: { $cond: [{ $eq: ["$outcome", "issues"] }, 1, 0] } },
-      failureCount: { $sum: { $cond: [{ $eq: ["$outcome", "error"] }, 1, 0] } },
-    },
-  },
-];
-
-export function toCheckStats(rows: Document[]): CheckStats {
-  const row = rows[0] ?? {};
-  return {
-    totalCount: Number(row.totalCount ?? 0),
-    successCount: Number(row.successCount ?? 0),
-    failureCount: Number(row.failureCount ?? 0),
-    needsAttentionCount: Number(row.needsAttentionCount ?? 0),
-  };
+/**
+ * Runs counted by outcome: clean (success), issues (needs attention) and
+ * error (failure). Three counts on the (outcome, finishedAt) index read no
+ * run documents, where a $group would load every stored run and its sample.
+ */
+export async function countRunsByOutcome(runs: Pick<Collection<Document>, "countDocuments">): Promise<CheckStats> {
+  const [successCount, needsAttentionCount, failureCount] = await Promise.all(
+    (["clean", "issues", "error"] as const).map((outcome) => runs.countDocuments({ outcome })),
+  );
+  return { totalCount: successCount + needsAttentionCount + failureCount, successCount, failureCount, needsAttentionCount };
 }

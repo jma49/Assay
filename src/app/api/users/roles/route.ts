@@ -10,7 +10,10 @@ import {
   requirePermission,
   canManageRole,
   getUserRole,
+  hasOtherActiveAdmin,
 } from "@/lib/auth/rbac";
+
+const LAST_ADMIN = { success: false, code: "last_admin", message: "至少需要保留一名管理员" };
 
 interface SetUserRoleRequest {
   /** Who gets the role: their user id, or the email they signed up with. */
@@ -154,6 +157,11 @@ export async function POST(request: NextRequest) {
 
     const targetEmail = target.email;
 
+    // Demoting the last admin would leave nobody able to manage roles.
+    if (existingRole === UserRole.ADMIN && role !== UserRole.ADMIN && !(await hasOtherActiveAdmin(targetUserId))) {
+      return NextResponse.json(LAST_ADMIN, { status: 409 });
+    }
+
     // Only admins may change their own role.
     if (targetUserId === user.id && currentUserRole !== UserRole.ADMIN) {
       return NextResponse.json(
@@ -230,6 +238,10 @@ export async function DELETE(request: NextRequest) {
         { success: false, message: "不能删除自己的角色" },
         { status: 403 }
       );
+    }
+
+    if ((await getUserRole(targetUserId)) === UserRole.ADMIN && !(await hasOtherActiveAdmin(targetUserId))) {
+      return NextResponse.json(LAST_ADMIN, { status: 409 });
     }
 
     const success = await removeUserRole(targetUserId);

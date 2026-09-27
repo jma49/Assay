@@ -1,7 +1,7 @@
 import { ObjectId, type Db, type Document } from "mongodb";
 import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
 import { runExpiresAt, runRetentionDays, stateFromHistory } from "@/domain/run";
-import { legacyRunFields, type CheckEvent, type RunCheckStore, type RunDocument } from "@/server/services/run-check";
+import { type CheckEvent, type RunCheckStore, type RunDocument } from "@/server/services/run-check";
 
 // Enough runs to find when the current streak began for any realistic schedule.
 const HISTORY_LIMIT = 500;
@@ -10,8 +10,7 @@ const DUPLICATE_KEY = 11000;
 
 /**
  * runCheck's state in MongoDB. The lease lives on the check document so
- * taking it is one atomic findOneAndUpdate; runs keep the fields older
- * pages read (script_name, raw_results, ...) next to the new ones.
+ * taking it is one atomic findOneAndUpdate.
  */
 export function mongoRunCheckStore(db: Db): RunCheckStore {
   const checks = db.collection("sql_scripts");
@@ -59,7 +58,6 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
     async saveRun(run: RunDocument) {
       const doc: Document = {
         _id: new ObjectId(run.runId),
-        ...legacyRunFields(run, process.env.GITHUB_RUN_ID),
         checkId: run.checkId,
         trigger: run.trigger,
         startedAt: run.startedAt,
@@ -71,6 +69,11 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
         rowKeys: run.rowKeys,
         diff: run.diff,
         error: run.error,
+        message: run.message,
+        findings: run.findings,
+        // The sample keeps its original name: the run report and exports read it.
+        raw_results: run.sample,
+        github_run_id: process.env.GITHUB_RUN_ID,
       };
       // Deleted by the TTL index on expiresAt; runs without it are kept.
       const expiresAt = runExpiresAt(run.finishedAt, runRetentionDays());
@@ -80,6 +83,11 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
 
     async commitState(scriptId, runId, state) {
       const result = await checks.updateOne({ scriptId, "lease.runId": runId }, { $set: { state }, $unset: { lease: "" } });
+      return result.matchedCount > 0;
+    },
+
+    async renewLease(scriptId, runId, until) {
+      const result = await checks.updateOne({ scriptId, "lease.runId": runId }, { $set: { "lease.until": until } });
       return result.matchedCount > 0;
     },
 

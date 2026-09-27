@@ -1,41 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { CHECK_STATS_PIPELINE, toCheckStats } from "./check-stats";
+import { countRunsByOutcome } from "./check-stats";
 
-describe("toCheckStats", () => {
-  it("returns zeros when the collection is empty", () => {
-    expect(toCheckStats([])).toEqual({
-      totalCount: 0,
-      successCount: 0,
-      failureCount: 0,
-      needsAttentionCount: 0,
-    });
-  });
-
-  it("maps the grouped row to counts", () => {
-    expect(
-      toCheckStats([
-        {
-          _id: null,
-          totalCount: 10,
-          successCount: 6,
-          failureCount: 3,
-          needsAttentionCount: 1,
-        },
-      ]),
-    ).toEqual({
-      totalCount: 10,
-      successCount: 6,
-      failureCount: 3,
-      needsAttentionCount: 1,
-    });
-  });
-});
-
-describe("CHECK_STATS_PIPELINE", () => {
-  it("counts each run once, by outcome", () => {
-    const group = CHECK_STATS_PIPELINE[0].$group;
-    expect(JSON.stringify(group.successCount)).toContain('["$outcome","clean"]');
-    expect(JSON.stringify(group.needsAttentionCount)).toContain('["$outcome","issues"]');
-    expect(JSON.stringify(group.failureCount)).toContain('["$outcome","error"]');
+describe("countRunsByOutcome", () => {
+  it("counts each outcome with an indexed filter and totals them", async () => {
+    const counts: Record<string, number> = { clean: 6, issues: 1, error: 3 };
+    const filters: unknown[] = [];
+    const runs = {
+      countDocuments: async (filter: { outcome: string }) => {
+        filters.push(filter);
+        return counts[filter.outcome];
+      },
+    };
+    expect(await countRunsByOutcome(runs as never)).toEqual({ totalCount: 10, successCount: 6, failureCount: 3, needsAttentionCount: 1 });
+    expect(filters).toEqual([{ outcome: "clean" }, { outcome: "issues" }, { outcome: "error" }]);
   });
 });

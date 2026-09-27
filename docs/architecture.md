@@ -19,7 +19,7 @@ today's code. Each phase ships on its own and keeps the app working.
 
 | Today | Problem | Target |
 |---|---|---|
-| The executor (`scripts/core/sql-executor.ts`, 980 lines) lives in the CLI folder and mixes parsing, status rules and persistence | Hard to test, reused by path hacks, one change touches everything | `server/services/run-check.ts` over a `DataSource` interface; `scripts/` only holds CLIs that call services |
+| The executor (a 980-line module in the CLI folder, since deleted) mixed parsing, status rules and persistence | Hard to test, reused by path hacks, one change touches everything | `server/services/run-check.ts` over a `DataSource` interface; `scripts/` only holds CLIs that call services |
 | Route handlers of 250–540 lines hold business logic | Logic is duplicated across routes and untestable without HTTP | Routes are thin adapters: parse input, call a service, map errors |
 | A check's current state is rebuilt from run history on each request | The checks list, alerts and diffs all need it; rebuilding is slow and racy | The check stores its state (status, rows, since, last run), updated when a run finishes |
 | Nothing stops the same check running twice at once | Manual and scheduled runs can overlap and write conflicting state | A per-check lease with a fencing token |
@@ -32,70 +32,89 @@ today's code. Each phase ships on its own and keeps the app working.
 
 ```
 src/
-  domain/        Pure types and rules: check status, run outcome, diffs,
-                 schedules, permissions. No I/O, fully unit-tested.
+  domain/        Pure types and rules: run outcome, check state, diffs,
+                 schedules, notifications, digests. No I/O, unit-tested.
   server/
-    db/          MongoDB client, Redis client, data sources (PostgreSQL).
-    repos/       The only code that reads or writes MongoDB collections.
-    services/    Use cases: runCheck, runDueChecks, runBatch, saveCheck,
-                 approve, draftCheck, triage, coverage, notify.
-    jobs/        Background work: an inline runner today, a queue adapter later.
-    auth/        Principal (user or demo guest) and permission checks.
-    http/        Route helpers: withAuth, input parsing (zod), error mapping.
-  contracts/     zod schemas for API input and output, shared with the client.
-  app/           Routes. Pages follow the information architecture below;
-                 API routes are thin adapters over services.
-  ui/            Design system: tokens, primitives, data display.
-  features/      Feature components (checks list, check detail, activity...).
-  client/        Typed API client and query hooks.
-scripts/         CLIs only (seed, run due checks, migrate), calling services.
+    services/    Use cases: runCheck, batches, checks read model,
+                 notifications dispatcher, alert controls, destinations.
+    repos/       MongoDB access for runs, checks state and the outbox.
+    runs/        Run history queries and the legacy response shape.
+    datasource/  The checked database (PostgreSQL), read-only.
+    notify/      Channels (Slack, Discord, Telegram, Feishu, WeCom, webhook),
+                 SSRF guard, sending.
+    integrations/ OAuth installs and chat-app callbacks.
+    mcp/         MCP server: caller, tools, permissions.
+    http/        withAuth and route helpers.
+    crypto/      Sealed secrets (AES-256-GCM).
+    concurrency/ Semaphore for bounded parallel runs.
+  lib/           Older shared code: auth (Better Auth, RBAC), database
+                 (Mongo client, indexes, Postgres pool), SQL validation,
+                 approval and version workflows, cache, utilities.
+  contracts/     API input and output types shared with the client; the
+                 alerting and notifications contracts are zod schemas, the
+                 others (activity, checks) plain TypeScript types.
+  client/        Typed fetch helpers and `useApi`, a plain fetch hook
+                 (no cache or deduplication).
+  app/           Routes. API routes are thin adapters over services.
+  components/
+    ui/          Primitives (button, dialog, table...).
+    layout/      App shell, sidebar, page header, the Runs page.
+    checks/ activity/ notifications/ settings/ auth/   Feature views.
+    business/    Views carried over from the first version, each split into
+                 a pure module (tested), a data hook and section components:
+                 analysis, approvals, dashboard (run panel), edit-history,
+                 scripts, users, ai.
+scripts/         CLIs (seed, run checks, migrations) calling the same code.
 ```
 
-Dependencies point inward: `app → features → client` on the browser side,
+Dependencies point inward: pages → components → client on the browser side,
 `app/api → server/http → server/services → server/repos, domain` on the
-server. `domain` imports nothing from the app. A lint rule enforces the
-boundaries once the folders exist.
+server. `domain` imports nothing from the app.
 
 ## Data model
 
 MongoDB collections. Existing names are kept where a rename would only add a
 migration; new fields are added alongside old ones and back-filled.
 
-**checks** (today `sql_scripts`)
+**checks** (collection `sql_scripts`)
 
 ```
-{ scriptId, name, description, sql, tags, schedule,
-  workspaceId, connectionId,          // "default" / "primary" until multi-tenant
+{ scriptId, name, description, sqlContent, hashtags, scope,
+  isScheduled, cronSchedule,           // cron, UTC
+  author, createdBy, updatedBy,
   version,                            // optimistic concurrency for edits
-  state: { status, rowCount, since, lastRunId, lastRunAt, previousRowCount },
-  lease: { runId, until } | null }
+  state: { outcome, rowCount, previousRowCount, since, lastRunId, lastRunAt },
+  lease: { runId, until } | null,
+  alerting: { owner, mutedUntil, mutedBy, ack } }
 ```
 
-**runs** (today `result`)
+**runs** (collection `result`)
 
 ```
-{ checkId, trigger: schedule | manual | batch | api, triggeredBy,
+{ checkId, trigger: { kind: schedule | manual | batch | api, by },
   startedAt, finishedAt, durationMs,
-  status: error | issues | clean, rowCount,
-  sample: first 500 rows, columns,
+  outcome: error | issues | clean, rowCount, columns,
+  raw_results: sample of at most 500 rows and 2 MB,
   rowKeys: fingerprints of up to 5,000 rows,  // for new / still / fixed
-  error, aiTriage }
+  diff, error, message, findings, expiresAt }
 ```
 
-Indexes: `{ checkId: 1, startedAt: -1 }`, `{ startedAt: -1 }`, and a TTL on
-`startedAt` for retention (configurable, 90 days by default).
+Indexes: `finishedAt`, `(checkId, finishedAt)`, `(outcome, finishedAt)`, and
+a TTL on `expiresAt` (`RUN_RETENTION_DAYS`, 90 days by default).
 
-**events**: the activity feed and the notification outbox in one.
+**events**: the activity feed and the notification outbox's source.
 
 ```
-{ _id, type: check.status_changed | check.edited | check.approved | ...,
-  checkId, runId, from, to, at, actor,
-  deliveries: { slack: { at, ok } } }
+{ type: check.outcome_changed | check.new_rows, checkId, runId,
+  from, to, rowCount, diff, error, at, workspaceId }
 ```
 
-A unique index on `(type, runId)` makes writing an event idempotent.
+A unique index on `runId` makes writing an event idempotent.
 
-**batches**: `{ requestedBy, checkIds, done, failed, startedAt, finishedAt }`.
+**batches**: `{ executionId, requestedBy, scripts: [{ scriptId, status, ... }],
+totalScripts, startedAt, completedAt, isActive }`.
+
+[database.md](database.md) lists every collection, field and index.
 
 ## Running a check
 
@@ -105,16 +124,40 @@ started by a person, the schedule, a batch, or an agent.
 1. **Lease.** `findOneAndUpdate` sets `lease = { runId, until }` only when
    there is no live lease. If a run is already in progress, the caller gets
    that run's id instead of starting a second one.
-2. **Execute** through the check's `DataSource`: a read-only transaction,
-   `statement_timeout`, and a row cap. Each instance limits concurrent
-   executions (a small semaphore) so a burst cannot exhaust the PostgreSQL
-   connection pool.
-3. **Record** the run: count, capped sample, row fingerprints, duration.
+2. **Execute** through the check's `DataSource` in a read-only transaction.
+   Each instance limits concurrent executions (a semaphore of
+   `CHECK_CONCURRENCY`, 4 by default) so a burst cannot exhaust the
+   PostgreSQL connection pool. When a slot frees up the lease is renewed,
+   so time spent queueing does not eat into it; a run whose lease was taken
+   meanwhile stops without querying. `CHECK_TIMEOUT_MS` (30 s by default,
+   clamped to 1 s – 5 min) is one deadline for the whole script: each
+   statement gets `statement_timeout` set to the time left. Rows are read
+   through a cursor; at most 5,000 are kept per run and the rest are only
+   counted, so the row count stays exact.
+3. **Record** the run: exact count, a sample (500 rows, 2 MB at most),
+   fingerprints of the kept rows, duration.
 4. **Transition.** Compare with the check's previous state and update it
    with the lease's `runId` as a fencing token: a run whose lease expired
    cannot overwrite a newer result. When the status or the set of rows
    changes, write an event.
 5. **Release** the lease.
+
+**Read-only, in layers.** A check's SQL passes the static validator
+(`src/lib/sql/read-only-validator.ts`): no write or DDL keywords, no
+side-effecting functions (also when their names are quoted), and every
+statement must start with SELECT, WITH, EXPLAIN or DO, so a bare `END` cannot
+close the transaction. Each statement is then sent on its own over the
+extended protocol, where PostgreSQL refuses a second statement, inside
+`BEGIN READ ONLY` with a `statement_timeout`. The strongest layer is the
+database itself: point `DATABASE_URL` at a role that can only SELECT, e.g.
+
+```sql
+CREATE ROLE assay_reader LOGIN PASSWORD '...';
+GRANT USAGE ON SCHEMA public TO assay_reader;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO assay_reader;
+ALTER ROLE assay_reader SET default_transaction_read_only = on;
+ALTER ROLE assay_reader SET statement_timeout = '60s';
+```
 
 `runDueChecks` claims each due slot atomically (already in place) and runs
 the claimed checks with bounded concurrency. `runBatch` records a batch
@@ -125,8 +168,11 @@ MongoDB, so any instance can report it.
 
 - **One run per check at a time:** the lease above. Leases expire, so a
   crashed instance never blocks a check for long.
-- **No lost updates on edits:** saving a check sends the `version` it was
-  based on; a stale version gets `409 Conflict` and the UI offers to reload.
+- **No lost updates on edits:** saving a check must send the `version` it was
+  based on (`428` without one); a stale version gets `409 Conflict` before
+  anything is written or sent for approval, and the UI offers to reload.
+  Because only one save per version succeeds, version records
+  (`script_versions`) are created one at a time too.
 - **Idempotent side effects:** events are unique per run, and deliveries
   record what was sent, so retries never notify twice.
 - **Bounded work per instance:** a semaphore around query execution, and
@@ -144,26 +190,56 @@ queue can replace the inline runner later without changing services.
 
 ## API conventions
 
-- Input and output are zod schemas in `src/contracts`, parsed at the edge of
-  every route and reused by the client for types.
-- Errors are `{ error: { code, message } }` with the matching HTTP status.
-- Lists use cursor pagination.
-- Every route declares its permission through `withAuth`; guests are opt-in
-  per route.
+These are the target conventions. The routes built on `server/` follow them;
+the legacy routes are still being migrated and keep their own shapes.
+
+- **Auth.** Target: every route declares its permission through `withAuth`
+  (`src/server/http/route.ts`); guests are opt-in per route. Today there are
+  three styles:
+  - `withAuth`: `activity`, `batch-execution-status`, `checks`,
+    `checks/[scriptId]`, `checks/[scriptId]/alerting`, `coverage`,
+    `members`, `notifications/destinations` (and `[id]`, `[id]/test`),
+    `integrations/[provider]/install` and `callback`,
+    `integrations/telegram/links` (and `[id]`), `run-all-scripts`.
+  - `authorizeApiRequest` (legacy): `ai/analyze-sql`, `ai/generate-sql`,
+    `ai/triage`, `check-history`, `check-history/stats`, `edit-history`,
+    `execution-details/[resultId]`, `execution-history`, `list-scripts`,
+    and the GET of `scripts`.
+  - `validateApiAuth` + `requirePermission` (legacy): `approvals`, `me`,
+    `run-check`, `scripts` (writes), `scripts/[scriptId]` (PUT, DELETE),
+    `users/roles`.
+  - Their own check: `auth/[...all]` (Better Auth), `mcp` (API key),
+    `notifications/dispatch` (`CRON_SECRET`), the Slack and Telegram
+    callbacks (signatures).
+- **Input.** Target: parsed with a zod schema at the edge (`parseJson`).
+  Only the alerting and notifications contracts are zod today.
+- **Errors.** Target: `{ error: { code, message } }` with the matching HTTP
+  status (`errorResponse`). The `withAuth` routes use it; legacy routes
+  answer `{ error: "..." }`, `{ message: "..." }` or
+  `{ success: false, ... }`.
+- **Paging.** Target: cursor pagination, as `activity` does. `check-history`,
+  `edit-history` and `approvals` page by `page` and `limit`;
+  `execution-history` returns up to `limit` rows with no paging.
 
 ## Front end
 
-- Routes follow the information architecture: `/checks`, `/checks/[id]`,
-  `/checks/new`, `/activity`, `/coverage`, `/settings/*`. Old routes redirect.
+- Routes: `/checks`, `/checks/[scriptId]`, `/scripts/new` (new check),
+  `/activity`, `/dashboard` (the Runs page), `/coverage`, `/data-analysis`,
+  `/settings/notifications`, `/settings/api-keys`, `/admin/users`. The
+  older pages `/manage-scripts` (Manage, with `/approvals` and
+  `/edit-history` under it) and `/view-execution-result/[resultId]` (a run's
+  full report) are still live, without redirects; the sidebar treats them as
+  part of Checks and Runs. The only redirect is `/docs/menu-bar-and-dock`.
 - Server components render the shell; interactive views are client
-  components that fetch through query hooks, with caching and revalidation
-  instead of hand-written effects.
+  components. They fetch with `useApi` (`src/client/use-api.ts`), a plain
+  `useEffect` fetch with abort and `reload()`: no cache, deduplication or
+  revalidation. A query library is a later step.
 - One set of design tokens (CSS variables) for light and dark, and a small
   set of primitives: button, pill, table, tabs, sparkline, empty state.
 
 ## Extension points
 
-- **DataSource:** `runReadOnly(sql, { timeoutMs, maxRows })`. PostgreSQL
+- **DataSource:** `runReadOnly(statements, { timeoutMs, maxRows })`. PostgreSQL
   today; MySQL, BigQuery or Snowflake later as adapters.
 - **Channel:** `request(message, secret)` and `interpretOk(body)` in
   `src/server/notify/channels/`. A new service is one file and an entry in
@@ -202,4 +278,8 @@ queue can replace the inline runner later without changing services.
 6. **MCP server.** Personal API keys and `/api/mcp` with read, run and
    alert tools. *Done ([mcp.md](mcp.md)).*
 7. **Clean-up.** Remove legacy modules and pages, add end-to-end tests for
-   the main flows.
+   the main flows. *In progress: dead code removed (#61); the oversized
+   legacy pages split into tested modules, hooks and sections (#82, #84,
+   #87–#89, #91); run readers moved to the new fields and the retired
+   fields no longer written (#80, #90); API route tests (#83). End-to-end
+   tests remain.*

@@ -5,7 +5,6 @@ import {
   nextCheckState,
   normalizeRow,
   sampleRows,
-  toLegacyStatus,
   type CheckState,
   type RowDiff,
   type RunOutcome,
@@ -77,6 +76,8 @@ export interface RunCheckStore {
   /** Writes the state only while this run still holds the lease, and releases it. */
   commitState(scriptId: string, runId: string, state: CheckState): Promise<boolean>;
   releaseLease(scriptId: string, runId: string): Promise<void>;
+  /** Moves this run's lease to `until`; false when another run holds the check now. */
+  renewLease(scriptId: string, runId: string, until: Date): Promise<boolean>;
   /** Idempotent: one event per run at most. */
   recordEvent(event: CheckEvent): Promise<void>;
 }
@@ -110,17 +111,38 @@ const MAX_EVENT_ERROR = 1_000;
 // Extra lease time on top of the query timeouts, for connecting and saving.
 const LEASE_MARGIN_MS = 60_000;
 
-async function execute(check: CheckToRun, deps: RunCheckDeps) {
+async function withRetries<T>(fn: () => Promise<T>, attempts = 3, delayMs = 200): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt >= attempts) throw error;
+      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+    }
+  }
+}
+
+/** The run waited so long for a free slot that its lease lapsed and another run took the check. */
+class LeaseLostError extends Error {}
+
+/** The rows a check found: up to FINGERPRINT_ROWS kept, and how many there were. */
+async function execute(check: CheckToRun, runId: string, deps: RunCheckDeps): Promise<{ rows: Record<string, unknown>[]; rowCount: number }> {
   const validation = validateReadOnlySql(check.sqlContent ?? "");
   if (!validation.isValid) {
     throw new Error(`The check is not read-only: ${validation.reasonEn ?? validation.reason}`);
   }
   const statements = splitStatements(check.sqlContent);
   if (statements.length === 0) throw new Error("The check has no query to run.");
-  const results = await deps.executions.run(() =>
-    deps.source.runReadOnly(statements, { timeoutMs: deps.timeoutMs }),
-  );
-  return results.flatMap((result) => result.rows).map(normalizeRow);
+  const results = await deps.executions.run(async () => {
+    // Waiting for a slot counts against the lease; restart its clock now that the query starts.
+    const until = new Date(deps.now().getTime() + deps.timeoutMs + LEASE_MARGIN_MS);
+    if (!(await deps.store.renewLease(check.scriptId, runId, until))) throw new LeaseLostError();
+    return deps.source.runReadOnly(statements, { timeoutMs: deps.timeoutMs, maxRows: FINGERPRINT_ROWS });
+  });
+  return {
+    rows: results.flatMap((result) => result.rows).slice(0, FINGERPRINT_ROWS).map(normalizeRow),
+    rowCount: results.reduce((total, result) => total + result.rowCount, 0),
+  };
 }
 
 /**
@@ -146,23 +168,25 @@ export async function runCheck(scriptId: string, trigger: RunTrigger, deps: RunC
   let committed = false;
   try {
     let rows: Record<string, unknown>[] = [];
+    let rowCount = 0;
     let error: string | null = null;
     try {
-      rows = await execute(check, deps);
+      ({ rows, rowCount } = await execute(check, runId, deps));
     } catch (cause) {
+      if (cause instanceof LeaseLostError) return { kind: "busy", runId: "" };
       error = cause instanceof Error ? cause.message : String(cause);
     }
 
     const finishedAt = deps.now();
-    const outcome: RunOutcome = error ? "error" : rows.length > 0 ? "issues" : "clean";
+    const outcome: RunOutcome = error ? "error" : rowCount > 0 ? "issues" : "clean";
     const rowKeys = rows.slice(0, FINGERPRINT_ROWS).map(fingerprintRow);
     const previousKeys =
       outcome !== "error" && check.state?.lastRunId ? await deps.store.previousRowKeys(check.state.lastRunId) : null;
     const diff = previousKeys ? diffRowKeys(previousKeys, rowKeys) : null;
     const findings = error
       ? "Execution incomplete"
-      : rows.length > 0
-        ? `Found ${rows.length} records`
+      : rowCount > 0
+        ? `Found ${rowCount} records`
         : "Completed successfully (no data returned)";
     const message = error ?? `Script executed successfully. ${findings}`;
 
@@ -174,7 +198,7 @@ export async function runCheck(scriptId: string, trigger: RunTrigger, deps: RunC
       finishedAt,
       durationMs: finishedAt.getTime() - startedAt.getTime(),
       outcome,
-      rowCount: rows.length,
+      rowCount,
       columns: rows[0] ? Object.keys(rows[0]) : [],
       sample: sampleRows(rows),
       rowKeys,
@@ -185,42 +209,28 @@ export async function runCheck(scriptId: string, trigger: RunTrigger, deps: RunC
     });
 
     const previous = check.state ?? null;
-    const state = nextCheckState(previous, { runId, outcome, rowCount: rows.length, finishedAt });
+    const state = nextCheckState(previous, { runId, outcome, rowCount, finishedAt });
     committed = await deps.store.commitState(scriptId, runId, state);
     if (committed && isNotable(previous, outcome, diff)) {
       // The run and state are already saved; a lost event must not fail the run.
-      await deps.store
-        .recordEvent({
+      // A lost event is never re-derived (the next run sees the same outcome),
+      // so retry a few times; recordEvent is idempotent per run.
+      await withRetries(() => deps.store.recordEvent({
           type: previous && previous.outcome === outcome ? "check.new_rows" : "check.outcome_changed",
           checkId: scriptId,
           runId,
           from: previous?.outcome ?? null,
           to: outcome,
-          rowCount: rows.length,
+          rowCount,
           diff,
           error: error ? error.slice(0, MAX_EVENT_ERROR) : null,
           at: finishedAt,
-        })
-        .catch((cause) => console.error(`[runCheck] Could not record the event for run ${runId}:`, cause));
+        }),
+      ).catch((cause) => console.error(`[runCheck] Could not record the event for run ${runId}:`, cause));
     }
 
-    return { kind: "completed", runId, outcome, rowCount: rows.length, diff, message, findings, stateUpdated: committed };
+    return { kind: "completed", runId, outcome, rowCount, diff, message, findings, stateUpdated: committed };
   } finally {
     if (!committed) await deps.store.releaseLease(scriptId, runId);
   }
-}
-
-/** The fields older pages read from a run, derived from the outcome. */
-export function legacyRunFields(run: RunDocument, githubRunId?: string) {
-  const statusType = toLegacyStatus(run.outcome);
-  return {
-    script_name: run.checkId,
-    execution_time: run.finishedAt,
-    status: statusType === "failure" ? "failure" : "success",
-    statusType,
-    message: run.message,
-    findings: run.findings,
-    raw_results: run.sample,
-    github_run_id: githubRunId,
-  };
 }

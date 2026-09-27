@@ -24,22 +24,37 @@ export function isPrivateAddress(address: string): boolean {
     );
   }
   if (version === 6) {
-    const lower = address.toLowerCase();
-    const mapped = lower.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-    if (mapped) return isPrivateAddress(mapped[1]);
-    return (
-      lower === "::" ||
-      lower === "::1" ||
-      lower.startsWith("fc") ||
-      lower.startsWith("fd") ||
-      lower.startsWith("fe8") ||
-      lower.startsWith("fe9") ||
-      lower.startsWith("fea") ||
-      lower.startsWith("feb") ||
-      lower.startsWith("ff")
-    );
+    const groups = ipv6Groups(address);
+    if (!groups) return true;
+    // IPv4 carried inside IPv6 (mapped ::ffff:0:0/96, NAT64 64:ff9b::/96, 6to4 2002::/16) is judged as that IPv4 address.
+    if (groups.slice(0, 5).every((g) => g === 0) && groups[5] === 0xffff) return isPrivateAddress(ipv4From(groups[6], groups[7]));
+    if (groups[0] === 0x64 && groups[1] === 0xff9b && groups.slice(2, 6).every((g) => g === 0)) return isPrivateAddress(ipv4From(groups[6], groups[7]));
+    if (groups[0] === 0x2002) return isPrivateAddress(ipv4From(groups[1], groups[2]));
+    // Only global unicast (2000::/3) is public; that excludes ::, ::1, IPv4-mapped and
+    // -compatible forms, unique-local, link- and site-local, and multicast.
+    if ((groups[0] & 0xe000) !== 0x2000) return true;
+    // Teredo (2001::/32) and documentation (2001:db8::/32) ranges.
+    return groups[0] === 0x2001 && (groups[1] === 0 || groups[1] === 0xdb8);
   }
   return true;
+}
+
+const ipv4From = (high: number, low: number) => `${high >> 8}.${high & 0xff}.${low >> 8}.${low & 0xff}`;
+
+/** The eight 16-bit groups of an IPv6 address, including a trailing dotted IPv4 part. */
+function ipv6Groups(address: string): number[] | null {
+  let text = address.toLowerCase().split("%")[0];
+  const dotted = text.match(/(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+  if (dotted) {
+    const [a, b, c, d] = dotted.slice(1).map(Number);
+    text = `${text.slice(0, dotted.index)}${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`;
+  }
+  const [head, tail] = text.split("::");
+  const parse = (part: string | undefined) => (part ? part.split(":").map((g) => parseInt(g, 16)) : []);
+  const front = parse(head);
+  const back = parse(tail);
+  const groups = tail === undefined ? front : [...front, ...Array(8 - front.length - back.length).fill(0), ...back];
+  return groups.length === 8 && groups.every((g) => Number.isInteger(g) && g >= 0 && g <= 0xffff) ? groups : null;
 }
 
 export type Resolver = (hostname: string) => Promise<string[]>;

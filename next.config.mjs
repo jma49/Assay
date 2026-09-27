@@ -1,20 +1,36 @@
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
 
+const isDev = process.env.NODE_ENV === "development";
+
+// Everything the app loads is same-origin (sign-in is Better Auth on this
+// domain, fonts are self-hosted by next/font); only avatars come from the
+// OAuth providers' image hosts. Next.js needs inline scripts to hydrate, and
+// the dev server also needs eval and a websocket for hot reload.
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  `connect-src 'self'${isDev ? " ws: wss:" : ""}`,
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join("; ");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   env: {
     NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version || "0.2.1",
   },
-  // 开发模式CSS优化
   experimental: {
     optimizePackageImports: ["lucide-react"],
   },
-  // TypeScript 配置
   typescript: {
     ignoreBuildErrors: false,
     tsconfigPath: "./tsconfig.json",
   },
-  // CSS 和编译器配置
   compiler: {
     removeConsole:
       process.env.NODE_ENV === "production"
@@ -23,24 +39,19 @@ const nextConfig = {
           }
         : false,
   },
-  // 开发服务器配置优化
   ...(process.env.NODE_ENV === "development" && {
     onDemandEntries: {
       maxInactiveAge: 60 * 1000,
       pagesBufferLength: 5,
     },
   }),
-  // Headers配置，防止CSS缓存问题
   async headers() {
     return [
       {
-        // Baseline hardening for every response. A full script CSP is left out
-        // on purpose: Clerk loads scripts from its own domains, and a wrong
-        // policy would break sign-in. frame-ancestors alone blocks clickjacking.
         source: "/:path*",
         headers: [
           { key: "X-Frame-Options", value: "DENY" },
-          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          { key: "Content-Security-Policy", value: CONTENT_SECURITY_POLICY },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           {
@@ -72,7 +83,7 @@ const nextConfig = {
   },
   async rewrites() {
     return [
-      // 开发模式下的CSS 404处理
+      // In development, a stale layout.css request would 404; serve an empty stylesheet instead.
       ...(process.env.NODE_ENV === "development"
         ? [
             {

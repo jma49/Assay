@@ -4,16 +4,19 @@ import { dryRunCheck, wrapForDryRun } from "./dry-run";
 
 function fakeRunner(rows: { count?: number; sample?: unknown[]; fail?: string }) {
   const queries: string[] = [];
+  const modes: (string | undefined)[] = [];
   const client = {
-    query: vi.fn(async (sql: string) => {
+    query: vi.fn(async (query: string | { text: string; queryMode?: string }) => {
+      const sql = typeof query === "string" ? query : query.text;
       queries.push(sql);
+      modes.push(typeof query === "string" ? undefined : query.queryMode);
       if (rows.fail && sql.includes("count(*)")) throw new Error(rows.fail);
       if (sql.includes("count(*)")) return { rows: [{ n: rows.count ?? 0 }] };
       return { rows: rows.sample ?? [] };
     }),
   } as unknown as PoolClient;
   const run = <T>(fn: (c: PoolClient) => Promise<T>) => fn(client);
-  return { run, queries };
+  return { run, queries, modes };
 }
 
 describe("wrapForDryRun", () => {
@@ -30,6 +33,19 @@ describe("dryRunCheck", () => {
     expect(result).toEqual({ ok: true, rowCount: 3, sample: [{ id: 1 }] });
     expect(queries[0]).toMatch(/^SET LOCAL statement_timeout = \d+$/);
     expect(queries[2]).toMatch(/LIMIT 5$/);
+  });
+
+  it("sends the user's query over the extended protocol, which rejects extra statements", async () => {
+    const { run, modes } = fakeRunner({ count: 1 });
+    await dryRunCheck("SELECT 1", run);
+    expect(modes.slice(1)).toEqual(["extended", "extended"]);
+  });
+
+  it("refuses SQL that closes the subquery to run more statements", async () => {
+    const { run, queries } = fakeRunner({});
+    const result = await dryRunCheck("SELECT 1) a; END; SELECT 1 FROM (SELECT 1", run);
+    expect(result.ok).toBe(false);
+    expect(queries).toHaveLength(0);
   });
 
   it("refuses writes before touching the database", async () => {

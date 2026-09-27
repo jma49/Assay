@@ -117,6 +117,29 @@ export async function getUserRole(userId: string): Promise<UserRole | null> {
   }
 }
 
+const DUPLICATE_KEY = 11000;
+
+/**
+ * Gives a signed-in user the default viewer role unless they hold an active
+ * one. It never replaces an active role, so a failed read (which looks like
+ * "no role") cannot demote an admin: the filter skips active documents and
+ * the unique userId index turns the upsert into a no-op.
+ */
+export async function ensureDefaultRole(userId: string, email: string): Promise<void> {
+  const collection = await getUserRolesCollection();
+  const now = new Date();
+  try {
+    await collection.updateOne(
+      { userId, isActive: { $ne: true } },
+      { $set: { userId, email, role: UserRole.VIEWER, assignedBy: "system", assignedAt: now, updatedAt: now, isActive: true } },
+      { upsert: true },
+    );
+    roleCache.delete(userId);
+  } catch (error) {
+    if ((error as { code?: number }).code !== DUPLICATE_KEY) throw error;
+  }
+}
+
 /** Gives someone a role, replacing any they had. */
 export async function setUserRole(
   userId: string,
@@ -212,6 +235,13 @@ export async function removeUserRole(userId: string): Promise<boolean> {
     console.error("[RBAC] Removing a role failed:", error);
     return false;
   }
+}
+
+/** Whether an active admin other than `userId` exists, so changing `userId` still leaves someone who can manage roles. */
+export async function hasOtherActiveAdmin(userId: string): Promise<boolean> {
+  const collection = await getUserRolesCollection();
+  const others = await collection.countDocuments({ role: UserRole.ADMIN, isActive: true, userId: { $ne: userId } }, { limit: 1 });
+  return others > 0;
 }
 
 /** Whether a role may give or take away another: admins any, managers developer and viewer only. */
