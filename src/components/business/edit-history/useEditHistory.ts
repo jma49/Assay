@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
 import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
 import { EMPTY_FILTERS, buildHistoryQuery, type HistoryFilters } from "./edit-history";
+import { createLatestRequest } from "./latest-request";
 
 /** Loads one page of the global edit history for the given filters. */
 export function useEditHistory() {
@@ -11,11 +12,12 @@ export function useEditHistory() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
-  const isFetchingRef = useRef(false);
+  const requests = useRef(createLatestRequest());
 
+  // A newer request supersedes one still in flight, so the table always matches the latest filters.
   const fetchHistories = useCallback(async (filters: HistoryFilters = EMPTY_FILTERS, page = 1) => {
-    if (isFetchingRef.current) return;
-    isFetchingRef.current = true;
+    const token = requests.current.start();
+    const isStale = () => !requests.current.isLatest(token);
     setLoading(true);
     setError(null);
 
@@ -27,19 +29,20 @@ export function useEditHistory() {
         throw new Error(errorData.error || "Failed to fetch edit history");
       }
       const data = await response.json();
+      if (isStale()) return;
       setHistories(data.histories || []);
       setTotalPages(data.pagination?.totalPages || 0);
       setTotalRecords(data.pagination?.total || 0);
       setCurrentPage(data.pagination?.page || 1);
     } catch (err) {
+      if (isStale()) return;
       console.error("Failed to fetch edit history:", err);
       setError(err instanceof Error ? err.message : "Unknown error occurred");
       setHistories([]);
       setTotalPages(0);
       setTotalRecords(0);
     } finally {
-      setLoading(false);
-      isFetchingRef.current = false;
+      if (!isStale()) setLoading(false);
     }
   }, []);
 
