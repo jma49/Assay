@@ -21,7 +21,9 @@ Copy `.env.example` to `.env.local` for local work, or add these to your host.
 
 | Variable | Purpose |
 |---|---|
-| `GEMINI_API_KEY` | Turns on the [AI assistant](/docs/ai-assistant). |
+| `AI_ENABLED` | `true` turns on the [AI assistant](/docs/ai-assistant). Off by default, because every request spends AI Gateway credits. |
+| `AI_GATEWAY_API_KEY` | AI Gateway key for hosts other than Vercel. On Vercel the gateway authenticates with OIDC and no key is needed. |
+| `AI_GATEWAY_MODEL` | Overrides the default model, as a `provider/model` id. |
 | `DEMO_MODE` | `true` makes the workspace a public demo: viewers may run the seeded demo checks, 20 runs per hour each. Leave unset otherwise. |
 | `ALLOWED_EMAIL_DOMAINS` | Comma-separated email domains allowed to sign in. Empty allows everyone. |
 | `CA_CERT_BLOB_URL` | CA certificate URL when PostgreSQL requires one for SSL. |
