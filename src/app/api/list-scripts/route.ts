@@ -6,6 +6,7 @@ import { nextRunAt } from "@/lib/scheduling/due-slot";
 import { Permission } from "@/lib/auth/rbac";
 import { cached, cacheKey } from "@/lib/cache/cached";
 import { SCRIPTS_CACHE_GENERATION_KEY } from "@/lib/cache/cache-utils";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 interface ScriptInfo {
   scriptId: string;
@@ -26,7 +27,7 @@ interface ScriptInfo {
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
   const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
-  return db.collection("sql_scripts");
+  return db.collection(COLLECTIONS.checks);
 }
 
 /**

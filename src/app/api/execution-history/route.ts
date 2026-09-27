@@ -4,6 +4,7 @@ import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { LEGACY_VIEW_FIELDS, toLegacyRunView } from "@/server/runs/legacy-view";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 /** The analysis page's record: "failed" rather than "failure" is what it counts. */
 interface ExecutionRecord {
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
 
     const db = await getMongoDbClient().getDb();
     const runs = await db
-      .collection("result")
+      .collection(COLLECTIONS.runs)
       .find(query, { projection: { ...LEGACY_VIEW_FIELDS, github_run_id: 1 } })
       .sort({ finishedAt: -1 })
       .limit(limit)

@@ -4,6 +4,7 @@ import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { checksWithAllTags, historyFilter, historySort, parseHistoryParams } from "@/server/runs/history-query";
 import { LEGACY_VIEW_FIELDS, toLegacyRunView } from "@/server/runs/legacy-view";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,14 +18,14 @@ export async function GET(request: NextRequest) {
     let taggedCheckIds: string[] | null = null;
     if (hashtags.length > 0) {
       const tagged = await db
-        .collection<{ scriptId: string; hashtags?: string[] }>("sql_scripts")
+        .collection<{ scriptId: string; hashtags?: string[] }>(COLLECTIONS.checks)
         .find({ hashtags: { $all: hashtags } }, { projection: { scriptId: 1, hashtags: 1 } })
         .toArray();
       taggedCheckIds = checksWithAllTags(tagged, hashtags);
     }
 
     const filter = historyFilter(params, taggedCheckIds);
-    const runs = db.collection("result");
+    const runs = db.collection(COLLECTIONS.runs);
     const [docs, total] =
       taggedCheckIds?.length === 0
         ? [[], 0]

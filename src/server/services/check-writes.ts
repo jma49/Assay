@@ -3,6 +3,7 @@ import { clearScriptsCache } from "@/lib/cache/cache-utils";
 import { versionFilter } from "@/lib/workflows/check-fields";
 import { recordEditHistoryOnServer } from "@/lib/workflows/edit-history-store";
 import { createScriptVersion } from "@/lib/workflows/version-control";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 /** Who is making the change, from the session or the approved request. */
 export interface CheckActor {
@@ -18,7 +19,7 @@ type VersionBump = "major" | "minor" | "patch";
  * cache clear, so the two paths cannot drift apart.
  */
 
-const checks = (db: Db) => db.collection("sql_scripts");
+const checks = (db: Db) => db.collection(COLLECTIONS.checks);
 const historyActor = (actor: CheckActor) => ({ id: actor.id, email: actor.email, name: actor.email.split("@")[0] });
 
 async function recordVersion(check: Document, actor: CheckActor, change: "create" | "update", note: string, bump: VersionBump) {

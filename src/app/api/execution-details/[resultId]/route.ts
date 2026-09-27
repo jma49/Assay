@@ -4,8 +4,7 @@ import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { ObjectId } from "mongodb";
-
-const SQL_SCRIPTS_COLLECTION_NAME = "sql_scripts";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export const GET = async (
   request: NextRequest,
@@ -26,8 +25,8 @@ export const GET = async (
   try {
     const mongoDbClient = getMongoDbClient();
     const db = await mongoDbClient.getDb();
-    const historyCollection = db.collection("result");
-    const scriptsCollection = db.collection(SQL_SCRIPTS_COLLECTION_NAME);
+    const historyCollection = db.collection(COLLECTIONS.runs);
+    const scriptsCollection = db.collection(COLLECTIONS.checks);
 
     const run = await historyCollection.findOne({ _id: new ObjectId(resultId) });
     if (!run) {
