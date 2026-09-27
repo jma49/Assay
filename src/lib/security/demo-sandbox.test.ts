@@ -40,10 +40,28 @@ describe("demoRunBudgets", () => {
     ]);
   });
 
-  it("reads the first forwarded address", async () => {
+  it("on Vercel, reads the addresses the edge sets", async () => {
     const { clientIp } = await import("./demo-sandbox");
-    expect(clientIp(new Headers({ "x-forwarded-for": "9.9.9.9, 10.0.0.1" }))).toBe("9.9.9.9");
-    expect(clientIp(new Headers())).toBe("unknown");
+    const vercel = { VERCEL: "1" };
+    expect(clientIp(new Headers({ "x-vercel-forwarded-for": "9.9.9.9", "x-real-ip": "8.8.8.8", "x-forwarded-for": "1.1.1.1" }), vercel)).toBe("9.9.9.9");
+    expect(clientIp(new Headers({ "x-real-ip": "8.8.8.8", "x-forwarded-for": "1.1.1.1" }), vercel)).toBe("8.8.8.8");
+    expect(clientIp(new Headers({ "x-forwarded-for": "9.9.9.9, 10.0.0.1" }), vercel)).toBe("9.9.9.9");
+    expect(clientIp(new Headers(), vercel)).toBe("unknown");
+  });
+
+  it("elsewhere, trusts only the entries its proxies appended, never a spoofed left-most one", async () => {
+    const { clientIp } = await import("./demo-sandbox");
+    const spoofed = new Headers({ "x-forwarded-for": "6.6.6.6, 9.9.9.9, 10.0.0.1", "x-real-ip": "6.6.6.6" });
+    // Default: one proxy, so the right-most entry is the address it saw.
+    expect(clientIp(spoofed, {})).toBe("10.0.0.1");
+    expect(clientIp(spoofed, { TRUSTED_PROXY_COUNT: "2" })).toBe("9.9.9.9");
+    // More proxies configured than entries: the left-most, still written by a proxy.
+    expect(clientIp(new Headers({ "x-forwarded-for": "9.9.9.9" }), { TRUSTED_PROXY_COUNT: "3" })).toBe("9.9.9.9");
+    // No proxy: no header can be trusted.
+    expect(clientIp(spoofed, { TRUSTED_PROXY_COUNT: "0" })).toBe("unknown");
+    // An invalid value falls back to the default.
+    expect(clientIp(spoofed, { TRUSTED_PROXY_COUNT: "lots" })).toBe("10.0.0.1");
+    expect(clientIp(new Headers(), {})).toBe("unknown");
   });
 });
 

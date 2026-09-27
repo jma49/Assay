@@ -17,10 +17,21 @@ vi.mock("./redis", () => ({
       store.set(key, value);
       return "OK";
     }),
+    incr: vi.fn(async (key: string) => {
+      const next = Number(store.get(key) ?? 0) + 1;
+      store.set(key, String(next));
+      return next;
+    }),
+    scan: vi.fn(async (_cursor: number, { match }: { match: string }) => {
+      const prefix = match.replace(/\*$/, "");
+      return ["0", [...store.keys()].filter((key) => key.startsWith(prefix))];
+    }),
+    del: vi.fn(async (...keys: string[]) => keys.filter((key) => store.delete(key)).length),
   },
 }));
 
 import { cached, cacheKey } from "./cached";
+import { clearScriptsCache, SCRIPTS_CACHE_GENERATION_KEY } from "./cache-utils";
 
 describe("cached", () => {
   beforeEach(() => store.clear());
@@ -40,6 +51,47 @@ describe("cached", () => {
     const hit = await cached("k", 600, async () => ({ name: "unused" }));
 
     expect(hit).toEqual({ name: "Paid orders without a payment" });
+  });
+});
+
+describe("cached with a generation", () => {
+  beforeEach(() => store.clear());
+  const options = { generationKey: SCRIPTS_CACHE_GENERATION_KEY };
+
+  it("never serves a list a slow reader loaded before a concurrent clear", async () => {
+    let finishSlowLoad!: (value: string[]) => void;
+    const slow = cached("scripts:list", 600, () => new Promise<string[]>((resolve) => (finishSlowLoad = resolve)), options);
+    // Let the slow reader get past its cache lookup and start loading.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // A check is created: the list is cleared while the slow reader still loads the old one.
+    await clearScriptsCache();
+    finishSlowLoad(["old"]);
+    expect(await slow).toEqual(["old"]);
+
+    // The stale write-back went to the old generation; the next reader loads afresh.
+    const fresh = vi.fn(async () => ["old", "new"]);
+    expect(await cached("scripts:list", 600, fresh, options)).toEqual(["old", "new"]);
+    expect(await cached("scripts:list", 600, fresh, options)).toEqual(["old", "new"]);
+    expect(fresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("clearing keeps the generation counter and drops the old lists", async () => {
+    await cached("scripts:list", 600, async () => ["a"], options);
+    await clearScriptsCache();
+    await clearScriptsCache();
+    expect(store.get(SCRIPTS_CACHE_GENERATION_KEY)).toBe("2");
+    expect([...store.keys()].filter((key) => key.startsWith("scripts:list"))).toEqual([]);
+  });
+
+  it("loads without caching when the generation cannot be read", async () => {
+    const redis = (await import("./redis")).default as unknown as { get: ReturnType<typeof vi.fn>; setex: ReturnType<typeof vi.fn> };
+    redis.get.mockRejectedValueOnce(new Error("down"));
+    redis.setex.mockClear();
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(await cached("scripts:list", 600, async () => ["a"], options)).toEqual(["a"]);
+    spy.mockRestore();
+    expect(redis.setex).not.toHaveBeenCalled();
   });
 });
 

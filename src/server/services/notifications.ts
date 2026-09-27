@@ -101,16 +101,22 @@ export interface NotifyStore {
   /** Idempotent: one delivery per event and destination. */
   createDeliveries(deliveries: { eventId: string; destinationId: string; workspaceId: string }[], now: Date): Promise<void>;
   /**
-   * Records that the event was handled, and why it went nowhere if it was
-   * held back. The action key is only set if the event has none, so every
-   * message for the event carries the same one.
+   * Gives the event the secret for its buttons, only if it has none, so
+   * every message for the event carries the same one.
    */
-  markFannedOut(eventId: string, now: Date, suppressed: Suppression | null, actionKey: string): Promise<void>;
+  assignActionKey(eventId: string, actionKey: string): Promise<void>;
+  /** Records that the event was handled, and why it went nowhere if it was held back. */
+  markFannedOut(eventId: string, now: Date, suppressed: Suppression | null): Promise<void>;
   /** Atomically takes the next due delivery for `leaseMs`, so no two dispatchers send it. */
   claimDelivery(now: Date, leaseMs: number): Promise<ClaimedDelivery | null>;
   /** Applies the update only while the claim is still this dispatcher's. */
   finishDelivery(delivery: ClaimedDelivery, update: DeliveryUpdate): Promise<void>;
-  sentSince(destinationId: string, since: Date): Promise<number>;
+  /**
+   * Atomically takes one of the destination's `limit` sends in the hour up
+   * to `now`; false when they are all taken, so concurrent dispatchers can
+   * never exceed the cap together.
+   */
+  takeSendSlot(destinationId: string, now: Date, limit: number): Promise<boolean>;
   recordLastDelivery(destinationId: string, result: { at: Date; ok: boolean; error?: string }): Promise<void>;
   /** Enabled destinations with a daily summary, in every workspace. */
   digestDestinations(): Promise<Destination[]>;
@@ -181,6 +187,8 @@ async function fanOut(deps: DispatchDeps): Promise<number> {
     const targets = suppressed
       ? []
       : destinations.filter((d) => d.enabled && d.createdAt <= event.at && wantsAlert(d, kind, check?.tags ?? []));
+    // Before the deliveries exist: another dispatcher may claim and send one at once.
+    await deps.store.assignActionKey(event.id, randomBytes(12).toString("base64url"));
     if (targets.length > 0) {
       await deps.store.createDeliveries(
         targets.map((d) => ({ eventId: event.id, destinationId: d.id, workspaceId: event.workspaceId })),
@@ -188,7 +196,7 @@ async function fanOut(deps: DispatchDeps): Promise<number> {
       );
       created += targets.length;
     }
-    await deps.store.markFannedOut(event.id, now, suppressed, randomBytes(12).toString("base64url"));
+    await deps.store.markFannedOut(event.id, now, suppressed);
   }
   return created;
 }
@@ -198,7 +206,8 @@ async function deliver(delivery: ClaimedDelivery, deps: DispatchDeps): Promise<D
   const [destination, event] = await Promise.all([deps.store.destination(delivery.destinationId), deps.store.event(delivery.eventId)]);
   if (!destination || !event) return { status: "failed", at: now, error: "The destination or event no longer exists", attempted: false };
   if (!destination.enabled) return { status: "failed", at: now, error: "The destination is paused", attempted: false };
-  if ((await deps.store.sentSince(destination.id, new Date(now.getTime() - 3_600_000))) >= HOURLY_LIMIT) {
+  // Every attempt counts, sent or not: the cap is there to keep a channel from being flooded.
+  if (!(await deps.store.takeSendSlot(destination.id, now, HOURLY_LIMIT))) {
     return { status: "pending", at: now, nextAttemptAt: new Date(now.getTime() + THROTTLE_DELAY_MS), attempted: false };
   }
 

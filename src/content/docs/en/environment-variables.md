@@ -49,6 +49,7 @@ See [Notifications](/docs/notifications).
 | `AI_GATEWAY_API_KEY` | AI Gateway key for hosts other than Vercel. On Vercel the gateway authenticates with OIDC and no key is needed. |
 | `AI_GATEWAY_MODEL` | Overrides the default model, as a `provider/model` id. |
 | `DEMO_MODE` | `true` makes the workspace a public demo: viewers may run the seeded demo checks, 20 runs per hour each, and visitors can try it as guests without an account (see [Accounts and roles](/docs/accounts-and-roles)). Leave unset otherwise. |
+| `TRUSTED_PROXY_COUNT` | Self-hosted demo only: how many proxies in front of Assay append to `X-Forwarded-For`, so a guest's address is read from the entry the outermost of them added, not one the visitor made up. Default `1`; `0` trusts no forwarding header, so all guests share one quota. Ignored on Vercel, which sets the client address itself. |
 | `ALLOWED_EMAIL_DOMAINS` | Comma-separated email domains allowed to sign in. Empty allows everyone. |
 | `CA_CERT_BLOB_URL` | https:// URL of the CA certificate PostgreSQL's server certificate is verified against. With `CLIENT_CERT_BLOB_URL` and `CLIENT_KEY_BLOB_URL`, also a client certificate. |
 | `AUTH_DEV_PASSWORD_LOGIN` | `true` also offers email and password sign-in, in local development only; ignored in production. |
