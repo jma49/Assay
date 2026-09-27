@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 获取数据库表结构作为上下文
+    // The table schema gives the model context for the query.
     const schema = await getCachedSchema();
 
     let aiPrompt = "";
@@ -70,10 +70,8 @@ ${sql}
 用Markdown格式，中文回复。`;
     }
 
-    // 调用AI服务分析内容，带重试机制
     const analysis = await generateContentWithRetry(aiPrompt, { feature: "analyze-sql", userId: authResult.user.id });
 
-    // 记录token使用量
     logTokenUsage(aiPrompt, analysis, `分析SQL-${analysisType}`);
 
     return NextResponse.json({
