@@ -204,6 +204,17 @@ the legacy routes are still being migrated and keep their own shapes.
   check: `auth/[...all]` (Better Auth), `mcp` (API key),
   `notifications/dispatch` (`CRON_SECRET`), the Slack and Telegram callbacks
   (signatures).
+- **Checks and runs.** One endpoint per job:
+  - `GET /api/checks`: every check with its state and last 30 runs (the
+    Checks list); `GET /api/checks/[scriptId]`: one check's detail.
+  - `GET /api/scripts`: every check's definition with its SQL and `version`
+    (the Manage editor, the Runs page's check list and Run sheet, the
+    Analysis page's names and tags). `POST /api/scripts` and
+    `PUT`/`DELETE /api/scripts/[scriptId]` write checks.
+  - `GET /api/check-history`: runs, filtered and paged (the Runs page's
+    table; the Analysis page asks for up to 500 in a date range);
+    `check-history/stats` counts them; `execution-details/[resultId]` is
+    one run's report.
 - **Input.** Target: parsed with a zod schema at the edge (`parseJson`).
   Only the alerting and notifications contracts are zod today.
 - **Errors.** Target: `{ error: { code, message } }` with the matching HTTP
@@ -275,5 +286,5 @@ the legacy routes are still being migrated and keep their own shapes.
    the main flows. *In progress: dead code removed (#61); the oversized
    legacy pages split into tested modules, hooks and sections (#82, #84,
    #87–#89, #91); run readers moved to the new fields and the retired
-   fields no longer written (#80, #90); API route tests (#83). End-to-end
-   tests remain.*
+   fields no longer written (#80, #90); API route tests (#83); one auth
+   style and fewer duplicate endpoints (#102). End-to-end tests remain.*

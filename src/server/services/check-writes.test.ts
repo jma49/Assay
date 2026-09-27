@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Db, Document } from "mongodb";
 
 const calls: string[] = [];
-vi.mock("@/lib/cache/cache-utils", () => ({ clearScriptsCache: async () => void calls.push("cache") }));
 vi.mock("@/lib/workflows/version-control", () => ({ createScriptVersion: async (_id: string, _d: unknown, _by: string, _e: string, change: string) => void calls.push(`version:${change}`) }));
 vi.mock("@/lib/workflows/edit-history-store", () => ({
   recordEditHistoryOnServer: async (params: { operation: string }) => (calls.push(`history:${params.operation}`), true),
@@ -37,7 +36,7 @@ describe("check writes", () => {
   it("creates, versions, records history and clears the cache in that order", async () => {
     const { db } = fakeDb(null);
     expect(await createCheck(db, { scriptId: "orders", name: "Orders", sqlContent: "SELECT 1" }, actor, "note", "major")).toBe("id1");
-    expect(calls).toEqual(["insert", "version:create", "history:create", "cache"]);
+    expect(calls).toEqual(["insert", "version:create", "history:create"]);
   });
 
   it("updates only onto the expected version and stamps who changed it", async () => {
@@ -47,7 +46,7 @@ describe("check writes", () => {
     const [filter, update] = collection.updateOne.mock.calls[0];
     expect(filter).toEqual({ scriptId: "orders", version: 3 });
     expect(update.$set.updatedBy).toEqual(actor);
-    expect(calls).toEqual(["update", "history:update", "version:update", "cache"]);
+    expect(calls).toEqual(["update", "history:update", "version:update"]);
   });
 
   it("reports a conflict or a missing check without side effects", async () => {
@@ -59,7 +58,7 @@ describe("check writes", () => {
 
   it("deletes with history, and says when the check was already gone", async () => {
     expect(await deleteCheck(fakeDb({ scriptId: "orders" }).db, "orders", actor)).toBe(true);
-    expect(calls).toEqual(["delete", "history:delete", "cache"]);
+    expect(calls).toEqual(["delete", "history:delete"]);
     expect(await deleteCheck(fakeDb(null).db, "orders", actor)).toBe(false);
   });
 });
