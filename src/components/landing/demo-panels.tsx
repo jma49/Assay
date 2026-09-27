@@ -38,7 +38,8 @@ export function DemoFrame({
   title,
   meta,
   children,
-  bodyClassName = "h-[300px] md:h-[340px]",
+  // Fixed so switching demos in a section never shifts the page; sized to the tallest demo.
+  bodyClassName = "h-[268px]",
   chrome = false,
   elevated = false,
 }: {
@@ -53,7 +54,7 @@ export function DemoFrame({
 }) {
   return (
     <div
-      className={`overflow-hidden rounded-xl bg-(--l-bg) shadow-border ${
+      className={`overflow-hidden rounded-xl bg-card shadow-border ${
         elevated ? "shadow-[var(--shadow-border),0_24px_60px_-24px_rgba(22,27,38,0.35)]" : ""
       }`}
     >

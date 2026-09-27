@@ -31,13 +31,11 @@ interface FeatureSection {
 
 interface LandingCopy {
   nav: { features: string; quickStart: string; faq: string; signIn: string; openApp: string };
-  hero: { title: string; subtitle: string; primary: string; secondary: string; demoNote: string; guestNote: string; mascotHint: string };
+  hero: { title: string; subtitle: string; primary: string; secondary: string; demoNote: string; guestNote: string };
   why: { eyebrow: string; title: string; cards: { title: string; body: string }[] };
   sections: FeatureSection[];
   quickStart: { eyebrow: string; title: string; body: string; readme: string };
   faq: { title: string; items: { q: string; a: string }[] };
-  cta: { title: string; body: string };
-  themeLabel: string;
   footer: string;
 }
 
@@ -70,7 +68,6 @@ const en: LandingCopy = {
     secondary: "View on GitHub",
     demoNote: "Sign in with any email. New accounts join the demo workspace as viewers.",
     guestNote: "No sign-up needed. Create an account when you want to write your own checks.",
-    mascotHint: "Drag the beetle to turn it",
   },
   why: {
     eyebrow: `Why ${BRAND}`,
@@ -192,11 +189,6 @@ const en: LandingCopy = {
       },
     ],
   },
-  cta: {
-    title: "Know before your users do.",
-    body: "Turn the queries you already run by hand into checks that run on their own.",
-  },
-  themeLabel: "Editor theme",
   footer: "Open source SQL checks for PostgreSQL.",
 };
 
@@ -215,7 +207,6 @@ const zh: LandingCopy = {
     secondary: "在 GitHub 查看",
     demoNote: "用任意邮箱登录即可，新账号会以查看者身份进入演示工作区。",
     guestNote: "无需注册即可体验。想编写自己的检查时再创建账号。",
-    mascotHint: "拖动独角仙可以旋转",
   },
   why: {
     eyebrow: `为什么选择 ${BRAND}`,
@@ -337,11 +328,6 @@ const zh: LandingCopy = {
       },
     ],
   },
-  cta: {
-    title: "在用户发现之前发现问题。",
-    body: "把你平时手动跑的查询，变成会自动运行的检查。",
-  },
-  themeLabel: "编辑器主题",
   footer: "面向 PostgreSQL 的开源 SQL 检查工具。",
 };
 
