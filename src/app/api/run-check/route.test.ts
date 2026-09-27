@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 const mocks = vi.hoisted(() => ({
   canExecute: false,
   scriptAuthor: "demo-seed" as string | undefined,
+  seedFlag: true,
   quotaAllowed: true,
   quotaThrows: false,
   isGuest: false,
@@ -30,7 +31,8 @@ vi.mock("@/lib/auth/rbac", () => ({
 vi.mock("@/lib/database/mongodb", () => ({
   getMongoDbClient: () => ({
     getDb: async () => ({
-      collection: () => ({ findOne: async () => (mocks.scriptAuthor === undefined ? null : { author: mocks.scriptAuthor }) }),
+      // Checks written by the demo seed carry demoSeed; the author label is only shown.
+      collection: () => ({ findOne: async () => (mocks.scriptAuthor === undefined ? null : { author: mocks.scriptAuthor, demoSeed: mocks.scriptAuthor === "demo-seed" && mocks.seedFlag }) }),
     }),
   }),
 }));
@@ -63,12 +65,20 @@ describe("POST /api/run-check", () => {
   beforeEach(() => {
     mocks.canExecute = false;
     mocks.scriptAuthor = "demo-seed";
+    mocks.seedFlag = true;
     mocks.quotaAllowed = true;
     mocks.quotaThrows = false;
     mocks.isGuest = false;
     mocks.quotaSubjects = [];
     mocks.execute.mockClear();
     delete process.env.DEMO_MODE;
+  });
+
+  it("does not let an author label pass a check off as a demo sample", async () => {
+    process.env.DEMO_MODE = "true";
+    mocks.seedFlag = false;
+    expect((await run({ scriptId: "spoofed" })).status).toBe(403);
+    expect(mocks.execute).not.toHaveBeenCalled();
   });
 
   it("runs any check for users with script:execute", async () => {
