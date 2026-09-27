@@ -11,8 +11,8 @@ Indexes live in `src/lib/database/indexes.ts` and are created on start-up
 
 ## Conventions
 
-- **New fields are camelCase**; runs still carry older snake_case fields
-  that the history pages read (see [Legacy fields](#legacy-fields)).
+- **New fields are camelCase**; runs still carry older snake_case fields,
+  written but no longer read (see [Legacy fields](#legacy-fields)).
 - **Who and when** come from the server, never the request: `createdBy`,
   `updatedBy`, `by` are `{ id, email }` or `{ id, name }` of the session.
 - **Workspaces:** documents written since phase 4 carry `workspaceId`;
@@ -57,8 +57,8 @@ Indexes: `scriptId` unique; `createdAt`.
 | `error`, `message`, `findings` | |
 | `expiresAt` | `finishedAt + RUN_RETENTION_DAYS` (90 by default) |
 
-Indexes: `execution_time`; `(script_name, execution_time)`; TTL on
-`expiresAt`. Only `run-check-store.ts` writes runs.
+Indexes: `finishedAt`; `(checkId, finishedAt)`; `(outcome, finishedAt)`;
+TTL on `expiresAt`. Only `run-check-store.ts` writes runs.
 
 ### `events` — what changed
 
@@ -119,8 +119,10 @@ source (web | slack | telegram | mcp), at }`. Index `(checkId, at)`.
 
 ## Legacy fields
 
-Runs carry fields the history and analysis pages still read, written next
-to the new ones by `legacyRunFields`:
+Runs still carry older fields, written next to the new ones by
+`legacyRunFields`. Nothing reads them any more: the history, analysis and
+report APIs read the new fields and map them to the old response shape in
+`src/server/runs/legacy-view.ts`.
 
 | Legacy | New |
 | --- | --- |
@@ -130,9 +132,13 @@ to the new ones by `legacyRunFields`:
 | `raw_results` | (the sample; kept under this name) |
 | `github_run_id` | `trigger` |
 
-Plan (issue #62): move each reader (`check-history`, `execution-history`,
-`execution-details`, stats, analysis) to the new fields; stop writing the
-legacy ones; back-fill old runs with the new names; drop the legacy fields
-and their indexes. Renaming the collections (`sql_scripts` → `checks`,
+Runs saved before the run pipeline only have the legacy fields;
+`scripts/migrations/backfill-run-fields.ts` derives the new ones (dry run,
+then `--apply`; idempotent).
+
+Plan (issue #62): readers moved and old runs back-filled (done); stop
+writing the legacy fields; drop them and the `execution_time` /
+`(script_name, execution_time)` indexes, which `ensureIndexes` no longer
+creates. Renaming the collections (`sql_scripts` → `checks`,
 `result` → `runs`) comes last, behind a migration script, because every
 deployment's data lives under the old names.
