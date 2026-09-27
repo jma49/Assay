@@ -74,7 +74,8 @@ export type AuthUser = Pick<User, "id" | "fullName">;
 /** Only these read permissions are open to demo guests. */
 export const GUEST_PERMISSIONS: readonly Permission[] = [Permission.SCRIPT_READ, Permission.HISTORY_READ];
 
-async function currentGuestId(): Promise<string | null> {
+/** The demo guest behind this request, if any; null outside demo mode. */
+export async function currentGuestId(): Promise<string | null> {
   const store = await cookies();
   return guestIdFromToken(store.get(GUEST_COOKIE)?.value);
 }
