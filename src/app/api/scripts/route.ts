@@ -4,6 +4,7 @@ import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document, ObjectId } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache/cache-utils";
 import { authorizeApiRequest, validateApiAuth } from "@/lib/auth/auth-utils";
+import { authorProblem } from "@/lib/workflows/check-fields";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
 import {
@@ -109,6 +110,10 @@ export async function POST(request: Request) {
         { message: "sqlContent is required and must be a string" },
         { status: 400 }
       );
+    }
+    const badAuthor = authorProblem(author);
+    if (badAuthor) {
+      return NextResponse.json({ message: badAuthor }, { status: 400 });
     }
     // An invalid cron would be saved and then silently never run.
     const badSchedule = scheduleProblem(isScheduled, cronSchedule ?? (isScheduled ? "" : undefined));
@@ -229,6 +234,9 @@ export async function POST(request: Request) {
       updatedAt: new Date(),
       approvalStatus: ApprovalStatus.APPROVED, // 自动审批通过
       approvalRequestId: null,
+      // Who made it, from the session: ownership and audit never trust the author label.
+      createdBy: { id: user.id, email: userEmail },
+      updatedBy: { id: user.id, email: userEmail },
     };
 
     // 6. 插入数据到 MongoDB

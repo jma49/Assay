@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEMO_AUTHOR, isDemoMode, runAccess } from "./demo-sandbox";
+import { isDemoMode, isReservedAuthor, runAccess } from "./demo-sandbox";
 
 describe("isDemoMode", () => {
   it("is on only for the exact value true", () => {
@@ -12,17 +12,18 @@ describe("isDemoMode", () => {
 
 describe("runAccess", () => {
   it("lets anyone with script:execute run any check", () => {
-    expect(runAccess({ canExecute: true, demoMode: false, scriptAuthor: "alice" })).toBe("allowed");
+    expect(runAccess({ canExecute: true, demoMode: false, demoSeed: undefined })).toBe("allowed");
   });
 
   it("lets viewers run seeded checks only in demo mode", () => {
-    expect(runAccess({ canExecute: false, demoMode: true, scriptAuthor: DEMO_AUTHOR })).toBe("demo");
-    expect(runAccess({ canExecute: false, demoMode: false, scriptAuthor: DEMO_AUTHOR })).toBe("forbidden");
+    expect(runAccess({ canExecute: false, demoMode: true, demoSeed: true })).toBe("demo");
+    expect(runAccess({ canExecute: false, demoMode: false, demoSeed: true })).toBe("forbidden");
   });
 
   it("never lets viewers run other people's checks, even in demo mode", () => {
-    for (const author of ["alice", "", null, undefined, "demo-seed ", "Demo-Seed"]) {
-      expect(runAccess({ canExecute: false, demoMode: true, scriptAuthor: author })).toBe("forbidden");
+    // Only the seed's flag counts; the author label, or a truthy look-alike, does not.
+    for (const demoSeed of [undefined, null, false, "true", 1, "demo-seed"]) {
+      expect(runAccess({ canExecute: false, demoMode: true, demoSeed })).toBe("forbidden");
     }
   });
 });
@@ -43,5 +44,12 @@ describe("demoRunBudgets", () => {
     const { clientIp } = await import("./demo-sandbox");
     expect(clientIp(new Headers({ "x-forwarded-for": "9.9.9.9, 10.0.0.1" }))).toBe("9.9.9.9");
     expect(clientIp(new Headers())).toBe("unknown");
+  });
+});
+
+describe("isReservedAuthor", () => {
+  it("reserves the seed's label in any case or spacing", () => {
+    for (const author of ["demo-seed", " Demo-Seed ", "DEMO-SEED"]) expect(isReservedAuthor(author)).toBe(true);
+    for (const author of ["alice", "", null, undefined, "demo-seeds"]) expect(isReservedAuthor(author)).toBe(false);
   });
 });

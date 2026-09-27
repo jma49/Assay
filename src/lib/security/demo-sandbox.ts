@@ -1,10 +1,18 @@
 /**
  * The public demo lets viewers run the sample checks, so visitors can see a
  * check find problems without being given the developer role. It is off
- * unless DEMO_MODE=true on the server, only covers checks created by the
- * demo seed, and is rate limited per user.
+ * unless DEMO_MODE=true on the server, only covers checks the demo seed
+ * marked with `demoSeed: true` (a field no API writes), and is rate limited.
  */
 export const DEMO_AUTHOR = "demo-seed";
+
+/**
+ * Whether an author label is reserved for the demo seed. The label is only
+ * shown, never trusted, but taking it would still pass a check off as a sample.
+ */
+export function isReservedAuthor(author: unknown): boolean {
+  return typeof author === "string" && author.trim().toLowerCase() === DEMO_AUTHOR;
+}
 export const DEMO_RUNS_PER_HOUR = 20;
 
 export function isDemoMode(env: Record<string, string | undefined> = process.env): boolean {
@@ -20,14 +28,14 @@ export type RunAccess = "allowed" | "demo" | "forbidden";
 export function runAccess({
   canExecute,
   demoMode,
-  scriptAuthor,
+  demoSeed,
 }: {
   canExecute: boolean;
   demoMode: boolean;
-  scriptAuthor: string | null | undefined;
+  demoSeed: unknown;
 }): RunAccess {
   if (canExecute) return "allowed";
-  if (demoMode && scriptAuthor === DEMO_AUTHOR) return "demo";
+  if (demoMode && demoSeed === true) return "demo";
   return "forbidden";
 }
 
