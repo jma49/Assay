@@ -25,6 +25,9 @@ function memoryStore(checks: CheckToRun[]) {
       doc.lease = { runId, until };
       return { kind: "acquired", check: { scriptId, sqlContent: doc.sqlContent, state: doc.state } };
     },
+    async historicalState() {
+      return null;
+    },
     async previousRowKeys(runId) {
       return runs.find((r) => r.runId === runId)?.rowKeys ?? null;
     },
@@ -162,6 +165,14 @@ describe("runCheck", () => {
     expect(result).toMatchObject({ rowCount: 6_000 });
     expect(runs[0].sample).toHaveLength(500);
     expect(runs[0].rowKeys).toHaveLength(5_000);
+  });
+
+  it("continues a check's history when it has no stored state yet", async () => {
+    const { store, docs } = memoryStore([CHECK]);
+    const since = new Date(Date.UTC(2026, 8, 24));
+    store.historicalState = async () => ({ outcome: "issues", rowCount: 2, previousRowCount: 2, since, lastRunId: "old", lastRunAt: since });
+    await runCheck(CHECK.scriptId, { kind: "manual" }, deps(store, rowsSource([[{ id: 1 }, { id: 2 }]])));
+    expect(docs.get(CHECK.scriptId)!.state).toMatchObject({ outcome: "issues", since, previousRowCount: 2 });
   });
 
   it("reports an unknown check", async () => {

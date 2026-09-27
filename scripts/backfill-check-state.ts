@@ -1,7 +1,9 @@
 /**
  * Gives every check that ran before state was kept its current state, built
- * from its run history. Checks that already have state are left alone.
- *   tsx -r dotenv/config scripts/backfill-check-state.ts [--dry-run]
+ * from its run history. Checks that already have state are left alone,
+ * unless --recompute rebuilds every check's state from its history (for
+ * state written before runs continued from history).
+ *   tsx -r dotenv/config scripts/backfill-check-state.ts [--dry-run] [--recompute]
  */
 import db from "@/lib/database/db";
 import { getMongoDbClient } from "@/lib/database/mongodb";
@@ -12,11 +14,12 @@ const HISTORY_LIMIT = 500;
 
 async function main() {
   const dryRun = process.argv.includes("--dry-run");
+  const recompute = process.argv.includes("--recompute");
   const mongo = await getMongoDbClient().getDb();
   const checks = mongo.collection("sql_scripts");
   const runs = mongo.collection("result");
 
-  const pending = await checks.find({ state: { $exists: false } }, { projection: { scriptId: 1 } }).toArray();
+  const pending = await checks.find(recompute ? {} : { state: { $exists: false } }, { projection: { scriptId: 1 } }).toArray();
   let updated = 0;
   for (const { scriptId } of pending) {
     const history = await runs
@@ -41,11 +44,12 @@ async function main() {
     console.log(`- ${scriptId}: ${state.outcome} since ${state.since.toISOString()}, ${state.rowCount} rows`);
     if (!dryRun) {
       // The filter keeps a run that finished meanwhile from being overwritten.
-      const result = await checks.updateOne({ scriptId, state: { $exists: false } }, { $set: { state } });
+      const result = await checks.updateOne(recompute ? { scriptId } : { scriptId, state: { $exists: false } }, { $set: { state } });
       updated += result.modifiedCount;
     }
   }
-  console.log(dryRun ? `Dry run: ${pending.length} checks without state.` : `Back-filled ${updated} of ${pending.length} checks.`);
+  const scope = recompute ? "checks" : "checks without state";
+  console.log(dryRun ? `Dry run: ${pending.length} ${scope}.` : `Updated ${updated} of ${pending.length} ${scope}.`);
 }
 
 main()

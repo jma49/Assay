@@ -5,6 +5,7 @@ import { Activity, Edit, History, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { SqlScript } from "@/components/business/dashboard/types";
 import { cn } from "@/lib/utils/utils";
+import { scheduleLabel } from "@/components/checks/status";
 import { listKeyHandler } from "./list-keys";
 
 type Source =
@@ -267,7 +268,7 @@ export function ScriptsFinder({
               <dt className="text-muted-foreground">{t.tags_}</dt>
               <dd>{selected.hashtags?.length ? selected.hashtags.map((tag) => `#${tag}`).join("  ") : "–"}</dd>
               <dt className="text-muted-foreground">{t.schedule}</dt>
-              <dd className="font-mono text-[12px]">{selected.isScheduled && selected.cronSchedule ? `${selected.cronSchedule} (UTC)` : t.manual}</dd>
+              <dd className="font-mono text-[12px]">{selected.isScheduled && selected.cronSchedule ? scheduleLabel(selected.cronSchedule, zh ? "zh" : "en") : t.manual}</dd>
               <dt className="text-muted-foreground">{t.created}</dt>
               <dd className="tabular-nums">
                 {selected.createdAt ? new Date(selected.createdAt).toLocaleString(zh ? "zh-CN" : "en-US") : "–"}

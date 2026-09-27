@@ -1,13 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import { CoveragePanes, useCoverage } from "./CoveragePanes";
 
 /** Which tables have a check watching them, and a way to add one where none does. */
 export function CoverageView() {
-  const router = useRouter();
   const { language } = useLanguage();
   const coverage = useCoverage(true);
   return (
@@ -18,7 +16,7 @@ export function CoverageView() {
           scripts={[]}
           searchTerm=""
           language={language}
-          onOpenCheck={(scriptId) => router.push(`/manage-scripts?scriptId=${encodeURIComponent(scriptId)}`)}
+          checkHref={(scriptId) => `/checks/${encodeURIComponent(scriptId)}`}
         />
       </div>
     </div>

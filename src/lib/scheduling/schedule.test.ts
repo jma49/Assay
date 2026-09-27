@@ -48,3 +48,25 @@ describe("scheduleProblem", () => {
     expect(scheduleProblem(true, 5)).toMatch(/must be a string/);
   });
 });
+
+describe("describeCron", () => {
+  it("describes the common shapes in both languages", async () => {
+    const { describeCron } = await import("./schedule");
+    expect(describeCron("*/15 * * * *", "en")).toBe("Every 15 minutes");
+    expect(describeCron("0 * * * *", "zh")).toBe("每小时");
+    expect(describeCron("5 * * * *", "en")).toBe("Every hour at :05");
+    expect(describeCron("0 9 * * *", "en")).toBe("Every day at 09:00 UTC");
+    expect(describeCron("0 9 * * 1-5", "zh")).toBe("工作日 09:00 UTC");
+    expect(describeCron("0 8 * * 1", "en")).toBe("Mondays at 08:00 UTC");
+    expect(describeCron("0 8 * * 1", "zh")).toBe("每周一 08:00 UTC");
+    expect(describeCron("30 6 1 * *", "en")).toBe("The 1st of each month at 06:30 UTC");
+    expect(describeCron("0 9 22 * *", "en")).toBe("The 22nd of each month at 09:00 UTC");
+  });
+
+  it("returns null for shapes it cannot say simply", async () => {
+    const { describeCron } = await import("./schedule");
+    expect(describeCron("0 9 * 1 *", "en")).toBeNull();
+    expect(describeCron("0 9,18 * * *", "en")).toBeNull();
+    expect(describeCron("bad", "en")).toBeNull();
+  });
+});

@@ -69,6 +69,8 @@ export interface RunCheckStore {
   /** Takes the check's lease unless a live one exists. */
   acquireLease(scriptId: string, runId: string, until: Date, now: Date): Promise<LeaseResult>;
   previousRowKeys(runId: string): Promise<string[] | null>;
+  /** State rebuilt from past runs, for a check that ran before state was stored. */
+  historicalState(scriptId: string): Promise<CheckState | null>;
   saveRun(run: RunDocument): Promise<void>;
   /** Writes the state only while this run still holds the lease, and releases it. */
   commitState(scriptId: string, runId: string, state: CheckState): Promise<boolean>;
@@ -133,6 +135,9 @@ export async function runCheck(scriptId: string, trigger: RunTrigger, deps: RunC
   const lease = await deps.store.acquireLease(scriptId, runId, until, startedAt);
   if (lease.kind !== "acquired") return lease;
   const { check } = lease;
+  // Without stored state the check may still have a history; start from it so
+  // "since" and the previous row count stay true.
+  if (!check.state) check.state = await deps.store.historicalState(scriptId);
 
   let committed = false;
   try {
