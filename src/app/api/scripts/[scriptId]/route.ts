@@ -43,6 +43,12 @@ interface UpdateScriptData {
   // scriptId is from URL param, not body for update
 }
 
+const CONFLICT = () =>
+  NextResponse.json(
+    { code: "conflict", message: "Someone else changed this check while you were editing it. Reload to see their changes." },
+    { status: 409 },
+  );
+
 // PUT (update) a script by scriptId
 export async function PUT(
   request: NextRequest,
@@ -91,6 +97,15 @@ export async function PUT(
       );
     }
 
+    // Saves without the version they started from would silently overwrite a concurrent edit.
+    const expectedVersion = readVersion((body as { version?: unknown }).version);
+    if (expectedVersion === undefined) {
+      return NextResponse.json(
+        { code: "version_required", message: "Send the check's version you edited (its current `version`, 0 if it has none)." },
+        { status: 428 },
+      );
+    }
+
     // Validate that at least one field is being updated
     if (Object.keys(body).length === 0) {
       return NextResponse.json(
@@ -130,6 +145,8 @@ export async function PUT(
         { status: 404 }
       );
     }
+
+    if ((existingScript.version ?? 0) !== expectedVersion) return CONFLICT();
 
     // Changing someone else's check needs approval unless you are an admin.
     const scriptAuthor = existingScript.author;
@@ -190,7 +207,7 @@ export async function PUT(
                 ? cronSchedule
                 : existingScript.cronSchedule,
             // The version this change was made against; applying it later onto a newer one is refused.
-            baseVersion: existingScript.version ?? 0,
+            baseVersion: expectedVersion,
           }
         );
 
@@ -252,19 +269,15 @@ export async function PUT(
     updateData.updatedAt = new Date(); // Always update the timestamp
     (updateData as Record<string, unknown>).updatedBy = { id: user.id, email: userEmail };
 
-    // Only onto the version the editor started from, if it said which.
-    const expectedVersion = readVersion((body as { version?: unknown }).version);
+    // Only onto the version the editor started from.
     const result = await collection.updateOne(
       { scriptId, ...versionFilter(expectedVersion) },
       { $set: updateData, $inc: { version: 1 } }
     );
 
     if (result.matchedCount === 0) {
-      if (expectedVersion !== undefined && (await collection.countDocuments({ scriptId }, { limit: 1 }))) {
-        return NextResponse.json(
-          { code: "conflict", message: "Someone else changed this check while you were editing it. Reload to see their changes." },
-          { status: 409 }
-        );
+      if (await collection.countDocuments({ scriptId }, { limit: 1 })) {
+        return CONFLICT();
       }
       return NextResponse.json(
         { message: `Script with ID '${scriptId}' not found` },
