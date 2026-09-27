@@ -2,15 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useLanguage } from "@/components/common/LanguageProvider";
+import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { DashboardSkeleton } from "@/components/common/PageSkeletons";
 import { CheckHistory } from "@/components/business/dashboard/CheckHistory";
 import { LoadingError } from "@/components/business/dashboard/LoadingError";
 import { StatusTiles } from "@/components/business/dashboard/StatusTiles";
-import {
-  CHECK_HISTORY_ITEMS_PER_PAGE,
-  dashboardTranslations,
-  type DashboardTranslationKeys,
-} from "@/components/business/dashboard/types";
+import { CHECK_HISTORY_ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
 import { RunSheet } from "@/components/business/dashboard/runs/RunSheet";
 import { RunsHeader } from "@/components/business/dashboard/runs/RunsHeader";
 import { pageRange, passRate } from "@/components/business/dashboard/runs/runs";
@@ -36,13 +33,7 @@ function useFadeInStyle() {
 /** The Runs page: overall numbers, the run history and the Run sheet. */
 const Dashboard = () => {
   const { language } = useLanguage();
-  const t = useCallback(
-    (key: DashboardTranslationKeys): string => {
-      const langTranslations = dashboardTranslations[language] || dashboardTranslations.en;
-      return langTranslations[key as keyof typeof langTranslations] || key;
-    },
-    [language],
-  );
+  const t = useDashboardT();
 
   // Offer only what this user may do; the run API enforces it regardless.
   const me = useMe();

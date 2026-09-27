@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { WindowToolbar } from "@/components/layout/WindowChrome";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/lib/auth/client";
 import { toast } from "sonner";
+import { sendJson } from "@/client/send-json";
 import { Button } from "@/components/ui/button";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import {
@@ -20,10 +21,7 @@ const CodeMirrorEditor = dynamic(
   { ssr: false, loading: () => <div className="h-[480px] animate-pulse rounded-lg border bg-muted/40" /> },
 );
 import { useLanguage } from "@/components/common/LanguageProvider";
-import {
-  dashboardTranslations,
-  DashboardTranslationKeys,
-} from "@/components/business/dashboard/types";
+import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
 
@@ -113,13 +111,7 @@ export default function NewScriptPage() {
   const [scriptIdEdited, setScriptIdEdited] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const t = useCallback(
-    (key: DashboardTranslationKeys | string): string => {
-      const translations = dashboardTranslations[language] || dashboardTranslations.en;
-      return translations[key as keyof typeof translations] || key.toString();
-    },
-    [language],
-  );
+  const t = useDashboardT<string>();
 
   // Coverage links here with ?table=schema.table; only plain identifiers are accepted.
   useEffect(() => {
@@ -174,17 +166,7 @@ export default function NewScriptPage() {
 
     setIsSaving(true);
     try {
-      const response = await fetch("/api/scripts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, sqlContent }),
-      });
-      const result = await response.json();
-
-      if (!response.ok) {
-        toast.error(c.failed, { description: result.message || response.statusText });
-        return;
-      }
+      const result = await sendJson<{ requiresApproval?: boolean }>("/api/scripts", "POST", { ...formData, sqlContent });
       if (result.requiresApproval) {
         toast.success(c.submitted, { description: c.submittedDesc });
       } else {

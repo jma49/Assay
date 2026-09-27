@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -12,8 +12,8 @@ import { ScriptEditorDialog } from "@/components/business/scripts/manage/ScriptE
 import { useScriptDelete } from "@/components/business/scripts/manage/useScriptDelete";
 import { useScriptEditor } from "@/components/business/scripts/manage/useScriptEditor";
 import { useScriptList } from "@/components/business/scripts/manage/useScriptList";
-import { DashboardTranslationKeys, dashboardTranslations } from "@/components/business/dashboard/types";
 import { useLanguage } from "@/components/common/LanguageProvider";
+import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { SkeletonTable } from "@/components/common/PageSkeletons";
 
 const ManageScriptsContent = () => {
@@ -24,13 +24,7 @@ const ManageScriptsContent = () => {
   const [historyScriptId, setHistoryScriptId] = useState("");
   const [isEditHistoryOpen, setIsEditHistoryOpen] = useState(false);
 
-  const t = useCallback(
-    (key: DashboardTranslationKeys | string): string => {
-      const langTranslations = dashboardTranslations[language] || dashboardTranslations.en;
-      return (langTranslations as Record<string, string>)[key] || key;
-    },
-    [language],
-  );
+  const t = useDashboardT<string>();
 
   const { scripts, isLoading, error, reload } = useScriptList();
   const editor = useScriptEditor(language, t, reload);

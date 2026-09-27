@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { Check, ScriptInfo } from "../types";
+import type { ScriptInfo } from "../types";
 import {
   DEFAULT_SORT,
   apiSort,
   buildCheckHistoryQuery,
-  checkTone,
   nextSort,
   pageRange,
   parseChecks,
@@ -144,13 +143,6 @@ describe("triggerErrorMessage", () => {
 });
 
 describe("row display", () => {
-  it("shows attention before the pass/fail status", () => {
-    const tone = (status: Check["status"], statusType?: Check["statusType"]) => checkTone({ status, statusType });
-    expect(tone("success")).toBe("success");
-    expect(tone("failure")).toBe("failure");
-    expect(tone("success", "attention_needed")).toBe("attention");
-  });
-
   it("names checks in the UI language, falling back to English and then the id", () => {
     const scripts = [
       { scriptId: "a", name: "Orders", cnName: "订单" },

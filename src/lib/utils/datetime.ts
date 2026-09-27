@@ -55,6 +55,24 @@ export function formatShortDateTime(
   });
 }
 
+/** The calendar date alone, "9/24/2026" by default; `options` picks other date fields. */
+export function formatDate(
+  value: Date | string | number | null | undefined,
+  language: string,
+  options: Intl.DateTimeFormatOptions = {},
+): string {
+  const date = toDate(value);
+  if (!date) return EMPTY;
+  return date.toLocaleDateString(localeOf(language), options);
+}
+
+/** Hours and minutes, "04:57 AM" or "04:57". */
+export function formatTime(value: Date | string | number | null | undefined, language: string, timeZone?: string): string {
+  const date = toDate(value);
+  if (!date) return EMPTY;
+  return date.toLocaleTimeString(localeOf(language), { timeZone, hour: "2-digit", minute: "2-digit" });
+}
+
 /** "5 min ago" for the last week, then the short date. */
 export function formatRelative(
   value: Date | string | number | null | undefined,

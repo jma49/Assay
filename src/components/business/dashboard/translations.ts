@@ -550,3 +550,9 @@ const zh: TranslationRecord = {
 };
 
 export const dashboardTranslations: Record<string, TranslationRecord> = { en, zh };
+
+/** A legacy dashboard string in the given language, falling back to English and then to the key itself. */
+export function translateDashboard(language: string, key: string): string {
+  const table = dashboardTranslations[language] ?? dashboardTranslations.en;
+  return table[key as DashboardTranslationKeys] || key;
+}

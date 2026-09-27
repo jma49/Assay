@@ -3,36 +3,23 @@ import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { formatRelative } from "@/lib/utils/datetime";
+import { OUTCOME_DOT, OUTCOME_TEXT, outcomeOf } from "@/components/checks/status";
+import { formatDateTime, formatRelative } from "@/lib/utils/datetime";
 import { cn } from "@/lib/utils/utils";
 import type { Check, DashboardTranslationKeys } from "../types";
-import { formatDate } from "../utils";
-import { checkTone, type CheckTone } from "./runs";
 
 type Translate = (key: DashboardTranslationKeys) => string;
 
-const TONE_TEXT: Record<CheckTone, string> = {
-  success: "text-success",
-  attention: "text-attention",
-  failure: "text-failure",
-};
-
-const TONE_DOT: Record<CheckTone, string> = {
-  success: "status-dot-clean",
-  attention: "status-dot-issues",
-  failure: "status-dot-error",
-};
-
 function StatusLabel({ check, t }: { check: Check; t: Translate }) {
-  const tone = checkTone(check);
+  const outcome = outcomeOf(check);
   const label = {
-    attention: t("needsAttention") || "Attention",
-    success: t("filterSuccess"),
-    failure: t("filterFailed"),
-  }[tone];
+    issues: t("needsAttention") || "Attention",
+    clean: t("filterSuccess"),
+    error: t("filterFailed"),
+  }[outcome];
   return (
-    <span className={cn("inline-flex items-center gap-2 text-[13px]", TONE_TEXT[tone])}>
-      <span className={cn("status-dot", TONE_DOT[tone])} aria-hidden />
+    <span className={cn("inline-flex items-center gap-2 text-[13px]", OUTCOME_TEXT[outcome])}>
+      <span className={cn("status-dot", OUTCOME_DOT[outcome])} aria-hidden />
       {label}
     </span>
   );
@@ -73,7 +60,7 @@ export function HistoryRow({ check, displayName, language, t }: HistoryRowProps)
         <time
           className="block truncate"
           dateTime={check.execution_time}
-          title={formatDate(check.execution_time, language)}
+          title={formatDateTime(check.execution_time, language)}
         >
           {formatRelative(check.execution_time, language)}
         </time>

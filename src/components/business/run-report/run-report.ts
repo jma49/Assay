@@ -1,4 +1,4 @@
-import type { RunReportMessages } from "./messages";
+import type { RunOutcome } from "@/domain/run";
 
 export type Language = "en" | "zh";
 export type FindingValue = string | number | boolean | null;
@@ -34,24 +34,6 @@ export async function readRunResponse(res: Response): Promise<ExecutionResult> {
   throw new Error(body?.message || `Error: ${res.status}`);
 }
 
-export type RunTone ="attention_needed" | "success" | "failure";
-
-export function runTone(result: Pick<ExecutionResult, "status" | "statusType">): RunTone {
-  if (result.statusType === "attention_needed") return "attention_needed";
-  return result.status === "success" ? "success" : "failure";
-}
-
-export const TONE_TEXT_CLASS: Record<RunTone, string> = {
-  attention_needed: "text-attention",
-  success: "text-success",
-  failure: "text-failure",
-};
-
-export function statusLabel(tone: RunTone, statusTexts: RunReportMessages["statusTexts"]): string {
-  if (tone === "attention_needed") return statusTexts.attentionNeeded;
-  return tone === "success" ? statusTexts.success : statusTexts.failure;
-}
-
 /** Findings as table rows, or null when the run returned no rows. */
 export function tableRows(findings: ExecutionResult["findings"]): FindingDetail[] | null {
   return Array.isArray(findings) && findings.length > 0 ? findings : null;
@@ -62,13 +44,13 @@ export function rowCount(findings: ExecutionResult["findings"]): number | null {
 }
 
 /** One sentence that says what happened, before any detail. */
-export function runHeadline(tone: RunTone, rows: number | null, language: Language): string {
+export function runHeadline(outcome: RunOutcome, rows: number | null, language: Language): string {
   const zh = language === "zh";
-  if (tone === "attention_needed") {
+  if (outcome === "issues") {
     if (rows === null) return zh ? "发现需要关注的问题" : "Needs attention";
     return zh ? `${rows} 行需要关注` : `${rows} ${rows === 1 ? "row needs" : "rows need"} attention`;
   }
-  if (tone === "success") return zh ? "正常：没有返回任何行" : "Clean: no rows returned";
+  if (outcome === "clean") return zh ? "正常：没有返回任何行" : "Clean: no rows returned";
   return zh ? "查询出错" : "The query failed";
 }
 

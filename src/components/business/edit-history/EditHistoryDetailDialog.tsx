@@ -1,5 +1,5 @@
 import { Edit, FileText, History, User } from "lucide-react";
-import { formatDate } from "@/components/business/dashboard/utils";
+import { formatDateTime } from "@/lib/utils/datetime";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
 import {
@@ -37,7 +37,7 @@ export function EditHistoryDetailDialog({ history, open, language, t, onOpenChan
               <span>
                 {operationLabel(history.operation, t)} •{" "}
                 {history.scriptSnapshot?.name || history.scriptSnapshot?.scriptId} •{" "}
-                {formatDate(operationTimeIso(history), language)}
+                {formatDateTime(operationTimeIso(history), language)}
               </span>
             )}
           </DialogDescription>

@@ -130,13 +130,6 @@ export function triggerErrorMessage(err: unknown): string {
   return err.message || "Trigger failed";
 }
 
-export type CheckTone = "success" | "attention" | "failure";
-
-export function checkTone(check: Pick<Check, "status" | "statusType">): CheckTone {
-  if (check.statusType === "attention_needed") return "attention";
-  return check.status === "success" ? "success" : "failure";
-}
-
 /** Each check's name in the UI language, keyed by the id the history rows carry. */
 export function scriptDisplayNames(scripts: ScriptInfo[], language: string): Map<string, string> {
   return new Map(
