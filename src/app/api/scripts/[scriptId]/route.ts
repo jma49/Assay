@@ -1,25 +1,24 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
-import { clearScriptsCache } from "@/lib/cache/cache-utils";
-import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { withAuth } from "@/server/http/route";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
-import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
-import { authorProblem, ownsCheck, readVersion, versionFilter } from "@/lib/workflows/check-fields";
-import { createScriptVersion } from "@/lib/workflows/version-control";
+import { Permission, getUserRole } from "@/lib/auth/rbac";
+import { authorProblem, ownsCheck, readVersion } from "@/lib/workflows/check-fields";
 import {
   createApprovalRequest,
   isAutoApprovalEligible,
   analyzeScriptType,
 } from "@/lib/workflows/approval-workflow";
-import { recordEditHistoryOnServer } from "@/lib/workflows/edit-history-store";
+import { deleteCheck, updateCheck } from "@/server/services/check-writes";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 // Helper function to get the MongoDB collection
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
   const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
-  return db.collection("sql_scripts"); // From sql_script_result DB
+  return db.collection(COLLECTIONS.checks); // From sql_script_result DB
 }
 
 // interface RouteContext {  // No longer needed
@@ -50,30 +49,10 @@ const CONFLICT = () =>
   );
 
 // PUT (update) a script by scriptId
-export async function PUT(
-  request: NextRequest,
-  { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
-) {
+export const PUT = withAuth<{ scriptId: string }>(Permission.SCRIPT_UPDATE, async (request, { principal, params }) => {
   try {
-    const authResult = await validateApiAuth("zh");
-    if (!authResult.isValid) {
-      return authResult.response!;
-    }
+    const userEmail = principal.email;
 
-    const { user, userEmail } = authResult;
-
-    const permissionCheck = await requirePermission(
-      user.id,
-      Permission.SCRIPT_UPDATE
-    );
-    if (!permissionCheck.authorized) {
-      return NextResponse.json(
-        { success: false, message: "权限不足：无法更新脚本" },
-        { status: 403 }
-      );
-    }
-
-    const params = await paramsPromise; // Await the promise
     const { scriptId } = params;
     const body = await request.json();
     const {
@@ -150,7 +129,7 @@ export async function PUT(
 
     // Changing someone else's check needs approval unless you are an admin.
     const scriptAuthor = existingScript.author;
-    const isModifyingOthersScript = !ownsCheck(existingScript, { id: user.id, email: userEmail });
+    const isModifyingOthersScript = !ownsCheck(existingScript, { id: principal.id, email: userEmail });
 
     const badAuthor = authorProblem(author);
     if (badAuthor) {
@@ -158,7 +137,7 @@ export async function PUT(
     }
 
     if (isModifyingOthersScript) {
-      const userRole = await getUserRole(user.id);
+      const userRole = await getUserRole(principal.id);
       // Without a role we cannot tell whether approval is needed: refuse instead of applying directly.
       if (!userRole) {
         return NextResponse.json({ success: false, message: "无法获取用户角色信息" }, { status: 500 });
@@ -172,7 +151,7 @@ export async function PUT(
 
         const requestId = await createApprovalRequest(
           scriptId,
-          user.id,
+          principal.id,
           userEmail,
           userRole,
           sqlContent || "",
@@ -266,62 +245,18 @@ export async function PUT(
       );
     }
 
-    updateData.updatedAt = new Date(); // Always update the timestamp
-    (updateData as Record<string, unknown>).updatedBy = { id: user.id, email: userEmail };
-
-    // Only onto the version the editor started from.
-    const result = await collection.updateOne(
-      { scriptId, ...versionFilter(expectedVersion) },
-      { $set: updateData, $inc: { version: 1 } }
+    const updated = await updateCheck(
+      await getMongoDbClient().getDb(),
+      scriptId,
+      updateData,
+      expectedVersion,
+      { id: principal.id, email: userEmail },
+      "脚本更新",
     );
-
-    if (result.matchedCount === 0) {
-      if (await collection.countDocuments({ scriptId }, { limit: 1 })) {
-        return CONFLICT();
-      }
-      return NextResponse.json(
-        { message: `Script with ID '${scriptId}' not found` },
-        { status: 404 }
-      );
+    if (updated.kind === "conflict") return CONFLICT();
+    if (updated.kind === "missing") {
+      return NextResponse.json({ message: `Script with ID '${scriptId}' not found` }, { status: 404 });
     }
-
-    const updatedScript = await collection.findOne({ scriptId });
-    if (updatedScript) {
-      await recordEditHistoryOnServer(
-        {
-          scriptId,
-          operation: "update",
-          oldData: existingScript as unknown as Record<string, unknown>,
-          newData: updatedScript as unknown as Record<string, unknown>,
-        },
-        { id: user.id, email: userEmail, name: userEmail.split("@")[0] }
-      );
-
-      const userRole = await getUserRole(user.id);
-      if (userRole) {
-        await createScriptVersion(
-          scriptId,
-          {
-            name: updatedScript.name,
-            cnName: updatedScript.cnName,
-            description: updatedScript.description,
-            cnDescription: updatedScript.cnDescription,
-            scope: updatedScript.scope,
-            cnScope: updatedScript.cnScope,
-            author: updatedScript.author,
-            hashtags: updatedScript.hashtags,
-            sqlContent: updatedScript.sqlContent,
-          },
-          user.id,
-          userEmail,
-          "update",
-          "脚本更新",
-          "patch"
-        );
-      }
-    }
-
-    await clearScriptsCache();
 
     const message = isModifyingOthersScript
       ? `脚本 '${scriptId}' 更新成功（管理员自动审批通过），已创建新版本`
@@ -329,14 +264,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, message }, { status: 200 });
   } catch (error) {
-    // It's tricky to get paramsPromise reliably here if the above await failed.
-    // For logging, it might be better to extract it from the request URL if possible or log a generic message.
-    // However, if paramsPromise itself is the issue, this won't work.
-    // For now, we'll assume params.scriptId might not be available if the promise itself rejects.
-    console.error(
-      `Error updating script (ID might be unavailable if promise rejected):`,
-      error
-    );
+    console.error(`Error updating script '${params.scriptId}':`, error);
     if (error instanceof SyntaxError) {
       // JSON parsing error
       return NextResponse.json(
@@ -349,33 +277,13 @@ export async function PUT(
       { status: 500 }
     );
   }
-}
+});
 
 // DELETE a script by scriptId
-export async function DELETE(
-  request: NextRequest,
-  { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
-) {
+export const DELETE = withAuth<{ scriptId: string }>(Permission.SCRIPT_DELETE, async (request, { principal, params }) => {
   try {
-    const authResult = await validateApiAuth("zh");
-    if (!authResult.isValid) {
-      return authResult.response!;
-    }
+    const userEmail = principal.email;
 
-    const { user, userEmail } = authResult;
-
-    const permissionCheck = await requirePermission(
-      user.id,
-      Permission.SCRIPT_DELETE
-    );
-    if (!permissionCheck.authorized) {
-      return NextResponse.json(
-        { success: false, message: "权限不足：无法删除脚本" },
-        { status: 403 }
-      );
-    }
-
-    const params = await paramsPromise;
     const { scriptId } = params;
 
     if (!scriptId) {
@@ -396,7 +304,7 @@ export async function DELETE(
     }
 
     // Deleting any check needs approval unless you are an admin.
-    const userRole = await getUserRole(user.id);
+    const userRole = await getUserRole(principal.id);
     // Without a role we cannot tell whether approval is needed: refuse instead of deleting directly.
     if (!userRole) {
       return NextResponse.json({ success: false, message: "无法获取用户角色信息" }, { status: 500 });
@@ -410,7 +318,7 @@ export async function DELETE(
 
       const requestId = await createApprovalRequest(
         scriptId,
-        user.id,
+        principal.id,
         userEmail,
         userRole,
         existingScript.sqlContent || "SELECT 1",
@@ -447,27 +355,9 @@ export async function DELETE(
       }
     }
 
-    const deleteResult = await collection.deleteOne({ scriptId });
-
-    if (deleteResult.deletedCount === 0) {
-      return NextResponse.json(
-        {
-          message: `Script with ID '${scriptId}' not found or already deleted`,
-        },
-        { status: 404 }
-      );
+    if (!(await deleteCheck(await getMongoDbClient().getDb(), scriptId, { id: principal.id, email: userEmail }))) {
+      return NextResponse.json({ message: `Script with ID '${scriptId}' not found or already deleted` }, { status: 404 });
     }
-
-    await recordEditHistoryOnServer(
-      {
-        scriptId,
-        operation: "delete",
-        oldData: existingScript as unknown as Record<string, unknown>,
-      },
-      { id: user.id, email: userEmail, name: userEmail.split("@")[0] }
-    );
-
-    await clearScriptsCache();
 
     const message =
       userRole &&
@@ -487,4 +377,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
+});

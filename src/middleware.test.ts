@@ -61,20 +61,20 @@ describe("middleware", () => {
   });
 
   it("keeps other pages private when / is public", async () => {
-    const res = await run("/dashboard");
+    const res = await run("/runs");
 
     expect(res.headers.get("location")).toBe(
-      "http://localhost/sign-in?redirect_url=%2Fdashboard"
+      "http://localhost/sign-in?redirect_url=%2Fruns"
     );
   });
 
   it("sends signed-out users back to the page they asked for", async () => {
-    const res = await run("/manage-scripts?scriptId=demo-duplicate-orders");
+    const res = await run("/checks/manage?scriptId=demo-duplicate-orders");
 
     const location = new URL(res.headers.get("location")!);
     expect(location.origin + location.pathname).toBe("http://localhost/sign-in");
     expect(location.searchParams.get("redirect_url")).toBe(
-      "/manage-scripts?scriptId=demo-duplicate-orders"
+      "/checks/manage?scriptId=demo-duplicate-orders"
     );
   });
 
@@ -88,7 +88,7 @@ describe("middleware", () => {
   });
 
   it("lets signed-in users through", async () => {
-    const res = await run("/manage-scripts", SESSION);
+    const res = await run("/checks/manage", SESSION);
 
     expect(res.headers.get("location")).toBeNull();
   });
@@ -99,22 +99,22 @@ describe("middleware", () => {
     });
 
     it("lets a guest open the read-only pages and the APIs", async () => {
-      for (const path of ["/dashboard", "/checks", "/checks/demo-duplicate-orders", "/manage-scripts", "/view-execution-result/abc", "/api/list-scripts"]) {
+      for (const path of ["/runs", "/checks", "/checks/demo-duplicate-orders", "/checks/manage", "/runs/abc", "/api/scripts"]) {
         expect((await run(path, GUEST)).headers.get("location"), path).toBeNull();
       }
     });
 
     it("sends a guest to sign-up for pages that need an account", async () => {
-      for (const path of ["/admin/users", "/scripts/new", "/manage-scripts/approvals"]) {
+      for (const path of ["/admin/users", "/checks/new", "/checks/manage/history", "/approvals"]) {
         expect(new URL((await run(path, GUEST)).headers.get("location")!).pathname, path).toBe("/sign-up");
       }
     });
 
     it("ignores the guest cookie outside demo mode or when malformed", async () => {
       delete process.env.DEMO_MODE;
-      expect(new URL((await run("/dashboard", GUEST)).headers.get("location")!).pathname).toBe("/sign-in");
+      expect(new URL((await run("/runs", GUEST)).headers.get("location")!).pathname).toBe("/sign-in");
       process.env.DEMO_MODE = "true";
-      expect(new URL((await run("/dashboard", "assay_guest=nope")).headers.get("location")!).pathname).toBe("/sign-in");
+      expect(new URL((await run("/runs", "assay_guest=nope")).headers.get("location")!).pathname).toBe("/sign-in");
     });
   });
 });

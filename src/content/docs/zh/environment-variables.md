@@ -49,6 +49,7 @@
 | `AI_GATEWAY_API_KEY` | 部署在 Vercel 以外时使用的 AI Gateway 密钥。在 Vercel 上通过 OIDC 认证，不需要密钥。 |
 | `AI_GATEWAY_MODEL` | 覆盖默认模型，格式为 `provider/model`。 |
 | `DEMO_MODE` | 设为 `true` 时工作区作为公开演示：查看者可以执行种子数据里的示例检查，每人每小时 20 次；访客无需注册也能进入体验（见 [账号与角色](/docs/accounts-and-roles)）。其他情况不要设置。 |
+| `TRUSTED_PROXY_COUNT` | 仅自托管的演示需要：Assay 前面有几层会追加 `X-Forwarded-For` 的代理。访客地址取自最外层可信代理追加的那一项，而不是访客自己伪造的值。默认 `1`；`0` 表示不信任任何转发头，所有访客共用一个配额。部署在 Vercel 上时忽略，由平台自己设置客户端地址。 |
 | `ALLOWED_EMAIL_DOMAINS` | 允许登录的邮箱域名，用逗号分隔。留空表示允许所有人。 |
 | `CA_CERT_BLOB_URL` | CA 证书的 https:// 地址，用来校验 PostgreSQL 服务器的证书。同时提供 `CLIENT_CERT_BLOB_URL` 和 `CLIENT_KEY_BLOB_URL` 时，还会使用客户端证书。 |
 | `AUTH_DEV_PASSWORD_LOGIN` | 设为 `true` 时额外提供邮箱密码登录，仅限本地开发；生产环境会忽略。 |

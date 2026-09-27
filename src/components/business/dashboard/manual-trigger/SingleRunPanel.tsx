@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { DashboardTranslationKeys, ScriptInfo } from "../types";
-import { formatDate } from "../utils";
+import { formatDateTime } from "@/lib/utils/datetime";
 
 interface SingleRunPanelProps {
   filteredScripts: ScriptInfo[];
@@ -167,12 +167,7 @@ export function SingleRunPanel({
                 </h5>
                 <div className="text-sm text-foreground rounded-lg p-3 border border-border/20 ">
                   {selectedScript.createdAt
-                    ? formatDate(
-                        typeof selectedScript.createdAt === "string"
-                          ? selectedScript.createdAt
-                          : selectedScript.createdAt.toISOString(),
-                        language,
-                      )
+                    ? formatDateTime(selectedScript.createdAt, language)
                     : t("unknown")}
                 </div>
               </div>

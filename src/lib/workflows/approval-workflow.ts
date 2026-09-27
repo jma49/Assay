@@ -1,10 +1,9 @@
-import { pickEditable, readVersion, versionFilter } from "./check-fields";
+import { pickEditable, readVersion } from "./check-fields";
 import { getMongoDbClient } from "../database/mongodb";
 import { Collection, Document, Db } from "mongodb";
 import { UserRole, Permission, hasPermission } from "../auth/rbac";
-import { clearScriptsCache } from "../cache/cache-utils";
-import { createScriptVersion } from "./version-control";
-import { recordEditHistoryOnServer } from "./edit-history-store";
+import { createCheck, deleteCheck, updateCheck } from "@/server/services/check-writes";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export enum ApprovalStatus {
   PENDING = "pending",
@@ -61,7 +60,7 @@ async function getDb(): Promise<Db> {
 
 async function getApprovalRequestsCollection(): Promise<Collection<Document>> {
   const db = await getDb();
-  return db.collection("approval_requests");
+  return db.collection(COLLECTIONS.approvalRequests);
 }
 
 function generateRequestId(): string {
@@ -511,207 +510,59 @@ export async function getCompletedApprovals(
 }
 
 /**
- * Applies an approved change to the check it is about.
+ * Applies an approved change to the check it is about, through the same
+ * writes a direct edit uses. An update only lands on the version the request
+ * was made against.
  */
-async function executeApprovedOperation(
-  request: ApprovalRequest
-): Promise<void> {
-  try {
-    console.log(
-      `[Approval] 开始执行审批操作: ${request.operationType} for ${request.scriptId}`
-    );
+async function executeApprovedOperation(request: ApprovalRequest): Promise<void> {
+  const db = await getDb();
+  const actor = { id: request.requesterId, email: request.requesterEmail };
+  const data = (request.originalData ?? {}) as Record<string, unknown>;
 
-    const scriptsDb = await getDb();
-    const collection = scriptsDb.collection("sql_scripts");
-
-    switch (request.operationType) {
-      case "create":
-        if (!request.originalData) {
-          throw new Error("创建操作缺少原始数据");
-        }
-
-        // Only the fields people may set; the requester is recorded from the request, not the payload.
-        const createData = {
-          ...pickEditable(request.originalData as Record<string, unknown>),
+  switch (request.operationType) {
+    case "create": {
+      if (!request.originalData) throw new Error("A create request has no data");
+      const now = new Date();
+      // Only the fields people may set; the requester comes from the request, not the payload.
+      await createCheck(
+        db,
+        {
+          ...pickEditable(data),
           scriptId: request.scriptId,
-          createdBy: { id: request.requesterId, email: request.requesterEmail },
-          updatedBy: { id: request.requesterId, email: request.requesterEmail },
+          createdBy: actor,
+          updatedBy: actor,
           version: 1,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: now,
+          updatedAt: now,
           approvalStatus: ApprovalStatus.APPROVED,
           approvalRequestId: request.requestId,
-        };
-
-        await collection.insertOne(createData);
-
-        await createScriptVersion(
-          request.scriptId,
-          {
-            name: (request.originalData as Record<string, unknown>)
-              .name as string,
-            cnName: (request.originalData as Record<string, unknown>).cnName as
-              | string
-              | undefined,
-            description: (request.originalData as Record<string, unknown>)
-              .description as string | undefined,
-            cnDescription: (request.originalData as Record<string, unknown>)
-              .cnDescription as string | undefined,
-            scope: (request.originalData as Record<string, unknown>).scope as
-              | string
-              | undefined,
-            cnScope: (request.originalData as Record<string, unknown>)
-              .cnScope as string | undefined,
-            author: (request.originalData as Record<string, unknown>)
-              .author as string,
-            hashtags: (request.originalData as Record<string, unknown>)
-              .hashtags as string[] | undefined,
-            sqlContent: (request.originalData as Record<string, unknown>)
-              .sqlContent as string,
-          },
-          request.requesterId,
-          request.requesterEmail,
-          "create",
-          "脚本创建（审批通过）",
-          "minor"
-        );
-
-        await recordEditHistoryOnServer(
-          {
-            scriptId: request.scriptId,
-            operation: "create",
-            newData: request.originalData,
-          },
-          {
-            id: request.requesterId,
-            email: request.requesterEmail,
-            name: request.requesterEmail.split("@")[0],
-          }
-        );
-
-        console.log(`[Approval] 脚本创建完成: ${request.scriptId}`);
-        break;
-
-      case "update":
-        if (!request.originalData) {
-          throw new Error("更新操作缺少原始数据");
-        }
-
-        const existingScript = await collection.findOne({
-          scriptId: request.scriptId,
-        });
-
-        const updateData = {
-          ...pickEditable(request.originalData as Record<string, unknown>),
-          updatedBy: { id: request.requesterId, email: request.requesterEmail },
-          updatedAt: new Date(),
-          approvalStatus: ApprovalStatus.APPROVED,
-          approvalRequestId: request.requestId,
-        };
-
-        const baseVersion = readVersion((request.originalData as Record<string, unknown>).baseVersion);
-        const updateResult = await collection.updateOne(
-          { scriptId: request.scriptId, ...versionFilter(baseVersion) },
-          { $set: updateData, $inc: { version: 1 } }
-        );
-
-        if (updateResult.matchedCount === 0) {
-          const stillThere = await collection.countDocuments({ scriptId: request.scriptId }, { limit: 1 });
-          throw new Error(
-            stillThere
-              ? "The check changed after this request was made; submit the change again against the current version"
-              : `脚本不存在: ${request.scriptId}`,
-          );
-        }
-
-        const updatedScript = await collection.findOne({
-          scriptId: request.scriptId,
-        });
-        if (updatedScript) {
-          await createScriptVersion(
-            request.scriptId,
-            {
-              name: updatedScript.name as string,
-              cnName: updatedScript.cnName as string | undefined,
-              description: updatedScript.description as string | undefined,
-              cnDescription: updatedScript.cnDescription as string | undefined,
-              scope: updatedScript.scope as string | undefined,
-              cnScope: updatedScript.cnScope as string | undefined,
-              author: updatedScript.author as string,
-              hashtags: updatedScript.hashtags as string[] | undefined,
-              sqlContent: updatedScript.sqlContent as string,
-            },
-            request.requesterId,
-            request.requesterEmail,
-            "update",
-            "脚本更新（审批通过）",
-            "patch"
-          );
-        }
-
-        await recordEditHistoryOnServer(
-          {
-            scriptId: request.scriptId,
-            operation: "update",
-            oldData: existingScript as unknown as Record<string, unknown>,
-            newData: request.originalData,
-          },
-          {
-            id: request.requesterId,
-            email: request.requesterEmail,
-            name: request.requesterEmail.split("@")[0],
-          }
-        );
-
-        console.log(`[Approval] 脚本更新完成: ${request.scriptId}`);
-        break;
-
-      case "delete":
-        const scriptToDelete = await collection.findOne({
-          scriptId: request.scriptId,
-        });
-        if (!scriptToDelete) {
-          throw new Error(`要删除的脚本不存在: ${request.scriptId}`);
-        }
-
-        const deleteResult = await collection.deleteOne({
-          scriptId: request.scriptId,
-        });
-
-        if (deleteResult.deletedCount === 0) {
-          throw new Error(`删除脚本失败: ${request.scriptId}`);
-        }
-
-        await recordEditHistoryOnServer(
-          {
-            scriptId: request.scriptId,
-            operation: "delete",
-            oldData: scriptToDelete as unknown as Record<string, unknown>,
-          },
-          {
-            id: request.requesterId,
-            email: request.requesterEmail,
-            name: request.requesterEmail.split("@")[0],
-          }
-        );
-
-        console.log(`[Approval] 脚本删除完成: ${request.scriptId}`);
-        break;
-
-      default:
-        throw new Error(`不支持的操作类型: ${request.operationType}`);
+        },
+        actor,
+        "脚本创建（审批通过）",
+        "minor",
+      );
+      return;
     }
-
-    await clearScriptsCache();
-
-    console.log(
-      `[Approval] 审批操作执行完成: ${request.operationType} for ${request.scriptId}`
-    );
-  } catch (error) {
-    console.error(
-      `[Approval] 执行审批操作失败: ${request.operationType} for ${request.scriptId}`,
-      error
-    );
-    throw error;
+    case "update": {
+      if (!request.originalData) throw new Error("An update request has no data");
+      const result = await updateCheck(
+        db,
+        request.scriptId,
+        { ...pickEditable(data), approvalStatus: ApprovalStatus.APPROVED, approvalRequestId: request.requestId },
+        readVersion(data.baseVersion),
+        actor,
+        "脚本更新（审批通过）",
+      );
+      if (result.kind === "conflict") {
+        throw new Error("The check changed after this request was made; submit the change again against the current version");
+      }
+      if (result.kind === "missing") throw new Error(`The check ${request.scriptId} no longer exists`);
+      return;
+    }
+    case "delete":
+      if (!(await deleteCheck(db, request.scriptId, actor))) throw new Error(`The check ${request.scriptId} no longer exists`);
+      return;
+    default:
+      throw new Error(`Unsupported operation: ${request.operationType}`);
   }
 }

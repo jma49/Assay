@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { CheckStats } from "@/lib/database/check-stats";
 import type { ScriptInfo } from "../types";
-import { DEFAULT_SORT, EMPTY_STATS, parseNextScheduled, parseScriptList, takeSearchParam } from "./runs";
+import { DEFAULT_SORT, EMPTY_STATS, nextScheduledRunOf, parseScriptList, takeSearchParam } from "./runs";
 import { useRunHistory } from "./useRunHistory";
 
 const scrollToHistory = () => document.getElementById("execution-history")?.scrollIntoView({ behavior: "smooth" });
@@ -21,16 +21,13 @@ export function useRunsPage(language: string) {
   const history = useRunHistory(setError);
 
   const loadScripts = useCallback(async () => {
-    const response = await fetch("/api/list-scripts", {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
+    const response = await fetch("/api/scripts");
     if (!response.ok) {
       throw new Error(`脚本列表获取失败: ${response.status} ${response.statusText}`);
     }
-    const body = await response.json();
-    setNextScheduled(parseNextScheduled(body));
-    setAvailableScripts(parseScriptList(body));
+    const scripts = parseScriptList(await response.json());
+    setNextScheduled(nextScheduledRunOf(scripts));
+    setAvailableScripts(scripts);
   }, []);
 
   const loadOverallStats = useCallback(async () => {

@@ -1,6 +1,6 @@
 import { AlertCircle, Calendar, Eye, History, RotateCcw, User } from "lucide-react";
 import { SkeletonTable } from "@/components/common/PageSkeletons";
-import { formatDate } from "@/components/business/dashboard/utils";
+import { formatDateTime } from "@/lib/utils/datetime";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
@@ -125,7 +125,7 @@ export function EditHistoryTable({ histories, loading, error, language, t, onRet
                 <TableCell className="max-w-40 px-4 py-3 text-[13px] text-muted-foreground tabular-nums">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-3 h-3" />
-                    <span className="truncate">{formatDate(operationTimeIso(history), language)}</span>
+                    <span className="truncate">{formatDateTime(operationTimeIso(history), language)}</span>
                   </div>
                 </TableCell>
                 <TableCell className="px-4 py-3 text-muted-foreground max-w-48 leading-relaxed">

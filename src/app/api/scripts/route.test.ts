@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const mocks = vi.hoisted(() => ({
   denied: null as Response | null,
@@ -11,12 +11,9 @@ const mocks = vi.hoisted(() => ({
   createApprovalRequest: vi.fn(async (..._args: unknown[]) => "req_1" as string | null),
 }));
 
-vi.mock("@/lib/auth/auth-utils", () => ({
+vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth/auth-utils")>()),
   validateApiAuth: async () =>
-    mocks.denied
-      ? { isValid: false, response: mocks.denied }
-      : { isValid: true, user: { id: "user_alice", fullName: "Alice" }, userEmail: "alice@example.com", isGuest: false },
-  authorizeApiRequest: async () =>
     mocks.denied
       ? { isValid: false, response: mocks.denied }
       : { isValid: true, user: { id: "user_alice", fullName: "Alice" }, userEmail: "alice@example.com", isGuest: false },
@@ -38,7 +35,6 @@ vi.mock("@/lib/database/mongodb", () => ({
   }),
 }));
 vi.mock("@/lib/cache/redis", () => ({ default: {} }));
-vi.mock("@/lib/cache/cache-utils", () => ({ clearScriptsCache: async () => undefined }));
 vi.mock("@/lib/workflows/version-control", () => ({ createScriptVersion: async () => undefined }));
 vi.mock("@/lib/workflows/edit-history-store", () => ({ recordEditHistoryOnServer: async () => undefined }));
 vi.mock("@/lib/workflows/approval-workflow", async (importOriginal) => ({
@@ -51,7 +47,7 @@ import { GET, POST } from "./route";
 const validBody = { scriptId: "orders-without-invoice", name: "Orders without invoice", sqlContent: "SELECT 1" };
 
 const create = (body: unknown) =>
-  POST(new Request("http://localhost/api/scripts", { method: "POST", body: JSON.stringify(body) }));
+  POST(new NextRequest("http://localhost/api/scripts", { method: "POST", body: JSON.stringify(body) }), { params: Promise.resolve({}) });
 
 const inserted = () => mocks.insertOne.mock.calls[0][0];
 
@@ -124,6 +120,11 @@ describe("POST /api/scripts", () => {
     expect(mocks.insertOne).not.toHaveBeenCalled();
   });
 
+  it("answers 409 when a concurrent create took the scriptId first", async () => {
+    mocks.insertOne.mockRejectedValueOnce(Object.assign(new Error("E11000 duplicate key"), { code: 11000 }));
+    expect((await create(validBody)).status).toBe(409);
+  });
+
   it("rejects a malformed scriptId", async () => {
     expect((await create({ ...validBody, scriptId: "Bad Id" })).status).toBe(400);
   });
@@ -145,11 +146,11 @@ describe("GET /api/scripts", () => {
 
   it("returns the auth response when script:read is refused", async () => {
     mocks.denied = NextResponse.json({ message: "forbidden" }, { status: 403 });
-    expect(await GET(new Request("http://localhost/api/scripts"))).toBe(mocks.denied);
+    expect(await GET(new NextRequest("http://localhost/api/scripts"), { params: Promise.resolve({}) })).toBe(mocks.denied);
   });
 
   it("lists the scripts for readers", async () => {
-    const res = await GET(new Request("http://localhost/api/scripts"));
+    const res = await GET(new NextRequest("http://localhost/api/scripts"), { params: Promise.resolve({}) });
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual([]);
   });

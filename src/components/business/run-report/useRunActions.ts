@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import * as checksApi from "@/client/checks";
 import { triageToMarkdown } from "@/lib/ai/triage-format";
 import type { ExecutionResult, Language } from "./run-report";
 
@@ -23,15 +24,8 @@ export function useRunActions(result: ExecutionResult | null, language: Language
     if (!result) return;
     setIsTriaging(true);
     try {
-      const response = await fetch("/api/ai/triage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resultId: result._id, language }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.triage) {
-        throw new Error(data.error || response.statusText);
-      }
+      const data = await checksApi.triage(result._id, language);
+      if (!data.triage) throw new Error(language === "zh" ? "没有返回分诊结果" : "No triage came back");
       setTriage(triageToMarkdown(data.triage, language));
       setIsTriageOpen(true);
     } catch (error) {
@@ -47,16 +41,9 @@ export function useRunActions(result: ExecutionResult | null, language: Language
     if (!result) return;
     setIsRunningAgain(true);
     try {
-      const response = await fetch("/api/run-check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scriptId: result.scriptId }),
-      });
-      const data = await response.json();
-      if (!response.ok || !data.mongoResultId) {
-        throw new Error(data.message || response.statusText);
-      }
-      router.push(`/view-execution-result/${data.mongoResultId}`);
+      const data = await checksApi.runCheck(result.scriptId);
+      if (!data.mongoResultId) throw new Error(data.message || (language === "zh" ? "没有返回执行记录" : "No run came back"));
+      router.push(`/runs/${data.mongoResultId}`);
     } catch (error) {
       toast.error(language === "zh" ? "执行失败" : "Could not run the check", {
         description: error instanceof Error ? error.message : String(error),

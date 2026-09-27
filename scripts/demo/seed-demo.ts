@@ -9,9 +9,9 @@ import path from "path";
 import { Client } from "pg";
 import { getMongoDbClient } from "../../src/lib/database/mongodb";
 import { redactConnectionString } from "../../src/lib/database/redact-connection-string";
-import { clearScriptsCache } from "../../src/lib/cache/cache-utils";
 import { ApprovalStatus } from "@/lib/workflows/approval-workflow";
 import { DEMO_AUTHOR, demoApprovals, demoChecks } from "./checks";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 const APPROVED = ApprovalStatus.APPROVED;
 
@@ -40,7 +40,7 @@ async function seedPostgres(databaseUrl: string): Promise<void> {
 async function seedScripts(): Promise<void> {
   const mongo = getMongoDbClient();
   try {
-    const scripts = (await mongo.getDb()).collection("sql_scripts");
+    const scripts = (await mongo.getDb()).collection(COLLECTIONS.checks);
     const now = new Date();
 
     for (const check of demoChecks) {
@@ -72,7 +72,7 @@ async function seedScripts(): Promise<void> {
       `MongoDB sql_scripts: upserted ${demoChecks.length} demo checks, removed ${deletedCount} stale ones`
     );
 
-    const approvals = (await mongo.getDb()).collection("approval_requests");
+    const approvals = (await mongo.getDb()).collection(COLLECTIONS.approvalRequests);
     await approvals.deleteMany({ requestId: { $regex: "^demo-approval-" } });
     const day = 24 * 60 * 60 * 1000;
     await approvals.insertMany(
@@ -118,7 +118,6 @@ async function seedScripts(): Promise<void> {
   } finally {
     await mongo.closeConnection();
   }
-  await clearScriptsCache();
 }
 
 async function main(): Promise<number> {

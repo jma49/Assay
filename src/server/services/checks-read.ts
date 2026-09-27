@@ -3,6 +3,7 @@ import type { CheckDetail, CheckStateDto, CheckSummary, LatestRun, RunListItem, 
 import { stateFromHistory, type CheckState, type RunOutcome } from "@/domain/run";
 import { markRows } from "@/server/runs/row-marks";
 import { toAlertingDto } from "./alert-controls";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export const HISTORY_LENGTH = 30;
 
@@ -71,7 +72,7 @@ export function toSummary(check: Document, historyNewestFirst: (RunPoint & { run
  * aggregation over all checks would rank every retained run on each load.
  */
 async function recentRuns(db: Db, scriptIds: string[], limit: number) {
-  const runs = db.collection("result");
+  const runs = db.collection(COLLECTIONS.runs);
   const lists = await Promise.all(
     scriptIds.map((checkId) =>
       runs
@@ -85,7 +86,7 @@ async function recentRuns(db: Db, scriptIds: string[], limit: number) {
 }
 
 export async function listChecks(db: Db): Promise<CheckSummary[]> {
-  const checks = await db.collection("sql_scripts").find({}, { projection: CHECK_FIELDS }).sort({ name: 1 }).toArray();
+  const checks = await db.collection(COLLECTIONS.checks).find({}, { projection: CHECK_FIELDS }).sort({ name: 1 }).toArray();
   const runs = await recentRuns(
     db,
     checks.map((c) => String(c.scriptId)),
@@ -106,7 +107,7 @@ function toRunItem(run: Document): RunListItem {
 }
 
 async function loadRows(db: Db, runId: string) {
-  return db.collection("result").findOne(
+  return db.collection(COLLECTIONS.runs).findOne(
     { _id: new ObjectId(runId) },
     { projection: { raw_results: 1, rowKeys: 1, columns: 1, message: 1, error: 1 } },
   );
@@ -114,7 +115,7 @@ async function loadRows(db: Db, runId: string) {
 
 export async function getCheckDetail(db: Db, scriptId: string): Promise<CheckDetail | null> {
   const check = await db
-    .collection("sql_scripts")
+    .collection(COLLECTIONS.checks)
     .findOne({ scriptId }, { projection: { ...CHECK_FIELDS, sqlContent: 1, author: 1, createdAt: 1 } });
   if (!check) return null;
 

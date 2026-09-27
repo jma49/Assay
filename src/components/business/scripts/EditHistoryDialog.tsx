@@ -23,7 +23,8 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { formatDate } from "@/components/business/dashboard/utils";
+import { formatDateTime } from "@/lib/utils/datetime";
+import { useLanguage } from "@/components/common/LanguageProvider";
 import { DashboardTranslationKeys } from "@/components/business/dashboard/types";
 
 interface EditHistoryItem {
@@ -58,6 +59,7 @@ export function EditHistoryDialog({
   scriptId,
   t,
 }: EditHistoryDialogProps) {
+  const { language } = useLanguage();
   const [histories, setHistories] = useState<EditHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -256,13 +258,7 @@ export function EditHistoryDialog({
                             <div className="flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
                               <span>
-                                {formatDate(
-                                  typeof history.operationTime === "string"
-                                    ? history.operationTime
-                                    : new Date(
-                                        history.operationTime,
-                                      ).toISOString(),
-                                )}
+                                {formatDateTime(history.operationTime, language)}
                               </span>
                             </div>
                           </div>

@@ -1,14 +1,14 @@
 import { createHash, randomBytes } from "node:crypto";
 import { ObjectId, type Db } from "mongodb";
-import type { TelegramLinkDto, TelegramLinkStatus } from "@/contracts/notifications";
+import type { DestinationDto, TelegramLinkDto, TelegramLinkStatus } from "@/contracts/notifications";
 import { escapeHtml, telegramApi } from "@/server/notify/channels/telegram";
 import { ACTION_IDS } from "@/server/notify/types";
 import { buttonReply, handleAlertButton, type ButtonAction } from "@/server/services/alert-buttons";
 import { saveDestination } from "@/server/services/destinations";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 type Env = Record<string, string | undefined>;
 
-export const LINKS = "telegram_links";
 const LINK_TTL_MS = 15 * 60 * 1000;
 const hash = (code: string) => createHash("sha256").update(code).digest("hex");
 
@@ -107,14 +107,14 @@ export async function createLink(
     expiresAt: new Date(Date.now() + LINK_TTL_MS),
     destinationId: null,
   };
-  await db.collection(LINKS).insertOne(doc);
+  await db.collection(COLLECTIONS.telegramLinks).insertOne(doc);
   const bot = env.TELEGRAM_BOT_USERNAME;
   return { ...linkStatus(doc), groupUrl: `https://t.me/${bot}?startgroup=${code}`, chatUrl: `https://t.me/${bot}?start=${code}` };
 }
 
 export async function getLinkStatus(db: Db, id: string, userId: string): Promise<TelegramLinkStatus | null> {
   if (!ObjectId.isValid(id)) return null;
-  const doc = await db.collection(LINKS).findOne({ _id: new ObjectId(id), "createdBy.id": userId });
+  const doc = await db.collection(COLLECTIONS.telegramLinks).findOne({ _id: new ObjectId(id), "createdBy.id": userId });
   return doc ? linkStatus(doc as never) : null;
 }
 
@@ -141,22 +141,29 @@ export async function handleUpdate(db: Db, update: TelegramUpdate, env: Env = pr
   if (!message || !code) return false;
 
   // Claim the link atomically, so the same code can never bind two chats.
-  const link = await db.collection(LINKS).findOneAndUpdate(
+  const link = await db.collection(COLLECTIONS.telegramLinks).findOneAndUpdate(
     { codeHash: hash(code), destinationId: null, expiresAt: { $gt: new Date() } },
     { $set: { destinationId: "pending" } },
   );
   if (!link) return false;
 
   const label = chatLabel(message.chat);
-  const destination = await saveDestination(db, link.workspaceId, link.createdBy, {
-    kind: "telegram",
-    name: `Telegram ${label}`,
-    label,
-    secret: { chatId: String(message.chat.id) },
-    language: link.language === "zh" ? "zh" : "en",
-    source: "telegram",
-  });
-  await db.collection(LINKS).updateOne({ _id: link._id }, { $set: { destinationId: destination.id } });
+  let destination: DestinationDto;
+  try {
+    destination = await saveDestination(db, link.workspaceId, link.createdBy, {
+      kind: "telegram",
+      name: `Telegram ${label}`,
+      label,
+      secret: { chatId: String(message.chat.id) },
+      language: link.language === "zh" ? "zh" : "en",
+      source: "telegram",
+    });
+  } catch (error) {
+    // Nothing was bound: free the code so opening the link again can retry.
+    await db.collection(COLLECTIONS.telegramLinks).updateOne({ _id: link._id, destinationId: "pending" }, { $set: { destinationId: null } });
+    throw error;
+  }
+  await db.collection(COLLECTIONS.telegramLinks).updateOne({ _id: link._id }, { $set: { destinationId: destination.id } });
   await telegramCall("sendMessage", { chat_id: message.chat.id, text: CONFIRM[destination.language](label), parse_mode: "HTML" }, env, fetcher).catch(() => undefined);
   return true;
 }
@@ -166,7 +173,7 @@ export async function handleUpdate(db: Db, update: TelegramUpdate, env: Env = pr
  * the page asks for updates instead. The offset confirms what was read.
  */
 export async function pollUpdates(db: Db, env: Env = process.env, fetcher: typeof fetch = fetch): Promise<void> {
-  const state = db.collection<{ _id: string; offset?: number }>("integration_state");
+  const state = db.collection<{ _id: string; offset?: number }>(COLLECTIONS.integrationState);
   const offset = (await state.findOne({ _id: "telegram" }))?.offset ?? 0;
   const reply = await telegramCall("getUpdates", { offset, timeout: 0, allowed_updates: ["message", "callback_query"] }, env, fetcher);
   // 409: a webhook is set, so updates arrive there instead.

@@ -8,13 +8,14 @@
  */
 import { runRetentionDays } from "@/domain/run";
 import { getMongoDbClient } from "@/lib/database/mongodb";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 async function main() {
   const apply = process.argv.includes("--apply");
   const days = runRetentionDays();
   const mongo = getMongoDbClient();
   try {
-    const runs = (await mongo.getDb()).collection("result");
+    const runs = (await mongo.getDb()).collection(COLLECTIONS.runs);
     const filter = { expiresAt: { $exists: false }, finishedAt: { $type: "date" } };
     const total = await runs.countDocuments(filter);
     const cutoff = new Date(Date.now() - days * 86_400_000);

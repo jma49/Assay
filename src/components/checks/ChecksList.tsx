@@ -209,7 +209,7 @@ export function ChecksList() {
         ) : checks.length === 0 ? (
           <div className="px-6 py-12 text-center text-[13px] text-muted-foreground">
             <p>{t.noChecks}</p>
-            <Link href="/scripts/new" className="mt-2 inline-block font-medium text-primary hover:underline">
+            <Link href="/checks/new" className="mt-2 inline-block font-medium text-primary hover:underline">
               {t.newCheck}
             </Link>
           </div>
