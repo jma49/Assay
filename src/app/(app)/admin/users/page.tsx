@@ -338,7 +338,7 @@ export default function AdminUsersPage() {
                           {t('addUserRole')}
                         </Button>
                       </DialogTrigger>
-                      <DialogContent variant="sheet">
+                      <DialogContent>
                         <DialogHeader>
                           <DialogTitle>{t('addUserRole')}</DialogTitle>
                           <DialogDescription>
@@ -407,7 +407,7 @@ export default function AdminUsersPage() {
             {Object.entries(roleStats).map(([role, count]) => (
               <div key={role} className="space-y-1 bg-card px-5 py-4">
                 <dt className="text-[13px] text-muted-foreground">{ROLE_INFO[role as UserRole].label}</dt>
-                <dd className="font-serif text-[30px] leading-tight font-semibold tabular-nums">{count}</dd>
+                <dd className="text-[24px] leading-tight font-semibold tabular-nums">{count}</dd>
               </div>
             ))}
           </dl>
@@ -571,7 +571,7 @@ export default function AdminUsersPage() {
                             onChange={handlePageInputChange}
                             onKeyDown={handlePageInputKeyDown}
                             placeholder={t("jumpToPage")}
-                            className="w-12 h-6 px-1 text-xs text-center aqua-field rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
+                            className="w-12 h-6 px-1 text-xs text-center border border-input bg-card rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
                             style={{ pointerEvents: "auto" }}
                           />
                           <Button

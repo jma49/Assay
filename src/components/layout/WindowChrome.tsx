@@ -2,20 +2,16 @@
 
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { useAppWindowState } from "@/components/layout/app-window-state";
+import { useAppShellState } from "@/components/layout/app-shell-state";
 
-/**
- * Page content for the window's unified toolbar (under the title bar), as in
- * Mac OS X: the page's main actions, filters and search. Push items right
- * with `ml-auto`.
- */
+/** The page's main actions, filters and search, shown in the top bar. Push items right with `ml-auto`. */
 export function WindowToolbar({ children }: { children: ReactNode }) {
-  const { toolbarSlot } = useAppWindowState();
+  const { toolbarSlot } = useAppShellState();
   return toolbarSlot ? createPortal(children, toolbarSlot) : null;
 }
 
-/** A one-line summary in the window's status bar, like Finder's "11 items". */
+/** A one-line summary next to the page title, like "11 checks". */
 export function WindowStatusBar({ children }: { children: ReactNode }) {
-  const { statusSlot } = useAppWindowState();
+  const { statusSlot } = useAppShellState();
   return statusSlot ? createPortal(children, statusSlot) : null;
 }

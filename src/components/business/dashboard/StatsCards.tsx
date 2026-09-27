@@ -90,7 +90,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
       {stats.map((stat) => (
         <div key={stat.title} className="flex flex-col justify-center gap-1 bg-card px-5 py-4">
           <dt className="text-[13px] text-muted-foreground">{stat.title}</dt>
-          <dd className={cn("font-serif text-[30px] leading-tight font-semibold tabular-nums", toneClass[stat.tone])}>
+          <dd className={cn("text-[24px] leading-tight font-semibold tabular-nums", toneClass[stat.tone])}>
             {stat.value}
             {stat.unit && (
               <span className="ml-0.5 text-base font-normal text-muted-foreground">

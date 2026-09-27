@@ -42,7 +42,7 @@ export function NavigationProgress() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-x-0 -bottom-px h-0.5 overflow-hidden">
       <div
-        className="h-full origin-left bg-foreground/70"
+        className="h-full origin-left bg-primary"
         style={
           phase === "loading"
             ? { animation: "nav-progress 6s cubic-bezier(0.1, 0.7, 0.2, 1) forwards" }

@@ -24,6 +24,7 @@ const isGuestRoute = createRouteMatcher([
   "/manage-scripts",
   "/view-execution-result/(.*)",
   "/data-analysis",
+  "/coverage",
   "/api/(.*)",
 ]);
 
