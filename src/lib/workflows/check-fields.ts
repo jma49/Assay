@@ -38,14 +38,13 @@ export function authorProblem(author: unknown): string | null {
 }
 
 /**
- * Whether the person owns the check. Checks record who created them
- * (createdBy); older ones only have the author label, compared with the
- * email's local part as before.
+ * Whether the person owns the check: its recorded creator. Checks from before
+ * createdBy have no owner, so changing them goes through approval; their
+ * author label is free text and never grants ownership.
  */
 export function ownsCheck(check: Record<string, unknown>, actor: Actor): boolean {
   const createdBy = check.createdBy as { id?: unknown } | null | undefined;
-  if (typeof createdBy?.id === "string") return createdBy.id === actor.id;
-  return typeof check.author === "string" && check.author !== "" && check.author === actor.email.split("@")[0];
+  return typeof createdBy?.id === "string" && createdBy.id === actor.id;
 }
 
 /**
