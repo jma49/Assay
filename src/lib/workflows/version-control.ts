@@ -4,10 +4,10 @@ import { clearScriptsCache } from "@/lib/cache/cache-utils";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 
 export enum VersionStatus {
-  DRAFT = "draft", // 草稿版本
-  ACTIVE = "active", // 当前活跃版本
-  ARCHIVED = "archived", // 已归档版本
-  DEPRECATED = "deprecated", // 已废弃版本
+  DRAFT = "draft",
+  ACTIVE = "active",
+  ARCHIVED = "archived",
+  DEPRECATED = "deprecated",
 }
 
 export interface ScriptVersion {
