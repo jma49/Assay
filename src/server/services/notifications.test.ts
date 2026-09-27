@@ -5,6 +5,7 @@ import {
   dispatchNotifications,
   HOURLY_LIMIT,
   MAX_ATTEMPTS,
+  type CheckInfo,
   type ClaimedDelivery,
   type Destination,
   type DispatchDeps,
@@ -60,8 +61,8 @@ interface MemoryDelivery {
   error?: string;
 }
 
-function memoryStore(events: StoredEvent[], destinations: Destination[]) {
-  const fanned = new Set<string>();
+function memoryStore(events: StoredEvent[], destinations: Destination[], checkExtras: Partial<CheckInfo> = {}) {
+  const fanned = new Map<string, string | null>();
   const deliveries: MemoryDelivery[] = [];
   let claims = 0;
   const store: NotifyStore = {
@@ -69,7 +70,7 @@ function memoryStore(events: StoredEvent[], destinations: Destination[]) {
       return events.filter((e) => !fanned.has(e.id) && e.at >= since);
     },
     async checkInfo(ids) {
-      return new Map(ids.map((id) => [id, { name: id === "orders" ? "Orders" : id, tags: id === "orders" ? ["finance"] : [] }]));
+      return new Map(ids.map((id) => [id, { name: id === "orders" ? "Orders" : id, tags: id === "orders" ? ["finance"] : [], ...checkExtras }]));
     },
     async destinations(workspaceId) {
       return destinations.filter((d) => d.workspaceId === workspaceId);
@@ -86,8 +87,8 @@ function memoryStore(events: StoredEvent[], destinations: Destination[]) {
         deliveries.push({ id: `${d.eventId}:${d.destinationId}`, ...d, status: "pending", attempts: 0, nextAttemptAt: now, claim: null });
       }
     },
-    async markFannedOut(id) {
-      fanned.add(id);
+    async markFannedOut(id, _now, suppressed) {
+      fanned.set(id, suppressed);
     },
     async claimDelivery(now, leaseMs) {
       const next = deliveries.find((d) => d.status === "pending" && d.nextAttemptAt <= now);
@@ -113,7 +114,7 @@ function memoryStore(events: StoredEvent[], destinations: Destination[]) {
     },
     async recordLastDelivery() {},
   };
-  return { store, deliveries };
+  return { store, deliveries, fanned };
 }
 
 function deps(store: NotifyStore, outcomes: DeliveryOutcome[] = [{ kind: "sent" }], clock = { now: t0 }) {
@@ -208,5 +209,27 @@ describe("dispatchNotifications", () => {
     d2.store.destination = async () => null;
     await dispatchNotifications(d2);
     expect(gone.deliveries[0]).toMatchObject({ status: "failed", attempts: 0 });
+  });
+
+  it("holds alerts back for muted checks and for more rows of an acknowledged problem", async () => {
+    const since = new Date(t0.getTime() - 3_600_000);
+    const muted = memoryStore([event()], [destination()], { alerting: { mutedUntil: new Date(t0.getTime() + 60_000) } });
+    await dispatchNotifications(deps(muted.store).deps);
+    expect(muted.deliveries).toHaveLength(0);
+    expect(muted.fanned.get("e1")).toBe("muted");
+
+    const ack = { since, by: { id: "u1", name: "Ada" }, at: t0 };
+    const acked = memoryStore([event({ type: "check.new_rows", from: "issues" })], [destination()], {
+      alerting: { ack },
+      state: { since, outcome: "issues" },
+    });
+    await dispatchNotifications(deps(acked.store).deps);
+    expect(acked.deliveries).toHaveLength(0);
+    expect(acked.fanned.get("e1")).toBe("acknowledged");
+
+    // A new failure still gets through.
+    const broken = memoryStore([event({ to: "error", from: "issues" })], [destination()], { alerting: { ack }, state: { since: t0, outcome: "error" } });
+    await dispatchNotifications(deps(broken.store).deps);
+    expect(broken.deliveries).toHaveLength(1);
   });
 });

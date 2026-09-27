@@ -90,6 +90,7 @@ export async function listActivity(
       runId: event.runId,
       at: event.at.toISOString(),
       deliveries: deliveriesByEvent.get(event.id) ?? [],
+      suppressed: event.suppressed ?? null,
     };
   });
   const last = page[page.length - 1];

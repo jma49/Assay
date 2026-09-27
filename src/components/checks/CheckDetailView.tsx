@@ -19,6 +19,7 @@ import { tableReferences } from "@/lib/sql/table-references";
 import { formatDateTime, formatRelative } from "@/lib/utils/datetime";
 import { cn } from "@/lib/utils/utils";
 import { cellText } from "@/lib/utils/cells";
+import { AlertBadges, AlertMenu } from "./AlertControls";
 import { Sparkline } from "./Sparkline";
 import { OUTCOME_DOT, OUTCOME_LABEL, OUTCOME_PILL, scheduleLabel } from "./status";
 
@@ -444,6 +445,7 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
 
   const canRun = !!me && (me.permissions.includes("script:execute") || !!me.demo);
   const canEdit = !!me?.permissions.includes("script:update");
+  const canAlert = !!me?.permissions.includes("script:execute");
 
   const runNow = async () => {
     setRunning(true);
@@ -508,6 +510,7 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
             {running ? t.running : t.runNow}
           </Button>
         )}
+        {canAlert && <AlertMenu scriptId={check.scriptId} alerting={check.alerting} state={check.state} onChanged={reload} />}
         {canEdit && (
           <Button asChild size="sm" variant="outline">
             <Link href={`/manage-scripts?scriptId=${encodeURIComponent(check.scriptId)}`}>
@@ -533,6 +536,7 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
           ) : (
             <span className="text-muted-foreground">{t.neverRan}</span>
           )}
+          <AlertBadges alerting={check.alerting} />
         </div>
         <h1 className="text-[28px] leading-tight font-bold">{name}</h1>
         {description && <p className="max-w-[70ch] text-pretty text-[14px] text-muted-foreground">{description}</p>}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { BellRing, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { BellOff, BellRing, CheckCircle2, Clock, Hand, XCircle } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import { WindowToolbar } from "@/components/layout/WindowChrome";
@@ -44,6 +44,7 @@ const COPY = {
     loading: "Loading…",
     loadFailed: "Could not load activity",
     delivery: { sent: "Delivered", failed: "Failed", pending: "Sending" } as Record<ActivityDelivery["status"], string>,
+    suppressed: { muted: "Muted, not sent", acknowledged: "Acknowledged, not sent" },
   },
   zh: {
     filters: { all: "全部", broken: "出错", issues: "有问题", recovered: "恢复" } as Record<Filter, string>,
@@ -64,6 +65,7 @@ const COPY = {
     loading: "加载中…",
     loadFailed: "无法加载动态",
     delivery: { sent: "已送达", failed: "发送失败", pending: "发送中" } as Record<ActivityDelivery["status"], string>,
+    suppressed: { muted: "已静音，未发送", acknowledged: "已确认，未发送" },
   },
 };
 
@@ -130,6 +132,12 @@ function Row({ item }: { item: ActivityItem }) {
           </Link>
         </div>
       </div>
+      {item.suppressed && (
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11.5px] text-muted-foreground max-sm:hidden">
+          {item.suppressed === "muted" ? <BellOff className="size-3" /> : <Hand className="size-3" />}
+          {t.suppressed[item.suppressed]}
+        </span>
+      )}
       {item.deliveries.length > 0 && (
         <ul className="flex shrink-0 flex-wrap justify-end gap-1.5 max-sm:hidden">
           {item.deliveries.map((delivery, i) => {

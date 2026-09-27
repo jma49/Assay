@@ -10,6 +10,7 @@ export const INDEXES: Record<string, IndexDescription[]> = {
   script_versions: [{ key: { scriptId: 1, createdAt: -1 } }],
   // One event per run at most, so retried runs never notify twice.
   events: [{ key: { runId: 1 }, unique: true }, { key: { at: -1 } }, { key: { checkId: 1, at: -1 } }],
+  check_actions: [{ key: { checkId: 1, at: -1 } }],
   notification_destinations: [{ key: { workspaceId: 1, createdAt: 1 } }],
   // One delivery per event and destination, so fan-out can run anywhere, any number of times.
   notification_deliveries: [

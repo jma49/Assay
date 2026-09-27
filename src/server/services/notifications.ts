@@ -6,7 +6,8 @@ import {
   type ChannelKind,
   type MessageLanguage,
 } from "@/domain/notify";
-import type { RowDiff, RunOutcome } from "@/domain/run";
+import { suppressionFor, type Alerting, type Suppression } from "@/domain/alerting";
+import type { CheckState, RowDiff, RunOutcome } from "@/domain/run";
 import { CHANNELS } from "@/server/notify/channels";
 import type { DeliveryOutcome, DestinationSecret, OutgoingRequest, Channel } from "@/server/notify/types";
 
@@ -42,6 +43,15 @@ export interface StoredEvent {
   diff: RowDiff | null;
   error?: string | null;
   at: Date;
+  suppressed?: Suppression | null;
+}
+
+export interface CheckInfo {
+  name: string;
+  cnName?: string;
+  tags: string[];
+  alerting?: Alerting | null;
+  state?: Pick<CheckState, "since" | "outcome"> | null;
 }
 
 export interface ClaimedDelivery {
@@ -60,13 +70,14 @@ export type DeliveryUpdate =
 export interface NotifyStore {
   /** Recent events not yet turned into deliveries. */
   pendingEvents(since: Date, limit: number): Promise<StoredEvent[]>;
-  checkInfo(checkIds: string[]): Promise<Map<string, { name: string; cnName?: string; tags: string[] }>>;
+  checkInfo(checkIds: string[]): Promise<Map<string, CheckInfo>>;
   destinations(workspaceId: string): Promise<Destination[]>;
   destination(id: string): Promise<Destination | null>;
   event(id: string): Promise<StoredEvent | null>;
   /** Idempotent: one delivery per event and destination. */
   createDeliveries(deliveries: { eventId: string; destinationId: string; workspaceId: string }[], now: Date): Promise<void>;
-  markFannedOut(eventId: string, now: Date): Promise<void>;
+  /** Records that the event was handled, and why it went nowhere if it was held back. */
+  markFannedOut(eventId: string, now: Date, suppressed: Suppression | null): Promise<void>;
   /** Atomically takes the next due delivery for `leaseMs`, so no two dispatchers send it. */
   claimDelivery(now: Date, leaseMs: number): Promise<ClaimedDelivery | null>;
   /** Applies the update only while the claim is still this dispatcher's. */
@@ -117,8 +128,11 @@ async function fanOut(deps: DispatchDeps): Promise<number> {
       destinationsByWorkspace.set(event.workspaceId, destinations);
     }
     const kind = alertKindOf(event);
-    const tags = checks.get(event.checkId)?.tags ?? [];
-    const targets = destinations.filter((d) => d.enabled && d.createdAt <= event.at && wantsAlert(d, kind, tags));
+    const check = checks.get(event.checkId);
+    const suppressed = suppressionFor(kind, check?.alerting, check?.state, now);
+    const targets = suppressed
+      ? []
+      : destinations.filter((d) => d.enabled && d.createdAt <= event.at && wantsAlert(d, kind, check?.tags ?? []));
     if (targets.length > 0) {
       await deps.store.createDeliveries(
         targets.map((d) => ({ eventId: event.id, destinationId: d.id, workspaceId: event.workspaceId })),
@@ -126,7 +140,7 @@ async function fanOut(deps: DispatchDeps): Promise<number> {
       );
       created += targets.length;
     }
-    await deps.store.markFannedOut(event.id, now);
+    await deps.store.markFannedOut(event.id, now, suppressed);
   }
   return created;
 }
