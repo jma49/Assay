@@ -59,7 +59,7 @@ export function DocsArticle({
 
         <nav className="mt-14 grid gap-3 border-t pt-6 sm:grid-cols-2" aria-label="Previous and next">
           {previous ? (
-            <Link href={`/docs/${previous.slug}`} className="aqua-pill flex flex-col items-start rounded-[8px] px-4 py-2.5">
+            <Link href={`/docs/${previous.slug}`} className="flex flex-col items-start rounded-lg border bg-card px-4 py-2.5 shadow-xs hover:border-border-strong">
               <span className="text-[12px] text-muted-foreground">← {t.previous}</span>
               <span className="text-[14px] font-medium">{previous.title[language]}</span>
             </Link>
@@ -67,7 +67,7 @@ export function DocsArticle({
             <span />
           )}
           {next && (
-            <Link href={`/docs/${next.slug}`} className="aqua-pill flex flex-col items-end rounded-[8px] px-4 py-2.5 text-right">
+            <Link href={`/docs/${next.slug}`} className="flex flex-col items-end rounded-lg border bg-card px-4 py-2.5 text-right shadow-xs hover:border-border-strong">
               <span className="text-[12px] text-muted-foreground">{t.next} →</span>
               <span className="text-[14px] font-medium">{next.title[language]}</span>
             </Link>

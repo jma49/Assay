@@ -68,7 +68,7 @@ const nextConfig = {
     ];
   },
   async redirects() {
-    return [];
+    return [{ source: "/docs/menu-bar-and-dock", destination: "/docs/navigation", permanent: true }];
   },
   async rewrites() {
     return [

@@ -1,6 +1,6 @@
 # Managing users
 
-Admins (and, for developer and viewer roles, managers) assign roles in **Users** in the Dock.
+Admins (and, for developer and viewer roles, managers) assign roles in **Members** in the sidebar.
 
 ## Give someone a role
 

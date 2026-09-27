@@ -76,13 +76,13 @@ function StatusLabel({
     failure: "text-failure",
   }[tone];
   const gem = {
-    success: "aqua-gem-success",
-    attention: "aqua-gem-attention_needed",
-    failure: "aqua-gem-failure",
+    success: "status-dot-clean",
+    attention: "status-dot-issues",
+    failure: "status-dot-error",
   }[tone];
   return (
     <span className={cn("inline-flex items-center gap-2 text-[13px]", color)}>
-      <span className={cn("aqua-gem", gem)} aria-hidden />
+      <span className={cn("status-dot", gem)} aria-hidden />
       {label}
     </span>
   );
@@ -173,7 +173,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                 placeholder={t("searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="aqua-field h-10 w-full rounded-[4px] pl-9 pr-9 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-[3px] focus-visible:ring-ring"
+                className="border border-input bg-card h-10 w-full rounded-[4px] pl-9 pr-9 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-[3px] focus-visible:ring-ring"
               />
               {searchTerm && (
                 <Button
@@ -470,7 +470,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                       onChange={handlePageInputChange}
                       onKeyDown={handlePageInputKeyDown}
                       placeholder={t("jumpToPage")}
-                      className="w-12 h-6 px-1 text-xs text-center aqua-field rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
+                      className="w-12 h-6 px-1 text-xs text-center border border-input bg-card rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
                       style={{ pointerEvents: "auto" }}
                     />
                     <Button

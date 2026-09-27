@@ -160,7 +160,7 @@ export function Pagination({
                   onChange={onPageInputChange}
                   onKeyDown={onPageInputKeyDown}
                   placeholder={t("jumpToPage")}
-                  className="w-12 h-6 px-1 text-xs text-center aqua-field rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="w-12 h-6 px-1 text-xs text-center rounded-md border border-input bg-card focus:outline-none focus:ring-1 focus:ring-ring"
                   aria-label={t("jumpToPage")}
                 />
                 <Button
