@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Assay Dock icon: a rubber stamp over an approved page. Original artwork. -->
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e2e7ee"/></linearGradient>
+    <radialGradient id="knob" cx="0.35" cy="0.3" r="0.75"><stop offset="0" stop-color="#e9b98a"/><stop offset="0.55" stop-color="#a8652f"/><stop offset="1" stop-color="#6d3a14"/></radialGradient>
+    <linearGradient id="neck" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7a4318"/><stop offset="0.45" stop-color="#c98a52"/><stop offset="1" stop-color="#6d3a14"/></linearGradient>
+    <linearGradient id="block" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9d9d9"/><stop offset="0.5" stop-color="#9a9a9a"/><stop offset="1" stop-color="#6a6a6a"/></linearGradient>
+    <linearGradient id="rubber" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2463c"/><stop offset="1" stop-color="#9c1a14"/></linearGradient>
+    <radialGradient id="shadow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#000" stop-opacity="0.35"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  </defs>
+  <ellipse cx="64" cy="118" rx="46" ry="6" fill="url(#shadow)"/>
+  <path d="M12 86 L96 70 L116 106 L32 122 Z" fill="url(#paper)" stroke="#8e98a6" stroke-width="1.8" stroke-linejoin="round"/>
+  <g transform="rotate(-11 70 98)" opacity="0.9">
+    <circle cx="70" cy="98" r="15" fill="none" stroke="#d6332a" stroke-width="3.2"/>
+    <path d="M62 98 l6 6 l11 -12" fill="none" stroke="#d6332a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g transform="rotate(-14 60 52)">
+    <ellipse cx="60" cy="20" rx="17" ry="15" fill="url(#knob)" stroke="#4a2408" stroke-width="2"/>
+    <ellipse cx="54" cy="14" rx="6" ry="4" fill="#fff" fill-opacity="0.5"/>
+    <path d="M52 32 h16 l3 20 h-22 z" fill="url(#neck)" stroke="#4a2408" stroke-width="2" stroke-linejoin="round"/>
+    <rect x="34" y="52" width="52" height="14" rx="3" fill="url(#block)" stroke="#3c3c3c" stroke-width="2"/>
+    <rect x="36" y="66" width="48" height="7" rx="2" fill="url(#rubber)" stroke="#5c0e0a" stroke-width="1.8"/>
+    <path d="M38 55 h44" stroke="#fff" stroke-opacity="0.7" stroke-width="1.5"/>
+  </g>
+</svg>
