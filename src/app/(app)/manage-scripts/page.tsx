@@ -55,7 +55,7 @@ const CodeMirrorEditor = dynamic(
   () => import("@/components/business/scripts/CodeMirrorEditor"),
   { ssr: false, loading: () => <div className="h-[480px] animate-pulse rounded-lg border bg-muted/40" /> },
 );
-import { generateSqlTemplateWithTranslation } from "@/components/business/dashboard/scriptTranslations";
+import { newCheckTemplate } from "@/components/business/scripts/sql-template";
 import { EditHistoryDialog } from "@/components/business/scripts/EditHistoryDialog";
 import { SkeletonTable } from "@/components/common/PageSkeletons";
 
@@ -138,13 +138,7 @@ const ManageScriptsContent = () => {
     setDialogMode(mode);
     if (mode === "add") {
       const newScriptId = `new-script-${Date.now().toString().slice(-6)}`;
-      const templateSql = generateSqlTemplateWithTranslation(
-        newScriptId,
-        "",
-        "",
-        "",
-        "",
-      );
+      const templateSql = newCheckTemplate();
       setCurrentFormScript({
         scriptId: newScriptId,
         name: "",
