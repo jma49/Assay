@@ -20,7 +20,9 @@ const AnalysisResultDialog = dynamic(() => import("@/components/business/ai/Anal
 import Link from "next/link";
 import { SkeletonPageHeader, SkeletonTable } from "@/components/common/PageSkeletons";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import { useMe } from "@/lib/auth/use-me";
+import { triageToMarkdown } from "@/lib/ai/triage-format";
 
 // 基于SQL脚本实际输出的精确类型定义
 interface OrderDuplicateDetail {
@@ -432,7 +434,7 @@ export default function ViewExecutionResultPage() {
     router.push("/dashboard");
   };
 
-  // AI分析错误函数
+  // Triage runs on the server from the run id; the answer is cached on the run.
   const handleAnalyzeError = async () => {
     if (!result) {
       return;
@@ -440,33 +442,21 @@ export default function ViewExecutionResultPage() {
 
     setIsAnalyzingError(true);
     try {
-      const response = await fetch('/api/ai/analyze-error', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          sql: `-- Script ID: ${result.scriptId}\n-- 执行时间: ${result.executedAt}\n-- 脚本相关信息不可用`,
-          errorMessage: result.message 
-        }),
+      const response = await fetch("/api/ai/triage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resultId: result._id, language }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'AI分析错误失败');
-      }
-
       const data = await response.json();
-      
-      if (data.success && data.analysis) {
-        setErrorAnalysis(data.analysis);
-        setIsErrorAnalysisDialogOpen(true);
-      } else {
-        throw new Error('AI返回数据格式错误');
+      if (!response.ok || !data.triage) {
+        throw new Error(data.error || response.statusText);
       }
+      setErrorAnalysis(triageToMarkdown(data.triage, language));
+      setIsErrorAnalysisDialogOpen(true);
     } catch (error) {
-      console.error('AI分析错误失败:', error);
-      // 可以在这里显示错误提示，但为了简化暂时忽略
+      toast.error(language === "zh" ? "AI 分诊失败" : "AI triage failed", {
+        description: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setIsAnalyzingError(false);
     }
@@ -724,10 +714,10 @@ export default function ViewExecutionResultPage() {
           <Link href="/dashboard">‹ {zh ? "仪表盘" : "Dashboard"}</Link>
         </Button>
         <div className="ml-auto flex items-center gap-2">
-          {tone === "failure" && aiAvailable && (
+          {(tone === "failure" || tone === "attention_needed") && aiAvailable && (
             <Button size="sm" variant="outline" onClick={handleAnalyzeError} disabled={isAnalyzingError}>
               <Brain />
-              {isAnalyzingError ? (zh ? "分析中…" : "Analyzing…") : zh ? "AI 分析错误" : "Analyze error with AI"}
+              {isAnalyzingError ? (zh ? "分诊中…" : "Triaging…") : zh ? "AI 分诊" : "Triage with AI"}
             </Button>
           )}
           {hasTableData && (
@@ -789,7 +779,7 @@ export default function ViewExecutionResultPage() {
           onOpenChange={setIsErrorAnalysisDialogOpen}
           result={errorAnalysis}
           type="explain"
-          title={language === "zh" ? "AI 错误分析结果" : "AI error analysis"}
+          title={language === "zh" ? "AI 分诊" : "AI triage"}
         />
       )}
     </div>

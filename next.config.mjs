@@ -1,3 +1,5 @@
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   env: {
@@ -83,4 +85,8 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+// The dev server writes to its own folder, so `npm run build` or `preview`
+// while `npm run dev` is running cannot overwrite its files and break it.
+export default function config(phase) {
+  return phase === PHASE_DEVELOPMENT_SERVER ? { ...nextConfig, distDir: ".next-dev" } : nextConfig;
+}
