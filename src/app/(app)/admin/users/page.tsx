@@ -505,7 +505,7 @@ export default function AdminUsersPage() {
                     size="sm"
                     onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
                     disabled={currentPage === 1}
-                    className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
+                    className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150 relative z-30"
                   >
                     <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                     <span className="hidden sm:inline">{t("previous")}</span>
@@ -602,7 +602,7 @@ export default function AdminUsersPage() {
                       setCurrentPage(Math.min(currentPage + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
-                    className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
+                    className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150 relative z-30"
                   >
                     <span className="hidden sm:inline">{t("next")}</span>
                     <ChevronRight className="h-3.5 w-3.5 ml-1" />

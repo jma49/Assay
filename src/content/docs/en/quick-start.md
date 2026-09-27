@@ -17,13 +17,13 @@ The sidebar on the left takes you to each section: **Checks**, **Runs**, **Cover
 
 ## Step 3 — Run a check
 
-1. Open **Runs** and choose **Run a Check…** in the top bar.
+1. Open **Runs** and choose **Run a check…** in the top bar.
 2. Pick a check such as *Duplicate orders* and choose **Run Check**.
 3. When it finishes, the new run appears at the top of **Check History**.
 
 ## Step 4 — Read the result
 
-Open **View Full Report** on the run. A check that returned no rows **passed**. A check that returned rows **needs attention**, and the rows are listed so you can see exactly what is wrong. A check that could not run **failed**, with the error.
+Open **View report** on the run. A check that returned no rows **passed**. A check that returned rows **needs attention**, and the rows are listed so you can see exactly what is wrong. A check that could not run **failed**, with the error.
 
 ## See also
 

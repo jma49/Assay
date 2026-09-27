@@ -518,7 +518,7 @@ const ManageScriptsContent = () => {
           {isLoading && scripts.length === 0 ? (
             <SkeletonTable rows={8} withTitle={false} />
           ) : error ? (
-            <div className="rounded-xl border bg-card shadow-xs  p-8 text-center">
+            <div className="rounded-xl bg-card shadow-border p-8 text-center">
               <AlertTriangle className="mx-auto mb-3 size-10 text-failure" />
               <p className="font-medium">{t("errorTitle")}</p>
               <p className="mt-1 text-[13px] text-muted-foreground">{error}</p>

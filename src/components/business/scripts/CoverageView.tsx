@@ -12,7 +12,7 @@ export function CoverageView() {
   const coverage = useCoverage(true);
   return (
     <div className={`${APP_CONTAINER} py-6`}>
-      <div className="flex h-[calc(100dvh-10rem)] min-h-[420px] overflow-hidden rounded-xl border bg-card shadow-xs max-xl:h-auto max-xl:flex-col">
+      <div className="flex h-[calc(100dvh-10rem)] min-h-[420px] overflow-hidden rounded-xl bg-card shadow-border max-xl:h-auto max-xl:flex-col">
         <CoveragePanes
           coverage={coverage}
           scripts={[]}

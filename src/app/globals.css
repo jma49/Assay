@@ -48,6 +48,12 @@
   --info: #2350c8;
 
   --code-bg: #f4f5f8;
+  /* Surfaces lift with a transparent ring instead of a solid border, so they
+     read the same on any background. Dividers and inputs keep real borders. */
+  --shadow-border:
+    0px 0px 0px 1px oklch(0 0 0 / 0.06), 0px 1px 2px -1px oklch(0 0 0 / 0.06), 0px 2px 4px 0px oklch(0 0 0 / 0.04);
+  --shadow-border-hover:
+    0px 0px 0px 1px oklch(0 0 0 / 0.08), 0px 1px 2px -1px oklch(0 0 0 / 0.08), 0px 2px 4px 0px oklch(0 0 0 / 0.06);
   --shadow-sm: 0 1px 2px rgba(22, 27, 38, 0.05), 0 1px 1px rgba(22, 27, 38, 0.03);
   --shadow-md: 0 8px 24px rgba(22, 27, 38, 0.1), 0 1px 2px rgba(22, 27, 38, 0.06);
 
@@ -100,6 +106,8 @@
   --info: #6f95f2;
 
   --code-bg: #12161c;
+  --shadow-border: 0 0 0 1px oklch(1 0 0 / 0.08);
+  --shadow-border-hover: 0 0 0 1px oklch(1 0 0 / 0.13);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.4);
 
@@ -172,6 +180,8 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   --shadow-xs: var(--shadow-sm);
+  --shadow-border: var(--shadow-border);
+  --shadow-border-hover: var(--shadow-border-hover);
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
 
@@ -225,9 +235,8 @@
 /* Legacy class names still used by pages that are not rebuilt yet. */
 .unified-card {
   background-color: var(--card);
-  border: 1px solid var(--border);
   border-radius: calc(var(--radius) + 4px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-border);
 }
 
 .icon-container {
