@@ -1,4 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
+import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache/cache-utils";
@@ -161,6 +162,11 @@ export async function PUT(
         { message: "Request body cannot be empty for update" },
         { status: 400 }
       );
+    }
+
+    const badSchedule = scheduleProblem(isScheduled, cronSchedule);
+    if (badSchedule) {
+      return NextResponse.json({ message: badSchedule }, { status: 400 });
     }
 
     // 严格的安全检查 - 只允许查询操作
