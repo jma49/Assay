@@ -27,7 +27,7 @@ Copy `.env.example` to `.env.local` for local work, or add these to your host.
 | `CHECK_TIMEOUT_MS` | How long one statement of a check may run before PostgreSQL stops it. Default 30000 (30 s), at most 300000. |
 | `CHECK_CONCURRENCY` | How many checks one server instance runs at the same time. Default 4. |
 | `ALLOWED_EMAIL_DOMAINS` | Comma-separated email domains allowed to sign in. Empty allows everyone. |
-| `CA_CERT_BLOB_URL` | CA certificate URL when PostgreSQL requires one for SSL. |
+| `CA_CERT_BLOB_URL` | https:// URL of the CA certificate PostgreSQL's server certificate is verified against. With `CLIENT_CERT_BLOB_URL` and `CLIENT_KEY_BLOB_URL`, also a client certificate. |
 
 > Only variables starting with `NEXT_PUBLIC_` reach the browser. Never give a secret that prefix.
 
