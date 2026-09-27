@@ -1,341 +1,72 @@
 # Assay
 
-Open-source SQL data checks for PostgreSQL: write read-only checks, run them on a schedule, and see what needs attention.
+Open-source SQL data checks for PostgreSQL: write read-only checks, run them on a schedule, and hear about it where your team works when something changes.
 
 **Live demo:** https://assay.majincheng.com (try it as a guest, or sign in with Google or GitHub; new accounts are viewers)
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black.svg)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-6.15.0-green.svg)](https://www.mongodb.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supported-336791.svg)](https://www.postgresql.org/)
-[![Redis](https://img.shields.io/badge/Redis-Cache-red.svg)](https://redis.io/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black.svg)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-6-green.svg)](https://www.mongodb.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-checked-336791.svg)](https://www.postgresql.org/)
 [![Better Auth](https://img.shields.io/badge/Better%20Auth-Google%20%7C%20GitHub-purple.svg)](https://www.better-auth.com/)
 
-A modern SQL script management and monitoring system built with Next.js, providing a visual interface for managing, executing, and monitoring SQL check scripts with enterprise-grade authentication and high-performance caching.
+## What it does
 
-## ✨ Key Features
+A **check** is a read-only SQL query whose returned rows are problems: duplicate orders, payments that do not match, stock below zero. Assay runs checks on a schedule and keeps each one's state:
 
-- **Script Management**: Full CRUD operations with intelligent SQL editor, syntax highlighting, and code formatting
-- **Automated Execution**: GitHub Actions and Vercel Cron Jobs integration for scheduled execution
-- **Real-time Monitoring**: Live execution progress tracking with detailed history and analytics
-- **Self-hosted sign-in**: Google and GitHub through Better Auth, users stored in your own MongoDB, optional email-domain restrictions
-- **High-Performance Caching**: Redis-powered distributed caching for improved performance
-- **Security-First**: Read-only enforcement with comprehensive SQL validation and approval workflows
-- **Multi-language Support**: Complete internationalization with English/Chinese language switching
+- **Clean** — no rows. **Issues** — rows that need attention, each marked new, still open or fixed since the last run. **Broken** — the query itself fails.
+- **Alerts** go to Slack, Discord, Telegram, Feishu, WeCom or a signed webhook when a check breaks, finds rows, gets new rows or recovers; with acknowledge, mute, owners, a daily summary and reminders.
+- **Agents** (Claude Code, Cursor, …) can list, read and run checks through the MCP server with personal API keys.
+- **Review**: changes by non-admins go through approval; every edit is versioned and audited.
 
-## 🚀 Quick Deployment
+## Stack
 
-### Prerequisites
+Next.js 15 (App Router) · TypeScript · Tailwind v4 · MongoDB (checks, runs, users) · PostgreSQL (the database being checked) · Upstash Redis (cache, rate limits) · Better Auth (Google, GitHub) · Vitest.
 
-- Node.js 18+ and npm
-- PostgreSQL database
-- MongoDB instance
-- Redis instance (optional but recommended)
-- A Google OAuth client and/or a GitHub OAuth app for sign-in
-
-### Environment Variables
-
-Create a `.env.local` file in the project root:
+## Quick start
 
 ```bash
-# Database Configuration
-DATABASE_URL="postgresql://username:password@host:port/database"
-MONGODB_URI="mongodb://username:password@host:port/database"
-
-# Redis Cache (Optional)
-REDIS_URL="redis://username:password@host:port"
-
-# Authentication (docs/authentication.md)
-BETTER_AUTH_SECRET="$(openssl rand -base64 32)"
-BETTER_AUTH_URL="https://assay.example.com"
-GOOGLE_CLIENT_ID="..."
-GOOGLE_CLIENT_SECRET="..."
-GITHUB_CLIENT_ID="..."
-GITHUB_CLIENT_SECRET="..."
-
-# Security
-CRON_SECRET_TOKEN="your-secure-random-token"
-
-# Application
-NEXT_PUBLIC_APP_VERSION="1.0.0"
-NODE_ENV="production"
-```
-
-### Installation & Setup
-
-1. **Clone and Install Dependencies**
-
-   ```bash
-   git clone https://github.com/jma49/Assay.git
-   cd Assay
-   npm install
-   ```
-
-2. **Database Setup**
-
-   ```bash
-   # Ensure your PostgreSQL and MongoDB instances are running
-   # The application will automatically create necessary collections
-   ```
-
-   Optionally load demo data: a `demo` schema (customers, orders, payments,
-   inventory with injected data quality issues) in `DATABASE_URL`, plus 11
-   check scripts in MongoDB. It only touches the `demo` schema and scripts
-   authored by `demo-seed`, and is safe to re-run.
-
-   ```bash
-   npm run seed:demo
-   DOTENV_CONFIG_PATH=.env.local npm run sql:run-all
-   ```
-
-3. **Development Mode**
-
-   ```bash
-   npm run dev
-   ```
-
-4. **Production Build**
-   ```bash
-   npm run build
-   npm start
-   ```
-
-### Platform-Specific Deployment
-
-#### Vercel Deployment
-
-1. **Connect Repository**
-
-   - Import your repository to Vercel
-   - Configure environment variables in Vercel dashboard
-
-2. **Deploy**
-   ```bash
-   vercel --prod
-   ```
-
-#### GitHub Actions Setup
-
-Create `.github/workflows/sql-check.yml`:
-
-```yaml
-name: SQL Script Execution
-
-on:
-  schedule:
-    - cron: "0 8 * * *" # Daily at 8:00 UTC
-  workflow_dispatch:
-
-jobs:
-  run-sql-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "20"
-          cache: "npm"
-      - run: npm ci
-      - name: Execute SQL Scripts
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          MONGODB_URI: ${{ secrets.MONGODB_URI }}
-        run: npx ts-node scripts/run-all-scripts.ts
-```
-
-#### Docker Deployment
-
-```dockerfile
-FROM node:20-alpine
-
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-
-COPY . .
-RUN npm run build
-
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
-```yaml
-# docker-compose.yml
-version: "3.8"
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - MONGODB_URI=${MONGODB_URI}
-      - REDIS_URL=${REDIS_URL}
-    depends_on:
-      - postgres
-      - mongodb
-      - redis
-
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: sqlscripts
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  mongodb:
-    image: mongo:6
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: user
-      MONGO_INITDB_ROOT_PASSWORD: password
-    volumes:
-      - mongodb_data:/data/db
-
-  redis:
-    image: redis:7-alpine
-    command: redis-server --requirepass password
-
-volumes:
-  postgres_data:
-  mongodb_data:
-```
-
-## 🔧 Configuration
-
-### Authentication Setup
-
-1. Create a Google OAuth client (redirect `<BETTER_AUTH_URL>/api/auth/callback/google`) and/or a GitHub OAuth app (callback `<BETTER_AUTH_URL>/api/auth/callback/github`).
-2. Set `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` and the client ids and secrets.
-3. Sign in once, then make yourself admin: `npm run user:set-role -- you@example.com admin`.
-
-See [docs/authentication.md](docs/authentication.md).
-
-### Database Configuration
-
-#### PostgreSQL
-
-- Ensure the target database allows read-only connections
-- Create a dedicated user with SELECT privileges only
-- Configure SSL if required for production
-
-#### MongoDB
-
-- Used for script metadata storage and execution history
-- Automatic collection creation on first run
-- Supports replica sets and sharding
-
-### Redis Cache (Optional)
-
-```bash
-# For enhanced performance, configure Redis:
-REDIS_URL="redis://localhost:6379"
-
-# With authentication:
-REDIS_URL="redis://username:password@host:port"
-
-# SSL connection:
-REDIS_URL="rediss://username:password@host:port"
-```
-
-### Monitoring
-
-#### Health Checks
-
-- `/api/health` - Application health status
-- `/api/maintenance/clear-cache` - Cache management
-- Automated monitoring for Redis connectivity
-
-## 🔒 Security Features
-
-### SQL Security
-
-- **Read-only enforcement**: Only SELECT, WITH, and EXPLAIN queries allowed
-- **Syntax validation**: PostgreSQL syntax checking before execution
-- **Timeout protection**: Automatic query timeout based on complexity
-- **Input sanitization**: Comprehensive user input validation
-
-### Access Control
-
-- **Domain-based restrictions**: Limit access to specific email domains
-- **Invitation-only registration**: Controlled user onboarding
-- **Role-based permissions**: Admin approval workflows for sensitive operations
-- **Secure API endpoints**: Token-based protection for automation endpoints
-
-### Approval Workflow
-
-- **Script creation**: Immediate access, no approval required
-- **Modify others' scripts**: Requires admin approval
-- **Script deletion**: Always requires admin approval
-- **Audit logging**: Complete operation history tracking
-
-## 📚 API Reference
-
-### Core Endpoints
-
-- `GET /api/scripts` - List all scripts
-- `POST /api/scripts` - Create new script
-- `PUT /api/scripts/[id]` - Update script
-- `DELETE /api/scripts/[id]` - Delete script
-- `POST /api/run-check` - Execute single script
-- `POST /api/run-all-scripts` - Batch execution
-
-### Monitoring Endpoints
-
-- `GET /api/execution-history` - Execution history
-- `GET /api/check-history` - Script check history
-- `GET /api/health` - System health status
-
-### Management Endpoints
-
-- `POST /api/maintenance/clear-cache` - Clear system cache
-- `GET /api/batch-execution-status` - Batch execution status
-
-## 🛠️ Development
-
-### Local Development Setup
-
-```bash
-# Install dependencies
 npm install
-
-# Set up environment variables
-cp .env.example .env.local
-
-# Start development server
+cp .env.example .env.local   # fill in MongoDB, PostgreSQL, Redis, Better Auth and one OAuth provider
+npm run seed:demo            # optional: a demo schema and sample checks
 npm run dev
 ```
 
-### Available Scripts
+Sign in once, then make yourself admin: `npm run user:set-role -- you@example.com admin`.
+
+Scheduled checks run from GitHub Actions (`.github/workflows/sql-check-cron.yml`) or from cron on your own server (`npm run sql:run-scheduled`).
+
+## Documentation
+
+| | |
+| --- | --- |
+| [docs/architecture.md](docs/architecture.md) | Layers, run pipeline, concurrency rules, phases |
+| [docs/authentication.md](docs/authentication.md) | Sign-in, roles, moving from Clerk |
+| [docs/notifications.md](docs/notifications.md) | Alert channels, delivery model, setup |
+| [docs/mcp.md](docs/mcp.md) | Connecting agents, tools, security |
+| [docs/brand.md](docs/brand.md) | The beetle, colours, type |
+| [docs/post-deploy-checklist.md](docs/post-deploy-checklist.md) | What to verify after each production deploy |
+| [scripts/README.md](scripts/README.md) | Command-line tools and migrations |
+| `/docs` in the app | User guide (English and Chinese) |
+
+## Development
 
 ```bash
-npm run dev          # Development server
-npm run build        # Production build
-npm run start        # Start production server
-npm run lint         # ESLint checking
-npm run type-check   # TypeScript validation
+npm run typecheck && npm run lint && npm test   # before every commit (see AGENTS.md)
+npm run build
 ```
-
-### Project Structure
 
 ```
 src/
-├── app/                 # Next.js app directory
-├── components/          # React components
-├── lib/                # Utilities and configurations
-├── middleware.ts       # Authentication middleware
-└── services/           # Business logic services
-
-scripts/
-├── core/               # Core execution scripts
-├── maintenance/        # System maintenance scripts
-└── scheduler/          # Scheduling utilities
+├── app/            # routes: pages and API
+├── components/     # UI
+├── contracts/      # request and response types shared by server and client
+├── domain/         # pure rules: runs, alerts, digests, reminders
+├── lib/            # auth, database clients, SQL validation, utilities
+└── server/         # services, repositories, notifications, MCP
+scripts/            # CLI entry points and migrations
+docs/               # engineering docs
 ```
-
-## 📞 Support
-
-For deployment assistance or technical support, please refer to the documentation in the `/docs` directory or create an issue in the repository.
 
 ## 📄 License
 
