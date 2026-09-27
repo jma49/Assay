@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { CheckStats } from "@/lib/database/check-stats";
-import { useAppCommand } from "@/lib/commands/use-app-command";
 import type { ScriptInfo } from "../types";
 import { DEFAULT_SORT, EMPTY_STATS, parseNextScheduled, parseScriptList, takeSearchParam } from "./runs";
 import { useRunHistory } from "./useRunHistory";
@@ -20,10 +19,6 @@ export function useRunsPage(language: string) {
   const [nextScheduled, setNextScheduled] = useState<Date | null>(null);
   const [overallStats, setOverallStats] = useState<CheckStats>(EMPTY_STATS);
   const history = useRunHistory(setError);
-
-  // A View-menu filter that arrives before the first history request is applied
-  // by that request, which would otherwise reset it to "all".
-  const initialFilterRef = useRef<string | null>(null);
 
   const loadScripts = useCallback(async () => {
     const response = await fetch("/api/list-scripts", {
@@ -90,21 +85,6 @@ export function useRunsPage(language: string) {
       });
   };
 
-  // View menu: filter the run history by status. Registered before the mount
-  // effect below so a filter chosen on another page reaches the first load.
-  useAppCommand((command) => {
-    if (command.type !== "history-filter") return false;
-    if (!history.hasRequested()) {
-      initialFilterRef.current = command.status;
-      history.presetFilters({ status: command.status });
-    } else {
-      history.changeStatus(command.status);
-    }
-    // Wait for the page to lay out before scrolling when it is still loading.
-    setTimeout(scrollToHistory, document.getElementById("execution-history") ? 0 : 800);
-    return true;
-  });
-
   useEffect(() => {
     // Strict Mode runs this twice; by then the search link is gone from the URL,
     // so a second pass would replace the filtered load with an unfiltered one.
@@ -114,7 +94,7 @@ export function useRunsPage(language: string) {
       window.history.replaceState({}, "", searchLink.cleanedHref);
       openFilteredBySearch(searchLink.search);
     } else {
-      loadAll(() => loadPage({ page: 1, status: initialFilterRef.current, search: "", hashtags: [], sort: DEFAULT_SORT }));
+      loadAll(() => loadPage({ page: 1, status: null, search: "", hashtags: [], sort: DEFAULT_SORT }));
     }
     // Runs once on mount; later loads come from the filters and the Run sheet.
     // eslint-disable-next-line react-hooks/exhaustive-deps

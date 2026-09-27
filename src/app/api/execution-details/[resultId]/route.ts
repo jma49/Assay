@@ -5,7 +5,6 @@ import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { ObjectId } from "mongodb";
 
-const MONGO_COLLECTION_NAME = process.env.MONGO_COLLECTION_NAME || "result";
 const SQL_SCRIPTS_COLLECTION_NAME = "sql_scripts";
 
 export const GET = async (
@@ -27,7 +26,7 @@ export const GET = async (
   try {
     const mongoDbClient = getMongoDbClient();
     const db = await mongoDbClient.getDb();
-    const historyCollection = db.collection(MONGO_COLLECTION_NAME);
+    const historyCollection = db.collection("result");
     const scriptsCollection = db.collection(SQL_SCRIPTS_COLLECTION_NAME);
 
     const run = await historyCollection.findOne({ _id: new ObjectId(resultId) });
