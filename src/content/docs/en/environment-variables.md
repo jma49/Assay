@@ -24,6 +24,7 @@ At least one sign-in provider (Google or GitHub) must be set.
 | `CHECK_TIMEOUT_MS` | How long a check's whole script may run, all statements together, before PostgreSQL stops it. Default 30000 (30 s); values are kept between 1000 and 300000. |
 | `CHECK_CONCURRENCY` | How many checks one server instance runs at the same time; more wait for a free slot. Default 4. |
 | `PG_POOL_MAX` | Most connections one server instance opens to `DATABASE_URL`. Default 10. |
+| `SEED_DATABASE_URL` | Optional. A role that may create tables, used only by `npm run seed:demo`. Lets `DATABASE_URL` be a SELECT-only role. |
 | `RUN_RETENTION_DAYS` | Days a run is kept before MongoDB deletes it. Default 90; `0` keeps runs forever. |
 
 ## Alerts
