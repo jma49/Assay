@@ -1,0 +1,139 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import type { CheckStats } from "@/lib/database/check-stats";
+import { useAppCommand } from "@/lib/commands/use-app-command";
+import type { ScriptInfo } from "../types";
+import { DEFAULT_SORT, EMPTY_STATS, parseNextScheduled, parseScriptList, takeSearchParam } from "./runs";
+import { useRunHistory } from "./useRunHistory";
+
+const scrollToHistory = () => document.getElementById("execution-history")?.scrollIntoView({ behavior: "smooth" });
+
+/**
+ * Everything the Runs page shows: the check list, overall numbers and the run history.
+ * A `?search=` link opens the history filtered to that check.
+ */
+export function useRunsPage(language: string) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [availableScripts, setAvailableScripts] = useState<ScriptInfo[]>([]);
+  const [isFetchingScripts, setIsFetchingScripts] = useState(true);
+  const [nextScheduled, setNextScheduled] = useState<Date | null>(null);
+  const [overallStats, setOverallStats] = useState<CheckStats>(EMPTY_STATS);
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const history = useRunHistory(setError);
+
+  // A View-menu filter that arrives before the first history load is applied
+  // by that load, which would otherwise reset it to "all".
+  const initialHistoryLoadedRef = useRef(false);
+  const initialFilterRef = useRef<string | null>(null);
+
+  const loadScripts = useCallback(async () => {
+    const response = await fetch("/api/list-scripts", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!response.ok) {
+      throw new Error(`脚本列表获取失败: ${response.status} ${response.statusText}`);
+    }
+    const body = await response.json();
+    setNextScheduled(parseNextScheduled(body));
+    setAvailableScripts(parseScriptList(body));
+  }, []);
+
+  const loadOverallStats = useCallback(async () => {
+    try {
+      const response = await fetch("/api/check-history/stats");
+      if (!response.ok) {
+        throw new Error(`Loading run stats failed: ${response.status} ${response.statusText}`);
+      }
+      setOverallStats(await response.json());
+    } catch (err) {
+      console.error("[runs] Loading run stats failed:", err);
+    }
+  }, []);
+
+  const { loadPage, isBusy } = history;
+  const loadInitialData = useCallback(async () => {
+    if (isBusy() || isSearchMode) return;
+    setLoading(true);
+    setIsFetchingScripts(true);
+    try {
+      // History and stats do not depend on the script list, so request all three at once.
+      await Promise.all([
+        loadScripts(),
+        loadPage({ page: 1, status: initialFilterRef.current, search: "", hashtags: [], sort: DEFAULT_SORT }),
+        loadOverallStats(),
+      ]);
+      initialHistoryLoadedRef.current = true;
+      setIsFetchingScripts(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "数据加载失败");
+    } finally {
+      setLoading(false);
+    }
+  }, [isBusy, isSearchMode, loadScripts, loadPage, loadOverallStats]);
+
+  const openFilteredBySearch = (search: string) => {
+    setIsSearchMode(true);
+    history.presetFilters({ status: null, search, hashtags: [] });
+    toast.info(language === "zh" ? "正在筛选执行历史" : "Filtering run history", {
+      description: language === "zh" ? `搜索脚本: ${search}` : `Script: ${search}`,
+      duration: 3000,
+    });
+    // Leave time for the filtered history to load before scrolling to it.
+    setTimeout(scrollToHistory, 1000);
+    setLoading(true);
+    setIsFetchingScripts(true);
+    // The history itself loads once the search term is set, below.
+    Promise.all([loadScripts(), loadOverallStats()])
+      .catch((err) => setError(err instanceof Error ? err.message : "数据加载失败"))
+      .finally(() => {
+        setLoading(false);
+        setIsFetchingScripts(false);
+      });
+  };
+
+  // View menu: filter the run history by status. Registered before the mount
+  // effect below so a filter chosen on another page reaches the first load.
+  useAppCommand((command) => {
+    if (command.type !== "history-filter") return false;
+    const beforeFirstLoad = !initialHistoryLoadedRef.current;
+    if (beforeFirstLoad) {
+      initialFilterRef.current = command.status;
+      history.presetFilters({ status: command.status });
+    } else {
+      history.changeStatus(command.status);
+    }
+    // Wait for the page to lay out before scrolling when it is still loading.
+    setTimeout(scrollToHistory, beforeFirstLoad ? 800 : 0);
+    return true;
+  });
+
+  useEffect(() => {
+    const searchLink = takeSearchParam(window.location.href);
+    if (searchLink) {
+      window.history.replaceState({}, "", searchLink.cleanedHref);
+      openFilteredBySearch(searchLink.search);
+    } else {
+      loadInitialData();
+    }
+    // Runs once on mount; later loads come from the filters and the Run sheet.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (history.searchTerm.trim() !== "") loadPage(history.current({ page: 1 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [history.searchTerm]);
+
+  return {
+    loading,
+    error,
+    availableScripts,
+    isFetchingScripts,
+    nextScheduled,
+    overallStats,
+    history,
+    refresh: loadInitialData,
+  };
+}
