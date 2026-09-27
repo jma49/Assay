@@ -68,3 +68,11 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 - [ ] 浅色、深色模式下侧边栏、卡片、弹窗、提示条配色正常，状态圆点颜色正确。
 - [ ] 新 favicon（蓝底白 A）和 iOS 主屏图标（apple-icon 由构建生成）显示正常。
 - [ ] 执行检查、分配角色、审批、删除确认等弹窗居中显示，Esc 可以关闭。
+
+## 执行管线（阶段 2）
+
+- [ ] 部署后在生产库执行一次回填（幂等，只补没有 state 的检查）：`DOTENV_CONFIG_PATH=<生产环境变量文件> npx tsx -r dotenv/config scripts/backfill-check-state.ts --dry-run`，确认列表后去掉 `--dry-run` 再跑。
+- [ ] 连续点两次「执行检查」：第二次提示正在执行（409），不会跑两遍。
+- [ ] 「批量执行」进度条正常推进并结束；Vercel 函数日志里没有 `[Batch ...] failed`。
+- [ ] Actions 里「Scheduled SQL checks」用 tsx 运行成功（日志里是 `Done: N ran, 0 failed ...`）。
+- [ ] MongoDB 里 `events`、`batches` 集合和索引已自动创建（`batches` 有 7 天 TTL）。

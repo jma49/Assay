@@ -179,8 +179,9 @@ queue can replace the inline runner later without changing services.
 2. **Server foundation.** `server/` layout, `withAuth`, contracts, the
    `DataSource` interface; move the executor into `runCheck` with the
    lease, row cap and fingerprints; migrate runs and back-fill check state.
-   *In progress: domain rules, `withAuth` and the statement splitter (#36);
-   `runCheck`, `runChecks` and the MongoDB store; back-fill and batches next.*
+   *Done: domain rules, `withAuth` and the statement splitter (#36);
+   `runCheck`, `runChecks` and the MongoDB store (#37); batches in MongoDB
+   run with `after()`, and `scripts/backfill-check-state.ts`.*
 3. **Checks list and detail on real state.** Status groups, 30-run history,
    new / still / fixed diffs.
 4. **Events and notifications.** Activity feed, Slack notifier, outbox
