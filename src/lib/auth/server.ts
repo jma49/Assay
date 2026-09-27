@@ -56,9 +56,11 @@ export const auth = betterAuth({
   },
   emailAndPassword: { enabled: providers.password },
   account: {
-    // Google and GitHub both verify email addresses, so the same person
-    // signing in with either ends up as one user.
-    accountLinking: { enabled: true, trustedProviders: ["google", "github"] },
+    // The same person signing in with Google and GitHub becomes one user,
+    // but only when the provider says the email is verified. No provider is
+    // "trusted" past that check, or an unverified address could take over
+    // someone else's account.
+    accountLinking: { enabled: true },
   },
   session: {
     // A signed cookie holds the session for five minutes, so most API calls

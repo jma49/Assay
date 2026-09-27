@@ -20,8 +20,8 @@ with `npm run user:set-role -- <email> <role>`. `ALLOWED_EMAIL_DOMAINS`
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | GitHub → Settings → Developer settings → OAuth Apps. Callback URL: `<BETTER_AUTH_URL>/api/auth/callback/github`. |
 
 A provider appears on the sign-in page once its two variables are set. The
-same person signing in with Google and GitHub (same verified email) is one
-user.
+same person signing in with Google and GitHub is one user, but accounts are
+only linked when the provider reports the email as verified.
 
 ### Local development without OAuth apps
 
