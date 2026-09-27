@@ -7,33 +7,15 @@ export interface CheckStats {
   needsAttentionCount: number;
 }
 
-// "attention_needed" results are stored with status "success", so they are
-// excluded from the success bucket to keep the three buckets disjoint.
+/** Runs counted by outcome: clean (success), issues (needs attention) and error (failure). */
 export const CHECK_STATS_PIPELINE: Document[] = [
   {
     $group: {
       _id: null,
       totalCount: { $sum: 1 },
-      needsAttentionCount: {
-        $sum: { $cond: [{ $eq: ["$statusType", "attention_needed"] }, 1, 0] },
-      },
-      successCount: {
-        $sum: {
-          $cond: [
-            {
-              $and: [
-                { $eq: ["$status", "success"] },
-                { $ne: ["$statusType", "attention_needed"] },
-              ],
-            },
-            1,
-            0,
-          ],
-        },
-      },
-      failureCount: {
-        $sum: { $cond: [{ $eq: ["$status", "failure"] }, 1, 0] },
-      },
+      successCount: { $sum: { $cond: [{ $eq: ["$outcome", "clean"] }, 1, 0] } },
+      needsAttentionCount: { $sum: { $cond: [{ $eq: ["$outcome", "issues"] }, 1, 0] } },
+      failureCount: { $sum: { $cond: [{ $eq: ["$outcome", "error"] }, 1, 0] } },
     },
   },
 ];

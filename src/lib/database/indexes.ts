@@ -5,7 +5,7 @@ export const INDEXES: Record<string, IndexDescription[]> = {
   user_roles: [{ key: { userId: 1 }, unique: true }],
   sql_scripts: [{ key: { scriptId: 1 }, unique: true }, { key: { createdAt: -1 } }],
   // Runs are deleted at expiresAt (RUN_RETENTION_DAYS after they finished; see migrations/set-run-expiry.ts for older runs).
-  result: [{ key: { execution_time: -1 } }, { key: { script_name: 1, execution_time: -1 } }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
+  result: [{ key: { finishedAt: -1 } }, { key: { checkId: 1, finishedAt: -1 } }, { key: { outcome: 1, finishedAt: -1 } }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
   approval_requests: [{ key: { requestId: 1 }, unique: true }, { key: { status: 1, requestedAt: -1 } }],
   edit_history: [{ key: { operationTime: -1 } }, { key: { "scriptSnapshot.scriptId": 1, operationTime: -1 } }],
   script_versions: [{ key: { scriptId: 1, createdAt: -1 } }],
