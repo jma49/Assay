@@ -191,6 +191,10 @@ export async function PUT(
 
     if (isModifyingOthersScript) {
       const userRole = await getUserRole(user.id);
+      // Without a role we cannot tell whether approval is needed: refuse instead of applying directly.
+      if (!userRole) {
+        return NextResponse.json({ success: false, message: "无法获取用户角色信息" }, { status: 500 });
+      }
       if (userRole) {
         const autoApprovalEligible = isAutoApprovalEligible(
           analyzeScriptType(sqlContent || "SELECT 1"),
@@ -429,6 +433,10 @@ export async function DELETE(
 
     // Deleting any check needs approval unless you are an admin.
     const userRole = await getUserRole(user.id);
+    // Without a role we cannot tell whether approval is needed: refuse instead of deleting directly.
+    if (!userRole) {
+      return NextResponse.json({ success: false, message: "无法获取用户角色信息" }, { status: 500 });
+    }
     if (userRole) {
       const autoApprovalEligible = isAutoApprovalEligible(
         analyzeScriptType(existingScript.sqlContent || "SELECT 1"),
