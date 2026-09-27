@@ -26,7 +26,7 @@ A self-hosted workspace has two options:
 To see what would run without running anything:
 
 ```bash
-DOTENV_CONFIG_PATH=.env.local npx ts-node -r dotenv/config scripts/run-all-scripts.ts scheduled --dry-run
+DOTENV_CONFIG_PATH=.env.local npx tsx -r dotenv/config scripts/run-all-scripts.ts scheduled --dry-run
 ```
 
 ### A small always-on server

@@ -257,7 +257,7 @@ async function main(): Promise<void> {
 // 帮助信息
 function showHelp() {
   console.log(`
-用法: ts-node scripts/run-all-scripts.ts [mode]
+用法: tsx scripts/run-all-scripts.ts [mode]
 
 模式选项:
   all        - 执行所有脚本 (默认)
@@ -265,9 +265,9 @@ function showHelp() {
   enabled    - 仅执行已启用的脚本 (与 scheduled 相同)
 
 示例:
-  npx ts-node scripts/run-all-scripts.ts
-  npx ts-node scripts/run-all-scripts.ts all
-  npx ts-node scripts/run-all-scripts.ts scheduled
+  npx tsx scripts/run-all-scripts.ts
+  npx tsx scripts/run-all-scripts.ts all
+  npx tsx scripts/run-all-scripts.ts scheduled
   `);
 }
 
