@@ -37,7 +37,6 @@ export function CompactHashtagFilter({
     return langTranslations[key as keyof typeof langTranslations] || key;
   };
 
-  // 筛选可用的hashtag
   const filteredHashtags = useMemo(() => {
     if (!searchValue.trim()) return availableHashtags;
     
@@ -46,7 +45,6 @@ export function CompactHashtagFilter({
     );
   }, [availableHashtags, searchValue]);
 
-  // 处理单个hashtag的选择/取消选择
   const toggleHashtag = useCallback((hashtag: string) => {
     const newHashtags = selectedHashtags.includes(hashtag) 
       ? selectedHashtags.filter((tag) => tag !== hashtag)
@@ -54,13 +52,11 @@ export function CompactHashtagFilter({
     
     onHashtagsChange(newHashtags);
     
-    // 选择后清空搜索，显示选择效果
     if (searchValue) {
       setSearchValue("");
     }
   }, [selectedHashtags, onHashtagsChange, searchValue]);
 
-  // 清除所有选择
   const clearSelection = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
@@ -68,12 +64,10 @@ export function CompactHashtagFilter({
     setSearchValue("");
   }, [onHashtagsChange]);
 
-  // 处理搜索框的清空
   const clearSearch = useCallback(() => {
     setSearchValue("");
   }, []);
 
-  // 应用选择并关闭弹框
   const applySelection = useCallback(() => {
     setIsOpen(false);
     setSearchValue("");
@@ -98,7 +92,6 @@ export function CompactHashtagFilter({
                 "group relative"
               )}
             >
-              {/* 背景装饰 */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               
               <div className="relative flex items-center gap-2 min-w-0 flex-1">
@@ -124,7 +117,6 @@ export function CompactHashtagFilter({
             sideOffset={4}
           >
             <div className="">
-              {/* 头部 */}
               <div className="px-4 py-3 border-b border-border/30   ">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -154,7 +146,6 @@ export function CompactHashtagFilter({
                 </div>
               </div>
 
-              {/* 搜索框 */}
               <div className="p-3 border-b border-border/20">
                 <div className="relative">
                   <Hash className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -178,7 +169,6 @@ export function CompactHashtagFilter({
                 </div>
               </div>
 
-              {/* 标签列表 */}
               <div className="p-2 max-h-64 overflow-y-auto">
                 {filteredHashtags.length === 0 ? (
                   <div className="px-3 py-6 text-center text-sm text-muted-foreground">
@@ -220,7 +210,6 @@ export function CompactHashtagFilter({
                 )}
               </div>
 
-              {/* 底部操作栏 */}
               {selectedHashtags.length > 0 && (
                 <div className="px-3 py-3 border-t border-border/20 bg-muted/20">
                   <div className="flex items-center justify-between gap-2">
@@ -254,7 +243,6 @@ export function CompactHashtagFilter({
           </PopoverContent>
         </Popover>
 
-        {/* 外部清除按钮 - 只在有选择时显示 */}
         {selectedHashtags.length > 0 && (
           <Button
             variant="ghost"
