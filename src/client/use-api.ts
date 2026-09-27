@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 
 export interface ApiState<T> {
   data: T | null;
+  /** The URL `data` came from; differs from the current URL while a new request is in flight. */
+  dataUrl: string | null;
   error: string | null;
   loading: boolean;
   /** Fetches again, keeping the current data on screen until the new one arrives. */
@@ -13,6 +15,7 @@ export interface ApiState<T> {
 /** GETs JSON from an API route; errors carry the route's message when it sent one. */
 export function useApi<T>(url: string | null): ApiState<T> {
   const [data, setData] = useState<T | null>(null);
+  const [dataUrl, setDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(Boolean(url));
   const [version, setVersion] = useState(0);
@@ -26,6 +29,7 @@ export function useApi<T>(url: string | null): ApiState<T> {
         const body = await response.json().catch(() => null);
         if (!response.ok) throw new Error(body?.error?.message ?? body?.message ?? response.statusText);
         setData(body as T);
+        setDataUrl(url);
         setError(null);
       })
       .catch((cause) => {
@@ -39,5 +43,5 @@ export function useApi<T>(url: string | null): ApiState<T> {
   }, [url, version]);
 
   const reload = useCallback(() => setVersion((v) => v + 1), []);
-  return { data, error, loading, reload };
+  return { data, dataUrl, error, loading, reload };
 }

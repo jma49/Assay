@@ -5,6 +5,7 @@ import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { parseJson, withAuth } from "@/server/http/route";
 import { mongoBatchStore, runBatch } from "@/server/services/batches";
+import { dispatchNow } from "@/server/services/notify-deps";
 import { runCheckNow } from "@/server/services/run-check-deps";
 
 const Body = z.object({
@@ -50,11 +51,12 @@ export const POST = withAuth(Permission.SCRIPT_EXECUTE, async (request, { princi
     isActive: true,
   });
 
-  after(() =>
-    runBatch(executionId, { store, run: runCheckNow, now: () => new Date() }).catch((error) =>
+  after(async () => {
+    await runBatch(executionId, { store, run: runCheckNow, now: () => new Date() }).catch((error) =>
       console.error(`[Batch ${executionId}] failed:`, error),
-    ),
-  );
+    );
+    await dispatchNow().catch((error) => console.error("[Notify] Dispatch failed:", error));
+  });
 
   const message = `Running ${checks.length} checks`;
   return NextResponse.json({
