@@ -3,7 +3,7 @@ import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache/cache-utils";
-import { authorizeApiRequest, validateApiAuth } from "@/lib/auth/auth-utils";
+import { validateApiAuth } from "@/lib/auth/auth-utils";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
 import { authorProblem, ownsCheck, readVersion, versionFilter } from "@/lib/workflows/check-fields";
@@ -41,55 +41,6 @@ interface UpdateScriptData {
   isScheduled?: boolean;
   cronSchedule?: string;
   // scriptId is from URL param, not body for update
-}
-
-// GET a single script by scriptId
-export async function GET(
-  request: NextRequest,
-  { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
-) {
-  try {
-    const authResult = await authorizeApiRequest(Permission.SCRIPT_READ);
-    if (!authResult.isValid) {
-      return authResult.response;
-    }
-
-    const params = await paramsPromise; // Await the promise
-    const { scriptId } = params;
-
-    if (!scriptId) {
-      return NextResponse.json(
-        { message: "scriptId parameter is required" },
-        { status: 400 }
-      );
-    }
-
-    const collection = await getSqlScriptsCollection();
-    const scriptDocument = await collection.findOne({ scriptId });
-
-    if (!scriptDocument) {
-      return NextResponse.json(
-        { message: `Script with ID '${scriptId}' not found` },
-        { status: 404 }
-      );
-    }
-
-    // Convert ObjectId to string if you are returning _id
-    // const responseDocument = {
-    //   ...scriptDocument,
-    //   _id: scriptDocument._id.toString(),
-    // };
-    // For now, returning the document as is, assuming frontend handles ObjectId if necessary
-    // or that scriptId is the primary way to identify and _id is not explicitly needed by client for this call.
-
-    return NextResponse.json(scriptDocument, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching script by ID:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
-  }
 }
 
 // PUT (update) a script by scriptId
