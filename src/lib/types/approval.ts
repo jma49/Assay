@@ -1,21 +1,18 @@
-// 审批状态枚举
 export enum ApprovalStatus {
-  PENDING = "pending", // 待审批
-  APPROVED = "approved", // 已批准
-  REJECTED = "rejected", // 已拒绝
-  WITHDRAWN = "withdrawn", // 已撤回
-  DRAFT = "draft", // 草稿状态（开发者可继续编辑）
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  WITHDRAWN = "withdrawn",
+  DRAFT = "draft",
 }
-
-// 脚本类型枚举（用于确定审批级别）
 export enum ScriptType {
-  READ_ONLY = "read_only", // 只读查询脚本
-  DATA_MODIFICATION = "data_modification", // 数据修改脚本
-  STRUCTURE_CHANGE = "structure_change", // 结构变更脚本
-  SYSTEM_ADMIN = "system_admin", // 系统管理脚本
+  READ_ONLY = "read_only",
+  DATA_MODIFICATION = "data_modification",
+  STRUCTURE_CHANGE = "structure_change",
+  SYSTEM_ADMIN = "system_admin",
 }
 
-// 前端使用的审批请求接口
+// The approval request as the pages receive it.
 export interface ApprovalRequestDto {
   id: string;
   scriptId: string;
@@ -39,8 +36,6 @@ export interface ApprovalRequestDto {
   comment?: string;
   reason?: string;
 }
-
-// 用户角色枚举
 export enum UserRole {
   ADMIN = "admin",
   MANAGER = "manager",

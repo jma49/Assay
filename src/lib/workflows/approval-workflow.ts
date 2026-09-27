@@ -6,24 +6,22 @@ import { clearScriptsCache } from "../cache/cache-utils";
 import { createScriptVersion } from "./version-control";
 import { recordEditHistoryOnServer } from "./edit-history-store";
 
-// 审批状态枚举
 export enum ApprovalStatus {
-  PENDING = "pending", // 待审批
-  APPROVED = "approved", // 已批准
-  REJECTED = "rejected", // 已拒绝
-  WITHDRAWN = "withdrawn", // 已撤回
-  DRAFT = "draft", // 草稿状态（开发者可继续编辑）
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+  WITHDRAWN = "withdrawn",
+  DRAFT = "draft", // a developer may still edit it
 }
 
-// 脚本类型枚举（用于确定审批级别）
+// How far a script reaches; every check is read-only today, the rest is kept for the classification.
 export enum ScriptType {
-  READ_ONLY = "read_only", // 只读查询脚本
-  DATA_MODIFICATION = "data_modification", // 数据修改脚本
-  STRUCTURE_CHANGE = "structure_change", // 结构变更脚本
-  SYSTEM_ADMIN = "system_admin", // 系统管理脚本
+  READ_ONLY = "read_only",
+  DATA_MODIFICATION = "data_modification",
+  STRUCTURE_CHANGE = "structure_change",
+  SYSTEM_ADMIN = "system_admin",
 }
 
-// 审批请求接口
 export interface ApprovalRequest {
   requestId: string;
   scriptId: string;
@@ -43,16 +41,14 @@ export interface ApprovalRequest {
   reviewComment?: string;
   updatedAt: Date;
   autoApprovalEligible: boolean;
-  requiredApprovers: string[]; // 必需的审批人角色或用户ID
-  currentApprovers: string[]; // 已审批的用户ID
+  requiredApprovers: string[]; // roles or user ids that must approve
+  currentApprovers: string[]; // user ids that have approved
 
-  // 新增字段：存储原始操作信息
   operationType: "create" | "update" | "delete";
-  originalData?: Record<string, unknown>; // 存储原始脚本数据（用于创建和更新）
-  sqlContent?: string; // SQL内容（单独存储便于查看）
+  originalData?: Record<string, unknown>; // the change itself; only its editable fields are applied
+  sqlContent?: string; // kept separately so reviewers can read it
 }
 
-// 审批历史接口
 export interface ApprovalHistory {
   historyId: string;
   requestId: string;
@@ -67,10 +63,8 @@ export interface ApprovalHistory {
   metadata?: Record<string, unknown>;
 }
 
-// 缓存数据库实例
 let cachedDb: Db | null = null;
 
-// 获取数据库实例（缓存版本）
 async function getDb(): Promise<Db> {
   if (!cachedDb) {
     const mongoDbClient = getMongoDbClient();
@@ -79,30 +73,22 @@ async function getDb(): Promise<Db> {
   return cachedDb;
 }
 
-// 获取审批请求集合
 async function getApprovalRequestsCollection(): Promise<Collection<Document>> {
   const db = await getDb();
   return db.collection("approval_requests");
 }
 
-// 获取审批历史集合
 async function getApprovalHistoryCollection(): Promise<Collection<Document>> {
   const db = await getDb();
   return db.collection("approval_history");
 }
 
-/**
- * 生成唯一的请求ID
- */
 function generateRequestId(): string {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2);
   return `req_${timestamp}_${random}`;
 }
 
-/**
- * 生成唯一的历史记录ID
- */
 function generateHistoryId(): string {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2);
@@ -110,15 +96,12 @@ function generateHistoryId(): string {
 }
 
 /**
- * 确定脚本类型（基于SQL内容分析）- 更严格的版本
+ * Classifies a script by its SQL. Only read-only checks are allowed today; the other classes are kept for the approval rules.
  */
 export function analyzeScriptType(sqlContent: string): ScriptType {
   const upperSql = sqlContent.toUpperCase().trim();
 
-  // 在新的安全策略下，系统只允许查询操作
-  // 但我们仍然保留分类逻辑以备将来使用
 
-  // 系统管理类脚本关键词
   const systemAdminKeywords = [
     "GRANT",
     "REVOKE",
@@ -134,7 +117,6 @@ export function analyzeScriptType(sqlContent: string): ScriptType {
     return ScriptType.SYSTEM_ADMIN;
   }
 
-  // 结构变更类脚本关键词
   const structureChangeKeywords = [
     "CREATE TABLE",
     "DROP TABLE",
@@ -148,7 +130,6 @@ export function analyzeScriptType(sqlContent: string): ScriptType {
     return ScriptType.STRUCTURE_CHANGE;
   }
 
-  // 数据修改类脚本关键词
   const dataModificationKeywords = [
     "INSERT",
     "UPDATE",
@@ -160,25 +141,18 @@ export function analyzeScriptType(sqlContent: string): ScriptType {
     return ScriptType.DATA_MODIFICATION;
   }
 
-  // 在严格安全策略下，所有脚本都应该是只读查询
   return ScriptType.READ_ONLY;
 }
 
 /**
- * 确定是否符合自动审批条件 - 简化的审批策略
+ * Admins' changes apply at once; everyone else's wait for an admin.
  */
 export function isAutoApprovalEligible(
   scriptType: ScriptType,
   requesterRole: UserRole,
   operationType: "create" | "update" | "delete" = "create"
 ): boolean {
-  // 新的审批策略：
-  // 1. 管理员操作 - 自动通过（创建、修改、删除）
-  // 2. 普通用户创建脚本 - 需要管理员审批
-  // 3. 普通用户修改别人的脚本 - 需要管理员审批
-  // 4. 普通用户删除任意脚本 - 需要管理员审批
 
-  // 管理员操作总是自动通过
   if (requesterRole === UserRole.ADMIN) {
     console.log(
       `[Approval] 管理员操作自动通过: ${operationType} - ${scriptType}`
@@ -186,30 +160,22 @@ export function isAutoApprovalEligible(
     return true;
   }
 
-  // 普通用户的所有操作都需要审批
   console.log(
     `[Approval] 普通用户操作需要审批: ${operationType} - ${scriptType}`
   );
   return false;
 }
 
-/**
- * 获取所需的审批人角色 - 简化的审批策略
- */
 export function getRequiredApprovers(
   scriptType: ScriptType,
   operationType: "create" | "update" | "delete" = "create"
 ): string[] {
-  // 所有操作都需要管理员审批（除非是管理员操作，那种情况下会自动审批）
   console.log(
     `[Approval] 操作需要审批人: ${operationType} - ${scriptType} -> ${UserRole.ADMIN}`
   );
   return [UserRole.ADMIN];
 }
 
-/**
- * 创建审批请求
- */
 export async function createApprovalRequest(
   scriptId: string,
   requesterId: string,
@@ -220,7 +186,7 @@ export async function createApprovalRequest(
   description: string,
   priority: "low" | "medium" | "high" | "urgent" = "medium",
   operationType: "create" | "update" | "delete" = "create",
-  originalData?: Record<string, unknown> // 新增参数：原始脚本数据
+  originalData?: Record<string, unknown>
 ): Promise<string | null> {
   try {
     const collection = await getApprovalRequestsCollection();
@@ -259,7 +225,6 @@ export async function createApprovalRequest(
       requiredApprovers,
       currentApprovers: autoApprovalEligible ? ["system"] : [],
 
-      // 新增字段
       operationType,
       originalData,
       sqlContent,
@@ -268,7 +233,6 @@ export async function createApprovalRequest(
     const result = await collection.insertOne(approvalRequest);
 
     if (result.acknowledged) {
-      // 记录历史
       await recordApprovalHistory(
         requestId,
         scriptId,
@@ -293,9 +257,6 @@ export async function createApprovalRequest(
   }
 }
 
-/**
- * 记录审批历史
- */
 async function recordApprovalHistory(
   requestId: string,
   scriptId: string,
@@ -328,9 +289,6 @@ async function recordApprovalHistory(
   }
 }
 
-/**
- * 审批脚本
- */
 export async function approveScript(
   requestId: string,
   approverId: string,
@@ -340,7 +298,6 @@ export async function approveScript(
   try {
     const collection = await getApprovalRequestsCollection();
 
-    // 检查审批人权限
     const hasApprovalPermission = await hasPermission(
       approverId,
       Permission.SCRIPT_APPROVE
@@ -349,7 +306,6 @@ export async function approveScript(
       return { success: false, message: "权限不足：无审批权限" };
     }
 
-    // 获取审批请求
     const request = await collection.findOne({ requestId });
     if (!request) {
       return { success: false, message: "审批请求不存在" };
@@ -388,7 +344,6 @@ export async function approveScript(
     );
 
     if (updateResult.modifiedCount > 0) {
-      // 记录历史
       await recordApprovalHistory(
         requestId,
         request.scriptId,
@@ -422,9 +377,6 @@ export async function approveScript(
   }
 }
 
-/**
- * 拒绝脚本
- */
 export async function rejectScript(
   requestId: string,
   reviewerId: string,
@@ -434,7 +386,6 @@ export async function rejectScript(
   try {
     const collection = await getApprovalRequestsCollection();
 
-    // 检查审批人权限
     const hasRejectPermission = await hasPermission(
       reviewerId,
       Permission.SCRIPT_REJECT
@@ -443,7 +394,6 @@ export async function rejectScript(
       return { success: false, message: "权限不足：无拒绝权限" };
     }
 
-    // 获取审批请求
     const request = await collection.findOne({ requestId });
     if (!request) {
       return { success: false, message: "审批请求不存在" };
@@ -456,7 +406,6 @@ export async function rejectScript(
       };
     }
 
-    // 更新审批请求状态
     const now = new Date();
     const updateResult = await collection.updateOne(
       { requestId, status: ApprovalStatus.PENDING },
@@ -473,7 +422,6 @@ export async function rejectScript(
     );
 
     if (updateResult.modifiedCount > 0) {
-      // 记录历史
       await recordApprovalHistory(
         requestId,
         request.scriptId,
@@ -496,9 +444,6 @@ export async function rejectScript(
   }
 }
 
-/**
- * 获取待审批列表
- */
 export async function getPendingApprovals(
   approverId?: string,
   page: number = 1,
@@ -519,8 +464,7 @@ export async function getPendingApprovals(
       status: ApprovalStatus.PENDING,
     };
 
-    // 如果指定了审批人，可以根据权限过滤
-    // 这里暂时返回所有待审批的请求
+    // Every pending request for now; filtering by the approver's scope can come later.
 
     const skip = (page - 1) * limit;
 
@@ -578,9 +522,6 @@ export async function getPendingApprovals(
   }
 }
 
-/**
- * 获取审批历史
- */
 export async function getApprovalHistory(
   scriptId?: string,
   requestId?: string
@@ -616,9 +557,6 @@ export async function getApprovalHistory(
   }
 }
 
-/**
- * 获取已完成的审批请求列表
- */
 export async function getCompletedApprovals(
   page: number = 1,
   limit: number = 20
@@ -701,7 +639,7 @@ export async function getCompletedApprovals(
 }
 
 /**
- * 执行已审批的操作
+ * Applies an approved change to the check it is about.
  */
 async function executeApprovedOperation(
   request: ApprovalRequest
@@ -711,7 +649,6 @@ async function executeApprovedOperation(
       `[Approval] 开始执行审批操作: ${request.operationType} for ${request.scriptId}`
     );
 
-    // 获取脚本集合
     const scriptsDb = await getDb();
     const collection = scriptsDb.collection("sql_scripts");
 
@@ -721,7 +658,6 @@ async function executeApprovedOperation(
           throw new Error("创建操作缺少原始数据");
         }
 
-        // 执行创建操作
         // Only the fields people may set; the requester is recorded from the request, not the payload.
         const createData = {
           ...pickEditable(request.originalData as Record<string, unknown>),
@@ -737,7 +673,6 @@ async function executeApprovedOperation(
 
         await collection.insertOne(createData);
 
-        // 创建版本记录
         await createScriptVersion(
           request.scriptId,
           {
@@ -769,7 +704,6 @@ async function executeApprovedOperation(
           "minor"
         );
 
-        // 记录编辑历史
         await recordEditHistoryOnServer(
           {
             scriptId: request.scriptId,
@@ -791,12 +725,10 @@ async function executeApprovedOperation(
           throw new Error("更新操作缺少原始数据");
         }
 
-        // 获取现有脚本数据用于记录历史
         const existingScript = await collection.findOne({
           scriptId: request.scriptId,
         });
 
-        // 执行更新操作
         const updateData = {
           ...pickEditable(request.originalData as Record<string, unknown>),
           updatedBy: { id: request.requesterId, email: request.requesterEmail },
@@ -820,7 +752,6 @@ async function executeApprovedOperation(
           );
         }
 
-        // 创建版本记录
         const updatedScript = await collection.findOne({
           scriptId: request.scriptId,
         });
@@ -846,7 +777,6 @@ async function executeApprovedOperation(
           );
         }
 
-        // 记录编辑历史
         await recordEditHistoryOnServer(
           {
             scriptId: request.scriptId,
@@ -865,7 +795,6 @@ async function executeApprovedOperation(
         break;
 
       case "delete":
-        // 获取现有脚本数据用于记录历史
         const scriptToDelete = await collection.findOne({
           scriptId: request.scriptId,
         });
@@ -873,7 +802,6 @@ async function executeApprovedOperation(
           throw new Error(`要删除的脚本不存在: ${request.scriptId}`);
         }
 
-        // 执行删除操作
         const deleteResult = await collection.deleteOne({
           scriptId: request.scriptId,
         });
@@ -882,7 +810,6 @@ async function executeApprovedOperation(
           throw new Error(`删除脚本失败: ${request.scriptId}`);
         }
 
-        // 记录编辑历史
         await recordEditHistoryOnServer(
           {
             scriptId: request.scriptId,
@@ -903,7 +830,6 @@ async function executeApprovedOperation(
         throw new Error(`不支持的操作类型: ${request.operationType}`);
     }
 
-    // 清除缓存
     await clearScriptsCache();
 
     console.log(

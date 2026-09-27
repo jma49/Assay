@@ -4,7 +4,7 @@ import { Collection, Document } from "mongodb";
 import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { nextRunAt } from "@/lib/scheduling/due-slot";
 import { Permission } from "@/lib/auth/rbac";
-import { withSmartCache, generateCacheKey } from "@/lib/cache/cache-strategies";
+import { cached, cacheKey } from "@/lib/cache/cached";
 
 interface ScriptInfo {
   scriptId: string;
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
     const includeScheduledOnly = searchParams.get("scheduled_only") === "true";
 
     // 生成缓存键
-    const cacheKey = generateCacheKey("scripts:list", {
+    const key = cacheKey("scripts:list", {
       sortBy,
       sortOrder,
       scheduledOnly: includeScheduledOnly,
@@ -119,14 +119,8 @@ export async function GET(request: NextRequest) {
       v: 3,
     });
 
-    // 使用智能缓存管理器
-    const scriptsData = await withSmartCache(
-      cacheKey,
-      "SCRIPT_LIST",
-      async () => {
-        return await fetchScriptsData(sortBy, sortOrder, includeScheduledOnly);
-      }
-    );
+    // Ten minutes; every create, edit and delete clears it.
+    const scriptsData = await cached(key, 600, () => fetchScriptsData(sortBy, sortOrder, includeScheduledOnly));
 
     // The dashboard shows when the next scheduled check will run; computed here
     // so the cron parser never ships to the browser.
@@ -142,8 +136,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       data: scriptsData,
       nextScheduledAt,
-      cached: true, // withSmartCache 会处理缓存逻辑
-      cacheKey,
       query_info: {
         sort_by: sortBy,
         sort_order: sortOrder,
@@ -152,7 +144,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("[API] 获取脚本列表失败:", error);
+    console.error("[API] Listing checks failed:", error);
 
     return NextResponse.json(
       {
