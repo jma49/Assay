@@ -956,6 +956,134 @@ svg.lucide-loader > * {
   }
 }
 
+/* ---------- Docs article ---------- */
+.docs-prose {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--foreground);
+}
+
+.docs-prose > * + * {
+  margin-top: 1rem;
+}
+
+.docs-prose h2 {
+  margin-top: 2.5rem;
+  scroll-margin-top: 4rem;
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.docs-prose h3 {
+  margin-top: 1.75rem;
+  scroll-margin-top: 4rem;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.docs-prose a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  text-underline-offset: 0.18em;
+}
+
+.docs-prose a:hover {
+  text-decoration-color: var(--primary);
+}
+
+.docs-prose ul,
+.docs-prose ol {
+  padding-left: 1.4rem;
+}
+
+.docs-prose ul {
+  list-style: disc;
+}
+
+.docs-prose ol {
+  list-style: decimal;
+}
+
+.docs-prose li + li {
+  margin-top: 0.3rem;
+}
+
+.docs-prose li::marker {
+  color: var(--muted-foreground);
+}
+
+.docs-prose strong {
+  font-weight: 700;
+}
+
+.docs-prose :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+}
+
+/* Code blocks: a recessed Terminal-like well. */
+.docs-prose pre {
+  overflow-x: auto;
+  padding: 0.9rem 1rem;
+  border-radius: 6px;
+  background: #1e2229;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.25);
+  color: #e6e9ee;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.docs-table {
+  overflow-x: auto;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.docs-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.docs-prose th {
+  background: var(--aqua-pinstripe-soft), var(--aqua-title);
+  border-bottom: 1px solid var(--aqua-title-line);
+  padding: 0.45rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+.docs-prose td {
+  padding: 0.45rem 0.75rem;
+  border-top: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.docs-prose tbody tr:nth-child(even) {
+  background-color: color-mix(in srgb, var(--aqua-accent) 6%, var(--card));
+}
+
+/* Notes: an Aqua information box with a blue edge. */
+.docs-note {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--aqua-accent) 8%, var(--card));
+  box-shadow: inset 3px 0 0 var(--aqua-accent), 0 0 0 1px color-mix(in srgb, var(--aqua-accent) 25%, transparent);
+}
+
+.docs-note > * + * {
+  margin-top: 0.5rem;
+}
+
 /* Aqua scrollbars: a grooved track and a glossy blue thumb. */
 ::-webkit-scrollbar {
   width: 14px;

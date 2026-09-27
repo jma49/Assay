@@ -8,6 +8,10 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/unauthorized",
+  // Public, static documentation: exactly /docs and pages under it, so a
+  // future route like /docs-admin does not become public by accident.
+  "/docs",
+  "/docs/(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
