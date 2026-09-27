@@ -651,6 +651,8 @@ export interface SqlScript {
   cronSchedule?: string;
   createdAt?: Date | string; // Allow string for API response, Date for client state
   updatedAt?: Date | string; // Allow string for API response, Date for client state
+  /** Incremented by every edit; a save sends it back so concurrent edits are caught. */
+  version?: number;
 }
 
 // 翻译配置

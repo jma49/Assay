@@ -19,6 +19,7 @@ interface ScriptInfo {
   isScheduled?: boolean;
   cronSchedule?: string;
   hashtags?: string[];
+  version?: number;
 }
 
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
@@ -69,6 +70,7 @@ async function fetchScriptsData(
         isScheduled: 1,
         cronSchedule: 1,
         hashtags: 1,
+        version: 1,
       },
     })
     .sort(sortCondition)
@@ -88,6 +90,8 @@ async function fetchScriptsData(
     isScheduled: Boolean(script.isScheduled),
     cronSchedule: typeof script.cronSchedule === "string" ? script.cronSchedule : undefined,
     hashtags: Array.isArray(script.hashtags) ? script.hashtags : [],
+    // Checks from before versions have none; editing them starts from 0.
+    version: typeof script.version === "number" ? script.version : 0,
   }));
 }
 
@@ -101,8 +105,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
 
     // 获取查询参数
-    const sortBy = searchParams.get("sort_by") || "name";
-    const sortOrder = searchParams.get("sort_order") || "asc";
+    // Only known values, so arbitrary query strings cannot mint new cache keys.
+    const sortBy = searchParams.get("sort_by") === "createdAt" ? "createdAt" : "name";
+    const sortOrder = searchParams.get("sort_order") === "desc" ? "desc" : "asc";
     const includeScheduledOnly = searchParams.get("scheduled_only") === "true";
 
     // 生成缓存键
@@ -110,8 +115,8 @@ export async function GET(request: NextRequest) {
       sortBy,
       sortOrder,
       scheduledOnly: includeScheduledOnly,
-      // v2 adds cronSchedule; bumping it skips list entries cached before.
-      v: 2,
+      // Bumped when list entries gain fields (v3: version), so older cached lists are skipped.
+      v: 3,
     });
 
     // 使用智能缓存管理器

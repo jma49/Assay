@@ -237,6 +237,7 @@ export async function POST(request: Request) {
       // Who made it, from the session: ownership and audit never trust the author label.
       createdBy: { id: user.id, email: userEmail },
       updatedBy: { id: user.id, email: userEmail },
+      version: 1,
     };
 
     // 6. 插入数据到 MongoDB
