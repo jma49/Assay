@@ -4,7 +4,7 @@ Run your first data check on the live demo in a few minutes.
 
 ## Step 1 — Sign in
 
-Open [the demo](https://assay-sql.vercel.app) and choose **Try the live demo**. Sign in with any email address or with Google. New accounts join the demo workspace as **viewers**: you can read every check and every result, but not change them.
+Open [the demo](https://assay.majincheng.com) and choose **Try the live demo**. Sign in with any email address or with Google. New accounts join the demo workspace as **viewers**: you can read every check and every result, but not change them.
 
 > On the demo, viewers can run the sample checks (up to 20 runs an hour) but not edit them. To try the whole flow, [host your own copy](/docs/deployment) or ask an admin for the developer role.
 
