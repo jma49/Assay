@@ -1,3 +1,4 @@
+import { apiKey } from "@better-auth/api-key";
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
@@ -14,11 +15,13 @@ import { enabledProviders } from "./providers";
 
 const globalForAuth = globalThis as unknown as { authMongo?: MongoClient };
 
+const building = process.env.NEXT_PHASE === "phase-production-build";
+
 function mongo(): MongoClient {
   const uri = process.env.MONGODB_URI;
   // `next build` loads route modules to collect page data without secrets;
   // the driver connects lazily, so a placeholder is never dialled there.
-  if (!uri && process.env.NEXT_PHASE === "phase-production-build") return new MongoClient("mongodb://build.invalid");
+  if (!uri && building) return new MongoClient("mongodb://build.invalid");
   if (!uri) throw new Error("MONGODB_URI is not set");
   // The driver connects lazily; one client per process, kept across dev reloads.
   globalForAuth.authMongo ??= new MongoClient(uri, { maxPoolSize: 5, serverSelectionTimeoutMS: 5000 });
@@ -49,6 +52,9 @@ const providers = enabledProviders();
 export const auth = betterAuth({
   appName: "Assay",
   baseURL: process.env.BETTER_AUTH_URL || process.env.APP_URL,
+  // `next build` imports this module without secrets; at runtime Better Auth
+  // refuses to start without BETTER_AUTH_SECRET, and the middleware answers 503.
+  secret: process.env.BETTER_AUTH_SECRET || (building ? "build-time-placeholder-never-used-for-sessions" : undefined),
   database: mongodbAdapter(db, { client }),
   socialProviders: {
     ...(providers.google && { google: { clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET!, prompt: "select_account" } }),
@@ -80,7 +86,19 @@ export const auth = betterAuth({
       },
     },
   },
-  plugins: [nextCookies()],
+  plugins: [
+    // Personal API keys for agents (the MCP server). Only a hash is stored;
+    // the default of 10 requests a day would stop an agent mid-task.
+    apiKey({
+      defaultPrefix: "assay_",
+      // "assay_" plus four characters, so people can tell their keys apart.
+      startingCharactersConfig: { charactersLength: 10 },
+      rateLimit: { enabled: true, timeWindow: 60_000, maxRequests: 120 },
+      // In seconds, although the plugin's type comment says milliseconds.
+      keyExpiration: { defaultExpiresIn: 90 * 24 * 60 * 60, maxExpiresIn: 365 },
+    }),
+    nextCookies(),
+  ],
 });
 
 export type Session = typeof auth.$Infer.Session;

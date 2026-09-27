@@ -31,6 +31,8 @@ const isPublicRoute = matcher([
   "/api/notifications/dispatch",
   "/api/integrations/telegram/webhook",
   "/api/integrations/slack/interactions",
+  // Agents authenticate with an API key as a bearer token, checked by the route.
+  "/api/mcp",
 ]);
 
 // Pages a demo guest can open; every API route still checks the guest itself.
