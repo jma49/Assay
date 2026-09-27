@@ -120,11 +120,14 @@ export function mongoNotifyStore(db: Db): NotifyStore {
       }
     },
 
-    async markFannedOut(eventId, now, suppressed, actionKey) {
+    async assignActionKey(eventId, actionKey) {
       const _id = toId(eventId);
-      if (!_id) return;
-      await events.updateOne({ _id }, { $set: { fannedOutAt: now, ...(suppressed && { suppressed }) } });
-      await events.updateOne({ _id, actionKey: { $exists: false } }, { $set: { actionKey } });
+      if (_id) await events.updateOne({ _id, actionKey: { $exists: false } }, { $set: { actionKey } });
+    },
+
+    async markFannedOut(eventId, now, suppressed) {
+      const _id = toId(eventId);
+      if (_id) await events.updateOne({ _id }, { $set: { fannedOutAt: now, ...(suppressed && { suppressed }) } });
     },
 
     async claimDelivery(now, leaseMs) {
