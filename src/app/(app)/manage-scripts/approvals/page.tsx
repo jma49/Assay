@@ -266,18 +266,18 @@ export default function ApprovalsPage() {
     }
   }, [loadPendingApprovals, loadApprovalHistory, currentPageHistory]);
 
+  // No need to wait for Clerk's client: the middleware already guarantees a
+  // signed-in user and each API call checks permissions on the server.
   useEffect(() => {
-    if (isLoaded && user) {
-      loadData();
-    }
-  }, [isLoaded, user, loadData]);
+    loadData();
+  }, [loadData]);
 
   // 监听审批历史页面变化
   useEffect(() => {
-    if (isLoaded && user && activeTab === 'history') {
+    if (activeTab === 'history') {
       loadApprovalHistory(currentPageHistory);
     }
-  }, [isLoaded, user, activeTab, currentPageHistory, loadApprovalHistory]);
+  }, [activeTab, currentPageHistory, loadApprovalHistory]);
 
   // 处理审批操作
   const handleApproval = async () => {
@@ -331,7 +331,7 @@ export default function ApprovalsPage() {
     setIsDialogOpen(true);
   };
 
-  if (!isLoaded) {
+  if (!hasLoaded) {
     return (
       <main className={`${APP_CONTAINER} space-y-6 py-8`} aria-busy="true">
         <SkeletonPageHeader />

@@ -182,11 +182,11 @@ export default function AdminUsersPage() {
     }
   }, [language]);
 
+  // No need to wait for Clerk's client: the middleware already guarantees a
+  // signed-in user and the API checks the admin permission on the server.
   useEffect(() => {
-    if (isLoaded && user) {
-      loadUserRoles();
-    }
-  }, [isLoaded, user, loadUserRoles]);
+    loadUserRoles();
+  }, [loadUserRoles]);
 
   // 分配用户角色
   const assignRole = async () => {
@@ -297,7 +297,7 @@ export default function AdminUsersPage() {
     [UserRole.VIEWER]: userRoles.filter(u => u.role === UserRole.VIEWER).length,
   };
 
-  if (!isLoaded) {
+  if (!hasLoaded) {
     return (
       <main className={`${APP_CONTAINER} space-y-6 py-8`} aria-busy="true">
         <SkeletonPageHeader withAction />
