@@ -88,18 +88,30 @@ export function columnLabel(column: string): string {
   return column.replace(/_/g, " ");
 }
 
+const FORMULA_TRIGGER = /^[=+\-@\t\r]/;
+const NUMERIC_LITERAL = /^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i;
+
+/**
+ * Spreadsheets run cells starting with = + - @ (or a tab/CR) as formulas, so
+ * query data could execute on the analyst's machine. Such text gets a leading
+ * quote; plain numbers like "-12.5" are left alone.
+ */
+function neutralizeFormula(text: string): string {
+  return FORMULA_TRIGGER.test(text) && !NUMERIC_LITERAL.test(text) ? `'${text}` : text;
+}
+
 export function csvCell(value: unknown): string {
   if (value === null || value === undefined) return "";
-  const text = String(value);
-  if (text.includes(",") || text.includes('"') || text.includes("\n")) {
-    return `"${text.replace(/"/g, '""')}"`;
-  }
-  return text;
+  const raw = typeof value === "object" ? JSON.stringify(value) : String(value);
+  const text = typeof value === "string" || typeof value === "object" ? neutralizeFormula(raw) : raw;
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
 export function buildFindingsCsv(rows: FindingDetail[]): string {
   const columns = findingColumns(rows);
-  return [columns.join(","), ...rows.map((row) => columns.map((column) => csvCell(row[column])).join(","))].join("\n");
+  return [columns.map(csvCell).join(","), ...rows.map((row) => columns.map((column) => csvCell(row[column])).join(","))].join(
+    "\n",
+  );
 }
 
 export function csvFileName(scriptId: string, now: Date): string {
