@@ -7,6 +7,8 @@ export interface Me {
   permissions: string[];
   /** Present when the workspace runs as the public demo. */
   demo: { runsPerHour: number } | null;
+  /** Whether the AI helpers are switched on (AI_ENABLED). */
+  ai: boolean;
 }
 
 // One request per page load; every component asking shares it.
