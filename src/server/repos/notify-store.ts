@@ -41,6 +41,7 @@ export function toStoredEvent(doc: Document): StoredEvent {
     diff: doc.diff ?? null,
     error: doc.error ?? null,
     at: new Date(doc.at),
+    suppressed: doc.suppressed ?? null,
   };
 }
 
@@ -62,12 +63,21 @@ export function mongoNotifyStore(db: Db): NotifyStore {
 
     async checkInfo(checkIds) {
       const docs = await checks
-        .find({ scriptId: { $in: checkIds } }, { projection: { scriptId: 1, name: 1, cnName: 1, hashtags: 1 } })
+        .find(
+          { scriptId: { $in: checkIds } },
+          { projection: { scriptId: 1, name: 1, cnName: 1, hashtags: 1, alerting: 1, "state.since": 1, "state.outcome": 1 } },
+        )
         .toArray();
       return new Map(
         docs.map((doc) => [
           String(doc.scriptId),
-          { name: String(doc.name ?? doc.scriptId), cnName: doc.cnName || undefined, tags: Array.isArray(doc.hashtags) ? doc.hashtags : [] },
+          {
+            name: String(doc.name ?? doc.scriptId),
+            cnName: doc.cnName || undefined,
+            tags: Array.isArray(doc.hashtags) ? doc.hashtags : [],
+            alerting: doc.alerting ?? null,
+            state: doc.state ?? null,
+          },
         ]),
       );
     },
@@ -103,9 +113,9 @@ export function mongoNotifyStore(db: Db): NotifyStore {
       }
     },
 
-    async markFannedOut(eventId, now) {
+    async markFannedOut(eventId, now, suppressed) {
       const _id = toId(eventId);
-      if (_id) await events.updateOne({ _id }, { $set: { fannedOutAt: now } });
+      if (_id) await events.updateOne({ _id }, { $set: { fannedOutAt: now, ...(suppressed && { suppressed }) } });
     },
 
     async claimDelivery(now, leaseMs) {
