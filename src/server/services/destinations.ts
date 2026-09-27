@@ -10,7 +10,8 @@ import { CHANNELS } from "@/server/notify/channels";
 import { assertPublicHost } from "@/server/notify/safe-url";
 import { sendRequest } from "@/server/notify/send";
 import type { DeliveryOutcome, DestinationSecret } from "@/server/notify/types";
-import { DESTINATIONS, toDestination } from "@/server/repos/notify-store";
+import { COLLECTIONS } from "@/lib/database/collections";
+import { toDestination } from "@/server/repos/notify-store";
 import type { Destination } from "./notifications";
 
 export function toDestinationDto(destination: Destination): DestinationDto {
@@ -41,7 +42,7 @@ function objectId(id: string): ObjectId {
 }
 
 export async function listDestinations(db: Db, workspaceId: string): Promise<DestinationDto[]> {
-  const docs = await db.collection(DESTINATIONS).find(workspaceFilter(workspaceId)).sort({ createdAt: 1 }).toArray();
+  const docs = await db.collection(COLLECTIONS.notificationDestinations).find(workspaceFilter(workspaceId)).sort({ createdAt: 1 }).toArray();
   return docs.map((doc) => toDestinationDto(toDestination(doc)));
 }
 
@@ -83,7 +84,7 @@ export async function saveDestination(
     createdBy: by,
     lastDelivery: null,
   };
-  const { insertedId } = await db.collection(DESTINATIONS).insertOne(doc);
+  const { insertedId } = await db.collection(COLLECTIONS.notificationDestinations).insertOne(doc);
   return toDestinationDto(toDestination({ ...doc, _id: insertedId }));
 }
 
@@ -130,20 +131,20 @@ export async function createPastedDestination(
 
 export async function updateDestination(db: Db, workspaceId: string, id: string, input: UpdateDestinationInput): Promise<DestinationDto> {
   const doc = await db
-    .collection(DESTINATIONS)
+    .collection(COLLECTIONS.notificationDestinations)
     .findOneAndUpdate({ _id: objectId(id), ...workspaceFilter(workspaceId) }, { $set: input }, { returnDocument: "after" });
   if (!doc) throw new ApiError(404, "not_found", "No destination with this id");
   return toDestinationDto(toDestination(doc));
 }
 
 export async function deleteDestination(db: Db, workspaceId: string, id: string): Promise<void> {
-  const result = await db.collection(DESTINATIONS).deleteOne({ _id: objectId(id), ...workspaceFilter(workspaceId) });
+  const result = await db.collection(COLLECTIONS.notificationDestinations).deleteOne({ _id: objectId(id), ...workspaceFilter(workspaceId) });
   if (result.deletedCount === 0) throw new ApiError(404, "not_found", "No destination with this id");
 }
 
 /** Sends a sample alert straight away, outside the outbox, and records the result. */
 export async function sendTestAlert(db: Db, workspaceId: string, id: string, appUrl: string): Promise<DeliveryOutcome> {
-  const doc = await db.collection(DESTINATIONS).findOne({ _id: objectId(id), ...workspaceFilter(workspaceId) });
+  const doc = await db.collection(COLLECTIONS.notificationDestinations).findOne({ _id: objectId(id), ...workspaceFilter(workspaceId) });
   if (!doc) throw new ApiError(404, "not_found", "No destination with this id");
   const destination = toDestination(doc);
   const now = new Date();
@@ -156,7 +157,7 @@ export async function sendTestAlert(db: Db, workspaceId: string, id: string, app
     outcome = { kind: "failed", error: error instanceof Error ? error.message : String(error) };
   }
   await db
-    .collection(DESTINATIONS)
+    .collection(COLLECTIONS.notificationDestinations)
     .updateOne(
       { _id: doc._id },
       { $set: { lastDelivery: { at: now, ok: outcome.kind === "sent", error: outcome.kind === "sent" ? undefined : outcome.error } } },

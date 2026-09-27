@@ -99,7 +99,7 @@ describe("middleware", () => {
     });
 
     it("lets a guest open the read-only pages and the APIs", async () => {
-      for (const path of ["/dashboard", "/checks", "/checks/demo-duplicate-orders", "/manage-scripts", "/view-execution-result/abc", "/api/list-scripts"]) {
+      for (const path of ["/dashboard", "/checks", "/checks/demo-duplicate-orders", "/manage-scripts", "/view-execution-result/abc", "/api/scripts"]) {
         expect((await run(path, GUEST)).headers.get("location"), path).toBeNull();
       }
     });

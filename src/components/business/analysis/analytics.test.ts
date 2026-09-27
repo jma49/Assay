@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildAnalytics, collectTags, historyQuery, withTags, type ExecutionRecord, type ScriptSummary } from "./analytics";
+import { buildAnalytics, collectTags, historyQuery, runsFromHistory, withTags, type ExecutionRecord, type ScriptSummary } from "./analytics";
 
-const run = (scriptId: string, statusType: ExecutionRecord["statusType"], createdAt: string): ExecutionRecord => ({
+const run = (scriptId: string, outcome: ExecutionRecord["outcome"], createdAt: string): ExecutionRecord => ({
   _id: `${scriptId}-${createdAt}`,
   scriptId,
-  statusType,
+  outcome,
   createdAt,
 });
 
@@ -15,12 +15,12 @@ const scripts: ScriptSummary[] = [
 ];
 
 const runs = [
-  run("a", "success", "2026-09-25T10:00:00"),
-  run("a", "failed", "2026-09-26T10:00:00"),
-  run("b", "success", "2026-09-26T11:00:00"),
-  run("b", "success", "2026-09-26T12:00:00"),
-  run("b", "attention_needed", "2026-09-26T13:00:00"),
-  run("gone", "success", "2026-09-26T14:00:00"),
+  run("a", "clean", "2026-09-25T10:00:00"),
+  run("a", "error", "2026-09-26T10:00:00"),
+  run("b", "clean", "2026-09-26T11:00:00"),
+  run("b", "clean", "2026-09-26T12:00:00"),
+  run("b", "issues", "2026-09-26T13:00:00"),
+  run("gone", "clean", "2026-09-26T14:00:00"),
 ];
 
 describe("buildAnalytics", () => {
@@ -61,7 +61,24 @@ describe("filters", () => {
     expect(params.get("endDate")).toBe(now.toISOString());
     expect(new Date(params.get("startDate")!).getTime()).toBe(now.getTime() - 7 * 86_400_000);
     expect(params.get("scriptId")).toBe("a");
-    expect([...historyQuery("all", "all", now).keys()]).toEqual([]);
+    expect(params.get("limit")).toBe("500");
+    expect([...historyQuery("all", "all", now).keys()]).toEqual(["limit"]);
+  });
+
+  it("reads the runs of a check-history body by outcome", () => {
+    const body = {
+      data: [
+        { _id: "1", script_name: "a", execution_time: "2026-09-26T10:00:00.000Z", status: "success", statusType: "success" },
+        { _id: "2", script_name: "a", execution_time: "2026-09-26T11:00:00.000Z", status: "failure", statusType: "failure" },
+        { _id: "3", script_name: "b", execution_time: "2026-09-26T12:00:00.000Z", status: "success", statusType: "attention_needed" },
+      ],
+    };
+    expect(runsFromHistory(body)).toEqual([
+      { _id: "1", scriptId: "a", outcome: "clean", createdAt: "2026-09-26T10:00:00.000Z" },
+      { _id: "2", scriptId: "a", outcome: "error", createdAt: "2026-09-26T11:00:00.000Z" },
+      { _id: "3", scriptId: "b", outcome: "issues", createdAt: "2026-09-26T12:00:00.000Z" },
+    ]);
+    expect(runsFromHistory(null)).toEqual([]);
   });
 
   it("collects tags once, sorted", () => {

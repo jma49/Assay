@@ -193,33 +193,38 @@ queue can replace the inline runner later without changing services.
 These are the target conventions. The routes built on `server/` follow them;
 the legacy routes are still being migrated and keep their own shapes.
 
-- **Auth.** Target: every route declares its permission through `withAuth`
-  (`src/server/http/route.ts`); guests are opt-in per route. Today there are
-  three styles:
-  - `withAuth`: `activity`, `batch-execution-status`, `checks`,
-    `checks/[scriptId]`, `checks/[scriptId]/alerting`, `coverage`,
-    `members`, `notifications/destinations` (and `[id]`, `[id]/test`),
-    `integrations/[provider]/install` and `callback`,
-    `integrations/telegram/links` (and `[id]`), `run-all-scripts`.
-  - `authorizeApiRequest` (legacy): `ai/analyze-sql`, `ai/generate-sql`,
-    `ai/triage`, `check-history`, `check-history/stats`, `edit-history`,
-    `execution-details/[resultId]`, `execution-history`, `list-scripts`,
-    and the GET of `scripts`.
-  - `validateApiAuth` + `requirePermission` (legacy): `approvals`, `me`,
-    `run-check`, `scripts` (writes), `scripts/[scriptId]` (PUT, DELETE),
-    `users/roles`.
-  - Their own check: `auth/[...all]` (Better Auth), `mcp` (API key),
-    `notifications/dispatch` (`CRON_SECRET`), the Slack and Telegram
-    callbacks (signatures).
+- **Auth.** Every route declares who may call it through `withAuth`
+  (`src/server/http/route.ts`): a permission, `{ anyOf: [...] }` (e.g.
+  `approvals`, the GET of `users/roles`), or `{ signedIn: true }` for any
+  signed-in user (`me`, `run-check`, which checks `script:execute` itself
+  because demo mode widens it). Guests are opt-in: a permission lets them in
+  only when it is in `GUEST_PERMISSIONS` (`script:read`, `history:read`),
+  `signedIn` only with `allowGuest` (`me`, `run-check`). Refusals answer
+  `{ success: false, message }` with 401 or 403. Routes with their own
+  check: `auth/[...all]` (Better Auth), `mcp` (API key),
+  `notifications/dispatch` (`CRON_SECRET`), the Slack and Telegram callbacks
+  (signatures).
+- **Checks and runs.** One endpoint per job:
+  - `GET /api/checks`: every check with its state and last 30 runs (the
+    Checks list); `GET /api/checks/[scriptId]`: one check's detail.
+  - `GET /api/scripts`: every check's definition with its SQL and `version`
+    (the Manage editor, the Runs page's check list and Run sheet, the
+    Analysis page's names and tags). `POST /api/scripts` and
+    `PUT`/`DELETE /api/scripts/[scriptId]` write checks.
+  - `GET /api/check-history`: runs, filtered and paged (the Runs page's
+    table; the Analysis page asks for up to 500 in a date range);
+    `check-history/stats` counts them; `execution-details/[resultId]` is
+    one run's report.
 - **Input.** Target: parsed with a zod schema at the edge (`parseJson`).
   Only the alerting and notifications contracts are zod today.
 - **Errors.** Target: `{ error: { code, message } }` with the matching HTTP
-  status (`errorResponse`). The `withAuth` routes use it; legacy routes
+  status (`errorResponse`). Errors thrown out of a handler get it; the
+  routes carried over from the first version still catch their own and
   answer `{ error: "..." }`, `{ message: "..." }` or
   `{ success: false, ... }`.
 - **Paging.** Target: cursor pagination, as `activity` does. `check-history`,
-  `edit-history` and `approvals` page by `page` and `limit`;
-  `execution-history` returns up to `limit` rows with no paging.
+  `edit-history` and `approvals` page by `page` and `limit` (`check-history`
+  up to 500 runs a page, 200 with `include_results`).
 
 ## Front end
 
@@ -281,5 +286,5 @@ the legacy routes are still being migrated and keep their own shapes.
    the main flows. *In progress: dead code removed (#61); the oversized
    legacy pages split into tested modules, hooks and sections (#82, #84,
    #87–#89, #91); run readers moved to the new fields and the retired
-   fields no longer written (#80, #90); API route tests (#83). End-to-end
-   tests remain.*
+   fields no longer written (#80, #90); API route tests (#83); one auth
+   style and fewer duplicate endpoints (#102). End-to-end tests remain.*

@@ -1,6 +1,6 @@
 import { intParam } from "@/lib/utils/query-params";
-import { NextRequest, NextResponse } from "next/server";
-import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/server/http/route";
 import { Permission, requirePermission } from "@/lib/auth/rbac";
 import {
   getPendingApprovals,
@@ -9,34 +9,19 @@ import {
   getCompletedApprovals,
 } from "@/lib/workflows/approval-workflow";
 
+const REVIEWERS = { anyOf: [Permission.SCRIPT_APPROVE, Permission.SCRIPT_REJECT] };
+
 /**
  * GET: pending requests, or decided ones for the history view.
  */
-export async function GET(request: NextRequest) {
+export const GET = withAuth(REVIEWERS, async (request, { principal }) => {
   try {
-    const authResult = await validateApiAuth("zh");
-    if (!authResult.isValid) {
-      return authResult.response!;
-    }
-
-    const { user, userEmail } = authResult;
+    const userEmail = principal.email;
     const { searchParams } = new URL(request.url);
 
-    const hasApprovalPermission = await requirePermission(
-      user.id,
-      Permission.SCRIPT_APPROVE
-    );
-    const hasRejectPermission = await requirePermission(
-      user.id,
-      Permission.SCRIPT_REJECT
-    );
-
-    if (!hasApprovalPermission.authorized && !hasRejectPermission.authorized) {
-      return NextResponse.json(
-        { success: false, message: "权限不足：无法查看审批列表" },
-        { status: 403 }
-      );
-    }
+    // What the reviewer may do with each request.
+    const hasApprovalPermission = await requirePermission(principal.id, Permission.SCRIPT_APPROVE);
+    const hasRejectPermission = await requirePermission(principal.id, Permission.SCRIPT_REJECT);
 
     const action = searchParams.get("action") === "history" ? "history" : "pending";
 
@@ -89,7 +74,7 @@ export async function GET(request: NextRequest) {
       const page = intParam(searchParams.get("page"), 1, 1, 10_000);
       const limit = intParam(searchParams.get("limit"), 20, 1, 100);
 
-      const result = await getPendingApprovals(user.id, page, limit);
+      const result = await getPendingApprovals(principal.id, page, limit);
 
       const transformedData = result.data.map((request) => ({
         id: request.requestId,
@@ -125,7 +110,7 @@ export async function GET(request: NextRequest) {
         data: transformedData,
         pagination: result.pagination,
         user_info: {
-          userId: user.id,
+          userId: principal.id,
           email: userEmail,
           canApprove: hasApprovalPermission.authorized,
           canReject: hasRejectPermission.authorized,
@@ -139,19 +124,14 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST: approves or rejects a request.
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuth(REVIEWERS, async (request, { principal }) => {
   try {
-    const authResult = await validateApiAuth("zh");
-    if (!authResult.isValid) {
-      return authResult.response!;
-    }
-
-    const { user, userEmail } = authResult;
+    const userEmail = principal.email;
 
     const body = await request.json();
     const { requestId, action, comment } = body;
@@ -181,7 +161,7 @@ export async function POST(request: NextRequest) {
 
     if (action === "approve") {
       const permissionCheck = await requirePermission(
-        user.id,
+        principal.id,
         Permission.SCRIPT_APPROVE
       );
       if (!permissionCheck.authorized) {
@@ -191,10 +171,10 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      result = await approveScript(requestId, user.id, userEmail, comment);
+      result = await approveScript(requestId, principal.id, userEmail, comment);
     } else {
       const permissionCheck = await requirePermission(
-        user.id,
+        principal.id,
         Permission.SCRIPT_REJECT
       );
       if (!permissionCheck.authorized) {
@@ -204,7 +184,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      result = await rejectScript(requestId, user.id, userEmail, comment);
+      result = await rejectScript(requestId, principal.id, userEmail, comment);
     }
 
     if (result.success) {
@@ -232,4 +212,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
