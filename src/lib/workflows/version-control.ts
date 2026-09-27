@@ -1,5 +1,6 @@
 import { getMongoDbClient } from "../database/mongodb";
 import { Collection, Document } from "mongodb";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export enum VersionStatus {
   DRAFT = "draft",
@@ -47,13 +48,13 @@ export interface ScriptVersion {
 async function getScriptVersionsCollection(): Promise<Collection<Document>> {
   const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
-  return db.collection("script_versions");
+  return db.collection(COLLECTIONS.scriptVersions);
 }
 
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
   const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
-  return db.collection("sql_scripts");
+  return db.collection(COLLECTIONS.checks);
 }
 
 function generateVersionId(): string {

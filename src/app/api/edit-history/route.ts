@@ -5,11 +5,12 @@ import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 import { EditHistoryFilter } from "@/lib/workflows/edit-history-schema";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 async function getEditHistoryCollection(): Promise<Collection<Document>> {
   const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
-  return db.collection("edit_history");
+  return db.collection(COLLECTIONS.editHistory);
 }
 
 // Edit history is written only on the server (recordEditHistoryOnServer),

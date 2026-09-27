@@ -10,8 +10,7 @@ import { profileRows } from "@/lib/ai/row-profile";
 import { triageRun, type Triage } from "@/lib/ai/triage";
 import { aiModel } from "@/lib/ai/model";
 import { getAIErrorMessage } from "@/lib/utils/ai-utils";
-
-const RESULTS_COLLECTION = "result";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 /**
  * Triage of one flagged or failed run. The client sends only the run id:
@@ -34,7 +33,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const db = await getMongoDbClient().getDb();
-    const results = db.collection(RESULTS_COLLECTION);
+    const results = db.collection(COLLECTIONS.runs);
     const run = await results.findOne(
       { _id: new ObjectId(resultId) },
       { projection: { checkId: 1, outcome: 1, message: 1, raw_results: 1, aiTriage: 1 } },
@@ -67,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     const scriptId = String(run.checkId ?? "");
     const script = await db
-      .collection("sql_scripts")
+      .collection(COLLECTIONS.checks)
       .findOne({ scriptId }, { projection: { name: 1, description: 1, sqlContent: 1 } });
     const rows = Array.isArray(run.raw_results) ? run.raw_results : [];
 

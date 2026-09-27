@@ -1,6 +1,7 @@
 import { getMongoDbClient } from "../database/mongodb";
 import { Collection, Document } from "mongodb";
 import { TtlCache } from "../cache/ttl-cache";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 // Every API request checks the caller's role, and a MongoDB round trip costs
 // ~70ms. Changes made on this instance invalidate immediately; other
@@ -94,7 +95,7 @@ export interface UserRoleInfo {
 async function getUserRolesCollection(): Promise<Collection<Document>> {
   const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
-  return db.collection("user_roles");
+  return db.collection(COLLECTIONS.userRoles);
 }
 
 export async function getUserRole(userId: string): Promise<UserRole | null> {

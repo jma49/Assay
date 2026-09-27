@@ -1,27 +1,28 @@
 import type { Db, IndexDescription } from "mongodb";
+import { COLLECTIONS } from "./collections";
 
 /** Indexes for the lookups every request makes; createIndexes is a no-op when they exist. */
 export const INDEXES: Record<string, IndexDescription[]> = {
-  user_roles: [{ key: { userId: 1 }, unique: true }],
-  sql_scripts: [{ key: { scriptId: 1 }, unique: true }, { key: { createdAt: -1 } }],
+  [COLLECTIONS.userRoles]: [{ key: { userId: 1 }, unique: true }],
+  [COLLECTIONS.checks]: [{ key: { scriptId: 1 }, unique: true }, { key: { createdAt: -1 } }],
   // Runs are deleted at expiresAt (RUN_RETENTION_DAYS after they finished; see migrations/set-run-expiry.ts for older runs).
-  result: [{ key: { finishedAt: -1 } }, { key: { checkId: 1, finishedAt: -1 } }, { key: { outcome: 1, finishedAt: -1 } }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
-  approval_requests: [{ key: { requestId: 1 }, unique: true }, { key: { status: 1, requestedAt: -1 } }],
-  edit_history: [{ key: { operationTime: -1 } }, { key: { "scriptSnapshot.scriptId": 1, operationTime: -1 } }],
-  script_versions: [{ key: { scriptId: 1, createdAt: -1 } }],
+  [COLLECTIONS.runs]: [{ key: { finishedAt: -1 } }, { key: { checkId: 1, finishedAt: -1 } }, { key: { outcome: 1, finishedAt: -1 } }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
+  [COLLECTIONS.approvalRequests]: [{ key: { requestId: 1 }, unique: true }, { key: { status: 1, requestedAt: -1 } }],
+  [COLLECTIONS.editHistory]: [{ key: { operationTime: -1 } }, { key: { "scriptSnapshot.scriptId": 1, operationTime: -1 } }],
+  [COLLECTIONS.scriptVersions]: [{ key: { scriptId: 1, createdAt: -1 } }],
   // One event per run at most, so retried runs never notify twice.
-  events: [{ key: { runId: 1 }, unique: true }, { key: { at: -1 } }, { key: { checkId: 1, at: -1 } }],
-  check_actions: [{ key: { checkId: 1, at: -1 } }],
-  notification_destinations: [{ key: { workspaceId: 1, createdAt: 1 } }],
+  [COLLECTIONS.events]: [{ key: { runId: 1 }, unique: true }, { key: { at: -1 } }, { key: { checkId: 1, at: -1 } }],
+  [COLLECTIONS.checkActions]: [{ key: { checkId: 1, at: -1 } }],
+  [COLLECTIONS.notificationDestinations]: [{ key: { workspaceId: 1, createdAt: 1 } }],
   // One delivery per event and destination, so fan-out can run anywhere, any number of times.
-  notification_deliveries: [
+  [COLLECTIONS.notificationDeliveries]: [
     { key: { eventId: 1, destinationId: 1 }, unique: true },
     { key: { status: 1, nextAttemptAt: 1 } },
     { key: { destinationId: 1, sentAt: -1 } },
     { key: { createdAt: 1 }, expireAfterSeconds: 30 * 24 * 60 * 60 },
   ],
   // One row per problem and destination counts its reminders; old ones go after 30 days.
-  notification_reminders: [
+  [COLLECTIONS.notificationReminders]: [
     { key: { destinationId: 1, checkId: 1, since: 1 }, unique: true },
     { key: { lastAt: 1 }, expireAfterSeconds: 30 * 24 * 60 * 60 },
   ],
@@ -29,15 +30,15 @@ export const INDEXES: Record<string, IndexDescription[]> = {
   // session token and API key run on every request; uniqueness stops
   // concurrent first sign-ins from creating duplicate users or accounts;
   // expired sessions and verifications go away on their own.
-  user: [{ key: { email: 1 }, unique: true }],
-  session: [{ key: { token: 1 }, unique: true }, { key: { userId: 1 } }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
-  account: [{ key: { userId: 1 } }, { key: { providerId: 1, accountId: 1 }, unique: true }],
-  verification: [{ key: { identifier: 1 } }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
-  apikey: [{ key: { key: 1 }, unique: true }, { key: { referenceId: 1 } }],
+  [COLLECTIONS.users]: [{ key: { email: 1 }, unique: true }],
+  [COLLECTIONS.sessions]: [{ key: { token: 1 }, unique: true }, { key: { userId: 1 } }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
+  [COLLECTIONS.accounts]: [{ key: { userId: 1 } }, { key: { providerId: 1, accountId: 1 }, unique: true }],
+  [COLLECTIONS.verifications]: [{ key: { identifier: 1 } }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
+  [COLLECTIONS.apiKeys]: [{ key: { key: 1 }, unique: true }, { key: { referenceId: 1 } }],
   // Pending Telegram links expire on their own.
-  telegram_links: [{ key: { codeHash: 1 }, unique: true }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
+  [COLLECTIONS.telegramLinks]: [{ key: { codeHash: 1 }, unique: true }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
   // Batches only matter while someone watches their progress; keep a week.
-  batches: [{ key: { executionId: 1 }, unique: true }, { key: { startedAt: 1 }, expireAfterSeconds: 7 * 24 * 60 * 60 }],
+  [COLLECTIONS.batches]: [{ key: { executionId: 1 }, unique: true }, { key: { startedAt: 1 }, expireAfterSeconds: 7 * 24 * 60 * 60 }],
 };
 
 export async function ensureIndexes(db: Db): Promise<void> {

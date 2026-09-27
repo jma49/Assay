@@ -13,6 +13,7 @@ import {
   analyzeScriptType,
 } from "@/lib/workflows/approval-workflow";
 import { createCheck } from "@/server/services/check-writes";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 interface NewScriptData {
   scriptId: string;
@@ -38,7 +39,7 @@ async function getSqlScriptsCollection(): Promise<Collection<Document>> {
   const db = await mongoDbClient.getDb();
   // As per previous correction, assuming MONGODB_URI points to sql_script_result
   // or the default db in MongoDbClient is configured accordingly.
-  return db.collection("sql_scripts");
+  return db.collection(COLLECTIONS.checks);
 }
 
 export async function POST(request: Request) {

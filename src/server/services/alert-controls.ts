@@ -4,6 +4,7 @@ import type { AlertingDto } from "@/contracts/checks";
 import { isAcknowledged, isMuted, type Actor, type Alerting } from "@/domain/alerting";
 import type { CheckState } from "@/domain/run";
 import { ApiError } from "@/server/http/route";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export type ActionSource = "web" | "slack" | "telegram" | "mcp";
 
@@ -32,7 +33,7 @@ export async function applyAlertingAction(
   options: { now?: Date; episodeAt?: Date } = {},
 ): Promise<AlertingDto> {
   const now = options.now ?? new Date();
-  const checks = db.collection("sql_scripts");
+  const checks = db.collection(COLLECTIONS.checks);
   const check = await checks.findOne({ scriptId }, { projection: { state: 1, alerting: 1 } });
   if (!check) throw new ApiError(404, "not_found", "No check with this id");
   const state = check.state as CheckState | undefined;
@@ -65,14 +66,14 @@ export async function applyAlertingAction(
 
   const updated = await checks.findOneAndUpdate(filter, update, { returnDocument: "after", projection: { state: 1, alerting: 1 } });
   if (!updated) throw new ApiError(409, "stale", "The check changed; reload and try again");
-  await db.collection("check_actions").insertOne({ checkId: scriptId, action: input.action, detail: input, by, source, at: now });
+  await db.collection(COLLECTIONS.checkActions).insertOne({ checkId: scriptId, action: input.action, detail: input, by, source, at: now });
   return toAlertingDto(updated.alerting, updated.state, now);
 }
 
 /** People who can own a check: members with an active role. Names come from their email. */
 export async function listMembers(db: Db): Promise<{ id: string; name: string }[]> {
   const docs = await db
-    .collection("user_roles")
+    .collection(COLLECTIONS.userRoles)
     .find({ isActive: true }, { projection: { userId: 1, email: 1 } })
     .sort({ email: 1 })
     .limit(500)

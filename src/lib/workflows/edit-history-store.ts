@@ -5,6 +5,7 @@ import {
   buildEditHistoryEntry,
 } from "./edit-history";
 import { EditHistoryRecord, ScriptSnapshot } from "./edit-history-schema";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export interface EditHistoryActor {
   id: string;
@@ -75,7 +76,7 @@ export async function insertEditHistory(entry: {
   };
 
   const db = await getMongoDbClient().getDb();
-  const result = await db.collection("edit_history").insertOne(record);
+  const result = await db.collection(COLLECTIONS.editHistory).insertOne(record);
   return String(result.insertedId);
 }
 

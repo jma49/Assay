@@ -12,12 +12,13 @@ import {
   analyzeScriptType,
 } from "@/lib/workflows/approval-workflow";
 import { deleteCheck, updateCheck } from "@/server/services/check-writes";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 // Helper function to get the MongoDB collection
 async function getSqlScriptsCollection(): Promise<Collection<Document>> {
   const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
-  return db.collection("sql_scripts"); // From sql_script_result DB
+  return db.collection(COLLECTIONS.checks); // From sql_script_result DB
 }
 
 // interface RouteContext {  // No longer needed

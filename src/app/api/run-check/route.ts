@@ -7,6 +7,7 @@ import { consumeQuota } from "@/lib/security/ai-guard";
 import { clientIp, demoRunBudgets, isDemoMode, runAccess } from "@/lib/security/demo-sandbox";
 import { dispatchAfterResponse } from "@/server/services/notify-deps";
 import { runCheckNow, toExecutionResult } from "@/server/services/run-check-deps";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 const DEMO_WINDOW_SECONDS = 60 * 60;
 
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
     if (!canExecute) {
       const db = await getMongoDbClient().getDb();
       const script = await db
-        .collection("sql_scripts")
+        .collection(COLLECTIONS.checks)
         .findOne({ scriptId }, { projection: { demoSeed: 1 } });
       const access = runAccess({ canExecute, demoMode, demoSeed: script?.demoSeed });
       if (access === "forbidden") {
