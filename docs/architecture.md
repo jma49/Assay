@@ -206,8 +206,8 @@ the legacy routes are still being migrated and keep their own shapes.
     `execution-details/[resultId]`, `execution-history`, `list-scripts`,
     and the GET of `scripts`.
   - `validateApiAuth` + `requirePermission` (legacy): `approvals`, `me`,
-    `run-check`, `scripts` (writes), `scripts/[scriptId]`,
-    `scripts/[scriptId]/versions`, `users/roles`.
+    `run-check`, `scripts` (writes), `scripts/[scriptId]` (PUT, DELETE),
+    `users/roles`.
   - Their own check: `auth/[...all]` (Better Auth), `mcp` (API key),
     `notifications/dispatch` (`CRON_SECRET`), the Slack and Telegram
     callbacks (signatures).
