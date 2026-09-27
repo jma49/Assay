@@ -69,3 +69,17 @@ describe("consumeQuota", () => {
     expect(retryAfterSeconds).toBe(45 * 60);
   });
 });
+
+describe("guardAiRequest", () => {
+  it("refuses every request unless AI_ENABLED=true, so no credits are spent by default", async () => {
+    const { guardAiRequest } = await import("./ai-guard");
+    const previous = process.env.AI_ENABLED;
+    delete process.env.AI_ENABLED;
+    try {
+      const response = await guardAiRequest("user_1", { prompt: "hi" });
+      expect(response?.status).toBe(503);
+    } finally {
+      if (previous !== undefined) process.env.AI_ENABLED = previous;
+    }
+  });
+});
