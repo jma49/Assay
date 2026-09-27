@@ -8,12 +8,10 @@ import {
   fieldLabel,
   formatPageInfo,
   historyDescription,
-  isJumpInputKey,
   parseDateInput,
   operationBadgeClass,
   operationLabel,
   operationTimeIso,
-  parseJumpPage,
   type FieldChange,
 } from "./edit-history";
 
@@ -96,30 +94,6 @@ describe("parseDateInput", () => {
   it("ignores empty or malformed input", () => {
     expect(parseDateInput("")).toBeUndefined();
     expect(parseDateInput("27/09/2026")).toBeUndefined();
-  });
-});
-
-describe("parseJumpPage", () => {
-  it("accepts pages within range", () => {
-    expect(parseJumpPage("1", 5)).toBe(1);
-    expect(parseJumpPage("5", 5)).toBe(5);
-  });
-
-  it("rejects empty, non-numeric and out-of-range input", () => {
-    expect(parseJumpPage("", 5)).toBeNull();
-    expect(parseJumpPage("x", 5)).toBeNull();
-    expect(parseJumpPage("0", 5)).toBeNull();
-    expect(parseJumpPage("6", 5)).toBeNull();
-  });
-});
-
-describe("isJumpInputKey", () => {
-  it("allows digits and editing keys only", () => {
-    expect(isJumpInputKey("7")).toBe(true);
-    expect(isJumpInputKey("Backspace")).toBe(true);
-    expect(isJumpInputKey("Tab")).toBe(true);
-    expect(isJumpInputKey("e")).toBe(false);
-    expect(isJumpInputKey("-")).toBe(false);
   });
 });
 

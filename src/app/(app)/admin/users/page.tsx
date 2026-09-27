@@ -11,14 +11,15 @@ import { useLanguage } from '@/components/common/LanguageProvider';
 import { dashboardTranslations, DashboardTranslationKeys, ITEMS_PER_PAGE } from '@/components/business/dashboard/types';
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
+import { Pagination } from "@/components/common/Pagination";
 import { SkeletonPageHeader, SkeletonStatStrip, SkeletonTable } from "@/components/common/PageSkeletons";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import { AddRoleDialog } from "@/components/business/users/AddRoleDialog";
-import { MembersPagination } from "@/components/business/users/MembersPagination";
 import { MembersTable } from "@/components/business/users/MembersTable";
 import { RoleStats } from "@/components/business/users/RoleStats";
-import { countByRole, formatPageInfo, pageSlice } from "@/components/business/users/members";
+import { countByRole, pageSlice } from "@/components/business/users/members";
 import { useMemberRoles } from "@/components/business/users/useMemberRoles";
+import { formatPageInfo } from "@/lib/utils/pagination";
 
 export default function AdminUsersPage() {
   const { user, isLoaded } = useCurrentUser();
@@ -111,10 +112,16 @@ export default function AdminUsersPage() {
             </CardContent>
 
             {page.totalPages > 1 && (
-              <MembersPagination
-                currentPage={page.page}
+              <Pagination
+                page={page.page}
                 totalPages={page.totalPages}
-                pageInfo={formatPageInfo(t("pageInfo"), [page.start, page.end, totalUsers, page.page, page.totalPages])}
+                pageInfo={formatPageInfo(t("pageInfo"), {
+                  start: page.start,
+                  end: page.end,
+                  totalItems: totalUsers,
+                  page: page.page,
+                  totalPages: page.totalPages,
+                })}
                 t={t}
                 onPageChange={setCurrentPage}
               />

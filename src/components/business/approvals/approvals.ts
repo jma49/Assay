@@ -42,33 +42,6 @@ export function pageSlice<T>(items: T[], page: number, pageSize: number): T[] {
   return items.slice(start, start + pageSize);
 }
 
-/** Fills the "Showing %s-%s of %s results (Page %s of %s)" template. */
-export function formatPageInfo(
-  template: string,
-  { page, totalPages, totalItems, pageSize }: { page: number; totalPages: number; totalItems: number; pageSize: number },
-): string {
-  const start = (page - 1) * pageSize + 1;
-  const end = Math.min(start - 1 + pageSize, totalItems);
-  return [start, end, totalItems, page, totalPages].reduce<string>(
-    (text, value) => text.replace("%s", String(value)),
-    template,
-  );
-}
-
-/** The page typed into the jump box, or null when it is not a page that exists. */
-export function parsePageInput(input: string, totalPages: number): number | null {
-  const page = parseInt(input, 10);
-  if (isNaN(page) || page < 1 || page > totalPages) return null;
-  return page;
-}
-
-const PAGE_INPUT_EDIT_KEYS = ["ArrowLeft", "ArrowRight", "Delete", "Backspace", "Tab"];
-
-/** Whether a key press may reach the numeric page-jump box. */
-export function isPageInputKeyAllowed(key: string): boolean {
-  return /[\d\b]/.test(key) || PAGE_INPUT_EDIT_KEYS.includes(key);
-}
-
 const MESSAGES = {
   en: {
     forbidden: "Permission denied: you cannot view approval requests",

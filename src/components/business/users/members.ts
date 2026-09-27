@@ -86,21 +86,3 @@ export function pageSlice<T>(items: T[], page: number, pageSize: number): PageSl
     end: Math.min(endIndex, items.length),
   };
 }
-
-/** Fills the `pageInfo` template: shown range, total, current page, page count. */
-export function formatPageInfo(template: string, values: number[]): string {
-  return values.reduce<string>((text, value) => text.replace("%s", String(value)), template);
-}
-
-/** The page a "jump to page" input points at, or null when it is not a valid page. */
-export function parsePageJump(input: string, totalPages: number): number | null {
-  const page = parseInt(input, 10);
-  return !isNaN(page) && page >= 1 && page <= totalPages ? page : null;
-}
-
-const EDITING_KEYS = ["ArrowLeft", "ArrowRight", "Delete", "Backspace", "Tab"];
-
-/** Keys the page-jump input accepts: digits and editing keys. */
-export function isPageJumpKey(key: string): boolean {
-  return /[\d\b]/.test(key) || EDITING_KEYS.includes(key);
-}
