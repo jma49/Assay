@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDate } from "@/components/business/dashboard/utils";
+import { dayKeyParts, localDayKey } from "@/lib/utils/datetime";
 import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
 
 import dynamic from "next/dynamic";
@@ -159,7 +160,7 @@ export default function DataAnalysisPage() {
     const dailyMap = new Map();
 
     executions.forEach((execution) => {
-      const date = new Date(execution.createdAt).toISOString().split("T")[0];
+      const date = localDayKey(execution.createdAt);
       if (!dailyMap.has(date)) {
         dailyMap.set(date, { date, executions: 0, successes: 0, failures: 0 });
       }
@@ -801,21 +802,10 @@ export default function DataAnalysisPage() {
                               <div className="flex-none">
                                 <div className="w-16 h-14 rounded-lg flex flex-col items-center justify-center text-xs font-medium transition-all duration-300 group-hover/ text-muted-foreground border border-border/40 hover:border-border/60">
                                   <div className="font-mono font-bold text-sm">
-                                    {formatDate(day.date, language)
-                                      .split(" ")[0]
-                                      .split("-")[2] ||
-                                      formatDate(day.date, language)
-                                        .split(" ")[0]
-                                        .split("/")[1]}
+                                    {dayKeyParts(day.date, language).day}
                                   </div>
                                   <div className="text-[10px] opacity-80 font-medium">
-                                    {formatDate(day.date, language)
-                                      .split(" ")[0]
-                                      .split("-")[1] ||
-                                      formatDate(day.date, language)
-                                        .split(" ")[0]
-                                        .split("/")[0]}
-                                    月
+                                    {dayKeyParts(day.date, language).month}
                                   </div>
                                 </div>
                               </div>
