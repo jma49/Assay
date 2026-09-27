@@ -39,7 +39,7 @@ DOTENV_CONFIG_PATH=.env.local npx tsx -r dotenv/config scripts/run-all-scripts.t
 
 ## 手动执行定时检查
 
-在仪表盘选 **Bulk Execution → Execute Scheduled Scripts**，会立即执行所有定时检查，不管现在几点。
+在**执行记录**页点 **批量执行…**，选择只执行定时检查，所有定时检查会立即执行，不管现在几点。
 
 ## 另见
 
