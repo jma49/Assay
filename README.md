@@ -9,7 +9,7 @@ Open-source SQL data checks for PostgreSQL: write read-only checks, run them on 
 [![MongoDB](https://img.shields.io/badge/MongoDB-6.15.0-green.svg)](https://www.mongodb.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supported-336791.svg)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-Cache-red.svg)](https://redis.io/)
-[![Clerk](https://img.shields.io/badge/Clerk-Auth-purple.svg)](https://clerk.com/)
+[![Better Auth](https://img.shields.io/badge/Better%20Auth-Google%20%7C%20GitHub-purple.svg)](https://www.better-auth.com/)
 
 A modern SQL script management and monitoring system built with Next.js, providing a visual interface for managing, executing, and monitoring SQL check scripts with enterprise-grade authentication and high-performance caching.
 
@@ -18,7 +18,7 @@ A modern SQL script management and monitoring system built with Next.js, providi
 - **Script Management**: Full CRUD operations with intelligent SQL editor, syntax highlighting, and code formatting
 - **Automated Execution**: GitHub Actions and Vercel Cron Jobs integration for scheduled execution
 - **Real-time Monitoring**: Live execution progress tracking with detailed history and analytics
-- **Enterprise Authentication**: Clerk-based authentication with domain restrictions and invitation-only access
+- **Self-hosted sign-in**: Google and GitHub through Better Auth, users stored in your own MongoDB, optional email-domain restrictions
 - **High-Performance Caching**: Redis-powered distributed caching for improved performance
 - **Security-First**: Read-only enforcement with comprehensive SQL validation and approval workflows
 - **Multi-language Support**: Complete internationalization with English/Chinese language switching
@@ -31,7 +31,7 @@ A modern SQL script management and monitoring system built with Next.js, providi
 - PostgreSQL database
 - MongoDB instance
 - Redis instance (optional but recommended)
-- Clerk account for authentication
+- A Google OAuth client and/or a GitHub OAuth app for sign-in
 
 ### Environment Variables
 
@@ -45,9 +45,13 @@ MONGODB_URI="mongodb://username:password@host:port/database"
 # Redis Cache (Optional)
 REDIS_URL="redis://username:password@host:port"
 
-# Authentication (Clerk)
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
-CLERK_SECRET_KEY="sk_test_..."
+# Authentication (docs/authentication.md)
+BETTER_AUTH_SECRET="$(openssl rand -base64 32)"
+BETTER_AUTH_URL="https://assay.example.com"
+GOOGLE_CLIENT_ID="..."
+GOOGLE_CLIENT_SECRET="..."
+GITHUB_CLIENT_ID="..."
+GITHUB_CLIENT_SECRET="..."
 
 # Security
 CRON_SECRET_TOKEN="your-secure-random-token"
@@ -200,22 +204,13 @@ volumes:
 
 ## 🔧 Configuration
 
-### Authentication Setup (Clerk)
+### Authentication Setup
 
-1. **Create Clerk Application**
+1. Create a Google OAuth client (redirect `<BETTER_AUTH_URL>/api/auth/callback/google`) and/or a GitHub OAuth app (callback `<BETTER_AUTH_URL>/api/auth/callback/github`).
+2. Set `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` and the client ids and secrets.
+3. Sign in once, then make yourself admin: `npm run user:set-role -- you@example.com admin`.
 
-   - Sign up at [clerk.com](https://clerk.com)
-   - Create a new application
-   - Copy API keys to environment variables
-
-2. **Configure Domain Restrictions**
-
-   - Set up email domain restrictions in Clerk dashboard
-   - Enable invitation-only mode for enhanced security
-
-3. **Customize Authentication Pages**
-   - The system includes pre-configured sign-in/sign-up pages
-   - Customize branding and styling as needed
+See [docs/authentication.md](docs/authentication.md).
 
 ### Database Configuration
 

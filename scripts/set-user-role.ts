@@ -1,8 +1,7 @@
 /**
- * Assigns a role to an existing Clerk user by email.
+ * Assigns a role to someone who has signed in at least once, by email.
  * Usage: npm run user:set-role -- <email> <admin|manager|developer|viewer>
  */
-import { createClerkClient } from "@clerk/nextjs/server";
 import { setUserRole, UserRole } from "../src/lib/auth/rbac";
 import { getMongoDbClient } from "../src/lib/database/mongodb";
 
@@ -11,45 +10,28 @@ async function main(): Promise<number> {
   const role = Object.values(UserRole).find((r) => r === roleArg);
 
   if (!email || !role) {
-    console.error(
-      `Usage: npm run user:set-role -- <email> <${Object.values(UserRole).join("|")}>`
-    );
+    console.error(`Usage: npm run user:set-role -- <email> <${Object.values(UserRole).join("|")}>`);
     return 1;
   }
 
-  const secretKey = process.env.CLERK_SECRET_KEY;
-  if (!secretKey) {
-    console.error("CLERK_SECRET_KEY is not set");
-    return 1;
-  }
-
-  const clerk = createClerkClient({ secretKey });
-  const { data: users } = await clerk.users.getUserList({
-    emailAddress: [email],
-  });
-
-  if (users.length !== 1) {
-    console.error(
-      users.length === 0
-        ? `No Clerk user found for ${email}. Sign up first.`
-        : `Multiple Clerk users found for ${email}.`
-    );
-    return 1;
-  }
-
-  let ok: boolean;
   try {
-    ok = await setUserRole(users[0].id, email, role, "cli");
+    const db = await getMongoDbClient().getDb();
+    // Better Auth keeps signed-in users in the "user" collection, emails lowercased.
+    const user = await db.collection("user").findOne({ email: email.trim().toLowerCase() });
+    if (!user) {
+      console.error(`No user found for ${email}. They need to sign in once first.`);
+      return 1;
+    }
+    const id = String(user._id);
+    if (!(await setUserRole(id, String(user.email), role, "cli"))) {
+      console.error(`Failed to set role for ${email}`);
+      return 1;
+    }
+    console.log(`Set ${user.email} (${id}) to ${role}`);
+    return 0;
   } finally {
     await getMongoDbClient().closeConnection();
   }
-  if (!ok) {
-    console.error(`Failed to set role for ${email}`);
-    return 1;
-  }
-
-  console.log(`Set ${email} (${users[0].id}) to ${role}`);
-  return 0;
 }
 
 main()

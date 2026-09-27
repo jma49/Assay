@@ -6,12 +6,10 @@
 
 | 变量 | 用途 |
 |---|---|
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk 公开密钥（可公开）。 |
-| `CLERK_SECRET_KEY` | Clerk 私密密钥。 |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | `/sign-in` |
-| `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | `/sign-up` |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | `/dashboard` |
-| `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | `/dashboard` |
+| `BETTER_AUTH_SECRET` | 签名会话 Cookie，32 字节以上的随机值。 |
+| `BETTER_AUTH_URL` | 应用的公开地址，例如 `https://assay.example.com`。 |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth 客户端，回调地址 `/api/auth/callback/google`。 |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth 应用，回调地址 `/api/auth/callback/github`。 |
 | `MONGODB_URI` | MongoDB 连接串。数据库名默认为 `sql_script_monitoring`。 |
 | `DATABASE_URL` | 检查要读取的 PostgreSQL 数据库。 |
 | `UPSTASH_REDIS_REST_URL` | Upstash Redis REST 地址。 |

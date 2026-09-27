@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { WindowToolbar } from "@/components/layout/WindowChrome";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useCurrentUser } from "@/lib/auth/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { APP_CONTAINER } from "@/components/layout/app-container";
@@ -104,7 +104,7 @@ const toScriptId = (name: string) =>
 
 export default function NewScriptPage() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user } = useCurrentUser();
   const { language } = useLanguage();
   const c = copy[language];
 
@@ -132,8 +132,7 @@ export default function NewScriptPage() {
 
   // Prefill the author once the signed-in user is known; the API falls back to it anyway.
   useEffect(() => {
-    const defaultAuthor =
-      user?.fullName || user?.primaryEmailAddress?.emailAddress?.split("@")[0];
+    const defaultAuthor = user?.name;
     if (defaultAuthor) {
       setFormData((prev) => (prev.author ? prev : { ...prev, author: defaultAuthor }));
     }

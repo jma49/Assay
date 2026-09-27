@@ -34,9 +34,6 @@ jobs:
       - name: Test
         run: npm test
 
-      # Replaces the build check Vercel previews used to give PRs. Only the
-      # public, placeholder Clerk key is needed to prerender; no secrets.
+      # Replaces the build check Vercel previews used to give PRs; no secrets needed.
       - name: Build
         run: npm run build
-        env:
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_Y2xlcmsuZXhhbXBsZS5jb20k

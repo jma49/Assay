@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { clerkClient } from "@clerk/nextjs/server";
+import { findUser } from "@/lib/auth/server";
 import { validateApiAuth } from "@/lib/auth/auth-utils";
 import {
   UserRole,
@@ -14,8 +14,8 @@ import {
 
 // 设置角色的请求体接口
 interface SetUserRoleRequest {
-  targetUserId: string;
-  /** Ignored: the email is read from Clerk. Still sent by older clients. */
+  /** Who gets the role: their user id, or the email they signed up with. */
+  targetUserId?: string;
   targetEmail?: string;
   role: UserRole;
 }
@@ -99,18 +99,27 @@ export async function POST(request: NextRequest) {
 
     // 解析请求体
     const body: SetUserRoleRequest = await request.json();
-    const { targetUserId, role } = body;
+    const { role } = body;
 
-    // 验证请求参数
-    if (!targetUserId || !role) {
+    if ((!body.targetUserId && !body.targetEmail) || !role) {
       return NextResponse.json(
         {
           success: false,
-          message: "缺少必要参数：targetUserId, role",
+          message: "缺少必要参数：targetUserId 或 targetEmail, role",
         },
         { status: 400 }
       );
     }
+
+    // The person must have signed up; their id and email come from the user store.
+    const target = await findUser({ id: body.targetUserId, email: body.targetEmail });
+    if (!target) {
+      return NextResponse.json(
+        { success: false, message: "目标用户不存在：请先让对方登录一次" },
+        { status: 404 }
+      );
+    }
+    const targetUserId = target.id;
 
     // 验证角色是否有效
     if (!Object.values(UserRole).includes(role)) {
@@ -153,21 +162,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // The email comes from Clerk, not the request, so it cannot be spoofed.
-    let targetEmail: string;
-    try {
-      const client = await clerkClient();
-      const targetUser = await client.users.getUser(targetUserId);
-      const primary = targetUser.emailAddresses.find(
-        (address) => address.id === targetUser.primaryEmailAddressId
-      );
-      targetEmail = (primary ?? targetUser.emailAddresses[0])?.emailAddress ?? "";
-    } catch {
-      return NextResponse.json(
-        { success: false, message: "目标用户不存在" },
-        { status: 404 }
-      );
-    }
+    const targetEmail = target.email;
 
     // 防止用户修改自己的角色（除非是管理员）
     if (targetUserId === user.id && currentUserRole !== UserRole.ADMIN) {
