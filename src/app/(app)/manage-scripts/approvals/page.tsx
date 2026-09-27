@@ -641,7 +641,7 @@ export default function ApprovalsPage() {
 
       {/* 审批对话框 */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent variant="sheet">
           <DialogHeader>
             <DialogTitle>
               {approvalAction === 'approve' ? t('approveScript') : t('rejectScript')}
