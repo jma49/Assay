@@ -152,3 +152,13 @@ VALUES (10, 9001, 1, 49.00), (250, 9002, 2, 15.50);
 
 -- price-below-cost
 UPDATE demo.products SET cost = price + 5.00 WHERE id IN (12, 35);
+
+-- Recreating the schema drops its grants; give the read-only role
+-- (docs/architecture.md, "Read-only, in layers") its access back.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'assay_reader') THEN
+    GRANT USAGE ON SCHEMA demo TO assay_reader;
+    GRANT SELECT ON ALL TABLES IN SCHEMA demo TO assay_reader;
+  END IF;
+END $$;
