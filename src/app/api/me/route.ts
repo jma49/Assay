@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { validateApiAuth } from "@/lib/auth/auth-utils";
 import { getUserRole, ROLE_PERMISSIONS } from "@/lib/auth/rbac";
+import { aiEnabled } from "@/lib/ai/model";
 import { DEMO_RUNS_PER_HOUR, isDemoMode } from "@/lib/security/demo-sandbox";
 
 /**
@@ -17,5 +18,6 @@ export async function GET() {
     role,
     permissions: role ? ROLE_PERMISSIONS[role] : [],
     demo: isDemoMode() ? { runsPerHour: DEMO_RUNS_PER_HOUR } : null,
+    ai: aiEnabled(),
   });
 }

@@ -20,6 +20,7 @@ import { useLanguage } from "@/components/common/LanguageProvider";
 import { DashboardTranslationKeys } from "../dashboard/types";
 import EditorThemeSettings from "./EditorThemeSettings";
 import AIAssistantPanel from "@/components/business/ai/AIAssistantPanel";
+import { useMe } from "@/lib/auth/use-me";
 import dynamic from "next/dynamic";
 
 // Pulls in a syntax highlighter; only load it when an analysis is shown.
@@ -66,6 +67,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   const { theme: systemTheme } = useTheme();
   const [showPreview, setShowPreview] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const aiAvailable = useMe()?.ai === true;
   const { language } = useLanguage();
   const isZh = language === "zh";
   const [isFormatting, setIsFormatting] = useState(false);
@@ -385,17 +387,19 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         </div>
 
         <div className="-mr-2 flex items-center gap-0.5">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowAI(!showAI)}
-            aria-pressed={showAI}
-            className={cn("h-8 px-2.5 text-[13px]", showAI && "bg-accent")}
-          >
-            <Sparkles className="size-3.5" />
-            AI
-          </Button>
+          {aiAvailable && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAI(!showAI)}
+              aria-pressed={showAI}
+              className={cn("h-8 px-2.5 text-[13px]", showAI && "bg-accent")}
+            >
+              <Sparkles className="size-3.5" />
+              AI
+            </Button>
+          )}
           <Button
             type="button"
             variant="ghost"
@@ -421,7 +425,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         </div>
       </div>
 
-      {showAI && (
+      {aiAvailable && showAI && (
         <AIAssistantPanel
           value={value}
           onAnalyze={handleAnalyzeSql}

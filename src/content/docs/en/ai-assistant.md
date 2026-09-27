@@ -1,6 +1,6 @@
 # AI assistant
 
-When the workspace sets `AI_ENABLED=true`, three helpers are available. Requests go through Vercel AI Gateway, which falls back to a second model if the first is unavailable.
+When the workspace sets `AI_ENABLED=true`, three helpers are available; otherwise their buttons are hidden. Requests go through Vercel AI Gateway, which falls back to a second model if the first is unavailable.
 
 | Helper | Where | Who |
 |---|---|---|
