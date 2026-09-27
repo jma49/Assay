@@ -1,3 +1,4 @@
+import { toLegacyStatus } from "@/domain/run";
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { Permission } from "@/lib/auth/rbac";
@@ -28,69 +29,42 @@ export const GET = async (
     const mongoDbClient = getMongoDbClient();
     const db = await mongoDbClient.getDb();
     const historyCollection = db.collection(MONGO_COLLECTION_NAME);
-    const scriptsCollection = db.collection(SQL_SCRIPTS_COLLECTION_NAME); // 获取 sql_scripts 集合
+    const scriptsCollection = db.collection(SQL_SCRIPTS_COLLECTION_NAME);
 
-    console.log(`正在从集合 ${MONGO_COLLECTION_NAME} 中查询记录: ${resultId}`);
-
-    const executionDoc = await historyCollection.findOne({
-      // 重命名为 executionDoc 以示区分
-      _id: new ObjectId(resultId),
-    });
-
-    if (!executionDoc) {
-      console.warn(`未找到ID为 ${resultId} 的执行结果`);
+    const run = await historyCollection.findOne({ _id: new ObjectId(resultId) });
+    if (!run) {
       return NextResponse.json({ message: "未找到执行结果" }, { status: 404 });
     }
 
-    const scriptIdFromExecution =
-      executionDoc.script_name || executionDoc.scriptId; // 从执行结果中获取 scriptId
-    const executedAt = executionDoc.execution_time || executionDoc.executedAt;
-    const findingsData = executionDoc.raw_results || executionDoc.findings;
+    const script = run.checkId
+      ? await scriptsCollection.findOne(
+          { scriptId: run.checkId },
+          { projection: { name: 1, cnName: 1, description: 1, cnDescription: 1, scope: 1, cnScope: 1, author: 1 } },
+        )
+      : null;
 
-    console.log(
-      `找到脚本 ${scriptIdFromExecution} 的执行结果，包含 ${
-        Array.isArray(findingsData) ? findingsData.length : 0
-      } 条记录`
-    );
-
-    let scriptMetadata = {};
-    if (scriptIdFromExecution) {
-      console.log(
-        `正在从集合 ${SQL_SCRIPTS_COLLECTION_NAME} 中查询脚本元数据: ${scriptIdFromExecution}`
-      );
-      const scriptDoc = await scriptsCollection.findOne({
-        scriptId: scriptIdFromExecution,
-      }); // 使用 scriptId 查询
-      if (scriptDoc) {
-        console.log(`找到了脚本 ${scriptIdFromExecution} 的元数据。`);
-        scriptMetadata = {
-          name: scriptDoc.name,
-          cnName: scriptDoc.cnName,
-          description: scriptDoc.description,
-          cnDescription: scriptDoc.cnDescription,
-          scope: scriptDoc.scope,
-          cnScope: scriptDoc.cnScope,
-          author: scriptDoc.author,
-        };
-      } else {
-        console.warn(
-          `未在 ${SQL_SCRIPTS_COLLECTION_NAME} 中找到脚本 ${scriptIdFromExecution} 的元数据。`
-        );
-      }
-    }
-
+    // The report page still reads the pre-pipeline shape; it is built from the run's current fields.
+    const statusType = toLegacyStatus(run.outcome);
     return NextResponse.json({
-      scriptId: scriptIdFromExecution, // 使用从执行结果中得到的 scriptId
-      executedAt,
-      status: executionDoc.status,
-      statusType: executionDoc.statusType || executionDoc.status,
-      message: executionDoc.message,
-      findings: findingsData,
-      _id: executionDoc._id.toString(),
-      ...scriptMetadata, // 合并脚本元数据
+      scriptId: run.checkId,
+      executedAt: run.finishedAt,
+      status: statusType === "failure" ? "failure" : "success",
+      statusType,
+      message: run.message,
+      findings: Array.isArray(run.raw_results) ? run.raw_results : [],
+      _id: run._id.toString(),
+      ...(script && {
+        name: script.name,
+        cnName: script.cnName,
+        description: script.description,
+        cnDescription: script.cnDescription,
+        scope: script.scope,
+        cnScope: script.cnScope,
+        author: script.author,
+      }),
     });
   } catch (error) {
-    console.error("获取执行详情时出错:", error);
+    console.error("[API] Reading a run failed:", error);
     return NextResponse.json(
       {
         message: "服务器内部错误",

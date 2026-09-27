@@ -159,13 +159,13 @@ export function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
       async handler({ run_id, max_rows }) {
         const run = await (await deps.db())
           .collection("result")
-          .findOne({ _id: new ObjectId(run_id) }, { projection: { script_name: 1, execution_time: 1, outcome: 1, statusType: 1, rowCount: 1, columns: 1, raw_results: 1, error: 1, message: 1 } });
+          .findOne({ _id: new ObjectId(run_id) }, { projection: { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, columns: 1, raw_results: 1, error: 1 } });
         if (!run) throw new Error(`No run with id ${run_id}`);
         const rows: Record<string, unknown>[] = Array.isArray(run.raw_results) ? run.raw_results : [];
         return {
           run_id,
-          check_id: run.script_name,
-          at: new Date(run.execution_time).toISOString(),
+          check_id: run.checkId,
+          at: new Date(run.finishedAt).toISOString(),
           row_count: typeof run.rowCount === "number" ? run.rowCount : rows.length,
           error: run.error ?? null,
           columns: run.columns ?? (rows[0] ? Object.keys(rows[0]) : []),

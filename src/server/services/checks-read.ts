@@ -1,6 +1,6 @@
 import { ObjectId, type Db, type Document } from "mongodb";
 import type { CheckDetail, CheckStateDto, CheckSummary, LatestRun, RunListItem, RunPoint } from "@/contracts/checks";
-import { fromLegacyStatus, stateFromHistory, type CheckState, type RunOutcome } from "@/domain/run";
+import { stateFromHistory, type CheckState, type RunOutcome } from "@/domain/run";
 import { markRows } from "@/server/runs/row-marks";
 import { toAlertingDto } from "./alert-controls";
 
@@ -21,18 +21,11 @@ const CHECK_FIELDS = {
   alerting: 1,
 } as const;
 
-/** A stored run, old or new shape, as the pages need it. */
+/** A stored run as the pages need it (older runs got these fields from migrations/backfill-run-fields.ts). */
 export function runPoint(run: Document): RunPoint & { runId: string } {
-  const outcome: RunOutcome = run.outcome ?? fromLegacyStatus(run.statusType);
-  const rowCount =
-    typeof run.rowCount === "number"
-      ? run.rowCount
-      : typeof run.legacyRowCount === "number"
-        ? run.legacyRowCount
-        : Array.isArray(run.raw_results)
-          ? run.raw_results.length
-          : 0;
-  return { runId: String(run._id), outcome, rowCount, at: new Date(run.finishedAt ?? run.execution_time).toISOString() };
+  const outcome: RunOutcome = run.outcome ?? "clean";
+  const rowCount = typeof run.rowCount === "number" ? run.rowCount : 0;
+  return { runId: String(run._id), outcome, rowCount, at: new Date(run.finishedAt).toISOString() };
 }
 
 function stateDto(state: CheckState | null | undefined): CheckStateDto | null {
@@ -81,37 +74,24 @@ async function recentRuns(db: Db, scriptIds: string[], limit: number) {
   const docs = await db
     .collection("result")
     .aggregate([
-      { $match: { script_name: { $in: scriptIds } } },
-      {
-        $project: {
-          script_name: 1,
-          execution_time: 1,
-          finishedAt: 1,
-          statusType: 1,
-          outcome: 1,
-          rowCount: 1,
-          trigger: 1,
-          diff: 1,
-          durationMs: 1,
-          legacyRowCount: { $size: { $ifNull: ["$raw_results", []] } },
-        },
-      },
+      { $match: { checkId: { $in: scriptIds } } },
+      { $project: { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, trigger: 1, diff: 1, durationMs: 1 } },
       {
         $setWindowFields: {
-          partitionBy: "$script_name",
-          sortBy: { execution_time: -1 },
+          partitionBy: "$checkId",
+          sortBy: { finishedAt: -1 },
           output: { rank: { $documentNumber: {} } },
         },
       },
       { $match: { rank: { $lte: limit } } },
-      { $sort: { script_name: 1, execution_time: -1 } },
+      { $sort: { checkId: 1, finishedAt: -1 } },
     ])
     .toArray();
   const byCheck = new Map<string, Document[]>();
   for (const doc of docs) {
-    const list = byCheck.get(doc.script_name) ?? [];
+    const list = byCheck.get(doc.checkId) ?? [];
     list.push(doc);
-    byCheck.set(doc.script_name, list);
+    byCheck.set(doc.checkId, list);
   }
   return byCheck;
 }
