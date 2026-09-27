@@ -41,6 +41,7 @@ const COPY = {
     collapse: "Collapse Window",
     expand: "Expand Window",
     zoom: "Zoom Window",
+    docs: "Assay Help",
     guide: "Setup Guide",
     github: "Assay on GitHub",
     issue: "Report an Issue…",
@@ -69,6 +70,7 @@ const COPY = {
     collapse: "收起窗口",
     expand: "展开窗口",
     zoom: "缩放窗口",
+    docs: "Assay 帮助",
     guide: "部署说明",
     github: "GitHub 上的 Assay",
     issue: "报告问题…",
@@ -227,7 +229,9 @@ export default function UserHeader() {
           </Menu>
 
           <Menu title={t.help} className="max-md:hidden">
-            <Item onSelect={() => open(`${GITHUB_URL}#readme`)}>{t.guide}</Item>
+            <Item onSelect={() => router.push("/docs")}>{t.docs}</Item>
+            <Item onSelect={() => router.push("/docs/deployment")}>{t.guide}</Item>
+            <Divider />
             <Item onSelect={() => open(GITHUB_URL)}>{t.github}</Item>
             <Item onSelect={() => open(`${GITHUB_URL}/issues/new`)}>{t.issue}</Item>
           </Menu>
