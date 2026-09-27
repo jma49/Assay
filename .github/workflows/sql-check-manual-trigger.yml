@@ -32,27 +32,25 @@ jobs:
         run: npm ci
 
       - name: Create environment file
+        # Secrets reach the file through env vars only: never inlined into the
+        # script text and never printed. Action logs of this public repo are public.
         run: |
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.local
-          echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env.local
+          printf 'DATABASE_URL=%s\nMONGODB_URI=%s\n' "$DATABASE_URL" "$MONGODB_URI" > .env.local
           # Pass the GitHub Run ID for potential linking in saved results
-          echo "GITHUB_RUN_ID=${{ github.run_id }}" >> .env.local 
-          echo "GITHUB_SERVER_URL=${{ github.server_url }}" >> .env.local
-          echo "GITHUB_REPOSITORY=${{ github.repository }}" >> .env.local
-          echo "NODE_ENV=production" >> .env.local
-          echo "--- .env.local content (for manual trigger) ---"
-          cat .env.local || echo ".env.local not found or empty"
-          echo "--- .env.local content end ---"
+          printf 'GITHUB_RUN_ID=%s\nGITHUB_SERVER_URL=%s\nGITHUB_REPOSITORY=%s\nNODE_ENV=production\n' \
+            "$GITHUB_RUN_ID" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" >> .env.local
 
       - name: Run SQL Check Script
         env:
           DOTENV_CONFIG_PATH: .env.local
+          # Inputs go through env, not ${{ }} in the script, so they cannot inject shell.
+          SCRIPT_ID: ${{ github.event.inputs.script_id }}
         run: |
           echo "Current working directory: $(pwd)"
           echo "Using .env file: ${DOTENV_CONFIG_PATH}"
-          echo "Script ID to execute: ${{ github.event.inputs.script_id }}"
+          echo "Script ID to execute: ${SCRIPT_ID}"
           ls -la ${DOTENV_CONFIG_PATH}
           echo "About to execute ts-node..."
           # Use ts-node with -r to preload dotenv/config, using the input script_id
-          npx ts-node -r dotenv/config scripts/run-sql.ts "${{ github.event.inputs.script_id }}"
+          npx ts-node -r dotenv/config scripts/run-sql.ts "$SCRIPT_ID"
         continue-on-error: false # Fail the workflow if the script fails
