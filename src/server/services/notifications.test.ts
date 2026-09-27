@@ -66,6 +66,7 @@ function memoryStore(events: StoredEvent[], destinations: Destination[], checkEx
   const reminderCounts = new Map<string, number>();
   const fanned = new Map<string, string | null>();
   const deliveries: MemoryDelivery[] = [];
+  const sendSlots = new Map<string, Date[]>();
   let claims = 0;
   const store: NotifyStore = {
     async pendingEvents(since) {
@@ -115,8 +116,12 @@ function memoryStore(events: StoredEvent[], destinations: Destination[], checkEx
       }
       if (update.status === "pending") d.nextAttemptAt = update.nextAttemptAt;
     },
-    async sentSince(destinationId, since) {
-      return deliveries.filter((d) => d.destinationId === destinationId && d.sentAt && d.sentAt >= since).length;
+    async takeSendSlot(destinationId, now, limit) {
+      const since = now.getTime() - 3_600_000;
+      const recent = (sendSlots.get(destinationId) ?? []).filter((at) => at.getTime() >= since);
+      if (recent.length >= limit) return false;
+      sendSlots.set(destinationId, [...recent, now]);
+      return true;
     },
     async recordLastDelivery() {},
     async digestDestinations() {
@@ -226,6 +231,19 @@ describe("dispatchNotifications", () => {
     expect(send).toHaveBeenCalledTimes(HOURLY_LIMIT);
     expect(report).toMatchObject({ sent: HOURLY_LIMIT, retrying: 2 });
     expect(deliveries.filter((x) => x.status === "pending").every((x) => x.attempts === 0)).toBe(true);
+  });
+
+  it("keeps concurrent dispatchers within the hourly cap together", async () => {
+    const events = Array.from({ length: HOURLY_LIMIT + 10 }, (_, i) => event({ id: `e${i}`, runId: `r${i}` }));
+    const { store } = memoryStore(events, [destination()]);
+    const { deps: d, send } = deps(store);
+    // Sending takes a moment, so the dispatchers interleave between the cap check and the send.
+    send.mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      return { kind: "sent" };
+    });
+    await Promise.all([dispatchNotifications(d, 100), dispatchNotifications(d, 100), dispatchNotifications(d, 100)]);
+    expect(send).toHaveBeenCalledTimes(HOURLY_LIMIT);
   });
 
   it("fails without retrying when the secret cannot be opened", async () => {
