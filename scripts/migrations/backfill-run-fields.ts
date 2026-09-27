@@ -7,12 +7,13 @@
  *   tsx -r dotenv/config scripts/migrations/backfill-run-fields.ts [--apply]
  */
 import { getMongoDbClient } from "@/lib/database/mongodb";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 async function main() {
   const apply = process.argv.includes("--apply");
   const mongo = getMongoDbClient();
   try {
-    const runs = (await mongo.getDb()).collection("result");
+    const runs = (await mongo.getDb()).collection(COLLECTIONS.runs);
     const filter = { $or: [{ checkId: { $exists: false } }, { finishedAt: { $exists: false } }, { outcome: { $exists: false } }, { rowCount: { $exists: false } }] };
     const pending = await runs.countDocuments(filter);
     console.log(`${pending} runs miss a new field.`);

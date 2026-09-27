@@ -2,7 +2,8 @@ import { ObjectId, type Db, type Document, type Filter } from "mongodb";
 import type { ActivityDelivery, ActivityItem, ActivityPage } from "@/contracts/activity";
 import { alertKindOf, type AlertKind } from "@/domain/notify";
 import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
-import { DELIVERIES, DESTINATIONS, toStoredEvent } from "@/server/repos/notify-store";
+import { toStoredEvent } from "@/server/repos/notify-store";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export const ACTIVITY_PAGE_SIZE = 40;
 
@@ -42,7 +43,7 @@ export async function listActivity(
   if (cursor) and.push({ $or: [{ at: { $lt: cursor.at } }, { at: cursor.at, _id: { $lt: cursor.id } }] });
 
   const docs = await db
-    .collection("events")
+    .collection(COLLECTIONS.events)
     .find({ $and: and })
     .sort({ at: -1, _id: -1 })
     .limit(limit + 1)
@@ -51,17 +52,17 @@ export async function listActivity(
 
   const [checks, deliveries] = await Promise.all([
     db
-      .collection("sql_scripts")
+      .collection(COLLECTIONS.checks)
       .find({ scriptId: { $in: [...new Set(page.map((e) => e.checkId))] } }, { projection: { scriptId: 1, name: 1, cnName: 1 } })
       .toArray(),
     db
-      .collection(DELIVERIES)
+      .collection(COLLECTIONS.notificationDeliveries)
       .find({ eventId: { $in: page.map((e) => e.id) } }, { projection: { eventId: 1, destinationId: 1, status: 1 } })
       .toArray(),
   ]);
   const destinationIds = [...new Set(deliveries.map((d) => String(d.destinationId)))].filter(ObjectId.isValid).map((id) => new ObjectId(id));
   const destinations = destinationIds.length
-    ? await db.collection(DESTINATIONS).find({ _id: { $in: destinationIds } }, { projection: { name: 1, kind: 1 } }).toArray()
+    ? await db.collection(COLLECTIONS.notificationDestinations).find({ _id: { $in: destinationIds } }, { projection: { name: 1, kind: 1 } }).toArray()
     : [];
   const checkById = new Map(checks.map((c) => [String(c.scriptId), c]));
   const destinationById = new Map(destinations.map((d) => [String(d._id), d]));

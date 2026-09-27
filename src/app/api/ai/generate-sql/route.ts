@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/server/http/route";
 import { Permission } from "@/lib/auth/rbac";
 import { guardAiRequest } from "@/lib/security/ai-guard";
 import { getCachedSchema } from "@/lib/database/db-schema";
@@ -11,16 +11,11 @@ import { getAIErrorMessage } from "@/lib/utils/ai-utils";
  * read-only before it is returned, so the editor gets SQL that parses and a
  * count of the rows it would flag today.
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuth(Permission.SCRIPT_CREATE, async (request, { principal }) => {
   try {
-    const authResult = await authorizeApiRequest(Permission.SCRIPT_CREATE);
-    if (!authResult.isValid) {
-      return authResult.response;
-    }
-
     const { prompt } = await request.json();
 
-    const refused = await guardAiRequest(authResult.user.id, { prompt });
+    const refused = await guardAiRequest(principal.id, { prompt });
     if (refused) {
       return refused;
     }
@@ -32,7 +27,7 @@ export async function POST(request: NextRequest) {
     const result = await draftCheck({
       request: prompt,
       schema: await getCachedSchema(),
-      userId: authResult.user.id,
+      userId: principal.id,
     });
 
     return NextResponse.json({
@@ -46,4 +41,4 @@ export async function POST(request: NextRequest) {
     console.error("[AI Generate SQL] error:", error);
     return NextResponse.json({ error: getAIErrorMessage(error) }, { status: 500 });
   }
-}
+});

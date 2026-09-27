@@ -2,19 +2,21 @@ import Link from "next/link";
 import { cn } from "@/lib/utils/utils";
 import { cleanRunMessage } from "@/lib/utils/run-message";
 import type { RunReportMessages } from "./messages";
-import { localized, statusLabel, TONE_TEXT_CLASS, type ExecutionResult, type Language, type RunTone } from "./run-report";
+import { OUTCOME_DOT, OUTCOME_LABEL, OUTCOME_TEXT } from "@/components/checks/status";
+import type { RunOutcome } from "@/domain/run";
+import { localized, type ExecutionResult, type Language } from "./run-report";
 
 /** A "Get Info"-style inspector: facts about the run and its check. */
 export function RunInfoPanel({
   result,
-  tone,
+  outcome,
   scriptName,
   executedAt,
   language,
   t,
 }: {
   result: ExecutionResult;
-  tone: RunTone;
+  outcome: RunOutcome;
   scriptName: string | undefined;
   executedAt: string;
   language: Language;
@@ -27,9 +29,9 @@ export function RunInfoPanel({
     {
       label: t.status,
       value: (
-        <span className={cn("inline-flex items-center gap-1.5", TONE_TEXT_CLASS[tone])}>
-          <span className={cn("status-dot", `status-dot-${tone}`)} aria-hidden />
-          {statusLabel(tone, t.statusTexts)}
+        <span className={cn("inline-flex items-center gap-1.5", OUTCOME_TEXT[outcome])}>
+          <span className={cn("status-dot", OUTCOME_DOT[outcome])} aria-hidden />
+          {OUTCOME_LABEL[outcome][language]}
         </span>
       ),
     },

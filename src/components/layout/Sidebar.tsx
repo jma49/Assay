@@ -33,27 +33,15 @@ interface NavItem {
   icon: ComponentType<{ className?: string }>;
   /** Shown only with this permission; the page enforces it anyway. */
   requires?: string;
-  /** Other paths that belong to this item. */
-  matches?: string[];
 }
 
 const SECTIONS: { title: Label; items: NavItem[] }[] = [
   {
     title: { en: "Monitor", zh: "监控" },
     items: [
-      {
-        href: "/checks",
-        label: { en: "Checks", zh: "检查" },
-        icon: ListChecks,
-        matches: ["/scripts", "/manage-scripts"],
-      },
+      { href: "/checks", label: { en: "Checks", zh: "检查" }, icon: ListChecks },
       { href: "/activity", label: { en: "Activity", zh: "动态" }, icon: Activity },
-      {
-        href: "/dashboard",
-        label: { en: "Runs", zh: "执行记录" },
-        icon: History,
-        matches: ["/view-execution-result"],
-      },
+      { href: "/runs", label: { en: "Runs", zh: "执行记录" }, icon: History },
       { href: "/coverage", label: { en: "Coverage", zh: "覆盖情况" }, icon: Table2 },
       { href: "/data-analysis", label: { en: "Analysis", zh: "分析" }, icon: BarChart3 },
     ],
@@ -62,7 +50,7 @@ const SECTIONS: { title: Label; items: NavItem[] }[] = [
     title: { en: "Workspace", zh: "工作区" },
     items: [
       {
-        href: "/manage-scripts/approvals",
+        href: "/approvals",
         label: { en: "Approvals", zh: "审批" },
         icon: CheckCircle2,
         requires: "script:approve",
@@ -80,13 +68,13 @@ const COPY = {
   zh: { workspace: "工作区", guestTitle: "你正在以访客身份浏览", guestBody: "可以随意查看并执行示例检查。注册后可以编写自己的检查。", signUp: "注册", leave: "退出演示", theme: "切换深色模式" },
 };
 
-/** How specifically an item matches the path: its longest owning prefix, or 0. */
+/** How specifically an item matches the path: the length of its href when it owns the path, or 0. */
 function matchLength(pathname: string, item: NavItem): number {
-  const owns = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
-  return Math.max(0, ...[item.href, ...(item.matches ?? [])].filter(owns).map((path) => path.length));
+  const owns = pathname === item.href || pathname.startsWith(`${item.href}/`);
+  return owns ? item.href.length : 0;
 }
 
-/** Only the most specific match is active, so /manage-scripts/approvals lights Approvals, not Checks. */
+/** Only the most specific match is active, so /checks/manage lights Checks and /runs/abc lights Runs. */
 function isActive(pathname: string, item: NavItem, all: NavItem[]): boolean {
   const length = matchLength(pathname, item);
   return length > 0 && all.every((other) => other === item || matchLength(pathname, other) < length);
@@ -102,7 +90,8 @@ export function Sidebar() {
   useEffect(() => setMounted(true), []);
   const t = COPY[language] ?? COPY.en;
 
-  const allowed = (item: NavItem) => !item.requires || !me || me.permissions.includes(item.requires);
+  // Items that need a permission stay hidden until it is known, so they never flash for people without it.
+  const allowed = (item: NavItem) => !item.requires || (me?.permissions.includes(item.requires) ?? false);
   const allItems = SECTIONS.flatMap((section) => section.items);
   const guest = me?.guest === true && isLoaded && !user;
 

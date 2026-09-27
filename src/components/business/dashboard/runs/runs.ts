@@ -1,4 +1,5 @@
 import type { CheckStats } from "@/lib/database/check-stats";
+import { nextRunAt } from "@/lib/scheduling/due-slot";
 import type { Check, ScriptInfo } from "../types";
 
 export type SortKey = keyof Check | "";
@@ -79,21 +80,20 @@ export function parsePagination(body: unknown): HistoryPagination | null {
   return { total, totalPages, hasNext, hasPrev };
 }
 
-const SCRIPT_LIST_FIELDS = ["data", "scripts", "items", "results", "list"] as const;
-
-/** The check list from a /api/list-scripts body, whichever shape it arrives in. */
+/** The checks in a GET /api/scripts body, by name (the order the Run sheet lists and preselects them in). */
 export function parseScriptList(body: unknown): ScriptInfo[] {
-  if (Array.isArray(body)) return body;
-  if (!body || typeof body !== "object") return [];
-  const record = body as Record<string, unknown>;
-  const field = SCRIPT_LIST_FIELDS.find((name) => Array.isArray(record[name]));
-  return field ? (record[field] as ScriptInfo[]) : [];
+  if (!Array.isArray(body)) return [];
+  // Plain code-unit order, as MongoDB sorts names.
+  return [...(body as ScriptInfo[])].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 }
 
-/** Earliest next run across scheduled checks, computed by the API. */
-export function parseNextScheduled(body: unknown): Date | null {
-  const nextScheduledAt = (body as { nextScheduledAt?: string } | null)?.nextScheduledAt;
-  return nextScheduledAt ? new Date(nextScheduledAt) : null;
+/** Earliest next run across scheduled checks. */
+export function nextScheduledRunOf(scripts: ScriptInfo[], now = new Date()): Date | null {
+  const next = scripts
+    .filter((script) => script.isScheduled && script.cronSchedule)
+    .map((script) => nextRunAt(script.cronSchedule!, now)?.getTime())
+    .filter((time): time is number => time !== undefined);
+  return next.length ? new Date(Math.min(...next)) : null;
 }
 
 /** Zero-based index of the first row on the page, and the index just past the last one. */
@@ -128,13 +128,6 @@ export function triggerErrorMessage(err: unknown): string {
     return (cause as { localizedMessage: string }).localizedMessage;
   }
   return err.message || "Trigger failed";
-}
-
-export type CheckTone = "success" | "attention" | "failure";
-
-export function checkTone(check: Pick<Check, "status" | "statusType">): CheckTone {
-  if (check.statusType === "attention_needed") return "attention";
-  return check.status === "success" ? "success" : "failure";
 }
 
 /** Each check's name in the UI language, keyed by the id the history rows carry. */

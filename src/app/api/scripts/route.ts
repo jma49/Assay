@@ -2,19 +2,18 @@ import { NextResponse } from "next/server";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document, ObjectId } from "mongodb";
-import { clearScriptsCache } from "@/lib/cache/cache-utils";
-import { authorizeApiRequest, validateApiAuth } from "@/lib/auth/auth-utils";
+import { withAuth } from "@/server/http/route";
 import { authorProblem } from "@/lib/workflows/check-fields";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
-import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
+import { Permission, getUserRole } from "@/lib/auth/rbac";
 import {
   ApprovalStatus,
   createApprovalRequest,
   isAutoApprovalEligible,
   analyzeScriptType,
 } from "@/lib/workflows/approval-workflow";
-import { createScriptVersion } from "@/lib/workflows/version-control";
-import { recordEditHistoryOnServer } from "@/lib/workflows/edit-history-store";
+import { createCheck } from "@/server/services/check-writes";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 interface NewScriptData {
   scriptId: string;
@@ -40,28 +39,12 @@ async function getSqlScriptsCollection(): Promise<Collection<Document>> {
   const db = await mongoDbClient.getDb();
   // As per previous correction, assuming MONGODB_URI points to sql_script_result
   // or the default db in MongoDbClient is configured accordingly.
-  return db.collection("sql_scripts");
+  return db.collection(COLLECTIONS.checks);
 }
 
-export async function POST(request: Request) {
+export const POST = withAuth(Permission.SCRIPT_CREATE, async (request, { principal }) => {
   try {
-    const authResult = await validateApiAuth("zh");
-    if (!authResult.isValid) {
-      return authResult.response!;
-    }
-
-    const { user, userEmail } = authResult;
-
-    const permissionCheck = await requirePermission(
-      user.id,
-      Permission.SCRIPT_CREATE
-    );
-    if (!permissionCheck.authorized) {
-      return NextResponse.json(
-        { success: false, message: "权限不足：无法创建脚本" },
-        { status: 403 }
-      );
-    }
+    const userEmail = principal.email;
 
     const body = await request.json();
     const {
@@ -141,7 +124,7 @@ export async function POST(request: Request) {
       ); // 403 Forbidden
     }
 
-    const userRole = await getUserRole(user.id);
+    const userRole = await getUserRole(principal.id);
     if (!userRole) {
       return NextResponse.json(
         { success: false, message: "无法获取用户角色信息" },
@@ -159,7 +142,7 @@ export async function POST(request: Request) {
     if (!autoApprovalEligible) {
       const requestId = await createApprovalRequest(
         scriptId,
-        user.id,
+        principal.id,
         userEmail,
         userRole,
         sqlContent,
@@ -225,70 +208,35 @@ export async function POST(request: Request) {
       approvalStatus: ApprovalStatus.APPROVED,
       approvalRequestId: null,
       // Who made it, from the session: ownership and audit never trust the author label.
-      createdBy: { id: user.id, email: userEmail },
-      updatedBy: { id: user.id, email: userEmail },
+      createdBy: { id: principal.id, email: userEmail },
+      updatedBy: { id: principal.id, email: userEmail },
       version: 1,
     };
 
-    const result = await collection.insertOne(newScriptDocument);
+    const mongoId = await createCheck(await getMongoDbClient().getDb(), newScriptDocument, { id: principal.id, email: userEmail }, "脚本创建", "major");
+    const message = autoApprovalEligible
+      ? "查询脚本创建成功（管理员自动审批通过）"
+      : "查询脚本创建成功";
 
-    if (result.insertedId) {
-      await createScriptVersion(
-        scriptId,
-        {
-          name: newScriptDocument.name,
-          cnName: newScriptDocument.cnName,
-          description: newScriptDocument.description,
-          cnDescription: newScriptDocument.cnDescription,
-          scope: newScriptDocument.scope,
-          cnScope: newScriptDocument.cnScope,
-          author: newScriptDocument.author,
-          hashtags: newScriptDocument.hashtags,
-          sqlContent: newScriptDocument.sqlContent,
-        },
-        user.id,
-        userEmail,
-        "create",
-        "脚本创建",
-        "major"
-      );
-
-      await recordEditHistoryOnServer(
-        {
-          scriptId,
-          operation: "create",
-          newData: newScriptDocument as unknown as Record<string, unknown>,
-        },
-        { id: user.id, email: userEmail, name: userEmail.split("@")[0] }
-      );
-
-      await clearScriptsCache();
-
-      const message = autoApprovalEligible
-        ? "查询脚本创建成功（管理员自动审批通过）"
-        : "查询脚本创建成功";
-
-      return NextResponse.json(
-        {
-          success: true,
-          message,
-          scriptId: newScriptDocument.scriptId,
-          mongoId: result.insertedId,
-          approvalStatus: newScriptDocument.approvalStatus,
-          securityPolicy: "系统已确认这是安全的查询操作",
-          policy: autoApprovalEligible
-            ? "管理员创建脚本，自动审批通过"
-            : "脚本创建成功",
-        },
-        { status: 201 }
-      );
-    } else {
-      return NextResponse.json(
-        { success: false, message: "创建脚本失败" },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json(
+      {
+        success: true,
+        message,
+        scriptId: newScriptDocument.scriptId,
+        mongoId,
+        approvalStatus: newScriptDocument.approvalStatus,
+        securityPolicy: "系统已确认这是安全的查询操作",
+        policy: autoApprovalEligible
+          ? "管理员创建脚本，自动审批通过"
+          : "脚本创建成功",
+      },
+      { status: 201 }
+    );
   } catch (error) {
+    // Two creates with the same id at once: the unique index lets one through.
+    if ((error as { code?: number }).code === 11000) {
+      return NextResponse.json({ message: "A check with this ID already exists" }, { status: 409 });
+    }
     console.error("Error creating script:", error);
     if (error instanceof SyntaxError) {
       return NextResponse.json(
@@ -301,17 +249,12 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function GET(_request: Request) {
+// The middleware only guarantees a signed-in user; reading scripts (and
+// their SQL) also needs script:read, as on the other script routes.
+export const GET = withAuth(Permission.SCRIPT_READ, async () => {
   try {
-    // The middleware only guarantees a signed-in user; reading scripts (and
-    // their SQL) also needs script:read, as on the other script routes.
-    const authResult = await authorizeApiRequest(Permission.SCRIPT_READ);
-    if (!authResult.isValid) {
-      return authResult.response;
-    }
-
     const collection = await getSqlScriptsCollection();
     const scriptsFromDb = await collection
       .find({})
@@ -378,4 +321,4 @@ export async function GET(_request: Request) {
       { status: 500 }
     );
   }
-}
+});

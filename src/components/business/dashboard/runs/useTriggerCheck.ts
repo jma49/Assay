@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { runCheck } from "@/client/checks";
 import type { ScriptInfo } from "../types";
 import { triggerErrorMessage } from "./runs";
 
@@ -33,13 +34,7 @@ export function useTriggerCheck(availableScripts: ScriptInfo[], onTriggered: () 
     setTriggerMessageType(null);
 
     try {
-      const response = await fetch("/api/run-check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scriptId: selectedScriptId }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message || "Trigger failed");
+      const result = await runCheck(selectedScriptId);
 
       const successMessage = result.localizedMessage || result.message || "Script triggered successfully";
       setTriggerMessage(successMessage);

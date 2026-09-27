@@ -2,10 +2,7 @@ import { randomUUID } from "node:crypto";
 import { ObjectId, type Db, type Document } from "mongodb";
 import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
 import type { Destination, NotifyStore, StoredEvent } from "@/server/services/notifications";
-
-export const DESTINATIONS = "notification_destinations";
-export const DELIVERIES = "notification_deliveries";
-export const REMINDERS = "notification_reminders";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 const DUPLICATE_KEY = 11000;
 
@@ -52,11 +49,11 @@ export function toStoredEvent(doc: Document): StoredEvent {
 }
 
 export function mongoNotifyStore(db: Db): NotifyStore {
-  const events = db.collection("events");
-  const checks = db.collection("sql_scripts");
-  const destinations = db.collection(DESTINATIONS);
-  const deliveries = db.collection(DELIVERIES);
-  const reminders = db.collection(REMINDERS);
+  const events = db.collection(COLLECTIONS.events);
+  const checks = db.collection(COLLECTIONS.checks);
+  const destinations = db.collection(COLLECTIONS.notificationDestinations);
+  const deliveries = db.collection(COLLECTIONS.notificationDeliveries);
+  const reminders = db.collection(COLLECTIONS.notificationReminders);
 
   return {
     async pendingEvents(since, limit) {
@@ -120,11 +117,14 @@ export function mongoNotifyStore(db: Db): NotifyStore {
       }
     },
 
-    async markFannedOut(eventId, now, suppressed, actionKey) {
+    async assignActionKey(eventId, actionKey) {
       const _id = toId(eventId);
-      if (!_id) return;
-      await events.updateOne({ _id }, { $set: { fannedOutAt: now, ...(suppressed && { suppressed }) } });
-      await events.updateOne({ _id, actionKey: { $exists: false } }, { $set: { actionKey } });
+      if (_id) await events.updateOne({ _id, actionKey: { $exists: false } }, { $set: { actionKey } });
+    },
+
+    async markFannedOut(eventId, now, suppressed) {
+      const _id = toId(eventId);
+      if (_id) await events.updateOne({ _id }, { $set: { fannedOutAt: now, ...(suppressed && { suppressed }) } });
     },
 
     async claimDelivery(now, leaseMs) {
@@ -147,8 +147,19 @@ export function mongoNotifyStore(db: Db): NotifyStore {
       await deliveries.updateOne({ _id: new ObjectId(delivery.id), claim: delivery.claim }, { $set: set, $inc: inc });
     },
 
-    async sentSince(destinationId, since) {
-      return deliveries.countDocuments({ destinationId, sentAt: { $gte: since } });
+    async takeSendSlot(destinationId, now, limit) {
+      const _id = toId(destinationId);
+      if (!_id) return false;
+      // The destination keeps the times of its sends in the last hour. One
+      // conditional update both checks the count and records the send, so
+      // no two dispatchers can take the last slot.
+      const since = new Date(now.getTime() - 3_600_000);
+      const recent = { $filter: { input: { $ifNull: ["$recentSends", []] }, cond: { $gte: ["$$this", since] } } };
+      const result = await destinations.updateOne(
+        { _id, $expr: { $lt: [{ $size: recent }, limit] } },
+        [{ $set: { recentSends: { $concatArrays: [recent, [now]] } } }],
+      );
+      return result.modifiedCount === 1;
     },
 
     async digestDestinations() {

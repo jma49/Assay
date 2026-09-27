@@ -1,11 +1,15 @@
 import React, { useMemo } from "react";
+import { Pagination } from "@/components/common/Pagination";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
+import { formatPageInfo } from "@/lib/utils/pagination";
 import { collectHashtags } from "./manual-trigger/script-search";
 import { HistoryFilters } from "./runs/HistoryFilters";
-import { HistoryPagination } from "./runs/HistoryPagination";
 import { HistoryTable } from "./runs/HistoryTable";
 import { scriptDisplayNames, type SortConfig } from "./runs/runs";
 import type { Check, DashboardTranslationKeys, ScriptInfo } from "./types";
+
+/** The jump box only pays off once there are more pages than the shortcuts cover. */
+const JUMP_BOX_MIN_PAGES = 6;
 
 interface CheckHistoryProps {
   paginatedChecks: Check[];
@@ -80,14 +84,19 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
         />
       </CardContent>
       {totalPages > 1 && (
-        <HistoryPagination
-          t={t}
-          currentPage={currentPage}
+        <Pagination
+          page={currentPage}
           totalPages={totalPages}
-          totalRecords={allChecksCount}
-          startIndex={startIndex}
-          endIndex={endIndex}
+          pageInfo={formatPageInfo(t("pageInfo"), {
+            start: startIndex + 1,
+            end: Math.min(endIndex, allChecksCount),
+            totalItems: allChecksCount,
+            page: currentPage,
+            totalPages,
+          })}
+          t={t}
           onPageChange={setCurrentPage}
+          jumpMinPages={JUMP_BOX_MIN_PAGES}
         />
       )}
     </Card>

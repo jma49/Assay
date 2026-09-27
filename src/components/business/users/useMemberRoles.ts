@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { sendJson } from "@/client/send-json";
 import { UserRole } from "@/lib/types/approval";
 import type { DashboardTranslationKeys } from "@/components/business/dashboard/types";
 import { getRoleInfo, type MemberRole } from "./members";
@@ -12,21 +13,7 @@ export interface RoleAssignment {
 
 /** Posts a role for a member; the server checks the caller may assign it. */
 async function postRole({ userId, email, role }: RoleAssignment, fallbackError: string) {
-  const response = await fetch("/api/users/roles", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      targetUserId: userId,
-      targetEmail: email,
-      role,
-    }),
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.message || fallbackError);
-  }
+  await sendJson("/api/users/roles", "POST", { targetUserId: userId, targetEmail: email, role }, fallbackError);
 }
 
 /**
@@ -121,15 +108,7 @@ export function useMemberRoles(language: string, t: (key: DashboardTranslationKe
     const failed = zh ? "删除角色失败" : "Could not remove the role";
     try {
       setActionLoading(userId);
-      const response = await fetch(`/api/users/roles?userId=${userId}`, {
-        method: "DELETE",
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || failed);
-      }
+      await sendJson(`/api/users/roles?userId=${userId}`, "DELETE", undefined, failed);
 
       toast.success(zh ? `用户 ${email} 的角色已删除` : `Removed the role from ${email}`);
       loadMembers();

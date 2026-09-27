@@ -1,15 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/server/http/route";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { checksWithAllTags, historyFilter, historySort, parseHistoryParams } from "@/server/runs/history-query";
 import { LEGACY_VIEW_FIELDS, toLegacyRunView } from "@/server/runs/legacy-view";
+import { COLLECTIONS } from "@/lib/database/collections";
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(Permission.HISTORY_READ, async (request) => {
   try {
-    const authResult = await authorizeApiRequest(Permission.HISTORY_READ);
-    if (!authResult.isValid) return authResult.response;
-
     const params = parseHistoryParams(new URL(request.url).searchParams);
     const { page, limit, hashtags, includeResults } = params;
     const db = await getMongoDbClient().getDb();
@@ -17,14 +15,14 @@ export async function GET(request: NextRequest) {
     let taggedCheckIds: string[] | null = null;
     if (hashtags.length > 0) {
       const tagged = await db
-        .collection<{ scriptId: string; hashtags?: string[] }>("sql_scripts")
+        .collection<{ scriptId: string; hashtags?: string[] }>(COLLECTIONS.checks)
         .find({ hashtags: { $all: hashtags } }, { projection: { scriptId: 1, hashtags: 1 } })
         .toArray();
       taggedCheckIds = checksWithAllTags(tagged, hashtags);
     }
 
     const filter = historyFilter(params, taggedCheckIds);
-    const runs = db.collection("result");
+    const runs = db.collection(COLLECTIONS.runs);
     const [docs, total] =
       taggedCheckIds?.length === 0
         ? [[], 0]
@@ -55,4 +53,4 @@ export async function GET(request: NextRequest) {
     console.error("[check-history] Reading run history failed:", error);
     return NextResponse.json({ message: "Internal Server Error fetching check history" }, { status: 500 });
   }
-}
+});

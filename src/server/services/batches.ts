@@ -1,6 +1,7 @@
 import type { Db } from "mongodb";
 import { createSemaphore } from "@/server/concurrency/semaphore";
 import type { RunCheckResult, RunTrigger } from "./run-check";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export type BatchItemStatus = "pending" | "running" | "completed" | "attention_needed" | "failed";
 
@@ -88,7 +89,7 @@ export async function runBatch(
 export const BATCH_STALE_MS = 15 * 60_000;
 
 export function mongoBatchStore(db: Db): BatchStore {
-  const batches = db.collection<Batch>("batches");
+  const batches = db.collection<Batch>(COLLECTIONS.batches);
   return {
     async create(batch) {
       await batches.insertOne({ ...batch });

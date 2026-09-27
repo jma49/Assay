@@ -9,7 +9,8 @@ const mocks = vi.hoisted(() => ({
   removeUserRole: vi.fn(async () => true),
 }));
 
-vi.mock("@/lib/auth/auth-utils", () => ({
+vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth/auth-utils")>()),
   validateApiAuth: async () => ({ isValid: true, user: { id: "user_admin" }, userEmail: "admin@example.com", isGuest: false }),
 }));
 vi.mock("@/lib/auth/server", () => ({
@@ -30,8 +31,8 @@ vi.mock("@/lib/auth/rbac", async (importOriginal) => {
 import { DELETE, POST } from "./route";
 
 const assign = (targetUserId: string, role: string) =>
-  POST(new NextRequest("http://localhost/api/users/roles", { method: "POST", body: JSON.stringify({ targetUserId, role }) }));
-const remove = (userId: string) => DELETE(new NextRequest(`http://localhost/api/users/roles?userId=${userId}`, { method: "DELETE" }));
+  POST(new NextRequest("http://localhost/api/users/roles", { method: "POST", body: JSON.stringify({ targetUserId, role }) }), { params: Promise.resolve({}) });
+const remove = (userId: string) => DELETE(new NextRequest(`http://localhost/api/users/roles?userId=${userId}`, { method: "DELETE" }), { params: Promise.resolve({}) });
 
 beforeEach(() => {
   mocks.callerRole = "admin";

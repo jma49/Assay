@@ -12,14 +12,14 @@ const mocks = vi.hoisted(() => ({
   execute: vi.fn(async (_scriptId: string) => ({ success: true, statusType: "success" }) as Record<string, unknown>),
 }));
 
-vi.mock("@/lib/auth/auth-utils", () => ({
+vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth/auth-utils")>()),
   validateApiAuth: async () => ({
     isValid: true,
     user: { id: mocks.isGuest ? "guest_abc" : "user_viewer" },
     userEmail: mocks.isGuest ? "" : "viewer@example.com",
     isGuest: mocks.isGuest,
   }),
-  getUserInfo: () => ({ name: "Viewer", email: "viewer@example.com", timestamp: "now" }),
 }));
 vi.mock("@/lib/auth/rbac", () => ({
   Permission: { SCRIPT_EXECUTE: "script:execute" },
@@ -59,6 +59,7 @@ const run = (body: unknown) =>
       body: JSON.stringify(body),
       headers: { "x-forwarded-for": "9.9.9.9" },
     }),
+    { params: Promise.resolve({}) },
   );
 
 describe("POST /api/run-check", () => {

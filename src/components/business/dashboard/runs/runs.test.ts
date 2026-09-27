@@ -1,14 +1,13 @@
 import { describe, expect, it } from "vitest";
-import type { Check, ScriptInfo } from "../types";
+import type { ScriptInfo } from "../types";
 import {
   DEFAULT_SORT,
   apiSort,
   buildCheckHistoryQuery,
-  checkTone,
   nextSort,
   pageRange,
   parseChecks,
-  parseNextScheduled,
+  nextScheduledRunOf,
   parsePagination,
   parseScriptList,
   passRate,
@@ -90,20 +89,23 @@ describe("response parsing", () => {
     expect(parsePagination({})).toBeNull();
   });
 
-  it("finds the check list in any of the shapes the scripts API has used", () => {
-    const list = [{ scriptId: "a", name: "A" }] as ScriptInfo[];
-    expect(parseScriptList(list)).toBe(list);
-    expect(parseScriptList({ success: true, data: list })).toBe(list);
-    expect(parseScriptList({ scripts: list })).toBe(list);
-    expect(parseScriptList({ results: list })).toBe(list);
-    expect(parseScriptList({ data: "nope" })).toEqual([]);
+  it("lists the checks by name, as MongoDB sorts them", () => {
+    const list = [{ scriptId: "b", name: "b" }, { scriptId: "c", name: "B" }, { scriptId: "a", name: "A" }] as ScriptInfo[];
+    expect(parseScriptList(list).map((s) => s.scriptId)).toEqual(["a", "c", "b"]);
+    expect(parseScriptList({ message: "nope" })).toEqual([]);
     expect(parseScriptList(null)).toEqual([]);
   });
 
-  it("reads the next scheduled run when there is one", () => {
-    expect(parseNextScheduled({ nextScheduledAt: "2026-09-27T08:00:00Z" })).toEqual(new Date("2026-09-27T08:00:00Z"));
-    expect(parseNextScheduled({ data: [] })).toBeNull();
-    expect(parseNextScheduled([])).toBeNull();
+  it("finds the earliest next run across scheduled checks", () => {
+    const now = new Date("2026-09-27T07:30:00Z");
+    const scripts = [
+      { scriptId: "hourly", name: "h", isScheduled: true, cronSchedule: "0 * * * *" },
+      { scriptId: "daily", name: "d", isScheduled: true, cronSchedule: "0 9 * * *" },
+      { scriptId: "manual", name: "m", isScheduled: false, cronSchedule: "*/5 * * * *" },
+      { scriptId: "broken", name: "x", isScheduled: true, cronSchedule: "not cron" },
+    ] as ScriptInfo[];
+    expect(nextScheduledRunOf(scripts, now)).toEqual(new Date("2026-09-27T08:00:00Z"));
+    expect(nextScheduledRunOf([], now)).toBeNull();
   });
 });
 
@@ -122,15 +124,15 @@ describe("page numbers", () => {
 
 describe("takeSearchParam", () => {
   it("returns the trimmed search and the URL without it", () => {
-    expect(takeSearchParam("https://assay.test/dashboard?search=%20orders%20&tab=x")).toEqual({
+    expect(takeSearchParam("https://assay.test/runs?search=%20orders%20&tab=x")).toEqual({
       search: "orders",
-      cleanedHref: "https://assay.test/dashboard?tab=x",
+      cleanedHref: "https://assay.test/runs?tab=x",
     });
   });
 
   it("ignores a missing or empty search", () => {
-    expect(takeSearchParam("https://assay.test/dashboard")).toBeNull();
-    expect(takeSearchParam("https://assay.test/dashboard?search=")).toBeNull();
+    expect(takeSearchParam("https://assay.test/runs")).toBeNull();
+    expect(takeSearchParam("https://assay.test/runs?search=")).toBeNull();
   });
 });
 
@@ -144,13 +146,6 @@ describe("triggerErrorMessage", () => {
 });
 
 describe("row display", () => {
-  it("shows attention before the pass/fail status", () => {
-    const tone = (status: Check["status"], statusType?: Check["statusType"]) => checkTone({ status, statusType });
-    expect(tone("success")).toBe("success");
-    expect(tone("failure")).toBe("failure");
-    expect(tone("success", "attention_needed")).toBe("attention");
-  });
-
   it("names checks in the UI language, falling back to English and then the id", () => {
     const scripts = [
       { scriptId: "a", name: "Orders", cnName: "订单" },

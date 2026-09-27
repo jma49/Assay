@@ -58,7 +58,35 @@ export function demoRunBudgets(
   ];
 }
 
-/** The client address as the platform reports it; Vercel sets x-forwarded-for itself. */
-export function clientIp(headers: Headers): string {
-  return headers.get("x-forwarded-for")?.split(",")[0]?.trim() || headers.get("x-real-ip") || "unknown";
+/** Proxies in front of a self-hosted server that append to x-forwarded-for, when TRUSTED_PROXY_COUNT is unset. */
+export const DEFAULT_TRUSTED_PROXY_COUNT = 1;
+
+function trustedProxyCount(env: Record<string, string | undefined>): number {
+  const raw = env.TRUSTED_PROXY_COUNT?.trim();
+  if (!raw) return DEFAULT_TRUSTED_PROXY_COUNT;
+  const count = Number(raw);
+  return Number.isInteger(count) && count >= 0 ? count : DEFAULT_TRUSTED_PROXY_COUNT;
+}
+
+/**
+ * The client address, for the guest demo quota. On Vercel the edge sets
+ * x-vercel-forwarded-for and x-real-ip itself, overwriting what the client
+ * sent. Elsewhere only the proxies' own entries in x-forwarded-for can be
+ * trusted: each appends the address it saw, so with N trusted proxies the
+ * client is the Nth entry from the right, and anything to its left may be
+ * made up by the client. With TRUSTED_PROXY_COUNT=0 no header is trusted.
+ */
+export function clientIp(headers: Headers, env: Record<string, string | undefined> = process.env): string {
+  const first = (value: string | null) => value?.split(",")[0]?.trim() || null;
+  if (env.VERCEL) {
+    return first(headers.get("x-vercel-forwarded-for")) || first(headers.get("x-real-ip")) || first(headers.get("x-forwarded-for")) || "unknown";
+  }
+  const proxies = trustedProxyCount(env);
+  if (proxies === 0) return "unknown";
+  const hops = (headers.get("x-forwarded-for") ?? "")
+    .split(",")
+    .map((hop) => hop.trim())
+    .filter(Boolean);
+  // Fewer entries than proxies: the left-most is still one a trusted proxy wrote.
+  return hops[Math.max(0, hops.length - proxies)] || "unknown";
 }

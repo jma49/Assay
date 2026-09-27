@@ -1,3 +1,4 @@
+import { describePage } from "@/lib/utils/pagination";
 import type { EditHistoryFilter, EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
 
 export type Translate = (key: string) => string;
@@ -52,30 +53,12 @@ export function buildHistoryQuery(filters: HistoryFilters, page: number, pageSiz
   return params.toString();
 }
 
-/** A page number typed into the jump box, or null when it is not a page that exists. */
-export function parseJumpPage(input: string, totalPages: number): number | null {
-  const page = parseInt(input, 10);
-  return !isNaN(page) && page >= 1 && page <= totalPages ? page : null;
-}
-
-const JUMP_EDITING_KEYS = ["ArrowLeft", "ArrowRight", "Delete", "Backspace", "Tab"];
-
-/** Whether a key may reach the jump box, which only takes digits and editing keys. */
-export function isJumpInputKey(key: string): boolean {
-  return /[\d\b]/.test(key) || JUMP_EDITING_KEYS.includes(key);
-}
-
 export function formatPageInfo(
   t: Translate,
   { currentPage, totalPages, totalRecords, pageSize }: { currentPage: number; totalPages: number; totalRecords: number; pageSize: number },
 ): string {
   if (totalRecords === 0) return t("noResults");
-  const start = Math.min((currentPage - 1) * pageSize + 1, totalRecords);
-  const end = Math.min(currentPage * pageSize, totalRecords);
-  return [start, end, totalRecords, currentPage, totalPages].reduce<string>(
-    (text, value) => text.replace("%s", String(value)),
-    t("pageInfo"),
-  );
+  return describePage(t("pageInfo"), { page: currentPage, totalPages, totalItems: totalRecords, pageSize });
 }
 
 const OPERATION_BADGE_CLASSES: Record<string, string> = {

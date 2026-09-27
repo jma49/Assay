@@ -1,11 +1,35 @@
+import type { RunOutcome } from "@/domain/run";
+import { outcomeOf } from "@/components/checks/status";
 import { localDayKey } from "@/lib/utils/datetime";
 
-/** A run as /api/execution-history returns it. */
+/** A run the page counts. */
 export interface ExecutionRecord {
   _id: string;
   scriptId: string;
-  statusType: "success" | "failed" | "attention_needed";
+  outcome: RunOutcome;
   createdAt: string;
+}
+
+/** A run as /api/check-history lists it. */
+interface HistoryRun {
+  _id: string;
+  script_name: string;
+  execution_time: string;
+  status?: string;
+  statusType?: string;
+}
+
+/** Most runs the charts read: the newest ones in the range. */
+const ANALYSIS_RUN_LIMIT = 500;
+
+/** The runs in a /api/check-history body. */
+export function runsFromHistory(body: { data?: HistoryRun[] } | null): ExecutionRecord[] {
+  return (body?.data ?? []).map((run) => ({
+    _id: run._id,
+    scriptId: run.script_name,
+    outcome: outcomeOf(run),
+    createdAt: run.execution_time,
+  }));
 }
 
 export interface ScriptSummary {
@@ -53,9 +77,9 @@ export const DEFAULT_TIME_RANGE: TimeRange = "7d";
 
 const rate = (part: number, whole: number) => (whole > 0 ? (part / whole) * 100 : 0);
 
-/** The execution-history query for a time range and check ("all" for every check). */
+/** The check-history query for a time range and check ("all" for every check). */
 export function historyQuery(range: TimeRange, scriptId: string, now = new Date()): URLSearchParams {
-  const params = new URLSearchParams();
+  const params = new URLSearchParams({ limit: String(ANALYSIS_RUN_LIMIT) });
   const days = TIME_RANGES[range].days;
   if (days) {
     const start = new Date(now);
@@ -73,7 +97,7 @@ function dailyTrend(executions: ExecutionRecord[]): DailyTrendPoint[] {
     const date = localDayKey(execution.createdAt);
     const day = days.get(date) ?? { date, executions: 0, successes: 0, failures: 0 };
     day.executions++;
-    if (execution.statusType === "success") day.successes++;
+    if (execution.outcome === "clean") day.successes++;
     else day.failures++;
     days.set(date, day);
   }
@@ -106,8 +130,8 @@ function scriptAnalytics(executions: ExecutionRecord[], scripts: ScriptSummary[]
     const analytics = byId.get(execution.scriptId);
     if (!analytics) continue;
     analytics.totalExecutions++;
-    if (execution.statusType === "success") analytics.successCount++;
-    else if (execution.statusType === "failed") analytics.failedCount++;
+    if (execution.outcome === "clean") analytics.successCount++;
+    else if (execution.outcome === "error") analytics.failedCount++;
     else analytics.attentionCount++;
     if (execution.createdAt > analytics.lastExecution) analytics.lastExecution = execution.createdAt;
   }
@@ -126,8 +150,8 @@ export function withTags(executions: ExecutionRecord[], scripts: ScriptSummary[]
 }
 
 export function buildAnalytics(executions: ExecutionRecord[], scripts: ScriptSummary[]): AnalyticsData {
-  const count = (status: ExecutionRecord["statusType"]) => executions.filter((e) => e.statusType === status).length;
-  const statusDistribution = { success: count("success"), failed: count("failed"), attention_needed: count("attention_needed") };
+  const count = (outcome: RunOutcome) => executions.filter((e) => e.outcome === outcome).length;
+  const statusDistribution = { success: count("clean"), failed: count("error"), attention_needed: count("issues") };
   return {
     totalExecutions: executions.length,
     totalScripts: scripts.length,

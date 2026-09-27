@@ -66,6 +66,7 @@ function memoryStore(events: StoredEvent[], destinations: Destination[], checkEx
   const reminderCounts = new Map<string, number>();
   const fanned = new Map<string, string | null>();
   const deliveries: MemoryDelivery[] = [];
+  const sendSlots = new Map<string, Date[]>();
   let claims = 0;
   const store: NotifyStore = {
     async pendingEvents(since) {
@@ -89,10 +90,12 @@ function memoryStore(events: StoredEvent[], destinations: Destination[], checkEx
         deliveries.push({ id: `${d.eventId}:${d.destinationId}`, ...d, status: "pending", attempts: 0, nextAttemptAt: now, claim: null });
       }
     },
-    async markFannedOut(id, _now, suppressed, actionKey) {
-      fanned.set(id, suppressed);
+    async assignActionKey(id, actionKey) {
       const event = events.find((e) => e.id === id)!;
       event.actionKey ??= actionKey;
+    },
+    async markFannedOut(id, _now, suppressed) {
+      fanned.set(id, suppressed);
     },
     async claimDelivery(now, leaseMs) {
       const next = deliveries.find((d) => d.status === "pending" && d.nextAttemptAt <= now);
@@ -113,8 +116,12 @@ function memoryStore(events: StoredEvent[], destinations: Destination[], checkEx
       }
       if (update.status === "pending") d.nextAttemptAt = update.nextAttemptAt;
     },
-    async sentSince(destinationId, since) {
-      return deliveries.filter((d) => d.destinationId === destinationId && d.sentAt && d.sentAt >= since).length;
+    async takeSendSlot(destinationId, now, limit) {
+      const since = now.getTime() - 3_600_000;
+      const recent = (sendSlots.get(destinationId) ?? []).filter((at) => at.getTime() >= since);
+      if (recent.length >= limit) return false;
+      sendSlots.set(destinationId, [...recent, now]);
+      return true;
     },
     async recordLastDelivery() {},
     async digestDestinations() {
@@ -226,6 +233,19 @@ describe("dispatchNotifications", () => {
     expect(deliveries.filter((x) => x.status === "pending").every((x) => x.attempts === 0)).toBe(true);
   });
 
+  it("keeps concurrent dispatchers within the hourly cap together", async () => {
+    const events = Array.from({ length: HOURLY_LIMIT + 10 }, (_, i) => event({ id: `e${i}`, runId: `r${i}` }));
+    const { store } = memoryStore(events, [destination()]);
+    const { deps: d, send } = deps(store);
+    // Sending takes a moment, so the dispatchers interleave between the cap check and the send.
+    send.mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      return { kind: "sent" };
+    });
+    await Promise.all([dispatchNotifications(d, 100), dispatchNotifications(d, 100), dispatchNotifications(d, 100)]);
+    expect(send).toHaveBeenCalledTimes(HOURLY_LIMIT);
+  });
+
   it("fails without retrying when the secret cannot be opened", async () => {
     const { store, deliveries } = memoryStore([event()], [destination({ sealed: "not json" })]);
     await dispatchNotifications(deps(store).deps);
@@ -309,6 +329,24 @@ describe("dispatchNotifications", () => {
     const second = deps(again.store);
     await dispatchNotifications(second.deps);
     expect(((second.send.mock.calls[0] as unknown[])[1] as { body: string }).body).not.toContain("assay_ack");
+  });
+
+  it("gives the event its button key before any delivery exists, so a concurrent dispatcher sends buttons too", async () => {
+    const telegramDest = destination({ id: "tg", kind: "telegram", sealed: JSON.stringify({ chatId: "-1" }), source: "telegram" });
+    const e = event({ id: "65f000000000000000000003" });
+    const { store } = memoryStore([e], [telegramDest]);
+    const keysWhenDelivered: (string | null | undefined)[] = [];
+    const createDeliveries = store.createDeliveries.bind(store);
+    store.createDeliveries = async (list, now) => {
+      keysWhenDelivered.push(e.actionKey);
+      await createDeliveries(list, now);
+    };
+    const { deps: d, send } = deps(store);
+    d.env = { TELEGRAM_BOT_TOKEN: "1:x" };
+    await dispatchNotifications(d);
+    expect(keysWhenDelivered).toHaveLength(1);
+    expect(keysWhenDelivered[0]).toMatch(/^[A-Za-z0-9_-]{16}$/);
+    expect(((send.mock.calls[0] as unknown[])[1] as { body: string }).body).toContain(`assay_ack:${e.id}.${keysWhenDelivered[0]}`);
   });
 
   it("gives recoveries no buttons", async () => {

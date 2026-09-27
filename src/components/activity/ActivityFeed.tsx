@@ -11,7 +11,7 @@ import { OUTCOME_DOT, OUTCOME_LABEL } from "@/components/checks/status";
 import { useApi } from "@/client/use-api";
 import type { ActivityDelivery, ActivityItem, ActivityPage } from "@/contracts/activity";
 import type { AlertKind } from "@/domain/notify";
-import { formatDateTime } from "@/lib/utils/datetime";
+import { formatDate, formatDateTime, formatTime } from "@/lib/utils/datetime";
 import { cn } from "@/lib/utils/utils";
 
 type Filter = "all" | "broken" | "issues" | "recovered";
@@ -79,7 +79,7 @@ function dayLabel(iso: string, language: "en" | "zh"): string {
   const days = Math.round((startOf(today) - startOf(date)) / 86_400_000);
   if (days === 0) return COPY[language].today;
   if (days === 1) return COPY[language].yesterday;
-  return date.toLocaleDateString(language === "zh" ? "zh-CN" : "en-US", { weekday: "short", month: "short", day: "numeric" });
+  return formatDate(date, language, { weekday: "short", month: "short", day: "numeric" });
 }
 
 function Headline({ item }: { item: ActivityItem }) {
@@ -120,14 +120,14 @@ function Row({ item }: { item: ActivityItem }) {
         )}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-muted-foreground">
           <time dateTime={item.at} title={formatDateTime(item.at, language)} className="tabular-nums">
-            {new Date(item.at).toLocaleTimeString(language === "zh" ? "zh-CN" : "en-US", { hour: "2-digit", minute: "2-digit" })}
+            {formatTime(item.at, language)}
           </time>
           {details.map((detail) => (
             <span key={detail} className="before:mr-2 before:content-['·']">
               {detail}
             </span>
           ))}
-          <Link href={`/view-execution-result/${item.runId}`} className="text-primary before:mr-2 before:text-muted-foreground before:content-['·'] hover:underline">
+          <Link href={`/runs/${item.runId}`} className="text-primary before:mr-2 before:text-muted-foreground before:content-['·'] hover:underline">
             {t.run}
           </Link>
         </div>

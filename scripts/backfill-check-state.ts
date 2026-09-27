@@ -8,6 +8,7 @@
 import db from "@/lib/database/db";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { stateFromHistory, type HistoricalRun } from "@/domain/run";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 // Enough runs to find when the current streak began for any realistic schedule.
 const HISTORY_LIMIT = 500;
@@ -16,8 +17,8 @@ async function main() {
   const dryRun = process.argv.includes("--dry-run");
   const recompute = process.argv.includes("--recompute");
   const mongo = await getMongoDbClient().getDb();
-  const checks = mongo.collection("sql_scripts");
-  const runs = mongo.collection("result");
+  const checks = mongo.collection(COLLECTIONS.checks);
+  const runs = mongo.collection(COLLECTIONS.runs);
 
   const pending = await checks.find(recompute ? {} : { state: { $exists: false } }, { projection: { scriptId: 1 } }).toArray();
   let updated = 0;
