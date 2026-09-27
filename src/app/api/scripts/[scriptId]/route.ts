@@ -98,7 +98,6 @@ export async function PUT(
   { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
 ) {
   try {
-    // 验证用户认证
     const authResult = await validateApiAuth("zh");
     if (!authResult.isValid) {
       return authResult.response!;
@@ -106,7 +105,6 @@ export async function PUT(
 
     const { user, userEmail } = authResult;
 
-    // 检查权限：需要 SCRIPT_UPDATE 权限
     const permissionCheck = await requirePermission(
       user.id,
       Permission.SCRIPT_UPDATE
@@ -155,7 +153,7 @@ export async function PUT(
       return NextResponse.json({ message: badSchedule }, { status: 400 });
     }
 
-    // 严格的安全检查 - 只允许查询操作
+    // Only read-only SQL may be saved.
     if (sqlContent && typeof sqlContent === "string") {
       const securityCheck = validateReadOnlySql(sqlContent);
       if (!securityCheck.isValid) {
@@ -174,7 +172,6 @@ export async function PUT(
 
     const collection = await getSqlScriptsCollection();
 
-    // 检查脚本是否存在并获取原作者信息
     const existingScript = await collection.findOne({ scriptId });
     if (!existingScript) {
       return NextResponse.json(
@@ -183,7 +180,7 @@ export async function PUT(
       );
     }
 
-    // 检查是否是修改别人的脚本
+    // Changing someone else's check needs approval unless you are an admin.
     const scriptAuthor = existingScript.author;
     const isModifyingOthersScript = !ownsCheck(existingScript, { id: user.id, email: userEmail });
 
@@ -192,13 +189,11 @@ export async function PUT(
       return NextResponse.json({ message: badAuthor }, { status: 400 });
     }
 
-    // 如果修改别人的脚本，需要提交审批申请
     if (isModifyingOthersScript) {
       const userRole = await getUserRole(user.id);
       if (userRole) {
-        // 检查是否符合自动审批条件
         const autoApprovalEligible = isAutoApprovalEligible(
-          analyzeScriptType(sqlContent || "SELECT 1"), // 使用现有SQL或默认查询
+          analyzeScriptType(sqlContent || "SELECT 1"),
           userRole,
           "update"
         );
@@ -247,7 +242,6 @@ export async function PUT(
         if (requestId) {
           console.log(`[Script] 修改脚本审批请求已创建: ${requestId}`);
 
-          // 如果不符合自动审批条件，返回等待审批的响应
           if (!autoApprovalEligible) {
             return NextResponse.json(
               {
@@ -261,7 +255,6 @@ export async function PUT(
               { status: 200 }
             );
           }
-          // 如果符合自动审批条件（管理员），则继续执行下面的更新逻辑
           console.log(
             `[Script] 管理员修改脚本，自动审批通过，继续执行更新: ${scriptId}`
           );
@@ -274,7 +267,6 @@ export async function PUT(
       }
     }
 
-    // 如果是修改自己的脚本，直接进行更新
     const updateData: Partial<UpdateScriptData> & { updatedAt?: Date } = {};
     // Build the update object with provided fields
     if (name !== undefined) updateData.name = name;
@@ -325,7 +317,6 @@ export async function PUT(
       );
     }
 
-    // 获取更新后的脚本数据，创建新版本
     const updatedScript = await collection.findOne({ scriptId });
     if (updatedScript) {
       await recordEditHistoryOnServer(
@@ -362,10 +353,8 @@ export async function PUT(
       }
     }
 
-    // 清除 Redis 缓存
     await clearScriptsCache();
 
-    // 根据是否是修改别人脚本的自动审批来调整返回消息
     const message = isModifyingOthersScript
       ? `脚本 '${scriptId}' 更新成功（管理员自动审批通过），已创建新版本`
       : `脚本 '${scriptId}' 更新成功，已创建新版本`;
@@ -400,7 +389,6 @@ export async function DELETE(
   { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
 ) {
   try {
-    // 验证用户认证
     const authResult = await validateApiAuth("zh");
     if (!authResult.isValid) {
       return authResult.response!;
@@ -408,7 +396,6 @@ export async function DELETE(
 
     const { user, userEmail } = authResult;
 
-    // 检查权限：需要 SCRIPT_DELETE 权限
     const permissionCheck = await requirePermission(
       user.id,
       Permission.SCRIPT_DELETE
@@ -432,7 +419,6 @@ export async function DELETE(
 
     const collection = await getSqlScriptsCollection();
 
-    // 检查脚本是否存在
     const existingScript = await collection.findOne({ scriptId });
     if (!existingScript) {
       return NextResponse.json(
@@ -441,34 +427,31 @@ export async function DELETE(
       );
     }
 
-    // 根据新的审批策略：删除任意脚本需要提交申请给管理员
+    // Deleting any check needs approval unless you are an admin.
     const userRole = await getUserRole(user.id);
     if (userRole) {
-      // 检查是否符合自动审批条件
       const autoApprovalEligible = isAutoApprovalEligible(
         analyzeScriptType(existingScript.sqlContent || "SELECT 1"),
         userRole,
         "delete"
       );
 
-      // 创建删除审批请求
       const requestId = await createApprovalRequest(
         scriptId,
         user.id,
         userEmail,
         userRole,
-        existingScript.sqlContent || "SELECT 1", // SQL内容参数
+        existingScript.sqlContent || "SELECT 1",
         `删除脚本: ${existingScript.name}`,
         `用户 ${userEmail} 申请删除脚本 "${existingScript.name}"`,
-        "high", // 删除操作设为高优先级
+        "high",
         "delete",
-        existingScript as unknown as Record<string, unknown> // 传递原始脚本数据
+        existingScript as unknown as Record<string, unknown>
       );
 
       if (requestId) {
         console.log(`[Script] 删除脚本审批请求已创建: ${requestId}`);
 
-        // 如果不符合自动审批条件，返回等待审批的响应
         if (!autoApprovalEligible) {
           return NextResponse.json(
             {
@@ -481,7 +464,6 @@ export async function DELETE(
             { status: 200 }
           );
         }
-        // 如果符合自动审批条件（管理员），则继续执行下面的删除逻辑
         console.log(
           `[Script] 管理员删除脚本，自动审批通过，继续执行删除: ${scriptId}`
         );
@@ -493,7 +475,6 @@ export async function DELETE(
       }
     }
 
-    // 执行实际的删除操作
     const deleteResult = await collection.deleteOne({ scriptId });
 
     if (deleteResult.deletedCount === 0) {
@@ -505,7 +486,6 @@ export async function DELETE(
       );
     }
 
-    // 记录删除历史
     await recordEditHistoryOnServer(
       {
         scriptId,
@@ -515,7 +495,6 @@ export async function DELETE(
       { id: user.id, email: userEmail, name: userEmail.split("@")[0] }
     );
 
-    // 清除 Redis 缓存
     await clearScriptsCache();
 
     const message =
