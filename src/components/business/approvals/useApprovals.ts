@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
-import { pageCount, pageSlice, type ApprovalAction, type ApprovalRequest } from "./approvals";
+import { clampPage, pageCount, pageSlice, type ApprovalAction, type ApprovalRequest } from "./approvals";
 
 type Language = "en" | "zh";
 
@@ -108,6 +108,8 @@ export function useApprovals(language: Language) {
   };
 
   const totalPendingPages = pageCount(pendingApprovals.length, ITEMS_PER_PAGE);
+  // Deciding the last request on the last page would otherwise leave an empty page with no way back.
+  const visiblePendingPage = clampPage(pendingPage, totalPendingPages);
 
   return {
     error,
@@ -117,8 +119,8 @@ export function useApprovals(language: Language) {
     actionLoading,
     decide,
     pending: {
-      items: pageSlice(pendingApprovals, pendingPage, ITEMS_PER_PAGE),
-      page: pendingPage,
+      items: pageSlice(pendingApprovals, visiblePendingPage, ITEMS_PER_PAGE),
+      page: visiblePendingPage,
       totalPages: totalPendingPages,
       totalItems: pendingApprovals.length,
       setPage: setPendingPage,
