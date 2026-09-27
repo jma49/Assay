@@ -1,9 +1,10 @@
 "use client";
 
+import { apiKeyClient } from "@better-auth/api-key/client";
 import { createAuthClient } from "better-auth/react";
 
 /** Same-origin client: the routes live at /api/auth on this app. */
-export const authClient = createAuthClient();
+export const authClient = createAuthClient({ plugins: [apiKeyClient()] });
 
 export const { useSession, signIn, signOut } = authClient;
 

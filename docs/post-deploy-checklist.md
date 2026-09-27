@@ -105,3 +105,10 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 - [ ] 用同一邮箱的 GitHub 登录，应当是同一个用户。
 - [ ] 退出登录后访问 /checks 跳转到登录页；访客演示 /demo 仍可用。
 - [ ] 生产环境登录页没有「开发环境登录」表单。
+
+## MCP（阶段 6）
+
+- [ ] 设置 → API 密钥：新建密钥，弹窗里的 Claude Code 命令和 JSON 地址是生产域名。
+- [ ] 用 Claude Code 连接（`claude mcp add --transport http assay https://<域名>/api/mcp --header "Authorization: Bearer ..."`），`/mcp` 里显示 assay 已连接，能列出检查。
+- [ ] 查看者的密钥只看到 4 个只读工具；开发者以上能执行检查、确认处理、静音。
+- [ ] 吊销密钥后，代理立即得到 401。
