@@ -361,6 +361,12 @@ export default function ApprovalsPage() {
         : approval.status === ApprovalStatus.REJECTED
           ? 'text-failure'
           : 'text-attention';
+    const statusGem =
+      approval.status === ApprovalStatus.APPROVED
+        ? 'aqua-gem-success'
+        : approval.status === ApprovalStatus.REJECTED
+          ? 'aqua-gem-failure'
+          : 'aqua-gem-attention_needed';
 
     return (
       <article className="rounded-lg border bg-card p-5">
@@ -370,7 +376,7 @@ export default function ApprovalsPage() {
               <h3 className="font-medium">{approval.scriptName}</h3>
               <Badge variant="secondary">{typeInfo.label}</Badge>
               <span className={`inline-flex items-center gap-1.5 text-[13px] ${statusTone}`}>
-                <span className="size-1.5 rounded-full bg-current" aria-hidden />
+                <span className={`aqua-gem ${statusGem}`} aria-hidden />
                 {statusInfo.label}
               </span>
             </div>
