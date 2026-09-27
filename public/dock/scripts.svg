@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Assay Dock icon: stacked SQL documents with a folded corner. Original artwork. -->
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e3e8ef"/></linearGradient>
+    <linearGradient id="back" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eef1f5"/><stop offset="1" stop-color="#c9d0da"/></linearGradient>
+    <linearGradient id="fold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#b8c1cd"/></linearGradient>
+    <radialGradient id="shadow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#000" stop-opacity="0.35"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  </defs>
+  <ellipse cx="64" cy="118" rx="38" ry="6" fill="url(#shadow)"/>
+  <g transform="rotate(-8 64 64)">
+    <rect x="28" y="16" width="70" height="92" rx="4" fill="url(#back)" stroke="#8e98a6" stroke-width="1.5"/>
+  </g>
+  <path d="M26 12 h54 l20 20 v80 a4 4 0 0 1 -4 4 h-70 a4 4 0 0 1 -4 -4 v-96 a4 4 0 0 1 4 -4 z" fill="url(#paper)" stroke="#7f8997" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M80 12 v16 a4 4 0 0 0 4 4 h16 z" fill="url(#fold)" stroke="#7f8997" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="32" y="34" width="26" height="7" rx="3.5" fill="#2f6fd8"/>
+  <rect x="62" y="34" width="22" height="7" rx="3.5" fill="#9aa6b6"/>
+  <rect x="40" y="48" width="20" height="7" rx="3.5" fill="#a24cc9"/>
+  <rect x="64" y="48" width="26" height="7" rx="3.5" fill="#9aa6b6"/>
+  <rect x="32" y="62" width="22" height="7" rx="3.5" fill="#2f6fd8"/>
+  <rect x="58" y="62" width="32" height="7" rx="3.5" fill="#9aa6b6"/>
+  <rect x="40" y="76" width="30" height="7" rx="3.5" fill="#e0822a"/>
+  <rect x="32" y="90" width="18" height="7" rx="3.5" fill="#2f6fd8"/>
+  <rect x="54" y="90" width="24" height="7" rx="3.5" fill="#9aa6b6"/>
+</svg>
