@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { WindowStatusBar } from "@/components/layout/WindowChrome";
 import { useCurrentUser } from "@/lib/auth/client";
@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UserRole } from "@/lib/types/approval";
 import { useLanguage } from '@/components/common/LanguageProvider';
-import { dashboardTranslations, DashboardTranslationKeys, ITEMS_PER_PAGE } from '@/components/business/dashboard/types';
+import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
+import { ITEMS_PER_PAGE } from '@/components/business/dashboard/types';
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Pagination } from "@/components/common/Pagination";
@@ -27,13 +28,7 @@ export default function AdminUsersPage() {
   const { language } = useLanguage();
   const [currentPage, setCurrentPage] = useState(1);
 
-  const t = useCallback(
-    (key: DashboardTranslationKeys): string => {
-      const langTranslations = dashboardTranslations[language] || dashboardTranslations.en;
-      return langTranslations[key as keyof typeof langTranslations] || key;
-    },
-    [language]
-  );
+  const t = useDashboardT();
 
   const { members, error, hasLoaded, actionLoading, assignRole, changeRole, removeRole } = useMemberRoles(language, t);
 

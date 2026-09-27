@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { WindowStatusBar } from "@/components/layout/WindowChrome";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/components/common/LanguageProvider";
+import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { Pagination } from "@/components/common/Pagination";
-import { dashboardTranslations, ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
+import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
 import { EditHistoryDetailDialog } from "@/components/business/edit-history/EditHistoryDetailDialog";
 import { EditHistoryTable } from "@/components/business/edit-history/EditHistoryTable";
 import { EditHistoryToolbar } from "@/components/business/edit-history/EditHistoryToolbar";
@@ -16,10 +17,7 @@ import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
 
 export default function GlobalEditHistoryPage() {
   const { language } = useLanguage();
-  const t = useCallback(
-    (key: string): string => ((dashboardTranslations[language] || dashboardTranslations.en) as Record<string, string>)[key] || key,
-    [language],
-  );
+  const t = useDashboardT<string>();
 
   const { histories, loading, error, currentPage, totalPages, totalRecords, fetchHistories, retry } = useEditHistory();
   const [filters, setFilters] = useState<HistoryFilters>(EMPTY_FILTERS);
