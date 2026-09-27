@@ -62,7 +62,7 @@ export function StackedTags({
         <PriorityBadge 
           hashtag={tags[0]} 
           className={cn(
-            "transition-all duration-300 hover:z-10 relative",
+            "transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300 hover:z-10 relative",
             " ",
             isOpen && "z-20 scale-105 "
           )}
@@ -74,7 +74,7 @@ export function StackedTags({
             key={tag}
             hashtag={tag}
             className={cn(
-              "absolute transition-all duration-500 pointer-events-none",
+              "absolute transition-[color,background-color,border-color,box-shadow,opacity,width] duration-500 pointer-events-none",
               "",
               !isOpen && stackedStyle(index + 1),
               isOpen && {

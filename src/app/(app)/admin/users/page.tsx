@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { WindowStatusBar } from "@/components/layout/WindowChrome";
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -321,6 +322,11 @@ export default function AdminUsersPage() {
     <div className="min-h-screen    ">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-6">
+          <WindowStatusBar>
+            {language === "zh"
+              ? `${userRoles.length} 位用户 · ${userRoles.filter((u) => u.role === UserRole.ADMIN).length} 位管理员`
+              : `${userRoles.length} users · ${userRoles.filter((u) => u.role === UserRole.ADMIN).length} admins`}
+          </WindowStatusBar>
           <PageHeader
             title={t('userManagementTitle')}
             description={t('userManagementDesc')}
@@ -401,7 +407,7 @@ export default function AdminUsersPage() {
             {Object.entries(roleStats).map(([role, count]) => (
               <div key={role} className="space-y-1 bg-card px-5 py-4">
                 <dt className="text-[13px] text-muted-foreground">{ROLE_INFO[role as UserRole].label}</dt>
-                <dd className="font-serif text-[30px] leading-tight font-semibold tabular-nums">{count}</dd>
+                <dd className="text-[24px] leading-tight font-semibold tabular-nums">{count}</dd>
               </div>
             ))}
           </dl>
@@ -499,7 +505,7 @@ export default function AdminUsersPage() {
                     size="sm"
                     onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
                     disabled={currentPage === 1}
-                    className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
+                    className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150 relative z-30"
                   >
                     <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                     <span className="hidden sm:inline">{t("previous")}</span>
@@ -565,7 +571,7 @@ export default function AdminUsersPage() {
                             onChange={handlePageInputChange}
                             onKeyDown={handlePageInputKeyDown}
                             placeholder={t("jumpToPage")}
-                            className="w-12 h-6 px-1 text-xs text-center aqua-field rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
+                            className="w-12 h-6 px-1 text-xs text-center border border-input bg-card rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
                             style={{ pointerEvents: "auto" }}
                           />
                           <Button
@@ -596,7 +602,7 @@ export default function AdminUsersPage() {
                       setCurrentPage(Math.min(currentPage + 1, totalPages))
                     }
                     disabled={currentPage === totalPages}
-                    className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
+                    className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150 relative z-30"
                   >
                     <span className="hidden sm:inline">{t("next")}</span>
                     <ChevronRight className="h-3.5 w-3.5 ml-1" />

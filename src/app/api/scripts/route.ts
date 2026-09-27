@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document, ObjectId } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache/cache-utils";
@@ -108,6 +109,11 @@ export async function POST(request: Request) {
         { message: "sqlContent is required and must be a string" },
         { status: 400 }
       );
+    }
+    // An invalid cron would be saved and then silently never run.
+    const badSchedule = scheduleProblem(isScheduled, cronSchedule ?? (isScheduled ? "" : undefined));
+    if (badSchedule) {
+      return NextResponse.json({ message: badSchedule }, { status: 400 });
     }
 
     const collection = await getSqlScriptsCollection();

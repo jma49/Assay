@@ -5,40 +5,29 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { ClerkLoading, SignedIn, SignedOut } from "@clerk/nextjs";
-import { CalendarClock, GitPullRequest, Moon, ShieldCheck, Sparkles, Sun } from "lucide-react";
+import { CalendarClock, Check, GitPullRequest, Moon, ShieldCheck, Sparkles, Sun } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { BRAND, GITHUB_URL, QUICK_START, landingCopy, type Language } from "./content";
-import { Demo, DemoFrame, RECENT_RUNS, StatusDot } from "./demo-panels";
-import { AquaWallpaper } from "@/components/common/AquaWallpaper";
+import { Demo, DemoFrame, StatusDot } from "./demo-panels";
+import { PREVIEW_RUNS } from "./preview-runs";
 import { BrandMark } from "@/components/common/BrandMark";
-import { SECTION_THEMES } from "./themes";
+import { VoxelBeetle } from "@/components/brand/VoxelBeetle";
+import { HighlightedLine } from "@/components/code/HighlightedLine";
 
 /** Shared horizontal frame: every section aligns to the same left and right edges. */
 const CONTAINER = "mx-auto w-full max-w-[1120px] px-4 sm:px-6";
 
 const secondaryButton =
-  "aqua-pill inline-flex h-10 items-center justify-center px-5 text-[14px] font-medium hover:brightness-[1.02]";
+  "inline-flex h-9 items-center justify-center rounded-md bg-card px-4 text-[13.5px] font-medium shadow-border hover:shadow-border-hover transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]";
 const heroPrimaryButton =
-  "aqua-gel aqua-default inline-flex h-11 items-center justify-center px-6 text-[14px] font-medium hover:brightness-105";
-// The hero is always dark, so its secondary button keeps the light Aqua pill.
+  "inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-[14px] font-medium text-primary-foreground shadow-xs hover:brightness-110 transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]";
 const heroSecondaryButton =
-  "aqua-pill inline-flex h-11 items-center justify-center px-6 text-[14px] font-medium [background:linear-gradient(#ffffff,#f1f1f1_45%,#dedede_50%,#f4f4f4)] text-[#111] hover:brightness-[1.02]";
+  "inline-flex h-11 items-center justify-center rounded-md bg-card px-6 text-[14px] font-medium shadow-border hover:shadow-border-hover transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]";
 
-const WHY_ICONS = [
-  { Icon: ShieldCheck, color: "#3f7d58" },
-  { Icon: CalendarClock, color: "#b7791f" },
-  { Icon: GitPullRequest, color: "#4a6a8a" },
-  { Icon: Sparkles, color: "#b54a3c" },
-];
+const WHY_ICONS = [ShieldCheck, CalendarClock, GitPullRequest, Sparkles];
 
-function Eyebrow({ children, accent = false }: { children: React.ReactNode; accent?: boolean }) {
-  return accent ? (
-    <span className="inline-block rounded-full bg-[color-mix(in_srgb,var(--l-accent)_16%,transparent)] px-2.5 py-1 text-[12px] font-medium text-(--l-accent)">
-      {children}
-    </span>
-  ) : (
-    <p className="text-[13px] tracking-wide text-(--l-muted) uppercase">{children}</p>
-  );
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return <p className="text-[12px] font-medium tracking-wider text-(--l-muted) uppercase">{children}</p>;
 }
 
 function ThemeToggle() {
@@ -61,7 +50,7 @@ function ThemeToggle() {
 function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void }) {
   const t = landingCopy[lang].nav;
   return (
-    <header className="aqua-menubar sticky top-0 z-20">
+    <header className="sticky top-0 z-20 border-b bg-card/90 backdrop-blur">
       <nav className={`${CONTAINER} flex h-14 items-center justify-between`}>
         <Link href="/">
           <BrandMark />
@@ -71,6 +60,7 @@ function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void
             <a href="#features" className="hover:text-foreground">{t.features}</a>
             <a href="#self-host" className="hover:text-foreground">{t.quickStart}</a>
             <a href="#faq" className="hover:text-foreground">{t.faq}</a>
+            <Link href="/docs" className="hover:text-foreground">{lang === "zh" ? "文档" : "Docs"}</Link>
             <a href={GITHUB_URL} className="hover:text-foreground">GitHub</a>
           </div>
           <button
@@ -86,12 +76,12 @@ function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void
             <span className="ml-1 inline-block h-8 w-[118px]" aria-hidden />
           </ClerkLoading>
           <SignedOut>
-            <Link href="/sign-in?redirect_url=/dashboard" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
+            <Link href="/sign-in?redirect_url=/checks" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
               {t.signIn}
             </Link>
           </SignedOut>
           <SignedIn>
-            <Link href="/dashboard" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
+            <Link href="/checks" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
               {t.openApp}
             </Link>
           </SignedIn>
@@ -103,71 +93,103 @@ function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void
 
 function ProductPreview({ lang }: { lang: Language }) {
   const zh = lang === "zh";
+  const [selected, setSelected] = useState(PREVIEW_RUNS[0].id);
+  const run = PREVIEW_RUNS.find((r) => r.id === selected) ?? PREVIEW_RUNS[0];
+  const needAttention = PREVIEW_RUNS.filter((r) => r.status !== "passed").length;
+  const statusText =
+    run.status === "failed"
+      ? zh ? "执行失败" : "Failed"
+      : run.status === "passed"
+        ? zh ? "通过" : "Passed"
+        : zh ? `发现 ${run.rows?.length ?? 0} 条` : `${run.rows?.length ?? 0} found`;
+  const statusColor =
+    run.status === "failed" ? "var(--l-failure)" : run.status === "passed" ? "var(--l-success)" : "var(--l-attention)";
+
   return (
     <DemoFrame
       title={BRAND}
-      meta={zh ? "11 个检查 · 8 个需要关注" : "11 checks · 8 need attention"}
-      bodyClassName="h-[380px] sm:h-[420px]"
+      meta={zh ? `${PREVIEW_RUNS.length} 个检查 · ${needAttention} 个需要关注` : `${PREVIEW_RUNS.length} checks · ${needAttention} need attention`}
+      bodyClassName="h-auto md:h-[420px]"
       chrome
       elevated
     >
-      <div className="grid h-full grid-cols-12 bg-card">
-        <aside className="col-span-4 hidden border-r border-(--l-line) bg-sidebar md:block">
-          <p className="px-4 pt-4 pb-2 text-[12px] text-(--l-muted) uppercase">{zh ? "最近执行" : "Recent runs"}</p>
-          <ul className="text-[13px]">
-            {RECENT_RUNS.map((run, i) => (
-              <li
-                key={run.en}
-                className={`flex items-center gap-2.5 px-4 py-2 ${i === 0 ? "aqua-selected" : ""}`}
-              >
-                <StatusDot status={run.status} />
-                <span className="flex-1 truncate">{run[lang]}</span>
-                <span className={`tabular-nums ${i === 0 ? "text-white/80" : "text-(--l-muted)"}`}>
-                  {run.status === "failed" ? "—" : run.found}
-                </span>
-              </li>
-            ))}
+      <div className="grid h-full bg-card md:grid-cols-12">
+        <aside className="border-(--l-line) bg-sidebar max-md:border-b md:col-span-4 md:border-r">
+          <p className="px-4 pt-4 pb-2 text-[12px] font-medium tracking-wider text-(--l-muted) uppercase max-md:hidden">
+            {zh ? "最近执行" : "Recent runs"}
+          </p>
+          <ul className="text-[13px] max-md:flex max-md:gap-1 max-md:overflow-x-auto max-md:p-2" aria-label={zh ? "最近执行" : "Recent runs"}>
+            {PREVIEW_RUNS.map((item) => {
+              const active = item.id === run.id;
+              return (
+                <li key={item.id} className="max-md:shrink-0">
+                  <button
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setSelected(item.id)}
+                    className={`flex w-full items-center gap-2.5 px-4 py-2 text-left transition-[background-color] duration-150 max-md:rounded-md max-md:px-3 ${
+                      active ? "bg-primary-soft font-medium" : "hover:bg-(--l-panel)"
+                    }`}
+                  >
+                    <StatusDot status={item.status} />
+                    <span className="flex-1 truncate">{item.name[lang]}</span>
+                    <span className="tabular-nums text-(--l-muted) max-md:hidden">
+                      {item.status === "failed" ? "—" : (item.rows?.length ?? 0)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </aside>
-        <div className="col-span-12 flex min-w-0 flex-col md:col-span-8">
+        <div className="flex min-w-0 flex-col md:col-span-8" aria-live="polite">
           <div className="flex items-baseline justify-between gap-4 border-b border-(--l-line) px-5 py-4">
             <div className="min-w-0">
-              <p className="serif truncate text-[20px] font-semibold">{zh ? "重复下单" : "Duplicate orders"}</p>
-              <p className="mt-1 truncate text-[13px] text-(--l-muted)">
-                {zh ? "同一客户 5 分钟内以相同金额重复下单" : "Same customer, same total, within 5 minutes"}
-              </p>
+              <p className="display truncate text-[20px] font-bold">{run.name[lang]}</p>
+              <p className="mt-1 truncate text-[13px] text-(--l-muted)">{run.description[lang]}</p>
             </div>
-            <span className="shrink-0 text-[13px]" style={{ color: "var(--l-attention)" }}>
-              {zh ? "发现 6 条" : "6 found"}
+            <span className="shrink-0 text-[13px] font-medium" style={{ color: statusColor }}>
+              {statusText}
             </span>
           </div>
-          <table className="w-full text-[13px]">
-            <thead>
-              <tr className="border-b border-(--l-line) text-(--l-muted)">
-                <th className="px-5 py-2.5 text-left font-normal">{zh ? "订单" : "Order"}</th>
-                <th className="px-5 py-2.5 text-left font-normal">{zh ? "重复订单" : "Duplicate"}</th>
-                <th className="hidden px-5 py-2.5 text-left font-normal sm:table-cell">{zh ? "客户" : "Customer"}</th>
-                <th className="px-5 py-2.5 text-right font-normal">{zh ? "金额" : "Total"}</th>
-              </tr>
-            </thead>
-            <tbody className="tabular-nums">
-              {[
-                [12, 1501, 88, "412.60"],
-                [19, 1502, 141, "96.40"],
-                [23, 1503, 7, "1,208.00"],
-                [31, 1504, 162, "57.99"],
-                [44, 1505, 23, "640.15"],
-                [58, 1506, 105, "233.70"],
-              ].map(([order, dup, customer, total]) => (
-                <tr key={order} className="border-b border-(--l-line) last:border-0">
-                  <td className="px-5 py-2.5">#{order}</td>
-                  <td className="px-5 py-2.5">#{dup}</td>
-                  <td className="hidden px-5 py-2.5 sm:table-cell">{customer}</td>
-                  <td className="px-5 py-2.5 text-right">${total}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {run.status === "failed" ? (
+            <pre className="mono m-5 overflow-x-auto rounded-lg bg-(--l-code-bg) p-4 text-[12.5px] leading-6 whitespace-pre text-(--l-failure)">
+              {run.error}
+            </pre>
+          ) : run.status === "passed" ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 p-10 text-center">
+              <span className="grid size-10 place-items-center rounded-full bg-[color-mix(in_srgb,var(--l-success)_14%,transparent)] text-(--l-success)">
+                <Check className="size-5" />
+              </span>
+              <p className="text-[14px] font-medium">{zh ? "没有返回任何行" : "No rows returned"}</p>
+              <p className="text-[13px] text-(--l-muted)">{zh ? "这个检查通过了。" : "This check passed."}</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-[13px]">
+                <thead>
+                  <tr className="border-b border-(--l-line) text-(--l-muted)">
+                    {run.columns?.map((column, i) => (
+                      <th key={column.en} className={`px-5 py-2.5 font-normal ${run.numeric?.includes(i) ? "text-right" : "text-left"}`}>
+                        {column[lang]}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="tabular-nums">
+                  {run.rows?.map((row) => (
+                    <tr key={String(row[0])} className="border-b border-(--l-line) last:border-0">
+                      {row.map((cell, i) => (
+                        <td key={i} className={`px-5 py-2.5 whitespace-nowrap ${run.numeric?.includes(i) ? "text-right" : ""}`}>
+                          {typeof cell === "object" ? cell[lang] : cell}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </DemoFrame>
@@ -176,32 +198,23 @@ function ProductPreview({ lang }: { lang: Language }) {
 
 function FeatureSection({ lang, index }: { lang: Language; index: number }) {
   const section = landingCopy[lang].sections[index];
-  const theme = SECTION_THEMES[index % SECTION_THEMES.length];
   const [active, setActive] = useState(0);
   // The middle section mirrors the layout (list left, demo right), as on inkdrop.app.
   const mirrored = index % 2 === 1;
 
   return (
-    <section id={section.id} className="py-20 sm:py-28">
+    <section id={section.id} className="py-14 sm:py-20">
       <div className={CONTAINER}>
         <div className="max-w-[640px]">
-          <Eyebrow accent>{section.eyebrow}</Eyebrow>
-          <h2 className="serif mt-4 text-[30px] leading-tight font-semibold tracking-tight text-(--l-fg) sm:text-[38px]">
+          <Eyebrow>{section.eyebrow}</Eyebrow>
+          <h2 className="display mt-4 text-[30px] leading-tight font-bold tracking-tight text-(--l-fg) sm:text-[38px]">
             {section.title}
           </h2>
           <p className="mt-4 text-pretty text-[16px] leading-7 text-(--l-muted)">{section.lead}</p>
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-12 md:gap-8">
           <div className={`order-2 min-w-0 md:col-span-8 ${mirrored ? "md:order-2" : "md:order-1"}`}>
-            {/* The editor theme colours only the window's content, like an app on the Aqua desktop. */}
-            <div style={{ ...theme.vars, color: "var(--l-fg)" }}>
-              <Demo kind={section.items[active].demo} lang={lang} />
-            </div>
-            <p className="mt-3 flex justify-center">
-              <span className="rounded-full bg-(--l-panel) px-2.5 py-1 text-[12px] text-(--l-muted)">
-                {landingCopy[lang].themeLabel}: {theme.name}
-              </span>
-            </p>
+            <Demo kind={section.items[active].demo} lang={lang} />
           </div>
           <ul
             className={`order-1 flex flex-col gap-1 md:col-span-4 ${mirrored ? "md:order-1" : "md:order-2"}`}
@@ -214,14 +227,14 @@ function FeatureSection({ lang, index }: { lang: Language; index: number }) {
                   role="tab"
                   aria-selected={i === active}
                   onClick={() => setActive(i)}
-                  className={`group w-full rounded-[5px] py-3 pr-3 pl-4 text-left ${
-                    i === active ? "aqua-selected" : "hover:bg-(--l-panel)"
+                  className={`group w-full rounded-lg py-3 pr-3 pl-4 text-left transition-[background-color] duration-150 ${
+                    i === active ? "bg-primary-soft" : "hover:bg-(--l-panel)"
                   }`}
                 >
                   <span className="block text-[14px] font-medium">
                     {item.title}
                   </span>
-                  <span className={`mt-1 block text-[13px] leading-5 ${i === active ? "text-white/85" : "text-(--l-muted)"}`}>
+                  <span className="mt-1 block text-[13px] leading-5 text-(--l-muted)">
                     {item.body}
                   </span>
                 </button>
@@ -234,7 +247,8 @@ function FeatureSection({ lang, index }: { lang: Language; index: number }) {
   );
 }
 
-export default function LandingPage() {
+/** `demo`: the workspace runs in demo mode, so visitors can look around as guests. */
+export default function LandingPage({ demo = false }: { demo?: boolean }) {
   const { language, setLanguage } = useLanguage();
   const t = landingCopy[language];
 
@@ -243,21 +257,20 @@ export default function LandingPage() {
       <Nav lang={language} setLang={setLanguage} />
 
       <main>
-        <section className="relative pt-20 sm:pt-28">
-          {/* The desktop picture stops partway down so the product window overlaps into the next section. */}
-          <div className="absolute inset-x-0 top-0 bottom-40 sm:bottom-56">
-            <AquaWallpaper />
-          </div>
+        <section className="relative pt-14 sm:pt-16">
+          {/* A quiet wash of the accent behind the headline, fading out before the product preview ends. */}
+          <div aria-hidden className="absolute inset-x-0 top-0 bottom-40 bg-[radial-gradient(ellipse_at_top,var(--primary-soft),transparent_70%)] sm:bottom-56" />
           <div className={`${CONTAINER} relative`}>
-            <div className="mx-auto max-w-[780px] text-center">
-              <h1 className="serif text-balance text-[40px] leading-[1.08] font-semibold tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,20,70,0.45)] sm:text-[60px]">
+            <div className="mx-auto max-w-[980px] text-center">
+              <VoxelBeetle className="mx-auto -mt-8 mb-2 h-[190px] w-full max-w-[340px] sm:h-[220px]" />
+              <h1 className="display text-balance text-[38px] leading-[1.08] font-bold tracking-tight sm:text-[46px] lg:text-[52px] lg:whitespace-nowrap">
                 {t.hero.title}
               </h1>
-              <p className="mx-auto mt-5 max-w-[560px] text-pretty text-[17px] leading-7 text-white/85 [text-shadow:0_1px_4px_rgba(0,20,70,0.4)]">
+              <p className="mx-auto mt-5 max-w-[560px] text-pretty text-[17px] leading-7 text-(--l-muted)">
                 {t.hero.subtitle}
               </p>
               <div className="mt-8 flex justify-center gap-3">
-                <Link href="/dashboard" className={heroPrimaryButton}>
+                <Link href={demo ? "/demo" : "/checks"} prefetch={false} className={heroPrimaryButton}>
                   {t.hero.primary}
                 </Link>
                 <a href={GITHUB_URL} className={heroSecondaryButton}>
@@ -265,7 +278,7 @@ export default function LandingPage() {
                 </a>
               </div>
               <SignedOut>
-                <p className="mt-4 text-[13px] text-white/75">{t.hero.demoNote}</p>
+                <p className="mt-4 text-[13px] text-(--l-muted)">{demo ? t.hero.guestNote : t.hero.demoNote}</p>
               </SignedOut>
             </div>
             <div className="mt-14 sm:mt-16">
@@ -274,26 +287,24 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="pt-16 pb-20 sm:pt-20 sm:pb-28">
+        <section id="features" className="pt-16 pb-6 sm:pt-20 sm:pb-8">
           <div className={CONTAINER}>
             <div className="max-w-[640px]">
               <Eyebrow>{t.why.eyebrow}</Eyebrow>
-              <h2 className="serif mt-3 text-[28px] leading-tight font-semibold tracking-tight sm:text-[34px]">
+              <h2 className="display mt-3 text-[28px] leading-tight font-bold tracking-tight sm:text-[34px]">
                 {t.why.title}
               </h2>
             </div>
-            <div className="mt-10 grid gap-px overflow-hidden rounded-[7px] bg-(--l-line) shadow-[var(--aqua-window-shadow)] sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-10 grid gap-px overflow-hidden rounded-xl border bg-(--l-line) sm:grid-cols-2 lg:grid-cols-4">
               {t.why.cards.map((card, i) => {
-                const { Icon, color } = WHY_ICONS[i % WHY_ICONS.length];
+                const Icon = WHY_ICONS[i % WHY_ICONS.length];
                 return (
                 <div key={card.title} className="bg-card p-6">
-                  <span
-                    className="mb-4 inline-flex size-9 items-center justify-center rounded-md"
-                    style={{ color, background: `color-mix(in srgb, ${color} 12%, transparent)` }}
-                  >
+                  {/* One colour for all four: green, amber and red mean run statuses elsewhere. */}
+                  <span className="mb-4 inline-flex size-9 items-center justify-center rounded-md bg-primary-soft text-primary">
                     <Icon className="size-[18px]" />
                   </span>
-                  <h3 className="serif text-[19px] font-semibold">{card.title}</h3>
+                  <h3 className="display text-[19px] font-bold">{card.title}</h3>
                   <p className="mt-2 text-[14px] leading-6 text-(--l-muted)">{card.body}</p>
                 </div>
                 );
@@ -310,22 +321,22 @@ export default function LandingPage() {
           <div className={`${CONTAINER} grid gap-10 md:grid-cols-2 md:gap-8`}>
             <div>
               <Eyebrow>{t.quickStart.eyebrow}</Eyebrow>
-              <h2 className="serif mt-3 text-[28px] leading-tight font-semibold tracking-tight sm:text-[34px]">
+              <h2 className="display mt-3 text-[28px] leading-tight font-bold tracking-tight sm:text-[34px]">
                 {t.quickStart.title}
               </h2>
               <p className="mt-4 text-[16px] leading-7 text-(--l-muted)">{t.quickStart.body}</p>
-              <a
-                href={`${GITHUB_URL}#readme`}
+              <Link
+                href="/docs/deployment"
                 className="mt-6 inline-block text-[14px] underline underline-offset-4 hover:opacity-80"
               >
                 {t.quickStart.readme} →
-              </a>
+              </Link>
             </div>
             <DemoFrame title="Terminal" bodyClassName="" chrome>
               <pre className="mono overflow-x-auto bg-(--l-code-bg) px-4 py-4 text-[13px] leading-6">
                 {QUICK_START.split("\n").map((line, i) => (
-                  <div key={i} className={line.startsWith("#") ? "text-(--l-muted)" : ""}>
-                    {line || " "}
+                  <div key={i} className="whitespace-pre">
+                    {line ? <HighlightedLine text={line} language="shell" /> : " "}
                   </div>
                 ))}
               </pre>
@@ -335,7 +346,7 @@ export default function LandingPage() {
 
         <section id="faq" className="border-t border-(--l-line) py-20 sm:py-24">
           <div className={`${CONTAINER} grid gap-8 md:grid-cols-12`}>
-            <h2 className="serif text-[28px] leading-tight font-semibold tracking-tight md:col-span-4 sm:text-[34px]">
+            <h2 className="display text-[28px] leading-tight font-bold tracking-tight md:col-span-4 sm:text-[34px]">
               {t.faq.title}
             </h2>
             <div className="border-t border-(--l-line) md:col-span-8">
@@ -351,37 +362,20 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-        <section className="relative overflow-hidden py-24 sm:py-28">
-          <AquaWallpaper />
-          <div className={`${CONTAINER} relative text-center`}>
-            <h2 className="serif mx-auto max-w-[640px] text-balance text-[32px] leading-tight font-semibold tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,20,70,0.45)] sm:text-[42px]">
-              {t.cta.title}
-            </h2>
-            <p className="mx-auto mt-4 max-w-[520px] text-pretty text-[16px] leading-7 text-white/85">{t.cta.body}</p>
-            <div className="mt-8 flex justify-center gap-3">
-              <Link href="/dashboard" className={heroPrimaryButton}>
-                {t.hero.primary}
-              </Link>
-              <a href={GITHUB_URL} className={heroSecondaryButton}>
-                {t.hero.secondary}
-              </a>
-            </div>
-          </div>
-        </section>
       </main>
 
       <footer className="border-t border-(--l-line) py-10">
         <div className={`${CONTAINER} flex flex-col gap-3 text-[13px] text-(--l-muted) sm:flex-row sm:items-center sm:justify-between`}>
           <span>
-            <span className="serif text-[15px] font-semibold text-(--l-fg)">{BRAND}</span> · {t.footer}
+            <span className="display text-[15px] font-bold text-(--l-fg)">{BRAND}</span> · {t.footer}
           </span>
           <span className="flex gap-6">
             <a href={GITHUB_URL} className="hover:text-foreground">GitHub</a>
             <SignedOut>
-              <Link href="/sign-in?redirect_url=/dashboard" className="hover:text-(--l-fg)">{t.nav.signIn}</Link>
+              <Link href="/sign-in?redirect_url=/checks" className="hover:text-(--l-fg)">{t.nav.signIn}</Link>
             </SignedOut>
             <SignedIn>
-              <Link href="/dashboard" className="hover:text-(--l-fg)">{t.nav.openApp}</Link>
+              <Link href="/checks" className="hover:text-(--l-fg)">{t.nav.openApp}</Link>
             </SignedIn>
           </span>
         </div>

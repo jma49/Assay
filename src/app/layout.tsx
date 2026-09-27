@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { EB_Garamond } from "next/font/google";
+import { JetBrains_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -11,14 +11,11 @@ import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { GlobalErrorHandlerProvider } from "@/components/error/GlobalErrorHandlerProvider";
 import { DialogPortalProvider } from "@/components/common/DialogPortalProvider";
 
-// Aqua's display face is Apple Garamond; EB Garamond is the closest open
-// licensed match, self-hosted by next/font.
-const garamond = EB_Garamond({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  display: "swap",
-  variable: "--font-garamond",
-});
+// Self-hosted by next/font. Manrope for the interface and headings (its round
+// forms suit the mascot and stay clear in dense tables), JetBrains Mono for
+// code and ids.
+const manrope = Manrope({ subsets: ["latin"], display: "swap", variable: "--font-manrope" });
+const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], display: "swap", variable: "--font-jetbrains-mono" });
 
 // Keep metadata export here (Server Component)
 export const metadata: Metadata = {
@@ -39,7 +36,7 @@ export default function RootLayout({
       <CSSErrorHandler />
       <GlobalErrorHandlerProvider>
         <ErrorBoundary>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <LanguageProvider>
               <DialogPortalProvider>{children}</DialogPortalProvider>
             </LanguageProvider>
@@ -50,11 +47,7 @@ export default function RootLayout({
   );
 
   return (
-    <html lang="en" className={garamond.variable} suppressHydrationWarning>
-      <head>
-        {/* 添加CSS预加载提示，减少404错误 */}
-        <meta name="preload" content="styles" />
-      </head>
+    <html lang="en" className={`${manrope.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <body>
         {hasClerkKey ? (
           <ClerkProvider appearance={{ theme: shadcn }}>{content}</ClerkProvider>

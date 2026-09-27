@@ -624,7 +624,7 @@ export function GlobalEditHistoryDialog({
                 size="sm"
                 onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
                 disabled={currentPage === 1 || loading}
-                className="h-7 px-2 text-xs transition-all duration-150"
+                className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150"
               >
                 <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                 <span className="hidden sm:inline">{t("previous")}</span>
@@ -690,7 +690,7 @@ export function GlobalEditHistoryDialog({
                         onChange={handlePageInputChange}
                         onKeyDown={handlePageInputKeyDown}
                         placeholder={t("jumpToPage")}
-                        className="w-12 h-6 px-1 text-xs text-center aqua-field rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring"
+                        className="w-12 h-6 px-1 text-xs text-center border border-input bg-card rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                       <Button
                         type="submit"
@@ -719,7 +719,7 @@ export function GlobalEditHistoryDialog({
                   handlePageChange(Math.min(currentPage + 1, totalPages))
                 }
                 disabled={currentPage === totalPages || loading}
-                className="h-7 px-2 text-xs transition-all duration-150"
+                className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150"
               >
                 <span className="hidden sm:inline">{t("next")}</span>
                 <ChevronRight className="h-3.5 w-3.5 ml-1" />

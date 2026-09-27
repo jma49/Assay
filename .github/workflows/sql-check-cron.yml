@@ -1,109 +1,72 @@
-name: SQL Script Manual/Backup Job
+name: Scheduled SQL checks
 
 on:
-  # 去除自动定时，改为手动触发和备用模式
-  workflow_dispatch: 
+  schedule:
+    # Every 30 minutes. The runner runs each check at most once per cron slot
+    # (scripts/run-all-scripts.ts with src/lib/scheduling/due-slot.ts), so
+    # GitHub's late or repeated triggers are safe.
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
     inputs:
       execution_mode:
-        description: "执行模式 (all: 所有脚本, scheduled: 仅定时脚本, backup: 备用检查)"
+        description: "scheduled: checks whose slot is due; all: every check now"
         required: false
-        default: "scheduled"
+        default: scheduled
         type: choice
         options:
           - scheduled
           - all
-          - backup
-      debug_mode:
-        description: "调试模式"
-        required: false
-        default: false
-        type: boolean
-  # 可选：保留每日备用检查 (可根据需要启用)
-  # schedule:
-  #   - cron: "0 12 * * *"  # 每天UTC 12:00 = 芝加哥早上7:00，作为备用检查
 
-env:
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  MONGODB_URI: ${{ secrets.MONGODB_URI }}
+permissions:
+  contents: read
+
+# Never run two batches at once; a new trigger waits for the running one.
+concurrency:
+  group: sql-checks
+  cancel-in-progress: false
 
 jobs:
-  run-sql-check:
+  run-checks:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 20
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: "22"
+          cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
 
-      - name: Create environment file
-        # Secrets reach the file through env vars only: never inlined into the
-        # script text and never printed. Action logs of this public repo are public.
-        run: |
-          printf 'DATABASE_URL=%s\nMONGODB_URI=%s\nNODE_ENV=production\n' "$DATABASE_URL" "$MONGODB_URI" > .env.local
-
-      - name: Debug environment setup
-        run: |
-          pwd
-          ls -la
-          echo "NODE_ENV: $NODE_ENV"
-          echo "GitHub Run ID: $GITHUB_RUN_ID"
-          echo "Execution Mode: ${{ github.event.inputs.execution_mode || 'scheduled' }}"
-          echo "Debug Mode: ${{ github.event.inputs.debug_mode || 'false' }}"
-          
-          # 时区和时间调试
-          echo "--- 时间和时区信息 ---"
-          echo "UTC 时间: $(date -u)"
-          echo "当前时区时间: $(date)"
-          echo "TZ环境变量: $TZ"
-          echo "系统时区: $(timedatectl show --property=Timezone --value 2>/dev/null || cat /etc/timezone 2>/dev/null || echo 'Unknown')"
-          
-          # 触发方式检查
-          echo "--- 触发方式分析 ---"
-          echo "GitHub Event Name: ${{ github.event_name }}"
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "✅ 由定时任务触发"
-            echo "预期下次运行: 明天 UTC 8:00 ($(date -d 'tomorrow 08:00 UTC' '+%Y-%m-%d %H:%M:%S %Z'))"
-          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "✅ 由手动触发"
-          else
-            echo "⚠️  由其他事件触发: ${{ github.event_name }}"
-          fi
-          
-          # 环境变量检查
-          echo "--- 必需环境变量检查 ---"
-          if [ -n "$DATABASE_URL" ]; then
-            echo "✅ DATABASE_URL: 已设置 (长度: ${#DATABASE_URL})"
-          else
-            echo "❌ DATABASE_URL: 未设置"
-          fi
-          
-          if [ -n "$MONGODB_URI" ]; then
-            echo "✅ MONGODB_URI: 已设置 (长度: ${#MONGODB_URI})"
-          else
-            echo "❌ MONGODB_URI: 未设置"
-          fi
-
-      - name: Run SQL Scripts from MongoDB
+      - name: Run checks
+        # Secrets go straight into the environment; nothing writes or prints them.
         env:
-          DOTENV_CONFIG_PATH: .env.local
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          CA_CERT_BLOB_URL: ${{ secrets.CA_CERT_BLOB_URL }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           EXECUTION_MODE: ${{ github.event.inputs.execution_mode || 'scheduled' }}
+          NODE_ENV: production
         run: |
-          echo "Current working directory: $(pwd)"
-          echo "Using .env file: ${DOTENV_CONFIG_PATH}"
-          echo "GitHub Run ID: ${GITHUB_RUN_ID}"
-          echo "执行模式: ${EXECUTION_MODE}"
-          echo "定时执行时间: 芝加哥夏令时凌晨 3:00 (UTC 8:00)"
-          ls -la ${DOTENV_CONFIG_PATH}
-          echo "开始从MongoDB批量执行SQL脚本（所有可用脚本）..."
-          # 使用新的批量执行脚本，scheduled模式现在执行所有脚本
-          npx ts-node -r dotenv/config scripts/run-all-scripts.ts ${EXECUTION_MODE}
-        continue-on-error: false
+          # Forks and fresh copies have no secrets yet: skip instead of failing.
+          if [ -z "$DATABASE_URL" ] || [ -z "$MONGODB_URI" ]; then
+            echo "::notice::DATABASE_URL or MONGODB_URI is not set; skipping scheduled checks."
+            exit 0
+          fi
+          npx tsx scripts/run-all-scripts.ts "$EXECUTION_MODE"
+
+      - name: Send alerts
+        # Alerts are sent by the app, which holds the channel secrets; this
+        # only asks it to run the outbox. Runs even when a check failed.
+        if: always()
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::notice::APP_URL or CRON_SECRET is not set; alerts go out on the next run in the app."
+            exit 0
+          fi
+          curl --fail-with-body --silent --show-error --max-time 60 \
+            -X POST -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/notifications/dispatch"

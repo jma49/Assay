@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
+import { cleanRunMessage } from "@/lib/utils/run-message";
 import { useParams, useRouter } from "next/navigation";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { Button } from "@/components/ui/button";
@@ -9,6 +11,7 @@ import {
   Database,
   Download,
   Brain,
+  Play,
 } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
 import dynamic from 'next/dynamic';
@@ -18,6 +21,11 @@ const AnalysisResultDialog = dynamic(() => import("@/components/business/ai/Anal
 import Link from "next/link";
 import { SkeletonPageHeader, SkeletonTable } from "@/components/common/PageSkeletons";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { formatDateTime } from "@/lib/utils/datetime";
+import { useMe } from "@/lib/auth/use-me";
+import { cellText } from "@/lib/utils/cells";
+import { triageToMarkdown } from "@/lib/ai/triage-format";
 
 // 基于SQL脚本实际输出的精确类型定义
 interface OrderDuplicateDetail {
@@ -59,7 +67,7 @@ const viewResultTranslations = {
     loading: "Loading...",
     loadingFailed: "Loading Failed",
     retry: "Retry",
-    back: "Back to Dashboard",
+    back: "Back",
     notFound: "Result Not Found",
     noResultFound: "Could not find execution result with ID",
     executionDetails: "Execution Result Details",
@@ -91,16 +99,16 @@ const viewResultTranslations = {
       other: "Other",
     },
     statusTexts: {
-      success: "Success",
-      attentionNeeded: "Attention Needed",
-      failure: "Failed",
+      success: "Clean",
+      attentionNeeded: "Issues",
+      failure: "Broken",
     },
   },
   zh: {
     loading: "加载中...",
     loadingFailed: "加载失败",
     retry: "重试",
-    back: "返回仪表盘",
+    back: "返回",
     notFound: "未找到结果",
     noResultFound: "无法找到ID为",
     executionDetails: "执行结果详情",
@@ -132,9 +140,9 @@ const viewResultTranslations = {
       other: "其他",
     },
     statusTexts: {
-      success: "成功",
-      attentionNeeded: "需要关注",
-      failure: "失败",
+      success: "正常",
+      attentionNeeded: "有问题",
+      failure: "出错",
     },
   },
 };
@@ -171,6 +179,11 @@ export default function ViewExecutionResultPage() {
 
   // 使用全局语言系统
   const { language } = useLanguage();
+  const me = useMe();
+  const aiAvailable = me?.ai === true;
+  // Demo viewers may run the sample checks too; the API has the final say.
+  const canRunAgain = !!me && (me.permissions.includes("script:execute") || !!me.demo);
+  const [isRunningAgain, setIsRunningAgain] = useState(false);
   const t = viewResultTranslations[language];
 
   // CSV导出功能
@@ -397,25 +410,7 @@ export default function ViewExecutionResultPage() {
     }
   }, [resultId, retryCount]);
 
-  // 用于格式化日期的工具函数，处理可能的无效日期
-  const formatDate = (dateString: string): string => {
-    try {
-      return new Date(dateString).toLocaleString(
-        language === "en" ? "en-US" : "zh-CN",
-        {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: language === "en",
-        },
-      );
-    } catch {
-      return dateString || (language === "en" ? "Unknown time" : "未知时间");
-    }
-  };
+  const formatDate = (dateString: string) => formatDateTime(dateString, language);
 
   const handleRetry = () => {
     setLoading(true);
@@ -423,12 +418,13 @@ export default function ViewExecutionResultPage() {
     setRetryCount((prev) => prev + 1);
   };
 
-  const handleGoToDashboard = () => {
-    // 直接导航到仪表盘
-    router.push("/dashboard");
+  // Back where the visitor came from (a check, the runs list), or to the checks.
+  const goBack = () => {
+    if (window.history.length > 1) router.back();
+    else router.push("/checks");
   };
 
-  // AI分析错误函数
+  // Triage runs on the server from the run id; the answer is cached on the run.
   const handleAnalyzeError = async () => {
     if (!result) {
       return;
@@ -436,35 +432,46 @@ export default function ViewExecutionResultPage() {
 
     setIsAnalyzingError(true);
     try {
-      const response = await fetch('/api/ai/analyze-error', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          sql: `-- Script ID: ${result.scriptId}\n-- 执行时间: ${result.executedAt}\n-- 脚本相关信息不可用`,
-          errorMessage: result.message 
-        }),
+      const response = await fetch("/api/ai/triage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resultId: result._id, language }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'AI分析错误失败');
-      }
-
       const data = await response.json();
-      
-      if (data.success && data.analysis) {
-        setErrorAnalysis(data.analysis);
-        setIsErrorAnalysisDialogOpen(true);
-      } else {
-        throw new Error('AI返回数据格式错误');
+      if (!response.ok || !data.triage) {
+        throw new Error(data.error || response.statusText);
       }
+      setErrorAnalysis(triageToMarkdown(data.triage, language));
+      setIsErrorAnalysisDialogOpen(true);
     } catch (error) {
-      console.error('AI分析错误失败:', error);
-      // 可以在这里显示错误提示，但为了简化暂时忽略
+      toast.error(language === "zh" ? "AI 分诊失败" : "AI triage failed", {
+        description: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       setIsAnalyzingError(false);
+    }
+  };
+
+  const handleRunAgain = async () => {
+    if (!result) return;
+    setIsRunningAgain(true);
+    try {
+      const response = await fetch("/api/run-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scriptId: result.scriptId }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.mongoResultId) {
+        throw new Error(data.message || response.statusText);
+      }
+      router.push(`/view-execution-result/${data.mongoResultId}`);
+    } catch (error) {
+      toast.error(language === "zh" ? "执行失败" : "Could not run the check", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setIsRunningAgain(false);
     }
   };
 
@@ -498,7 +505,7 @@ export default function ViewExecutionResultPage() {
                 {t.retry}
               </button>
               <Button
-                onClick={handleGoToDashboard}
+                onClick={goBack}
                 variant="outline"
                 className="dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10"
               >
@@ -524,7 +531,7 @@ export default function ViewExecutionResultPage() {
               {t.noResultFound} {resultId} 的执行结果。
             </p>
             <Button
-              onClick={handleGoToDashboard}
+              onClick={goBack}
               className="mt-6 dark:text-[var(--primary)] dark:border-[var(--primary)] dark:hover:bg-[var(--primary)]/10"
               variant="outline"
             >
@@ -601,7 +608,7 @@ export default function ViewExecutionResultPage() {
                           </span>
                         ) : (
                           <span className="tabular-nums">
-                            {String(value)}
+                            {cellText(value)}
                           </span>
                         )}
                       </td>
@@ -667,211 +674,120 @@ export default function ViewExecutionResultPage() {
     );
   }
 
-  // 状态显示逻辑
-  // Catppuccin Mocha theme colors: Yellow (#f9e2af), Green (#a6e3a1), Red (#f38ba8)
+  const tone: "attention_needed" | "success" | "failure" =
+    result.statusType === "attention_needed" ? "attention_needed" : result.status === "success" ? "success" : "failure";
   const statusText =
-    result.statusType === "attention_needed"
+    tone === "attention_needed"
       ? t.statusTexts.attentionNeeded
-      : result.status === "success"
+      : tone === "success"
         ? t.statusTexts.success
         : t.statusTexts.failure;
+  const rowCount = Array.isArray(result.findings) ? result.findings.length : null;
+  const zh = language === "zh";
+  // One sentence that says what happened, before any detail.
+  const headline =
+    tone === "attention_needed"
+      ? rowCount !== null
+        ? zh ? `${rowCount} 行需要关注` : `${rowCount} ${rowCount === 1 ? "row needs" : "rows need"} attention`
+        : zh ? "发现需要关注的问题" : "Needs attention"
+      : tone === "success"
+        ? zh ? "正常：没有返回任何行" : "Clean: no rows returned"
+        : zh ? "查询出错" : "The query failed";
+  const scriptName = zh ? result.cnName || result.name : result.name;
+  const toneText = { attention_needed: "text-attention", success: "text-success", failure: "text-failure" }[tone];
+
+  // "Get Info"-style facts about the run and its check.
+  const info: { label: string; value: React.ReactNode; mono?: boolean }[] = [
+    { label: t.status, value: <span className={cn("inline-flex items-center gap-1.5", toneText)}><span className={cn("status-dot", `status-dot-${tone}`)} aria-hidden />{statusText}</span> },
+    { label: t.executionTime, value: <span className="tabular-nums">{formatDate(result.executedAt)}</span> },
+    { label: t.message, value: cleanRunMessage(result.message) },
+    {
+      label: t.scriptId,
+      mono: true,
+      value: (
+        <Link href={`/checks/${encodeURIComponent(result.scriptId)}`} className="text-primary hover:underline">
+          {result.scriptId}
+        </Link>
+      ),
+    },
+    ...(scriptName ? [{ label: t.name, value: scriptName }] : []),
+    ...((result.description || result.cnDescription)
+      ? [{ label: t.description, value: zh ? result.cnDescription || result.description : result.description }]
+      : []),
+    ...((result.scope || result.cnScope) ? [{ label: t.scope, value: zh ? result.cnScope || result.scope : result.scope }] : []),
+    ...(result.author ? [{ label: t.author, value: result.author }] : []),
+    { label: t.resultId, value: result._id, mono: true },
+  ];
 
   return (
-    <div className="min-h-screen    ">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        <div className="space-y-8 animate-fadeIn">
-          {/* Header Section */}
-          <header className="">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="space-y-2">
-                <h1 className="text-[28px] leading-tight font-semibold">
-                  {t.executionDetails}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  {result.scriptId}
+    <div className="min-h-screen">
+      <h1 className="sr-only">{t.executionDetails}</h1>
+      <WindowToolbar>
+        <Button variant="outline" size="sm" onClick={goBack}>
+          ‹ {zh ? "返回" : "Back"}
+        </Button>
+        <div className="ml-auto flex items-center gap-2">
+          {(tone === "failure" || tone === "attention_needed") && aiAvailable && (
+            <Button size="sm" variant="outline" onClick={handleAnalyzeError} disabled={isAnalyzingError}>
+              <Brain />
+              {isAnalyzingError ? (zh ? "分诊中…" : "Triaging…") : zh ? "AI 分诊" : "Triage with AI"}
+            </Button>
+          )}
+          {canRunAgain && (
+            <Button size="sm" variant="outline" onClick={handleRunAgain} disabled={isRunningAgain}>
+              <Play />
+              {isRunningAgain ? (zh ? "执行中…" : "Running…") : zh ? "再次执行" : "Run again"}
+            </Button>
+          )}
+          {hasTableData && (
+            <Button size="sm" variant="outline" onClick={exportToCSV} title={t.exportCsvDesc}>
+              <Download />
+              {t.exportCsv}
+            </Button>
+          )}
+        </div>
+      </WindowToolbar>
+      <WindowStatusBar>
+        {scriptName ?? result.scriptId} · {formatDate(result.executedAt)}
+        {rowCount !== null && ` · ${zh ? `${rowCount} 行` : `${rowCount} rows`}`}
+      </WindowStatusBar>
+
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div className="grid gap-6 lg:grid-cols-12 animate-fadeIn">
+          {/* What happened, then the rows that prove it. */}
+          <section className="min-w-0 space-y-5 lg:col-span-8">
+            <header className="rounded-xl bg-card shadow-border flex items-start gap-3  px-5 py-4">
+              <span className={cn("status-dot mt-2", `status-dot-${tone}`)} aria-hidden />
+              <div className="min-w-0">
+                <p className={cn("font-display text-[26px] leading-tight font-semibold", toneText)}>{headline}</p>
+                <p className="mt-1 text-[13px] text-muted-foreground">
+                  {scriptName ?? result.scriptId} · {formatDate(result.executedAt)}
                 </p>
-              </div>
-              {result.status !== "success" && result.statusType !== "attention_needed" && (
-                <Button
-                  variant="outline"
-                  onClick={handleAnalyzeError}
-                  disabled={isAnalyzingError}
-                >
-                  <Brain />
-                  {isAnalyzingError
-                    ? language === "zh" ? "分析中…" : "Analyzing…"
-                    : language === "zh" ? "AI 分析错误" : "Analyze error with AI"}
-                </Button>
-              )}
-            </div>
-          </header>
-
-          <dl className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-4">
-            <div className="space-y-1 bg-card px-5 py-4">
-              <dt className="text-[13px] text-muted-foreground">{t.status}</dt>
-              <dd
-                className={`inline-flex items-center gap-2 font-medium ${
-                  result.statusType === "attention_needed"
-                    ? "text-attention"
-                    : result.status === "success"
-                      ? "text-success"
-                      : "text-failure"
-                }`}
-              >
-                <span
-                  aria-hidden
-                  className={`size-1.5 rounded-full ${
-                    result.statusType === "attention_needed"
-                      ? "bg-attention"
-                      : result.status === "success"
-                        ? "bg-success"
-                        : "bg-failure"
-                  }`}
-                />
-                {statusText}
-              </dd>
-            </div>
-            <div className="space-y-1 bg-card px-5 py-4">
-              <dt className="text-[13px] text-muted-foreground">{t.executionTime}</dt>
-              <dd className="tabular-nums">{formatDate(result.executedAt)}</dd>
-            </div>
-            <div className="space-y-1 bg-card px-5 py-4 sm:col-span-2">
-              <dt className="text-[13px] text-muted-foreground">{t.message}</dt>
-              <dd className="break-words">{result.message}</dd>
-            </div>
-          </dl>
-
-          {/* Script Metadata Card - 总是显示，包含基本信息 */}
-          <div className="relative overflow-hidden rounded-lg border bg-card">
-            <div className="relative p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <h2 className="text-[23px] leading-tight font-semibold">
-                  {t.scriptMetadata ||
-                    (language === "en" ? "Script Metadata" : "脚本元数据")}
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* 左侧列 */}
-                <div className="space-y-6">
-                  {/* Script ID */}
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                      {t.scriptId}
-                    </p>
-                    <div className="text-base text-foreground bg-muted/20 rounded-lg p-3 font-mono">
-                      <Link 
-                        href={`/manage-scripts?scriptId=${encodeURIComponent(result.scriptId)}`}
-                        className="flex items-center gap-2 hover:text-primary transition-colors duration-200 group/link"
-                      >
-                        <span>{result.scriptId}</span>
-                      </Link>
-                    </div>
-                  </div>
-
-                  {/* Script Name */}
-                  {(result.name || result.cnName) && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                        {t.name}
-                      </p>
-                      <p className="text-base text-foreground bg-muted/20 rounded-lg p-3">
-                        {language === "en" ? result.name : (result.cnName || result.name)}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Description */}
-                  {(result.description || result.cnDescription) && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                        {t.description}
-                      </p>
-                      <p className="text-base text-foreground bg-muted/20 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
-                        {language === "en" ? result.description : (result.cnDescription || result.description)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* 右侧列 */}
-                <div className="space-y-6">
-                  {/* Author */}
-                  {result.author && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                        {t.author}
-                      </p>
-                      <p className="text-base text-foreground bg-muted/20 rounded-lg p-3">
-                        {result.author}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Result ID */}
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                      {t.resultId}
-                    </p>
-                    <p className="text-xs text-muted-foreground bg-muted/20 rounded-lg p-3 font-mono break-all">
-                      {result._id}
-                    </p>
-                  </div>
-
-                  {/* Scope */}
-                  {(result.scope || result.cnScope) && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                        {t.scope}
-                      </p>
-                      <p className="text-base text-foreground bg-muted/20 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
-                        {language === "en" ? result.scope : (result.cnScope || result.scope)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Query Findings Card */}
-          <div className="relative overflow-hidden rounded-lg border bg-card">
-            <div className="relative p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-[23px] leading-tight font-semibold">
-                    {t.queryFindings}
-                  </h2>
-                </div>
-
-                {/* CSV 导出按钮 */}
-                {hasTableData && (
-                  <Button
-                    onClick={exportToCSV}
-                    variant="outline"
-                    size="sm"
-                    className="group transition-all duration-300 h-10 px-4 gap-2"
-                    title={t.exportCsvDesc}
-                  >
-                    <Download className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                    <span className="hidden sm:inline">{t.exportCsv}</span>
-                  </Button>
+                {tone === "failure" && result.message && (
+                  <p className="mt-2 font-mono text-[13px] break-words">{cleanRunMessage(result.message)}</p>
                 )}
               </div>
-              <div className="overflow-hidden rounded-lg border border-border/30 ">
-                {findingsContent}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+            </header>
 
-      {/* 版本号显示 - 固定在左下角 */}
-      <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 transition-all duration-300">
-          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-          <span className="font-mono text-xs text-muted-foreground font-medium">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.7"}
-          </span>
+            <div className="rounded-xl bg-card shadow-border overflow-hidden " aria-label={t.queryFindings}>
+              {findingsContent}
+            </div>
+          </section>
+
+          {/* A Get Info inspector: everything else about the run. */}
+          <aside className="lg:col-span-4">
+            <div className="rounded-xl bg-card shadow-border overflow-hidden  lg:sticky lg:top-16">
+              <p className="border-b bg-muted px-4 py-2 text-[12px] font-medium text-muted-foreground">{zh ? "简介" : "Info"}</p>
+              <dl className="divide-y text-[13px]">
+                {info.map((item) => (
+                  <div key={item.label} className="grid grid-cols-[7.5rem_1fr] gap-3 px-4 py-2">
+                    <dt className="text-muted-foreground">{item.label}</dt>
+                    <dd className={cn("min-w-0 break-words", item.mono && "font-mono text-[12px]")}>{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </aside>
         </div>
       </div>
 
@@ -882,7 +798,7 @@ export default function ViewExecutionResultPage() {
           onOpenChange={setIsErrorAnalysisDialogOpen}
           result={errorAnalysis}
           type="explain"
-          title={language === "zh" ? "AI 错误分析结果" : "AI error analysis"}
+          title={language === "zh" ? "AI 分诊" : "AI triage"}
         />
       )}
     </div>

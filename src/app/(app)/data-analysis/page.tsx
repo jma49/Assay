@@ -1,6 +1,7 @@
 "use client"; // Assuming client-side interactions might be added later
 
 import React, { useCallback, useState, useEffect, useMemo } from "react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDate } from "@/components/business/dashboard/utils";
+import { dayKeyParts, localDayKey } from "@/lib/utils/datetime";
 import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
 
 import dynamic from "next/dynamic";
@@ -158,7 +160,7 @@ export default function DataAnalysisPage() {
     const dailyMap = new Map();
 
     executions.forEach((execution) => {
-      const date = new Date(execution.createdAt).toISOString().split("T")[0];
+      const date = localDayKey(execution.createdAt);
       if (!dailyMap.has(date)) {
         dailyMap.set(date, { date, executions: 0, successes: 0, failures: 0 });
       }
@@ -427,20 +429,7 @@ export default function DataAnalysisPage() {
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
           <div className="space-y-8">
             {/* 简化的Header Section - 与主页风格统一 */}
-            <header className="">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div className="space-y-3">
-                  <h1 className="text-[28px] leading-tight font-semibold">
-                    {t("dataAnalysisTitle")}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    {t("dataAnalysisSubTitle")}
-                  </p>
-                </div>
-
-
-              </div>
-            </header>
+            <PageHeader title={t("dataAnalysisTitle")} description={t("dataAnalysisSubTitle")} />
 
             {/* 筛选控制 - 优化展示逻辑 */}
             <Card className="relative overflow-hidden gap-0 py-0">
@@ -657,7 +646,7 @@ export default function DataAnalysisPage() {
               <dl className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-1 bg-card px-5 py-4">
                   <dt className="text-[13px] text-muted-foreground">{t("totalExecutions")}</dt>
-                  <dd className="font-serif text-[30px] leading-tight font-semibold tabular-nums">
+                  <dd className="text-[24px] leading-tight font-semibold tabular-nums">
                     {analyticsData.totalExecutions.toLocaleString()}
                   </dd>
                   <dd className="text-[13px] text-muted-foreground">
@@ -668,7 +657,7 @@ export default function DataAnalysisPage() {
                   <dt className="text-[13px] text-muted-foreground">{t("overallSuccessRate")}</dt>
                   <dd
                     className={cn(
-                      "font-serif text-[30px] leading-tight font-semibold tabular-nums",
+                      "text-[24px] leading-tight font-semibold tabular-nums",
                       analyticsData.overallSuccessRate >= 80 ? "text-success" : "text-attention",
                     )}
                   >
@@ -681,7 +670,7 @@ export default function DataAnalysisPage() {
                 </div>
                 <div className="space-y-1 bg-card px-5 py-4">
                   <dt className="text-[13px] text-muted-foreground">{t("successfulExecutions")}</dt>
-                  <dd className="font-serif text-[30px] leading-tight font-semibold text-success tabular-nums">
+                  <dd className="text-[24px] leading-tight font-semibold text-success tabular-nums">
                     {analyticsData.statusDistribution.success.toLocaleString()}
                   </dd>
                   <dd className="text-[13px] text-muted-foreground">
@@ -694,7 +683,7 @@ export default function DataAnalysisPage() {
                 </div>
                 <div className="space-y-1 bg-card px-5 py-4">
                   <dt className="text-[13px] text-muted-foreground">{t("failedAttentionExecutions")}</dt>
-                  <dd className="font-serif text-[30px] leading-tight font-semibold text-attention tabular-nums">
+                  <dd className="text-[24px] leading-tight font-semibold text-attention tabular-nums">
                     {(
                       analyticsData.statusDistribution.failed +
                       analyticsData.statusDistribution.attention_needed
@@ -802,7 +791,7 @@ export default function DataAnalysisPage() {
                         return (
                           <div
                             key={day.date}
-                            className="trend-item group/item relative overflow-hidden rounded-lg p-4 transition-all duration-300 border border-border/30 hover:border-border/50  "
+                            className="trend-item group/item relative overflow-hidden rounded-lg p-4 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300 border border-border/30 hover:border-border/50  "
                             style={{ animationDelay: `${index * 0.1}s` }}
                           >
                             {/* 装饰性渐变背景 */}
@@ -811,23 +800,12 @@ export default function DataAnalysisPage() {
                             <div className="relative flex items-center gap-4">
                               {/* 日期卡片 - 统一样式 */}
                               <div className="flex-none">
-                                <div className="w-16 h-14 rounded-lg flex flex-col items-center justify-center text-xs font-medium transition-all duration-300 group-hover/ text-muted-foreground border border-border/40 hover:border-border/60">
+                                <div className="w-16 h-14 rounded-lg flex flex-col items-center justify-center text-xs font-medium transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300 group-hover/ text-muted-foreground border border-border/40 hover:border-border/60">
                                   <div className="font-mono font-bold text-sm">
-                                    {formatDate(day.date, language)
-                                      .split(" ")[0]
-                                      .split("-")[2] ||
-                                      formatDate(day.date, language)
-                                        .split(" ")[0]
-                                        .split("/")[1]}
+                                    {dayKeyParts(day.date, language).day}
                                   </div>
                                   <div className="text-[10px] opacity-80 font-medium">
-                                    {formatDate(day.date, language)
-                                      .split(" ")[0]
-                                      .split("-")[1] ||
-                                      formatDate(day.date, language)
-                                        .split(" ")[0]
-                                        .split("/")[0]}
-                                    月
+                                    {dayKeyParts(day.date, language).month}
                                   </div>
                                 </div>
                               </div>
@@ -843,7 +821,7 @@ export default function DataAnalysisPage() {
                                     {day.executions > 0 && (
                                       <Badge
                                         variant="outline"
-                                        className={`text-xs font-medium px-3 py-1 transition-all duration-300  ${
+                                        className={`text-xs font-medium px-3 py-1 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300  ${
                                           successRate >= 95
                                             ? "border-success/30 text-success       "
                                             : successRate >= 85
@@ -890,7 +868,7 @@ export default function DataAnalysisPage() {
                                       <>
                                         {/* 成功部分 */}
                                         <div
-                                          className="absolute left-0 top-0 h-full transition-all duration-700 ease-out relative overflow-hidden"
+                                          className="absolute left-0 top-0 h-full transition-[color,background-color,border-color,box-shadow,opacity,width] duration-700 ease-out relative overflow-hidden"
                                           style={{
                                             background: `linear-gradient(to right, ${CHART_COLORS.chartGreen}, ${CHART_COLORS.success})`,
                                             width: `${(day.successes / day.executions) * 100}%`,
@@ -903,7 +881,7 @@ export default function DataAnalysisPage() {
                                         {/* 失败部分 */}
                                         {day.failures > 0 && (
                                           <div
-                                            className="absolute top-0 h-full transition-all duration-700 ease-out relative overflow-hidden"
+                                            className="absolute top-0 h-full transition-[color,background-color,border-color,box-shadow,opacity,width] duration-700 ease-out relative overflow-hidden"
                                             style={{
                                               background: `linear-gradient(to right, ${CHART_COLORS.chartRed}, ${CHART_COLORS.failed})`,
                                               left: `${(day.successes / day.executions) * 100}%`,
@@ -923,7 +901,7 @@ export default function DataAnalysisPage() {
                                   </div>
 
                                   {/* 动态光线扫过效果 */}
-                                  <div className="absolute inset-0 h-4 rounded-full opacity-0 group-hover/item:opacity-100 transition-all duration-700 transform -skew-x-12 group-hover/item:animate-pulse"></div>
+                                  <div className="absolute inset-0 h-4 rounded-full opacity-0 group-hover/item:opacity-100 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-700 transform -skew-x-12 group-hover/item:animate-pulse"></div>
                                 </div>
                               </div>
                             </div>
@@ -1025,7 +1003,7 @@ export default function DataAnalysisPage() {
                         size="sm"
                         onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
                         disabled={currentPage === 1}
-                        className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
+                        className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150 relative z-30"
                       >
                         <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                         <span className="hidden sm:inline">{t("previous")}</span>
@@ -1095,7 +1073,7 @@ export default function DataAnalysisPage() {
                                       onChange={handlePageInputChange}
                                       onKeyDown={handlePageInputKeyDown}
                                       placeholder={t("jumpToPage")}
-                                      className="w-12 h-6 px-1 text-xs text-center aqua-field rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
+                                      className="w-12 h-6 px-1 text-xs text-center border border-input bg-card rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
                                       style={{ pointerEvents: "auto" }}
                                     />
                                     <Button
@@ -1130,7 +1108,7 @@ export default function DataAnalysisPage() {
                           setCurrentPage(Math.min(currentPage + 1, totalPages));
                         }}
                         disabled={currentPage === Math.ceil(analyticsData.scriptAnalytics.length / ITEMS_PER_PAGE)}
-                        className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
+                        className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150 relative z-30"
                       >
                         <span className="hidden sm:inline">{t("next")}</span>
                         <ChevronRight className="h-3.5 w-3.5 ml-1" />
@@ -1190,15 +1168,6 @@ export default function DataAnalysisPage() {
         </div>
       </div>
 
-      {/* 版本号显示 - 与主页风格统一 */}
-      <div className="fixed left-6 bottom-6 z-50">
-        <div className="flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/40 transition-all duration-300">
-          <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-          <span className="font-mono text-xs text-muted-foreground font-medium">
-            v{process.env.NEXT_PUBLIC_APP_VERSION || "0.1.9"}
-          </span>
-        </div>
-      </div>
     </div>
   );
 }

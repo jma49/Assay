@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import { WindowToolbar } from "@/components/layout/WindowChrome";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
@@ -24,6 +25,7 @@ import {
   DashboardTranslationKeys,
 } from "@/components/business/dashboard/types";
 import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
+import { scheduleProblem } from "@/lib/scheduling/schedule";
 
 const SCRIPT_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -33,6 +35,18 @@ SELECT id, created_at
 FROM your_table
 WHERE status IS NULL;
 `;
+
+const TABLE_NAME = /^[A-Za-z_][\w$]*(\.[A-Za-z_][\w$]*)?$/;
+
+/** A starting query for a check on one table, opened from the coverage view. */
+function starterSqlFor(table: string) {
+  return `-- A check passes when this query returns no rows.
+-- Replace "false" with what makes a row need attention.
+SELECT *
+FROM ${table}
+WHERE false;
+`;
+}
 
 const initialFormData: ScriptFormData = {
   scriptId: "",
@@ -107,6 +121,15 @@ export default function NewScriptPage() {
     [language],
   );
 
+  // Coverage links here with ?table=schema.table; only plain identifiers are accepted.
+  useEffect(() => {
+    const table = new URLSearchParams(window.location.search).get("table");
+    if (!table || !TABLE_NAME.test(table)) return;
+    setSqlContent(starterSqlFor(table));
+    const schema = table.includes(".") ? table.split(".")[0] : "";
+    if (schema) setFormData((prev) => (prev.scope ? prev : { ...prev, scope: schema }));
+  }, []);
+
   // Prefill the author once the signed-in user is known; the API falls back to it anyway.
   useEffect(() => {
     const defaultAuthor =
@@ -137,6 +160,11 @@ export default function NewScriptPage() {
     }
     if (!SCRIPT_ID_PATTERN.test(formData.scriptId)) {
       toast.error(c.badId);
+      return;
+    }
+    const badSchedule = scheduleProblem(formData.isScheduled, formData.cronSchedule, language);
+    if (badSchedule) {
+      toast.error(badSchedule);
       return;
     }
     const validation = validateReadOnlySql(sqlContent);
@@ -176,26 +204,24 @@ export default function NewScriptPage() {
   return (
     <div className="min-h-screen">
       <main className={`${APP_CONTAINER} space-y-8 py-8`}>
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-1">
-            <p className="text-[13px] text-muted-foreground">
-              <Link href="/manage-scripts" className="hover:text-foreground">
-                {c.breadcrumb}
-              </Link>{" "}
-              / {c.title}
-            </p>
-            <h1 className="text-[28px] leading-tight font-semibold">{c.title}</h1>
-            <p className="text-sm text-muted-foreground">{c.lead}</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => router.push("/manage-scripts")} disabled={isSaving}>
+        <header className="sr-only">
+          <h1>{c.title}</h1>
+          <p>{c.lead}</p>
+        </header>
+        <WindowToolbar>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/manage-scripts">‹ {c.breadcrumb}</Link>
+          </Button>
+          <p className="text-[13px] text-foreground/70 max-md:hidden">{c.lead}</p>
+          <div className="ml-auto flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => router.push("/manage-scripts")} disabled={isSaving}>
               {c.cancel}
             </Button>
-            <Button className="aqua-default" onClick={handleSave} disabled={isSaving}>
+            <Button size="sm" className="" onClick={handleSave} disabled={isSaving}>
               {isSaving ? c.saving : c.save}
             </Button>
           </div>
-        </header>
+        </WindowToolbar>
 
         {/* items-stretch + fill keeps the editor and the details panel the same height. */}
         <div className="grid gap-6 lg:grid-cols-12">

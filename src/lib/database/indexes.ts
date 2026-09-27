@@ -8,6 +8,26 @@ export const INDEXES: Record<string, IndexDescription[]> = {
   approval_requests: [{ key: { requestId: 1 }, unique: true }, { key: { status: 1, requestedAt: -1 } }],
   edit_history: [{ key: { operationTime: -1 } }, { key: { "scriptSnapshot.scriptId": 1, operationTime: -1 } }],
   script_versions: [{ key: { scriptId: 1, createdAt: -1 } }],
+  // One event per run at most, so retried runs never notify twice.
+  events: [{ key: { runId: 1 }, unique: true }, { key: { at: -1 } }, { key: { checkId: 1, at: -1 } }],
+  check_actions: [{ key: { checkId: 1, at: -1 } }],
+  notification_destinations: [{ key: { workspaceId: 1, createdAt: 1 } }],
+  // One delivery per event and destination, so fan-out can run anywhere, any number of times.
+  notification_deliveries: [
+    { key: { eventId: 1, destinationId: 1 }, unique: true },
+    { key: { status: 1, nextAttemptAt: 1 } },
+    { key: { destinationId: 1, sentAt: -1 } },
+    { key: { createdAt: 1 }, expireAfterSeconds: 30 * 24 * 60 * 60 },
+  ],
+  // One row per problem and destination counts its reminders; old ones go after 30 days.
+  notification_reminders: [
+    { key: { destinationId: 1, checkId: 1, since: 1 }, unique: true },
+    { key: { lastAt: 1 }, expireAfterSeconds: 30 * 24 * 60 * 60 },
+  ],
+  // Pending Telegram links expire on their own.
+  telegram_links: [{ key: { codeHash: 1 }, unique: true }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
+  // Batches only matter while someone watches their progress; keep a week.
+  batches: [{ key: { executionId: 1 }, unique: true }, { key: { startedAt: 1 }, expireAfterSeconds: 7 * 24 * 60 * 60 }],
 };
 
 export async function ensureIndexes(db: Db): Promise<void> {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import redis from "@/lib/cache/redis";
+import { aiEnabled } from "@/lib/ai/model";
 
 /**
  * Sign-up is public, so every AI endpoint is reachable by anyone who makes an
@@ -30,16 +31,20 @@ export interface CounterStore {
   expire(key: string, seconds: number): Promise<unknown>;
 }
 
-/** Fixed-window counter: counts this request and says whether it is within the limit. */
+/**
+ * Fixed-window counter: counts this request and says whether it is within
+ * the limit. `scope` keeps separate budgets (AI requests, demo runs) apart.
+ */
 export async function consumeQuota(
   store: CounterStore,
   userId: string,
   now: number,
   limit = AI_REQUESTS_PER_HOUR,
   windowSeconds = WINDOW_SECONDS,
+  scope = "ai",
 ): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
   const windowStart = Math.floor(now / 1000 / windowSeconds) * windowSeconds;
-  const key = `ratelimit:ai:${userId}:${windowStart}`;
+  const key = `ratelimit:${scope}:${userId}:${windowStart}`;
   const count = await store.incr(key);
   if (count === 1) await store.expire(key, windowSeconds);
   const retryAfterSeconds = windowStart + windowSeconds - Math.floor(now / 1000);
@@ -55,6 +60,10 @@ export async function guardAiRequest(
   userId: string,
   fields: Partial<Record<LimitedField, unknown>>,
 ): Promise<NextResponse | null> {
+  if (!aiEnabled()) {
+    return NextResponse.json({ error: "AI 功能尚未开启（AI_ENABLED）" }, { status: 503 });
+  }
+
   const oversized = findOversizedField(fields);
   if (oversized) {
     return NextResponse.json(

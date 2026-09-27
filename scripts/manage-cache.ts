@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env -S npx tsx
 
 /**
  * 缓存管理脚本
@@ -33,7 +33,7 @@ function showHelp() {
 Redis缓存管理工具
 
 使用方法:
-  ts-node scripts/manage-cache.ts [命令] [选项]
+  tsx scripts/manage-cache.ts [命令] [选项]
 
 命令:
   health              显示缓存健康报告
@@ -51,16 +51,16 @@ Redis缓存管理工具
 
 示例:
   # 查看健康报告
-  ts-node scripts/manage-cache.ts health
+  tsx scripts/manage-cache.ts health
   
   # 清理所有dashboard相关缓存
-  ts-node scripts/manage-cache.ts clear "stats:dashboard:*"
+  tsx scripts/manage-cache.ts clear "stats:dashboard:*"
   
   # 以JSON格式查看统计
-  ts-node scripts/manage-cache.ts stats --format json
+  tsx scripts/manage-cache.ts stats --format json
   
   # 实时监控（每5秒刷新）
-  ts-node scripts/manage-cache.ts monitor
+  tsx scripts/manage-cache.ts monitor
 
 环境要求:
   - UPSTASH_REDIS_REST_URL: Redis连接URL

@@ -1,18 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authorizeApiRequest, getUserInfo } from "@/lib/auth/auth-utils";
-import { Permission } from "@/lib/auth/rbac";
-import { executeScriptAndNotify } from "@/lib/utils/script-executor";
+import { getUserInfo, validateApiAuth } from "@/lib/auth/auth-utils";
+import { Permission, requirePermission } from "@/lib/auth/rbac";
+import redis from "@/lib/cache/redis";
+import { getMongoDbClient } from "@/lib/database/mongodb";
+import { consumeQuota } from "@/lib/security/ai-guard";
+import { clientIp, demoRunBudgets, isDemoMode, runAccess } from "@/lib/security/demo-sandbox";
+import { dispatchAfterResponse } from "@/server/services/notify-deps";
+import { runCheckNow, toExecutionResult } from "@/server/services/run-check-deps";
+
+const DEMO_WINDOW_SECONDS = 60 * 60;
 
 /**
- * 处理手动触发 SQL 脚本检查的 API 请求。
- * @param request Next.js 的请求对象。
- * @returns 返回包含执行结果的 NextResponse。
+ * Runs one check now. Needs script:execute, except in demo mode, where viewers and guests may
+ * run the seeded demo checks within an hourly budget.
  */
 export async function POST(request: NextRequest) {
-  // 验证用户认证和权限
-  const authResult = await authorizeApiRequest(Permission.SCRIPT_EXECUTE, "en");
+  const authResult = await validateApiAuth("en", { allowGuest: true });
   if (!authResult.isValid) {
-    return authResult.response;
+    return authResult.response!;
   }
 
   const { user, userEmail } = authResult;
@@ -22,27 +27,71 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { scriptId } = body;
 
-    console.log(
-      `[API] 用户 ${userInfo.name} (${userInfo.email}) 手动执行脚本: ${scriptId}`,
-    );
-
-    if (!scriptId) {
+    if (!scriptId || typeof scriptId !== "string") {
       return NextResponse.json(
         { success: false, message: "Missing scriptId" },
         { status: 400 },
       );
     }
 
-    // 执行脚本
-    const result = await executeScriptAndNotify(scriptId);
+    const canExecute = authResult.isGuest
+      ? false
+      : (await requirePermission(user.id, Permission.SCRIPT_EXECUTE)).authorized;
+    const demoMode = isDemoMode();
+    if (!canExecute && !demoMode) {
+      return NextResponse.json(
+        { success: false, message: "Forbidden: Insufficient permissions" },
+        { status: 403 },
+      );
+    }
 
-    console.log(
-      `[API] 脚本 ${scriptId} 执行完成，状态: ${
-        result.success ? "成功" : "失败"
-      }`,
+    if (!canExecute) {
+      const db = await getMongoDbClient().getDb();
+      const script = await db
+        .collection("sql_scripts")
+        .findOne({ scriptId }, { projection: { author: 1 } });
+      const access = runAccess({ canExecute, demoMode, scriptAuthor: script?.author as string | undefined });
+      if (access === "forbidden") {
+        return NextResponse.json(
+          { success: false, message: "In the demo, viewers can run the sample checks only." },
+          { status: 403 },
+        );
+      }
+      // Demo runs widen access, so a Redis failure refuses them (fail closed).
+      let quota = { allowed: true, retryAfterSeconds: 0 };
+      let limit = 0;
+      try {
+        for (const budget of demoRunBudgets({ id: user.id, isGuest: authResult.isGuest }, clientIp(request.headers))) {
+          quota = await consumeQuota(redis, budget.subject, Date.now(), budget.limit, DEMO_WINDOW_SECONDS, "demo-run");
+          limit = budget.limit;
+          if (!quota.allowed) break;
+        }
+      } catch (error) {
+        console.error("[API] Demo run quota check failed:", error);
+        return NextResponse.json(
+          { success: false, message: "The demo is busy, please try again shortly." },
+          { status: 503 },
+        );
+      }
+      if (!quota.allowed) {
+        return NextResponse.json(
+          { success: false, message: `Demo limit reached: ${limit} runs per hour.` },
+          { status: 429, headers: { "Retry-After": String(quota.retryAfterSeconds) } },
+        );
+      }
+    }
+
+    const result = toExecutionResult(
+      await runCheckNow(scriptId, { kind: "manual", by: { id: user.id, name: userInfo.name } }),
     );
+    if (result.alreadyRunning) {
+      return NextResponse.json(result, { status: 409 });
+    }
+    if (result.notFound) {
+      return NextResponse.json(result, { status: 404 });
+    }
+    dispatchAfterResponse();
 
-    // 在结果中包含操作用户信息
     return NextResponse.json({
       ...result,
       executedBy: {
@@ -52,7 +101,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error(`[API] 用户 ${userInfo.name} 执行脚本失败:`, error);
+    console.error(`[API] Running a check for ${userInfo.name} failed:`, error);
     return NextResponse.json(
       { success: false, message: "Failed to execute script" },
       { status: 500 },

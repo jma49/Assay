@@ -21,7 +21,7 @@ export default function NotFound() {
           <Link href="/">{t.home}</Link>
         </Button>
         <Button asChild>
-          <Link href="/dashboard">{t.dashboard}</Link>
+          <Link href="/checks">{t.dashboard}</Link>
         </Button>
       </div>
     </AuthShell>

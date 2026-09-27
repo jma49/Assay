@@ -1,116 +1,33 @@
-// import path from "path"; // No longer needed
-// import fs from "fs"; // No longer needed for reading files
-import db from "../src/lib/database/db"; // For closing PG pool
-import { getMongoDbClient } from "../src/lib/database/mongodb";
-import { Collection, Document } from "mongodb"; // For types
-// Import the refactored function
-import { executeSqlScriptFromDb } from "./core/sql-executor";
-
-// --- 环境变量检查 (保持在此处或移至 utils/env-loader.ts) ---
-// 简单的检查，确保必要的环境变量存在
-function checkEnvVariables() {
-  const requiredVars = ["DATABASE_URL", "MONGODB_URI"];
-  let allSet = true;
-  console.log("检查环境变量...");
-  requiredVars.forEach((varName) => {
-    if (!process.env[varName]) {
-      console.warn(`警告: 环境变量 ${varName} 未定义`);
-      allSet = false;
-    } else {
-      console.log(`  - ${varName}: 已设置`);
-    }
-  });
-  if (!allSet) {
-    console.error("错误: 缺少必要的环境变量，脚本可能无法正常运行。");
-    // 在关键变量缺失时可以选择退出
-    // process.exit(1);
-  }
-}
-checkEnvVariables();
-// --- 环境变量检查结束 ---
-
-// Helper function to get MongoDB collection (similar to other places)
-async function getSqlScriptsCollection(): Promise<Collection<Document>> {
-  const mongoDbClient = getMongoDbClient();
-  const db = await mongoDbClient.getDb(); // Assumes MONGODB_URI points to sql_script_result
-  return db.collection("sql_scripts");
-}
-
 /**
- * 主函数，处理命令行参数，从数据库获取脚本内容，并执行。
+ * Runs one check from the command line; the manual GitHub workflow calls it.
+ *   tsx scripts/run-sql.ts <scriptId>
  */
-async function main(): Promise<void> {
-  const args = process.argv.slice(2);
+import db from "@/lib/database/db";
+import { getMongoDbClient } from "@/lib/database/mongodb";
+import { runCheckNow } from "@/server/services/run-check-deps";
 
-  if (args.length === 0) {
-    console.error("错误: 请提供要执行的 SQL 脚本的 ID。"); // Updated message
-    console.log("用法: ts-node scripts/run-sql.ts <scriptId>");
+async function main() {
+  const scriptId = process.argv[2];
+  if (!scriptId) {
+    console.log("Usage: tsx scripts/run-sql.ts <scriptId>");
     process.exit(1);
   }
-
-  const scriptId = args[0];
-  console.log(`[CLI] 请求执行脚本 ID: ${scriptId}`);
-
   try {
-    // Get MongoDB collection
-    const collection = await getSqlScriptsCollection();
-
-    // Find the script by scriptId
-    const scriptDoc = await collection.findOne({ scriptId: scriptId });
-
-    if (!scriptDoc) {
-      console.error(`脚本 '${scriptId}' 在数据库中未找到。`);
-      process.exit(1);
+    const result = await runCheckNow(scriptId, { kind: "manual", by: { id: "cli", name: "Command line" } });
+    if (result.kind === "missing") throw new Error(`No check with id ${scriptId}`);
+    if (result.kind === "busy") {
+      console.log(`${scriptId} is already running (run ${result.runId}).`);
+      return;
     }
-
-    // Extract SQL content, hashtags, and author from the document
-    const sqlContent = scriptDoc.sqlContent as string;
-    const scriptHashtags = scriptDoc.hashtags as string[] | undefined; // 获取hashtags信息
-    const scriptAuthor = scriptDoc.author as string | undefined; // 获取作者信息
-
-    if (!sqlContent || sqlContent.trim() === "") {
-      console.warn(`脚本 '${scriptId}' 没有SQL内容。`);
-      process.exit(1);
-    }
-
-    console.log(
-      `找到脚本 '${scriptId}'，开始执行...${
-        scriptAuthor ? ` [作者: ${scriptAuthor}]` : ""
-      }${scriptHashtags ? ` [标签: ${scriptHashtags.join(", ")}]` : ""}`
-    );
-
-    // Use executeSqlScriptFromDb with scriptId, sqlContent, hashtags, and author
-    const result = await executeSqlScriptFromDb(
-      scriptId,
-      sqlContent,
-      scriptHashtags,
-      scriptAuthor
-    );
-
-    if (result.success) {
-      console.log(`脚本 ${scriptId} 执行成功！状态: ${result.statusType}`);
-    } else {
-      console.error(`脚本 ${scriptId} 执行失败: ${result.message}`);
-      process.exit(1);
-    }
-  } catch (error) {
-    // Catch errors from DB fetch or execution
-    const errorMsg =
-      error instanceof Error ? error.message : "发生未知的顶层错误";
-    console.error(`[CLI] 执行脚本 ${scriptId} 时发生错误:`, errorMsg);
-    // process.exit(1); // Decide if CLI should exit on error
+    console.log(`${scriptId}: ${result.outcome}, ${result.rowCount} rows. ${result.message}`);
+    if (result.outcome === "error") process.exitCode = 1;
   } finally {
-    // Ensure connections are closed
-    console.log("尝试关闭数据库连接...");
     await db.closePool();
-    const mongoDbClient = getMongoDbClient();
-    await mongoDbClient.closeConnection();
-    console.log("数据库连接已关闭。");
+    await getMongoDbClient().closeConnection();
   }
 }
 
-// Execute main function
 main().catch((error) => {
-  console.error("主函数执行过程中发生未捕获的错误:", error);
+  console.error("Running the check failed:", error);
   process.exit(1);
 });
