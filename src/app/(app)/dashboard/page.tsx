@@ -6,7 +6,6 @@ import { auth } from "@/lib/auth/server";
 import Dashboard from "@/components/layout/Dashboard";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 
-// 强制动态渲染，避免静态预渲染
 export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Runs" };

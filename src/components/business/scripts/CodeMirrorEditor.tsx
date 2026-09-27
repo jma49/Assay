@@ -39,16 +39,13 @@ interface CodeMirrorEditorProps
   t?: (key: DashboardTranslationKeys | string) => string;
 }
 
-// 主题映射表 - 包含所有可用的主题
 const THEME_MAP = {
-  // 浅色主题
   eclipse: eclipse,
   githubLight: githubLight,
   materialLight: materialLight,
   nord: nord,
   solarizedLight: solarizedLight,
 
-  // 暗色主题
   tokyoNight: tokyoNight,
   okaidia: okaidia,
   dracula: dracula,
@@ -73,41 +70,34 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   const [isFormatting, setIsFormatting] = useState(false);
   const [editorTheme, setEditorTheme] = useState<string>("eclipse");
 
-  // AI功能相关状态
   const [isGenerating, setIsGenerating] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const [analysisType, setAnalysisType] = useState<'explain' | 'optimize'>('explain');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAnalysisDialogOpen, setIsAnalysisDialogOpen] = useState(false);
 
-  // 获取当前应用的编辑器主题
   const getCurrentEditorTheme = React.useMemo(() => {
-    // 根据主题名称获取主题对象
     const themeObj = THEME_MAP[editorTheme as keyof typeof THEME_MAP];
 
     if (themeObj) {
       return themeObj;
     }
 
-    // 如果主题不存在，根据系统主题返回默认主题
     return systemTheme === "dark" ? tokyoNight : eclipse;
   }, [editorTheme, systemTheme]);
 
-  // 从localStorage读取编辑器主题设置
   useEffect(() => {
     const savedTheme = localStorage.getItem("editor-theme");
 
     if (savedTheme && THEME_MAP[savedTheme as keyof typeof THEME_MAP]) {
       setEditorTheme(savedTheme);
     } else {
-      // 如果没有保存的主题或主题不存在，使用默认主题
       const defaultTheme = systemTheme === "dark" ? "tokyoNight" : "eclipse";
       setEditorTheme(defaultTheme);
       localStorage.setItem("editor-theme", defaultTheme);
     }
   }, [systemTheme]);
 
-  // 监听主题变更事件
   useEffect(() => {
     const handleThemeChange = (event: CustomEvent) => {
       const newTheme = event.detail.theme;
@@ -123,19 +113,16 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
     };
   }, []);
 
-  // 创建支持PostgreSQL的扩展，包括对dollar-quoted字符串的更好支持
   const postgresExtensions = React.useMemo(() => {
-    // 创建自定义PostgreSQL方言，禁用$$的字符串处理以改善DO块语法高亮
     const customPostgres = SQLDialect.define({
       ...PostgreSQL.spec,
-      doubleDollarQuotedStrings: false, // 禁用$$字符串处理以改善DO块语法高亮
+      doubleDollarQuotedStrings: false, // Keeps DO $$ ... $$ bodies highlighted as SQL, not as a string
     });
 
     const postgresConfig = {
       dialect: customPostgres,
       upperCaseKeywords: false,
       schema: {
-        // 添加一些常见的PostgreSQL函数和关键字以改善自动完成
         pg_catalog: [
           "now",
           "current_timestamp",
@@ -168,18 +155,16 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
     setIsFormatting(true);
     try {
-      console.log("开始SQL格式化...");
+      console.log("Formatting SQL...");
 
-      // 基础清理
       const cleanedValue = value
-        .replace(/\r\n/g, '\n')  // 统一换行符
-        .replace(/\t/g, '  ')    // 将tab转换为空格
+        .replace(/\r\n/g, '\n')
+        .replace(/\t/g, '  ')
         .trim();
 
       let formatted = cleanedValue;
 
       try {
-        // 尝试使用sql-formatter进行专业格式化
         const { format } = await import("sql-formatter");
 
         formatted = format(cleanedValue, {
@@ -198,63 +183,52 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
           newlineBeforeSemicolon: false,
         });
 
-        console.log("sql-formatter格式化成功");
+        console.log("sql-formatter succeeded");
 
       } catch (formatterError) {
-        console.warn("sql-formatter失败，使用基础格式化:", formatterError);
+        console.warn("sql-formatter failed, using the basic formatter:", formatterError);
 
-        // 基础格式化作为fallback - 修复逻辑
         const lines = cleanedValue.split('\n').map(line => line.trim()).filter(line => line.length > 0);
 
-        // 合并所有行为一个字符串
         let singleLine = lines.join(' ');
 
-        // 压缩多余空格
         singleLine = singleLine.replace(/\s+/g, ' ').trim();
 
-        // 在关键字前添加换行
         const keywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN', 'ORDER BY', 'GROUP BY', 'HAVING', 'WITH', 'UNION', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'ALTER', 'DROP', 'LIMIT'];
         keywords.forEach(keyword => {
           const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
           singleLine = singleLine.replace(regex, `\n${keyword}`);
         });
 
-        // 在AND/OR前添加换行并缩进
         singleLine = singleLine.replace(/\b(AND|OR)\b/gi, '\n  $1');
 
-        // 在逗号后添加换行和缩进（仅在SELECT子句中）
         const selectRegex = /(SELECT[^FROM]*)/gi;
         singleLine = singleLine.replace(selectRegex, (match) => {
           return match.replace(/,\s*/g, ',\n  ');
         });
 
-        // 在分号后添加空行
         singleLine = singleLine.replace(/;\s*/g, ';\n\n');
 
-        // 清理格式：移除开头的换行，清理多余空行
         formatted = singleLine
           .split('\n')
           .map(line => line.trim())
           .filter((line, index, array) => {
-            // 保留非空行，或者前后都有内容的空行
             return line.length > 0 || (index > 0 && index < array.length - 1 && array[index - 1].length > 0 && array[index + 1].length > 0);
           })
           .join('\n')
-          .replace(/\n\s*\n\s*\n+/g, '\n\n') // 最多保留一个空行
+          .replace(/\n\s*\n\s*\n+/g, '\n\n')
           .trim();
       }
 
-      // 应用格式化结果
       onChange(formatted);
 
-      // 成功提示
       toast.success(isZh ? "格式化成功" : "Formatted", {
         description: isZh ? "SQL代码已格式化" : "The query was reformatted.",
         duration: 3000,
       });
 
     } catch (error) {
-      console.error("格式化过程出错:", error);
+      console.error("SQL formatting failed:", error);
       toast.error(isZh ? "格式化失败" : "Could not format the query", {
         description: error instanceof Error ? error.message : "未知错误",
         duration: 5000,
@@ -266,7 +240,6 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
   const getLineCount = (text: string) => text.split("\n").length;
 
-  // AI生成SQL函数
   const handleGenerateSql = async (prompt: string) => {
     if (!prompt.trim()) {
       toast.warning(isZh ? "请输入SQL生成描述" : "Describe the check you want first");
@@ -312,7 +285,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         throw new Error('AI返回数据格式错误');
       }
     } catch (error) {
-      console.error('AI生成SQL错误:', error);
+      console.error('AI SQL generation failed:', error);
       toast.error(isZh ? "AI生成SQL失败" : "Could not generate a query", {
         description: error instanceof Error ? error.message : '未知错误',
         duration: 5000,
@@ -322,7 +295,6 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
     }
   };
 
-  // AI分析SQL函数
   const handleAnalyzeSql = async (type: 'explain' | 'optimize') => {
     if (!value.trim()) {
       toast.warning(isZh ? "请先输入SQL语句" : "Write a query first");
@@ -361,7 +333,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         throw new Error('AI返回数据格式错误');
       }
     } catch (error) {
-      console.error('AI分析SQL错误:', error);
+      console.error('AI SQL analysis failed:', error);
       toast.error(isZh ? "AI分析SQL失败" : "Could not analyze the query", {
         description: error instanceof Error ? error.message : '未知错误',
         duration: 5000,
