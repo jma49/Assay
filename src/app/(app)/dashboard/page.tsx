@@ -1,7 +1,7 @@
 import React from "react";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { getUserProfile, isValidEmailDomain } from "@/lib/auth/auth-utils";
+import { currentGuestId, getUserProfile, isValidEmailDomain } from "@/lib/auth/auth-utils";
 import Dashboard from "@/components/layout/Dashboard";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 
@@ -33,6 +33,8 @@ export default async function DashboardPage() {
   const { userId } = await auth();
 
   if (!userId) {
+    // Demo guests have no Clerk user; the middleware already let them through.
+    if (await currentGuestId()) return <DashboardView />;
     redirect("/sign-in?redirect_url=/dashboard");
   }
 
@@ -59,12 +61,15 @@ export default async function DashboardPage() {
     console.log(`✅ Authorized access: ${userEmail} -> Dashboard`);
   }
 
+  return <DashboardView />;
+}
+
+function DashboardView() {
   return (
     <div className="min-h-screen">
       <main className={`${APP_CONTAINER} py-8`}>
         <Dashboard />
       </main>
-
     </div>
   );
 }
