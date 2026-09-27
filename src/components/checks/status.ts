@@ -26,6 +26,21 @@ export const OUTCOME_PILL: Record<RunOutcome, string> = {
   clean: "bg-success-soft text-success",
 };
 
+export const OUTCOME_TEXT: Record<RunOutcome, string> = {
+  error: "text-failure",
+  issues: "text-attention",
+  clean: "text-success",
+};
+
+/**
+ * The outcome of a run as the legacy APIs report it: `statusType` flags issues,
+ * otherwise `status` tells clean ("success") from broken (anything else, e.g. "failure" or "error").
+ */
+export function outcomeOf(run: { status?: string; statusType?: string }): RunOutcome {
+  if (run.statusType === "attention_needed") return "issues";
+  return run.status === "success" ? "clean" : "error";
+}
+
 /** A schedule in words where it has a common shape, otherwise the cron itself. */
 export function scheduleLabel(cron: string | null, language: "en" | "zh"): string {
   if (!cron) return language === "zh" ? "手动" : "Manual";

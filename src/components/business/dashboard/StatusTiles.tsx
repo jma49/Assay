@@ -1,8 +1,10 @@
 "use client";
 
+import { OUTCOME_DOT, OUTCOME_LABEL, OUTCOME_TEXT } from "@/components/checks/status";
+import { toLegacyStatus, type LegacyStatusType, type RunOutcome } from "@/domain/run";
 import { cn } from "@/lib/utils/utils";
 
-type Status = "success" | "attention_needed" | "failure";
+type Status = LegacyStatusType;
 
 interface StatusTilesProps {
   total: number;
@@ -16,8 +18,8 @@ interface StatusTilesProps {
 }
 
 const LABELS = {
-  en: { total: "All runs", success: "Clean", attention: "Issues", failure: "Broken", ofRuns: "of runs" },
-  zh: { total: "全部执行", success: "正常", attention: "有问题", failure: "出错", ofRuns: "占比" },
+  en: { total: "All runs", ofRuns: "of runs" },
+  zh: { total: "全部执行", ofRuns: "占比" },
 };
 
 /**
@@ -28,11 +30,19 @@ export function StatusTiles({ total, success, attention, failure, active, onSele
   const t = LABELS[language];
   const share = (n: number) => (total > 0 ? `${Math.round((n / total) * 100)}%` : "–");
 
-  const tiles: { key: Status | null; label: string; value: number; note: string; tone: string }[] = [
+  const outcomeTile = (outcome: RunOutcome, value: number) => ({
+    key: toLegacyStatus(outcome),
+    dot: OUTCOME_DOT[outcome],
+    label: OUTCOME_LABEL[outcome][language],
+    value,
+    note: share(value),
+    tone: OUTCOME_TEXT[outcome],
+  });
+  const tiles: { key: Status | null; dot?: string; label: string; value: number; note: string; tone: string }[] = [
     { key: null, label: t.total, value: total, note: "", tone: "text-foreground" },
-    { key: "success", label: t.success, value: success, note: share(success), tone: "text-success" },
-    { key: "attention_needed", label: t.attention, value: attention, note: share(attention), tone: "text-attention" },
-    { key: "failure", label: t.failure, value: failure, note: share(failure), tone: "text-failure" },
+    outcomeTile("clean", success),
+    outcomeTile("issues", attention),
+    outcomeTile("error", failure),
   ];
 
   return (
@@ -51,7 +61,7 @@ export function StatusTiles({ total, success, attention, failure, active, onSele
             )}
           >
             <span className="flex items-center gap-2 text-[12px] text-muted-foreground">
-              {tile.key && <span className={cn("status-dot", `status-dot-${tile.key}`)} aria-hidden />}
+              {tile.dot && <span className={cn("status-dot", tile.dot)} aria-hidden />}
               {tile.label}
             </span>
             <span className={cn("mt-1 text-[24px] leading-none font-semibold tabular-nums", tile.tone)}>
