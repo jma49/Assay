@@ -13,6 +13,9 @@ vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/auth/auth-utils")>()),
   validateApiAuth: async () => ({ isValid: true, user: { id: "user_admin" }, userEmail: "admin@example.com", isGuest: false }),
 }));
+const revokeAccess = vi.fn(async () => ({ sessions: 1, apiKeys: 1 }));
+vi.mock("@/server/services/revoke-access", () => ({ revokeAccess: (...args: unknown[]) => revokeAccess(...(args as [])) }));
+vi.mock("@/lib/database/mongodb", () => ({ getMongoDbClient: () => ({ getDb: async () => ({}) }) }));
 vi.mock("@/lib/auth/server", () => ({
   findUser: async ({ id, email }: { id?: string; email?: string }) => ({ id: id ?? `user_${email}`, email: email ?? `${id}@example.com` }),
 }));
@@ -65,7 +68,10 @@ describe("keeping at least one admin", () => {
     const res = await remove("user_bob");
     expect(res.status).toBe(409);
     expect(mocks.removeUserRole).not.toHaveBeenCalled();
+    expect(revokeAccess).not.toHaveBeenCalled();
     mocks.otherAdmins = true;
     expect((await remove("user_bob")).status).toBe(200);
+    // Removing a role also signs the person out and disables their API keys.
+    expect(revokeAccess).toHaveBeenCalledWith({}, "user_bob");
   });
 });
