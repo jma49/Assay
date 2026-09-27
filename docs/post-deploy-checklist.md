@@ -69,6 +69,7 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 - [ ] 「解释 / 优化 SQL」正常返回。
 - [ ] 失败和需关注的记录上「AI 分诊」正常返回；再次点击秒回（读取缓存，Gateway Logs 里没有新请求）。
 - [ ] AI Gateway Logs 里请求带 `feature:*` 标签和用户 id。
+- [ ] （可选，会花额度）本地跑评测：先 `EVAL_CASES=3 AI_ENABLED=true npm run eval` 小规模试，再跑全部 11 个用例；报告在 `evals/results/`。关注三项：试运行通过、读取的表一致、标出的行数与手写检查一致。
 
 ## UI 第一批（develop）
 
