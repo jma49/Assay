@@ -44,18 +44,15 @@ jobs:
         run: npm ci
 
       - name: Create environment file
+        # Secrets reach the file through env vars only: never inlined into the
+        # script text and never printed. Action logs of this public repo are public.
         run: |
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.local
-          echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env.local
-          echo "NODE_ENV=production" >> .env.local
+          printf 'DATABASE_URL=%s\nMONGODB_URI=%s\nNODE_ENV=production\n' "$DATABASE_URL" "$MONGODB_URI" > .env.local
 
       - name: Debug environment setup
         run: |
           pwd
           ls -la
-          echo "--- .env.local content start ---"
-          cat .env.local || echo ".env.local not found or empty"
-          echo "--- .env.local content end ---"
           echo "NODE_ENV: $NODE_ENV"
           echo "GitHub Run ID: $GITHUB_RUN_ID"
           echo "Execution Mode: ${{ github.event.inputs.execution_mode || 'scheduled' }}"
