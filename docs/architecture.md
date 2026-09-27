@@ -212,8 +212,8 @@ the legacy routes are still being migrated and keep their own shapes.
   answer `{ error: "..." }`, `{ message: "..." }` or
   `{ success: false, ... }`.
 - **Paging.** Target: cursor pagination, as `activity` does. `check-history`,
-  `edit-history` and `approvals` page by `page` and `limit`;
-  `execution-history` returns up to `limit` rows with no paging.
+  `edit-history` and `approvals` page by `page` and `limit` (`check-history`
+  up to 500 runs a page, 200 with `include_results`).
 
 ## Front end
 
