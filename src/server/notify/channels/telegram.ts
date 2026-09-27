@@ -1,5 +1,5 @@
 import type { Channel, DeliveryOutcome } from "../types";
-import { JSON_HEADERS } from "../types";
+import { ACTION_IDS, JSON_HEADERS } from "../types";
 
 const EMOJI = { failure: "🔴", attention: "🟠", success: "🟢" };
 
@@ -20,6 +20,16 @@ export function telegramOk(body: string): DeliveryOutcome {
   }
 }
 
+/** callback_data is capped at 64 bytes: "<action>:<eventId>.<key>" fits with room to spare. */
+export function telegramKeyboard(actions: { token: string; acknowledge: string; mute: string }) {
+  return [
+    [
+      { text: `✅ ${actions.acknowledge}`, callback_data: `${ACTION_IDS.acknowledge}:${actions.token}` },
+      { text: `🔕 ${actions.mute}`, callback_data: `${ACTION_IDS.mute}:${actions.token}` },
+    ],
+  ];
+}
+
 /** Telegram has no incoming webhooks: the bot posts to a chat it was added to. */
 export const telegram: Channel = {
   kind: "telegram",
@@ -33,7 +43,13 @@ export const telegram: Channel = {
     return {
       url: telegramApi("sendMessage", env),
       headers: JSON_HEADERS,
-      body: JSON.stringify({ chat_id: secret.chatId, text, parse_mode: "HTML", link_preview_options: { is_disabled: true } }),
+      body: JSON.stringify({
+        chat_id: secret.chatId,
+        text,
+        parse_mode: "HTML",
+        link_preview_options: { is_disabled: true },
+        ...(message.actions && { reply_markup: { inline_keyboard: telegramKeyboard(message.actions) } }),
+      }),
     };
   },
   interpretOk: telegramOk,

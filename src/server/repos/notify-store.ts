@@ -25,6 +25,9 @@ export function toDestination(doc: Document): Destination {
     createdAt: new Date(doc.createdAt),
     createdBy: doc.createdBy ?? { id: "", name: "" },
     lastDelivery: doc.lastDelivery ?? null,
+    digest: doc.digest ?? null,
+    lastDigestAt: doc.lastDigestAt ? new Date(doc.lastDigestAt) : null,
+    source: doc.source ?? "paste",
   };
 }
 
@@ -41,6 +44,8 @@ export function toStoredEvent(doc: Document): StoredEvent {
     diff: doc.diff ?? null,
     error: doc.error ?? null,
     at: new Date(doc.at),
+    suppressed: doc.suppressed ?? null,
+    actionKey: doc.actionKey ?? null,
   };
 }
 
@@ -62,12 +67,21 @@ export function mongoNotifyStore(db: Db): NotifyStore {
 
     async checkInfo(checkIds) {
       const docs = await checks
-        .find({ scriptId: { $in: checkIds } }, { projection: { scriptId: 1, name: 1, cnName: 1, hashtags: 1 } })
+        .find(
+          { scriptId: { $in: checkIds } },
+          { projection: { scriptId: 1, name: 1, cnName: 1, hashtags: 1, alerting: 1, "state.since": 1, "state.outcome": 1 } },
+        )
         .toArray();
       return new Map(
         docs.map((doc) => [
           String(doc.scriptId),
-          { name: String(doc.name ?? doc.scriptId), cnName: doc.cnName || undefined, tags: Array.isArray(doc.hashtags) ? doc.hashtags : [] },
+          {
+            name: String(doc.name ?? doc.scriptId),
+            cnName: doc.cnName || undefined,
+            tags: Array.isArray(doc.hashtags) ? doc.hashtags : [],
+            alerting: doc.alerting ?? null,
+            state: doc.state ?? null,
+          },
         ]),
       );
     },
@@ -103,9 +117,11 @@ export function mongoNotifyStore(db: Db): NotifyStore {
       }
     },
 
-    async markFannedOut(eventId, now) {
+    async markFannedOut(eventId, now, suppressed, actionKey) {
       const _id = toId(eventId);
-      if (_id) await events.updateOne({ _id }, { $set: { fannedOutAt: now } });
+      if (!_id) return;
+      await events.updateOne({ _id }, { $set: { fannedOutAt: now, ...(suppressed && { suppressed }) } });
+      await events.updateOne({ _id, actionKey: { $exists: false } }, { $set: { actionKey } });
     },
 
     async claimDelivery(now, leaseMs) {
@@ -130,6 +146,38 @@ export function mongoNotifyStore(db: Db): NotifyStore {
 
     async sentSince(destinationId, since) {
       return deliveries.countDocuments({ destinationId, sentAt: { $gte: since } });
+    },
+
+    async digestDestinations() {
+      return (await destinations.find({ enabled: { $ne: false }, "digest.enabled": true }).toArray()).map(toDestination);
+    },
+
+    async claimDigest(destinationId, slot, now) {
+      const _id = toId(destinationId);
+      if (!_id) return false;
+      const result = await destinations.updateOne(
+        { _id, $or: [{ lastDigestAt: { $lt: slot } }, { lastDigestAt: null, createdAt: { $lt: slot } }] },
+        { $set: { lastDigestAt: now } },
+      );
+      return result.modifiedCount === 1;
+    },
+
+    async digestSummary(workspaceId, tags, since) {
+      // Checks carry no workspaceId yet; they all belong to the default workspace.
+      const checkFilter = tags.length ? { hashtags: { $in: [...tags] } } : {};
+      const docs = workspaceId === DEFAULT_WORKSPACE_ID
+        ? await checks.find(checkFilter, { projection: { scriptId: 1, name: 1, cnName: 1, state: 1 } }).toArray()
+        : [];
+      const broken = docs.filter((d) => d.state?.outcome === "error").map((d) => ({ name: String(d.name ?? d.scriptId) }));
+      const issues = docs
+        .filter((d) => d.state?.outcome === "issues")
+        .map((d) => ({ name: String(d.name ?? d.scriptId), rowCount: Number(d.state.rowCount ?? 0) }))
+        .sort((a, b) => b.rowCount - a.rowCount);
+      const ids = docs.map((d) => String(d.scriptId));
+      const recent = await events
+        .find({ checkId: { $in: ids }, at: { $gte: since } }, { projection: { to: 1 } })
+        .toArray();
+      return { total: docs.length, broken, issues, changes: recent.length, recovered: recent.filter((e) => e.to === "clean").length };
     },
 
     async recordLastDelivery(destinationId, result) {

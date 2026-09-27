@@ -26,6 +26,9 @@ export interface ChannelContext {
   env: Record<string, string | undefined>;
 }
 
+/** Button ids shared by the channels that send them and the handlers that receive them. */
+export const ACTION_IDS = { acknowledge: "assay_ack", mute: "assay_mute" } as const;
+
 export interface Channel {
   kind: ChannelKind;
   /** Checks a pasted webhook URL: null when it is acceptable, otherwise why not. */

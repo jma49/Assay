@@ -21,6 +21,8 @@ export interface ActivityItem {
   runId: string;
   at: string;
   deliveries: ActivityDelivery[];
+  /** Why no alert went out: the check was muted, or the problem already acknowledged. */
+  suppressed: "muted" | "acknowledged" | null;
 }
 
 export interface ActivityPage {

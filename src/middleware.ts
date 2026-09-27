@@ -22,6 +22,7 @@ const isPublicRoute = createRouteMatcher([
   // Machine callers that authenticate with their own shared secrets.
   "/api/notifications/dispatch",
   "/api/integrations/telegram/webhook",
+  "/api/integrations/slack/interactions",
 ]);
 
 // Pages a demo guest can open; every API route still checks the guest itself.

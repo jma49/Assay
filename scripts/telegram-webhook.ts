@@ -29,7 +29,7 @@ async function main() {
     throw new Error("TELEGRAM_WEBHOOK_SECRET may only contain A-Z, a-z, 0-9, _ and -");
   }
   const url = `${APP_URL.replace(/\/+$/, "")}/api/integrations/telegram/webhook`;
-  await call("setWebhook", { url, secret_token: TELEGRAM_WEBHOOK_SECRET, allowed_updates: ["message"] });
+  await call("setWebhook", { url, secret_token: TELEGRAM_WEBHOOK_SECRET, allowed_updates: ["message", "callback_query"] });
   console.log(`Webhook set to ${url}`);
 }
 

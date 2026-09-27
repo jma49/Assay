@@ -30,6 +30,7 @@ export interface CheckSummary {
   /** Cron in UTC, or null for manual checks. */
   schedule: string | null;
   state: CheckStateDto | null;
+  alerting: AlertingDto;
   /** Up to the last 30 runs, oldest first. */
   history: RunPoint[];
 }
@@ -63,4 +64,14 @@ export interface CheckDetail extends CheckSummary {
   createdAt?: string;
   runs: RunListItem[];
   latest: LatestRun | null;
+}
+
+/** The alert controls on a check, as pages see them. */
+export interface AlertingDto {
+  owner: { id: string; name: string } | null;
+  /** ISO time while muted, otherwise null. */
+  mutedUntil: string | null;
+  mutedBy: string | null;
+  /** Set only when the acknowledgement covers the current problem. */
+  acknowledged: { by: string; at: string } | null;
 }

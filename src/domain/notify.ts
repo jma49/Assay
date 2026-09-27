@@ -1,3 +1,4 @@
+import { digestContent, type DigestSummary } from "./digest";
 import type { RowDiff, RunOutcome } from "./run";
 
 /** What happened to a check, as people subscribe to it. */
@@ -33,7 +34,7 @@ const TONE: Record<AlertKind, Tone> = { broken: "failure", issues: "attention", 
 
 /** A channel-neutral alert; each channel turns it into its own payload. */
 export interface AlertMessage {
-  kind: AlertKind;
+  kind: AlertKind | "digest";
   tone: Tone;
   title: string;
   /** Plain text, one fact per line. */
@@ -44,6 +45,25 @@ export interface AlertMessage {
   at: string;
   /** Plain-text fallback for notification previews. */
   text: string;
+  /** Tokens for acknowledge / mute buttons, on channels that can take a click back. */
+  actions?: AlertActions;
+}
+
+export interface AlertActions {
+  token: string;
+  acknowledge: string;
+  mute: string;
+}
+
+const ACTION_LABELS = {
+  en: { acknowledge: "Acknowledge", mute: "Mute 24 h" },
+  zh: { acknowledge: "确认处理", mute: "静音 24 小时" },
+};
+
+/** Buttons make sense while there is a problem to act on, not for a recovery or a digest. */
+export function withActions(message: AlertMessage, token: string, language: MessageLanguage): AlertMessage {
+  if (message.kind === "recovered" || message.kind === "digest") return message;
+  return { ...message, actions: { token, ...ACTION_LABELS[language] } };
 }
 
 const EMOJI: Record<Tone, string> = { failure: "🔴", attention: "🟠", success: "🟢" };
@@ -142,6 +162,21 @@ export function buildTestMessage(options: { language: MessageLanguage; url: stri
     checkName: "Assay",
     url: options.url,
     linkLabel: t.open,
+    at: options.at.toISOString(),
+  });
+}
+
+/** The daily summary as a message, linking to the checks list. */
+export function buildDigestMessage(summary: DigestSummary, options: { language: MessageLanguage; url: string; at: Date }): AlertMessage {
+  const content = digestContent(summary, options.language);
+  return withText({
+    kind: "digest",
+    tone: content.tone,
+    title: content.title,
+    lines: content.lines,
+    checkName: "Assay",
+    url: options.url,
+    linkLabel: content.linkLabel,
     at: options.at.toISOString(),
   });
 }
