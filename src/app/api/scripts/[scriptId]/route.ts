@@ -3,7 +3,7 @@ import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 import { clearScriptsCache } from "@/lib/cache/cache-utils";
-import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { authorizeApiRequest, validateApiAuth } from "@/lib/auth/auth-utils";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { Permission, requirePermission, getUserRole } from "@/lib/auth/rbac";
 import { createScriptVersion } from "@/lib/workflows/version-control";
@@ -48,24 +48,9 @@ export async function GET(
   { params: paramsPromise }: { params: Promise<{ scriptId: string }> }
 ) {
   try {
-    // 验证用户认证
-    const authResult = await validateApiAuth("zh");
+    const authResult = await authorizeApiRequest(Permission.SCRIPT_READ);
     if (!authResult.isValid) {
-      return authResult.response!;
-    }
-
-    const { user } = authResult;
-
-    // 检查权限：需要 SCRIPT_READ 权限
-    const permissionCheck = await requirePermission(
-      user.id,
-      Permission.SCRIPT_READ
-    );
-    if (!permissionCheck.authorized) {
-      return NextResponse.json(
-        { success: false, message: "权限不足：无法查看脚本" },
-        { status: 403 }
-      );
+      return authResult.response;
     }
 
     const params = await paramsPromise; // Await the promise

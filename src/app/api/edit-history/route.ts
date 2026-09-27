@@ -3,7 +3,6 @@ import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
-import { auth } from "@clerk/nextjs/server";
 import { EditHistoryFilter } from "@/lib/workflows/edit-history-schema";
 
 // 获取编辑历史集合
@@ -21,11 +20,6 @@ export async function GET(request: NextRequest) {
     const authResult = await authorizeApiRequest(Permission.HISTORY_READ);
     if (!authResult.isValid) {
       return authResult.response;
-    }
-
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);

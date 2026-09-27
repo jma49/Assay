@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { GUEST_COOKIE, guestIdFromToken } from "@/lib/auth/guest";
 
 // 定义公开路由（不需要认证）
 // "/" is the public landing page; only the exact root path is public.
@@ -12,6 +13,18 @@ const isPublicRoute = createRouteMatcher([
   // future route like /docs-admin does not become public by accident.
   "/docs",
   "/docs/(.*)",
+  // Starts and ends a demo guest session; both check DEMO_MODE themselves.
+  "/demo",
+  "/demo/exit",
+]);
+
+// Pages a demo guest can open; every API route still checks the guest itself.
+const isGuestRoute = createRouteMatcher([
+  "/dashboard",
+  "/manage-scripts",
+  "/view-execution-result/(.*)",
+  "/data-analysis",
+  "/api/(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
@@ -29,6 +42,14 @@ export default clerkMiddleware(async (auth, req) => {
 
   // 检查用户是否已认证
   const { userId } = await auth();
+
+  if (!userId && guestIdFromToken(req.cookies.get(GUEST_COOKIE)?.value)) {
+    if (isGuestRoute(req)) return NextResponse.next();
+    // Anything that needs an account: offer to create one, then come back here.
+    const signUpUrl = new URL("/sign-up", req.url);
+    signUpUrl.searchParams.set("redirect_url", req.nextUrl.pathname);
+    return NextResponse.redirect(signUpUrl);
+  }
 
   if (!userId) {
     // 未认证用户重定向到登录页

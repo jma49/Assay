@@ -4,18 +4,18 @@ import { Permission, requirePermission } from "@/lib/auth/rbac";
 import redis from "@/lib/cache/redis";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { consumeQuota } from "@/lib/security/ai-guard";
-import { DEMO_RUNS_PER_HOUR, isDemoMode, runAccess } from "@/lib/security/demo-sandbox";
+import { clientIp, demoRunBudgets, isDemoMode, runAccess } from "@/lib/security/demo-sandbox";
 import { executeScriptAndNotify } from "@/lib/utils/script-executor";
 
 const DEMO_WINDOW_SECONDS = 60 * 60;
 
 /**
  * 处理手动触发 SQL 脚本检查的 API 请求。
- * Needs script:execute, except in demo mode, where viewers may run the
- * seeded demo checks within a per-user hourly budget.
+ * Needs script:execute, except in demo mode, where viewers and guests may
+ * run the seeded demo checks within an hourly budget.
  */
 export async function POST(request: NextRequest) {
-  const authResult = await validateApiAuth("en");
+  const authResult = await validateApiAuth("en", { allowGuest: true });
   if (!authResult.isValid) {
     return authResult.response!;
   }
@@ -34,7 +34,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { authorized: canExecute } = await requirePermission(user.id, Permission.SCRIPT_EXECUTE);
+    const canExecute = authResult.isGuest
+      ? false
+      : (await requirePermission(user.id, Permission.SCRIPT_EXECUTE)).authorized;
     const demoMode = isDemoMode();
     if (!canExecute && !demoMode) {
       return NextResponse.json(
@@ -56,9 +58,14 @@ export async function POST(request: NextRequest) {
         );
       }
       // Demo runs widen access, so a Redis failure refuses them (fail closed).
-      let quota: { allowed: boolean; retryAfterSeconds: number };
+      let quota = { allowed: true, retryAfterSeconds: 0 };
+      let limit = 0;
       try {
-        quota = await consumeQuota(redis, user.id, Date.now(), DEMO_RUNS_PER_HOUR, DEMO_WINDOW_SECONDS, "demo-run");
+        for (const budget of demoRunBudgets({ id: user.id, isGuest: authResult.isGuest }, clientIp(request.headers))) {
+          quota = await consumeQuota(redis, budget.subject, Date.now(), budget.limit, DEMO_WINDOW_SECONDS, "demo-run");
+          limit = budget.limit;
+          if (!quota.allowed) break;
+        }
       } catch (error) {
         console.error("[API] Demo run quota check failed:", error);
         return NextResponse.json(
@@ -68,7 +75,7 @@ export async function POST(request: NextRequest) {
       }
       if (!quota.allowed) {
         return NextResponse.json(
-          { success: false, message: `Demo limit reached: ${DEMO_RUNS_PER_HOUR} runs per hour.` },
+          { success: false, message: `Demo limit reached: ${limit} runs per hour.` },
           { status: 429, headers: { "Retry-After": String(quota.retryAfterSeconds) } },
         );
       }
