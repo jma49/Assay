@@ -88,7 +88,7 @@ function DocsSearch({ index }: { index: DocsSearchEntry[] }) {
           else return;
           event.preventDefault();
         }}
-        className="h-8 w-full rounded-md border border-input bg-card pr-3 pl-8 text-[13px] shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+        className="h-8 w-full rounded-md border border-input bg-card pr-3 pl-8 text-base shadow-xs sm:text-[13px] outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
       />
       {query.trim() && (
         <ul className="absolute top-full right-0 z-50 mt-1.5 w-[340px] rounded-lg border bg-popover p-1 text-popover-foreground shadow-md" role="listbox">
@@ -200,7 +200,7 @@ export function DocsShell({ index, children }: { index: DocsSearchEntry[]; child
             </button>
             <Link
               href="/manage-scripts"
-              className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground shadow-xs hover:brightness-110"
+              className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground shadow-xs hover:brightness-110 transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]"
             >
               {t.openApp}
             </Link>
@@ -221,7 +221,7 @@ export function DocsShell({ index, children }: { index: DocsSearchEntry[]; child
           <div className="mb-4 flex items-center gap-2 lg:hidden">
             <button
               type="button"
-              className="inline-flex h-8 items-center rounded-md border border-border-strong bg-card px-3 text-[13px] shadow-xs"
+              className="inline-flex h-8 items-center rounded-md bg-card px-3 text-[13px] shadow-border"
               aria-expanded={contentsOpen}
               onClick={() => setContentsOpen((open) => !open)}
             >

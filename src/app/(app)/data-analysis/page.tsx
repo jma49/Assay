@@ -791,7 +791,7 @@ export default function DataAnalysisPage() {
                         return (
                           <div
                             key={day.date}
-                            className="trend-item group/item relative overflow-hidden rounded-lg p-4 transition-all duration-300 border border-border/30 hover:border-border/50  "
+                            className="trend-item group/item relative overflow-hidden rounded-lg p-4 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300 border border-border/30 hover:border-border/50  "
                             style={{ animationDelay: `${index * 0.1}s` }}
                           >
                             {/* 装饰性渐变背景 */}
@@ -800,7 +800,7 @@ export default function DataAnalysisPage() {
                             <div className="relative flex items-center gap-4">
                               {/* 日期卡片 - 统一样式 */}
                               <div className="flex-none">
-                                <div className="w-16 h-14 rounded-lg flex flex-col items-center justify-center text-xs font-medium transition-all duration-300 group-hover/ text-muted-foreground border border-border/40 hover:border-border/60">
+                                <div className="w-16 h-14 rounded-lg flex flex-col items-center justify-center text-xs font-medium transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300 group-hover/ text-muted-foreground border border-border/40 hover:border-border/60">
                                   <div className="font-mono font-bold text-sm">
                                     {dayKeyParts(day.date, language).day}
                                   </div>
@@ -821,7 +821,7 @@ export default function DataAnalysisPage() {
                                     {day.executions > 0 && (
                                       <Badge
                                         variant="outline"
-                                        className={`text-xs font-medium px-3 py-1 transition-all duration-300  ${
+                                        className={`text-xs font-medium px-3 py-1 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300  ${
                                           successRate >= 95
                                             ? "border-success/30 text-success       "
                                             : successRate >= 85
@@ -868,7 +868,7 @@ export default function DataAnalysisPage() {
                                       <>
                                         {/* 成功部分 */}
                                         <div
-                                          className="absolute left-0 top-0 h-full transition-all duration-700 ease-out relative overflow-hidden"
+                                          className="absolute left-0 top-0 h-full transition-[color,background-color,border-color,box-shadow,opacity,width] duration-700 ease-out relative overflow-hidden"
                                           style={{
                                             background: `linear-gradient(to right, ${CHART_COLORS.chartGreen}, ${CHART_COLORS.success})`,
                                             width: `${(day.successes / day.executions) * 100}%`,
@@ -881,7 +881,7 @@ export default function DataAnalysisPage() {
                                         {/* 失败部分 */}
                                         {day.failures > 0 && (
                                           <div
-                                            className="absolute top-0 h-full transition-all duration-700 ease-out relative overflow-hidden"
+                                            className="absolute top-0 h-full transition-[color,background-color,border-color,box-shadow,opacity,width] duration-700 ease-out relative overflow-hidden"
                                             style={{
                                               background: `linear-gradient(to right, ${CHART_COLORS.chartRed}, ${CHART_COLORS.failed})`,
                                               left: `${(day.successes / day.executions) * 100}%`,
@@ -901,7 +901,7 @@ export default function DataAnalysisPage() {
                                   </div>
 
                                   {/* 动态光线扫过效果 */}
-                                  <div className="absolute inset-0 h-4 rounded-full opacity-0 group-hover/item:opacity-100 transition-all duration-700 transform -skew-x-12 group-hover/item:animate-pulse"></div>
+                                  <div className="absolute inset-0 h-4 rounded-full opacity-0 group-hover/item:opacity-100 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-700 transform -skew-x-12 group-hover/item:animate-pulse"></div>
                                 </div>
                               </div>
                             </div>
@@ -1003,7 +1003,7 @@ export default function DataAnalysisPage() {
                         size="sm"
                         onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
                         disabled={currentPage === 1}
-                        className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
+                        className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150 relative z-30"
                       >
                         <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                         <span className="hidden sm:inline">{t("previous")}</span>
@@ -1108,7 +1108,7 @@ export default function DataAnalysisPage() {
                           setCurrentPage(Math.min(currentPage + 1, totalPages));
                         }}
                         disabled={currentPage === Math.ceil(analyticsData.scriptAnalytics.length / ITEMS_PER_PAGE)}
-                        className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
+                        className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150 relative z-30"
                       >
                         <span className="hidden sm:inline">{t("next")}</span>
                         <ChevronRight className="h-3.5 w-3.5 ml-1" />

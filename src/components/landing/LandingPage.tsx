@@ -16,11 +16,11 @@ import { SECTION_THEMES } from "./themes";
 const CONTAINER = "mx-auto w-full max-w-[1120px] px-4 sm:px-6";
 
 const secondaryButton =
-  "inline-flex h-9 items-center justify-center rounded-md border border-border-strong bg-card px-4 text-[13.5px] font-medium shadow-xs hover:bg-muted";
+  "inline-flex h-9 items-center justify-center rounded-md bg-card px-4 text-[13.5px] font-medium shadow-border hover:shadow-border-hover transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]";
 const heroPrimaryButton =
-  "inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-[14px] font-medium text-primary-foreground shadow-xs hover:brightness-110";
+  "inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-[14px] font-medium text-primary-foreground shadow-xs hover:brightness-110 transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]";
 const heroSecondaryButton =
-  "inline-flex h-11 items-center justify-center rounded-md border border-border-strong bg-card px-6 text-[14px] font-medium shadow-xs hover:bg-muted";
+  "inline-flex h-11 items-center justify-center rounded-md bg-card px-6 text-[14px] font-medium shadow-border hover:shadow-border-hover transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]";
 
 const WHY_ICONS = [
   { Icon: ShieldCheck, color: "#3f7d58" },

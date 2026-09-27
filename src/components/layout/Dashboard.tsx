@@ -65,7 +65,7 @@ const Dashboard = () => {
     setRunSheetOpen(true);
   }, []);
 
-  // File menu: "Run a Check…" / "Run in Bulk…".
+  // Commands from elsewhere: "Run a check…" / "Run in bulk…".
   useAppCommand((command) => {
     if (command.type !== "run-mode") return false;
     openRunSheet(command.mode);
@@ -866,13 +866,13 @@ const Dashboard = () => {
 
           {(canExecute || demoRuns !== null) && (
             <WindowToolbar>
-              <Button size="sm" className="" onClick={() => openRunSheet("single")}>
+              <Button size="sm" variant="outline" onClick={() => openRunSheet("single")}>
                 <Play className="size-3.5" />
-                {language === "zh" ? "执行检查…" : "Run a Check…"}
+                {language === "zh" ? "执行检查…" : "Run a check…"}
               </Button>
               {canExecute && (
                 <Button size="sm" variant="outline" onClick={() => openRunSheet("bulk")}>
-                  {language === "zh" ? "批量执行…" : "Run in Bulk…"}
+                  {language === "zh" ? "批量执行…" : "Run in bulk…"}
                 </Button>
               )}
               {demoRuns !== null && (
