@@ -41,7 +41,9 @@ interface LandingCopy {
   footer: string;
 }
 
-export const GITHUB_URL = "https://github.com/jma49/Assay";
+import { GITHUB_URL } from "@/lib/brand";
+
+export { GITHUB_URL };
 
 export const QUICK_START = `git clone ${GITHUB_URL}.git
 cd Assay && npm install

@@ -1,5 +1,6 @@
 /** @jsxImportSource react */
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useAppCommand } from "@/lib/commands/use-app-command";
 import {
   Database,
   Loader2,
@@ -98,6 +99,16 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
   const [executionMode, setExecutionMode] = useState<"single" | "bulk">(
     "single",
   );
+
+  // File menu: "Run a check" / "Run in bulk".
+  useAppCommand((command) => {
+    if (command.type !== "run-mode") return false;
+    setExecutionMode(command.mode);
+    requestAnimationFrame(() =>
+      document.getElementById("manual-trigger")?.scrollIntoView({ behavior: "smooth" }),
+    );
+    return true;
+  });
   const [bulkMode, setBulkMode] = useState<"all" | "scheduled">("scheduled");
   const [searchTerm, setSearchTerm] = useState("");
   const [showBatchDialog, setShowBatchDialog] = useState(false);
@@ -626,7 +637,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
 
   return (
     <>
-      <Card className="relative h-full flex flex-col gap-0 overflow-hidden py-0">
+      <Card id="manual-trigger" className="relative h-full scroll-mt-20 flex flex-col gap-0 overflow-hidden py-0">
         <CardHeader className="relative border-b px-6 py-4">
           <div className="flex items-center gap-4">
             <div className="flex-1 space-y-1">
