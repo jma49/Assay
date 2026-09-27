@@ -757,7 +757,7 @@ export default function ViewExecutionResultPage() {
             <header className="rounded-xl bg-card shadow-border flex items-start gap-3  px-5 py-4">
               <span className={cn("status-dot mt-2", `status-dot-${tone}`)} aria-hidden />
               <div className="min-w-0">
-                <p className={cn("font-serif text-[26px] leading-tight font-semibold", toneText)}>{headline}</p>
+                <p className={cn("font-display text-[26px] leading-tight font-semibold", toneText)}>{headline}</p>
                 <p className="mt-1 text-[13px] text-muted-foreground">
                   {scriptName ?? result.scriptId} · {formatDate(result.executedAt)}
                 </p>

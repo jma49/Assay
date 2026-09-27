@@ -9,7 +9,7 @@ export function BrandMark({ className, compact = false }: { className?: string; 
       <span aria-hidden className="grid size-7 place-items-center rounded-md bg-primary-soft">
         <BeetleMark className="size-6" />
       </span>
-      {!compact && <span className="font-serif text-[19px] leading-none font-semibold">{BRAND}</span>}
+      {!compact && <span className="font-display text-[19px] leading-none font-semibold">{BRAND}</span>}
     </span>
   );
 }
