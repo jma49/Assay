@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { BellOff, Hand, Search } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
@@ -44,6 +44,8 @@ const COPY = {
     newCheck: "Write your first check",
     loadFailed: "Could not load checks",
     count: (n: number) => `${n} checks`,
+    acknowledgedBy: (name: string) => `Acknowledged by ${name}`,
+    muted: "Alerts muted",
   },
   zh: {
     search: "搜索检查、标签、范围",
@@ -70,6 +72,8 @@ const COPY = {
     newCheck: "编写第一个检查",
     loadFailed: "无法加载检查",
     count: (n: number) => `${n} 个检查`,
+    acknowledgedBy: (name: string) => `${name} 已确认处理`,
+    muted: "告警已静音",
   },
 };
 
@@ -250,10 +254,19 @@ export function ChecksList() {
                           {c.state && <span className={cn("status-dot", OUTCOME_DOT[c.state.outcome])} aria-label={OUTCOME_LABEL[c.state.outcome][language]} />}
                         </td>
                         <td className="px-3 py-2.5">
-                          <Link href={`/checks/${encodeURIComponent(c.scriptId)}`} className="block truncate font-medium hover:underline">
-                            {name(c)}
-                          </Link>
-                          <span className="block truncate font-mono text-[11.5px] text-subtle-foreground">{c.scriptId}</span>
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <Link href={`/checks/${encodeURIComponent(c.scriptId)}`} className="truncate font-medium hover:underline">
+                              {name(c)}
+                            </Link>
+                            {c.alerting.acknowledged && (
+                              <Hand className="size-3.5 shrink-0 text-primary" aria-label={t.acknowledgedBy(c.alerting.acknowledged.by)} />
+                            )}
+                            {c.alerting.mutedUntil && <BellOff className="size-3.5 shrink-0 text-muted-foreground" aria-label={t.muted} />}
+                          </div>
+                          <span className="block truncate font-mono text-[11.5px] text-subtle-foreground">
+                            {c.scriptId}
+                            {c.alerting.owner && <span className="font-sans"> · {c.alerting.owner.name}</span>}
+                          </span>
                         </td>
                         <td className="px-3 py-2.5 whitespace-nowrap tabular-nums">
                           {!c.state ? (

@@ -1,5 +1,5 @@
 import type { Channel } from "../types";
-import { expectHost, JSON_HEADERS, maskUrl } from "../types";
+import { ACTION_IDS, expectHost, JSON_HEADERS, maskUrl } from "../types";
 
 const EMOJI = { failure: ":red_circle:", attention: ":large_orange_circle:", success: ":large_green_circle:" };
 
@@ -15,7 +15,15 @@ export const slack: Channel = {
       ...(message.lines.length ? [{ type: "section", text: { type: "mrkdwn", text: message.lines.map(mrkdwn).join("\n") } }] : []),
       {
         type: "actions",
-        elements: [{ type: "button", text: { type: "plain_text", text: message.linkLabel }, url: message.url }],
+        elements: [
+          { type: "button", text: { type: "plain_text", text: message.linkLabel }, url: message.url, action_id: "assay_open" },
+          ...(message.actions
+            ? [
+                { type: "button", style: "primary", text: { type: "plain_text", text: message.actions.acknowledge }, action_id: ACTION_IDS.acknowledge, value: message.actions.token },
+                { type: "button", text: { type: "plain_text", text: message.actions.mute }, action_id: ACTION_IDS.mute, value: message.actions.token },
+              ]
+            : []),
+        ],
       },
     ];
     return { url: secret.url!, headers: JSON_HEADERS, body: JSON.stringify({ text: message.text, blocks }) };

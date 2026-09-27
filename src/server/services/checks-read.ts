@@ -2,6 +2,7 @@ import { ObjectId, type Db, type Document } from "mongodb";
 import type { CheckDetail, CheckStateDto, CheckSummary, LatestRun, RunListItem, RunPoint } from "@/contracts/checks";
 import { fromLegacyStatus, stateFromHistory, type CheckState, type RunOutcome } from "@/domain/run";
 import { markRows } from "@/server/runs/row-marks";
+import { toAlertingDto } from "./alert-controls";
 
 export const HISTORY_LENGTH = 30;
 
@@ -17,6 +18,7 @@ const CHECK_FIELDS = {
   isScheduled: 1,
   cronSchedule: 1,
   state: 1,
+  alerting: 1,
 } as const;
 
 /** A stored run, old or new shape, as the pages need it. */
@@ -62,6 +64,7 @@ export function toSummary(check: Document, historyNewestFirst: (RunPoint & { run
     scope: check.scope || undefined,
     schedule: check.isScheduled && check.cronSchedule ? String(check.cronSchedule) : null,
     state,
+    alerting: toAlertingDto(check.alerting, state ? { since: new Date(state.since), outcome: state.outcome } : null),
     history: historyNewestFirst
       .slice(0, HISTORY_LENGTH)
       .reverse()

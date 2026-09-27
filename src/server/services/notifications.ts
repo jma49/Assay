@@ -1,12 +1,17 @@
+import { randomBytes } from "node:crypto";
+import { digestSlot, type DigestSettings, type DigestSummary } from "@/domain/digest";
 import {
   alertKindOf,
   buildAlertMessage,
+  buildDigestMessage,
+  withActions,
   wantsAlert,
   type AlertKind,
   type ChannelKind,
   type MessageLanguage,
 } from "@/domain/notify";
-import type { RowDiff, RunOutcome } from "@/domain/run";
+import { suppressionFor, type Alerting, type Suppression } from "@/domain/alerting";
+import type { CheckState, RowDiff, RunOutcome } from "@/domain/run";
 import { CHANNELS } from "@/server/notify/channels";
 import type { DeliveryOutcome, DestinationSecret, OutgoingRequest, Channel } from "@/server/notify/types";
 
@@ -28,6 +33,10 @@ export interface Destination {
   createdAt: Date;
   createdBy: { id: string; name: string };
   lastDelivery?: { at: Date; ok: boolean; error?: string } | null;
+  digest?: DigestSettings | null;
+  lastDigestAt?: Date | null;
+  /** How it was connected; an OAuth-installed Slack app is the only Slack destination that can take button clicks. */
+  source?: "oauth" | "paste" | "telegram";
 }
 
 export interface StoredEvent {
@@ -42,6 +51,17 @@ export interface StoredEvent {
   diff: RowDiff | null;
   error?: string | null;
   at: Date;
+  suppressed?: Suppression | null;
+  /** Secret half of the token in the alert's buttons. */
+  actionKey?: string | null;
+}
+
+export interface CheckInfo {
+  name: string;
+  cnName?: string;
+  tags: string[];
+  alerting?: Alerting | null;
+  state?: Pick<CheckState, "since" | "outcome"> | null;
 }
 
 export interface ClaimedDelivery {
@@ -60,19 +80,29 @@ export type DeliveryUpdate =
 export interface NotifyStore {
   /** Recent events not yet turned into deliveries. */
   pendingEvents(since: Date, limit: number): Promise<StoredEvent[]>;
-  checkInfo(checkIds: string[]): Promise<Map<string, { name: string; cnName?: string; tags: string[] }>>;
+  checkInfo(checkIds: string[]): Promise<Map<string, CheckInfo>>;
   destinations(workspaceId: string): Promise<Destination[]>;
   destination(id: string): Promise<Destination | null>;
   event(id: string): Promise<StoredEvent | null>;
   /** Idempotent: one delivery per event and destination. */
   createDeliveries(deliveries: { eventId: string; destinationId: string; workspaceId: string }[], now: Date): Promise<void>;
-  markFannedOut(eventId: string, now: Date): Promise<void>;
+  /**
+   * Records that the event was handled, and why it went nowhere if it was
+   * held back. The action key is only set if the event has none, so every
+   * message for the event carries the same one.
+   */
+  markFannedOut(eventId: string, now: Date, suppressed: Suppression | null, actionKey: string): Promise<void>;
   /** Atomically takes the next due delivery for `leaseMs`, so no two dispatchers send it. */
   claimDelivery(now: Date, leaseMs: number): Promise<ClaimedDelivery | null>;
   /** Applies the update only while the claim is still this dispatcher's. */
   finishDelivery(delivery: ClaimedDelivery, update: DeliveryUpdate): Promise<void>;
   sentSince(destinationId: string, since: Date): Promise<number>;
   recordLastDelivery(destinationId: string, result: { at: Date; ok: boolean; error?: string }): Promise<void>;
+  /** Enabled destinations with a daily summary, in every workspace. */
+  digestDestinations(): Promise<Destination[]>;
+  /** Atomically marks the digest for `slot` as taken; false when another dispatcher already sent it. */
+  claimDigest(destinationId: string, slot: Date, now: Date): Promise<boolean>;
+  digestSummary(workspaceId: string, tags: readonly string[], since: Date): Promise<DigestSummary>;
 }
 
 export interface DispatchDeps {
@@ -98,6 +128,12 @@ export function backoffMs(attempts: number, retryAfterMs?: number): number {
   return Math.max(base, retryAfterMs ?? 0);
 }
 
+/** Whether a click on a button in this destination's messages would reach Assay. */
+export function canTakeClicks(destination: Pick<Destination, "kind" | "source">, env: Record<string, string | undefined>): boolean {
+  if (destination.kind === "telegram") return true;
+  return destination.kind === "slack" && destination.source === "oauth" && Boolean(env.SLACK_SIGNING_SECRET);
+}
+
 export function checkUrl(appUrl: string, checkId: string): string {
   return `${appUrl.replace(/\/+$/, "")}/checks/${encodeURIComponent(checkId)}`;
 }
@@ -117,8 +153,11 @@ async function fanOut(deps: DispatchDeps): Promise<number> {
       destinationsByWorkspace.set(event.workspaceId, destinations);
     }
     const kind = alertKindOf(event);
-    const tags = checks.get(event.checkId)?.tags ?? [];
-    const targets = destinations.filter((d) => d.enabled && d.createdAt <= event.at && wantsAlert(d, kind, tags));
+    const check = checks.get(event.checkId);
+    const suppressed = suppressionFor(kind, check?.alerting, check?.state, now);
+    const targets = suppressed
+      ? []
+      : destinations.filter((d) => d.enabled && d.createdAt <= event.at && wantsAlert(d, kind, check?.tags ?? []));
     if (targets.length > 0) {
       await deps.store.createDeliveries(
         targets.map((d) => ({ eventId: event.id, destinationId: d.id, workspaceId: event.workspaceId })),
@@ -126,7 +165,7 @@ async function fanOut(deps: DispatchDeps): Promise<number> {
       );
       created += targets.length;
     }
-    await deps.store.markFannedOut(event.id, now);
+    await deps.store.markFannedOut(event.id, now, suppressed, randomBytes(12).toString("base64url"));
   }
   return created;
 }
@@ -142,7 +181,8 @@ async function deliver(delivery: ClaimedDelivery, deps: DispatchDeps): Promise<D
 
   const check = (await deps.store.checkInfo([event.checkId])).get(event.checkId);
   const name = (destination.language === "zh" ? check?.cnName || check?.name : check?.name) ?? event.checkId;
-  const message = buildAlertMessage(event, { name }, { language: destination.language, url: checkUrl(deps.appUrl, event.checkId) });
+  const alert = buildAlertMessage(event, { name }, { language: destination.language, url: checkUrl(deps.appUrl, event.checkId) });
+  const message = event.actionKey && canTakeClicks(destination, deps.env) ? withActions(alert, `${event.id}.${event.actionKey}`, destination.language) : alert;
   const channel = CHANNELS[destination.kind];
   let outcome: DeliveryOutcome;
   try {
@@ -173,6 +213,39 @@ export interface DispatchReport {
   sent: number;
   retrying: number;
   failed: number;
+  digests: number;
+}
+
+/**
+ * Sends each destination's daily summary once its hour has come. The claim
+ * moves lastDigestAt forward first, so a digest is sent at most once per
+ * day even with several dispatchers; one that fails is not retried until
+ * the next day.
+ */
+async function sendDigests(deps: DispatchDeps): Promise<number> {
+  const now = deps.now();
+  let sent = 0;
+  for (const destination of await deps.store.digestDestinations()) {
+    const digest = destination.digest!;
+    const slot = digestSlot(now, digest.hour, digest.timeZone);
+    // A new destination starts with the next slot, not one that passed before it existed.
+    const last = destination.lastDigestAt ?? destination.createdAt;
+    if (last >= slot) continue;
+    if (!(await deps.store.claimDigest(destination.id, slot, now))) continue;
+
+    const summary = await deps.store.digestSummary(destination.workspaceId, destination.tags, new Date(now.getTime() - EVENT_FRESHNESS_MS));
+    const message = buildDigestMessage(summary, { language: destination.language, url: `${deps.appUrl.replace(/\/+$/, "")}/checks`, at: now });
+    const channel = CHANNELS[destination.kind];
+    let outcome: DeliveryOutcome;
+    try {
+      outcome = await deps.send(channel, channel.request(message, deps.openSecret(destination.sealed), { now, env: deps.env }));
+    } catch (error) {
+      outcome = { kind: "failed", error: error instanceof Error ? error.message : String(error) };
+    }
+    await deps.store.recordLastDelivery(destination.id, { at: deps.now(), ok: outcome.kind === "sent", error: outcome.kind === "sent" ? undefined : outcome.error });
+    if (outcome.kind === "sent") sent++;
+  }
+  return sent;
 }
 
 /**
@@ -182,7 +255,7 @@ export interface DispatchReport {
  * dispatcher that dies after sending but before recording may send again.
  */
 export async function dispatchNotifications(deps: DispatchDeps, maxSends = 50): Promise<DispatchReport> {
-  const report: DispatchReport = { queued: await fanOut(deps), sent: 0, retrying: 0, failed: 0 };
+  const report: DispatchReport = { queued: await fanOut(deps), sent: 0, retrying: 0, failed: 0, digests: 0 };
   for (let i = 0; i < maxSends; i++) {
     const delivery = await deps.store.claimDelivery(deps.now(), LEASE_MS);
     if (!delivery) break;
@@ -192,5 +265,6 @@ export async function dispatchNotifications(deps: DispatchDeps, maxSends = 50): 
     else if (update.status === "failed") report.failed++;
     else report.retrying++;
   }
+  report.digests = await sendDigests(deps);
   return report;
 }
