@@ -11,6 +11,7 @@ Copy `.env.example` to `.env.local` for local work, or add these to your host.
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth client; callback `/api/auth/callback/google`. |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth app; callback `/api/auth/callback/github`. |
 | `MONGODB_URI` | MongoDB connection string. The database is the one named in its path, else `MONGODB_DB_NAME`, else `sql_script_monitoring`; users, roles, checks and runs all live there. |
+| `RUN_RETENTION_DAYS` | Days a run is kept (default 90; `0` keeps runs forever). |
 | `DATABASE_URL` | The PostgreSQL database checks run against. |
 | `UPSTASH_REDIS_REST_URL` | Upstash Redis REST URL. |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token. |
