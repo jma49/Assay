@@ -6,7 +6,6 @@ import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
 import { EditHistoryFilter } from "@/lib/workflows/edit-history-schema";
 
-// 获取编辑历史集合
 async function getEditHistoryCollection(): Promise<Collection<Document>> {
   const mongoDbClient = getMongoDbClient();
   const db = await mongoDbClient.getDb();
@@ -25,7 +24,6 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
 
-    // 解析筛选参数
     const filter: EditHistoryFilter = {
       scriptName: searchParams.get("scriptName") || undefined,
       author: searchParams.get("author") || undefined,
@@ -48,20 +46,16 @@ export async function GET(request: NextRequest) {
         "desc",
     };
 
-    // 获取特定脚本ID参数
     const scriptId = searchParams.get("scriptId");
 
     const collection = await getEditHistoryCollection();
 
-    // 构建查询条件
     const query: Record<string, unknown> = {};
 
-    // 如果指定了scriptId，只查询该脚本的历史
     if (scriptId) {
       query["scriptSnapshot.scriptId"] = scriptId;
     }
 
-    // 脚本名称筛选（支持英文和中文）
     if (filter.scriptName) {
       const scriptNameRegex = containsText(filter.scriptName);
       query.$or = [
@@ -71,31 +65,27 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // 作者筛选
     if (filter.author) {
       query.searchableAuthor = containsText(filter.author);
     }
 
-    // 操作类型筛选
     if (filter.operation && filter.operation !== "all") {
       query.operationType = filter.operation;
     }
 
-    // 日期范围筛选
     if (filter.dateFrom || filter.dateTo) {
       query.operationTime = {};
       if (filter.dateFrom) {
         (query.operationTime as Record<string, unknown>).$gte = filter.dateFrom;
       }
       if (filter.dateTo) {
-        // 添加一天，以包含整个结束日期
+        // Through the end of that day.
         const endDate = new Date(filter.dateTo);
         endDate.setDate(endDate.getDate() + 1);
         (query.operationTime as Record<string, unknown>).$lt = endDate;
       }
     }
 
-    // 构建排序
     const sort: Record<string, 1 | -1> = {};
     if (filter.sortBy === "operationTime") {
       sort.operationTime = filter.sortOrder === "asc" ? 1 : -1;
@@ -105,23 +95,17 @@ export async function GET(request: NextRequest) {
       sort.searchableAuthor = filter.sortOrder === "asc" ? 1 : -1;
     }
 
-    // 计算跳过的数量
     const skip = ((filter.page || 1) - 1) * (filter.limit || 20);
 
-    // 使用聚合管道优化性能：同时获取数据和总数
+    // One round trip for the page and the total count.
     const aggregationPipeline = [
-      // 匹配阶段
       { $match: query },
 
-      // 添加排序阶段
       { $sort: sort },
 
-      // 使用facet同时获取数据和总数
       {
         $facet: {
-          // 获取分页数据
           data: [{ $skip: skip }, { $limit: filter.limit || 20 }],
-          // 获取总数
           count: [{ $count: "total" }],
         },
       },

@@ -1,3 +1,4 @@
+import { intParam } from "@/lib/utils/query-params";
 import { NextRequest, NextResponse } from "next/server";
 import { validateApiAuth } from "@/lib/auth/auth-utils";
 import { Permission, requirePermission } from "@/lib/auth/rbac";
@@ -9,11 +10,10 @@ import {
 } from "@/lib/workflows/approval-workflow";
 
 /**
- * GET - 获取待审批列表或审批历史
+ * GET: pending requests, or decided ones for the history view.
  */
 export async function GET(request: NextRequest) {
   try {
-    // 验证用户认证
     const authResult = await validateApiAuth("zh");
     if (!authResult.isValid) {
       return authResult.response!;
@@ -22,7 +22,6 @@ export async function GET(request: NextRequest) {
     const { user, userEmail } = authResult;
     const { searchParams } = new URL(request.url);
 
-    // 检查权限：需要 SCRIPT_APPROVE 或 SCRIPT_REJECT 权限才能查看审批列表
     const hasApprovalPermission = await requirePermission(
       user.id,
       Permission.SCRIPT_APPROVE
@@ -39,20 +38,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const action = searchParams.get("action") || "pending"; // pending, history
+    const action = searchParams.get("action") === "history" ? "history" : "pending";
 
     if (action === "history") {
-      // 获取审批历史 - 返回已完成的审批请求列表
-      const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-      const limit = Math.min(
-        100,
-        Math.max(1, parseInt(searchParams.get("limit") || "20"))
-      );
+      const page = intParam(searchParams.get("page"), 1, 1, 10_000);
+      const limit = intParam(searchParams.get("limit"), 20, 1, 100);
 
-      // 获取已完成的审批请求（非待审批状态）
       const result = await getCompletedApprovals(page, limit);
 
-      // 转换数据格式以匹配前端期望的结构
       const transformedHistoryData = result.data.map((request) => ({
         id: request.requestId,
         scriptId: request.scriptId,
@@ -93,16 +86,11 @@ export async function GET(request: NextRequest) {
         count: transformedHistoryData.length,
       });
     } else {
-      // 获取待审批列表
-      const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-      const limit = Math.min(
-        100,
-        Math.max(1, parseInt(searchParams.get("limit") || "20"))
-      );
+      const page = intParam(searchParams.get("page"), 1, 1, 10_000);
+      const limit = intParam(searchParams.get("limit"), 20, 1, 100);
 
       const result = await getPendingApprovals(user.id, page, limit);
 
-      // 转换数据格式以匹配前端期望的结构
       const transformedData = result.data.map((request) => ({
         id: request.requestId,
         scriptId: request.scriptId,
@@ -154,11 +142,10 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST - 审批或拒绝脚本
+ * POST: approves or rejects a request.
  */
 export async function POST(request: NextRequest) {
   try {
-    // 验证用户认证
     const authResult = await validateApiAuth("zh");
     if (!authResult.isValid) {
       return authResult.response!;
@@ -166,11 +153,9 @@ export async function POST(request: NextRequest) {
 
     const { user, userEmail } = authResult;
 
-    // 解析请求体
     const body = await request.json();
     const { requestId, action, comment } = body;
 
-    // 验证请求参数
     if (!requestId || !action) {
       return NextResponse.json(
         { success: false, message: "缺少必要参数：requestId, action" },
@@ -195,7 +180,6 @@ export async function POST(request: NextRequest) {
     let result: { success: boolean; message: string };
 
     if (action === "approve") {
-      // 检查审批权限
       const permissionCheck = await requirePermission(
         user.id,
         Permission.SCRIPT_APPROVE
@@ -209,7 +193,6 @@ export async function POST(request: NextRequest) {
 
       result = await approveScript(requestId, user.id, userEmail, comment);
     } else {
-      // 检查拒绝权限
       const permissionCheck = await requirePermission(
         user.id,
         Permission.SCRIPT_REJECT
