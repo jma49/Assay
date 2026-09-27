@@ -89,10 +89,12 @@ function memoryStore(events: StoredEvent[], destinations: Destination[], checkEx
         deliveries.push({ id: `${d.eventId}:${d.destinationId}`, ...d, status: "pending", attempts: 0, nextAttemptAt: now, claim: null });
       }
     },
-    async markFannedOut(id, _now, suppressed, actionKey) {
-      fanned.set(id, suppressed);
+    async assignActionKey(id, actionKey) {
       const event = events.find((e) => e.id === id)!;
       event.actionKey ??= actionKey;
+    },
+    async markFannedOut(id, _now, suppressed) {
+      fanned.set(id, suppressed);
     },
     async claimDelivery(now, leaseMs) {
       const next = deliveries.find((d) => d.status === "pending" && d.nextAttemptAt <= now);
@@ -309,6 +311,24 @@ describe("dispatchNotifications", () => {
     const second = deps(again.store);
     await dispatchNotifications(second.deps);
     expect(((second.send.mock.calls[0] as unknown[])[1] as { body: string }).body).not.toContain("assay_ack");
+  });
+
+  it("gives the event its button key before any delivery exists, so a concurrent dispatcher sends buttons too", async () => {
+    const telegramDest = destination({ id: "tg", kind: "telegram", sealed: JSON.stringify({ chatId: "-1" }), source: "telegram" });
+    const e = event({ id: "65f000000000000000000003" });
+    const { store } = memoryStore([e], [telegramDest]);
+    const keysWhenDelivered: (string | null | undefined)[] = [];
+    const createDeliveries = store.createDeliveries.bind(store);
+    store.createDeliveries = async (list, now) => {
+      keysWhenDelivered.push(e.actionKey);
+      await createDeliveries(list, now);
+    };
+    const { deps: d, send } = deps(store);
+    d.env = { TELEGRAM_BOT_TOKEN: "1:x" };
+    await dispatchNotifications(d);
+    expect(keysWhenDelivered).toHaveLength(1);
+    expect(keysWhenDelivered[0]).toMatch(/^[A-Za-z0-9_-]{16}$/);
+    expect(((send.mock.calls[0] as unknown[])[1] as { body: string }).body).toContain(`assay_ack:${e.id}.${keysWhenDelivered[0]}`);
   });
 
   it("gives recoveries no buttons", async () => {
