@@ -795,6 +795,83 @@
   color: rgba(0, 0, 0, 0.6);
 }
 
+/* Status gems: glossy lights in the style of the window buttons. */
+.aqua-gem {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.aqua-gem::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 2.5px;
+  right: 2.5px;
+  height: 4px;
+  border-radius: 50%;
+  background: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.1));
+}
+
+.aqua-gem-success {
+  background: radial-gradient(circle at 50% 75%, #c8f5b0, #53b43c 55%, #2c7a1d);
+}
+
+.aqua-gem-attention_needed {
+  background: radial-gradient(circle at 50% 75%, #fff0a8, #e9a92a 55%, #a86e0c);
+}
+
+.aqua-gem-failure {
+  background: radial-gradient(circle at 50% 75%, #ffb6a8, #e2322a 55%, #a61a13);
+}
+
+/* Sheets slide down from the top edge of the window. */
+.aqua-sheet-overlay {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.aqua-sheet {
+  border-radius: 0 0 8px 8px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 18px 40px rgba(0, 0, 0, 0.4);
+}
+
+.aqua-sheet[data-state="open"] {
+  animation: aqua-sheet-in 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.aqua-sheet[data-state="closed"] {
+  animation: aqua-sheet-out 0.18s ease-in forwards;
+}
+
+@keyframes aqua-sheet-in {
+  from {
+    transform: translate(-50%, -24px);
+    opacity: 0;
+  }
+}
+
+@keyframes aqua-sheet-out {
+  to {
+    transform: translate(-50%, -24px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aqua-sheet[data-state="open"],
+  .aqua-sheet[data-state="closed"] {
+    animation: none;
+  }
+}
+
 /* The Aqua spinner: twelve fading bars, stepping round. Replaces lucide's
    loader icons everywhere they spin. */
 svg.lucide-loader-circle,

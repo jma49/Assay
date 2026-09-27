@@ -1,20 +1,16 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import {
-  AlertCircle,
-  CheckCircle,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
   Database,
   ExternalLink,
-  Filter,
   Search,
   X,
   MoreHorizontal,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -42,19 +38,14 @@ interface CheckHistoryProps {
   totalUnfilteredCount: number;
   totalPages: number;
   currentPage: number;
-  filterStatus: string | null;
   searchTerm: string;
   selectedHashtags?: string[];
   sortConfig: {
     key: keyof Check | "";
     direction: "ascending" | "descending";
   };
-  successCount: number;
-  failureCount: number;
-  needsAttentionCount: number;
   language: string;
   t: (key: DashboardTranslationKeys) => string;
-  setFilterStatus: (status: string | null) => void;
   setSearchTerm: (term: string) => void;
   setSelectedHashtags?: (hashtags: string[]) => void;
   setCurrentPage: (page: number) => void;
@@ -83,14 +74,14 @@ function StatusLabel({
     attention: "text-attention",
     failure: "text-failure",
   }[tone];
-  const dot = {
-    success: "bg-success",
-    attention: "bg-attention",
-    failure: "bg-failure",
+  const gem = {
+    success: "aqua-gem-success",
+    attention: "aqua-gem-attention_needed",
+    failure: "aqua-gem-failure",
   }[tone];
   return (
     <span className={cn("inline-flex items-center gap-2 text-[13px]", color)}>
-      <span className={cn("size-1.5 rounded-full", dot)} aria-hidden />
+      <span className={cn("aqua-gem", gem)} aria-hidden />
       {label}
     </span>
   );
@@ -102,16 +93,11 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
   totalUnfilteredCount,
   totalPages,
   currentPage,
-  filterStatus,
   searchTerm,
   selectedHashtags = [],
   sortConfig,
-  successCount,
-  failureCount,
-  needsAttentionCount,
   language,
   t,
-  setFilterStatus,
   setSearchTerm,
   setSelectedHashtags,
   setCurrentPage,
@@ -167,104 +153,6 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
         </CardDescription>
 
         <div className="pt-3 space-y-3">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Button
-              variant={filterStatus === null ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setFilterStatus(null);
-                setCurrentPage(1);
-              }}
-              className={cn(
-                "h-10 px-3 gap-2 text-sm transition-all duration-300 group/filter",
-              )}
-            >
-              <Filter
-                size={14}
-                className="group-hover/filter:rotate-12 transition-transform duration-200"
-              />
-              <span className="font-medium">{t("filterAll")}</span>
-              <Badge
-                variant="secondary"
-                className="ml-1 h-4 text-xs px-1.5 bg-primary/10 text-primary border-primary/20"
-              >
-                {totalUnfilteredCount}
-              </Badge>
-            </Button>
-
-            <Button
-              variant={filterStatus === "success" ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setFilterStatus("success");
-                setCurrentPage(1);
-              }}
-              className={cn(
-                "h-10 px-3 gap-2 text-sm transition-all duration-300 group/filter",
-              )}
-            >
-              <CheckCircle
-                size={14}
-                className="group-hover/filter:scale-110 transition-transform duration-200"
-              />
-              <span className="font-medium">{t("filterSuccess")}</span>
-              <Badge
-                variant="secondary"
-                className="ml-1 h-4 text-xs px-1.5 bg-success/10 text-success border-success/30 "
-              >
-                {successCount}
-              </Badge>
-            </Button>
-
-            <Button
-              variant={filterStatus === "attention_needed" ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setFilterStatus("attention_needed");
-                setCurrentPage(1);
-              }}
-              className={cn(
-                "h-10 px-3 gap-2 text-sm transition-all duration-300 group/filter",
-              )}
-            >
-              <AlertCircle
-                size={14}
-                className="group-hover/filter:scale-110 transition-transform duration-200"
-              />
-              <span className="font-medium">{t("needsAttention")}</span>
-              <Badge
-                variant="secondary"
-                className="ml-1 h-4 text-xs px-1.5 bg-attention/10 text-attention border-attention/30 "
-              >
-                {needsAttentionCount}
-              </Badge>
-            </Button>
-
-            <Button
-              variant={filterStatus === "failure" ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setFilterStatus("failure");
-                setCurrentPage(1);
-              }}
-              className={cn(
-                "h-10 px-3 gap-2 text-sm transition-all duration-300 group/filter",
-              )}
-            >
-              <AlertCircle
-                size={14}
-                className="group-hover/filter:scale-110 transition-transform duration-200"
-              />
-              <span className="font-medium">{t("filterFailed")}</span>
-              <Badge
-                variant="secondary"
-                className="ml-1 h-4 text-xs px-1.5 bg-failure/10 text-failure border-failure/30 "
-              >
-                {failureCount}
-              </Badge>
-            </Button>
-          </div>
-
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <div className="relative sm:col-span-3">
               <Search className="absolute left-3 top-3 z-10 h-4 w-4 text-muted-foreground pointer-events-none" />

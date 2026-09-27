@@ -15,11 +15,14 @@ import {
   ScriptInfo,
   type DashboardTranslationKeys,
 } from "@/components/business/dashboard/types";
-import { StatsCards } from "@/components/business/dashboard/StatsCards";
+import { StatusTiles } from "@/components/business/dashboard/StatusTiles";
 import { ManualTrigger } from "@/components/business/dashboard/ManualTrigger";
 import { CheckHistory } from "@/components/business/dashboard/CheckHistory";
 import { LoadingError } from "@/components/business/dashboard/LoadingError";
-import { DashboardFooter } from "@/components/business/dashboard/DashboardFooter";
+import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
+import { AquaSheet } from "@/components/ui/aqua-sheet";
+import { Button } from "@/components/ui/button";
+import { Play } from "lucide-react";
 import { DashboardSkeleton } from "@/components/common/PageSkeletons";
 import type { CheckStats } from "@/lib/database/check-stats";
 import { useAppCommand } from "@/lib/commands/use-app-command";
@@ -47,6 +50,21 @@ const Dashboard = () => {
     "success" | "error" | null
   >(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // The Run sheet, opened from the toolbar or the File menu.
+  const [runSheetOpen, setRunSheetOpen] = useState(false);
+  const [runSheetMode, setRunSheetMode] = useState<"single" | "bulk">("single");
+  const openRunSheet = useCallback((mode: "single" | "bulk") => {
+    setRunSheetMode(mode);
+    setRunSheetOpen(true);
+  }, []);
+
+  // File menu: "Run a Check…" / "Run in Bulk…".
+  useAppCommand((command) => {
+    if (command.type !== "run-mode") return false;
+    openRunSheet(command.mode);
+    return true;
+  });
 
   // A View-menu filter that arrives before the first history load is applied
   // by that load, which would otherwise reset it to "all".
@@ -837,60 +855,70 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-10 animate-fadeIn">
-          <header className="space-y-1">
-            <h1 className="text-[28px] leading-tight font-semibold">
-              {t("dashboardTitle")}
-            </h1>
-            {nextScheduled && (
-              <p className="text-[13px] text-muted-foreground">
-                {t("nextScheduledCheck")}:{" "}
-                {nextScheduled.toLocaleString(language, {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              </p>
-            )}
-          </header>
+    <div className="space-y-6 animate-fadeIn">
+          <h1 className="sr-only">{t("dashboardTitle")}</h1>
 
-          {/* Manual Trigger & Stats Combined Section */}
-          <section className="grid gap-6 lg:grid-cols-12">
-              <div className="min-w-0 lg:col-span-8">
-                <ManualTrigger
-                  availableScripts={availableScripts}
-                  selectedScriptId={selectedScriptId}
-                  selectedScript={selectedScript}
-                  isTriggering={isTriggering}
-                  isFetchingScripts={isFetchingScripts}
-                  loading={loading && isFetchingScripts}
-                  triggerMessage={triggerMessage}
-                  triggerMessageType={triggerMessageType}
-                  language={language}
-                  t={t}
-                  setSelectedScriptId={stableSetSelectedScriptId}
-                  handleTriggerCheck={handleTriggerCheck}
-                />
-              </div>
-              
-              <div className="min-w-0 lg:col-span-4">
-                <StatsCards
-                  nextScheduled={nextScheduled}
-                  successCount={successCount}
-                  allChecksCount={allChecksCount}
-                  needsAttentionCount={needsAttentionCount}
-                  successRate={successRate}
-                  language={language}
-                  t={t}
-                  isVerticalLayout={true}
-                />
-              </div>
-          </section>
+          <WindowToolbar>
+            <Button size="sm" className="aqua-default" onClick={() => openRunSheet("single")}>
+              <Play className="size-3.5" />
+              {language === "zh" ? "执行检查…" : "Run a Check…"}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => openRunSheet("bulk")}>
+              {language === "zh" ? "批量执行…" : "Run in Bulk…"}
+            </Button>
+          </WindowToolbar>
+
+          <WindowStatusBar>
+            <span>
+              {language === "zh"
+                ? `${allChecksCount} 次执行 · 通过率 ${successRate}%`
+                : `${allChecksCount} runs · ${successRate}% passed`}
+            </span>
+            {nextScheduled && (
+              <span>
+                · {t("nextScheduledCheck")}{" "}
+                {nextScheduled.toLocaleString(language, { dateStyle: "medium", timeStyle: "short" })}
+              </span>
+            )}
+          </WindowStatusBar>
+
+          {/* The numbers people come for, first; each tile filters the history. */}
+          <StatusTiles
+            total={allChecksCount}
+            success={successCount}
+            attention={needsAttentionCount}
+            failure={failureCount}
+            active={filterStatus}
+            onSelect={handleFilterStatusChange}
+            language={language === "zh" ? "zh" : "en"}
+          />
+
+          {/* Running a check is an occasional action, so it lives in a sheet. */}
+          <AquaSheet
+            open={runSheetOpen}
+            onOpenChange={setRunSheetOpen}
+            title={language === "zh" ? "执行检查" : "Run a check"}
+          >
+            <ManualTrigger
+              key={runSheetMode}
+              initialMode={runSheetMode}
+              availableScripts={availableScripts}
+              selectedScriptId={selectedScriptId}
+              selectedScript={selectedScript}
+              isTriggering={isTriggering}
+              isFetchingScripts={isFetchingScripts}
+              loading={loading && isFetchingScripts}
+              triggerMessage={triggerMessage}
+              triggerMessageType={triggerMessageType}
+              language={language}
+              t={t}
+              setSelectedScriptId={stableSetSelectedScriptId}
+              handleTriggerCheck={handleTriggerCheck}
+            />
+          </AquaSheet>
 
           {/* Check History Section */}
-          <section id="execution-history" className="scroll-mt-20 space-y-4">
-            <h2 className="text-[23px] leading-tight font-semibold">
-              {t("checkHistoryTitle")}
-            </h2>
+          <section id="execution-history" className="scroll-mt-20" aria-label={t("checkHistoryTitle")}>
 
             <CheckHistory
               paginatedChecks={paginatedChecks}
@@ -898,16 +926,11 @@ const Dashboard = () => {
               totalUnfilteredCount={allChecksCount}
               totalPages={totalPages}
               currentPage={currentPage}
-              filterStatus={filterStatus}
               searchTerm={searchTerm}
               selectedHashtags={selectedHashtags}
               sortConfig={sortConfig}
-              successCount={successCount}
-              failureCount={failureCount}
-              needsAttentionCount={needsAttentionCount}
               language={language}
               t={t}
-              setFilterStatus={handleFilterStatusChange}
               setSearchTerm={handleSearchChange}
               setSelectedHashtags={handleHashtagsChange}
               setCurrentPage={handlePageChange}
@@ -919,10 +942,6 @@ const Dashboard = () => {
             />
           </section>
 
-          {/* Footer Section */}
-          <section className="border-t">
-            <DashboardFooter t={t} />
-          </section>
     </div>
   );
 };
