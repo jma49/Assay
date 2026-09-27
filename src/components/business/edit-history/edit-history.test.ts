@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
 import {
   EMPTY_FILTERS,
@@ -8,6 +8,7 @@ import {
   formatPageInfo,
   historyDescription,
   isJumpInputKey,
+  parseDateInput,
   operationBadgeClass,
   operationLabel,
   operationTimeIso,
@@ -73,6 +74,27 @@ describe("buildHistoryQuery", () => {
     const query = new URLSearchParams(buildHistoryQuery({ ...EMPTY_FILTERS, dateFrom: "2026-09-01", dateTo: "2026-09-27" }, 1, 10));
     expect(Number.isNaN(Date.parse(query.get("dateFrom")!))).toBe(false);
     expect(Number.isNaN(Date.parse(query.get("dateTo")!))).toBe(false);
+  });
+});
+
+describe("parseDateInput", () => {
+  const originalTz = process.env.TZ;
+  beforeAll(() => {
+    process.env.TZ = "America/Los_Angeles";
+  });
+  afterAll(() => {
+    process.env.TZ = originalTz;
+  });
+
+  it("returns local midnight of the picked day, not UTC midnight", () => {
+    const date = parseDateInput("2026-09-27")!;
+    expect([date.getFullYear(), date.getMonth(), date.getDate(), date.getHours()]).toEqual([2026, 8, 27, 0]);
+    expect(date.toISOString()).toBe("2026-09-27T07:00:00.000Z");
+  });
+
+  it("ignores empty or malformed input", () => {
+    expect(parseDateInput("")).toBeUndefined();
+    expect(parseDateInput("27/09/2026")).toBeUndefined();
   });
 });
 

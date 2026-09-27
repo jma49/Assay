@@ -22,8 +22,15 @@ export const EMPTY_FILTERS: HistoryFilters = {
   dateTo: "",
 };
 
+/**
+ * Midnight at the start of a `yyyy-mm-dd` day in the viewer's time zone.
+ * `new Date("yyyy-mm-dd")` would give UTC midnight and shift the range by the viewer's offset.
+ */
 export function parseDateInput(value: string): Date | undefined {
-  return value ? new Date(value) : undefined;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return undefined;
+  const [, year, month, day] = match.map(Number);
+  return new Date(year, month - 1, day);
 }
 
 /** Query string for `/api/edit-history`, newest first. */
