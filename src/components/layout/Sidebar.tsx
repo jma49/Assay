@@ -102,7 +102,8 @@ export function Sidebar() {
   useEffect(() => setMounted(true), []);
   const t = COPY[language] ?? COPY.en;
 
-  const allowed = (item: NavItem) => !item.requires || !me || me.permissions.includes(item.requires);
+  // Items that need a permission stay hidden until it is known, so they never flash for people without it.
+  const allowed = (item: NavItem) => !item.requires || (me?.permissions.includes(item.requires) ?? false);
   const allItems = SECTIONS.flatMap((section) => section.items);
   const guest = me?.guest === true && isLoaded && !user;
 
