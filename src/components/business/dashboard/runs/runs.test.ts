@@ -7,7 +7,7 @@ import {
   nextSort,
   pageRange,
   parseChecks,
-  parseNextScheduled,
+  nextScheduledRunOf,
   parsePagination,
   parseScriptList,
   passRate,
@@ -89,20 +89,23 @@ describe("response parsing", () => {
     expect(parsePagination({})).toBeNull();
   });
 
-  it("finds the check list in any of the shapes the scripts API has used", () => {
-    const list = [{ scriptId: "a", name: "A" }] as ScriptInfo[];
-    expect(parseScriptList(list)).toBe(list);
-    expect(parseScriptList({ success: true, data: list })).toBe(list);
-    expect(parseScriptList({ scripts: list })).toBe(list);
-    expect(parseScriptList({ results: list })).toBe(list);
-    expect(parseScriptList({ data: "nope" })).toEqual([]);
+  it("lists the checks by name, as MongoDB sorts them", () => {
+    const list = [{ scriptId: "b", name: "b" }, { scriptId: "c", name: "B" }, { scriptId: "a", name: "A" }] as ScriptInfo[];
+    expect(parseScriptList(list).map((s) => s.scriptId)).toEqual(["a", "c", "b"]);
+    expect(parseScriptList({ message: "nope" })).toEqual([]);
     expect(parseScriptList(null)).toEqual([]);
   });
 
-  it("reads the next scheduled run when there is one", () => {
-    expect(parseNextScheduled({ nextScheduledAt: "2026-09-27T08:00:00Z" })).toEqual(new Date("2026-09-27T08:00:00Z"));
-    expect(parseNextScheduled({ data: [] })).toBeNull();
-    expect(parseNextScheduled([])).toBeNull();
+  it("finds the earliest next run across scheduled checks", () => {
+    const now = new Date("2026-09-27T07:30:00Z");
+    const scripts = [
+      { scriptId: "hourly", name: "h", isScheduled: true, cronSchedule: "0 * * * *" },
+      { scriptId: "daily", name: "d", isScheduled: true, cronSchedule: "0 9 * * *" },
+      { scriptId: "manual", name: "m", isScheduled: false, cronSchedule: "*/5 * * * *" },
+      { scriptId: "broken", name: "x", isScheduled: true, cronSchedule: "not cron" },
+    ] as ScriptInfo[];
+    expect(nextScheduledRunOf(scripts, now)).toEqual(new Date("2026-09-27T08:00:00Z"));
+    expect(nextScheduledRunOf([], now)).toBeNull();
   });
 });
 

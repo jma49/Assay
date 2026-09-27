@@ -1,5 +1,4 @@
 import type { Db, Document } from "mongodb";
-import { clearScriptsCache } from "@/lib/cache/cache-utils";
 import { versionFilter } from "@/lib/workflows/check-fields";
 import { recordEditHistoryOnServer } from "@/lib/workflows/edit-history-store";
 import { createScriptVersion } from "@/lib/workflows/version-control";
@@ -15,8 +14,8 @@ type VersionBump = "major" | "minor" | "patch";
 
 /**
  * The one way a check is created, changed or deleted, whether directly or
- * after approval: the write, then its version record, edit history entry and
- * cache clear, so the two paths cannot drift apart.
+ * after approval: the write, then its version record and edit history entry,
+ * so the two paths cannot drift apart.
  */
 
 const checks = (db: Db) => db.collection(COLLECTIONS.checks);
@@ -49,7 +48,6 @@ export async function createCheck(db: Db, doc: Document, actor: CheckActor, note
   const { insertedId } = await checks(db).insertOne(doc);
   await recordVersion(doc, actor, "create", note, bump);
   await recordEditHistoryOnServer({ scriptId: doc.scriptId, operation: "create", newData: doc }, historyActor(actor));
-  await clearScriptsCache();
   return String(insertedId);
 }
 
@@ -81,7 +79,6 @@ export async function updateCheck(
   const after = (await collection.findOne({ scriptId }))!;
   await recordEditHistoryOnServer({ scriptId, operation: "update", oldData: before, newData: after }, historyActor(actor));
   await recordVersion(after, actor, "update", note, "patch");
-  await clearScriptsCache();
   return { kind: "updated", check: after };
 }
 
@@ -93,6 +90,5 @@ export async function deleteCheck(db: Db, scriptId: string, actor: CheckActor): 
   const { deletedCount } = await collection.deleteOne({ scriptId });
   if (deletedCount === 0) return false;
   await recordEditHistoryOnServer({ scriptId, operation: "delete", oldData: before }, historyActor(actor));
-  await clearScriptsCache();
   return true;
 }

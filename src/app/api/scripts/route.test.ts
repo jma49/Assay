@@ -35,7 +35,6 @@ vi.mock("@/lib/database/mongodb", () => ({
   }),
 }));
 vi.mock("@/lib/cache/redis", () => ({ default: {} }));
-vi.mock("@/lib/cache/cache-utils", () => ({ clearScriptsCache: async () => undefined }));
 vi.mock("@/lib/workflows/version-control", () => ({ createScriptVersion: async () => undefined }));
 vi.mock("@/lib/workflows/edit-history-store", () => ({ recordEditHistoryOnServer: async () => undefined }));
 vi.mock("@/lib/workflows/approval-workflow", async (importOriginal) => ({

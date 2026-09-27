@@ -9,7 +9,6 @@ import path from "path";
 import { Client } from "pg";
 import { getMongoDbClient } from "../../src/lib/database/mongodb";
 import { redactConnectionString } from "../../src/lib/database/redact-connection-string";
-import { clearScriptsCache } from "../../src/lib/cache/cache-utils";
 import { ApprovalStatus } from "@/lib/workflows/approval-workflow";
 import { DEMO_AUTHOR, demoApprovals, demoChecks } from "./checks";
 import { COLLECTIONS } from "@/lib/database/collections";
@@ -119,7 +118,6 @@ async function seedScripts(): Promise<void> {
   } finally {
     await mongo.closeConnection();
   }
-  await clearScriptsCache();
 }
 
 async function main(): Promise<number> {
