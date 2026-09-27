@@ -188,7 +188,11 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
           <Switch
             id="isScheduled"
             checked={formData.isScheduled}
-            onCheckedChange={(checked) => onFormChange("isScheduled", checked)}
+            onCheckedChange={(checked) => {
+              onFormChange("isScheduled", checked);
+              // Start from a sensible schedule instead of an empty one.
+              if (checked && !formData.cronSchedule.trim()) onFormChange("cronSchedule", "0 9 * * *");
+            }}
           />
         </div>
         {formData.isScheduled && (
@@ -196,7 +200,6 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
             value={formData.cronSchedule}
             onChange={(cron) => onFormChange("cronSchedule", cron)}
             language={language}
-            required
           />
         )}
       </Section>
