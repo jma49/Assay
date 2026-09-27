@@ -41,6 +41,7 @@ Scheduled checks run from GitHub Actions (`.github/workflows/sql-check-cron.yml`
 | | |
 | --- | --- |
 | [docs/architecture.md](docs/architecture.md) | Layers, run pipeline, concurrency rules, phases |
+| [docs/database.md](docs/database.md) | Collections, fields, indexes, retention, concurrency |
 | [docs/authentication.md](docs/authentication.md) | Sign-in, roles, moving from Clerk |
 | [docs/notifications.md](docs/notifications.md) | Alert channels, delivery model, setup |
 | [docs/mcp.md](docs/mcp.md) | Connecting agents, tools, security |
