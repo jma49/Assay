@@ -55,22 +55,15 @@ function DialogOverlay({
 function DialogContent({
   className,
   children,
-  variant = "dialog",
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & {
-  /** "sheet" slides down from the top of the window, as Mac OS X sheets do. */
-  variant?: "dialog" | "sheet";
-}) {
+}: React.ComponentProps<typeof DialogPrimitive.Content>) {
   return (
     <DialogPortal>
-      <DialogOverlay className={variant === "sheet" ? "aqua-sheet-overlay" : undefined} />
+      <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "[background:var(--aqua-pinstripe),var(--background)] fixed left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] gap-4 border p-6 shadow-lg sm:max-w-lg",
-          variant === "sheet"
-            ? "aqua-sheet top-10 rounded-t-none rounded-b-lg"
-            : "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 top-[50%] translate-y-[-50%] rounded-lg duration-200",
+          "bg-card fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border p-6 shadow-md duration-150 sm:max-w-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-[0.98] data-[state=open]:zoom-in-[0.98]",
           className,
         )}
         {...props}
