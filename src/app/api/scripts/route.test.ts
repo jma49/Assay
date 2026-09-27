@@ -124,6 +124,11 @@ describe("POST /api/scripts", () => {
     expect(mocks.insertOne).not.toHaveBeenCalled();
   });
 
+  it("answers 409 when a concurrent create took the scriptId first", async () => {
+    mocks.insertOne.mockRejectedValueOnce(Object.assign(new Error("E11000 duplicate key"), { code: 11000 }));
+    expect((await create(validBody)).status).toBe(409);
+  });
+
   it("rejects a malformed scriptId", async () => {
     expect((await create({ ...validBody, scriptId: "Bad Id" })).status).toBe(400);
   });
