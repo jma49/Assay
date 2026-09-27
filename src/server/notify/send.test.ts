@@ -25,6 +25,10 @@ describe("sendRequest", () => {
       error: "HTTP 404: no_service",
     });
     expect(await sendRequest(CHANNELS.slack, request, { fetch: reply(302), resolve: publicDns })).toMatchObject({ kind: "failed" });
+    expect(await sendRequest(CHANNELS.webhook, request, { fetch: reply(405, "<!doctype html><html>…"), resolve: publicDns })).toEqual({
+      kind: "failed",
+      error: "HTTP 405",
+    });
   });
 
   it("reads errors inside a 200 body", async () => {

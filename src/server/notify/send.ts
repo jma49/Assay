@@ -43,7 +43,9 @@ export async function sendRequest(channel: Channel, request: OutgoingRequest, de
     });
     const body = (await response.text().catch(() => "")).slice(0, 2000);
     if (response.ok) return channel.interpretOk(body);
-    const error = `HTTP ${response.status}${body ? `: ${body.slice(0, 200)}` : ""}`;
+    // Services answer errors in a short text or JSON; an HTML error page says nothing useful.
+    const detail = body && !body.trimStart().startsWith("<") ? `: ${body.slice(0, 200)}` : "";
+    const error = `HTTP ${response.status}${detail}`;
     if (response.status === 429) return { kind: "retry", error, retryAfterMs: retryAfterMs(response.headers.get("retry-after")) };
     if (response.status >= 500 || response.status === 408) return { kind: "retry", error };
     // 3xx (not followed) and other 4xx: the URL or the payload is wrong; retrying will not help.
