@@ -11,11 +11,19 @@
 
 ## 谁来启动定时执行
 
-Assay 本身不常驻一个时钟，需要有东西去启动定时执行器。执行器会运行所有 cron 表达式与当前时间匹配（30 分钟内）的检查。自托管的工作区有两种做法：
+Assay 本身不常驻一个时钟，需要有东西去启动定时执行器。执行器对每个检查**每个计划时间只执行一次**：取它的 cron 表达式最近一次到点的时间，如果这个时间还没执行过就执行。触发晚了也不会错过，重复触发也不会执行两次；超过两小时的旧计划时间会被跳过，而不是一次性全部补跑。
 
-### GitHub Actions
+自托管的工作区有两种做法：
 
-仓库里有 `.github/workflows/sql-check-cron.yml`。把 `DATABASE_URL` 和 `MONGODB_URI` 加到仓库的 Secrets，再启用它的 `schedule:` 触发器即可。也可以在 Actions 页面手动运行，并选择模式（`scheduled`、`all` 或 `backup`）。
+### GitHub Actions（推荐）
+
+`.github/workflows/sql-check-cron.yml` 每 30 分钟启动一次执行器。把 `DATABASE_URL` 和 `MONGODB_URI` 加到仓库的 Secrets 后，它就会在默认分支上开始运行；没有配置时会静默跳过。也可以在 Actions 页面手动运行，选择 `scheduled`（到点的检查）或 `all`（立即执行全部）。
+
+想只看会执行哪些检查、而不真正执行：
+
+```bash
+DOTENV_CONFIG_PATH=.env.local npx ts-node -r dotenv/config scripts/run-all-scripts.ts scheduled --dry-run
+```
 
 ### 一台常驻的小服务器
 

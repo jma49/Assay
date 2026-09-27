@@ -2,7 +2,7 @@ import db from "../src/lib/database/db"; // For closing PG pool
 import { getMongoDbClient } from "../src/lib/database/mongodb"; // For MongoDB operations
 import { Collection, Document } from "mongodb"; // For types
 import { executeSqlScriptFromDb } from "./core/sql-executor";
-import { shouldExecuteNow } from "../src/lib/utils/schedule-utils-v2";
+import { dueSlot } from "../src/lib/scheduling/due-slot";
 
 // 环境变量检查
 function checkEnvVariables() {
@@ -36,6 +36,8 @@ async function getSqlScriptsCollection(): Promise<Collection<Document>> {
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const mode = args[0] || "all"; // 默认执行所有脚本
+  // --dry-run lists what would run (and for which slot) without running or recording anything.
+  const dryRun = args.includes("--dry-run");
 
   console.log(`[批量执行] 开始从MongoDB获取SQL脚本... (模式: ${mode})`);
 
@@ -84,6 +86,9 @@ async function main(): Promise<void> {
       console.log(`[批量执行] scheduled模式：仅执行启用了定时任务的脚本`);
     }
 
+    // One clock for the whole run, so every check is judged against the same time.
+    const now = new Date();
+
     let successCount = 0;
     let failCount = 0;
     let skippedCount = 0;
@@ -107,13 +112,34 @@ async function main(): Promise<void> {
         continue;
       }
 
-      // 如果是scheduled模式，检查是否应该在当前时间执行
-      if (mode === "scheduled" && isScheduled && cronSchedule) {
-        const shouldExecute = shouldExecuteNow(cronSchedule);
-        if (!shouldExecute) {
-          console.log(
-            `[批量执行] ⏳ 跳过脚本 ${scriptId} (${scriptName})，当前时间不在执行计划内`
-          );
+      // Scheduled mode runs a check once per cron slot: the latest slot at or
+      // before now, if it has not run for it yet (see dueSlot).
+      let slot: Date | null = null;
+      if (mode === "scheduled") {
+        const lastRunSlot = script.lastScheduledRunSlot as Date | undefined;
+        slot = cronSchedule ? dueSlot(cronSchedule, now, lastRunSlot) : null;
+        if (!slot) {
+          console.log(`[批量执行] ⏳ 跳过脚本 ${scriptId} (${scriptName})，没有待执行的计划时间`);
+          skippedCount++;
+          continue;
+        }
+        if (dryRun) {
+          console.log(`[批量执行] (dry run) 将执行 ${scriptId} (${scriptName})，计划时间 ${slot.toISOString()}`);
+          continue;
+        }
+        // Claim the slot before running, so an overlapping trigger skips it.
+        const claimed = await collection.updateOne(
+          {
+            scriptId,
+            $or: [
+              { lastScheduledRunSlot: { $exists: false } },
+              { lastScheduledRunSlot: { $lt: slot } },
+            ],
+          },
+          { $set: { lastScheduledRunSlot: slot } },
+        );
+        if (claimed.modifiedCount === 0) {
+          console.log(`[批量执行] ⏳ 跳过脚本 ${scriptId}，该计划时间已由其他触发执行`);
           skippedCount++;
           continue;
         }
