@@ -2,7 +2,7 @@
 
 Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改动只在本地（开发服务器和 `next build` + `next start`）和 CI 里验证过。下面这些只能在线上环境确认，部署后逐项检查，完成的打勾。
 
-线上地址：https://assay-sql.vercel.app
+线上地址：https://assay.majincheng.com
 
 ## 部署配置（本 PR：CI 构建 + 只部署 main）
 
@@ -12,7 +12,7 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 
 ## PR #13 安全修复
 
-- [ ] 响应头：`curl -sI https://assay-sql.vercel.app/` 能看到 `X-Frame-Options: DENY`、`Content-Security-Policy: frame-ancestors 'none'`、`X-Content-Type-Options`、`Referrer-Policy`、`Permissions-Policy`、`Strict-Transport-Security`。
+- [ ] 响应头：`curl -sI https://assay.majincheng.com/` 能看到 `X-Frame-Options: DENY`、`Content-Security-Policy: frame-ancestors 'none'`、`X-Content-Type-Options`、`Referrer-Policy`、`Permissions-Policy`、`Strict-Transport-Security`。
 - [ ] 加了响应头后，Clerk 登录、注册（含 Google 登录）仍然正常。
 - [ ] AI 配额：线上 Upstash 正常计数，同一账号一小时内第 31 次 AI 请求返回 429；超长输入返回 413。
 - [ ] 管理员在 User Management 给用户分配角色仍然成功，列表里的邮箱来自 Clerk。
@@ -28,7 +28,7 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 
 ## 文档站 /docs（合并后）
 
-- [ ] 未登录也能打开 https://assay-sql.vercel.app/docs ，`/docs` 跳到快速开始。
+- [ ] 未登录也能打开 https://assay.majincheng.com/docs ，`/docs` 跳到快速开始。
 - [ ] 侧边栏「文档」、文档页「打开 Assay」和首页导航的「文档」链接正确；旧链接 /docs/menu-bar-and-dock 跳到 /docs/navigation。
 - [ ] 中英文切换后刷新页面，语言保持不变。
 - [ ] 文档页面是构建时静态生成的（Vercel 部署详情里 /docs/* 显示为 Static）。
