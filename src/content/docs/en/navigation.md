@@ -18,7 +18,7 @@ Items you do not have permission for are hidden. At the bottom of the sidebar ar
 
 ## Top bar
 
-The page title comes first, then the page's own controls: search, filters, **Run a Check…** on the Runs page, and so on. **New check** is always at the right if you can write checks.
+The page title comes first, then the page's own controls: search, filters, **Run a check…** on the Runs page, and so on. **New check** is always at the right if you can write checks.
 
 ## Keyboard
 
