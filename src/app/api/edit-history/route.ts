@@ -1,3 +1,4 @@
+import { containsText, intParam } from "@/lib/utils/query-params";
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { Permission } from "@/lib/auth/rbac";
@@ -37,8 +38,8 @@ export async function GET(request: NextRequest) {
       dateTo: searchParams.get("dateTo")
         ? new Date(searchParams.get("dateTo")!)
         : undefined,
-      page: parseInt(searchParams.get("page") || "1"),
-      limit: parseInt(searchParams.get("limit") || "20"),
+      page: intParam(searchParams.get("page"), 1, 1, 100_000),
+      limit: intParam(searchParams.get("limit"), 20, 1, 100),
       sortBy:
         (searchParams.get("sortBy") as EditHistoryFilter["sortBy"]) ||
         "operationTime",
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
 
     // 脚本名称筛选（支持英文和中文）
     if (filter.scriptName) {
-      const scriptNameRegex = new RegExp(filter.scriptName, "i");
+      const scriptNameRegex = containsText(filter.scriptName);
       query.$or = [
         { searchableScriptName: scriptNameRegex },
         { searchableScriptNameCn: scriptNameRegex },
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
 
     // 作者筛选
     if (filter.author) {
-      query.searchableAuthor = new RegExp(filter.author, "i");
+      query.searchableAuthor = containsText(filter.author);
     }
 
     // 操作类型筛选

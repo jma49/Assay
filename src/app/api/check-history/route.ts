@@ -1,3 +1,4 @@
+import { containsText, intParam } from "@/lib/utils/query-params";
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { Permission } from "@/lib/auth/rbac";
@@ -62,17 +63,8 @@ export async function GET(request: NextRequest) {
     }
 
     // 获取分页参数
-    const page = Math.max(
-      1,
-      parseInt(searchParams.get("page") || DEFAULT_PAGE.toString())
-    );
-    const limit = Math.min(
-      MAX_LIMIT,
-      Math.max(
-        1,
-        parseInt(searchParams.get("limit") || DEFAULT_LIMIT.toString())
-      )
-    );
+    const page = intParam(searchParams.get("page"), DEFAULT_PAGE, 1, 100_000);
+    const limit = intParam(searchParams.get("limit"), DEFAULT_LIMIT, 1, MAX_LIMIT);
 
     // 获取其他查询参数
     const scriptName = searchParams.get("script_name");
@@ -152,7 +144,7 @@ export async function GET(request: NextRequest) {
     // 处理script_name查询条件
     let scriptNameQuery: unknown = undefined;
     if (scriptName) {
-      scriptNameQuery = { $regex: scriptName, $options: "i" }; // 支持模糊搜索
+      scriptNameQuery = containsText(scriptName);
     }
 
     // 添加hashtag过滤条件
@@ -301,17 +293,8 @@ async function getOptimizedCheckHistory(request: NextRequest) {
     const { searchParams } = new URL(request.url);
 
     // 获取分页参数
-    const page = Math.max(
-      1,
-      parseInt(searchParams.get("page") || DEFAULT_PAGE.toString())
-    );
-    const limit = Math.min(
-      MAX_LIMIT,
-      Math.max(
-        1,
-        parseInt(searchParams.get("limit") || DEFAULT_LIMIT.toString())
-      )
-    );
+    const page = intParam(searchParams.get("page"), DEFAULT_PAGE, 1, 100_000);
+    const limit = intParam(searchParams.get("limit"), DEFAULT_LIMIT, 1, MAX_LIMIT);
 
     // 获取其他查询参数
     const scriptName = searchParams.get("script_name");
@@ -341,7 +324,7 @@ async function getOptimizedCheckHistory(request: NextRequest) {
 
     // 脚本名称过滤
     if (scriptName) {
-      matchStage.script_name = { $regex: scriptName, $options: "i" };
+      matchStage.script_name = containsText(scriptName);
     }
 
     // 状态过滤 - 优化逻辑
