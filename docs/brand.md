@@ -1,0 +1,42 @@
+# Brand
+
+## Mascot
+
+Assay's mascot is a rhinoceros beetle (独角仙): small, armoured, and strong
+for its size, which is what a data check should be. It exists in two forms,
+both in `src/lib/brand/beetle.ts`:
+
+- **Voxel figure** (`beetleVoxels`) for the landing page, rendered by
+  `src/components/brand/VoxelBeetle.tsx` with three.js. It spins in once,
+  then turns slowly and can be dragged; with reduced motion it stays still.
+  three.js loads only where the figure is shown.
+- **Pixel icon** (`beetleIconGrid`), drawn for small sizes: a high dome, the
+  forked horn and three visible legs. It is the favicon, the iOS icon and
+  the mark beside the wordmark (`BeetleMark`, `BrandMark`).
+
+After changing the icon, regenerate the favicon:
+
+```bash
+npx tsx scripts/brand/render-icons.ts
+```
+
+Both are original work. Do not replace them with third-party models or icons
+without checking the licence.
+
+## Colour
+
+The beetle uses the cobalt ramp of the interface accent:
+
+| Role | Hex |
+|---|---|
+| Shell highlight | `#5B82E6` |
+| Shell | `#2350C8` (the interface accent) |
+| Head and pronotum shadow | `#1A3D9E` |
+| Horn | `#16307A`, tip `#2B4FA8` |
+| Legs | `#0F2257` |
+| Tile behind the icon | `#EAF0FD` (the accent's soft tint) |
+
+## Type
+
+Geist for the interface, Geist Mono for code and ids, EB Garamond for page
+titles only.
