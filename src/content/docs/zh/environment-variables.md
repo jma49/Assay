@@ -24,6 +24,7 @@
 | `CHECK_TIMEOUT_MS` | 一个检查的整个脚本（所有语句加在一起）最多运行多久，超时由 PostgreSQL 终止。默认 30000（30 秒），取值会限制在 1000 到 300000 之间。 |
 | `CHECK_CONCURRENCY` | 每个服务器实例同时执行的检查数量，多出来的排队等待。默认 4。 |
 | `PG_POOL_MAX` | 每个服务器实例连接 `DATABASE_URL` 的最大连接数。默认 10。 |
+| `SEED_DATABASE_URL` | 可选。只给 `npm run seed:demo` 用的、能建表的账号。有了它，`DATABASE_URL` 就可以换成只读账号。 |
 | `RUN_RETENTION_DAYS` | 执行记录保留多少天后由 MongoDB 删除。默认 90；`0` 表示永久保留。 |
 
 ## 告警
