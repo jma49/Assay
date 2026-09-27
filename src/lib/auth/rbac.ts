@@ -214,6 +214,13 @@ export async function removeUserRole(userId: string): Promise<boolean> {
   }
 }
 
+/** Whether an active admin other than `userId` exists, so changing `userId` still leaves someone who can manage roles. */
+export async function hasOtherActiveAdmin(userId: string): Promise<boolean> {
+  const collection = await getUserRolesCollection();
+  const others = await collection.countDocuments({ role: UserRole.ADMIN, isActive: true, userId: { $ne: userId } }, { limit: 1 });
+  return others > 0;
+}
+
 /** Whether a role may give or take away another: admins any, managers developer and viewer only. */
 export function canManageRole(
   managerRole: UserRole,
