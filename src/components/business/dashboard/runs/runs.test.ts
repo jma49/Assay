@@ -124,15 +124,15 @@ describe("page numbers", () => {
 
 describe("takeSearchParam", () => {
   it("returns the trimmed search and the URL without it", () => {
-    expect(takeSearchParam("https://assay.test/dashboard?search=%20orders%20&tab=x")).toEqual({
+    expect(takeSearchParam("https://assay.test/runs?search=%20orders%20&tab=x")).toEqual({
       search: "orders",
-      cleanedHref: "https://assay.test/dashboard?tab=x",
+      cleanedHref: "https://assay.test/runs?tab=x",
     });
   });
 
   it("ignores a missing or empty search", () => {
-    expect(takeSearchParam("https://assay.test/dashboard")).toBeNull();
-    expect(takeSearchParam("https://assay.test/dashboard?search=")).toBeNull();
+    expect(takeSearchParam("https://assay.test/runs")).toBeNull();
+    expect(takeSearchParam("https://assay.test/runs?search=")).toBeNull();
   });
 });
 

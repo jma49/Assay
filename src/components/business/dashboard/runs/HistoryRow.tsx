@@ -35,7 +35,7 @@ interface HistoryRowProps {
 /** One run; clicking anywhere outside its links opens the run report. */
 export function HistoryRow({ check, displayName, language, t }: HistoryRowProps) {
   const router = useRouter();
-  const reportHref = `/view-execution-result/${check._id}`;
+  const reportHref = `/runs/${check._id}`;
   return (
     <TableRow
       className="group/row cursor-pointer"

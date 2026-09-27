@@ -127,7 +127,7 @@ function Row({ item }: { item: ActivityItem }) {
               {detail}
             </span>
           ))}
-          <Link href={`/view-execution-result/${item.runId}`} className="text-primary before:mr-2 before:text-muted-foreground before:content-['·'] hover:underline">
+          <Link href={`/runs/${item.runId}`} className="text-primary before:mr-2 before:text-muted-foreground before:content-['·'] hover:underline">
             {t.run}
           </Link>
         </div>

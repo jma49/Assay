@@ -10,23 +10,23 @@ export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Runs" };
 
-export default async function DashboardPage() {
+export default async function RunsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
     // Demo guests have no account; the middleware already let them through.
-    if (await currentGuestId()) return <DashboardView />;
-    redirect("/sign-in?redirect_url=/dashboard");
+    if (await currentGuestId()) return <RunsView />;
+    redirect("/sign-in?redirect_url=/runs");
   }
 
   if (!isValidEmailDomain(session.user.email)) {
     redirect("/unauthorized");
   }
 
-  return <DashboardView />;
+  return <RunsView />;
 }
 
-function DashboardView() {
+function RunsView() {
   return (
     <div className="min-h-screen">
       <main className={`${APP_CONTAINER} py-8`}>

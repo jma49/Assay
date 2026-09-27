@@ -179,7 +179,7 @@ export function CoveragePanes({
 
             {!selected.missing && (
               <Button asChild size="sm" variant={selected.checks.length > 0 ? "outline" : "default"}>
-                <Link href={`/scripts/new?table=${encodeURIComponent(selected.table)}`}>
+                <Link href={`/checks/new?table=${encodeURIComponent(selected.table)}`}>
                   <Plus />
                   {t.newCheck}
                 </Link>

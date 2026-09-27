@@ -26,13 +26,13 @@ export function RunHistory({ runs, t, language }: { runs: RunListItem[]; t: Copy
             <tr
               key={run.runId}
               className="cursor-pointer border-b transition-[background-color] duration-150 last:border-0 hover:bg-muted/60"
-              onClick={() => router.push(`/view-execution-result/${run.runId}`)}
+              onClick={() => router.push(`/runs/${run.runId}`)}
             >
               <td className="px-4 py-2.5">
                 <span className={cn("status-dot", OUTCOME_DOT[run.outcome])} aria-label={OUTCOME_LABEL[run.outcome][language]} />
               </td>
               <td className="px-3 py-2.5 whitespace-nowrap" title={formatDateTime(run.at, language)}>
-                <Link href={`/view-execution-result/${run.runId}`} className="hover:underline">
+                <Link href={`/runs/${run.runId}`} className="hover:underline">
                   {formatRelative(run.at, language)}
                 </Link>
               </td>
