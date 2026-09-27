@@ -793,9 +793,12 @@ svg.lucide-loader > * {
 }
 
 /* ---------- Dock ----------
-   A translucent glass shelf at the bottom of the desktop. The icon under the
-   pointer grows and its neighbours make room, as in Mac OS X. */
+   A translucent glass shelf of Aqua-style object icons. Dock.tsx writes each
+   icon's magnification into --s from the pointer position; widths (not
+   transforms) grow, so neighbours make room as in Mac OS X. */
 .aqua-dock-wrap {
+  --dock-icon: 50px;
+
   position: fixed;
   bottom: max(6px, env(safe-area-inset-bottom));
   left: 50%;
@@ -806,9 +809,10 @@ svg.lucide-loader > * {
 .aqua-dock {
   display: flex;
   align-items: flex-end;
-  gap: 6px;
+  gap: 4px;
+  height: calc(var(--dock-icon) + 16px);
   margin: 0;
-  padding: 6px 12px 10px;
+  padding: 0 10px 9px;
   list-style: none;
   border-radius: 12px;
   background: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.38));
@@ -830,95 +834,87 @@ svg.lucide-loader > * {
 
 .aqua-dock-item {
   position: relative;
+  flex: none;
+  width: calc(var(--dock-icon) * var(--s, 1));
   margin: 0;
-  transform-origin: 50% 100%;
-  transition:
-    transform 0.16s ease-out,
-    margin 0.16s ease-out;
+  /* Settles back gently when the pointer leaves... */
+  transition: width 0.22s ease-out;
 }
 
-@media (hover: hover) and (min-width: 768px) {
-  .aqua-dock-item:hover {
-    z-index: 1;
-    margin: 0 12px;
-    transform: scale(1.45);
-  }
-
-  .aqua-dock-item:hover + .aqua-dock-item,
-  .aqua-dock-item:has(+ .aqua-dock-item:hover) {
-    margin: 0 5px;
-    transform: scale(1.18);
-  }
-
-  .aqua-dock-item:hover .aqua-dock-label {
-    opacity: 1;
-  }
+/* ...but follows the pointer closely while it moves. */
+.aqua-dock[data-tracking] .aqua-dock-item {
+  transition-duration: 0.07s;
 }
 
-/* Phones: a smaller, iOS-like row of tiles without magnification. */
-@media (max-width: 767px) {
-  .aqua-dock {
-    gap: 8px;
-    padding: 6px 10px 9px;
-  }
-
-  .aqua-dock-tile {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-  }
-
-  .aqua-dock-tile svg {
-    width: 22px;
-    height: 22px;
-  }
-}
-
-.aqua-dock-tile {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  width: 46px;
-  height: 46px;
-  place-items: center;
-  border-radius: 11px;
+.aqua-dock-link {
+  display: block;
+  border-radius: 10px;
+  outline: none;
   cursor: default;
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
-    0 2px 4px rgba(0, 0, 0, 0.35);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.aqua-dock-tile::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  top: 1px;
-  left: 3px;
-  right: 3px;
-  height: 50%;
-  border-radius: 10px 10px 18px 18px / 10px 10px 8px 8px;
-  background: linear-gradient(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.12));
+.aqua-dock-link img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.aqua-dock-tile:active {
-  filter: brightness(0.7);
+/* Pressing an icon darkens it, as on the Mac. */
+.aqua-dock-link:active img {
+  filter: brightness(0.55) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
 }
 
-/* The name floats above the icon while pointing at it. */
+.aqua-dock-link:focus-visible {
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+/* The launch bounce while the chosen section opens. */
+.aqua-dock-item[data-launching] .aqua-dock-link {
+  animation: aqua-dock-bounce 0.62s infinite;
+}
+
+@keyframes aqua-dock-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
+  }
+  45% {
+    transform: translateY(-22px);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.3);
+  }
+}
+
+/* The name floats above the icon while pointing at it or focusing it. */
 .aqua-dock-label {
   position: absolute;
-  bottom: calc(100% + 10px);
+  bottom: calc(100% + 8px);
   left: 50%;
   padding: 2px 10px;
   border-radius: 999px;
   background: rgba(20, 20, 22, 0.78);
   color: #fff;
-  font-size: 9px;
+  font-size: 12px;
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
   transform: translateX(-50%);
   transition: opacity 0.12s;
+}
+
+@media (hover: hover) {
+  .aqua-dock-item:hover .aqua-dock-label {
+    opacity: 1;
+  }
+}
+
+.aqua-dock-item:has(.aqua-dock-link:focus-visible) .aqua-dock-label {
+  opacity: 1;
 }
 
 /* The black triangle under a running application (Mac OS X 10.0–10.4). */
@@ -938,10 +934,25 @@ svg.lucide-loader > * {
   border-bottom-color: #eee;
 }
 
+/* Phones: a smaller, iOS-like row without magnification. */
+@media (max-width: 767px) {
+  .aqua-dock-wrap {
+    --dock-icon: 44px;
+  }
+
+  .aqua-dock {
+    gap: 6px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .aqua-dock-item,
   .aqua-dock-label {
     transition: none;
+  }
+
+  .aqua-dock-item[data-launching] .aqua-dock-link {
+    animation: none;
   }
 }
 
