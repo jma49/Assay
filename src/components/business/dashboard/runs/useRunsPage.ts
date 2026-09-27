@@ -106,6 +106,9 @@ export function useRunsPage(language: string) {
   });
 
   useEffect(() => {
+    // Strict Mode runs this twice; by then the search link is gone from the URL,
+    // so a second pass would replace the filtered load with an unfiltered one.
+    if (history.hasRequested()) return;
     const searchLink = takeSearchParam(window.location.href);
     if (searchLink) {
       window.history.replaceState({}, "", searchLink.cleanedHref);
