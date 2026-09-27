@@ -734,7 +734,7 @@ export default function ViewExecutionResultPage() {
           {canRunAgain && (
             <Button size="sm" variant="outline" onClick={handleRunAgain} disabled={isRunningAgain}>
               <Play />
-              {isRunningAgain ? (zh ? "执行中…" : "Running…") : zh ? "再次执行" : "Run Again"}
+              {isRunningAgain ? (zh ? "执行中…" : "Running…") : zh ? "再次执行" : "Run again"}
             </Button>
           )}
           {hasTableData && (
@@ -754,7 +754,7 @@ export default function ViewExecutionResultPage() {
         <div className="grid gap-6 lg:grid-cols-12 animate-fadeIn">
           {/* What happened, then the rows that prove it. */}
           <section className="min-w-0 space-y-5 lg:col-span-8">
-            <header className="rounded-xl border bg-card shadow-xs flex items-start gap-3  px-5 py-4">
+            <header className="rounded-xl bg-card shadow-border flex items-start gap-3  px-5 py-4">
               <span className={cn("status-dot mt-2", `status-dot-${tone}`)} aria-hidden />
               <div className="min-w-0">
                 <p className={cn("font-serif text-[26px] leading-tight font-semibold", toneText)}>{headline}</p>
@@ -767,14 +767,14 @@ export default function ViewExecutionResultPage() {
               </div>
             </header>
 
-            <div className="rounded-xl border bg-card shadow-xs overflow-hidden " aria-label={t.queryFindings}>
+            <div className="rounded-xl bg-card shadow-border overflow-hidden " aria-label={t.queryFindings}>
               {findingsContent}
             </div>
           </section>
 
           {/* A Get Info inspector: everything else about the run. */}
           <aside className="lg:col-span-4">
-            <div className="rounded-xl border bg-card shadow-xs overflow-hidden  lg:sticky lg:top-16">
+            <div className="rounded-xl bg-card shadow-border overflow-hidden  lg:sticky lg:top-16">
               <p className="border-b bg-muted px-4 py-2 text-[12px] font-medium text-muted-foreground">{zh ? "简介" : "Info"}</p>
               <dl className="divide-y text-[13px]">
                 {info.map((item) => (

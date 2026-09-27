@@ -64,7 +64,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
       : 0;
 
   return (
-    <Card className="unified-card transition-all duration-300 h-full flex flex-col">
+    <Card className="unified-card transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300 h-full flex flex-col">
       <CardHeader className="px-4 py-3 bg-card/50 border-b border-border/50">
         <div className="flex items-center gap-2">
           <div className="icon-container bg-primary/10 rounded-lg">

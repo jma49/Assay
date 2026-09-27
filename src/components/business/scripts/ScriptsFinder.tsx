@@ -23,8 +23,8 @@ const COPY = {
     empty: "No checks here",
     choose: "Select a check to see it here",
     edit: "Edit",
-    editHistory: "Edit History",
-    runHistory: "Run History",
+    editHistory: "Edit history",
+    runHistory: "Run history",
     delete: "Delete",
     author: "Author",
     scope: "Scope",
@@ -152,7 +152,7 @@ export function ScriptsFinder({
   );
 
   return (
-    <div className="flex h-[calc(100dvh-10rem)] min-h-[440px] overflow-hidden rounded-xl border bg-card shadow-xs max-xl:h-auto max-xl:flex-col">
+    <div className="flex h-[calc(100dvh-10rem)] min-h-[440px] overflow-hidden rounded-xl bg-card shadow-border max-xl:h-auto max-xl:flex-col">
       {/* Source list */}
       <nav
         aria-label={t.library}

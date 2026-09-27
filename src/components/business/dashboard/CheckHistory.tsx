@@ -179,7 +179,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="absolute right-1 top-1 h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-all duration-200"
+                  className="absolute right-1 top-1 h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200"
                   onClick={() => setSearchTerm("")}
                 >
                   <span className="sr-only">{t("clearSearch")}</span>
@@ -232,7 +232,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                             )}
                           </span>
                         )}
-                        <ChevronUp className="h-3 w-3 opacity-20 group-hover/sort:opacity-50 transition-all duration-300" />
+                        <ChevronUp className="h-3 w-3 opacity-20 group-hover/sort:opacity-50 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300" />
                       </div>
                     </div>
                   </TableHead>
@@ -252,7 +252,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                             )}
                           </span>
                         )}
-                        <ChevronUp className="h-3 w-3 opacity-20 group-hover/sort:opacity-50 transition-all duration-300" />
+                        <ChevronUp className="h-3 w-3 opacity-20 group-hover/sort:opacity-50 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300" />
                       </div>
                     </div>
                   </TableHead>
@@ -369,7 +369,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                           variant="ghost"
                           size="sm"
                           className="-mr-2 h-8 gap-1.5 px-2 text-[13px] text-muted-foreground hover:text-foreground"
-                          title={t("viewFullReportButton") || "View Full Report"}
+                          title={t("viewFullReportButton") || "View report"}
                         >
                           <Link href={`/view-execution-result/${check._id}`}>
                             <span className="hidden sm:inline">
@@ -404,7 +404,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
               size="sm"
               onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
               disabled={currentPage === 1}
-              className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
+              className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150 relative z-30"
             >
               <ChevronLeft className="h-3.5 w-3.5 mr-1" />
               <span className="hidden sm:inline">{t("previous")}</span>
@@ -501,7 +501,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
                 setCurrentPage(Math.min(currentPage + 1, totalPages))
               }
               disabled={currentPage === totalPages}
-              className="h-7 px-2 text-xs transition-all duration-150 relative z-30"
+              className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150 relative z-30"
             >
               <span className="hidden sm:inline">{t("next")}</span>
               <ChevronRight className="h-3.5 w-3.5 ml-1" />
