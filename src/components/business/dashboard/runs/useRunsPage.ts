@@ -19,7 +19,6 @@ export function useRunsPage(language: string) {
   const [isFetchingScripts, setIsFetchingScripts] = useState(true);
   const [nextScheduled, setNextScheduled] = useState<Date | null>(null);
   const [overallStats, setOverallStats] = useState<CheckStats>(EMPTY_STATS);
-  const [isSearchMode, setIsSearchMode] = useState(false);
   const history = useRunHistory(setError);
 
   // A View-menu filter that arrives before the first history load is applied
@@ -52,29 +51,29 @@ export function useRunsPage(language: string) {
     }
   }, []);
 
-  const { loadPage } = history;
-  const loadInitialData = useCallback(async () => {
-    if (isSearchMode) return;
-    setLoading(true);
-    setIsFetchingScripts(true);
-    try {
-      // History and stats do not depend on the script list, so request all three at once.
-      await Promise.all([
-        loadScripts(),
-        loadPage({ page: 1, status: initialFilterRef.current, search: "", hashtags: [], sort: DEFAULT_SORT }),
-        loadOverallStats(),
-      ]);
-      initialHistoryLoadedRef.current = true;
-      setIsFetchingScripts(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "数据加载失败");
-    } finally {
-      setLoading(false);
-    }
-  }, [isSearchMode, loadScripts, loadPage, loadOverallStats]);
+  const { loadPage, reload } = history;
+  /** Loads the check list, the numbers and the history page `loadHistory` asks for, all at once. */
+  const loadAll = useCallback(
+    async (loadHistory: () => Promise<void>) => {
+      setLoading(true);
+      setIsFetchingScripts(true);
+      try {
+        await Promise.all([loadScripts(), loadHistory(), loadOverallStats()]);
+        initialHistoryLoadedRef.current = true;
+        setIsFetchingScripts(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "数据加载失败");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loadScripts, loadOverallStats],
+  );
+
+  // After a manual run: the new run and numbers, keeping the filters the history shows.
+  const refresh = useCallback(() => loadAll(reload), [loadAll, reload]);
 
   const openFilteredBySearch = (search: string) => {
-    setIsSearchMode(true);
     history.presetFilters({ status: null, search, hashtags: [] });
     toast.info(language === "zh" ? "正在筛选执行历史" : "Filtering run history", {
       description: language === "zh" ? `搜索脚本: ${search}` : `Script: ${search}`,
@@ -115,7 +114,7 @@ export function useRunsPage(language: string) {
       window.history.replaceState({}, "", searchLink.cleanedHref);
       openFilteredBySearch(searchLink.search);
     } else {
-      loadInitialData();
+      loadAll(() => loadPage({ page: 1, status: initialFilterRef.current, search: "", hashtags: [], sort: DEFAULT_SORT }));
     }
     // Runs once on mount; later loads come from the filters and the Run sheet.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -129,6 +128,6 @@ export function useRunsPage(language: string) {
     nextScheduled,
     overallStats,
     history,
-    refresh: loadInitialData,
+    refresh,
   };
 }

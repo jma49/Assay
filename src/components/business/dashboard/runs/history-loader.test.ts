@@ -65,4 +65,20 @@ describe("createHistoryLoader", () => {
     const loader = createHistoryLoader(async () => new Response("boom", { status: 500, statusText: "Server Error" }));
     expect(await loader.load(query(""))).toEqual({ kind: "error", message: "获取检查历史失败: 500 Server Error" });
   });
+
+  it("reloads the last requested page with its filters, e.g. after a manual run", async () => {
+    const fetchImpl = vi.fn(async (_url: string, _init?: RequestInit) => page("orders"));
+    const loader = createHistoryLoader(fetchImpl);
+    await loader.load({ page: 2, status: "failure", search: "orders", hashtags: ["billing"], sort: DEFAULT_SORT });
+    await loader.reload();
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchImpl.mock.calls[1]).toEqual(fetchImpl.mock.calls[0]);
+    expect(fetchImpl.mock.calls[1][0]).toContain("page=2&limit=50&include_results=false&status=failure&script_name=orders&hashtags=billing");
+  });
+
+  it("has nothing to reload before the first request", async () => {
+    const fetchImpl = vi.fn(async (_url: string, _init?: RequestInit) => page("orders"));
+    expect(await createHistoryLoader(fetchImpl).reload()).toEqual({ kind: "stale" });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
 });
