@@ -56,6 +56,7 @@ const COPY = {
     testFailed: (error: string) => `Test failed: ${error}`,
     removed: "Destination removed",
     paused: "Paused",
+    digestAt: (time: string) => `Daily summary ${time}`,
     connected: "Channel connected. Send a test to see how alerts look.",
     oauthError: {
       cancelled: "Connection cancelled.",
@@ -94,6 +95,7 @@ const COPY = {
     testFailed: (error: string) => `测试失败：${error}`,
     removed: "已移除通知渠道",
     paused: "已暂停",
+    digestAt: (time: string) => `每日汇总 ${time}`,
     connected: "渠道已连接。发送一条测试看看告警的样子。",
     oauthError: {
       cancelled: "已取消连接。",
@@ -270,6 +272,11 @@ function DestinationRow({
               {ALERT_LABEL[kind][language]}
             </span>
           ))}
+          {destination.digest?.enabled && (
+            <span className="rounded-md bg-primary-soft px-1.5 py-0.5 text-primary" title={destination.digest.timeZone}>
+              {t.digestAt(`${String(destination.digest.hour).padStart(2, "0")}:00`)}
+            </span>
+          )}
           <span className="text-subtle-foreground">·</span>
           <span className="text-muted-foreground">{destination.tags.length ? t.tagged(destination.tags.join(", ")) : t.everyCheck}</span>
           <span className="text-subtle-foreground">·</span>

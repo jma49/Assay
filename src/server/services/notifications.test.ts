@@ -113,6 +113,18 @@ function memoryStore(events: StoredEvent[], destinations: Destination[], checkEx
       return deliveries.filter((d) => d.destinationId === destinationId && d.sentAt && d.sentAt >= since).length;
     },
     async recordLastDelivery() {},
+    async digestDestinations() {
+      return destinations.filter((d) => d.enabled && d.digest?.enabled);
+    },
+    async claimDigest(id, slot, now) {
+      const d = destinations.find((x) => x.id === id)!;
+      if ((d.lastDigestAt ?? d.createdAt) >= slot) return false;
+      d.lastDigestAt = now;
+      return true;
+    },
+    async digestSummary() {
+      return { total: 3, broken: [], issues: [{ name: "Orders", rowCount: 3 }], changes: 1, recovered: 0 };
+    },
   };
   return { store, deliveries, fanned };
 }
@@ -137,13 +149,13 @@ describe("dispatchNotifications", () => {
       [destination(), destination({ id: "d2", alerts: ["broken"] }), destination({ id: "d3", tags: ["ops"] }), destination({ id: "d4", enabled: false })],
     );
     const { deps: d, send } = deps(store);
-    expect(await dispatchNotifications(d)).toEqual({ queued: 1, sent: 1, retrying: 0, failed: 0 });
+    expect(await dispatchNotifications(d)).toEqual({ queued: 1, sent: 1, retrying: 0, failed: 0, digests: 0 });
     expect(deliveries.map((x) => x.destinationId)).toEqual(["d1"]);
     const request = (send.mock.calls[0] as unknown[])[1] as { body: string };
     expect(request.body).toContain("https://assay.example/checks/orders");
 
     // Running again (or concurrently) sends nothing more.
-    expect(await dispatchNotifications(d)).toEqual({ queued: 0, sent: 0, retrying: 0, failed: 0 });
+    expect(await dispatchNotifications(d)).toEqual({ queued: 0, sent: 0, retrying: 0, failed: 0, digests: 0 });
     expect(send).toHaveBeenCalledTimes(1);
   });
 
@@ -231,5 +243,26 @@ describe("dispatchNotifications", () => {
     const broken = memoryStore([event({ to: "error", from: "issues" })], [destination()], { alerting: { ack }, state: { since: t0, outcome: "error" } });
     await dispatchNotifications(deps(broken.store).deps);
     expect(broken.deliveries).toHaveLength(1);
+  });
+
+  it("sends the daily summary once per day, from the first slot after the destination was made", async () => {
+    const digest = { enabled: true, hour: 9, timeZone: "UTC" };
+    // t0 is 09:00 UTC; the destination was made a minute before.
+    const { store } = memoryStore([], [destination({ digest, alerts: [] })]);
+    const clock = { now: new Date(t0.getTime() + 60_000) };
+    const { deps: d, send } = deps(store, [{ kind: "sent" }], clock);
+    expect((await dispatchNotifications(d)).digests).toBe(1);
+    expect(((send.mock.calls[0] as unknown[])[1] as { body: string }).body).toContain("Daily summary: 1 with issues");
+
+    // Later the same day, and from a second dispatcher: nothing more.
+    clock.now = new Date(t0.getTime() + 5 * 3_600_000);
+    expect((await dispatchNotifications(d)).digests).toBe(0);
+    // The next day's slot.
+    clock.now = new Date(t0.getTime() + 24 * 3_600_000 + 60_000);
+    expect((await dispatchNotifications(d)).digests).toBe(1);
+
+    // Made after today's slot: waits for tomorrow.
+    const late = memoryStore([], [destination({ digest, createdAt: new Date(t0.getTime() + 3_600_000) })]);
+    expect((await dispatchNotifications(deps(late.store, [{ kind: "sent" }], { now: new Date(t0.getTime() + 2 * 3_600_000) }).deps)).digests).toBe(0);
   });
 });
