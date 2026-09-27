@@ -30,3 +30,27 @@ export function runAccess({
   if (demoMode && scriptAuthor === DEMO_AUTHOR) return "demo";
   return "forbidden";
 }
+
+/** All guests together, so rotating addresses cannot run the demo database hot. */
+export const GUEST_RUNS_PER_HOUR_TOTAL = 200;
+
+/**
+ * The budgets a demo run counts against. A signed-up viewer is limited per
+ * account; a guest, whose cookie is free to replace, per IP address and
+ * against a shared cap for all guests.
+ */
+export function demoRunBudgets(
+  caller: { id: string; isGuest: boolean },
+  ip: string,
+): { subject: string; limit: number }[] {
+  if (!caller.isGuest) return [{ subject: caller.id, limit: DEMO_RUNS_PER_HOUR }];
+  return [
+    { subject: `ip:${ip}`, limit: DEMO_RUNS_PER_HOUR },
+    { subject: "guests", limit: GUEST_RUNS_PER_HOUR_TOTAL },
+  ];
+}
+
+/** The client address as the platform reports it; Vercel sets x-forwarded-for itself. */
+export function clientIp(headers: Headers): string {
+  return headers.get("x-forwarded-for")?.split(",")[0]?.trim() || headers.get("x-real-ip") || "unknown";
+}

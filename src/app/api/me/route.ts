@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { GUEST_PERMISSIONS, validateApiAuth } from "@/lib/auth/auth-utils";
 import { getUserRole, ROLE_PERMISSIONS } from "@/lib/auth/rbac";
 import { aiEnabled } from "@/lib/ai/model";
 import { DEMO_RUNS_PER_HOUR, isDemoMode } from "@/lib/security/demo-sandbox";
@@ -9,14 +9,16 @@ import { DEMO_RUNS_PER_HOUR, isDemoMode } from "@/lib/security/demo-sandbox";
  * user can do. Every API still enforces permissions itself.
  */
 export async function GET() {
-  const authResult = await validateApiAuth("en");
+  const authResult = await validateApiAuth("en", { allowGuest: true });
   if (!authResult.isValid) {
     return authResult.response!;
   }
-  const role = await getUserRole(authResult.user.id);
+  const guest = authResult.isGuest;
+  const role = guest ? "guest" : await getUserRole(authResult.user.id);
   return NextResponse.json({
     role,
-    permissions: role ? ROLE_PERMISSIONS[role] : [],
+    permissions: guest ? GUEST_PERMISSIONS : role && role !== "guest" ? ROLE_PERMISSIONS[role] : [],
+    guest,
     demo: isDemoMode() ? { runsPerHour: DEMO_RUNS_PER_HOUR } : null,
     ai: aiEnabled(),
   });
