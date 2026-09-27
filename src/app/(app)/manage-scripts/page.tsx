@@ -136,9 +136,14 @@ const ManageScriptsContent = () => {
   );
 };
 
+const LoadingFallback = () => {
+  const { language } = useLanguage();
+  return <div>{language === "zh" ? "加载中..." : "Loading..."}</div>;
+};
+
 const ManageScriptsPage = () => {
   return (
-    <Suspense fallback={<div>加载中...</div>}>
+    <Suspense fallback={<LoadingFallback />}>
       <ManageScriptsContent />
     </Suspense>
   );

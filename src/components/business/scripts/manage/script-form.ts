@@ -84,12 +84,13 @@ export function toFormMetadata(form: ScriptFormState): ScriptFormData {
 }
 
 /** Fields the save button refuses to go without. */
-export function missingRequiredFields(form: ScriptFormState, sql: string): string[] {
+export function missingRequiredFields(form: ScriptFormState, sql: string, language: Language): string[] {
+  const zh = isZh(language);
   const missing: string[] = [];
-  if (!form.scriptId?.trim()) missing.push("脚本ID");
-  if (!form.name?.trim()) missing.push("脚本名称");
-  if (!form.author?.trim()) missing.push("作者");
-  if (!sql?.trim()) missing.push("SQL内容");
+  if (!form.scriptId?.trim()) missing.push(zh ? "脚本ID" : "script ID");
+  if (!form.name?.trim()) missing.push(zh ? "脚本名称" : "name");
+  if (!form.author?.trim()) missing.push(zh ? "作者" : "author");
+  if (!sql?.trim()) missing.push(zh ? "SQL内容" : "SQL");
   return missing;
 }
 
@@ -108,7 +109,7 @@ export function stillNeededHint(form: ScriptFormState, sql: string, language: La
 /** Client-side checks before a save is sent; the server repeats them. */
 export function saveProblem(form: ScriptFormState, sql: string, language: Language): Notice | null {
   const zh = isZh(language);
-  const missing = missingRequiredFields(form, sql);
+  const missing = missingRequiredFields(form, sql, language);
   if (missing.length > 0) {
     return {
       title: zh ? "请填写必填字段" : "Fill in the required fields",

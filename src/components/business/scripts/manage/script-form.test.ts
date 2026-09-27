@@ -87,6 +87,11 @@ describe("saveProblem", () => {
     expect(problem?.duration).toBe(6000);
   });
 
+  it("names the missing fields in the UI language", () => {
+    expect(saveProblem(emptyForm(""), "", "en")?.description).toBe("Missing: script ID, name, author, SQL");
+    expect(saveProblem(emptyForm(""), "", "zh")?.description).toBe("缺少字段：脚本ID、脚本名称、作者、SQL内容");
+  });
+
   it("rejects a scheduled check without a cron expression", () => {
     const problem = saveProblem({ ...validForm, isScheduled: true, cronSchedule: "" }, "SELECT 1", "en");
     expect(problem?.title).toBeTruthy();
