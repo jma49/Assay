@@ -9,7 +9,8 @@ export const INDEXES: Record<string, IndexDescription[]> = {
   [COLLECTIONS.runs]: [{ key: { finishedAt: -1 } }, { key: { checkId: 1, finishedAt: -1 } }, { key: { outcome: 1, finishedAt: -1 } }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
   [COLLECTIONS.approvalRequests]: [{ key: { requestId: 1 }, unique: true }, { key: { status: 1, requestedAt: -1 } }],
   [COLLECTIONS.editHistory]: [{ key: { operationTime: -1 } }, { key: { "scriptSnapshot.scriptId": 1, operationTime: -1 } }],
-  [COLLECTIONS.scriptVersions]: [{ key: { scriptId: 1, createdAt: -1 } }],
+  // One record per version number; a concurrent second "1.0.5" fails instead of being stored twice.
+  [COLLECTIONS.scriptVersions]: [{ key: { scriptId: 1, createdAt: -1 } }, { key: { scriptId: 1, version: 1 }, unique: true }],
   // One event per run at most, so retried runs never notify twice.
   [COLLECTIONS.events]: [{ key: { runId: 1 }, unique: true }, { key: { at: -1 } }, { key: { checkId: 1, at: -1 } }],
   [COLLECTIONS.checkActions]: [{ key: { checkId: 1, at: -1 } }],
