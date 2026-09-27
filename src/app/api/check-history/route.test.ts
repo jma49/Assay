@@ -125,7 +125,18 @@ describe("GET /api/check-history", () => {
 
   it("clamps the page size", async () => {
     await history("?limit=100000");
-    expect(mocks.limit).toHaveBeenCalledWith(200);
+    expect(mocks.limit).toHaveBeenLastCalledWith(500);
+    await history("?limit=100000&include_results=true");
+    expect(mocks.limit).toHaveBeenLastCalledWith(200);
+  });
+
+  it("filters one check's runs within a date range, as the Analysis page asks", async () => {
+    await history("?scriptId=orders-check&startDate=2026-09-01T00:00:00.000Z&endDate=2026-09-08T00:00:00.000Z&limit=500");
+    expect(mocks.runsFind.mock.calls[0][0]).toEqual({
+      checkId: { $eq: "orders-check" },
+      finishedAt: { $gte: new Date("2026-09-01T00:00:00.000Z"), $lte: new Date("2026-09-08T00:00:00.000Z") },
+    });
+    expect(mocks.limit).toHaveBeenLastCalledWith(500);
   });
 
   it("only reads and returns raw_results when include_results=true", async () => {
