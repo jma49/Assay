@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApprovalStatus } from "@/lib/types/approval";
-import { formatPageInfo, isPageInputKeyAllowed, pageCount, pageSlice, parsePageInput, statusTone } from "./approvals";
+import { clampPage, formatPageInfo, isPageInputKeyAllowed, pageCount, pageSlice, parsePageInput, statusTone } from "./approvals";
 
 describe("statusTone", () => {
   it("colours approved green, rejected red and everything else as needing attention", () => {
@@ -19,6 +19,13 @@ describe("pagination helpers", () => {
     expect(pageCount(23, 10)).toBe(3);
     expect(pageCount(20, 10)).toBe(2);
     expect(pageCount(0, 10)).toBe(0);
+  });
+
+  it("pulls a page that no longer exists back to the last one", () => {
+    expect(clampPage(2, 1)).toBe(1);
+    expect(clampPage(3, 0)).toBe(1);
+    expect(clampPage(0, 3)).toBe(1);
+    expect(clampPage(2, 3)).toBe(2);
   });
 
   it("slices one page of items", () => {

@@ -31,6 +31,11 @@ export function pageCount(totalItems: number, pageSize: number): number {
   return Math.ceil(totalItems / pageSize);
 }
 
+/** Keeps a page number inside 1..totalPages, e.g. after the list shrank under it. */
+export function clampPage(page: number, totalPages: number): number {
+  return Math.min(Math.max(page, 1), Math.max(totalPages, 1));
+}
+
 export function pageSlice<T>(items: T[], page: number, pageSize: number): T[] {
   const start = (page - 1) * pageSize;
   return items.slice(start, start + pageSize);
