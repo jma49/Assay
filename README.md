@@ -9,6 +9,7 @@ Open-source SQL data checks for PostgreSQL: write read-only checks, run them on 
 [![MongoDB](https://img.shields.io/badge/MongoDB-6-green.svg)](https://www.mongodb.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-checked-336791.svg)](https://www.postgresql.org/)
 [![Better Auth](https://img.shields.io/badge/Better%20Auth-Google%20%7C%20GitHub-purple.svg)](https://www.better-auth.com/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
 ## What it does
 
@@ -69,6 +70,6 @@ scripts/            # CLI entry points and migrations
 docs/               # engineering docs
 ```
 
-## 📄 License
+## License
 
-This project is proprietary software. All rights reserved.
+[Apache License 2.0](LICENSE). Copyright 2025-2026 Jincheng Ma; see [NOTICE](NOTICE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
