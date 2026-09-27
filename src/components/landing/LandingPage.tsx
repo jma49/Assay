@@ -10,7 +10,6 @@ import { useLanguage } from "@/components/common/LanguageProvider";
 import { BRAND, GITHUB_URL, QUICK_START, landingCopy, type Language } from "./content";
 import { Demo, DemoFrame, RECENT_RUNS, StatusDot } from "./demo-panels";
 import { BrandMark } from "@/components/common/BrandMark";
-import { SECTION_THEMES } from "./themes";
 import { VoxelBeetle } from "@/components/brand/VoxelBeetle";
 
 /** Shared horizontal frame: every section aligns to the same left and right edges. */
@@ -23,21 +22,10 @@ const heroPrimaryButton =
 const heroSecondaryButton =
   "inline-flex h-11 items-center justify-center rounded-md bg-card px-6 text-[14px] font-medium shadow-border hover:shadow-border-hover transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]";
 
-const WHY_ICONS = [
-  { Icon: ShieldCheck, color: "#3f7d58" },
-  { Icon: CalendarClock, color: "#b7791f" },
-  { Icon: GitPullRequest, color: "#4a6a8a" },
-  { Icon: Sparkles, color: "#b54a3c" },
-];
+const WHY_ICONS = [ShieldCheck, CalendarClock, GitPullRequest, Sparkles];
 
-function Eyebrow({ children, accent = false }: { children: React.ReactNode; accent?: boolean }) {
-  return accent ? (
-    <span className="inline-block rounded-full bg-[color-mix(in_srgb,var(--l-accent)_16%,transparent)] px-2.5 py-1 text-[12px] font-medium text-(--l-accent)">
-      {children}
-    </span>
-  ) : (
-    <p className="text-[13px] tracking-wide text-(--l-muted) uppercase">{children}</p>
-  );
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return <p className="text-[12px] font-medium tracking-wider text-(--l-muted) uppercase">{children}</p>;
 }
 
 function ThemeToggle() {
@@ -176,16 +164,15 @@ function ProductPreview({ lang }: { lang: Language }) {
 
 function FeatureSection({ lang, index }: { lang: Language; index: number }) {
   const section = landingCopy[lang].sections[index];
-  const theme = SECTION_THEMES[index % SECTION_THEMES.length];
   const [active, setActive] = useState(0);
   // The middle section mirrors the layout (list left, demo right), as on inkdrop.app.
   const mirrored = index % 2 === 1;
 
   return (
-    <section id={section.id} className="py-20 sm:py-28">
+    <section id={section.id} className="py-14 sm:py-20">
       <div className={CONTAINER}>
         <div className="max-w-[640px]">
-          <Eyebrow accent>{section.eyebrow}</Eyebrow>
+          <Eyebrow>{section.eyebrow}</Eyebrow>
           <h2 className="serif mt-4 text-[30px] leading-tight font-semibold tracking-tight text-(--l-fg) sm:text-[38px]">
             {section.title}
           </h2>
@@ -193,15 +180,7 @@ function FeatureSection({ lang, index }: { lang: Language; index: number }) {
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-12 md:gap-8">
           <div className={`order-2 min-w-0 md:col-span-8 ${mirrored ? "md:order-2" : "md:order-1"}`}>
-            {/* The editor theme colours only the window's content, like an app on the Aqua desktop. */}
-            <div style={{ ...theme.vars, color: "var(--l-fg)" }}>
-              <Demo kind={section.items[active].demo} lang={lang} />
-            </div>
-            <p className="mt-3 flex justify-center">
-              <span className="rounded-full bg-(--l-panel) px-2.5 py-1 text-[12px] text-(--l-muted)">
-                {landingCopy[lang].themeLabel}: {theme.name}
-              </span>
-            </p>
+            <Demo kind={section.items[active].demo} lang={lang} />
           </div>
           <ul
             className={`order-1 flex flex-col gap-1 md:col-span-4 ${mirrored ? "md:order-1" : "md:order-2"}`}
@@ -214,7 +193,7 @@ function FeatureSection({ lang, index }: { lang: Language; index: number }) {
                   role="tab"
                   aria-selected={i === active}
                   onClick={() => setActive(i)}
-                  className={`group w-full rounded-[5px] py-3 pr-3 pl-4 text-left ${
+                  className={`group w-full rounded-lg py-3 pr-3 pl-4 text-left transition-[background-color] duration-150 ${
                     i === active ? "bg-primary-soft" : "hover:bg-(--l-panel)"
                   }`}
                 >
@@ -249,8 +228,7 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
           <div aria-hidden className="absolute inset-x-0 top-0 bottom-40 bg-[radial-gradient(ellipse_at_top,var(--primary-soft),transparent_70%)] sm:bottom-56" />
           <div className={`${CONTAINER} relative`}>
             <div className="mx-auto max-w-[780px] text-center">
-              <VoxelBeetle className="mx-auto -mt-10 h-[240px] w-full max-w-[420px] sm:h-[300px]" />
-              <p className="mb-4 text-[12px] text-(--l-muted)">{t.hero.mascotHint}</p>
+              <VoxelBeetle className="mx-auto -mt-10 mb-2 h-[240px] w-full max-w-[420px] sm:h-[300px]" />
               <h1 className="serif text-balance text-[40px] leading-[1.08] font-semibold tracking-tight sm:text-[60px]">
                 {t.hero.title}
               </h1>
@@ -275,7 +253,7 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
           </div>
         </section>
 
-        <section id="features" className="pt-16 pb-20 sm:pt-20 sm:pb-28">
+        <section id="features" className="pt-16 pb-6 sm:pt-20 sm:pb-8">
           <div className={CONTAINER}>
             <div className="max-w-[640px]">
               <Eyebrow>{t.why.eyebrow}</Eyebrow>
@@ -285,13 +263,11 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
             </div>
             <div className="mt-10 grid gap-px overflow-hidden rounded-xl border bg-(--l-line) sm:grid-cols-2 lg:grid-cols-4">
               {t.why.cards.map((card, i) => {
-                const { Icon, color } = WHY_ICONS[i % WHY_ICONS.length];
+                const Icon = WHY_ICONS[i % WHY_ICONS.length];
                 return (
                 <div key={card.title} className="bg-card p-6">
-                  <span
-                    className="mb-4 inline-flex size-9 items-center justify-center rounded-md"
-                    style={{ color, background: `color-mix(in srgb, ${color} 12%, transparent)` }}
-                  >
+                  {/* One colour for all four: green, amber and red mean run statuses elsewhere. */}
+                  <span className="mb-4 inline-flex size-9 items-center justify-center rounded-md bg-primary-soft text-primary">
                     <Icon className="size-[18px]" />
                   </span>
                   <h3 className="serif text-[19px] font-semibold">{card.title}</h3>
@@ -349,22 +325,6 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
                   <p className="pb-4 text-[14px] leading-6 text-(--l-muted)">{item.a}</p>
                 </details>
               ))}
-            </div>
-          </div>
-        </section>
-        <section className="relative overflow-hidden border-t bg-[radial-gradient(ellipse_at_bottom,var(--primary-soft),transparent_70%)] py-24 sm:py-28">
-          <div className={`${CONTAINER} relative text-center`}>
-            <h2 className="serif mx-auto max-w-[640px] text-balance text-[32px] leading-tight font-semibold tracking-tight sm:text-[42px]">
-              {t.cta.title}
-            </h2>
-            <p className="mx-auto mt-4 max-w-[520px] text-pretty text-[16px] leading-7 text-(--l-muted)">{t.cta.body}</p>
-            <div className="mt-8 flex justify-center gap-3">
-              <Link href={demo ? "/demo" : "/dashboard"} prefetch={false} className={heroPrimaryButton}>
-                {t.hero.primary}
-              </Link>
-              <a href={GITHUB_URL} className={heroSecondaryButton}>
-                {t.hero.secondary}
-              </a>
             </div>
           </div>
         </section>
