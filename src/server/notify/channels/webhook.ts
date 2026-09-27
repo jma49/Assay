@@ -20,8 +20,8 @@ export const webhook: Channel = {
   },
   request(message, secret, { now }) {
     const body = JSON.stringify({
-      type: message.kind === "digest" ? "assay.digest" : "assay.alert",
-      alert: message.kind === "digest" ? undefined : message.kind,
+      type: message.kind === "digest" ? "assay.digest" : message.kind === "reminder" ? "assay.reminder" : "assay.alert",
+      alert: message.kind === "digest" || message.kind === "reminder" ? undefined : message.kind,
       title: message.title,
       lines: message.lines,
       check: { name: message.checkName, url: message.url },

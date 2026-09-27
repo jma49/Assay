@@ -5,6 +5,7 @@ import type { Destination, NotifyStore, StoredEvent } from "@/server/services/no
 
 export const DESTINATIONS = "notification_destinations";
 export const DELIVERIES = "notification_deliveries";
+export const REMINDERS = "notification_reminders";
 
 const DUPLICATE_KEY = 11000;
 
@@ -28,6 +29,7 @@ export function toDestination(doc: Document): Destination {
     digest: doc.digest ?? null,
     lastDigestAt: doc.lastDigestAt ? new Date(doc.lastDigestAt) : null,
     source: doc.source ?? "paste",
+    remind: doc.remind ?? null,
   };
 }
 
@@ -54,6 +56,7 @@ export function mongoNotifyStore(db: Db): NotifyStore {
   const checks = db.collection("sql_scripts");
   const destinations = db.collection(DESTINATIONS);
   const deliveries = db.collection(DELIVERIES);
+  const reminders = db.collection(REMINDERS);
 
   return {
     async pendingEvents(since, limit) {
@@ -178,6 +181,56 @@ export function mongoNotifyStore(db: Db): NotifyStore {
         .find({ checkId: { $in: ids }, at: { $gte: since } }, { projection: { to: 1 } })
         .toArray();
       return { total: docs.length, broken, issues, changes: recent.length, recovered: recent.filter((e) => e.to === "clean").length };
+    },
+
+    async reminderDestinations() {
+      return (await destinations.find({ enabled: { $ne: false }, "remind.afterHours": { $gt: 0 } }).toArray()).map(toDestination);
+    },
+
+    async openProblems(workspaceId, tags) {
+      // Checks carry no workspaceId yet; they all belong to the default workspace.
+      if (workspaceId !== DEFAULT_WORKSPACE_ID) return [];
+      const docs = await checks
+        .find(
+          { "state.outcome": { $in: ["error", "issues"] }, ...(tags.length ? { hashtags: { $in: [...tags] } } : {}) },
+          { projection: { scriptId: 1, name: 1, cnName: 1, state: 1, alerting: 1 } },
+        )
+        .toArray();
+      return docs.map((doc) => ({
+        checkId: String(doc.scriptId),
+        name: String(doc.name ?? doc.scriptId),
+        cnName: doc.cnName || undefined,
+        outcome: doc.state.outcome,
+        rowCount: Number(doc.state.rowCount ?? 0),
+        since: new Date(doc.state.since),
+        alerting: doc.alerting ?? null,
+      }));
+    },
+
+    async remindersSent(destinationId, checkId, since) {
+      return (await reminders.findOne({ destinationId, checkId, since }, { projection: { sent: 1 } }))?.sent ?? 0;
+    },
+
+    async claimReminder(destinationId, checkId, since, sent, now) {
+      if (sent === 0) {
+        try {
+          await reminders.insertOne({ destinationId, checkId, since, sent: 1, lastAt: now });
+          return true;
+        } catch (error) {
+          if ((error as { code?: number }).code === DUPLICATE_KEY) return false;
+          throw error;
+        }
+      }
+      const result = await reminders.updateOne({ destinationId, checkId, since, sent }, { $inc: { sent: 1 }, $set: { lastAt: now } });
+      return result.modifiedCount === 1;
+    },
+
+    async problemToken(checkId, since) {
+      const event = await events.findOne(
+        { checkId, at: { $gte: since }, actionKey: { $exists: true } },
+        { sort: { at: -1 }, projection: { actionKey: 1 } },
+      );
+      return event ? `${String(event._id)}.${event.actionKey}` : null;
     },
 
     async recordLastDelivery(destinationId, result) {
