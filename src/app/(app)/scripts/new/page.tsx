@@ -35,6 +35,18 @@ FROM your_table
 WHERE status IS NULL;
 `;
 
+const TABLE_NAME = /^[A-Za-z_][\w$]*(\.[A-Za-z_][\w$]*)?$/;
+
+/** A starting query for a check on one table, opened from the coverage view. */
+function starterSqlFor(table: string) {
+  return `-- A check passes when this query returns no rows.
+-- Replace "false" with what makes a row need attention.
+SELECT *
+FROM ${table}
+WHERE false;
+`;
+}
+
 const initialFormData: ScriptFormData = {
   scriptId: "",
   name: "",
@@ -107,6 +119,15 @@ export default function NewScriptPage() {
     },
     [language],
   );
+
+  // Coverage links here with ?table=schema.table; only plain identifiers are accepted.
+  useEffect(() => {
+    const table = new URLSearchParams(window.location.search).get("table");
+    if (!table || !TABLE_NAME.test(table)) return;
+    setSqlContent(starterSqlFor(table));
+    const schema = table.includes(".") ? table.split(".")[0] : "";
+    if (schema) setFormData((prev) => (prev.scope ? prev : { ...prev, scope: schema }));
+  }, []);
 
   // Prefill the author once the signed-in user is known; the API falls back to it anyway.
   useEffect(() => {
