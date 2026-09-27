@@ -47,6 +47,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p .",
     "user:set-role": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/set-user-role.ts",
+    "telegram:webhook": "tsx -r dotenv/config scripts/telegram-webhook.ts",
     "seed:demo": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/demo/seed-demo.ts"
   },
   "dependencies": {

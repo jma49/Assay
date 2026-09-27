@@ -165,11 +165,16 @@ queue can replace the inline runner later without changing services.
 
 - **DataSource:** `runReadOnly(sql, { timeoutMs, maxRows })`. PostgreSQL
   today; MySQL, BigQuery or Snowflake later as adapters.
-- **Notifier:** `send(event)`. Slack first, then email and webhooks.
+- **Channel:** `request(message, secret)` and `interpretOk(body)` in
+  `src/server/notify/channels/`. A new service is one file and an entry in
+  `CHANNELS`; the outbox, retries and settings page need no change.
 - **Agents:** an MCP server exposes the same services (list checks, run,
   draft, triage) with the same permissions.
-- **Workspaces:** every document already carries `workspaceId`, so
-  multi-tenant access control is a filter in the repositories, not a rewrite.
+- **Workspaces:** new documents (events, destinations, deliveries) carry
+  `workspaceId`; older ones without it belong to the default workspace.
+  Routes resolve the workspace through `workspaceOf(principal)` and pass it
+  to the repositories, so multi-tenant access control is a change there, not
+  a rewrite.
 
 ## Phases
 
@@ -185,6 +190,10 @@ queue can replace the inline runner later without changing services.
 3. **Checks list and detail on real state.** Status groups, 30-run history,
    new / still / fixed diffs.
 4. **Events and notifications.** Activity feed, Slack notifier, outbox
-   dispatcher.
+   dispatcher. *Done: an outbox of deliveries (unique per event and
+   destination, claimed atomically, retried with backoff) and channels for
+   Slack, Discord, Telegram, Feishu, WeCom and signed webhooks; one-click
+   Slack and Discord through OAuth and Telegram through a deep link; secrets
+   sealed with AES-256-GCM. See [notifications.md](notifications.md).*
 5. **Clean-up.** Remove legacy modules and pages, add end-to-end tests for
    the main flows.

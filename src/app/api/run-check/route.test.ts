@@ -35,6 +35,7 @@ vi.mock("@/lib/database/mongodb", () => ({
   }),
 }));
 vi.mock("@/lib/cache/redis", () => ({ default: {} }));
+vi.mock("@/server/services/notify-deps", () => ({ dispatchAfterResponse: () => undefined }));
 vi.mock("@/lib/security/ai-guard", () => ({
   consumeQuota: async (_store: unknown, subject: string) => {
     mocks.quotaSubjects.push(subject);

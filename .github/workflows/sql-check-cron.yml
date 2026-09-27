@@ -55,3 +55,18 @@ jobs:
             exit 0
           fi
           npx tsx scripts/run-all-scripts.ts "$EXECUTION_MODE"
+
+      - name: Send alerts
+        # Alerts are sent by the app, which holds the channel secrets; this
+        # only asks it to run the outbox. Runs even when a check failed.
+        if: always()
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::notice::APP_URL or CRON_SECRET is not set; alerts go out on the next run in the app."
+            exit 0
+          fi
+          curl --fail-with-body --silent --show-error --max-time 60 \
+            -X POST -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/notifications/dispatch"

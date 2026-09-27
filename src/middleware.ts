@@ -19,6 +19,9 @@ const isPublicRoute = createRouteMatcher([
   // Icons generated at build time have no file extension for the matcher to skip.
   "/apple-icon(.*)",
   "/icon(.*)",
+  // Machine callers that authenticate with their own shared secrets.
+  "/api/notifications/dispatch",
+  "/api/integrations/telegram/webhook",
 ]);
 
 // Pages a demo guest can open; every API route still checks the guest itself.
@@ -30,6 +33,8 @@ const isGuestRoute = createRouteMatcher([
   "/view-execution-result/(.*)",
   "/data-analysis",
   "/coverage",
+  "/activity",
+  "/settings/notifications",
   "/api/(.*)",
 ]);
 
