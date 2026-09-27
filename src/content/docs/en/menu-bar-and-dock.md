@@ -6,12 +6,12 @@ Assay borrows the Mac OS X layout: the **Dock** at the bottom takes you somewher
 
 | Icon | Opens |
 |---|---|
-| Monitor | Dashboard |
-| Documents | Scripts |
-| Flask with + | New Check |
-| Bar chart | Analysis |
-| Stamp | Approvals |
-| ID badges | Users |
+| Gauges | Dashboard |
+| Database | Scripts |
+| Database with + | New Check |
+| Pie chart | Analysis |
+| Green tick | Approvals |
+| Person | Users |
 
 The triangle under an icon marks where you are. With a keyboard, use **Tab** to reach the Dock and **← →**, **Home** and **End** to move along it.
 
