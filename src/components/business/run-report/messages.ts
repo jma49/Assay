@@ -35,11 +35,6 @@ export const runReportMessages = {
       report: "Report",
       other: "Other",
     },
-    statusTexts: {
-      success: "Clean",
-      attentionNeeded: "Issues",
-      failure: "Broken",
-    },
   },
   zh: {
     loading: "加载中...",
@@ -76,11 +71,6 @@ export const runReportMessages = {
       monitor: "监控",
       report: "报告",
       other: "其他",
-    },
-    statusTexts: {
-      success: "正常",
-      attentionNeeded: "有问题",
-      failure: "出错",
     },
   },
 };

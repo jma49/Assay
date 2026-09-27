@@ -11,27 +11,8 @@ import {
   readRunResponse,
   rowCount,
   runHeadline,
-  runTone,
-  statusLabel,
   tableRows,
 } from "./run-report";
-
-describe("runTone", () => {
-  it("prefers the attention status, then success, and treats anything else as a failure", () => {
-    expect(runTone({ status: "success", statusType: "attention_needed" })).toBe("attention_needed");
-    expect(runTone({ status: "success" })).toBe("success");
-    expect(runTone({ status: "success", statusType: "success" })).toBe("success");
-    expect(runTone({ status: "failure" })).toBe("failure");
-    expect(runTone({ status: "error", statusType: "failed" })).toBe("failure");
-  });
-
-  it("maps each tone to its label", () => {
-    const { statusTexts } = runReportMessages.en;
-    expect(statusLabel("attention_needed", statusTexts)).toBe("Issues");
-    expect(statusLabel("success", statusTexts)).toBe("Clean");
-    expect(statusLabel("failure", statusTexts)).toBe("Broken");
-  });
-});
 
 describe("readRunResponse", () => {
   it("returns the run on success", async () => {
@@ -73,16 +54,16 @@ describe("findings shape", () => {
 
 describe("runHeadline", () => {
   it("counts rows needing attention, with singular and plural", () => {
-    expect(runHeadline("attention_needed", 1, "en")).toBe("1 row needs attention");
-    expect(runHeadline("attention_needed", 3, "en")).toBe("3 rows need attention");
-    expect(runHeadline("attention_needed", 3, "zh")).toBe("3 行需要关注");
-    expect(runHeadline("attention_needed", null, "en")).toBe("Needs attention");
+    expect(runHeadline("issues", 1, "en")).toBe("1 row needs attention");
+    expect(runHeadline("issues", 3, "en")).toBe("3 rows need attention");
+    expect(runHeadline("issues", 3, "zh")).toBe("3 行需要关注");
+    expect(runHeadline("issues", null, "en")).toBe("Needs attention");
   });
 
   it("describes clean and failed runs", () => {
-    expect(runHeadline("success", 0, "en")).toBe("Clean: no rows returned");
-    expect(runHeadline("failure", null, "en")).toBe("The query failed");
-    expect(runHeadline("failure", null, "zh")).toBe("查询出错");
+    expect(runHeadline("clean", 0, "en")).toBe("Clean: no rows returned");
+    expect(runHeadline("error", null, "en")).toBe("The query failed");
+    expect(runHeadline("error", null, "zh")).toBe("查询出错");
   });
 });
 

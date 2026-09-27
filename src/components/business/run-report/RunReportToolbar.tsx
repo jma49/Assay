@@ -2,12 +2,13 @@ import { Brain, Download, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
 import type { RunReportMessages } from "./messages";
-import type { Language, RunTone } from "./run-report";
+import type { RunOutcome } from "@/domain/run";
+import type { Language } from "./run-report";
 
 interface RunReportToolbarProps {
   language: Language;
   t: RunReportMessages;
-  tone: RunTone;
+  outcome: RunOutcome;
   title: string;
   executedAt: string;
   rowCount: number | null;
@@ -25,7 +26,7 @@ interface RunReportToolbarProps {
 export function RunReportToolbar({
   language,
   t,
-  tone,
+  outcome,
   title,
   executedAt,
   rowCount,
@@ -47,7 +48,7 @@ export function RunReportToolbar({
           ‹ {zh ? "返回" : "Back"}
         </Button>
         <div className="ml-auto flex items-center gap-2">
-          {(tone === "failure" || tone === "attention_needed") && canTriage && (
+          {outcome !== "clean" && canTriage && (
             <Button size="sm" variant="outline" onClick={onTriage} disabled={isTriaging}>
               <Brain />
               {isTriaging ? (zh ? "分诊中…" : "Triaging…") : zh ? "AI 分诊" : "Triage with AI"}
