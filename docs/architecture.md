@@ -153,11 +153,14 @@ database itself: point `DATABASE_URL` at a role that can only SELECT, e.g.
 
 ```sql
 CREATE ROLE assay_reader LOGIN PASSWORD '...';
-GRANT USAGE ON SCHEMA public TO assay_reader;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO assay_reader;
+GRANT USAGE ON SCHEMA public, demo TO assay_reader;
+GRANT SELECT ON ALL TABLES IN SCHEMA public, demo TO assay_reader;
 ALTER ROLE assay_reader SET default_transaction_read_only = on;
 ALTER ROLE assay_reader SET statement_timeout = '60s';
 ```
+
+`npm run seed:demo` recreates the `demo` schema through `SEED_DATABASE_URL`
+and gives `assay_reader` its grants back when that role exists.
 
 `runDueChecks` claims each due slot atomically (already in place) and runs
 the claimed checks with bounded concurrency. `runBatch` records a batch
