@@ -1,18 +1,15 @@
-# .github/workflows/sql-check-manual-trigger.yml
 name: Manual SQL Script Trigger
 
 on:
   workflow_dispatch:
     inputs:
       script_id:
-        description: "The ID of the SQL script to run (from manifest.json)"
+        description: "The ID of the check to run (its script ID in the app)"
         required: true
         type: string
 
-env:
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  MONGODB_URI: ${{ secrets.MONGODB_URI }} # Make sure MONGODB_URI is also a secret
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed if run_sql needs it, otherwise optional
+permissions:
+  contents: read
 
 jobs:
   run-manual-sql-check:
@@ -20,10 +17,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "22"
           cache: "npm"
@@ -31,26 +28,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Create environment file
-        # Secrets reach the file through env vars only: never inlined into the
-        # script text and never printed. Action logs of this public repo are public.
-        run: |
-          printf 'DATABASE_URL=%s\nMONGODB_URI=%s\n' "$DATABASE_URL" "$MONGODB_URI" > .env.local
-          # Pass the GitHub Run ID for potential linking in saved results
-          printf 'GITHUB_RUN_ID=%s\nGITHUB_SERVER_URL=%s\nGITHUB_REPOSITORY=%s\nNODE_ENV=production\n' \
-            "$GITHUB_RUN_ID" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" >> .env.local
-
       - name: Run SQL Check Script
+        # Secrets go straight into the environment; nothing writes or prints them.
+        # Action logs of this public repo are public.
         env:
-          DOTENV_CONFIG_PATH: .env.local
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          NODE_ENV: production
           # Inputs go through env, not ${{ }} in the script, so they cannot inject shell.
           SCRIPT_ID: ${{ github.event.inputs.script_id }}
-        run: |
-          echo "Current working directory: $(pwd)"
-          echo "Using .env file: ${DOTENV_CONFIG_PATH}"
-          echo "Script ID to execute: ${SCRIPT_ID}"
-          ls -la ${DOTENV_CONFIG_PATH}
-          echo "About to run the check..."
-          # tsx runs TypeScript directly; -r preloads dotenv/config
-          npx tsx -r dotenv/config scripts/run-sql.ts "$SCRIPT_ID"
-        continue-on-error: false # Fail the workflow if the script fails
+        run: npx tsx scripts/run-sql.ts "$SCRIPT_ID"
