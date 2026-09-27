@@ -4,10 +4,9 @@ import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { OUTCOME_DOT, OUTCOME_TEXT, outcomeOf } from "@/components/checks/status";
-import { formatRelative } from "@/lib/utils/datetime";
+import { formatDateTime, formatRelative } from "@/lib/utils/datetime";
 import { cn } from "@/lib/utils/utils";
 import type { Check, DashboardTranslationKeys } from "../types";
-import { formatDate } from "../utils";
 
 type Translate = (key: DashboardTranslationKeys) => string;
 
@@ -61,7 +60,7 @@ export function HistoryRow({ check, displayName, language, t }: HistoryRowProps)
         <time
           className="block truncate"
           dateTime={check.execution_time}
-          title={formatDate(check.execution_time, language)}
+          title={formatDateTime(check.execution_time, language)}
         >
           {formatRelative(check.execution_time, language)}
         </time>
