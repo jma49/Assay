@@ -100,7 +100,7 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 ## 登录（阶段 5：Better Auth 替换 Clerk）
 
 - [ ] Vercel 环境变量：`BETTER_AUTH_SECRET`（`openssl rand -base64 32`）、`BETTER_AUTH_URL`（生产地址）、`GOOGLE_CLIENT_ID/SECRET`、`GITHUB_CLIENT_ID/SECRET`；删除所有 `CLERK_*` 和 `NEXT_PUBLIC_CLERK_*`。
-- [ ] Google Cloud 的 OAuth 客户端加上回调 `https://<域名>/api/auth/callback/google`；GitHub OAuth App 的回调 `https://<域名>/api/auth/callback/github`。
+- [ ] Google Cloud 的 OAuth 客户端加上回调 `https://assay.majincheng.com/api/auth/callback/google`；线上 GitHub OAuth App 的回调 `https://assay.majincheng.com/api/auth/callback/github`。`BETTER_AUTH_URL` 和 `APP_URL` 都设为 `https://assay.majincheng.com`。
 - [ ] 用原来的管理员邮箱通过 Google 登录：成员页里原角色自动转到新账号（`legacyUserId` 保留旧 Clerk ID）。
 - [ ] 用同一邮箱的 GitHub 登录，应当是同一个用户。
 - [ ] 退出登录后访问 /checks 跳转到登录页；访客演示 /demo 仍可用。
