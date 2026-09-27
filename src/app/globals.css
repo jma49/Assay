@@ -851,16 +851,18 @@
   animation: aqua-sheet-out 0.18s ease-in forwards;
 }
 
+/* Only the vertical slide: horizontal centring comes from Tailwind's
+   separate translate property, which a transform here would double. */
 @keyframes aqua-sheet-in {
   from {
-    transform: translate(-50%, -24px);
+    transform: translateY(-24px);
     opacity: 0;
   }
 }
 
 @keyframes aqua-sheet-out {
   to {
-    transform: translate(-50%, -24px);
+    transform: translateY(-24px);
     opacity: 0;
   }
 }
