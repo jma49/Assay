@@ -47,6 +47,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ triage: cached, cached: true });
     }
 
+    // Guests may read saved triage but never start a model call.
+    if (authResult.isGuest) {
+      return NextResponse.json({ error: "Sign up to run AI triage" }, { status: 403 });
+    }
+
     const status = String(run.statusType || run.status || "");
     if (status === "success") {
       return NextResponse.json({ error: "This run passed; there is nothing to triage" }, { status: 400 });

@@ -26,3 +26,22 @@ describe("runAccess", () => {
     }
   });
 });
+
+describe("demoRunBudgets", () => {
+  it("limits accounts per account and guests per IP plus a shared cap", async () => {
+    const { demoRunBudgets, DEMO_RUNS_PER_HOUR, GUEST_RUNS_PER_HOUR_TOTAL } = await import("./demo-sandbox");
+    expect(demoRunBudgets({ id: "user_1", isGuest: false }, "1.2.3.4")).toEqual([
+      { subject: "user_1", limit: DEMO_RUNS_PER_HOUR },
+    ]);
+    expect(demoRunBudgets({ id: "guest_x", isGuest: true }, "1.2.3.4")).toEqual([
+      { subject: "ip:1.2.3.4", limit: DEMO_RUNS_PER_HOUR },
+      { subject: "guests", limit: GUEST_RUNS_PER_HOUR_TOTAL },
+    ]);
+  });
+
+  it("reads the first forwarded address", async () => {
+    const { clientIp } = await import("./demo-sandbox");
+    expect(clientIp(new Headers({ "x-forwarded-for": "9.9.9.9, 10.0.0.1" }))).toBe("9.9.9.9");
+    expect(clientIp(new Headers())).toBe("unknown");
+  });
+});

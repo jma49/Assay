@@ -6,20 +6,26 @@ const mocks = vi.hoisted(() => ({
   scriptAuthor: "demo-seed" as string | undefined,
   quotaAllowed: true,
   quotaThrows: false,
+  isGuest: false,
+  quotaSubjects: [] as string[],
   execute: vi.fn(async () => ({ success: true, statusType: "success" })),
 }));
 
 vi.mock("@/lib/auth/auth-utils", () => ({
   validateApiAuth: async () => ({
     isValid: true,
-    user: { id: "user_viewer" },
-    userEmail: "viewer@example.com",
+    user: { id: mocks.isGuest ? "guest_abc" : "user_viewer" },
+    userEmail: mocks.isGuest ? "" : "viewer@example.com",
+    isGuest: mocks.isGuest,
   }),
   getUserInfo: () => ({ name: "Viewer", email: "viewer@example.com", timestamp: "now" }),
 }));
 vi.mock("@/lib/auth/rbac", () => ({
   Permission: { SCRIPT_EXECUTE: "script:execute" },
-  requirePermission: async () => ({ authorized: mocks.canExecute }),
+  requirePermission: async () => {
+    if (mocks.isGuest) throw new Error("guests must not reach the role lookup");
+    return { authorized: mocks.canExecute };
+  },
 }));
 vi.mock("@/lib/database/mongodb", () => ({
   getMongoDbClient: () => ({
@@ -30,7 +36,8 @@ vi.mock("@/lib/database/mongodb", () => ({
 }));
 vi.mock("@/lib/cache/redis", () => ({ default: {} }));
 vi.mock("@/lib/security/ai-guard", () => ({
-  consumeQuota: async () => {
+  consumeQuota: async (_store: unknown, subject: string) => {
+    mocks.quotaSubjects.push(subject);
     if (mocks.quotaThrows) throw new Error("redis down");
     return { allowed: mocks.quotaAllowed, retryAfterSeconds: 60 };
   },
@@ -40,7 +47,13 @@ vi.mock("@/lib/utils/script-executor", () => ({ executeScriptAndNotify: mocks.ex
 import { POST } from "./route";
 
 const run = (body: unknown) =>
-  POST(new NextRequest("http://localhost/api/run-check", { method: "POST", body: JSON.stringify(body) }));
+  POST(
+    new NextRequest("http://localhost/api/run-check", {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: { "x-forwarded-for": "9.9.9.9" },
+    }),
+  );
 
 describe("POST /api/run-check", () => {
   beforeEach(() => {
@@ -48,6 +61,8 @@ describe("POST /api/run-check", () => {
     mocks.scriptAuthor = "demo-seed";
     mocks.quotaAllowed = true;
     mocks.quotaThrows = false;
+    mocks.isGuest = false;
+    mocks.quotaSubjects = [];
     mocks.execute.mockClear();
     delete process.env.DEMO_MODE;
   });
@@ -93,6 +108,21 @@ describe("POST /api/run-check", () => {
     process.env.DEMO_MODE = "true";
     mocks.quotaThrows = true;
     expect((await run({ scriptId: "demo-duplicate-orders" })).status).toBe(503);
+    expect(mocks.execute).not.toHaveBeenCalled();
+  });
+
+  it("lets guests run a seeded check, budgeted per IP and across all guests", async () => {
+    process.env.DEMO_MODE = "true";
+    mocks.isGuest = true;
+    expect((await run({ scriptId: "demo-duplicate-orders" })).status).toBe(200);
+    expect(mocks.quotaSubjects).toEqual(["ip:9.9.9.9", "guests"]);
+  });
+
+  it("never lets guests run a non-demo check", async () => {
+    process.env.DEMO_MODE = "true";
+    mocks.isGuest = true;
+    mocks.scriptAuthor = "alice";
+    expect((await run({ scriptId: "private-check" })).status).toBe(403);
     expect(mocks.execute).not.toHaveBeenCalled();
   });
 

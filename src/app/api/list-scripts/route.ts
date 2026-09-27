@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document } from "mongodb";
-import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { nextRunAt } from "@/lib/scheduling/due-slot";
-import { Permission, requirePermission } from "@/lib/auth/rbac";
+import { Permission } from "@/lib/auth/rbac";
 import { withSmartCache, generateCacheKey } from "@/lib/cache/cache-strategies";
 
 interface ScriptInfo {
@@ -93,24 +93,9 @@ async function fetchScriptsData(
 
 export async function GET(request: NextRequest) {
   try {
-    // 验证用户认证
-    const authResult = await validateApiAuth("zh");
+    const authResult = await authorizeApiRequest(Permission.SCRIPT_READ);
     if (!authResult.isValid) {
-      return authResult.response!;
-    }
-
-    const { user } = authResult;
-
-    // 检查权限：需要 SCRIPT_READ 权限
-    const permissionCheck = await requirePermission(
-      user.id,
-      Permission.SCRIPT_READ
-    );
-    if (!permissionCheck.authorized) {
-      return NextResponse.json(
-        { success: false, message: "权限不足：无法查看脚本列表" },
-        { status: 403 }
-      );
+      return authResult.response;
     }
 
     const { searchParams } = new URL(request.url);

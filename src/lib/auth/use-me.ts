@@ -7,6 +7,8 @@ export interface Me {
   permissions: string[];
   /** Present when the workspace runs as the public demo. */
   demo: { runsPerHour: number } | null;
+  /** A demo visitor without an account: read-only, plus the sample checks. */
+  guest: boolean;
   /** Whether the AI helpers are switched on (AI_ENABLED). */
   ai: boolean;
 }
