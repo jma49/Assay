@@ -4,20 +4,27 @@
 
 The dashboard lists every run, newest first. You can:
 
-- filter by status with **All**, **Success**, **Attention** and **Failure**, or from the menu bar with **View → Passed / Needs Attention / Failed**;
+- filter by status with the four tiles at the top (all runs, passed, needs attention, failed), or from the menu bar with **View → Passed / Needs Attention / Failed**; choosing the active tile again clears the filter;
 - search by check name or message, or by `#tag`;
 - sort by name or time;
 - page through older runs.
 
-To see the history of one check, open **Scripts** and choose its history button.
+Times are shown in your own time zone, as "3 hr ago" for the last week; hover over one for the exact time.
+
+To see the history of one check, open **Scripts** and choose **Run History**.
 
 ## The full report
 
-**View Full Report** opens one run:
+Click a run to open it:
 
 - the status, time and message;
-- for **needs attention**, every row the query returned;
-- for **failed**, the error, and an **AI** button that explains the error and suggests a fix.
+- for **needs attention**, every row the query returned, with **Export CSV**;
+- **Run Again** runs the same check now and opens the new result, handy after fixing the data;
+- **Triage with AI**, when AI is switched on, for failed and flagged runs (see [AI assistant](/docs/ai-assistant)).
+
+## Keyboard
+
+In the Scripts window, **↑** and **↓** move through the list, **Home** and **End** jump to either end, and **Return** opens the selected check for editing. The same keys move through the tables in **Coverage**.
 
 ## See also
 
