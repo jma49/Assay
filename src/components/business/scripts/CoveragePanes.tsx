@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { SqlScript } from "@/components/business/dashboard/types";
 import type { CoverageReport } from "@/lib/coverage/coverage";
 import { cn } from "@/lib/utils/utils";
+import { listKeyHandler } from "./list-keys";
 
 export type CoverageState = CoverageReport | "loading" | "error" | null;
 
@@ -109,7 +110,14 @@ export function CoveragePanes({
 
   return (
     <>
-      <ul aria-label={t.list} className="w-80 shrink-0 overflow-y-auto border-r max-lg:max-h-72 max-lg:w-full max-lg:border-r-0 max-lg:border-b">
+      <ul
+        aria-label={t.list}
+        onKeyDown={listKeyHandler(
+          rows.map((row) => row.table),
+          selectedTable,
+          setSelectedTable,
+        )}
+        className="w-80 shrink-0 overflow-y-auto border-r max-lg:max-h-72 max-lg:w-full max-lg:border-r-0 max-lg:border-b">
         {notice ? (
           <li className="p-6 text-center text-[13px] text-muted-foreground">{notice}</li>
         ) : (
@@ -120,6 +128,8 @@ export function CoveragePanes({
               <li key={row.table}>
                 <button
                   type="button"
+                  data-list-id={row.table}
+                  tabIndex={active ? 0 : -1}
                   aria-pressed={active}
                   onClick={() => setSelectedTable(row.table)}
                   className={cn(
