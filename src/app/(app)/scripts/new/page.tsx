@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { WindowToolbar } from "@/components/layout/WindowChrome";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,10 +20,7 @@ const CodeMirrorEditor = dynamic(
   { ssr: false, loading: () => <div className="h-[480px] animate-pulse rounded-lg border bg-muted/40" /> },
 );
 import { useLanguage } from "@/components/common/LanguageProvider";
-import {
-  dashboardTranslations,
-  DashboardTranslationKeys,
-} from "@/components/business/dashboard/types";
+import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
 
@@ -113,13 +110,7 @@ export default function NewScriptPage() {
   const [scriptIdEdited, setScriptIdEdited] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const t = useCallback(
-    (key: DashboardTranslationKeys | string): string => {
-      const translations = dashboardTranslations[language] || dashboardTranslations.en;
-      return translations[key as keyof typeof translations] || key.toString();
-    },
-    [language],
-  );
+  const t = useDashboardT<string>();
 
   // Coverage links here with ?table=schema.table; only plain identifiers are accepted.
   useEffect(() => {

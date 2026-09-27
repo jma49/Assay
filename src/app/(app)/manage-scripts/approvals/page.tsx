@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { WindowStatusBar } from "@/components/layout/WindowChrome";
 import { useCurrentUser } from "@/lib/auth/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLanguage } from '@/components/common/LanguageProvider';
-import { dashboardTranslations, DashboardTranslationKeys } from '@/components/business/dashboard/types';
+import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { SkeletonCardList, SkeletonPageHeader } from "@/components/common/PageSkeletons";
 import { APP_CONTAINER } from "@/components/layout/app-container";
@@ -28,13 +28,7 @@ export default function ApprovalsPage() {
   const [approvalAction, setApprovalAction] = useState<ApprovalAction>('approve');
   const [approvalComment, setApprovalComment] = useState('');
 
-  const t = useCallback(
-    (key: DashboardTranslationKeys): string => {
-      const langTranslations = dashboardTranslations[language] || dashboardTranslations.en;
-      return langTranslations[key as keyof typeof langTranslations] || key;
-    },
-    [language]
-  );
+  const t = useDashboardT();
 
   useEffect(() => {
     if (isLoaded && !user) {
