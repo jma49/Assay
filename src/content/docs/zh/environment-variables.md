@@ -21,7 +21,9 @@
 
 | 变量 | 用途 |
 |---|---|
-| `GEMINI_API_KEY` | 开启 [AI 助手](/docs/ai-assistant)。 |
+| `AI_ENABLED` | 设为 `true` 开启 [AI 助手](/docs/ai-assistant)。默认关闭，因为每次请求都会消耗 AI Gateway 额度。 |
+| `AI_GATEWAY_API_KEY` | 部署在 Vercel 以外时使用的 AI Gateway 密钥。在 Vercel 上通过 OIDC 认证，不需要密钥。 |
+| `AI_GATEWAY_MODEL` | 覆盖默认模型，格式为 `provider/model`。 |
 | `DEMO_MODE` | 设为 `true` 时工作区作为公开演示：查看者可以执行种子数据里的示例检查，每人每小时 20 次。其他情况不要设置。 |
 | `ALLOWED_EMAIL_DOMAINS` | 允许登录的邮箱域名，用逗号分隔。留空表示允许所有人。 |
 | `CA_CERT_BLOB_URL` | PostgreSQL 的 SSL 需要 CA 证书时，填证书地址。 |

@@ -3,12 +3,14 @@ import { authorizeApiRequest } from "@/lib/auth/auth-utils";
 import { Permission } from "@/lib/auth/rbac";
 import { guardAiRequest } from "@/lib/security/ai-guard";
 import { getCachedSchema } from "@/lib/database/db-schema";
-import {
-  generateContentWithRetry,
-  getAIErrorMessage,
-  logTokenUsage,
-} from "@/lib/utils/ai-utils";
+import { draftCheck } from "@/lib/ai/draft-check";
+import { getAIErrorMessage } from "@/lib/utils/ai-utils";
 
+/**
+ * Drafts a check from a plain-language request. The query is dry-run
+ * read-only before it is returned, so the editor gets SQL that parses and a
+ * count of the rows it would flag today.
+ */
 export async function POST(request: NextRequest) {
   try {
     const authResult = await authorizeApiRequest(Permission.SCRIPT_CREATE);
@@ -24,52 +26,24 @@ export async function POST(request: NextRequest) {
     }
 
     if (!prompt || typeof prompt !== "string") {
-      return NextResponse.json(
-        { error: "请提供有效的SQL生成描述" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "请提供有效的SQL生成描述" }, { status: 400 });
     }
 
-    // 获取数据库表结构
-    const schema = await getCachedSchema();
-
-    // 构建给AI的prompt（精简版）
-    const aiPrompt = `基于表结构生成PostgreSQL查询:
-
-${schema}
-
-需求: ${prompt}
-
-要求: 只返回SQL，语法正确，如找不到确切表则基于现有表生成相似查询。
-
-SQL:`;
-
-    // 调用AI服务生成内容，带重试机制
-    const generatedSQL = await generateContentWithRetry(aiPrompt);
-
-    // 记录token使用量
-    logTokenUsage(aiPrompt, generatedSQL, "生成SQL");
-
-    // 简单的SQL清理：移除可能的markdown标记
-    const cleanSQL = generatedSQL
-      .replace(/```sql\n?/g, "")
-      .replace(/```\n?/g, "")
-      .trim();
+    const result = await draftCheck({
+      request: prompt,
+      schema: await getCachedSchema(),
+      userId: authResult.user.id,
+    });
 
     return NextResponse.json({
-      sql: cleanSQL,
       success: true,
+      sql: result.draft.sql,
+      draft: result.draft,
+      dryRun: result.dryRun,
+      attempts: result.attempts,
     });
   } catch (error) {
-    console.error("[AI Generate SQL] 错误:", error);
-
-    const errorMessage = getAIErrorMessage(error);
-
-    return NextResponse.json(
-      {
-        error: errorMessage,
-      },
-      { status: 500 }
-    );
+    console.error("[AI Generate SQL] error:", error);
+    return NextResponse.json({ error: getAIErrorMessage(error) }, { status: 500 });
   }
 }
