@@ -47,6 +47,23 @@ describe("middleware", () => {
     expect(auth).not.toHaveBeenCalled();
   });
 
+  it("serves the docs without a session", async () => {
+    for (const path of ["/docs", "/docs/quick-start"]) {
+      const res = await run(path);
+      expect(res.headers.get("location")).toBeNull();
+    }
+    expect(auth).not.toHaveBeenCalled();
+  });
+
+  it("does not let a docs-like prefix open the app or the API", async () => {
+    auth.mockResolvedValue({ userId: null });
+
+    for (const path of ["/docsx", "/api/docs"]) {
+      const res = await run(path);
+      expect(res.headers.get("location")).toContain("/sign-in");
+    }
+  });
+
   it("keeps other pages private when / is public", async () => {
     auth.mockResolvedValue({ userId: null });
 
