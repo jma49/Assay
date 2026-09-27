@@ -66,7 +66,8 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 - [ ] 在 Vercel 生产环境添加 `AI_ENABLED=true`；未设置时 AI 接口返回 503。
 - [ ] 默认模型 `anthropic/claude-haiku-4.5` 和备用模型 `google/gemini-3-flash` 仍在 `https://ai-gateway.vercel.sh/v1/models` 列表中。
 - [ ] 编辑器「生成 SQL」：返回的查询能保存；通知里显示试运行标出的行数；故意描述一个不存在的表时，能看到修复后的查询或试运行失败原因。
-- [ ] 「解释 / 优化 SQL」「解释错误」正常返回。
+- [ ] 「解释 / 优化 SQL」正常返回。
+- [ ] 失败和需关注的记录上「AI 分诊」正常返回；再次点击秒回（读取缓存，Gateway Logs 里没有新请求）。
 - [ ] AI Gateway Logs 里请求带 `feature:*` 标签和用户 id。
 
 ## UI 第一批（develop）
