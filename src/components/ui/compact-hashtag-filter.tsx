@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/utils";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import { dashboardTranslations, DashboardTranslationKeys } from "@/components/business/dashboard/types";
+import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { PriorityBadge } from "./priority-badge";
 
 interface CompactHashtagFilterProps {
@@ -32,10 +32,7 @@ export function CompactHashtagFilter({
   const [isOpen, setIsOpen] = useState(false);
   const { language } = useLanguage();
 
-  const t = (key: DashboardTranslationKeys): string => {
-    const langTranslations = dashboardTranslations[language] || dashboardTranslations.en;
-    return langTranslations[key as keyof typeof langTranslations] || key;
-  };
+  const t = useDashboardT();
 
   const filteredHashtags = useMemo(() => {
     if (!searchValue.trim()) return availableHashtags;

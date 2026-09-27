@@ -1,25 +1,23 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { WindowStatusBar } from "@/components/layout/WindowChrome";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import { dashboardTranslations } from "@/components/business/dashboard/types";
+import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
+import { Pagination } from "@/components/common/Pagination";
+import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
 import { EditHistoryDetailDialog } from "@/components/business/edit-history/EditHistoryDetailDialog";
-import { EditHistoryPagination } from "@/components/business/edit-history/EditHistoryPagination";
 import { EditHistoryTable } from "@/components/business/edit-history/EditHistoryTable";
 import { EditHistoryToolbar } from "@/components/business/edit-history/EditHistoryToolbar";
-import { EMPTY_FILTERS, type HistoryFilters, type OperationFilter } from "@/components/business/edit-history/edit-history";
+import { EMPTY_FILTERS, formatPageInfo, type HistoryFilters, type OperationFilter } from "@/components/business/edit-history/edit-history";
 import { useEditHistory } from "@/components/business/edit-history/useEditHistory";
 import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
 
 export default function GlobalEditHistoryPage() {
   const { language } = useLanguage();
-  const t = useCallback(
-    (key: string): string => ((dashboardTranslations[language] || dashboardTranslations.en) as Record<string, string>)[key] || key,
-    [language],
-  );
+  const t = useDashboardT<string>();
 
   const { histories, loading, error, currentPage, totalPages, totalRecords, fetchHistories, retry } = useEditHistory();
   const [filters, setFilters] = useState<HistoryFilters>(EMPTY_FILTERS);
@@ -77,13 +75,13 @@ export default function GlobalEditHistoryPage() {
               />
             </CardContent>
             {totalPages > 1 && !loading && histories.length > 0 && (
-              <EditHistoryPagination
-                currentPage={currentPage}
+              <Pagination
+                page={currentPage}
                 totalPages={totalPages}
-                totalRecords={totalRecords}
-                loading={loading}
+                pageInfo={formatPageInfo(t, { currentPage, totalPages, totalRecords, pageSize: ITEMS_PER_PAGE })}
                 t={t}
                 onPageChange={(page) => fetchHistories(filters, page)}
+                disabled={loading}
               />
             )}
           </Card>

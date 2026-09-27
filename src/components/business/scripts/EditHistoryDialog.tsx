@@ -23,7 +23,7 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { formatDate } from "@/components/business/dashboard/utils";
+import { formatDateTime } from "@/lib/utils/datetime";
 import { DashboardTranslationKeys } from "@/components/business/dashboard/types";
 
 interface EditHistoryItem {
@@ -256,13 +256,7 @@ export function EditHistoryDialog({
                             <div className="flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
                               <span>
-                                {formatDate(
-                                  typeof history.operationTime === "string"
-                                    ? history.operationTime
-                                    : new Date(
-                                        history.operationTime,
-                                      ).toISOString(),
-                                )}
+                                {formatDateTime(history.operationTime, "en")}
                               </span>
                             </div>
                           </div>

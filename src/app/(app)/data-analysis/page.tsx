@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AlertTriangle, BarChart2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SkeletonStatStrip, SkeletonTable } from "@/components/common/PageSkeletons";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import { dashboardTranslations } from "@/components/business/dashboard/types";
+import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { AnalysisChartsRow } from "@/components/business/analysis/AnalysisChartsRow";
 import { AnalysisFilters } from "@/components/business/analysis/AnalysisFilters";
 import { AnalysisSummary } from "@/components/business/analysis/AnalysisSummary";
@@ -23,10 +23,7 @@ export default function DataAnalysisPage() {
   const [hashtags, setHashtags] = useState<string[]>([]);
   const { data, scripts, isLoading, error } = useAnalytics(timeRange, scriptId, hashtags);
 
-  const t = useCallback(
-    (key: string): string => (dashboardTranslations[language] ?? dashboardTranslations.en)[key as keyof typeof dashboardTranslations.en] || key,
-    [language],
-  );
+  const t = useDashboardT<string>();
   const availableTags = useMemo(() => collectTags(scripts), [scripts]);
   const activeFilters = [timeRange !== DEFAULT_TIME_RANGE, scriptId !== "all", hashtags.length > 0].filter(Boolean).length;
   const filterKey = `${timeRange}|${scriptId}|${hashtags.join(",")}`;

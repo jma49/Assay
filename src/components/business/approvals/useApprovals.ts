@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { sendJson } from "@/client/send-json";
 import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
 import {
   approvalMessages,
@@ -90,19 +91,12 @@ export function useApprovals(language: Language) {
   const decide = async (approval: ApprovalRequest, action: ApprovalAction, comment: string, onAccepted: () => void) => {
     try {
       setActionLoading(approval.id);
-      const response = await fetch("/api/approvals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          requestId: approval.id,
-          action,
-          comment: comment.trim() || undefined,
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || approvalMessages(language).decisionFailed);
-      }
+      await sendJson(
+        "/api/approvals",
+        "POST",
+        { requestId: approval.id, action, comment: comment.trim() || undefined },
+        approvalMessages(language).decisionFailed,
+      );
       toast.success(decisionToast(action, approval.scriptName, language));
       onAccepted();
       await Promise.all([loadPendingApprovals(), loadApprovalHistory(historyPage)]);

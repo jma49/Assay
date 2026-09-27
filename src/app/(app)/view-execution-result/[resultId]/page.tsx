@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/components/common/LanguageProvider";
+import { outcomeOf } from "@/components/checks/status";
 import { formatDateTime } from "@/lib/utils/datetime";
 import { useMe } from "@/lib/auth/use-me";
 import { runReportMessages } from "@/components/business/run-report/messages";
@@ -11,7 +12,6 @@ import {
   localized,
   rowCount,
   runHeadline,
-  runTone,
   tableRows,
 } from "@/components/business/run-report/run-report";
 import { downloadTextFile } from "@/components/business/run-report/download";
@@ -42,7 +42,7 @@ export default function ViewExecutionResultPage() {
   if (!result) return <RunNotFound resultId={resultId} t={t} onBack={actions.goBack} />;
 
   const rows = tableRows(result.findings);
-  const tone = runTone(result);
+  const outcome = outcomeOf(result);
   const count = rowCount(result.findings);
   const scriptName = localized(language, result.name, result.cnName);
   const executedAt = formatDateTime(result.executedAt, language);
@@ -59,7 +59,7 @@ export default function ViewExecutionResultPage() {
       <RunReportToolbar
         language={language}
         t={t}
-        tone={tone}
+        outcome={outcome}
         title={title}
         executedAt={executedAt}
         rowCount={count}
@@ -78,8 +78,8 @@ export default function ViewExecutionResultPage() {
         <div className="grid gap-6 lg:grid-cols-12 animate-fadeIn">
           <section className="min-w-0 space-y-5 lg:col-span-8">
             <RunHeadline
-              tone={tone}
-              headline={runHeadline(tone, count, language)}
+              outcome={outcome}
+              headline={runHeadline(outcome, count, language)}
               subtitle={`${title} · ${executedAt}`}
               message={result.message}
             />
@@ -88,7 +88,7 @@ export default function ViewExecutionResultPage() {
 
           <RunInfoPanel
             result={result}
-            tone={tone}
+            outcome={outcome}
             scriptName={scriptName}
             executedAt={executedAt}
             language={language}

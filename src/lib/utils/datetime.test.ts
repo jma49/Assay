@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayKeyParts, formatDateTime, formatRelative, formatShortDateTime, localDayKey } from "./datetime";
+import { dayKeyParts, formatDate, formatDateTime, formatRelative, formatShortDateTime, formatTime, localDayKey } from "./datetime";
 
 const now = new Date("2026-09-26T12:00:00Z");
 
@@ -47,5 +47,25 @@ describe("localDayKey and dayKeyParts", () => {
   it("reads a day key without shifting it", () => {
     expect(dayKeyParts("2026-09-24", "en")).toEqual({ day: "24", month: "Sep" });
     expect(dayKeyParts("2026-09-24", "zh")).toEqual({ day: "24", month: "9月" });
+  });
+});
+
+describe("formatDate and formatTime", () => {
+  it("formats the date alone, with optional fields", () => {
+    expect(formatDate("2026-09-24T04:57:00Z", "en", { timeZone: "UTC" })).toBe("9/24/2026");
+    expect(formatDate("2026-09-24T04:57:00Z", "zh", { timeZone: "UTC" })).toBe("2026/9/24");
+    expect(formatDate("2026-09-24T04:57:00Z", "en", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric" })).toBe(
+      "Thu, Sep 24",
+    );
+  });
+
+  it("formats hours and minutes", () => {
+    expect(formatTime("2026-09-24T04:57:00Z", "en", "UTC")).toBe("04:57 AM");
+    expect(formatTime("2026-09-24T16:57:00Z", "zh", "UTC")).toBe("16:57");
+  });
+
+  it("renders missing or invalid values as a dash", () => {
+    expect(formatDate(undefined, "en")).toBe("—");
+    expect(formatTime("not a date", "en")).toBe("—");
   });
 });
