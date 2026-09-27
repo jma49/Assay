@@ -129,7 +129,7 @@ export function EditHistoryTable({ histories, loading, error, language, t, onRet
                   </div>
                 </TableCell>
                 <TableCell className="px-4 py-3 text-muted-foreground max-w-48 leading-relaxed">
-                  <div className="truncate text-sm">{changesPreview(history.changes, t)}</div>
+                  <div className="truncate text-sm">{changesPreview(history.changes, t, language)}</div>
                 </TableCell>
                 <TableCell className="px-6 py-3 text-right">
                   <Button
