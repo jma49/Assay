@@ -80,6 +80,10 @@ interface ManualTriggerProps {
   handleTriggerCheck: () => void;
   /** Which tab the panel opens on (the File menu can ask for bulk). */
   initialMode?: "single" | "bulk";
+  /** False for demo viewers, who may run single sample checks only. */
+  allowBulk?: boolean;
+  /** Shown instead of the mode choice when bulk is not allowed. */
+  demoNote?: string;
 }
 
 export const ManualTrigger: React.FC<ManualTriggerProps> = ({
@@ -96,6 +100,8 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
   setSelectedScriptId,
   handleTriggerCheck,
   initialMode = "single",
+  allowBulk = true,
+  demoNote,
 }) => {
   // 状态管理
   const [executionMode, setExecutionMode] = useState<"single" | "bulk">(initialMode);
@@ -661,6 +667,9 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
               {/* 主要内容区域 */}
               <div className="space-y-4 flex-1">
                 {/* 执行模式选择 */}
+                {!allowBulk ? (
+                  demoNote && <aside className="docs-note text-[13px]">{demoNote}</aside>
+                ) : (
                 <div className="space-y-2">
                   <Label className="text-sm font-bold text-foreground/90 flex items-center gap-2 tracking-wide">
                     <Settings2 className="h-4 w-4 text-primary " />
@@ -697,6 +706,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                   </RadioGroup>
                   </div>
                 </div>
+                )}
 
               {executionMode === "single" ? (
                 <>
