@@ -6,8 +6,7 @@ import {
   getUserRole,
   Permission,
   requirePermission,
-  setUserRole,
-  UserRole,
+  ensureDefaultRole,
 } from "@/lib/auth/rbac";
 
 export const authMessages = {
@@ -108,14 +107,10 @@ export async function validateApiAuth(
 
     // Everyone who signs in starts as a viewer.
     try {
-      const existingRole = await getUserRole(user.id);
-      if (!existingRole) {
-        console.log(`[Auth] 为新用户分配默认角色: ${userEmail}`);
-        await setUserRole(user.id, userEmail, UserRole.VIEWER, "system");
-      }
+      if (!(await getUserRole(user.id))) await ensureDefaultRole(user.id, userEmail);
     } catch (error) {
-      console.error("[Auth] 分配默认角色失败:", error);
       // A failed role write must not block the request.
+      console.error("[Auth] Assigning the default role failed:", error);
     }
 
     return {
