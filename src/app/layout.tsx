@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { EB_Garamond, Geist, Geist_Mono } from "next/font/google";
+import { JetBrains_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -11,16 +11,11 @@ import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { GlobalErrorHandlerProvider } from "@/components/error/GlobalErrorHandlerProvider";
 import { DialogPortalProvider } from "@/components/common/DialogPortalProvider";
 
-// Self-hosted by next/font. Geist for the interface and code; EB Garamond
-// only for page titles, the one brand accent in the type.
-const geist = Geist({ subsets: ["latin"], display: "swap", variable: "--font-geist" });
-const geistMono = Geist_Mono({ subsets: ["latin"], display: "swap", variable: "--font-geist-mono" });
-const garamond = EB_Garamond({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  display: "swap",
-  variable: "--font-garamond",
-});
+// Self-hosted by next/font. Manrope for the interface and headings (its round
+// forms suit the mascot and stay clear in dense tables), JetBrains Mono for
+// code and ids.
+const manrope = Manrope({ subsets: ["latin"], display: "swap", variable: "--font-manrope" });
+const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], display: "swap", variable: "--font-jetbrains-mono" });
 
 // Keep metadata export here (Server Component)
 export const metadata: Metadata = {
@@ -52,7 +47,7 @@ export default function RootLayout({
   );
 
   return (
-    <html lang="en" className={`${geist.variable} ${geistMono.variable} ${garamond.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${manrope.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <body>
         {hasClerkKey ? (
           <ClerkProvider appearance={{ theme: shadcn }}>{content}</ClerkProvider>
