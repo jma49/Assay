@@ -4,6 +4,8 @@
  * The actual guarantee is the read-only transaction the executor runs in.
  */
 
+import { splitStatements } from "./statements";
+
 export interface SqlValidationResult {
   isValid: boolean;
   /** Chinese message, kept as-is because API responses already return it. */
@@ -92,6 +94,8 @@ const FORBIDDEN_FUNCTIONS = [
 
 interface StrippedSql {
   code: string;
+  /** `code` with quoted identifiers spelled out, so `"pg_sleep"(...)` reads as a call to pg_sleep. */
+  codeWithIdentifiers: string;
   /** Dollar-quoted bodies (e.g. DO blocks), inspected as code. */
   dollarBodies: string;
 }
@@ -102,13 +106,18 @@ const isIdentChar = (ch: string | undefined) =>
 /** Removes comments, string literals and quoted identifiers; returns upper-cased SQL. */
 function stripSql(sql: string): StrippedSql {
   let code = "";
+  let codeWithIdentifiers = "";
   let dollarBodies = "";
   let dollarTag: string | null = null;
   let i = 0;
 
-  const emit = (text: string) => {
-    if (dollarTag === null) code += text;
-    else dollarBodies += text;
+  const emit = (text: string, spelled = text) => {
+    if (dollarTag === null) {
+      code += text;
+      codeWithIdentifiers += spelled;
+    } else {
+      dollarBodies += spelled;
+    }
   };
 
   while (i < sql.length) {
@@ -164,8 +173,9 @@ function stripSql(sql: string): StrippedSql {
 
     if (ch === '"') {
       const end = sql.indexOf('"', i + 1);
+      const name = sql.slice(i + 1, end === -1 ? sql.length : end);
       i = end === -1 ? sql.length : end + 1;
-      emit(' "" ');
+      emit(' "" ', name.replace(/[^A-Za-z0-9_$]/g, "_"));
       continue;
     }
 
@@ -179,6 +189,7 @@ function stripSql(sql: string): StrippedSql {
           dollarTag = null;
         }
         code += " ";
+        codeWithIdentifiers += " ";
         dollarBodies += " ";
         i += tag.length;
         continue;
@@ -190,11 +201,11 @@ function stripSql(sql: string): StrippedSql {
   }
 
   const normalize = (s: string) => s.toUpperCase().replace(/\s+/g, " ").trim();
-  return { code: normalize(code), dollarBodies: normalize(dollarBodies) };
+  return { code: normalize(code), codeWithIdentifiers: normalize(codeWithIdentifiers), dollarBodies: normalize(dollarBodies) };
 }
 
 export function validateReadOnlySql(sqlContent: string): SqlValidationResult {
-  const { code, dollarBodies } = stripSql(sqlContent ?? "");
+  const { code, codeWithIdentifiers, dollarBodies } = stripSql(sqlContent ?? "");
 
   if (code === "") {
     return { isValid: false, reason: "SQL 内容为空。", reasonEn: "The SQL is empty." };
@@ -228,7 +239,7 @@ export function validateReadOnlySql(sqlContent: string): SqlValidationResult {
   }
 
   for (const fn of FORBIDDEN_FUNCTIONS) {
-    const match = new RegExp(`\\b(${fn})\\s*\\(`).exec(everything);
+    const match = new RegExp(`\\b(${fn})\\s*\\(`).exec(`${codeWithIdentifiers} ${dollarBodies}`);
     if (match) {
       return {
         isValid: false,
@@ -238,14 +249,18 @@ export function validateReadOnlySql(sqlContent: string): SqlValidationResult {
     }
   }
 
-  const leading = code.match(/^[A-Z]+/)?.[0];
-  if (!leading || !ALLOWED_LEADING_KEYWORDS.includes(leading)) {
-    return {
-      isValid: false,
-      reason:
-        "SQL语句必须以 SELECT、WITH、EXPLAIN 或 DO 开头。系统仅允许查询操作和安全的PL/pgSQL块。",
-      reasonEn: "A check must start with SELECT, WITH, EXPLAIN or DO.",
-    };
+  // Every statement must be a query: a bare END or ABORT between statements
+  // would close the read-only transaction and run the rest outside it.
+  for (const statement of splitStatements(sqlContent)) {
+    const leading = stripSql(statement).code.match(/^[A-Z]+/)?.[0];
+    if (!leading || !ALLOWED_LEADING_KEYWORDS.includes(leading)) {
+      return {
+        isValid: false,
+        reason:
+          "每条SQL语句都必须以 SELECT、WITH、EXPLAIN 或 DO 开头。系统仅允许查询操作和安全的PL/pgSQL块。",
+        reasonEn: "Every statement must start with SELECT, WITH, EXPLAIN or DO.",
+      };
+    }
   }
 
   return { isValid: true };
