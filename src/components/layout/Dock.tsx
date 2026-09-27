@@ -5,21 +5,24 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from "react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { dashboardTranslations } from "@/components/business/dashboard/types";
+import { useMe } from "@/lib/auth/use-me";
 
 interface DockItem {
   href: string;
   label: { en: string; zh: string } | keyof typeof dashboardTranslations.en;
   /** Crystal Clear icons (LGPL) in public/dock; see THIRD_PARTY_NOTICES.md. */
   icon: string;
+  /** Shown only to users with this permission; the page enforces it anyway. */
+  requires?: string;
 }
 
 const ITEMS: DockItem[] = [
   { href: "/dashboard", label: "navigationDashboard", icon: "/dock/dashboard.png" },
   { href: "/manage-scripts", label: "navigationScripts", icon: "/dock/scripts.svg" },
-  { href: "/scripts/new", label: { en: "New Check", zh: "新建检查" }, icon: "/dock/new-check.png" },
+  { href: "/scripts/new", label: { en: "New Check", zh: "新建检查" }, icon: "/dock/new-check.png", requires: "script:create" },
   { href: "/data-analysis", label: "navigationAnalysis", icon: "/dock/analysis.png" },
-  { href: "/manage-scripts/approvals", label: "navigationApprovals", icon: "/dock/approvals.svg" },
-  { href: "/admin/users", label: "navigationUsers", icon: "/dock/users.png" },
+  { href: "/manage-scripts/approvals", label: "navigationApprovals", icon: "/dock/approvals.svg", requires: "script:approve" },
+  { href: "/admin/users", label: "navigationUsers", icon: "/dock/users.png", requires: "user:manage" },
 ];
 
 // Magnification: an icon right under the pointer grows to MAX_SCALE, and the
@@ -47,6 +50,9 @@ export function Dock() {
   const pathname = usePathname() ?? "";
   const { language } = useLanguage();
   const labels = dashboardTranslations[language] ?? dashboardTranslations.en;
+  const me = useMe();
+  // Until the permissions load, keep every icon so the Dock does not jump for most users.
+  const items = ITEMS.filter((item) => !item.requires || !me || me.permissions.includes(item.requires));
   const listRef = useRef<HTMLUListElement>(null);
   const frameRef = useRef(0);
   const [launching, setLaunching] = useState<string | null>(null);
@@ -126,7 +132,7 @@ export function Dock() {
         onPointerLeave={onPointerLeave}
         onKeyDown={onKeyDown}
       >
-        {ITEMS.map(({ href, label, icon }) => {
+        {items.map(({ href, label, icon }) => {
           const text = typeof label === "string" ? labels[label] : label[language];
           const current = isCurrent(pathname, href);
           return (

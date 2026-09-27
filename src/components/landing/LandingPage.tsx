@@ -235,7 +235,8 @@ function FeatureSection({ lang, index }: { lang: Language; index: number }) {
   );
 }
 
-export default function LandingPage() {
+/** `demo`: the workspace runs in demo mode, so visitors can look around as guests. */
+export default function LandingPage({ demo = false }: { demo?: boolean }) {
   const { language, setLanguage } = useLanguage();
   const t = landingCopy[language];
 
@@ -258,7 +259,7 @@ export default function LandingPage() {
                 {t.hero.subtitle}
               </p>
               <div className="mt-8 flex justify-center gap-3">
-                <Link href="/dashboard" className={heroPrimaryButton}>
+                <Link href={demo ? "/demo" : "/dashboard"} prefetch={false} className={heroPrimaryButton}>
                   {t.hero.primary}
                 </Link>
                 <a href={GITHUB_URL} className={heroSecondaryButton}>
@@ -266,7 +267,7 @@ export default function LandingPage() {
                 </a>
               </div>
               <SignedOut>
-                <p className="mt-4 text-[13px] text-white/75">{t.hero.demoNote}</p>
+                <p className="mt-4 text-[13px] text-white/75">{demo ? t.hero.guestNote : t.hero.demoNote}</p>
               </SignedOut>
             </div>
             <div className="mt-14 sm:mt-16">
@@ -360,7 +361,7 @@ export default function LandingPage() {
             </h2>
             <p className="mx-auto mt-4 max-w-[520px] text-pretty text-[16px] leading-7 text-white/85">{t.cta.body}</p>
             <div className="mt-8 flex justify-center gap-3">
-              <Link href="/dashboard" className={heroPrimaryButton}>
+              <Link href={demo ? "/demo" : "/dashboard"} prefetch={false} className={heroPrimaryButton}>
                 {t.hero.primary}
               </Link>
               <a href={GITHUB_URL} className={heroSecondaryButton}>
