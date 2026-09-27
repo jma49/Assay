@@ -2,7 +2,7 @@ import type { Db, MongoClient } from "mongodb";
 import { ensureIndexes } from "./indexes";
 import { closeSharedMongoClient, mongoDatabaseName, sharedMongoClient } from "./mongo-connection";
 
-const state = globalThis as unknown as { assayMongoReady?: Promise<MongoClient> | null; assayIndexesEnsured?: boolean };
+const state = globalThis as unknown as { assayMongoReady?: Promise<MongoClient> | null; assayIndexes?: Promise<void> | null };
 
 /** Access to the app's MongoDB database through the process's one shared client. */
 class MongoDbClient {
@@ -19,17 +19,16 @@ class MongoDbClient {
 
   async getDb(): Promise<Db> {
     const db = (await this.getClient()).db(mongoDatabaseName());
-    if (!state.assayIndexesEnsured) {
-      state.assayIndexesEnsured = true;
-      // Once per process, in the background, so the first request is not delayed.
-      void ensureIndexes(db);
-    }
+    // Once per process, in the background, so the first request is not delayed.
+    state.assayIndexes ??= ensureIndexes(db);
     return db;
   }
 
   async closeConnection(): Promise<void> {
+    // Scripts close right after their work; let the background index build finish first.
+    await state.assayIndexes;
+    state.assayIndexes = null;
     state.assayMongoReady = null;
-    state.assayIndexesEnsured = false;
     await closeSharedMongoClient();
   }
 }
