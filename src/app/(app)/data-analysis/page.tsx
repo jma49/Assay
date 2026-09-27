@@ -1,6 +1,7 @@
 "use client"; // Assuming client-side interactions might be added later
 
 import React, { useCallback, useState, useEffect, useMemo } from "react";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -427,20 +428,7 @@ export default function DataAnalysisPage() {
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
           <div className="space-y-8">
             {/* 简化的Header Section - 与主页风格统一 */}
-            <header className="">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div className="space-y-3">
-                  <h1 className="text-[28px] leading-tight font-semibold">
-                    {t("dataAnalysisTitle")}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    {t("dataAnalysisSubTitle")}
-                  </p>
-                </div>
-
-
-              </div>
-            </header>
+            <PageHeader title={t("dataAnalysisTitle")} description={t("dataAnalysisSubTitle")} />
 
             {/* 筛选控制 - 优化展示逻辑 */}
             <Card className="relative overflow-hidden gap-0 py-0">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { WindowStatusBar } from "@/components/layout/WindowChrome";
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -321,6 +322,11 @@ export default function AdminUsersPage() {
     <div className="min-h-screen    ">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-6">
+          <WindowStatusBar>
+            {language === "zh"
+              ? `${userRoles.length} 位用户 · ${userRoles.filter((u) => u.role === UserRole.ADMIN).length} 位管理员`
+              : `${userRoles.length} users · ${userRoles.filter((u) => u.role === UserRole.ADMIN).length} admins`}
+          </WindowStatusBar>
           <PageHeader
             title={t('userManagementTitle')}
             description={t('userManagementDesc')}

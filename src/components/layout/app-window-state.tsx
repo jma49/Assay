@@ -9,6 +9,11 @@ interface AppWindowState {
   zoomed: boolean;
   toggleShade: () => void;
   toggleZoom: () => void;
+  /** Where pages portal their toolbar and status bar content. */
+  toolbarSlot: HTMLElement | null;
+  statusSlot: HTMLElement | null;
+  setToolbarSlot: (element: HTMLElement | null) => void;
+  setStatusSlot: (element: HTMLElement | null) => void;
 }
 
 const AppWindowContext = createContext<AppWindowState | null>(null);
@@ -17,6 +22,8 @@ const AppWindowContext = createContext<AppWindowState | null>(null);
 export function AppWindowStateProvider({ children }: { children: ReactNode }) {
   const [shaded, setShaded] = useState(false);
   const [zoomed, setZoomed] = useState(false);
+  const [toolbarSlot, setToolbarSlot] = useState<HTMLElement | null>(null);
+  const [statusSlot, setStatusSlot] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
     try {
@@ -40,8 +47,8 @@ export function AppWindowStateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ shaded, zoomed, toggleShade, toggleZoom }),
-    [shaded, zoomed, toggleShade, toggleZoom],
+    () => ({ shaded, zoomed, toggleShade, toggleZoom, toolbarSlot, statusSlot, setToolbarSlot, setStatusSlot }),
+    [shaded, zoomed, toggleShade, toggleZoom, toolbarSlot, statusSlot],
   );
   return <AppWindowContext.Provider value={value}>{children}</AppWindowContext.Provider>;
 }

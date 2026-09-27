@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { WindowStatusBar } from "@/components/layout/WindowChrome";
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { CardFooter } from '@/components/ui/card';
@@ -558,6 +559,11 @@ export default function ApprovalsPage() {
     <div className="min-h-screen    ">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-6">
+          <WindowStatusBar>
+            {language === "zh"
+              ? `${totalPendingApprovals} 项待审批 · ${totalHistoryApprovals} 项已处理`
+              : `${totalPendingApprovals} pending · ${totalHistoryApprovals} decided`}
+          </WindowStatusBar>
           <PageHeader title={t('approvalsTitle')} description={t('approvalsDescription')} />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-0">

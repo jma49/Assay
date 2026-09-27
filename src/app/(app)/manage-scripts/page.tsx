@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useRef, Suspense } from "react";
+import { WindowStatusBar } from "@/components/layout/WindowChrome";
+import { PageHeader } from "@/components/layout/PageHeader";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -597,18 +599,20 @@ const ManageScriptsContent = () => {
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-8 animate-fadeIn">
           {/* Header Section */}
-          <header className="">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="space-y-3">
-                <h1 className="text-[28px] leading-tight font-semibold">
-                  {t("manageScriptsPageTitle")}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  {t("manageScriptsPageDescription")}
-                </p>
-              </div>
-            </div>
-          </header>
+          <WindowStatusBar>
+            {language === "zh"
+              ? `${scripts.length} 个检查 · ${scripts.filter((script) => script.isScheduled).length} 个定时执行`
+              : `${scripts.length} checks · ${scripts.filter((script) => script.isScheduled).length} scheduled`}
+          </WindowStatusBar>
+          <PageHeader
+            title={t("manageScriptsPageTitle")}
+            description={t("manageScriptsPageDescription")}
+            actions={
+              <Button asChild size="sm">
+                <Link href="/scripts/new">{language === "zh" ? "新建检查" : "New Check"}</Link>
+              </Button>
+            }
+          />
 
           {/* Scripts Table */}
           <Card className="relative gap-0 overflow-hidden py-0">

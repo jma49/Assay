@@ -499,6 +499,44 @@
     box-shadow: var(--aqua-window-shadow);
   }
 
+  /* Unified toolbar: continues the title bar's gradient under it. */
+  .aqua-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 6px 12px;
+    background: var(--aqua-pinstripe-soft), linear-gradient(#cbcbcb, #bdbdbd);
+    border-bottom: 1px solid #8e8e8e;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+  }
+
+  .dark .aqua-toolbar {
+    background: var(--aqua-pinstripe-soft), linear-gradient(#3c3c3c, #333);
+    border-bottom-color: #1a1a1a;
+    text-shadow: none;
+  }
+
+  /* Finder-style status bar along the bottom of the window. */
+  .aqua-statusbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 24px;
+    padding: 3px 12px;
+    background: linear-gradient(#e9e9e9, #d4d4d4);
+    border-top: 1px solid #a8a8a8;
+    color: var(--muted-foreground);
+    font-size: 12px;
+  }
+
+  .dark .aqua-statusbar {
+    background: linear-gradient(#3a3a3a, #2c2c2c);
+    border-top-color: #1a1a1a;
+  }
+
   /* Menu bar: frosted light gradient across the top of the page. */
   .aqua-menubar {
     background: var(--aqua-pinstripe-soft), var(--aqua-bar);
