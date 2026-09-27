@@ -37,6 +37,7 @@ export const GET = withAuth<{ provider: string }>(Permission.NOTIFICATION_MANAGE
       name: webhook.name,
       label: webhook.label,
       secret: { url: webhook.url },
+      source: "oauth",
     });
     return back({ connected: destination.id });
   } catch (error) {

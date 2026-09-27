@@ -87,8 +87,10 @@ function memoryStore(events: StoredEvent[], destinations: Destination[], checkEx
         deliveries.push({ id: `${d.eventId}:${d.destinationId}`, ...d, status: "pending", attempts: 0, nextAttemptAt: now, claim: null });
       }
     },
-    async markFannedOut(id, _now, suppressed) {
+    async markFannedOut(id, _now, suppressed, actionKey) {
       fanned.set(id, suppressed);
+      const event = events.find((e) => e.id === id)!;
+      event.actionKey ??= actionKey;
     },
     async claimDelivery(now, leaseMs) {
       const next = deliveries.find((d) => d.status === "pending" && d.nextAttemptAt <= now);
@@ -264,5 +266,36 @@ describe("dispatchNotifications", () => {
     // Made after today's slot: waits for tomorrow.
     const late = memoryStore([], [destination({ digest, createdAt: new Date(t0.getTime() + 3_600_000) })]);
     expect((await dispatchNotifications(deps(late.store, [{ kind: "sent" }], { now: new Date(t0.getTime() + 2 * 3_600_000) }).deps)).digests).toBe(0);
+  });
+
+  it("adds Acknowledge and Mute buttons where a click can come back", async () => {
+    const telegramDest = destination({ id: "tg", kind: "telegram", sealed: JSON.stringify({ chatId: "-1" }), source: "telegram" });
+    const pastedSlack = destination({ id: "paste", source: "paste" });
+    const oauthSlack = destination({ id: "oauth", source: "oauth" });
+    const { store } = memoryStore([event({ id: "65f000000000000000000001" })], [telegramDest, pastedSlack, oauthSlack]);
+    const { deps: d, send } = deps(store);
+    d.env = { TELEGRAM_BOT_TOKEN: "1:x", SLACK_SIGNING_SECRET: "s" };
+    await dispatchNotifications(d);
+    const bodies = new Map(
+      (send.mock.calls as unknown[][]).map((call) => [(call[1] as { url: string }).url, (call[1] as { body: string }).body]),
+    );
+    const telegram = JSON.parse([...bodies.entries()].find(([url]) => url.includes("telegram"))![1]);
+    expect(telegram.reply_markup.inline_keyboard[0][0].callback_data).toMatch(/^assay_ack:65f000000000000000000001\.[A-Za-z0-9_-]{16}$/);
+    const slackBodies = [...bodies.entries()].filter(([url]) => url.includes("slack")).map(([, body]) => body);
+    expect(slackBodies.filter((body) => body.includes("assay_ack"))).toHaveLength(1);
+
+    // Without the signing secret no Slack message gets buttons.
+    const again = memoryStore([event({ id: "65f000000000000000000002" })], [oauthSlack]);
+    const second = deps(again.store);
+    await dispatchNotifications(second.deps);
+    expect(((second.send.mock.calls[0] as unknown[])[1] as { body: string }).body).not.toContain("assay_ack");
+  });
+
+  it("gives recoveries no buttons", async () => {
+    const { store } = memoryStore([event({ to: "clean", from: "issues" })], [destination({ kind: "telegram", sealed: JSON.stringify({ chatId: "-1" }) })]);
+    const { deps: d, send } = deps(store);
+    d.env = { TELEGRAM_BOT_TOKEN: "1:x" };
+    await dispatchNotifications(d);
+    expect(((send.mock.calls[0] as unknown[])[1] as { body: string }).body).not.toContain("reply_markup");
   });
 });

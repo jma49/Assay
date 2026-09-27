@@ -92,3 +92,6 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 - [ ] 把一个检查从正常变为有问题：动态页出现事件，渠道收到告警，事件后面显示送达图标。
 - [ ] Actions 里「Scheduled SQL checks」的「Send alerts」步骤返回 JSON（`sent`、`retrying` 等），没有 401。
 - [ ] 以访客身份打开设置 → 通知：只能查看，按钮不可用。
+- [ ] 检查详情页「告警」菜单：确认处理、静音、指定负责人都生效；检查列表显示静音和确认图标；动态页标出「已静音，未发送」。
+- [ ] 渠道开启「每日汇总」，到设定的时间（按渠道的时区）收到一条汇总，同一天只收到一次。
+- [ ] Slack App 开启 Interactivity（Request URL 指向 `/api/integrations/slack/interactions`）并设置 `SLACK_SIGNING_SECRET`；Slack 和 Telegram 告警里的「确认处理」「静音 24 小时」按钮可用，点击后消息更新为谁做了什么。
