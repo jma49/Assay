@@ -3,6 +3,7 @@ import { CreateDestination, type DestinationsResponse } from "@/contracts/notifi
 import { Permission, requirePermission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { hasSecretKey } from "@/server/crypto/secret-box";
+import { destinationForGuest } from "@/server/http/guest-view";
 import { ApiError, parseJson, withAuth } from "@/server/http/route";
 import { workspaceOf } from "@/server/http/workspace";
 import { discordConfigured, slackConfigured, telegramConfigured } from "@/server/integrations/config";
@@ -13,7 +14,7 @@ export const GET = withAuth(Permission.SCRIPT_READ, async (_request, { principal
   const db = await getMongoDbClient().getDb();
   const canManage = !principal.isGuest && (await requirePermission(principal.id, Permission.NOTIFICATION_MANAGE)).authorized;
   const body: DestinationsResponse = {
-    destinations: await listDestinations(db, workspaceOf(principal)),
+    destinations: (await listDestinations(db, workspaceOf(principal))).map((d) => (principal.isGuest ? destinationForGuest(d) : d)),
     setup: {
       canManage,
       secretKey: hasSecretKey(),
