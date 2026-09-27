@@ -5,6 +5,7 @@ import {
   buildHistoryQuery,
   changesPreview,
   formatChangeValue,
+  fieldLabel,
   formatPageInfo,
   historyDescription,
   isJumpInputKey,
@@ -172,13 +173,21 @@ describe("formatChangeValue", () => {
 
 describe("changesPreview", () => {
   it("says there are no changes for an empty or missing list", () => {
-    expect(changesPreview(undefined, t)).toBe("No changes");
-    expect(changesPreview([], t)).toBe("No changes");
+    expect(changesPreview(undefined, t, "en")).toBe("No changes");
+    expect(changesPreview([], t, "en")).toBe("No changes");
   });
 
-  it("names a single changed field and counts several", () => {
-    expect(changesPreview([change({ fieldDisplayNameCn: "" })], t)).toBe("Name");
-    expect(changesPreview([change(), change()], t)).toBe("2 changes");
+  it("names a single changed field in the UI language and counts several", () => {
+    expect(changesPreview([change()], t, "en")).toBe("Name");
+    expect(changesPreview([change()], t, "zh")).toBe("名称");
+    expect(changesPreview([change(), change()], t, "en")).toBe("2 changes");
+  });
+});
+
+describe("fieldLabel", () => {
+  it("falls back to the other language when the UI language's name is missing", () => {
+    expect(fieldLabel(change({ fieldDisplayName: "" }), "en")).toBe("名称");
+    expect(fieldLabel(change({ fieldDisplayNameCn: "" }), "zh")).toBe("Name");
   });
 });
 
@@ -189,8 +198,11 @@ describe("record accessors", () => {
     expect(operationTimeIso(fromJson)).toBe("2026-09-27T10:00:00Z");
   });
 
-  it("returns undefined when the record has no description", () => {
-    expect(historyDescription(record())).toBeUndefined();
-    expect(historyDescription(record({ description: "Renamed" }))).toBe("Renamed");
+  it("returns the description in the UI language, or undefined when there is none", () => {
+    expect(historyDescription(record(), "en")).toBeUndefined();
+    const described = record({ description: "Renamed", descriptionCn: "已重命名" });
+    expect(historyDescription(described, "en")).toBe("Renamed");
+    expect(historyDescription(described, "zh")).toBe("已重命名");
+    expect(historyDescription(record({ descriptionCn: "已重命名" }), "en")).toBe("已重命名");
   });
 });

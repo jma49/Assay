@@ -109,18 +109,23 @@ export function formatChangeValue(value: unknown, t: Translate): string {
   return String(value);
 }
 
-export function fieldLabel(change: FieldChange): string {
-  return change.fieldDisplayNameCn || change.fieldDisplayName;
+/** Picks the text for the UI language, falling back to the other one when it is missing. */
+function localized(language: string, en: string | undefined, zh: string | undefined): string | undefined {
+  return language === "zh" ? zh || en : en || zh;
 }
 
-export function changesPreview(changes: EditHistoryRecord["changes"], t: Translate): string {
+export function fieldLabel(change: FieldChange, language: string): string {
+  return localized(language, change.fieldDisplayName, change.fieldDisplayNameCn) ?? "";
+}
+
+export function changesPreview(changes: EditHistoryRecord["changes"], t: Translate, language: string): string {
   if (!changes || changes.length === 0) return t("noChanges");
-  if (changes.length === 1) return fieldLabel(changes[0]);
+  if (changes.length === 1) return fieldLabel(changes[0], language);
   return t("fieldChangesCount").replace("{count}", String(changes.length));
 }
 
-export function historyDescription(history: EditHistoryRecord): string | undefined {
-  return history.descriptionCn || history.description;
+export function historyDescription(history: EditHistoryRecord, language: string): string | undefined {
+  return localized(language, history.description, history.descriptionCn);
 }
 
 export function operationTimeIso(history: EditHistoryRecord): string {

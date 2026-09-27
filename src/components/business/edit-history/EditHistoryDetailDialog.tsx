@@ -23,6 +23,7 @@ interface EditHistoryDetailDialogProps {
 
 /** Who changed which check when, and a before/after view of every changed field. */
 export function EditHistoryDetailDialog({ history, open, language, t, onOpenChange }: EditHistoryDetailDialogProps) {
+  const description = history ? historyDescription(history, language) : undefined;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -46,11 +47,13 @@ export function EditHistoryDetailDialog({ history, open, language, t, onOpenChan
           <div className="space-y-6 py-4">
             <BasicInfo history={history} t={t} />
             <ScriptInfo snapshot={history.scriptSnapshot} t={t} />
-            {history.changes && history.changes.length > 0 && <ChangeList changes={history.changes} t={t} />}
-            {historyDescription(history) && (
+            {history.changes && history.changes.length > 0 && (
+              <ChangeList changes={history.changes} language={language} t={t} />
+            )}
+            {description && (
               <div className="p-4 bg-muted/30 rounded-lg">
                 <h4 className="font-medium mb-2">{t("description")}</h4>
-                <p className="text-sm text-muted-foreground">{historyDescription(history)}</p>
+                <p className="text-sm text-muted-foreground">{description}</p>
               </div>
             )}
           </div>
@@ -113,7 +116,7 @@ function ScriptInfo({ snapshot, t }: { snapshot: EditHistoryRecord["scriptSnapsh
   );
 }
 
-function ChangeList({ changes, t }: { changes: FieldChange[]; t: Translate }) {
+function ChangeList({ changes, language, t }: { changes: FieldChange[]; language: string; t: Translate }) {
   return (
     <div>
       <h4 className="font-medium mb-3 flex items-center gap-2">
@@ -123,7 +126,7 @@ function ChangeList({ changes, t }: { changes: FieldChange[]; t: Translate }) {
       <div className="space-y-4">
         {changes.map((change, index) => (
           <div key={index} className="border border-border/30 rounded-lg p-4 bg-background/50">
-            <div className="font-medium mb-3 text-sm">{fieldLabel(change)}</div>
+            <div className="font-medium mb-3 text-sm">{fieldLabel(change, language)}</div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-muted-foreground font-medium">{t("originalValue")}</label>
