@@ -27,7 +27,7 @@ interface ManualTriggerProps {
   t: (key: DashboardTranslationKeys) => string;
   setSelectedScriptId: (id: string) => void;
   handleTriggerCheck: () => void;
-  /** Which tab the panel opens on (the File menu can ask for bulk). */
+  /** Which tab the panel opens on. */
   initialMode?: "single" | "bulk";
   /** False for demo viewers, who may run single sample checks only. */
   allowBulk?: boolean;
