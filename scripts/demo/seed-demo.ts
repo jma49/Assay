@@ -1,5 +1,7 @@
 /**
- * Seeds demo data: recreates the `demo` schema in DATABASE_URL and upserts the
+ * Seeds demo data: recreates the `demo` schema in SEED_DATABASE_URL (a role
+ * that may create tables; falls back to DATABASE_URL, which in production
+ * should be a read-only role) and upserts the
  * demo check scripts into MongoDB. Only the `demo` schema and scripts marked demoSeed
  * by DEMO_AUTHOR are touched.
  * Usage: npm run seed:demo
@@ -121,9 +123,9 @@ async function seedScripts(): Promise<void> {
 }
 
 async function main(): Promise<number> {
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = process.env.SEED_DATABASE_URL || process.env.DATABASE_URL;
   if (!databaseUrl || !process.env.MONGODB_URI) {
-    console.error("DATABASE_URL and MONGODB_URI must be set");
+    console.error("SEED_DATABASE_URL (or DATABASE_URL) and MONGODB_URI must be set");
     return 1;
   }
 
