@@ -338,7 +338,7 @@ export default function AdminUsersPage() {
                           {t('addUserRole')}
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
+                      <DialogContent variant="sheet">
                         <DialogHeader>
                           <DialogTitle>{t('addUserRole')}</DialogTitle>
                           <DialogDescription>

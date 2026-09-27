@@ -499,6 +499,21 @@
     box-shadow: var(--aqua-window-shadow);
   }
 
+  /* Inside the app window, type follows Aqua's denser scale: 13 px body text
+     (Lucida Grande's native size) instead of 14, 14 instead of 16. Tailwind's
+     text-* utilities read these variables, so every page follows. */
+  /* Sheets and dialogs render outside the window (in a portal), so they
+     opt in too. */
+  .aqua-app,
+  .aqua-sheet,
+  [data-slot="dialog-content"] {
+    --text-sm: 0.8125rem;
+    --text-sm--line-height: calc(1.2 / 0.8125);
+    --text-base: 0.875rem;
+    --text-base--line-height: calc(1.35 / 0.875);
+    font-size: 13px;
+  }
+
   /* Unified toolbar: continues the title bar's gradient under it. */
   .aqua-toolbar {
     display: flex;
@@ -851,16 +866,18 @@
   animation: aqua-sheet-out 0.18s ease-in forwards;
 }
 
+/* Only the vertical slide: horizontal centring comes from Tailwind's
+   separate translate property, which a transform here would double. */
 @keyframes aqua-sheet-in {
   from {
-    transform: translate(-50%, -24px);
+    transform: translateY(-24px);
     opacity: 0;
   }
 }
 
 @keyframes aqua-sheet-out {
   to {
-    transform: translate(-50%, -24px);
+    transform: translateY(-24px);
     opacity: 0;
   }
 }

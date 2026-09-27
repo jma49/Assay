@@ -9,22 +9,23 @@ import { dashboardTranslations } from "@/components/business/dashboard/types";
 interface DockItem {
   href: string;
   label: { en: string; zh: string } | keyof typeof dashboardTranslations.en;
-  /** Original Aqua-style artwork in public/dock. */
+  /** Crystal Clear icons (LGPL) in public/dock; see THIRD_PARTY_NOTICES.md. */
   icon: string;
 }
 
 const ITEMS: DockItem[] = [
-  { href: "/dashboard", label: "navigationDashboard", icon: "/dock/dashboard.svg" },
+  { href: "/dashboard", label: "navigationDashboard", icon: "/dock/dashboard.png" },
   { href: "/manage-scripts", label: "navigationScripts", icon: "/dock/scripts.svg" },
-  { href: "/scripts/new", label: { en: "New Check", zh: "新建检查" }, icon: "/dock/new-check.svg" },
-  { href: "/data-analysis", label: "navigationAnalysis", icon: "/dock/analysis.svg" },
+  { href: "/scripts/new", label: { en: "New Check", zh: "新建检查" }, icon: "/dock/new-check.png" },
+  { href: "/data-analysis", label: "navigationAnalysis", icon: "/dock/analysis.png" },
   { href: "/manage-scripts/approvals", label: "navigationApprovals", icon: "/dock/approvals.svg" },
-  { href: "/admin/users", label: "navigationUsers", icon: "/dock/users.svg" },
+  { href: "/admin/users", label: "navigationUsers", icon: "/dock/users.png" },
 ];
 
 // Magnification: an icon right under the pointer grows to MAX_SCALE, and the
 // effect fades out over RADIUS pixels either side, so neighbours grow a little.
-const MAX_SCALE = 1.65;
+// 1.3 keeps the 128 px icons sharp on 2x screens at full size (50 px x 1.3).
+const MAX_SCALE = 1.3;
 const RADIUS = 150;
 // Stop the launch bounce even if the page never reports that it arrived.
 const BOUNCE_TIMEOUT_MS = 4000;
