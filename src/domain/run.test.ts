@@ -67,3 +67,32 @@ describe("check state", () => {
     expect(isNotable(null, "error", null)).toBe(true);
   });
 });
+
+describe("stateFromHistory", () => {
+  const run = (runId: string, outcome: "error" | "issues" | "clean", rowCount: number, day: number) => ({
+    runId,
+    outcome,
+    rowCount,
+    finishedAt: new Date(Date.UTC(2026, 8, day)),
+  });
+
+  it("starts `since` at the beginning of the latest streak", async () => {
+    const { stateFromHistory } = await import("./run");
+    expect(
+      stateFromHistory([run("r4", "issues", 4, 26), run("r3", "issues", 2, 25), run("r2", "clean", 0, 24), run("r1", "issues", 1, 23)]),
+    ).toEqual({
+      outcome: "issues",
+      rowCount: 4,
+      previousRowCount: 2,
+      since: new Date(Date.UTC(2026, 8, 25)),
+      lastRunId: "r4",
+      lastRunAt: new Date(Date.UTC(2026, 8, 26)),
+    });
+  });
+
+  it("handles a single run and no runs", async () => {
+    const { stateFromHistory } = await import("./run");
+    expect(stateFromHistory([run("r1", "clean", 0, 1)])).toMatchObject({ previousRowCount: null, since: new Date(Date.UTC(2026, 8, 1)) });
+    expect(stateFromHistory([])).toBeNull();
+  });
+});
