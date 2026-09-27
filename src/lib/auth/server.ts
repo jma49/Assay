@@ -2,6 +2,7 @@ import { apiKey } from "@better-auth/api-key";
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { lastLoginMethod } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { MongoClient, ObjectId } from "mongodb";
 import { claimLegacyRole, emailAllowed } from "./legacy-accounts";
@@ -97,6 +98,8 @@ export const auth = betterAuth({
       // In seconds, although the plugin's type comment says milliseconds.
       keyExpiration: { defaultExpiresIn: 90 * 24 * 60 * 60, maxExpiresIn: 365 },
     }),
+    // Remembers the last provider in a cookie, so the sign-in page can mark it.
+    lastLoginMethod(),
     nextCookies(),
   ],
 });
