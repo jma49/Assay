@@ -361,10 +361,16 @@ export async function approveScript(
       };
     }
 
-    // 更新审批请求状态
+    // Separation of duties: whoever asked for a change cannot approve it.
+    if (request.requesterId === approverId) {
+      return { success: false, message: "不能审批自己提交的申请" };
+    }
+
+    // The status only moves from pending once: of two approvers, or an
+    // approve racing a reject, exactly one wins and only it applies the change.
     const now = new Date();
     const updateResult = await collection.updateOne(
-      { requestId },
+      { requestId, status: ApprovalStatus.PENDING },
       {
         $set: {
           status: ApprovalStatus.APPROVED,
@@ -393,21 +399,22 @@ export async function approveScript(
         comment
       );
 
-      // 执行实际的脚本操作
       try {
         await executeApprovedOperation(request as unknown as ApprovalRequest);
-        console.log(
-          `[Approval] 脚本已审批通过并执行操作: ${requestId} by ${approverEmail}`
-        );
       } catch (error) {
-        console.error(`[Approval] 执行审批操作失败: ${requestId}`, error);
-        // 即使执行失败，审批状态仍然是通过的，但需要记录错误
+        // The request stays approved; the failure is recorded on it instead of only in a log.
+        console.error(`[Approval] Applying ${requestId} failed:`, error);
+        await collection.updateOne(
+          { requestId },
+          { $set: { applyError: error instanceof Error ? error.message : String(error), updatedAt: new Date() } },
+        );
+        return { success: false, message: "审批已通过，但应用变更失败，请查看审批记录" };
       }
 
       return { success: true, message: "脚本审批通过" };
     }
 
-    return { success: false, message: "更新审批状态失败" };
+    return { success: false, message: "这条申请已被其他人处理" };
   } catch (error) {
     console.error("[Approval] 审批脚本失败:", error);
     return { success: false, message: "审批处理时发生错误" };
@@ -451,7 +458,7 @@ export async function rejectScript(
     // 更新审批请求状态
     const now = new Date();
     const updateResult = await collection.updateOne(
-      { requestId },
+      { requestId, status: ApprovalStatus.PENDING },
       {
         $set: {
           status: ApprovalStatus.REJECTED,
@@ -481,7 +488,7 @@ export async function rejectScript(
       return { success: true, message: "脚本已被拒绝" };
     }
 
-    return { success: false, message: "更新审批状态失败" };
+    return { success: false, message: "这条申请已被其他人处理" };
   } catch (error) {
     console.error("[Approval] 拒绝脚本失败:", error);
     return { success: false, message: "拒绝处理时发生错误" };
