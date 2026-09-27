@@ -1,6 +1,6 @@
 import { ObjectId, type Db, type Document } from "mongodb";
 import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
-import { fromLegacyStatus, stateFromHistory } from "@/domain/run";
+import { fromLegacyStatus, runExpiresAt, runRetentionDays, stateFromHistory } from "@/domain/run";
 import { legacyRunFields, type CheckEvent, type RunCheckStore, type RunDocument } from "@/server/services/run-check";
 
 // Enough runs to find when the current streak began for any realistic schedule.
@@ -75,6 +75,9 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
         diff: run.diff,
         error: run.error,
       };
+      // Deleted by the TTL index on expiresAt; runs without it are kept.
+      const expiresAt = runExpiresAt(run.finishedAt, runRetentionDays());
+      if (expiresAt) doc.expiresAt = expiresAt;
       await runs.insertOne(doc);
     },
 
