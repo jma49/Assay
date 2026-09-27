@@ -64,6 +64,8 @@ export function countByRole(members: MemberRole[]): Record<UserRole, number> {
 
 export interface PageSlice<T> {
   items: T[];
+  /** The page actually shown: the requested one, kept within 1..totalPages. */
+  page: number;
   totalPages: number;
   /** 1-based index of the first and last item shown. */
   start: number;
@@ -72,10 +74,13 @@ export interface PageSlice<T> {
 
 export function pageSlice<T>(items: T[], page: number, pageSize: number): PageSlice<T> {
   const totalPages = Math.ceil(items.length / pageSize);
-  const startIndex = (page - 1) * pageSize;
+  // Removing the last member of the last page must not strand the view on an empty page.
+  const shown = Math.min(Math.max(page, 1), Math.max(totalPages, 1));
+  const startIndex = (shown - 1) * pageSize;
   const endIndex = startIndex + pageSize;
   return {
     items: items.slice(startIndex, endIndex),
+    page: shown,
     totalPages,
     start: startIndex + 1,
     end: Math.min(endIndex, items.length),

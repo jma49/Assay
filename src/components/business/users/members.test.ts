@@ -34,8 +34,12 @@ describe("pageSlice", () => {
   const items = Array.from({ length: 23 }, (_, i) => i);
 
   it("returns the requested page and its 1-based range", () => {
-    expect(pageSlice(items, 1, 10)).toEqual({ items: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], totalPages: 3, start: 1, end: 10 });
+    expect(pageSlice(items, 1, 10)).toEqual({ items: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], page: 1, totalPages: 3, start: 1, end: 10 });
     expect(pageSlice(items, 3, 10)).toMatchObject({ items: [20, 21, 22], start: 21, end: 23 });
+  });
+
+  it("falls back to the last page when the list shrinks below the current one", () => {
+    expect(pageSlice(items.slice(0, 20), 3, 10)).toMatchObject({ items: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], page: 2, start: 11, end: 20 });
   });
 
   it("has no pages when there are no items", () => {
