@@ -111,7 +111,12 @@ export interface NotifyStore {
   claimDelivery(now: Date, leaseMs: number): Promise<ClaimedDelivery | null>;
   /** Applies the update only while the claim is still this dispatcher's. */
   finishDelivery(delivery: ClaimedDelivery, update: DeliveryUpdate): Promise<void>;
-  sentSince(destinationId: string, since: Date): Promise<number>;
+  /**
+   * Atomically takes one of the destination's `limit` sends in the hour up
+   * to `now`; false when they are all taken, so concurrent dispatchers can
+   * never exceed the cap together.
+   */
+  takeSendSlot(destinationId: string, now: Date, limit: number): Promise<boolean>;
   recordLastDelivery(destinationId: string, result: { at: Date; ok: boolean; error?: string }): Promise<void>;
   /** Enabled destinations with a daily summary, in every workspace. */
   digestDestinations(): Promise<Destination[]>;
@@ -201,7 +206,8 @@ async function deliver(delivery: ClaimedDelivery, deps: DispatchDeps): Promise<D
   const [destination, event] = await Promise.all([deps.store.destination(delivery.destinationId), deps.store.event(delivery.eventId)]);
   if (!destination || !event) return { status: "failed", at: now, error: "The destination or event no longer exists", attempted: false };
   if (!destination.enabled) return { status: "failed", at: now, error: "The destination is paused", attempted: false };
-  if ((await deps.store.sentSince(destination.id, new Date(now.getTime() - 3_600_000))) >= HOURLY_LIMIT) {
+  // Every attempt counts, sent or not: the cap is there to keep a channel from being flooded.
+  if (!(await deps.store.takeSendSlot(destination.id, now, HOURLY_LIMIT))) {
     return { status: "pending", at: now, nextAttemptAt: new Date(now.getTime() + THROTTLE_DELAY_MS), attempted: false };
   }
 
