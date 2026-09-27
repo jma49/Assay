@@ -10,6 +10,7 @@ import { HighlightedLine } from "@/components/code/HighlightedLine";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import { WindowToolbar } from "@/components/layout/WindowChrome";
 import { Button } from "@/components/ui/button";
+import * as checksApi from "@/client/checks";
 import { useApi } from "@/client/use-api";
 import type { CheckDetail, LatestRun, RunListItem } from "@/contracts/checks";
 import type { Triage } from "@/lib/ai/triage";
@@ -365,14 +366,8 @@ function TriagePanel({ check, t, language }: { check: CheckDetail; t: Copy; lang
   const start = async () => {
     setBusy(true);
     try {
-      const response = await fetch("/api/ai/triage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resultId: latest.runId, language }),
-      });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.error?.message ?? body.error ?? response.statusText);
-      setTriage(body.triage);
+      const body = await checksApi.triage(latest.runId, language);
+      setTriage(body.triage ?? null);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : String(error));
     } finally {
@@ -450,13 +445,7 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
   const runNow = async () => {
     setRunning(true);
     try {
-      const response = await fetch("/api/run-check", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scriptId }),
-      });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.message ?? body.error?.message ?? response.statusText);
+      const body = await checksApi.runCheck(scriptId);
       if (body.statusType === "failure") toast.error(t.ranError, { description: body.message });
       else if (body.statusType === "attention_needed") toast.warning(t.ranIssues(body.rowCount ?? 0));
       else toast.success(t.ranClean);

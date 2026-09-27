@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/lib/auth/client";
 import { toast } from "sonner";
+import { sendJson } from "@/client/send-json";
 import { Button } from "@/components/ui/button";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import {
@@ -165,17 +166,7 @@ export default function NewScriptPage() {
 
     setIsSaving(true);
     try {
-      const response = await fetch("/api/scripts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, sqlContent }),
-      });
-      const result = await response.json();
-
-      if (!response.ok) {
-        toast.error(c.failed, { description: result.message || response.statusText });
-        return;
-      }
+      const result = await sendJson<{ requiresApproval?: boolean }>("/api/scripts", "POST", { ...formData, sqlContent });
       if (result.requiresApproval) {
         toast.success(c.submitted, { description: c.submittedDesc });
       } else {
