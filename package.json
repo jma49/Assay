@@ -25,7 +25,6 @@
     "scheduler": "ts-node -r dotenv/config scripts/scheduler/task-scheduler.ts",
     "scheduler:start": "chmod +x scripts/scheduler/start-scheduler.sh && ./scripts/scheduler/start-scheduler.sh",
     "scheduler:manage": "chmod +x scripts/manage-scheduler.sh && ./scripts/manage-scheduler.sh",
-    "test:scheduler": "ts-node -r dotenv/config scripts/test-schedule-utils.ts",
     "test:db": "NODE_OPTIONS='--import=ts-node/register --loader=ts-node/esm' node --no-warnings test/database/connection.test.ts",
     "test:mongodb": "ts-node test/database/mongodb.test.ts",
     "optimize:db": "ts-node -r dotenv/config scripts/maintenance/optimize-database-indexes.ts",
