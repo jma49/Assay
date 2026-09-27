@@ -4,7 +4,8 @@ import { APIError } from "better-auth/api";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { lastLoginMethod } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
-import { MongoClient, ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
+import { mongoDatabaseName, sharedMongoClient } from "@/lib/database/mongo-connection";
 import { claimLegacyRole, emailAllowed } from "./legacy-accounts";
 import { enabledProviders } from "./providers";
 
@@ -14,23 +15,12 @@ import { enabledProviders } from "./providers";
  * involved, so a self-hosted Assay needs only MongoDB and the OAuth apps.
  */
 
-const globalForAuth = globalThis as unknown as { authMongo?: MongoClient };
-
 const building = process.env.NEXT_PHASE === "phase-production-build";
 
-function mongo(): MongoClient {
-  const uri = process.env.MONGODB_URI;
-  // `next build` loads route modules to collect page data without secrets;
-  // the driver connects lazily, so a placeholder is never dialled there.
-  if (!uri && building) return new MongoClient("mongodb://build.invalid");
-  if (!uri) throw new Error("MONGODB_URI is not set");
-  // The driver connects lazily; one client per process, kept across dev reloads.
-  globalForAuth.authMongo ??= new MongoClient(uri, { maxPoolSize: 5, serverSelectionTimeoutMS: 5000 });
-  return globalForAuth.authMongo;
-}
-
-const client = mongo();
-const db = client.db(process.env.MONGODB_DB_NAME || "sql_script_monitoring");
+// The same client and database as the rest of the app: users, sessions and
+// roles must live together, or roles never find their users.
+const client = sharedMongoClient();
+const db = client.db(mongoDatabaseName());
 
 /**
  * A signed-up user by id or email, from the users Better Auth keeps. Admins
