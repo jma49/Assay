@@ -132,3 +132,29 @@ END $$;`);
     }
   });
 });
+
+describe("statements that would leave the read-only transaction", () => {
+  it.each(["SELECT 1; END; SELECT 1", "SELECT 1; ABORT; SELECT 1", "SELECT 1; BEGIN; SELECT 1", "SELECT 1; START TRANSACTION; SELECT 1"])(
+    "refuses %s",
+    (sql) => {
+      expect(validateReadOnlySql(sql)).toMatchObject({ isValid: false, reasonEn: "Every statement must start with SELECT, WITH, EXPLAIN or DO." });
+    },
+  );
+
+  it("still allows END in expressions", () => {
+    expect(validateReadOnlySql("SELECT CASE WHEN x > 1 THEN 'a' ELSE 'b' END FROM t; SELECT 2").isValid).toBe(true);
+  });
+});
+
+describe("functions called through quoted names", () => {
+  it.each([`SELECT "pg_sleep"(600)`, `SELECT pg_catalog."set_config"('a', 'b', false)`, `SELECT "setval"('s', 1)`, `SELECT "dblink_exec"('x')`])(
+    "refuses %s",
+    (sql) => {
+      expect(validateReadOnlySql(sql).isValid).toBe(false);
+    },
+  );
+
+  it("does not treat quoted column names as keywords", () => {
+    expect(validateReadOnlySql(`SELECT "update", "delete" FROM t`).isValid).toBe(true);
+  });
+});
