@@ -71,6 +71,7 @@ function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void
             <a href="#features" className="hover:text-foreground">{t.features}</a>
             <a href="#self-host" className="hover:text-foreground">{t.quickStart}</a>
             <a href="#faq" className="hover:text-foreground">{t.faq}</a>
+            <Link href="/docs" className="hover:text-foreground">{lang === "zh" ? "文档" : "Docs"}</Link>
             <a href={GITHUB_URL} className="hover:text-foreground">GitHub</a>
           </div>
           <button
@@ -314,12 +315,12 @@ export default function LandingPage() {
                 {t.quickStart.title}
               </h2>
               <p className="mt-4 text-[16px] leading-7 text-(--l-muted)">{t.quickStart.body}</p>
-              <a
-                href={`${GITHUB_URL}#readme`}
+              <Link
+                href="/docs/deployment"
                 className="mt-6 inline-block text-[14px] underline underline-offset-4 hover:opacity-80"
               >
                 {t.quickStart.readme} →
-              </a>
+              </Link>
             </div>
             <DemoFrame title="Terminal" bodyClassName="" chrome>
               <pre className="mono overflow-x-auto bg-(--l-code-bg) px-4 py-4 text-[13px] leading-6">
