@@ -32,6 +32,10 @@ describe("formatDateTime", () => {
   it("formats in the given zone rather than a fixed one", () => {
     expect(formatDateTime("2026-09-24T04:57:54Z", "en", "Asia/Shanghai")).toContain("12:57:54 PM");
   });
+
+  it("puts the zone after the time in Chinese too", () => {
+    expect(formatDateTime("2026-09-24T09:57:08Z", "zh", "America/Los_Angeles")).toBe("2026/09/24 02:57:08 PDT");
+  });
 });
 
 describe("localDayKey and dayKeyParts", () => {

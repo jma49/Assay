@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronRight, Pencil, Play, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/common/LanguageProvider";
@@ -18,6 +18,7 @@ import { nextScheduledRun } from "@/lib/scheduling/schedule";
 import { tableReferences } from "@/lib/sql/table-references";
 import { formatDateTime, formatRelative } from "@/lib/utils/datetime";
 import { cn } from "@/lib/utils/utils";
+import { cellText } from "@/lib/utils/cells";
 import { Sparkline } from "./Sparkline";
 import { OUTCOME_DOT, OUTCOME_LABEL, OUTCOME_PILL, scheduleLabel } from "./status";
 
@@ -79,7 +80,9 @@ const COPY = {
     notFound: "No check with this id.",
     back: "Back to checks",
     runFailed: "Could not run the check",
-    ran: "Run finished",
+    ranClean: "Run finished: clean",
+    ranIssues: (n: number) => (n === 1 ? "Run finished: 1 row needs attention" : `Run finished: ${n} rows need attention`),
+    ranError: "Run finished: the query failed",
   },
   zh: {
     since: (when: string) => `${when}起`,
@@ -135,31 +138,27 @@ const COPY = {
     fixedSql: "修正后的查询",
     notFound: "找不到这个检查。",
     back: "返回检查列表",
-    runFailed: "执行失败",
-    ran: "执行完成",
+    runFailed: "无法执行检查",
+    ranClean: "执行完成：正常",
+    ranIssues: (n: number) => `执行完成：${n} 行需要处理`,
+    ranError: "执行完成：查询出错",
   },
 };
 
 type Copy = (typeof COPY)["en"];
 
-const ISO_TIMESTAMP = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(?:\.\d+)?Z$/;
-
-/** A cell as text; ISO timestamps lose their milliseconds and the T. */
-function cellText(value: unknown): string {
-  if (value === null || value === undefined) return "NULL";
-  if (typeof value === "string") {
-    const iso = ISO_TIMESTAMP.exec(value);
-    if (iso) return `${iso[1]} ${iso[2]}`;
-  }
-  if (typeof value === "object") return JSON.stringify(value);
-  return String(value);
-}
 
 function LatestResult({ latest, t }: { latest: LatestRun; t: Copy }) {
   if (latest.outcome === "error") {
     return (
       <div className="space-y-3 p-5">
-        <p className="text-[13px] font-medium text-failure">{t.failed}</p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[13px] font-medium text-failure">{t.failed}</p>
+          <Link href={`/view-execution-result/${latest.runId}`} className="inline-flex items-center gap-0.5 text-[12px] font-medium text-primary hover:underline">
+            {t.fullReport}
+            <ChevronRight className="size-3.5" />
+          </Link>
+        </div>
         <pre className="overflow-x-auto rounded-lg bg-code p-4 font-mono text-[12.5px] leading-6 whitespace-pre-wrap text-failure">{latest.message}</pre>
       </div>
     );
@@ -437,6 +436,12 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
   const [running, setRunning] = useState(false);
   const check = data?.check;
 
+  // The tab title names the check once it has loaded.
+  const title = check ? (zh ? check.cnName || check.name : check.name) : null;
+  useEffect(() => {
+    if (title) document.title = `${title} · Assay`;
+  }, [title]);
+
   const canRun = !!me && (me.permissions.includes("script:execute") || !!me.demo);
   const canEdit = !!me?.permissions.includes("script:update");
 
@@ -450,7 +455,9 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.message ?? body.error?.message ?? response.statusText);
-      toast.success(t.ran, { description: body.findings });
+      if (body.statusType === "failure") toast.error(t.ranError, { description: body.message });
+      else if (body.statusType === "attention_needed") toast.warning(t.ranIssues(body.rowCount ?? 0));
+      else toast.success(t.ranClean);
       setTab("result");
       reload();
     } catch (cause) {
@@ -486,7 +493,11 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
   const name = zh ? check.cnName || check.name : check.name;
   const description = zh ? check.cnDescription || check.description : check.description;
   const history = check.history;
-  const high = Math.max(0, ...history.map((p) => (p.outcome === "error" ? 0 : p.rowCount)));
+  // Runs that errored have no row count, so they are left out of the numbers.
+  const counted = history.filter((p) => p.outcome !== "error");
+  const high: number | string = counted.length ? Math.max(...counted.map((p) => p.rowCount)) : "—";
+  const previousPoint = history.length > 1 ? history[history.length - 2] : null;
+  const previousRows: number | string = previousPoint && previousPoint.outcome !== "error" ? previousPoint.rowCount : "—";
 
   return (
     <div className={`${APP_CONTAINER} space-y-5 py-6`}>
@@ -562,7 +573,7 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
               <dl className="flex gap-5">
                 {[
                   [t.now, state?.outcome === "error" ? "—" : state?.rowCount ?? "—"],
-                  [t.previous, state?.previousRowCount ?? "—"],
+                  [t.previous, previousRows],
                   [t.high, high],
                 ].map(([label, value]) => (
                   <div key={String(label)}>

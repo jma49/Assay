@@ -161,7 +161,7 @@ export function ChecksList() {
                 {tile.label}
               </span>
               <span className="text-[24px] leading-tight font-semibold tabular-nums">{loading && !data ? "–" : tile.value}</span>
-              <span className="text-[12px] text-muted-foreground">{tile.hint}</span>
+              <span className="text-[12px] text-muted-foreground">{loading && !data ? "\u00a0" : tile.hint}</span>
             </button>
           );
         })}
@@ -213,16 +213,17 @@ export function ChecksList() {
           <p className="px-6 py-10 text-center text-[13px] text-muted-foreground">{t.empty}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-[13px]">
+            {/* Fixed column widths, so filtering or searching never shifts the columns. */}
+            <table className="w-full table-fixed text-[13px]">
               <thead>
                 <tr className="border-b text-[12px] text-muted-foreground">
-                  <th className="w-8 px-4 py-2" />
+                  <th className="w-10 px-4 py-2" />
                   <th className="px-3 py-2 text-left font-medium">{t.check}</th>
-                  <th className="px-3 py-2 text-left font-medium">{t.now}</th>
-                  <th className="px-3 py-2 text-left font-medium max-sm:hidden">{t.delta}</th>
-                  <th className="px-3 py-2 text-left font-medium max-md:hidden">{t.trend}</th>
-                  <th className="px-3 py-2 text-left font-medium max-lg:hidden">{t.schedule}</th>
-                  <th className="px-4 py-2 text-right font-medium">{t.lastRun}</th>
+                  <th className="w-28 px-3 py-2 text-left font-medium">{t.now}</th>
+                  <th className="w-24 px-3 py-2 text-left font-medium max-sm:hidden">{t.delta}</th>
+                  <th className="w-32 px-3 py-2 text-left font-medium max-md:hidden">{t.trend}</th>
+                  <th className="w-48 px-3 py-2 text-left font-medium max-lg:hidden">{t.schedule}</th>
+                  <th className="w-32 px-4 py-2 text-right font-medium">{t.lastRun}</th>
                 </tr>
               </thead>
               <tbody>
@@ -248,7 +249,7 @@ export function ChecksList() {
                         <td className="px-4 py-2.5">
                           {c.state && <span className={cn("status-dot", OUTCOME_DOT[c.state.outcome])} aria-label={OUTCOME_LABEL[c.state.outcome][language]} />}
                         </td>
-                        <td className="max-w-[340px] min-w-[220px] px-3 py-2.5">
+                        <td className="px-3 py-2.5">
                           <Link href={`/checks/${encodeURIComponent(c.scriptId)}`} className="block truncate font-medium hover:underline">
                             {name(c)}
                           </Link>
@@ -271,7 +272,9 @@ export function ChecksList() {
                         <td className="px-3 py-2.5 max-md:hidden">
                           <Sparkline points={c.history} outcome={c.state?.outcome ?? "clean"} />
                         </td>
-                        <td className="px-3 py-2.5 whitespace-nowrap text-muted-foreground max-lg:hidden">{scheduleLabel(c.schedule, language)}</td>
+                        <td className="truncate px-3 py-2.5 whitespace-nowrap text-muted-foreground max-lg:hidden" title={c.schedule ?? undefined}>
+                          {scheduleLabel(c.schedule, language)}
+                        </td>
                         <td className="px-4 py-2.5 text-right whitespace-nowrap text-muted-foreground" title={c.state ? formatDateTime(c.state.lastRunAt, language) : undefined}>
                           {c.state ? formatRelative(c.state.lastRunAt, language) : t.neverRan}
                         </td>

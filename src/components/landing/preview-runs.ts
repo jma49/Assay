@@ -1,5 +1,5 @@
 /** Sample runs for the landing page's product preview, shaped like the demo database. */
-type Text = { en: string; zh: string };
+export type Text = { en: string; zh: string };
 
 export interface PreviewRun {
   id: string;
@@ -9,7 +9,8 @@ export interface PreviewRun {
   columns?: Text[];
   /** Columns aligned right (numbers). */
   numeric?: number[];
-  rows?: (string | number)[][];
+  /** A cell is a value, or a phrase in both languages (e.g. dates). */
+  rows?: (string | number | Text)[][];
   error?: string;
 }
 
@@ -72,13 +73,13 @@ export const PREVIEW_RUNS: PreviewRun[] = [
     ],
     numeric: [3],
     rows: [
-      ["#2104", 55, "Sep 12", 14],
-      ["#2111", 208, "Sep 13", 13],
-      ["#2129", 17, "Sep 15", 11],
-      ["#2140", 96, "Sep 16", 10],
-      ["#2152", 131, "Sep 17", 9],
-      ["#2163", 44, "Sep 18", 8],
-      ["#2170", 189, "Sep 19", 7],
+      ["#2104", 55, { en: "Sep 12", zh: "9月12日" }, 14],
+      ["#2111", 208, { en: "Sep 13", zh: "9月13日" }, 13],
+      ["#2129", 17, { en: "Sep 15", zh: "9月15日" }, 11],
+      ["#2140", 96, { en: "Sep 16", zh: "9月16日" }, 10],
+      ["#2152", 131, { en: "Sep 17", zh: "9月17日" }, 9],
+      ["#2163", 44, { en: "Sep 18", zh: "9月18日" }, 8],
+      ["#2170", 189, { en: "Sep 19", zh: "9月19日" }, 7],
     ],
   },
   {
