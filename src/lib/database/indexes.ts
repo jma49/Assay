@@ -10,6 +10,16 @@ export const INDEXES: Record<string, IndexDescription[]> = {
   script_versions: [{ key: { scriptId: 1, createdAt: -1 } }],
   // One event per run at most, so retried runs never notify twice.
   events: [{ key: { runId: 1 }, unique: true }, { key: { at: -1 } }, { key: { checkId: 1, at: -1 } }],
+  notification_destinations: [{ key: { workspaceId: 1, createdAt: 1 } }],
+  // One delivery per event and destination, so fan-out can run anywhere, any number of times.
+  notification_deliveries: [
+    { key: { eventId: 1, destinationId: 1 }, unique: true },
+    { key: { status: 1, nextAttemptAt: 1 } },
+    { key: { destinationId: 1, sentAt: -1 } },
+    { key: { createdAt: 1 }, expireAfterSeconds: 30 * 24 * 60 * 60 },
+  ],
+  // Pending Telegram links expire on their own.
+  telegram_links: [{ key: { codeHash: 1 }, unique: true }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
   // Batches only matter while someone watches their progress; keep a week.
   batches: [{ key: { executionId: 1 }, unique: true }, { key: { startedAt: 1 }, expireAfterSeconds: 7 * 24 * 60 * 60 }],
 };
