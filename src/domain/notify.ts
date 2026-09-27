@@ -34,7 +34,7 @@ const TONE: Record<AlertKind, Tone> = { broken: "failure", issues: "attention", 
 
 /** A channel-neutral alert; each channel turns it into its own payload. */
 export interface AlertMessage {
-  kind: AlertKind | "digest";
+  kind: AlertKind | "digest" | "reminder";
   tone: Tone;
   title: string;
   /** Plain text, one fact per line. */
@@ -177,6 +177,23 @@ export function buildDigestMessage(summary: DigestSummary, options: { language: 
     checkName: "Assay",
     url: options.url,
     linkLabel: content.linkLabel,
+    at: options.at.toISOString(),
+  });
+}
+
+/** A reminder that a problem is still open and nobody has acknowledged it. */
+export function buildReminderMessage(
+  content: { title: string; lines: string[] },
+  options: { tone: Tone; checkName: string; language: MessageLanguage; url: string; at: Date },
+): AlertMessage {
+  return withText({
+    kind: "reminder",
+    tone: options.tone,
+    title: `⏰ ${content.title}`,
+    lines: content.lines,
+    checkName: options.checkName,
+    url: options.url,
+    linkLabel: COPY[options.language].open,
     at: options.at.toISOString(),
   });
 }

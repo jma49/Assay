@@ -19,6 +19,11 @@ export const INDEXES: Record<string, IndexDescription[]> = {
     { key: { destinationId: 1, sentAt: -1 } },
     { key: { createdAt: 1 }, expireAfterSeconds: 30 * 24 * 60 * 60 },
   ],
+  // One row per problem and destination counts its reminders; old ones go after 30 days.
+  notification_reminders: [
+    { key: { destinationId: 1, checkId: 1, since: 1 }, unique: true },
+    { key: { lastAt: 1 }, expireAfterSeconds: 30 * 24 * 60 * 60 },
+  ],
   // Pending Telegram links expire on their own.
   telegram_links: [{ key: { codeHash: 1 }, unique: true }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
   // Batches only matter while someone watches their progress; keep a week.

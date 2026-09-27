@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { sendJson } from "@/client/send-json";
 import type { DestinationDto, TelegramLinkDto, TelegramLinkStatus } from "@/contracts/notifications";
 import type { DigestSettings } from "@/domain/digest";
+import { REMIND_AFTER_HOURS } from "@/domain/reminders";
 import { ALERT_KINDS, type AlertKind, type ChannelKind } from "@/domain/notify";
 import { cn } from "@/lib/utils/utils";
 import { ALERT_LABEL, CHANNEL_META, ChannelIcon } from "./channels";
@@ -37,6 +38,10 @@ const COPY = {
     digest: "Daily summary",
     digestHint: "What is broken or has issues, and what changed in the last 24 hours.",
     digestAt: "at",
+    remind: "Remind if nobody acts",
+    remindHint: "While a problem stays open and unacknowledged, up to 3 times.",
+    remindOff: "Off",
+    remindEvery: (h: number) => (h < 24 ? `Every ${h} h` : "Every day"),
     secretTitle: "Save the signing secret",
     secretBody: "Your endpoint verifies X-Assay-Signature with this secret. It is shown only once.",
     copy: "Copy",
@@ -71,6 +76,10 @@ const COPY = {
     digest: "每日汇总",
     digestHint: "出错和有问题的检查，以及过去 24 小时的变化。",
     digestAt: "时间",
+    remind: "无人处理时提醒",
+    remindHint: "问题一直未确认处理时提醒，最多 3 次。",
+    remindOff: "关闭",
+    remindEvery: (h: number) => (h < 24 ? `每 ${h} 小时` : "每天"),
     secretTitle: "保存签名密钥",
     secretBody: "你的服务用这个密钥校验 X-Assay-Signature。它只显示这一次。",
     copy: "复制",
@@ -94,6 +103,8 @@ interface Subscription {
   tags: string;
   language: "en" | "zh";
   digest: DigestSettings;
+  /** Hours, or 0 for no reminders. */
+  remindAfter: number;
 }
 
 /** New summaries go out at 09:00 in the browser's own time zone. */
@@ -157,6 +168,24 @@ function SubscriptionFields({ value, onChange }: { value: Subscription; onChange
           </div>
         </div>
       </div>
+      <label className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg p-3 shadow-border">
+        <span className="grid min-w-0 gap-0.5">
+          <span className="text-[13px] font-medium">{t.remind}</span>
+          <span className="text-[12px] text-muted-foreground">{t.remindHint}</span>
+        </span>
+        <select
+          value={value.remindAfter}
+          onChange={(e) => onChange({ ...value, remindAfter: Number(e.target.value) })}
+          className="h-8 rounded-md bg-card px-2 text-[13px] text-foreground shadow-border"
+        >
+          <option value={0}>{t.remindOff}</option>
+          {REMIND_AFTER_HOURS.map((hours) => (
+            <option key={hours} value={hours}>
+              {t.remindEvery(hours)}
+            </option>
+          ))}
+        </select>
+      </label>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg p-3 shadow-border">
         <Switch
           checked={value.digest.enabled}
@@ -228,7 +257,7 @@ export function PasteDestinationDialog({
   const { language } = useLanguage();
   const t = COPY[language];
   const meta = kind ? CHANNEL_META[kind] : null;
-  const [subscription, setSubscription] = useState<Subscription>({ name: "", alerts: [...ALERT_KINDS], tags: "", language, digest: defaultDigest() });
+  const [subscription, setSubscription] = useState<Subscription>({ name: "", alerts: [...ALERT_KINDS], tags: "", language, digest: defaultDigest(), remindAfter: 0 });
   const [url, setUrl] = useState("");
   const [signingSecret, setSigningSecret] = useState("");
   const [saving, setSaving] = useState(false);
@@ -238,7 +267,7 @@ export function PasteDestinationDialog({
   useEffect(() => {
     if (!kind) return;
     const channel = CHANNEL_META[kind].name[language];
-    setSubscription({ name: language === "zh" ? `${channel}告警` : `${channel} alerts`, alerts: [...ALERT_KINDS], tags: "", language, digest: defaultDigest() });
+    setSubscription({ name: language === "zh" ? `${channel}告警` : `${channel} alerts`, alerts: [...ALERT_KINDS], tags: "", language, digest: defaultDigest(), remindAfter: 0 });
     setUrl("");
     setSigningSecret("");
     setError(null);
@@ -261,6 +290,7 @@ export function PasteDestinationDialog({
         alerts: subscription.alerts,
         tags: parseTags(subscription.tags),
         digest: subscription.digest,
+        remind: subscription.remindAfter ? { afterHours: subscription.remindAfter } : null,
       });
       onCreated();
       if (result.signingSecret) setCreatedSecret(result.signingSecret);
@@ -348,7 +378,7 @@ export function EditDestinationDialog({
 }) {
   const { language } = useLanguage();
   const t = COPY[language];
-  const [subscription, setSubscription] = useState<Subscription>({ name: "", alerts: [], tags: "", language: "en", digest: defaultDigest() });
+  const [subscription, setSubscription] = useState<Subscription>({ name: "", alerts: [], tags: "", language: "en", digest: defaultDigest(), remindAfter: 0 });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -360,6 +390,7 @@ export function EditDestinationDialog({
       tags: destination.tags.join(", "),
       language: destination.language,
       digest: destination.digest ?? defaultDigest(),
+      remindAfter: destination.remind?.afterHours ?? 0,
     });
     setError(null);
   }, [destination]);
@@ -375,6 +406,7 @@ export function EditDestinationDialog({
         alerts: subscription.alerts,
         tags: parseTags(subscription.tags),
         digest: subscription.digest,
+        remind: subscription.remindAfter ? { afterHours: subscription.remindAfter } : null,
         language: subscription.language,
       });
       onSaved();
