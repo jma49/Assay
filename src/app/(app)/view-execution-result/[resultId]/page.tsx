@@ -11,6 +11,7 @@ import {
   Database,
   Download,
   Brain,
+  Play,
 } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
 import dynamic from 'next/dynamic';
@@ -21,6 +22,7 @@ import Link from "next/link";
 import { SkeletonPageHeader, SkeletonTable } from "@/components/common/PageSkeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { formatDateTime } from "@/lib/utils/datetime";
 import { useMe } from "@/lib/auth/use-me";
 import { triageToMarkdown } from "@/lib/ai/triage-format";
 
@@ -176,7 +178,11 @@ export default function ViewExecutionResultPage() {
 
   // 使用全局语言系统
   const { language } = useLanguage();
-  const aiAvailable = useMe()?.ai === true;
+  const me = useMe();
+  const aiAvailable = me?.ai === true;
+  // Demo viewers may run the sample checks too; the API has the final say.
+  const canRunAgain = !!me && (me.permissions.includes("script:execute") || !!me.demo);
+  const [isRunningAgain, setIsRunningAgain] = useState(false);
   const t = viewResultTranslations[language];
 
   // CSV导出功能
@@ -403,25 +409,7 @@ export default function ViewExecutionResultPage() {
     }
   }, [resultId, retryCount]);
 
-  // 用于格式化日期的工具函数，处理可能的无效日期
-  const formatDate = (dateString: string): string => {
-    try {
-      return new Date(dateString).toLocaleString(
-        language === "en" ? "en-US" : "zh-CN",
-        {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: language === "en",
-        },
-      );
-    } catch {
-      return dateString || (language === "en" ? "Unknown time" : "未知时间");
-    }
-  };
+  const formatDate = (dateString: string) => formatDateTime(dateString, language);
 
   const handleRetry = () => {
     setLoading(true);
@@ -459,6 +447,29 @@ export default function ViewExecutionResultPage() {
       });
     } finally {
       setIsAnalyzingError(false);
+    }
+  };
+
+  const handleRunAgain = async () => {
+    if (!result) return;
+    setIsRunningAgain(true);
+    try {
+      const response = await fetch("/api/run-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scriptId: result.scriptId }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.mongoResultId) {
+        throw new Error(data.message || response.statusText);
+      }
+      router.push(`/view-execution-result/${data.mongoResultId}`);
+    } catch (error) {
+      toast.error(language === "zh" ? "执行失败" : "Could not run the check", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setIsRunningAgain(false);
     }
   };
 
@@ -718,6 +729,12 @@ export default function ViewExecutionResultPage() {
             <Button size="sm" variant="outline" onClick={handleAnalyzeError} disabled={isAnalyzingError}>
               <Brain />
               {isAnalyzingError ? (zh ? "分诊中…" : "Triaging…") : zh ? "AI 分诊" : "Triage with AI"}
+            </Button>
+          )}
+          {canRunAgain && (
+            <Button size="sm" variant="outline" onClick={handleRunAgain} disabled={isRunningAgain}>
+              <Play />
+              {isRunningAgain ? (zh ? "执行中…" : "Running…") : zh ? "再次执行" : "Run Again"}
             </Button>
           )}
           {hasTableData && (
