@@ -20,6 +20,7 @@ const AnalysisResultDialog = dynamic(() => import("@/components/business/ai/Anal
 import Link from "next/link";
 import { SkeletonPageHeader, SkeletonTable } from "@/components/common/PageSkeletons";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMe } from "@/lib/auth/use-me";
 
 // 基于SQL脚本实际输出的精确类型定义
 interface OrderDuplicateDetail {
@@ -173,6 +174,7 @@ export default function ViewExecutionResultPage() {
 
   // 使用全局语言系统
   const { language } = useLanguage();
+  const aiAvailable = useMe()?.ai === true;
   const t = viewResultTranslations[language];
 
   // CSV导出功能
@@ -722,7 +724,7 @@ export default function ViewExecutionResultPage() {
           <Link href="/dashboard">‹ {zh ? "仪表盘" : "Dashboard"}</Link>
         </Button>
         <div className="ml-auto flex items-center gap-2">
-          {tone === "failure" && (
+          {tone === "failure" && aiAvailable && (
             <Button size="sm" variant="outline" onClick={handleAnalyzeError} disabled={isAnalyzingError}>
               <Brain />
               {isAnalyzingError ? (zh ? "分析中…" : "Analyzing…") : zh ? "AI 分析错误" : "Analyze error with AI"}
