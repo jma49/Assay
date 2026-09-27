@@ -1,0 +1,241 @@
+import { randomUUID } from "node:crypto";
+import { ObjectId, type Db, type Document } from "mongodb";
+import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
+import type { Destination, NotifyStore, StoredEvent } from "@/server/services/notifications";
+
+export const DESTINATIONS = "notification_destinations";
+export const DELIVERIES = "notification_deliveries";
+export const REMINDERS = "notification_reminders";
+
+const DUPLICATE_KEY = 11000;
+
+const toId = (id: string) => (ObjectId.isValid(id) ? new ObjectId(id) : null);
+
+export function toDestination(doc: Document): Destination {
+  return {
+    id: String(doc._id),
+    workspaceId: doc.workspaceId ?? DEFAULT_WORKSPACE_ID,
+    kind: doc.kind,
+    name: doc.name,
+    label: doc.label ?? "",
+    sealed: doc.sealed,
+    language: doc.language === "zh" ? "zh" : "en",
+    alerts: doc.alerts ?? [],
+    tags: doc.tags ?? [],
+    enabled: doc.enabled !== false,
+    createdAt: new Date(doc.createdAt),
+    createdBy: doc.createdBy ?? { id: "", name: "" },
+    lastDelivery: doc.lastDelivery ?? null,
+    digest: doc.digest ?? null,
+    lastDigestAt: doc.lastDigestAt ? new Date(doc.lastDigestAt) : null,
+    source: doc.source ?? "paste",
+    remind: doc.remind ?? null,
+  };
+}
+
+export function toStoredEvent(doc: Document): StoredEvent {
+  return {
+    id: String(doc._id),
+    workspaceId: doc.workspaceId ?? DEFAULT_WORKSPACE_ID,
+    type: doc.type,
+    checkId: doc.checkId,
+    runId: doc.runId,
+    from: doc.from ?? null,
+    to: doc.to,
+    rowCount: doc.rowCount ?? 0,
+    diff: doc.diff ?? null,
+    error: doc.error ?? null,
+    at: new Date(doc.at),
+    suppressed: doc.suppressed ?? null,
+    actionKey: doc.actionKey ?? null,
+  };
+}
+
+export function mongoNotifyStore(db: Db): NotifyStore {
+  const events = db.collection("events");
+  const checks = db.collection("sql_scripts");
+  const destinations = db.collection(DESTINATIONS);
+  const deliveries = db.collection(DELIVERIES);
+  const reminders = db.collection(REMINDERS);
+
+  return {
+    async pendingEvents(since, limit) {
+      const docs = await events
+        .find({ at: { $gte: since }, fannedOutAt: { $exists: false } })
+        .sort({ at: 1 })
+        .limit(limit)
+        .toArray();
+      return docs.map(toStoredEvent);
+    },
+
+    async checkInfo(checkIds) {
+      const docs = await checks
+        .find(
+          { scriptId: { $in: checkIds } },
+          { projection: { scriptId: 1, name: 1, cnName: 1, hashtags: 1, alerting: 1, "state.since": 1, "state.outcome": 1 } },
+        )
+        .toArray();
+      return new Map(
+        docs.map((doc) => [
+          String(doc.scriptId),
+          {
+            name: String(doc.name ?? doc.scriptId),
+            cnName: doc.cnName || undefined,
+            tags: Array.isArray(doc.hashtags) ? doc.hashtags : [],
+            alerting: doc.alerting ?? null,
+            state: doc.state ?? null,
+          },
+        ]),
+      );
+    },
+
+    async destinations(workspaceId) {
+      const filter = workspaceId === DEFAULT_WORKSPACE_ID ? { workspaceId: { $in: [workspaceId, null] } } : { workspaceId };
+      return (await destinations.find(filter).toArray()).map(toDestination);
+    },
+
+    async destination(id) {
+      const _id = toId(id);
+      const doc = _id ? await destinations.findOne({ _id }) : null;
+      return doc ? toDestination(doc) : null;
+    },
+
+    async event(id) {
+      const _id = toId(id);
+      const doc = _id ? await events.findOne({ _id }) : null;
+      return doc ? toStoredEvent(doc) : null;
+    },
+
+    async createDeliveries(list, now) {
+      if (list.length === 0) return;
+      try {
+        await deliveries.insertMany(
+          list.map((d) => ({ ...d, status: "pending", attempts: 0, nextAttemptAt: now, claim: null, createdAt: now })),
+          { ordered: false },
+        );
+      } catch (error) {
+        // Another dispatcher fanned the same event out first; its deliveries stand.
+        const writeErrors = (error as { writeErrors?: { code: number }[] }).writeErrors ?? [];
+        if (writeErrors.length === 0 || writeErrors.some((e) => e.code !== DUPLICATE_KEY)) throw error;
+      }
+    },
+
+    async markFannedOut(eventId, now, suppressed, actionKey) {
+      const _id = toId(eventId);
+      if (!_id) return;
+      await events.updateOne({ _id }, { $set: { fannedOutAt: now, ...(suppressed && { suppressed }) } });
+      await events.updateOne({ _id, actionKey: { $exists: false } }, { $set: { actionKey } });
+    },
+
+    async claimDelivery(now, leaseMs) {
+      const claim = randomUUID();
+      const doc = await deliveries.findOneAndUpdate(
+        { status: "pending", nextAttemptAt: { $lte: now } },
+        { $set: { claim, nextAttemptAt: new Date(now.getTime() + leaseMs) } },
+        { sort: { nextAttemptAt: 1 }, returnDocument: "after" },
+      );
+      if (!doc) return null;
+      return { id: String(doc._id), eventId: doc.eventId, destinationId: doc.destinationId, attempts: doc.attempts ?? 0, claim };
+    },
+
+    async finishDelivery(delivery, update) {
+      const set: Document = { status: update.status, claim: null, updatedAt: update.at };
+      if (update.status === "sent") set.sentAt = update.at;
+      if (update.status === "pending") set.nextAttemptAt = update.nextAttemptAt;
+      if (update.status !== "sent" && update.error) set.lastError = update.error;
+      const inc = update.status !== "sent" && !update.attempted ? {} : { attempts: 1 };
+      await deliveries.updateOne({ _id: new ObjectId(delivery.id), claim: delivery.claim }, { $set: set, $inc: inc });
+    },
+
+    async sentSince(destinationId, since) {
+      return deliveries.countDocuments({ destinationId, sentAt: { $gte: since } });
+    },
+
+    async digestDestinations() {
+      return (await destinations.find({ enabled: { $ne: false }, "digest.enabled": true }).toArray()).map(toDestination);
+    },
+
+    async claimDigest(destinationId, slot, now) {
+      const _id = toId(destinationId);
+      if (!_id) return false;
+      const result = await destinations.updateOne(
+        { _id, $or: [{ lastDigestAt: { $lt: slot } }, { lastDigestAt: null, createdAt: { $lt: slot } }] },
+        { $set: { lastDigestAt: now } },
+      );
+      return result.modifiedCount === 1;
+    },
+
+    async digestSummary(workspaceId, tags, since) {
+      // Checks carry no workspaceId yet; they all belong to the default workspace.
+      const checkFilter = tags.length ? { hashtags: { $in: [...tags] } } : {};
+      const docs = workspaceId === DEFAULT_WORKSPACE_ID
+        ? await checks.find(checkFilter, { projection: { scriptId: 1, name: 1, cnName: 1, state: 1 } }).toArray()
+        : [];
+      const broken = docs.filter((d) => d.state?.outcome === "error").map((d) => ({ name: String(d.name ?? d.scriptId) }));
+      const issues = docs
+        .filter((d) => d.state?.outcome === "issues")
+        .map((d) => ({ name: String(d.name ?? d.scriptId), rowCount: Number(d.state.rowCount ?? 0) }))
+        .sort((a, b) => b.rowCount - a.rowCount);
+      const ids = docs.map((d) => String(d.scriptId));
+      const recent = await events
+        .find({ checkId: { $in: ids }, at: { $gte: since } }, { projection: { to: 1 } })
+        .toArray();
+      return { total: docs.length, broken, issues, changes: recent.length, recovered: recent.filter((e) => e.to === "clean").length };
+    },
+
+    async reminderDestinations() {
+      return (await destinations.find({ enabled: { $ne: false }, "remind.afterHours": { $gt: 0 } }).toArray()).map(toDestination);
+    },
+
+    async openProblems(workspaceId, tags) {
+      // Checks carry no workspaceId yet; they all belong to the default workspace.
+      if (workspaceId !== DEFAULT_WORKSPACE_ID) return [];
+      const docs = await checks
+        .find(
+          { "state.outcome": { $in: ["error", "issues"] }, ...(tags.length ? { hashtags: { $in: [...tags] } } : {}) },
+          { projection: { scriptId: 1, name: 1, cnName: 1, state: 1, alerting: 1 } },
+        )
+        .toArray();
+      return docs.map((doc) => ({
+        checkId: String(doc.scriptId),
+        name: String(doc.name ?? doc.scriptId),
+        cnName: doc.cnName || undefined,
+        outcome: doc.state.outcome,
+        rowCount: Number(doc.state.rowCount ?? 0),
+        since: new Date(doc.state.since),
+        alerting: doc.alerting ?? null,
+      }));
+    },
+
+    async remindersSent(destinationId, checkId, since) {
+      return (await reminders.findOne({ destinationId, checkId, since }, { projection: { sent: 1 } }))?.sent ?? 0;
+    },
+
+    async claimReminder(destinationId, checkId, since, sent, now) {
+      if (sent === 0) {
+        try {
+          await reminders.insertOne({ destinationId, checkId, since, sent: 1, lastAt: now });
+          return true;
+        } catch (error) {
+          if ((error as { code?: number }).code === DUPLICATE_KEY) return false;
+          throw error;
+        }
+      }
+      const result = await reminders.updateOne({ destinationId, checkId, since, sent }, { $inc: { sent: 1 }, $set: { lastAt: now } });
+      return result.modifiedCount === 1;
+    },
+
+    async problemToken(checkId, since) {
+      const event = await events.findOne(
+        { checkId, at: { $gte: since }, actionKey: { $exists: true } },
+        { sort: { at: -1 }, projection: { actionKey: 1 } },
+      );
+      return event ? `${String(event._id)}.${event.actionKey}` : null;
+    },
+
+    async recordLastDelivery(destinationId, result) {
+      const _id = toId(destinationId);
+      if (_id) await destinations.updateOne({ _id }, { $set: { lastDelivery: result } });
+    },
+  };
+}

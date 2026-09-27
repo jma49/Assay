@@ -4,172 +4,147 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Design tokens: Mac OS X Aqua, after JM/OS (github.com/jma49/jmos,
-   src/os/styles/base.css). Font files are not bundled; the stacks fall back
-   to what the system has. See docs/ui-redesign-plan.md. */
+/* Design tokens. Neutrals lean slightly blue toward the cobalt accent;
+   status colours are separate from the accent and mean the same thing
+   everywhere: error = the check itself broke, issues = it found rows,
+   clean = it found none. */
 :root {
-  /* Lucida Grande on the Mac, its twin Lucida Sans Unicode on Windows. */
-  --app-font-sans:
-    "Lucida Grande", "LucidaGrande", "Lucida Sans Unicode", "Lucida Sans", ui-sans-serif,
-    -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
-    sans-serif;
-  --app-font-serif:
-    var(--font-garamond), "Apple Garamond", "EB Garamond", Garamond, Georgia, "Songti SC",
-    "Noto Serif SC", serif;
-  --app-font-mono: Monaco, "Lucida Console", ui-monospace, Menlo, Consolas, monospace;
+  --app-font-sans: var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  /* Headings use the same family, heavier and tighter. */
+  --app-font-display: var(--app-font-sans);
+  --app-font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
-  --radius: 0.375rem;
+  --radius: 0.4rem;
 
-  /* The page is window grey; cards, fields and popovers are white content. */
-  --background: #ececec;
-  --foreground: #1a1a1a;
+  --background: #f6f7f9;
+  --foreground: #161b26;
   --card: #ffffff;
-  --card-foreground: #1a1a1a;
+  --card-foreground: #161b26;
   --popover: #ffffff;
-  --popover-foreground: #1a1a1a;
-  --primary: #3875d7;
+  --popover-foreground: #161b26;
+  --primary: #2350c8;
   --primary-foreground: #ffffff;
-  --secondary: #f2f2f2;
-  --secondary-foreground: #1a1a1a;
-  --muted: #f2f2f2;
-  --muted-foreground: #6b6b6b;
-  --accent: #e3e9ef;
-  --accent-foreground: #1a1a1a;
-  --destructive: #c7342b;
+  --secondary: #f1f3f6;
+  --secondary-foreground: #161b26;
+  --muted: #f1f3f6;
+  --muted-foreground: #626b7c;
+  --subtle-foreground: #7a8394;
+  --accent: #f1f3f6;
+  --accent-foreground: #161b26;
+  --destructive: #c93636;
   --destructive-foreground: #ffffff;
-  --border: #c9c9c9;
-  --input: #a8a8a8;
-  --ring: color-mix(in srgb, #3875d7 55%, transparent);
+  --border: #e3e6eb;
+  --border-strong: #d2d7df;
+  --input: #d2d7df;
+  --ring: color-mix(in srgb, #2350c8 45%, transparent);
+  --primary-soft: #eaf0fd;
 
-  --success: #2f8a2a;
-  --attention: #b8740b;
-  --failure: #c7342b;
-  --info: #3875d7;
+  --success: #1d8a57;
+  --success-soft: #e8f6ee;
+  --attention: #b87408;
+  --attention-soft: #fdf4e3;
+  --failure: #c93636;
+  --failure-soft: #fceded;
+  --info: #2350c8;
 
-  --chart-1: #3875d7;
-  --chart-2: #2f8a2a;
-  --chart-3: #b8740b;
-  --chart-4: #c7342b;
-  --chart-5: #8a8a8a;
+  --code-bg: #f4f5f8;
+  /* Syntax colours for code samples: the accent for keywords, the rest kept
+     off the status hues so a string never reads as a failure. */
+  --syntax-keyword: #2350c8;
+  --syntax-string: #a1452b;
+  --syntax-number: #7c3fc4;
+  --syntax-function: #0b7285;
+  --syntax-comment: #7a8394;
+  --syntax-punctuation: #5b6474;
+  /* Surfaces lift with a transparent ring instead of a solid border, so they
+     read the same on any background. Dividers and inputs keep real borders. */
+  --shadow-border:
+    0px 0px 0px 1px oklch(0 0 0 / 0.06), 0px 1px 2px -1px oklch(0 0 0 / 0.06), 0px 2px 4px 0px oklch(0 0 0 / 0.04);
+  --shadow-border-hover:
+    0px 0px 0px 1px oklch(0 0 0 / 0.08), 0px 1px 2px -1px oklch(0 0 0 / 0.08), 0px 2px 4px 0px oklch(0 0 0 / 0.06);
+  --shadow-sm: 0 1px 2px rgba(22, 27, 38, 0.05), 0 1px 1px rgba(22, 27, 38, 0.03);
+  --shadow-md: 0 8px 24px rgba(22, 27, 38, 0.1), 0 1px 2px rgba(22, 27, 38, 0.06);
 
-  --sidebar: #e3e9ef;
-  --sidebar-foreground: #1a1a1a;
-  --sidebar-primary: #3875d7;
+  --chart-1: #2350c8;
+  --chart-2: #1d8a57;
+  --chart-3: #b87408;
+  --chart-4: #c93636;
+  --chart-5: #7a8394;
+
+  --sidebar: #fbfbfc;
+  --sidebar-foreground: #4a5263;
+  --sidebar-primary: #2350c8;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #d4dde8;
-  --sidebar-accent-foreground: #1a1a1a;
-  --sidebar-border: #c9c9c9;
-  --sidebar-ring: color-mix(in srgb, #3875d7 55%, transparent);
-
-  /* Aqua materials. */
-  --aqua-accent: #3875d7;
-  --aqua-gel: linear-gradient(
-    color-mix(in srgb, var(--aqua-accent) 30%, white),
-    color-mix(in srgb, var(--aqua-accent) 75%, white) 45%,
-    var(--aqua-accent) 50%,
-    color-mix(in srgb, var(--aqua-accent) 55%, white)
-  );
-  --aqua-gel-pressed: linear-gradient(
-    color-mix(in srgb, var(--aqua-accent) 25%, white),
-    color-mix(in srgb, var(--aqua-accent) 48%, white) 50%,
-    color-mix(in srgb, var(--aqua-accent) 62%, white) 50%,
-    color-mix(in srgb, var(--aqua-accent) 33%, white)
-  );
-  --aqua-gel-red: linear-gradient(#f6b5ad, #e2594e 45%, #c7342b 50%, #eb8177);
-  --aqua-accent-rim: color-mix(in srgb, var(--aqua-accent) 55%, black);
-  --aqua-white: linear-gradient(#ffffff, #f1f1f1 45%, #dedede 50%, #f4f4f4);
-  --aqua-white-rim: rgba(0, 0, 0, 0.35);
-  --aqua-gloss: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.25));
-  --aqua-title: linear-gradient(#ebebeb, #cbcbcb);
-  --aqua-title-line: #9c9c9c;
-  --aqua-bar: linear-gradient(rgba(255, 255, 255, 0.9), rgba(230, 230, 230, 0.9));
-  --aqua-pinstripe: repeating-linear-gradient(
-    0deg,
-    transparent 0 1.5px,
-    rgba(255, 255, 255, 0.62) 1.5px 4px
-  );
-  --aqua-pinstripe-soft: repeating-linear-gradient(
-    0deg,
-    transparent 0 1.5px,
-    rgba(255, 255, 255, 0.3) 1.5px 4px
-  );
-  --aqua-window-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.12);
-  --aqua-field-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
-  --aqua-selection: #b5d5ff;
-  --aqua-menu-bg: rgba(250, 250, 250, 0.96);
-  --aqua-select: linear-gradient(
-    color-mix(in srgb, var(--aqua-accent) 70%, white),
-    var(--aqua-accent)
-  );
+  --sidebar-accent: #eaf0fd;
+  --sidebar-accent-foreground: #2350c8;
+  --sidebar-border: #e3e6eb;
+  --sidebar-ring: color-mix(in srgb, #2350c8 45%, transparent);
 }
 
 .dark {
-  --background: #2e2e2e;
-  --foreground: #ececec;
-  --card: #232323;
-  --card-foreground: #ececec;
-  --popover: #2a2a2a;
-  --popover-foreground: #ececec;
-  --primary: #4a8ae8;
-  --primary-foreground: #ffffff;
-  --secondary: #3a3a3a;
-  --secondary-foreground: #ececec;
-  --muted: #333333;
-  --muted-foreground: #a0a0a0;
-  --accent: #34383e;
-  --accent-foreground: #ececec;
-  --destructive: #e0645a;
-  --destructive-foreground: #ffffff;
-  --border: #474747;
-  --input: #5a5a5a;
-  --ring: color-mix(in srgb, #4a8ae8 60%, transparent);
+  --background: #0f1217;
+  --foreground: #e8ebf0;
+  --card: #161a21;
+  --card-foreground: #e8ebf0;
+  --popover: #1c212a;
+  --popover-foreground: #e8ebf0;
+  --primary: #6f95f2;
+  --primary-foreground: #0f1217;
+  --secondary: #1c212a;
+  --secondary-foreground: #e8ebf0;
+  --muted: #1c212a;
+  --muted-foreground: #aab2bf;
+  --subtle-foreground: #7e8898;
+  --accent: #1c212a;
+  --accent-foreground: #e8ebf0;
+  --destructive: #f07474;
+  --destructive-foreground: #0f1217;
+  --border: #262c36;
+  --border-strong: #333b47;
+  --input: #333b47;
+  --ring: color-mix(in srgb, #6f95f2 50%, transparent);
+  --primary-soft: #1b2640;
 
-  --success: #6cc05f;
-  --attention: #e3a33c;
-  --failure: #e0645a;
-  --info: #6fa3ef;
+  --success: #4fc48a;
+  --success-soft: #15291f;
+  --attention: #e4a94a;
+  --attention-soft: #332815;
+  --failure: #f07474;
+  --failure-soft: #331b1d;
+  --info: #6f95f2;
 
-  --chart-1: #6fa3ef;
-  --chart-2: #6cc05f;
-  --chart-3: #e3a33c;
-  --chart-4: #e0645a;
-  --chart-5: #8a8a8a;
+  --code-bg: #12161c;
+  --syntax-keyword: #8ea9f5;
+  --syntax-string: #f0a58a;
+  --syntax-number: #c4a5f5;
+  --syntax-function: #67c8da;
+  --syntax-comment: #7e8898;
+  --syntax-punctuation: #9aa3b2;
+  --shadow-border: 0 0 0 1px oklch(1 0 0 / 0.08);
+  --shadow-border-hover: 0 0 0 1px oklch(1 0 0 / 0.13);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.4);
 
-  --sidebar: #2e3136;
-  --sidebar-foreground: #ececec;
-  --sidebar-primary: #4a8ae8;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #3a3f46;
-  --sidebar-accent-foreground: #ececec;
-  --sidebar-border: #474747;
-  --sidebar-ring: color-mix(in srgb, #4a8ae8 60%, transparent);
+  --chart-1: #6f95f2;
+  --chart-2: #4fc48a;
+  --chart-3: #e4a94a;
+  --chart-4: #f07474;
+  --chart-5: #7e8898;
 
-  --aqua-accent: #3f7fdf;
-  --aqua-white: linear-gradient(#6a6a6a, #575757 45%, #4a4a4a 50%, #5a5a5a);
-  --aqua-white-rim: rgba(0, 0, 0, 0.6);
-  --aqua-gloss: linear-gradient(rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.04));
-  --aqua-title: linear-gradient(#565656, #3c3c3c);
-  --aqua-title-line: #1a1a1a;
-  --aqua-bar: linear-gradient(rgba(60, 60, 60, 0.92), rgba(40, 40, 40, 0.92));
-  --aqua-pinstripe: repeating-linear-gradient(
-    0deg,
-    transparent 0 1.5px,
-    rgba(255, 255, 255, 0.028) 1.5px 4px
-  );
-  --aqua-pinstripe-soft: repeating-linear-gradient(
-    0deg,
-    transparent 0 1.5px,
-    rgba(255, 255, 255, 0.02) 1.5px 4px
-  );
-  --aqua-window-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.35);
-  --aqua-field-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
-  --aqua-selection: #3a5a8c;
-  --aqua-menu-bg: rgba(44, 44, 44, 0.96);
+  --sidebar: #12151b;
+  --sidebar-foreground: #aab2bf;
+  --sidebar-primary: #6f95f2;
+  --sidebar-primary-foreground: #0f1217;
+  --sidebar-accent: #1b2640;
+  --sidebar-accent-foreground: #6f95f2;
+  --sidebar-border: #262c36;
+  --sidebar-ring: color-mix(in srgb, #6f95f2 50%, transparent);
 }
 
 @theme inline {
   --font-sans: var(--app-font-sans);
-  --font-serif: var(--app-font-serif);
+  --font-display: var(--app-font-display);
   --font-mono: var(--app-font-mono);
 
   --color-background: var(--background);
@@ -180,22 +155,29 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
   --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
   --color-attention: var(--attention);
+  --color-attention-soft: var(--attention-soft);
   --color-failure: var(--failure);
+  --color-failure-soft: var(--failure-soft);
   --color-info: var(--info);
+  --color-code: var(--code-bg);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -211,6 +193,12 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  --shadow-xs: var(--shadow-sm);
+  --shadow-border: var(--shadow-border);
+  --shadow-border-hover: var(--shadow-border-hover);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
 
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
@@ -229,75 +217,42 @@
   }
 
   body {
-    @apply text-foreground font-sans;
-    background: var(--aqua-pinstripe), var(--background);
+    @apply bg-background text-foreground font-sans;
+    font-size: 14px;
   }
 
   ::selection {
-    background: var(--aqua-selection);
+    background: color-mix(in srgb, var(--primary) 22%, transparent);
   }
 
-  input[type="range"] {
-    accent-color: var(--aqua-accent);
+  input[type="date"],
+  input[type="datetime-local"] {
+    color-scheme: light;
   }
 
-  /* Native checkboxes and radios become white gels that fill with the
-     accent when on. In the base layer so size utilities still apply. */
-  input[type="checkbox"],
-  input[type="radio"] {
-    appearance: none;
-    flex: none;
-    width: 14px;
-    height: 14px;
-    border-radius: 3px;
-    background: var(--aqua-white);
-    box-shadow:
-      inset 0 0 0 1px rgba(0, 0, 0, 0.4),
-      inset 0 1px 2px rgba(0, 0, 0, 0.12);
+  .dark input[type="date"],
+  .dark input[type="datetime-local"] {
+    color-scheme: dark;
   }
 
-  input[type="radio"] {
-    border-radius: 50%;
+  /* Titles: the display face, tighter as it gets larger. */
+  h1 {
+    @apply font-display;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
   }
 
-  input[type="checkbox"]:checked {
-    background:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M2 6.5l2.6 2.8L10 2.5' fill='none' stroke='%23111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
-        center / 11px no-repeat,
-      var(--aqua-gel);
-    box-shadow: inset 0 0 0 1px var(--aqua-accent-rim);
-  }
-
-  input[type="radio"]:checked {
-    background: radial-gradient(circle, #1b1b1b 0 2.4px, transparent 2.9px), var(--aqua-gel);
-    box-shadow: inset 0 0 0 1px var(--aqua-accent-rim);
-  }
-
-  /* Aqua controls use the arrow cursor, as on the Mac. */
-  button,
-  [role="button"],
-  [role="tab"],
-  [role="switch"],
-  [role="menuitem"],
-  [role="option"],
-  input[type="checkbox"],
-  input[type="radio"] {
-    cursor: default;
-  }
-
-  /* Page and section titles use the serif face; UI text stays sans. */
-  h1,
-  h2 {
-    @apply font-serif tracking-tight;
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
   }
 }
 
-/* Legacy class names still referenced by pages that have not been restyled
-   yet. Kept flat so they match the new tokens; remove with their last use. */
+/* Legacy class names still used by pages that are not rebuilt yet. */
 .unified-card {
   background-color: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: calc(var(--radius) + 4px);
+  box-shadow: var(--shadow-border);
 }
 
 .icon-container {
@@ -328,657 +283,168 @@
   }
 }
 
-/* Aqua controls. The gloss sits under the label (isolation + z-index: -1)
-   so text stays crisp. */
-@layer components {
-  .aqua-pill,
-  .aqua-gel,
-  .aqua-gel-red {
-    position: relative;
-    isolation: isolate;
-    border-radius: 999px;
-    box-shadow:
-      inset 0 0 0 1px var(--aqua-white-rim),
-      0 1px 1px rgba(0, 0, 0, 0.15);
-  }
-
-  .aqua-pill {
-    background: var(--aqua-white);
-    color: var(--foreground);
-  }
-
-  .aqua-gel {
-    background: var(--aqua-gel);
-    color: #111;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
-    box-shadow:
-      inset 0 0 0 1px color-mix(in srgb, var(--aqua-accent-rim) 70%, transparent),
-      0 1px 1px rgba(0, 0, 0, 0.2);
-  }
-
-  .aqua-gel-red {
-    background: var(--aqua-gel-red);
-    color: #111;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
-    box-shadow:
-      inset 0 0 0 1px rgba(120, 20, 15, 0.55),
-      0 1px 1px rgba(0, 0, 0, 0.2);
-  }
-
-  .aqua-pill::before,
-  .aqua-gel::before,
-  .aqua-gel-red::before {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    top: 1px;
-    left: 8px;
-    right: 8px;
-    height: 48%;
-    border-radius: 999px 999px 6px 6px / 999px 999px 4px 4px;
-    background: var(--aqua-gloss);
-    pointer-events: none;
-  }
-
-  .aqua-pill::after,
-  .aqua-gel::after,
-  .aqua-gel-red::after {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    bottom: 0;
-    left: 14%;
-    right: 14%;
-    height: 45%;
-    border-radius: 50%;
-    background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.55), transparent 70%);
-    pointer-events: none;
-  }
-
-  .aqua-pill:active {
-    background: var(--aqua-gel-pressed);
-  }
-
-  .aqua-gel:active,
-  .aqua-gel-red:active {
-    filter: brightness(0.9);
-  }
-
-  /* A selected row or menu item: the accent gradient with white text. */
-  .aqua-selected {
-    background: var(--aqua-select);
-    color: #fff;
-  }
-
-  /* Recessed text field. */
-  .aqua-field {
-    background-color: var(--card);
-    border: 1px solid var(--input);
-    box-shadow: var(--aqua-field-shadow);
-  }
-
-  .aqua-field:focus-visible {
-    border-color: var(--aqua-accent);
-  }
-
-  /* Pop-up menu: a white gel with the accent's cap on the right. */
-  .aqua-popup {
-    background:
-      var(--aqua-gel) right / 30px 100% no-repeat,
-      linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.2) 48%, transparent 50%),
-      var(--aqua-white);
-    box-shadow:
-      inset 0 0 0 1px var(--aqua-white-rim),
-      0 1px 1px rgba(0, 0, 0, 0.15);
-  }
-
-  .dark .aqua-popup {
-    background:
-      var(--aqua-gel) right / 30px 100% no-repeat,
-      var(--aqua-white);
-  }
-
-  .aqua-popup .aqua-popup-arrow {
-    color: #fff;
-    opacity: 1;
-    filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.3));
-  }
-
-  /* Section cards whose header is a bordered strip at the very top get a
-     window title bar. */
-  [data-slot="card"] > [data-slot="card-header"].border-b:first-child {
-    background: var(--aqua-pinstripe-soft), var(--aqua-title);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
-    border-bottom-color: var(--aqua-title-line);
-  }
-
-  .dark [data-slot="card"] > [data-slot="card-header"].border-b:first-child {
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
-
-  /* Aqua lists stripe alternate rows. */
-  [data-slot="table-body"] > [data-slot="table-row"]:nth-child(even) {
-    background-color: color-mix(in srgb, var(--aqua-accent) 6%, var(--card));
-  }
-
-  /* Window chrome: a grey gradient title bar with soft pinstripes. */
-  .aqua-titlebar {
-    background: var(--aqua-pinstripe-soft), var(--aqua-title);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
-    border-bottom: 1px solid var(--aqua-title-line);
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
-  }
-
-  .dark .aqua-titlebar {
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    text-shadow: none;
-  }
-
-  .aqua-window {
-    background-color: var(--card);
-    box-shadow: var(--aqua-window-shadow);
-  }
-
-  /* Menu bar: frosted light gradient across the top of the page. */
-  .aqua-menubar {
-    background: var(--aqua-pinstripe-soft), var(--aqua-bar);
-    backdrop-filter: blur(18px) saturate(1.3);
-    -webkit-backdrop-filter: blur(18px) saturate(1.3);
-    box-shadow:
-      0 1px 0 rgba(0, 0, 0, 0.32),
-      0 2px 6px rgba(0, 0, 0, 0.12);
-  }
-
-  /* Aqua traffic lights. */
-  .aqua-lights {
-    display: inline-flex;
-    gap: 7px;
-  }
-
-  .aqua-lights > * {
-    position: relative;
-    display: block;
-    width: 12px;
-    height: 12px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    box-shadow:
-      inset 0 0 0 1px rgba(0, 0, 0, 0.35),
-      0 1px 1px rgba(255, 255, 255, 0.5);
-  }
-
-  .aqua-lights > *::before {
-    content: "";
-    position: absolute;
-    top: 1px;
-    left: 3px;
-    right: 3px;
-    height: 5px;
-    border-radius: 50%;
-    background: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.1));
-  }
-
-  /* × – + appear while pointing at the group, as on the Mac. */
-  .aqua-lights > *::after {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    font: 700 10px/1 var(--app-font-sans);
-    color: rgba(60, 0, 0, 0.7);
-    opacity: 0;
-  }
-
-  .aqua-lights:hover > *::after {
-    opacity: 1;
-  }
-
-  .aqua-lights > :nth-child(1)::after {
-    content: "×";
-  }
-
-  .aqua-lights > :nth-child(2)::after {
-    content: "–";
-  }
-
-  .aqua-lights > :nth-child(3)::after {
-    content: "+";
-  }
-
-  .aqua-lights > button:active {
-    filter: brightness(0.75);
-  }
-
-  .aqua-lights > :nth-child(1) {
-    background: radial-gradient(circle at 50% 75%, #ffb6a8, #e2322a 55%, #a61a13);
-  }
-
-  .aqua-lights > :nth-child(2) {
-    background: radial-gradient(circle at 50% 75%, #fff0a8, #e9a92a 55%, #a86e0c);
-  }
-
-  .aqua-lights > :nth-child(3) {
-    background: radial-gradient(circle at 50% 75%, #c8f5b0, #53b43c 55%, #2c7a1d);
-  }
-}
-
-/* Unlayered so it beats the badge's own colour utilities: a count badge
-   sitting on a blue gel button must stay readable. */
-.aqua-gel [data-slot="badge"] {
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(0, 0, 0, 0.15);
-  color: #111;
-}
-
-.dark .aqua-pill::after,
-.dark .aqua-popup::after {
-  background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.12), transparent 70%);
-}
-
-/* ---------- Aqua interaction layer ----------
-   Unlayered on purpose: these rules restyle Radix/shadcn parts through the
-   marker classes the primitives carry, and must beat their colour utilities. */
-
-/* Default buttons pulse, as in Aqua. Submit buttons and marked CTAs only. */
-.aqua-gel[type="submit"],
-.aqua-gel.aqua-default {
-  animation: aqua-throb 1.6s ease-in-out infinite alternate;
-}
-
-@keyframes aqua-throb {
-  to {
-    filter: brightness(1.12) saturate(1.1);
-  }
-}
-
-/* Pressing a gel darkens it; pressing a white pill turns it blue. */
-.aqua-gel:active,
-.aqua-gel-red:active {
-  animation: none;
-  filter: brightness(0.85) saturate(1.2);
-}
-
-.aqua-pill:active:not(:disabled) {
-  background: var(--aqua-gel-pressed);
-}
-
-/* Windows open with a short zoom, like a Mac OS X window appearing. */
-.aqua-window-open {
-  animation: aqua-window-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-@keyframes aqua-window-in {
-  from {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-}
-
-/* Menus: translucent pinstriped sheets; the item under the pointer takes the
-   blue selection gradient with white text. */
-.aqua-menu {
-  border: 0;
-  border-radius: 5px;
-  background: var(--aqua-pinstripe-soft), var(--aqua-menu-bg);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.18),
-    0 10px 26px rgba(0, 0, 0, 0.35);
-}
-
-.aqua-menu-item {
-  border-radius: 3px;
-}
-
-.aqua-menu-item[data-highlighted],
-.aqua-menu-item[data-state="open"] {
-  background: var(--aqua-select);
-  color: #fff;
-}
-
-.aqua-menu-item[data-highlighted] svg,
-.aqua-menu-item[data-highlighted] [class*="text-"] {
-  color: #fff;
-}
-
-.aqua-menu-item[data-highlighted] [data-slot="badge"] {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.45);
-  color: #fff;
-}
-
-/* Radix checkbox and radio: the same gels as the native controls. */
-.aqua-check,
-.aqua-radio {
-  border: 0;
-  background: var(--aqua-white);
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
-    inset 0 1px 2px rgba(0, 0, 0, 0.12);
-}
-
-.aqua-check {
-  border-radius: 3px;
-}
-
-.aqua-check[data-state="checked"],
-.aqua-radio[data-state="checked"] {
-  background: var(--aqua-gel);
-  box-shadow: inset 0 0 0 1px var(--aqua-accent-rim);
-  color: #111;
-}
-
-/* Switch: a recessed groove that fills with gel when on. */
-.aqua-switch {
-  background: linear-gradient(#b8b8b8, #dedede);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
-}
-
-.dark .aqua-switch {
-  background: linear-gradient(#2a2a2a, #3c3c3c);
-}
-
-.aqua-switch[aria-checked="true"] {
-  background: var(--aqua-gel);
-  box-shadow: inset 0 0 0 1px var(--aqua-accent-rim);
-}
-
-/* Progress: a recessed track and a moving barber-pole gel. */
-.aqua-progress {
-  background: linear-gradient(#c4c4c4, #ececec);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
-}
-
-.dark .aqua-progress {
-  background: linear-gradient(#262626, #3a3a3a);
-}
-
-.aqua-progress-bar {
-  background:
-    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.35) 0 6px, transparent 6px 12px) 0 0 / 17px 17px,
-    var(--aqua-gel);
-  animation: aqua-barber 0.8s linear infinite;
-}
-
-@keyframes aqua-barber {
-  to {
-    background-position: 17px 0, 0 0;
-  }
-}
-
-/* Segmented control (tabs). */
-.aqua-segmented {
-  overflow: hidden;
-  background: var(--aqua-white);
-  box-shadow:
-    inset 0 0 0 1px var(--aqua-white-rim),
-    0 1px 1px rgba(0, 0, 0, 0.15);
-}
-
-.aqua-segment + .aqua-segment {
-  box-shadow: inset 1px 0 0 rgba(0, 0, 0, 0.25);
-}
-
-.aqua-segment[data-state="active"] {
-  background: var(--aqua-gel);
-  color: #111;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
-}
-
-.aqua-segment[data-state="active"] .text-muted-foreground {
-  color: rgba(0, 0, 0, 0.6);
-}
-
-/* The Aqua spinner: twelve fading bars, stepping round. Replaces lucide's
-   loader icons everywhere they spin. */
-svg.lucide-loader-circle,
-svg.lucide-loader-2,
-svg.lucide-loader {
+/* Status dot: the one shape that means error / issues / clean everywhere. */
+.status-dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: conic-gradient(from 0deg, currentColor, transparent);
-  -webkit-mask:
-    repeating-conic-gradient(#000 0 18deg, transparent 18deg 30deg),
-    radial-gradient(circle, transparent 36%, #000 38%);
-  -webkit-mask-composite: source-in;
-  mask:
-    repeating-conic-gradient(#000 0 18deg, transparent 18deg 30deg),
-    radial-gradient(circle, transparent 36%, #000 38%);
-  mask-composite: intersect;
-  animation: aqua-spin 0.9s steps(12) infinite;
 }
 
-svg.lucide-loader-circle > *,
-svg.lucide-loader-2 > *,
-svg.lucide-loader > * {
-  display: none;
+.status-dot-error {
+  background: var(--failure);
+  box-shadow: 0 0 0 3px var(--failure-soft);
 }
 
-@keyframes aqua-spin {
-  to {
-    rotate: 360deg;
-  }
+.status-dot-issues {
+  background: var(--attention);
+  box-shadow: 0 0 0 3px var(--attention-soft);
 }
 
-/* Notifications in Growl's "Smoke" style. */
+.status-dot-clean {
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-soft);
+}
+
+.status-dot-idle {
+  background: var(--subtle-foreground);
+  box-shadow: 0 0 0 3px var(--muted);
+}
+
+/* Toasts sit on the popover surface. */
 [data-sonner-toast] {
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border-radius: 10px !important;
-  box-shadow:
-    0 6px 20px rgba(0, 0, 0, 0.35),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
+  border-radius: 8px !important;
+  box-shadow: var(--shadow-md) !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .aqua-gel[type="submit"],
-  .aqua-gel.aqua-default,
-  .aqua-progress-bar,
-  .aqua-window-open {
-    animation: none;
-  }
-
-  svg.lucide-loader-circle,
-  svg.lucide-loader-2,
-  svg.lucide-loader {
-    animation-duration: 2.4s;
-  }
+/* ---------- Docs article ---------- */
+.docs-prose {
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--foreground);
 }
 
-/* ---------- Dock ----------
-   A translucent glass shelf at the bottom of the desktop. The icon under the
-   pointer grows and its neighbours make room, as in Mac OS X. */
-.aqua-dock-wrap {
-  position: fixed;
-  bottom: 6px;
-  left: 50%;
-  z-index: 30;
-  display: none;
-  transform: translateX(-50%);
+.docs-prose > * + * {
+  margin-top: 1rem;
 }
 
-@media (min-width: 768px) {
-  .aqua-dock-wrap {
-    display: block;
-  }
+.docs-prose h2 {
+  margin-top: 2.5rem;
+  letter-spacing: -0.015em;
+  scroll-margin-top: 4rem;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
 }
 
-.aqua-dock {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  margin: 0;
-  padding: 6px 12px 10px;
-  list-style: none;
-  border-radius: 12px;
-  background: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.38));
-  -webkit-backdrop-filter: blur(14px) saturate(1.4);
-  backdrop-filter: blur(14px) saturate(1.4);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    0 0 0 1px rgba(0, 0, 0, 0.18),
-    0 10px 28px rgba(0, 0, 0, 0.3);
+.docs-prose h3 {
+  margin-top: 1.75rem;
+  scroll-margin-top: 4rem;
+  font-size: 16px;
+  font-weight: 600;
 }
 
-.dark .aqua-dock {
-  background: linear-gradient(rgba(70, 70, 70, 0.6), rgba(35, 35, 35, 0.55));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 0 0 1px rgba(0, 0, 0, 0.5),
-    0 10px 28px rgba(0, 0, 0, 0.45);
+.docs-prose a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  text-underline-offset: 0.18em;
 }
 
-.aqua-dock-item {
-  position: relative;
-  margin: 0;
-  transform-origin: 50% 100%;
-  transition:
-    transform 0.16s ease-out,
-    margin 0.16s ease-out;
+.docs-prose a:hover {
+  text-decoration-color: var(--primary);
 }
 
-.aqua-dock-item:hover {
-  z-index: 1;
-  margin: 0 12px;
-  transform: scale(1.45);
+.docs-prose ul,
+.docs-prose ol {
+  padding-left: 1.4rem;
 }
 
-.aqua-dock-item:hover + .aqua-dock-item,
-.aqua-dock-item:has(+ .aqua-dock-item:hover) {
-  margin: 0 5px;
-  transform: scale(1.18);
+.docs-prose ul {
+  list-style: disc;
 }
 
-.aqua-dock-tile {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  width: 46px;
-  height: 46px;
-  place-items: center;
-  border-radius: 11px;
-  cursor: default;
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
-    0 2px 4px rgba(0, 0, 0, 0.35);
+.docs-prose ol {
+  list-style: decimal;
 }
 
-.aqua-dock-tile::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  top: 1px;
-  left: 3px;
-  right: 3px;
-  height: 50%;
-  border-radius: 10px 10px 18px 18px / 10px 10px 8px 8px;
-  background: linear-gradient(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.12));
+.docs-prose li + li {
+  margin-top: 0.3rem;
 }
 
-.aqua-dock-tile:active {
-  filter: brightness(0.7);
+.docs-prose li::marker {
+  color: var(--subtle-foreground);
 }
 
-/* The name floats above the icon while pointing at it. */
-.aqua-dock-label {
-  position: absolute;
-  bottom: calc(100% + 10px);
-  left: 50%;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: rgba(20, 20, 22, 0.78);
-  color: #fff;
-  font-size: 9px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-50%);
-  transition: opacity 0.12s;
+.docs-prose strong {
+  font-weight: 600;
 }
 
-.aqua-dock-item:hover .aqua-dock-label {
-  opacity: 1;
+.docs-prose :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--code-bg);
+  box-shadow: inset 0 0 0 1px var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.86em;
 }
 
-/* The black triangle under a running application (Mac OS X 10.0–10.4). */
-.aqua-dock-running {
-  position: absolute;
-  bottom: -8px;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-right: 4px solid transparent;
-  border-bottom: 5px solid #111;
-  border-left: 4px solid transparent;
-  transform: translateX(-50%);
-}
-
-.dark .aqua-dock-running {
-  border-bottom-color: #eee;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .aqua-dock-item,
-  .aqua-dock-label {
-    transition: none;
-  }
-}
-
-/* Aqua scrollbars: a grooved track and a glossy blue thumb. */
-::-webkit-scrollbar {
-  width: 14px;
-  height: 14px;
-}
-
-::-webkit-scrollbar-track {
-  background: linear-gradient(90deg, #d8d8d8, #f3f3f3 40%, #f3f3f3 60%, #e2e2e2);
-  box-shadow: inset 1px 0 0 #c4c4c4;
-}
-
-::-webkit-scrollbar-track:horizontal {
-  background: linear-gradient(#d8d8d8, #f3f3f3 40%, #f3f3f3 60%, #e2e2e2);
-  box-shadow: inset 0 1px 0 #c4c4c4;
-}
-
-::-webkit-scrollbar-thumb {
-  border: 2px solid transparent;
+.docs-prose pre {
+  overflow-x: auto;
+  padding: 0.9rem 1rem;
   border-radius: 8px;
-  background: linear-gradient(90deg, #3b7fe0, #8ec0f8 45%, #5f9ef0 55%, #3070d8) padding-box;
-  box-shadow: inset 0 0 0 1px rgba(20, 60, 130, 0.45);
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.65;
 }
 
-::-webkit-scrollbar-thumb:horizontal {
-  background: linear-gradient(#3b7fe0, #8ec0f8 45%, #5f9ef0 55%, #3070d8) padding-box;
+.docs-table {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border);
 }
 
-::-webkit-scrollbar-corner {
-  background: #ececec;
+.docs-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
 }
 
-.dark ::-webkit-scrollbar-track {
-  background: linear-gradient(90deg, #2a2a2a, #363636 50%, #2a2a2a);
-  box-shadow: inset 1px 0 0 #1a1a1a;
+.docs-prose th {
+  background: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted-foreground);
 }
 
-.dark ::-webkit-scrollbar-track:horizontal {
-  background: linear-gradient(#2a2a2a, #363636 50%, #2a2a2a);
-  box-shadow: inset 0 1px 0 #1a1a1a;
+.docs-prose td {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--border);
+  vertical-align: top;
 }
 
-.dark ::-webkit-scrollbar-corner {
-  background: #2e2e2e;
+.docs-note {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--border));
+  background: var(--primary-soft);
 }
 
-/* Loading placeholders: a slow warm sheen instead of blinking. */
+.docs-note > * + * {
+  margin-top: 0.5rem;
+}
+
+/* Loading placeholders: a slow sheen instead of blinking. */
 .skeleton-shimmer {
-  --skeleton-base: color-mix(in srgb, var(--foreground) 6%, var(--background));
-  background: linear-gradient(
-    90deg,
-    var(--skeleton-base) 0%,
-    var(--muted) 50%,
-    var(--skeleton-base) 100%
-  );
+  --skeleton-base: color-mix(in srgb, var(--foreground) 5%, var(--background));
+  background: linear-gradient(90deg, var(--skeleton-base) 0%, var(--muted) 50%, var(--skeleton-base) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.6s ease-in-out infinite;
 }
@@ -1006,4 +472,49 @@ svg.lucide-loader > * {
   .skeleton-shimmer {
     animation: none;
   }
+}
+
+/* Run statuses as stored today (success / attention_needed / failure) map
+   onto the same dots until runs use error / issues / clean. */
+.status-dot-success {
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-soft);
+}
+
+.status-dot-attention_needed {
+  background: var(--attention);
+  box-shadow: 0 0 0 3px var(--attention-soft);
+}
+
+.status-dot-failure {
+  background: var(--failure);
+  box-shadow: 0 0 0 3px var(--failure-soft);
+}
+
+/* Highlighted code (src/lib/highlight.ts). */
+.tok-keyword {
+  color: var(--syntax-keyword);
+  font-weight: 500;
+}
+.tok-string {
+  color: var(--syntax-string);
+}
+.tok-number,
+.tok-flag {
+  color: var(--syntax-number);
+}
+.tok-function {
+  color: var(--syntax-function);
+}
+.tok-comment {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+.tok-punctuation {
+  color: var(--syntax-punctuation);
+}
+
+/* The display face runs tight at heading sizes. */
+.font-display {
+  letter-spacing: -0.02em;
 }

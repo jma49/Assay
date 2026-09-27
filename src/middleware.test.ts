@@ -13,10 +13,12 @@ vi.mock("@clerk/nextjs/server", () => ({
     patterns.some((p) => new RegExp(`^${p}$`).test(req.nextUrl.pathname)),
 }));
 
-const run = (path: string) =>
+const run = (path: string, cookie?: string) =>
   (middleware as unknown as (req: NextRequest) => Promise<Response>)(
-    new NextRequest(`http://localhost${path}`)
+    new NextRequest(`http://localhost${path}`, cookie ? { headers: { cookie } } : undefined)
   );
+
+const GUEST = `assay_guest=${"a".repeat(32)}`;
 
 describe("middleware", () => {
   beforeEach(() => {
@@ -33,6 +35,12 @@ describe("middleware", () => {
     expect(auth).not.toHaveBeenCalled();
   });
 
+  it("serves the generated icons without a session", async () => {
+    for (const path of ["/apple-icon", "/icon.svg"]) {
+      expect((await run(path)).headers.get("location"), path).toBeNull();
+    }
+  });
+
   it("lets public routes through without a session", async () => {
     const res = await run("/sign-in");
 
@@ -45,6 +53,23 @@ describe("middleware", () => {
 
     expect(res.headers.get("location")).toBeNull();
     expect(auth).not.toHaveBeenCalled();
+  });
+
+  it("serves the docs without a session", async () => {
+    for (const path of ["/docs", "/docs/quick-start"]) {
+      const res = await run(path);
+      expect(res.headers.get("location")).toBeNull();
+    }
+    expect(auth).not.toHaveBeenCalled();
+  });
+
+  it("does not let a docs-like prefix open the app or the API", async () => {
+    auth.mockResolvedValue({ userId: null });
+
+    for (const path of ["/docsx", "/api/docs"]) {
+      const res = await run(path);
+      expect(res.headers.get("location")).toContain("/sign-in");
+    }
   });
 
   it("keeps other pages private when / is public", async () => {
@@ -86,5 +111,31 @@ describe("middleware", () => {
     const res = await run("/manage-scripts");
 
     expect(res.headers.get("location")).toBeNull();
+  });
+
+  describe("demo guests", () => {
+    beforeEach(() => {
+      auth.mockResolvedValue({ userId: null });
+      process.env.DEMO_MODE = "true";
+    });
+
+    it("lets a guest open the read-only pages and the APIs", async () => {
+      for (const path of ["/dashboard", "/checks", "/checks/demo-duplicate-orders", "/manage-scripts", "/view-execution-result/abc", "/api/list-scripts"]) {
+        expect((await run(path, GUEST)).headers.get("location"), path).toBeNull();
+      }
+    });
+
+    it("sends a guest to sign-up for pages that need an account", async () => {
+      for (const path of ["/admin/users", "/scripts/new", "/manage-scripts/approvals"]) {
+        expect(new URL((await run(path, GUEST)).headers.get("location")!).pathname, path).toBe("/sign-up");
+      }
+    });
+
+    it("ignores the guest cookie outside demo mode or when malformed", async () => {
+      delete process.env.DEMO_MODE;
+      expect(new URL((await run("/dashboard", GUEST)).headers.get("location")!).pathname).toBe("/sign-in");
+      process.env.DEMO_MODE = "true";
+      expect(new URL((await run("/dashboard", "assay_guest=nope")).headers.get("location")!).pathname).toBe("/sign-in");
+    });
   });
 });

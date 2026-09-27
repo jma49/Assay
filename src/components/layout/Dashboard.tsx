@@ -15,13 +15,18 @@ import {
   ScriptInfo,
   type DashboardTranslationKeys,
 } from "@/components/business/dashboard/types";
-import { StatsCards } from "@/components/business/dashboard/StatsCards";
+import { StatusTiles } from "@/components/business/dashboard/StatusTiles";
 import { ManualTrigger } from "@/components/business/dashboard/ManualTrigger";
 import { CheckHistory } from "@/components/business/dashboard/CheckHistory";
 import { LoadingError } from "@/components/business/dashboard/LoadingError";
-import { DashboardFooter } from "@/components/business/dashboard/DashboardFooter";
+import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
+import { Modal } from "@/components/ui/modal";
+import { Button } from "@/components/ui/button";
+import { Play } from "lucide-react";
 import { DashboardSkeleton } from "@/components/common/PageSkeletons";
 import type { CheckStats } from "@/lib/database/check-stats";
+import { useAppCommand } from "@/lib/commands/use-app-command";
+import { useMe } from "@/lib/auth/use-me";
 
 // --- Main Component ---
 const Dashboard = () => {
@@ -46,6 +51,31 @@ const Dashboard = () => {
     "success" | "error" | null
   >(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Offer only what this user may do; the run API enforces it regardless.
+  const me = useMe();
+  const canExecute = me?.permissions.includes("script:execute") ?? false;
+  const demoRuns = !canExecute && me?.demo ? me.demo.runsPerHour : null;
+
+  // The Run sheet, opened from the toolbar or the File menu.
+  const [runSheetOpen, setRunSheetOpen] = useState(false);
+  const [runSheetMode, setRunSheetMode] = useState<"single" | "bulk">("single");
+  const openRunSheet = useCallback((mode: "single" | "bulk") => {
+    setRunSheetMode(mode);
+    setRunSheetOpen(true);
+  }, []);
+
+  // Commands from elsewhere: "Run a check…" / "Run in bulk…".
+  useAppCommand((command) => {
+    if (command.type !== "run-mode") return false;
+    openRunSheet(command.mode);
+    return true;
+  });
+
+  // A View-menu filter that arrives before the first history load is applied
+  // by that load, which would otherwise reset it to "all".
+  const initialHistoryLoadedRef = useRef(false);
+  const initialFilterRef = useRef<string | null>(null);
 
   // 新增：后端分页相关状态
   const [paginationInfo, setPaginationInfo] = useState({
@@ -283,6 +313,25 @@ const Dashboard = () => {
     loadPaginatedChecks(1, status, searchTerm, selectedHashtags, sortBy, sortOrder);
   }, [loadPaginatedChecks, searchTerm, selectedHashtags, sortConfig]);
 
+  // View menu: filter the run history by status.
+  useAppCommand((command) => {
+    if (command.type !== "history-filter") return false;
+    const beforeFirstLoad = !initialHistoryLoadedRef.current;
+    if (beforeFirstLoad) {
+      initialFilterRef.current = command.status;
+      setFilterStatus(command.status);
+      setCurrentPage(1);
+    } else {
+      handleFilterStatusChange(command.status);
+    }
+    // Wait for the page to lay out before scrolling when it is still loading.
+    setTimeout(
+      () => document.getElementById("execution-history")?.scrollIntoView({ behavior: "smooth" }),
+      beforeFirstLoad ? 800 : 0,
+    );
+    return true;
+  });
+
   // 处理搜索变化
   const handleSearchChange = useCallback((search: string) => {
     setSearchTerm(search);
@@ -317,6 +366,10 @@ const Dashboard = () => {
 
       if (scriptsResult.ok) {
         const scriptsResponseData = await scriptsResult.json();
+        // Earliest next run across scheduled checks, computed by the API.
+        setNextScheduled(
+          scriptsResponseData?.nextScheduledAt ? new Date(scriptsResponseData.nextScheduledAt) : null,
+        );
         let scriptsData: ScriptInfo[] = [];
 
         // 处理不同的API响应格式
@@ -428,9 +481,10 @@ const Dashboard = () => {
       isLoadingRef.current = false;
       const [scriptsResult] = await Promise.all([
         scriptsRequest,
-        loadPaginatedChecks(1, null, "", [], "execution_time", "desc"),
+        loadPaginatedChecks(1, initialFilterRef.current, "", [], "execution_time", "desc"),
         loadOverallStats(),
       ]);
+      initialHistoryLoadedRef.current = true;
 
       console.log(`✅ API响应完成 ${requestId}:`, {
         scriptsOk: scriptsResult.ok,
@@ -439,6 +493,10 @@ const Dashboard = () => {
       // 处理脚本列表响应
       if (scriptsResult.ok) {
         const scriptsResponseData = await scriptsResult.json();
+        // Earliest next run across scheduled checks, computed by the API.
+        setNextScheduled(
+          scriptsResponseData?.nextScheduledAt ? new Date(scriptsResponseData.nextScheduledAt) : null,
+        );
         let scriptsData: ScriptInfo[] = [];
 
         // 处理不同的API响应格式
@@ -586,19 +644,6 @@ const Dashboard = () => {
       loadInitialData();
     }
 
-    const now = new Date();
-    const nextRun = new Date();
-    // 设置下一个运行时间为芝加哥时间凌晨 3:00 (Chicago Central Time)
-    // 芝加哥标准时间 CST = UTC-6，夏令时 CDT = UTC-5
-    // 凌晨3:00 CST = UTC 9:00，凌晨3:00 CDT = UTC 8:00
-    // 这里使用 UTC 8:00 来对应芝加哥夏令时凌晨3:00
-    nextRun.setUTCHours(8, 0, 0, 0);
-    // 如果 UTC 8:00 已经过去，则设置为明天的 UTC 8:00 (对应芝加哥时间凌晨3:00)
-    if (nextRun < now) {
-      nextRun.setDate(nextRun.getDate() + 1);
-    }
-    //直接将 Date 对象传递给状态，显示时会由 formatDate 处理
-    setNextScheduled(nextRun);
 
     const style = document.createElement("style");
     style.textContent = `
@@ -816,60 +861,87 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-10 animate-fadeIn">
-          <header className="space-y-1">
-            <h1 className="text-[28px] leading-tight font-semibold">
-              {t("dashboardTitle")}
-            </h1>
-            {nextScheduled && (
-              <p className="text-[13px] text-muted-foreground">
-                {t("nextScheduledCheck")}:{" "}
-                {nextScheduled.toLocaleString(language, {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              </p>
-            )}
-          </header>
+    <div className="space-y-6 animate-fadeIn">
+          <h1 className="sr-only">{t("dashboardTitle")}</h1>
 
-          {/* Manual Trigger & Stats Combined Section */}
-          <section className="grid gap-6 lg:grid-cols-12">
-              <div className="min-w-0 lg:col-span-8">
-                <ManualTrigger
-                  availableScripts={availableScripts}
-                  selectedScriptId={selectedScriptId}
-                  selectedScript={selectedScript}
-                  isTriggering={isTriggering}
-                  isFetchingScripts={isFetchingScripts}
-                  loading={loading && isFetchingScripts}
-                  triggerMessage={triggerMessage}
-                  triggerMessageType={triggerMessageType}
-                  language={language}
-                  t={t}
-                  setSelectedScriptId={stableSetSelectedScriptId}
-                  handleTriggerCheck={handleTriggerCheck}
-                />
-              </div>
-              
-              <div className="min-w-0 lg:col-span-4">
-                <StatsCards
-                  nextScheduled={nextScheduled}
-                  successCount={successCount}
-                  allChecksCount={allChecksCount}
-                  needsAttentionCount={needsAttentionCount}
-                  successRate={successRate}
-                  language={language}
-                  t={t}
-                  isVerticalLayout={true}
-                />
-              </div>
-          </section>
+          {(canExecute || demoRuns !== null) && (
+            <WindowToolbar>
+              <Button size="sm" variant="outline" onClick={() => openRunSheet("single")}>
+                <Play className="size-3.5" />
+                {language === "zh" ? "执行检查…" : "Run a check…"}
+              </Button>
+              {canExecute && (
+                <Button size="sm" variant="outline" onClick={() => openRunSheet("bulk")}>
+                  {language === "zh" ? "批量执行…" : "Run in bulk…"}
+                </Button>
+              )}
+              {demoRuns !== null && (
+                <span className="text-[12px] text-foreground/70">
+                  {language === "zh" ? "演示：可以执行示例检查" : "Demo: you can run the sample checks"}
+                </span>
+              )}
+            </WindowToolbar>
+          )}
+
+          <WindowStatusBar>
+            <span>
+              {language === "zh"
+                ? `${allChecksCount} 次执行 · 通过率 ${successRate}%`
+                : `${allChecksCount} runs · ${successRate}% passed`}
+            </span>
+            {nextScheduled && (
+              <span>
+                · {t("nextScheduledCheck")}{" "}
+                {nextScheduled.toLocaleString(language, { dateStyle: "medium", timeStyle: "short" })}
+              </span>
+            )}
+          </WindowStatusBar>
+
+          {/* The numbers people come for, first; each tile filters the history. */}
+          <StatusTiles
+            total={allChecksCount}
+            success={successCount}
+            attention={needsAttentionCount}
+            failure={failureCount}
+            active={filterStatus}
+            onSelect={handleFilterStatusChange}
+            language={language === "zh" ? "zh" : "en"}
+          />
+
+          {/* Running a check is an occasional action, so it lives in a sheet. */}
+          <Modal
+            open={runSheetOpen}
+            onOpenChange={setRunSheetOpen}
+            title={language === "zh" ? "执行检查" : "Run a check"}
+          >
+            <ManualTrigger
+              key={runSheetMode}
+              initialMode={canExecute ? runSheetMode : "single"}
+              allowBulk={canExecute}
+              demoNote={
+                demoRuns === null
+                  ? undefined
+                  : language === "zh"
+                    ? `演示工作区：查看者可以执行示例检查，每小时最多 ${demoRuns} 次。`
+                    : `Demo workspace: viewers can run the sample checks, up to ${demoRuns} times an hour.`
+              }
+              availableScripts={availableScripts}
+              selectedScriptId={selectedScriptId}
+              selectedScript={selectedScript}
+              isTriggering={isTriggering}
+              isFetchingScripts={isFetchingScripts}
+              loading={loading && isFetchingScripts}
+              triggerMessage={triggerMessage}
+              triggerMessageType={triggerMessageType}
+              language={language}
+              t={t}
+              setSelectedScriptId={stableSetSelectedScriptId}
+              handleTriggerCheck={handleTriggerCheck}
+            />
+          </Modal>
 
           {/* Check History Section */}
-          <section id="execution-history" className="scroll-mt-20 space-y-4">
-            <h2 className="text-[23px] leading-tight font-semibold">
-              {t("checkHistoryTitle")}
-            </h2>
+          <section id="execution-history" className="scroll-mt-20" aria-label={t("checkHistoryTitle")}>
 
             <CheckHistory
               paginatedChecks={paginatedChecks}
@@ -877,16 +949,11 @@ const Dashboard = () => {
               totalUnfilteredCount={allChecksCount}
               totalPages={totalPages}
               currentPage={currentPage}
-              filterStatus={filterStatus}
               searchTerm={searchTerm}
               selectedHashtags={selectedHashtags}
               sortConfig={sortConfig}
-              successCount={successCount}
-              failureCount={failureCount}
-              needsAttentionCount={needsAttentionCount}
               language={language}
               t={t}
-              setFilterStatus={handleFilterStatusChange}
               setSearchTerm={handleSearchChange}
               setSelectedHashtags={handleHashtagsChange}
               setCurrentPage={handlePageChange}
@@ -898,10 +965,6 @@ const Dashboard = () => {
             />
           </section>
 
-          {/* Footer Section */}
-          <section className="border-t">
-            <DashboardFooter t={t} />
-          </section>
     </div>
   );
 };

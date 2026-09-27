@@ -16,6 +16,7 @@
 
 # next.js
 /.next/
+/.next-dev/
 /out/
 
 # webpack cache (to resolve serialization warnings)
@@ -86,3 +87,6 @@ logs/
 
 
 !.env.example
+
+# eval reports
+/evals/results/

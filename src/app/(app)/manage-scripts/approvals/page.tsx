@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { WindowStatusBar } from "@/components/layout/WindowChrome";
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { CardFooter } from '@/components/ui/card';
@@ -360,6 +361,12 @@ export default function ApprovalsPage() {
         : approval.status === ApprovalStatus.REJECTED
           ? 'text-failure'
           : 'text-attention';
+    const statusGem =
+      approval.status === ApprovalStatus.APPROVED
+        ? 'status-dot-clean'
+        : approval.status === ApprovalStatus.REJECTED
+          ? 'status-dot-error'
+          : 'status-dot-issues';
 
     return (
       <article className="rounded-lg border bg-card p-5">
@@ -369,7 +376,7 @@ export default function ApprovalsPage() {
               <h3 className="font-medium">{approval.scriptName}</h3>
               <Badge variant="secondary">{typeInfo.label}</Badge>
               <span className={`inline-flex items-center gap-1.5 text-[13px] ${statusTone}`}>
-                <span className="size-1.5 rounded-full bg-current" aria-hidden />
+                <span className={`status-dot ${statusGem}`} aria-hidden />
                 {statusInfo.label}
               </span>
             </div>
@@ -451,7 +458,7 @@ export default function ApprovalsPage() {
             size="sm"
             onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
             disabled={currentPage === 1}
-            className="h-7 px-2 text-xs transition-all duration-150"
+            className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150"
           >
             <ChevronLeft className="h-3.5 w-3.5 mr-1" />
             <span className="hidden sm:inline">{t("previous")}</span>
@@ -517,7 +524,7 @@ export default function ApprovalsPage() {
                     onChange={onPageInputChange}
                     onKeyDown={onPageInputKeyDown}
                     placeholder={t("jumpToPage")}
-                    className="w-12 h-6 px-1 text-xs text-center aqua-field rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="w-12 h-6 px-1 text-xs text-center border border-input bg-card rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                   <Button
                     type="submit"
@@ -544,7 +551,7 @@ export default function ApprovalsPage() {
             size="sm"
             onClick={() => onPageChange(Math.min(currentPage + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="h-7 px-2 text-xs transition-all duration-150"
+            className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150"
           >
             <span className="hidden sm:inline">{t("next")}</span>
             <ChevronRight className="h-3.5 w-3.5 ml-1" />
@@ -558,6 +565,11 @@ export default function ApprovalsPage() {
     <div className="min-h-screen    ">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="space-y-6">
+          <WindowStatusBar>
+            {language === "zh"
+              ? `${totalPendingApprovals} 项待审批 · ${totalHistoryApprovals} 项已处理`
+              : `${totalPendingApprovals} pending · ${totalHistoryApprovals} decided`}
+          </WindowStatusBar>
           <PageHeader title={t('approvalsTitle')} description={t('approvalsDescription')} />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="gap-0">

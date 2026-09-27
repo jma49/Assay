@@ -78,6 +78,12 @@ interface ManualTriggerProps {
   t: (key: DashboardTranslationKeys) => string;
   setSelectedScriptId: (id: string) => void;
   handleTriggerCheck: () => void;
+  /** Which tab the panel opens on (the File menu can ask for bulk). */
+  initialMode?: "single" | "bulk";
+  /** False for demo viewers, who may run single sample checks only. */
+  allowBulk?: boolean;
+  /** Shown instead of the mode choice when bulk is not allowed. */
+  demoNote?: string;
 }
 
 export const ManualTrigger: React.FC<ManualTriggerProps> = ({
@@ -93,11 +99,12 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
   t,
   setSelectedScriptId,
   handleTriggerCheck,
+  initialMode = "single",
+  allowBulk = true,
+  demoNote,
 }) => {
   // 状态管理
-  const [executionMode, setExecutionMode] = useState<"single" | "bulk">(
-    "single",
-  );
+  const [executionMode, setExecutionMode] = useState<"single" | "bulk">(initialMode);
   const [bulkMode, setBulkMode] = useState<"all" | "scheduled">("scheduled");
   const [searchTerm, setSearchTerm] = useState("");
   const [showBatchDialog, setShowBatchDialog] = useState(false);
@@ -626,7 +633,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
 
   return (
     <>
-      <Card className="relative h-full flex flex-col gap-0 overflow-hidden py-0">
+      <Card id="manual-trigger" className="relative h-full scroll-mt-20 flex flex-col gap-0 overflow-hidden py-0">
         <CardHeader className="relative border-b px-6 py-4">
           <div className="flex items-center gap-4">
             <div className="flex-1 space-y-1">
@@ -660,6 +667,9 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
               {/* 主要内容区域 */}
               <div className="space-y-4 flex-1">
                 {/* 执行模式选择 */}
+                {!allowBulk ? (
+                  demoNote && <aside className="docs-note text-[13px]">{demoNote}</aside>
+                ) : (
                 <div className="space-y-2">
                   <Label className="text-sm font-bold text-foreground/90 flex items-center gap-2 tracking-wide">
                     <Settings2 className="h-4 w-4 text-primary " />
@@ -673,7 +683,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                     }
                     className="grid grid-cols-1 sm:grid-cols-2 gap-2"
                   >
-                    <div className="flex items-center space-x-3 group hover:bg-background/60 rounded-lg p-3 transition-all duration-200 border border-transparent hover:border-border/30">
+                    <div className="flex items-center space-x-3 group hover:bg-background/60 rounded-lg p-3 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200 border border-transparent hover:border-border/30">
                       <RadioGroupItem value="single" id="single" className="border" />
                       <Label
                         htmlFor="single"
@@ -683,7 +693,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                         Execute Selected Script
                       </Label>
                     </div>
-                    <div className="flex items-center space-x-3 group hover:bg-background/60 rounded-lg p-3 transition-all duration-200 border border-transparent hover:border-border/30">
+                    <div className="flex items-center space-x-3 group hover:bg-background/60 rounded-lg p-3 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200 border border-transparent hover:border-border/30">
                       <RadioGroupItem value="bulk" id="bulk" className="border" />
                       <Label
                         htmlFor="bulk"
@@ -696,6 +706,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                   </RadioGroup>
                   </div>
                 </div>
+                )}
 
               {executionMode === "single" ? (
                 <>
@@ -712,7 +723,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                         value={searchTerm}
                         onChange={(e) => handleHashtagInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        className="h-11 border-border/60 focus:border-primary/60 transition-all duration-300 hover:border-primary/40 focus:ring-2 focus:ring-primary/20"
+                        className="h-11 border-border/60 focus:border-primary/60 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300 hover:border-primary/40 focus:ring-2 focus:ring-primary/20"
                       />
                       {/* Hashtag建议 */}
                       {showHashtagDropdown && availableHashtags.length > 0 && (
@@ -732,7 +743,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                               {availableHashtags.map((tag) => (
                                 <button
                                   key={tag}
-                                  className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2 transition-all duration-200 group"
+                                  className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200 group"
                                   onClick={() => handleHashtagSelect(tag)}
                                 >
                                   <Hash className="h-4 w-4 text-primary" />
@@ -783,7 +794,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                     >
                       <SelectTrigger
                         id="script-select"
-                        className="h-11 text-base border border-border/60 hover:border-primary/40 focus:border-primary/60 transition-all duration-300 focus:ring-2 focus:ring-primary/20"
+                        className="h-11 text-base border border-border/60 hover:border-primary/40 focus:border-primary/60 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300 focus:ring-2 focus:ring-primary/20"
                       >
                         <SelectValue
                           placeholder={
@@ -928,7 +939,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                       onClick={handleTriggerCheck}
                       disabled={!selectedScriptId || isTriggering || loading}
                       size="lg"
-                      className="w-full h-10 text-base font-semibold transition-all duration-300 group/btn"
+                      className="w-full h-10 text-base font-semibold transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300 group/btn"
                     >
                       {isTriggering ? (
                         <>
@@ -961,7 +972,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                           value={searchTerm}
                           onChange={(e) => handleHashtagInput(e.target.value)}
                           onKeyDown={handleKeyDown}
-                          className="h-11 border-border/60 focus:border-primary/60 transition-all duration-300 hover:border-primary/40 focus:ring-2 focus:ring-primary/20"
+                          className="h-11 border-border/60 focus:border-primary/60 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300 hover:border-primary/40 focus:ring-2 focus:ring-primary/20"
                         />
                         {/* Hashtag建议 */}
                         {showHashtagDropdown && availableHashtags.length > 0 && (
@@ -981,7 +992,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                                 {availableHashtags.map((tag) => (
                                   <button
                                     key={tag}
-                                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2 transition-all duration-200 group"
+                                    className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 rounded-md flex items-center gap-2 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200 group"
                                     onClick={() => handleHashtagSelect(tag)}
                                   >
                                     <Hash className="h-4 w-4 text-primary" />
@@ -1011,7 +1022,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-8 px-3 border-border/60 hover:border-primary/30 transition-all duration-300 group"
+                          className="h-8 px-3 border-border/60 hover:border-primary/30 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300 group"
                           onClick={() => setShowFilteredScriptsDialog(true)}
                         >
                           <Files className="h-4 w-4 text-primary/70 group-hover:text-primary mr-2 transition-colors" />
@@ -1022,7 +1033,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                           </span>
                           {searchTerm.includes('#') && (
                             <Badge variant="outline" className="ml-2 text-[10px]">
-                              {language === "zh" ? "标签筛选" : "Tag Filter"}
+                              {language === "zh" ? "标签筛选" : "Tags"}
                             </Badge>
                           )}
                         </Button>
@@ -1050,7 +1061,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                             return (
                               <div
                                 key={script.scriptId}
-                                className="flex items-center gap-3 p-2.5 rounded-lg border border-border/30 hover:border-border/50 transition-all duration-200"
+                                className="flex items-center gap-3 p-2.5 rounded-lg border border-border/30 hover:border-border/50 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200"
                               >
                                 <div className="w-2 h-2 rounded-full bg-primary/60" />
                                 <div className="flex-1">
@@ -1089,7 +1100,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                         }
                         className="space-y-3"
                       >
-                        <div className="flex items-start space-x-3 group hover:bg-background/30 rounded-lg p-2 transition-all duration-200">
+                        <div className="flex items-start space-x-3 group hover:bg-background/30 rounded-lg p-2 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200">
                           <RadioGroupItem
                             value="all"
                             id="all"
@@ -1111,7 +1122,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-start space-x-3 group hover:bg-background/30 rounded-lg p-2 transition-all duration-200">
+                        <div className="flex items-start space-x-3 group hover:bg-background/30 rounded-lg p-2 transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200">
                           <RadioGroupItem
                             value="scheduled"
                             id="scheduled"
@@ -1181,7 +1192,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                             isRunningBatch || getBatchScriptCount() === 0
                           }
                           size="lg"
-                          className="w-full h-10 text-base font-semibold transition-all duration-300 group/btn"
+                          className="w-full h-10 text-base font-semibold transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300 group/btn"
                         >
                           {isRunningBatch ? (
                             <>
@@ -1245,7 +1256,7 @@ export const ManualTrigger: React.FC<ManualTriggerProps> = ({
                     variant={
                       triggerMessageType === "error" ? "destructive" : "default"
                     }
-                    className="slide-in-right transition-all duration-300"
+                    className="slide-in-right transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300"
                   >
                     <AlertTitle>
                       {triggerMessageType === "error"

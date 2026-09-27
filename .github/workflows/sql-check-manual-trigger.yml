@@ -25,7 +25,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
       - name: Install dependencies
@@ -50,7 +50,7 @@ jobs:
           echo "Using .env file: ${DOTENV_CONFIG_PATH}"
           echo "Script ID to execute: ${SCRIPT_ID}"
           ls -la ${DOTENV_CONFIG_PATH}
-          echo "About to execute ts-node..."
-          # Use ts-node with -r to preload dotenv/config, using the input script_id
-          npx ts-node -r dotenv/config scripts/run-sql.ts "$SCRIPT_ID"
+          echo "About to run the check..."
+          # tsx runs TypeScript directly; -r preloads dotenv/config
+          npx tsx -r dotenv/config scripts/run-sql.ts "$SCRIPT_ID"
         continue-on-error: false # Fail the workflow if the script fails
