@@ -83,3 +83,12 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 - [ ] 打开一个有问题的检查：30 格执行状态条、新增 / 仍未解决 / 已修复标记、执行历史链接到报告、查询高亮、下次执行时间。
 - [ ] 对出错的检查点「立即执行」出现红色提示；有问题的是黄色提示，正常的是绿色提示。
 - [ ] 登录后、进入演示后都落在 /checks。
+
+## 通知与动态（阶段 4）
+
+- [ ] Vercel 环境变量：`ASSAY_SECRET_KEY`（`openssl rand -base64 32`，之后不能再改）、`APP_URL`、`CRON_SECRET`；GitHub Actions secrets 里也加上 `APP_URL` 和 `CRON_SECRET`。
+- [ ] 可选的一键连接：`SLACK_CLIENT_ID/SECRET`、`DISCORD_CLIENT_ID/SECRET`、`TELEGRAM_BOT_TOKEN/USERNAME/WEBHOOK_SECRET`（步骤见 `docs/notifications.md`）；设置 Telegram 后执行一次 `npm run telegram:webhook`。
+- [ ] 设置 → 通知：添加一个渠道并「发送测试」，确认消息送达、「最近送达」状态更新。
+- [ ] 把一个检查从正常变为有问题：动态页出现事件，渠道收到告警，事件后面显示送达图标。
+- [ ] Actions 里「Scheduled SQL checks」的「Send alerts」步骤返回 JSON（`sent`、`retrying` 等），没有 401。
+- [ ] 以访客身份打开设置 → 通知：只能查看，按钮不可用。
