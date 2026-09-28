@@ -6,12 +6,13 @@
  */
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { DEMO_AUTHOR, demoChecks } from "../demo/checks";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 async function main() {
   const apply = process.argv.includes("--apply");
   const mongo = getMongoDbClient();
   try {
-    const checks = (await mongo.getDb()).collection("sql_scripts");
+    const checks = (await mongo.getDb()).collection(COLLECTIONS.checks);
     const filter = { scriptId: { $in: demoChecks.map((c) => c.scriptId) }, author: DEMO_AUTHOR, demoSeed: { $ne: true } };
     const pending = await checks.find(filter, { projection: { scriptId: 1 } }).toArray();
     for (const check of pending) console.log(`- ${check.scriptId}`);

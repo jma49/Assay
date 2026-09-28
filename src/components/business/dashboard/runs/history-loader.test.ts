@@ -2,12 +2,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createHistoryLoader } from "./history-loader";
 import { DEFAULT_SORT, type HistoryQuery } from "./runs";
 
-const query = (search: string): HistoryQuery => ({ page: 1, status: null, search, hashtags: [], sort: DEFAULT_SORT });
+const query = (search: string): HistoryQuery => ({ page: 1, outcome: null, search, hashtags: [], sort: DEFAULT_SORT });
 
 const page = (name: string) =>
   new Response(
     JSON.stringify({
-      data: [{ _id: name, script_name: name, createdAt: "2026-09-27" }],
+      data: [{ _id: name, checkId: name, finishedAt: "2026-09-27T00:00:00.000Z", outcome: "clean" }],
       pagination: { total: 1, totalPages: 1, hasNext: false, hasPrev: false },
     }),
   );
@@ -18,7 +18,7 @@ function controlledFetch() {
   const fetchImpl = vi.fn(
     (url: string) =>
       new Promise<Response>((resolve) => {
-        pending.set(new URL(url, "http://test").searchParams.get("script_name") ?? "", resolve);
+        pending.set(new URL(url, "http://test").searchParams.get("search") ?? "", resolve);
       }),
   );
   const respond = (search: string, response: Response) => pending.get(search)!(response);
@@ -34,7 +34,7 @@ describe("createHistoryLoader", () => {
     loader.load(query("o"));
     loader.load(query("or"));
     expect(fetchImpl).toHaveBeenCalledTimes(2);
-    expect(fetchImpl.mock.calls[1][0]).toContain("script_name=or");
+    expect(fetchImpl.mock.calls[1][0]).toContain("search=or");
   });
 
   it("shows the newest request's page when an older one answers last", async () => {
@@ -69,11 +69,11 @@ describe("createHistoryLoader", () => {
   it("reloads the last requested page with its filters, e.g. after a manual run", async () => {
     const fetchImpl = vi.fn(async (_url: string, _init?: RequestInit) => page("orders"));
     const loader = createHistoryLoader(fetchImpl);
-    await loader.load({ page: 2, status: "failure", search: "orders", hashtags: ["billing"], sort: DEFAULT_SORT });
+    await loader.load({ page: 2, outcome: "error", search: "orders", hashtags: ["billing"], sort: DEFAULT_SORT });
     await loader.reload();
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     expect(fetchImpl.mock.calls[1]).toEqual(fetchImpl.mock.calls[0]);
-    expect(fetchImpl.mock.calls[1][0]).toContain("page=2&limit=50&include_results=false&status=failure&script_name=orders&hashtags=billing");
+    expect(fetchImpl.mock.calls[1][0]).toContain("page=2&limit=50&include_sample=false&outcome=error&search=orders&hashtags=billing");
   });
 
   it("has nothing to reload before the first request", async () => {

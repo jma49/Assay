@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { getMongoDbClient } from "@/lib/database/mongodb";
+import { revokeAccess } from "@/server/services/revoke-access";
 import { findUser } from "@/lib/auth/server";
-import { validateApiAuth } from "@/lib/auth/auth-utils";
+import { withAuth } from "@/server/http/route";
 import {
   UserRole,
   Permission,
   getAllUserRoles,
   setUserRole,
   removeUserRole,
-  requirePermission,
   canManageRole,
   getUserRole,
   hasOtherActiveAdmin,
@@ -23,37 +24,11 @@ interface SetUserRoleRequest {
 }
 
 /**
- * GET: every active member and their role.
+ * GET: every active member and their role. Admins (user:manage) and
+ * managers (user:role:assign) may read the list.
  */
-export async function GET() {
+export const GET = withAuth({ anyOf: [Permission.USER_MANAGE, Permission.USER_ROLE_ASSIGN] }, async () => {
   try {
-    const authResult = await validateApiAuth("zh");
-    if (!authResult.isValid) {
-      return authResult.response!;
-    }
-
-    const { user } = authResult;
-
-    // Admins (user:manage) and managers (user:role:assign) may read the list.
-    const permissionCheck = await requirePermission(
-      user.id,
-      Permission.USER_MANAGE
-    );
-
-    if (!permissionCheck.authorized) {
-      const roleAssignCheck = await requirePermission(
-        user.id,
-        Permission.USER_ROLE_ASSIGN
-      );
-
-      if (!roleAssignCheck.authorized) {
-        return NextResponse.json(
-          { success: false, message: "权限不足：无法查看用户角色" },
-          { status: 403 }
-        );
-      }
-    }
-
     const userRoles = await getAllUserRoles();
 
     return NextResponse.json({
@@ -68,31 +43,14 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * POST: gives a signed-up person a role.
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuth(Permission.USER_ROLE_ASSIGN, async (request, { principal }) => {
   try {
-    const authResult = await validateApiAuth("zh");
-    if (!authResult.isValid) {
-      return authResult.response!;
-    }
-
-    const { user, userEmail } = authResult;
-
-    const permissionCheck = await requirePermission(
-      user.id,
-      Permission.USER_ROLE_ASSIGN
-    );
-
-    if (!permissionCheck.authorized) {
-      return NextResponse.json(
-        { success: false, message: "权限不足：无法分配用户角色" },
-        { status: 403 }
-      );
-    }
+    const userEmail = principal.email;
 
     const body: SetUserRoleRequest = await request.json();
     const { role } = body;
@@ -124,7 +82,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const currentUserRole = permissionCheck.userRole;
+    const currentUserRole = principal.role;
     if (!currentUserRole) {
       return NextResponse.json(
         { success: false, message: "无法获取当前用户角色" },
@@ -163,7 +121,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Only admins may change their own role.
-    if (targetUserId === user.id && currentUserRole !== UserRole.ADMIN) {
+    if (targetUserId === principal.id && currentUserRole !== UserRole.ADMIN) {
       return NextResponse.json(
         { success: false, message: "不能修改自己的角色" },
         { status: 403 }
@@ -196,31 +154,13 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE: removes someone's role. Admins only.
  */
-export async function DELETE(request: NextRequest) {
+export const DELETE = withAuth(Permission.USER_MANAGE, async (request, { principal }) => {
   try {
-    const authResult = await validateApiAuth("zh");
-    if (!authResult.isValid) {
-      return authResult.response!;
-    }
-
-    const { user } = authResult;
-
-    const permissionCheck = await requirePermission(
-      user.id,
-      Permission.USER_MANAGE
-    );
-
-    if (!permissionCheck.authorized) {
-      return NextResponse.json(
-        { success: false, message: "权限不足：只有管理员可以删除用户角色" },
-        { status: 403 }
-      );
-    }
 
     const { searchParams } = new URL(request.url);
     const targetUserId = searchParams.get("userId");
@@ -233,7 +173,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Nobody removes their own role.
-    if (targetUserId === user.id) {
+    if (targetUserId === principal.id) {
       return NextResponse.json(
         { success: false, message: "不能删除自己的角色" },
         { status: 403 }
@@ -247,10 +187,12 @@ export async function DELETE(request: NextRequest) {
     const success = await removeUserRole(targetUserId);
 
     if (success) {
+      // Removing a role also takes away the access already held: sessions, API keys and OAuth apps.
+      const revoked = await revokeAccess(await getMongoDbClient().getDb(), targetUserId);
       return NextResponse.json({
         success: true,
         message: "用户角色已删除",
-        data: { targetUserId },
+        data: { targetUserId, revoked },
       });
     } else {
       return NextResponse.json(
@@ -265,4 +207,4 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

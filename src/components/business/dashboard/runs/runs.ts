@@ -1,7 +1,9 @@
+import type { RunOutcome } from "@/domain/run";
 import type { CheckStats } from "@/lib/database/check-stats";
-import type { Check, ScriptInfo } from "../types";
+import { nextRunAt } from "@/lib/scheduling/due-slot";
+import type { HistoryRun, ScriptInfo } from "../types";
 
-export type SortKey = keyof Check | "";
+export type SortKey = "finishedAt" | "checkId";
 export type SortDirection = "ascending" | "descending";
 
 export interface SortConfig {
@@ -9,7 +11,7 @@ export interface SortConfig {
   direction: SortDirection;
 }
 
-export const DEFAULT_SORT: SortConfig = { key: "execution_time", direction: "descending" };
+export const DEFAULT_SORT: SortConfig = { key: "finishedAt", direction: "descending" };
 
 export interface HistoryPagination {
   total: number;
@@ -25,22 +27,19 @@ export const EMPTY_STATS: CheckStats = { totalCount: 0, successCount: 0, failure
 /** One page of run history as the filters, sort and pager describe it. */
 export interface HistoryQuery {
   page: number;
-  status: string | null;
+  outcome: RunOutcome | null;
   search: string;
   hashtags: string[];
   sort: SortConfig;
 }
 
-/** The sort field and order /api/check-history understands; the table only sorts by name or time. */
-export function apiSort(sort: SortConfig): { sortBy: "execution_time" | "script_name"; sortOrder: "asc" | "desc" } {
-  return {
-    sortBy: sort.key === "script_name" ? "script_name" : "execution_time",
-    sortOrder: sort.direction === "ascending" ? "asc" : "desc",
-  };
+/** The sort field and order /api/check-history understands; the table only sorts by check or time. */
+export function apiSort(sort: SortConfig): { sortBy: SortKey; sortOrder: "asc" | "desc" } {
+  return { sortBy: sort.key, sortOrder: sort.direction === "ascending" ? "asc" : "desc" };
 }
 
 /** Clicking the sorted column flips it; a new column starts newest/last first. */
-export function nextSort(current: SortConfig, key: keyof Check): SortConfig {
+export function nextSort(current: SortConfig, key: SortKey): SortConfig {
   if (current.key !== key) return { key, direction: "descending" };
   return { key, direction: current.direction === "ascending" ? "descending" : "ascending" };
 }
@@ -50,26 +49,22 @@ export function buildCheckHistoryQuery(query: HistoryQuery, pageSize: number): s
   const params = new URLSearchParams({
     page: query.page.toString(),
     limit: pageSize.toString(),
-    include_results: "false",
+    include_sample: "false",
   });
   const search = query.search.trim();
   const { sortBy, sortOrder } = apiSort(query.sort);
-  if (query.status) params.set("status", query.status);
-  if (search) params.set("script_name", search);
+  if (query.outcome) params.set("outcome", query.outcome);
+  if (search) params.set("search", search);
   if (query.hashtags.length > 0) params.set("hashtags", query.hashtags.join(","));
   params.set("sort_by", sortBy);
   params.set("sort_order", sortOrder);
   return params.toString();
 }
 
-/** The runs from a /api/check-history body, with `createdAt` always an ISO string. */
-export function parseChecks(body: unknown, now = new Date()): Check[] | null {
+/** The runs in a /api/check-history body, or null when it has none. */
+export function parseRuns(body: unknown): HistoryRun[] | null {
   const data = (body as { data?: unknown } | null)?.data;
-  if (!Array.isArray(data)) return null;
-  return data.map((check: Check) => ({
-    ...check,
-    createdAt: check.createdAt ? String(check.createdAt) : now.toISOString(),
-  }));
+  return Array.isArray(data) ? (data as HistoryRun[]) : null;
 }
 
 export function parsePagination(body: unknown): HistoryPagination | null {
@@ -79,21 +74,20 @@ export function parsePagination(body: unknown): HistoryPagination | null {
   return { total, totalPages, hasNext, hasPrev };
 }
 
-const SCRIPT_LIST_FIELDS = ["data", "scripts", "items", "results", "list"] as const;
-
-/** The check list from a /api/list-scripts body, whichever shape it arrives in. */
+/** The checks in a GET /api/scripts body, by name (the order the Run sheet lists and preselects them in). */
 export function parseScriptList(body: unknown): ScriptInfo[] {
-  if (Array.isArray(body)) return body;
-  if (!body || typeof body !== "object") return [];
-  const record = body as Record<string, unknown>;
-  const field = SCRIPT_LIST_FIELDS.find((name) => Array.isArray(record[name]));
-  return field ? (record[field] as ScriptInfo[]) : [];
+  if (!Array.isArray(body)) return [];
+  // Plain code-unit order, as MongoDB sorts names.
+  return [...(body as ScriptInfo[])].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 }
 
-/** Earliest next run across scheduled checks, computed by the API. */
-export function parseNextScheduled(body: unknown): Date | null {
-  const nextScheduledAt = (body as { nextScheduledAt?: string } | null)?.nextScheduledAt;
-  return nextScheduledAt ? new Date(nextScheduledAt) : null;
+/** Earliest next run across scheduled checks. */
+export function nextScheduledRunOf(scripts: ScriptInfo[], now = new Date()): Date | null {
+  const next = scripts
+    .filter((script) => script.isScheduled && script.cronSchedule)
+    .map((script) => nextRunAt(script.cronSchedule!, now)?.getTime())
+    .filter((time): time is number => time !== undefined);
+  return next.length ? new Date(Math.min(...next)) : null;
 }
 
 /** Zero-based index of the first row on the page, and the index just past the last one. */

@@ -11,7 +11,7 @@ export function LatestResult({ latest, t }: { latest: LatestRun; t: Copy }) {
       <div className="space-y-3 p-5">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[13px] font-medium text-failure">{t.failed}</p>
-          <Link href={`/view-execution-result/${latest.runId}`} className="inline-flex items-center gap-0.5 text-[12px] font-medium text-primary hover:underline">
+          <Link href={`/runs/${latest.runId}`} className="inline-flex items-center gap-0.5 text-[12px] font-medium text-primary hover:underline">
             {t.fullReport}
             <ChevronRight className="size-3.5" />
           </Link>
@@ -45,7 +45,7 @@ export function LatestResult({ latest, t }: { latest: LatestRun; t: Copy }) {
             <span className="rounded-md bg-success-soft px-1.5 py-0.5 font-medium text-success">{t.fixedRows(latest.fixed.length)}</span>
           </>
         )}
-        <Link href={`/view-execution-result/${latest.runId}`} className="ml-auto inline-flex items-center gap-0.5 font-medium text-primary hover:underline">
+        <Link href={`/runs/${latest.runId}`} className="ml-auto inline-flex items-center gap-0.5 font-medium text-primary hover:underline">
           {t.fullReport}
           <ChevronRight className="size-3.5" />
         </Link>
@@ -85,7 +85,7 @@ export function LatestResult({ latest, t }: { latest: LatestRun; t: Copy }) {
               </tr>
             ))}
             {latest.fixed.map((values, i) => (
-              <tr key={`fixed-${i}`} className="border-b text-subtle-foreground last:border-0">
+              <tr key={`fixed-${i}`} className="border-b text-muted-foreground last:border-0">
                 <td className="px-4 py-2">
                   <span className="rounded-md bg-success-soft px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap text-success">{t.markFixed}</span>
                 </td>

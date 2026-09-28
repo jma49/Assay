@@ -32,8 +32,8 @@ describe("saveRun", () => {
     const { db, inserted } = fakeDb();
     await mongoRunCheckStore(db).saveRun(run);
     const [doc] = inserted;
-    expect(doc).toMatchObject({ checkId: "orders", outcome: "issues", rowCount: 2, raw_results: run.sample, message: "Found 2 records" });
+    expect(doc).toMatchObject({ checkId: "orders", outcome: "issues", rowCount: 2, sample: run.sample, message: "Found 2 records" });
     expect(doc.expiresAt).toBeInstanceOf(Date);
-    for (const field of ["script_name", "execution_time", "status", "statusType"]) expect(doc).not.toHaveProperty(field);
+    for (const field of ["script_name", "execution_time", "status", "statusType", "raw_results"]) expect(doc).not.toHaveProperty(field);
   });
 });

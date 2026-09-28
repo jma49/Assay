@@ -2,7 +2,9 @@ import { ObjectId, type Db, type Document } from "mongodb";
 import type { CheckDetail, CheckStateDto, CheckSummary, LatestRun, RunListItem, RunPoint } from "@/contracts/checks";
 import { stateFromHistory, type CheckState, type RunOutcome } from "@/domain/run";
 import { markRows } from "@/server/runs/row-marks";
+import { SAMPLE_FIELDS, storedSample } from "@/server/runs/sample";
 import { toAlertingDto } from "./alert-controls";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export const HISTORY_LENGTH = 30;
 
@@ -71,7 +73,7 @@ export function toSummary(check: Document, historyNewestFirst: (RunPoint & { run
  * aggregation over all checks would rank every retained run on each load.
  */
 async function recentRuns(db: Db, scriptIds: string[], limit: number) {
-  const runs = db.collection("result");
+  const runs = db.collection(COLLECTIONS.runs);
   const lists = await Promise.all(
     scriptIds.map((checkId) =>
       runs
@@ -85,7 +87,7 @@ async function recentRuns(db: Db, scriptIds: string[], limit: number) {
 }
 
 export async function listChecks(db: Db): Promise<CheckSummary[]> {
-  const checks = await db.collection("sql_scripts").find({}, { projection: CHECK_FIELDS }).sort({ name: 1 }).toArray();
+  const checks = await db.collection(COLLECTIONS.checks).find({}, { projection: CHECK_FIELDS }).sort({ name: 1 }).toArray();
   const runs = await recentRuns(
     db,
     checks.map((c) => String(c.scriptId)),
@@ -106,15 +108,15 @@ function toRunItem(run: Document): RunListItem {
 }
 
 async function loadRows(db: Db, runId: string) {
-  return db.collection("result").findOne(
+  return db.collection(COLLECTIONS.runs).findOne(
     { _id: new ObjectId(runId) },
-    { projection: { raw_results: 1, rowKeys: 1, columns: 1, message: 1, error: 1 } },
+    { projection: { ...SAMPLE_FIELDS, rowKeys: 1, columns: 1, message: 1, error: 1 } },
   );
 }
 
 export async function getCheckDetail(db: Db, scriptId: string): Promise<CheckDetail | null> {
   const check = await db
-    .collection("sql_scripts")
+    .collection(COLLECTIONS.checks)
     .findOne({ scriptId }, { projection: { ...CHECK_FIELDS, sqlContent: 1, author: 1, createdAt: 1 } });
   if (!check) return null;
 
@@ -127,10 +129,10 @@ export async function getCheckDetail(db: Db, scriptId: string): Promise<CheckDet
       loadRows(db, String(history[0]._id)),
       history[1] ? loadRows(db, String(history[1]._id)) : Promise.resolve(null),
     ]);
-    const latestRows: Record<string, unknown>[] = Array.isArray(latestDoc?.raw_results) ? latestDoc.raw_results : [];
+    const latestRows = storedSample(latestDoc);
     const marked = markRows(
       { rows: latestRows, keys: latestDoc?.rowKeys ?? null },
-      previousDoc ? { rows: Array.isArray(previousDoc.raw_results) ? previousDoc.raw_results : [], keys: previousDoc.rowKeys ?? null } : null,
+      previousDoc ? { rows: storedSample(previousDoc), keys: previousDoc.rowKeys ?? null } : null,
     );
     const point = runPoint(history[0]);
     latest = {

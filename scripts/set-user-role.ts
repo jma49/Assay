@@ -4,6 +4,7 @@
  */
 import { setUserRole, UserRole } from "../src/lib/auth/rbac";
 import { getMongoDbClient } from "../src/lib/database/mongodb";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 async function main(): Promise<number> {
   const [email, roleArg] = process.argv.slice(2);
@@ -17,7 +18,7 @@ async function main(): Promise<number> {
   try {
     const db = await getMongoDbClient().getDb();
     // Better Auth keeps signed-in users in the "user" collection, emails lowercased.
-    const user = await db.collection("user").findOne({ email: email.trim().toLowerCase() });
+    const user = await db.collection(COLLECTIONS.users).findOne({ email: email.trim().toLowerCase() });
     if (!user) {
       console.error(`No user found for ${email}. They need to sign in once first.`);
       return 1;

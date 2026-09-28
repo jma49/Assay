@@ -94,7 +94,7 @@ migration; new fields are added alongside old ones and back-filled.
 { checkId, trigger: { kind: schedule | manual | batch | api, by },
   startedAt, finishedAt, durationMs,
   outcome: error | issues | clean, rowCount, columns,
-  raw_results: sample of at most 500 rows and 2 MB,
+  sample: at most 500 rows and 2 MB,
   rowKeys: fingerprints of up to 5,000 rows,  // for new / still / fixed
   diff, error, message, findings, expiresAt }
 ```
@@ -152,12 +152,20 @@ extended protocol, where PostgreSQL refuses a second statement, inside
 database itself: point `DATABASE_URL` at a role that can only SELECT, e.g.
 
 ```sql
-CREATE ROLE assay_reader LOGIN PASSWORD '...';
-GRANT USAGE ON SCHEMA public TO assay_reader;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO assay_reader;
-ALTER ROLE assay_reader SET default_transaction_read_only = on;
-ALTER ROLE assay_reader SET statement_timeout = '60s';
+CREATE ROLE assay_readonly LOGIN PASSWORD '...';
+GRANT USAGE ON SCHEMA public, demo TO assay_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public, demo TO assay_readonly;
+ALTER ROLE assay_readonly SET default_transaction_read_only = on;
+ALTER ROLE assay_readonly SET statement_timeout = '60s';
 ```
+
+Create the role with SQL as the database owner. On Neon, a role made in the
+console joins `neon_superuser`, which carries `pg_write_all_data`, so it is
+not read-only whatever its grants say; check with
+`SELECT pg_has_role('assay_readonly', 'pg_write_all_data', 'USAGE')` (must be false).
+
+`npm run seed:demo` recreates the `demo` schema through `SEED_DATABASE_URL`
+and gives `assay_readonly` its grants back when that role exists.
 
 `runDueChecks` claims each due slot atomically (already in place) and runs
 the claimed checks with bounded concurrency. `runBatch` records a batch
@@ -193,43 +201,51 @@ queue can replace the inline runner later without changing services.
 These are the target conventions. The routes built on `server/` follow them;
 the legacy routes are still being migrated and keep their own shapes.
 
-- **Auth.** Target: every route declares its permission through `withAuth`
-  (`src/server/http/route.ts`); guests are opt-in per route. Today there are
-  three styles:
-  - `withAuth`: `activity`, `batch-execution-status`, `checks`,
-    `checks/[scriptId]`, `checks/[scriptId]/alerting`, `coverage`,
-    `members`, `notifications/destinations` (and `[id]`, `[id]/test`),
-    `integrations/[provider]/install` and `callback`,
-    `integrations/telegram/links` (and `[id]`), `run-all-scripts`.
-  - `authorizeApiRequest` (legacy): `ai/analyze-sql`, `ai/generate-sql`,
-    `ai/triage`, `check-history`, `check-history/stats`, `edit-history`,
-    `execution-details/[resultId]`, `execution-history`, `list-scripts`,
-    and the GET of `scripts`.
-  - `validateApiAuth` + `requirePermission` (legacy): `approvals`, `me`,
-    `run-check`, `scripts` (writes), `scripts/[scriptId]` (PUT, DELETE),
-    `users/roles`.
-  - Their own check: `auth/[...all]` (Better Auth), `mcp` (API key),
-    `notifications/dispatch` (`CRON_SECRET`), the Slack and Telegram
-    callbacks (signatures).
+- **Auth.** Every route declares who may call it through `withAuth`
+  (`src/server/http/route.ts`): a permission, `{ anyOf: [...] }` (e.g.
+  `approvals`, the GET of `users/roles`), or `{ signedIn: true }` for any
+  signed-in user (`me`, `run-check`, which checks `script:execute` itself
+  because demo mode widens it). Guests are opt-in: a permission lets them in
+  only when it is in `GUEST_PERMISSIONS` (`script:read`, `history:read`),
+  `signedIn` only with `allowGuest` (`me`, `run-check`). Refusals answer
+  `{ success: false, message }` with 401 or 403. Routes with their own
+  check: `auth/[...all]` (Better Auth), `mcp` (API key),
+  `notifications/dispatch` (`CRON_SECRET`), the Slack and Telegram callbacks
+  (signatures).
+- **Checks and runs.** One endpoint per job:
+  - `GET /api/checks`: every check with its state and last 30 runs (the
+    Checks list); `GET /api/checks/[scriptId]`: one check's detail.
+  - `GET /api/scripts`: every check's definition with its SQL and `version`
+    (the Manage editor, the Runs page's check list and Run sheet, the
+    Analysis page's names and tags). `POST /api/scripts` and
+    `PUT`/`DELETE /api/scripts/[scriptId]` write checks.
+  - `GET /api/check-history`: runs, filtered and paged (the Runs page's
+    table; the Analysis page asks for up to 500 in a date range);
+    `check-history/stats` counts them; `execution-details/[resultId]` is
+    one run's report.
 - **Input.** Target: parsed with a zod schema at the edge (`parseJson`).
   Only the alerting and notifications contracts are zod today.
 - **Errors.** Target: `{ error: { code, message } }` with the matching HTTP
-  status (`errorResponse`). The `withAuth` routes use it; legacy routes
+  status (`errorResponse`). Errors thrown out of a handler get it; the
+  routes carried over from the first version still catch their own and
   answer `{ error: "..." }`, `{ message: "..." }` or
   `{ success: false, ... }`.
 - **Paging.** Target: cursor pagination, as `activity` does. `check-history`,
-  `edit-history` and `approvals` page by `page` and `limit`;
-  `execution-history` returns up to `limit` rows with no paging.
+  `edit-history` and `approvals` page by `page` and `limit` (`check-history`
+  up to 500 runs a page, 200 with `include_sample`).
 
 ## Front end
 
-- Routes: `/checks`, `/checks/[scriptId]`, `/scripts/new` (new check),
-  `/activity`, `/dashboard` (the Runs page), `/coverage`, `/data-analysis`,
-  `/settings/notifications`, `/settings/api-keys`, `/admin/users`. The
-  older pages `/manage-scripts` (Manage, with `/approvals` and
-  `/edit-history` under it) and `/view-execution-result/[resultId]` (a run's
-  full report) are still live, without redirects; the sidebar treats them as
-  part of Checks and Runs. The only redirect is `/docs/menu-bar-and-dock`.
+- Routes: `/checks`, `/checks/[scriptId]`, `/checks/new` (new check),
+  `/checks/manage` (Manage, with `/checks/manage/history` for edit history),
+  `/approvals`, `/activity`, `/runs` (accepts `?search=`), `/runs/[runId]`
+  (a run's full report), `/coverage`, `/data-analysis`,
+  `/settings/notifications`, `/settings/api-keys`, `/admin/users`. Static
+  segments win over `[scriptId]`, so `/checks/new` and `/checks/manage` are
+  their own pages. The old URLs (`/dashboard`, `/view-execution-result/:id`,
+  `/scripts/new`, `/manage-scripts`, `/manage-scripts/edit-history`,
+  `/manage-scripts/approvals`) and `/docs/menu-bar-and-dock` redirect
+  permanently; the list is `src/lib/legacy-redirects.mjs`.
 - Server components render the shell; interactive views are client
   components. They fetch with `useApi` (`src/client/use-api.ts`), a plain
   `useEffect` fetch with abort and `reload()`: no cache, deduplication or
@@ -281,5 +297,5 @@ the legacy routes are still being migrated and keep their own shapes.
    the main flows. *In progress: dead code removed (#61); the oversized
    legacy pages split into tested modules, hooks and sections (#82, #84,
    #87–#89, #91); run readers moved to the new fields and the retired
-   fields no longer written (#80, #90); API route tests (#83). End-to-end
-   tests remain.*
+   fields no longer written (#80, #90); API route tests (#83); one auth
+   style and fewer duplicate endpoints (#102). End-to-end tests remain.*

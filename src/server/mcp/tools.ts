@@ -9,8 +9,10 @@ import { cellText } from "@/lib/utils/cells";
 import { listActivity } from "@/server/services/activity";
 import { applyAlertingAction } from "@/server/services/alert-controls";
 import { getCheckDetail, listChecks } from "@/server/services/checks-read";
+import { SAMPLE_FIELDS, storedSample } from "@/server/runs/sample";
 import type { RunCheckResult } from "@/server/services/run-check";
 import type { McpCaller } from "./caller";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export interface ToolDeps {
   db(): Promise<Db>;
@@ -158,10 +160,10 @@ export function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
       }),
       async handler({ run_id, max_rows }) {
         const run = await (await deps.db())
-          .collection("result")
-          .findOne({ _id: new ObjectId(run_id) }, { projection: { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, columns: 1, raw_results: 1, error: 1 } });
+          .collection(COLLECTIONS.runs)
+          .findOne({ _id: new ObjectId(run_id) }, { projection: { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, columns: 1, ...SAMPLE_FIELDS, error: 1 } });
         if (!run) throw new Error(`No run with id ${run_id}`);
-        const rows: Record<string, unknown>[] = Array.isArray(run.raw_results) ? run.raw_results : [];
+        const rows = storedSample(run);
         return {
           run_id,
           check_id: run.checkId,

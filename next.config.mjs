@@ -1,4 +1,5 @@
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
+import { LEGACY_PAGE_REDIRECTS } from "./src/lib/legacy-redirects.mjs";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -79,7 +80,7 @@ const nextConfig = {
     ];
   },
   async redirects() {
-    return [{ source: "/docs/menu-bar-and-dock", destination: "/docs/navigation", permanent: true }];
+    return LEGACY_PAGE_REDIRECTS;
   },
   async rewrites() {
     return [

@@ -1,9 +1,9 @@
 import { ChevronDown, ChevronUp, Database } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils/utils";
-import type { Check, DashboardTranslationKeys } from "../types";
+import type { DashboardTranslationKeys, HistoryRun } from "../types";
 import { HistoryRow } from "./HistoryRow";
-import type { SortConfig } from "./runs";
+import type { SortConfig, SortKey } from "./runs";
 
 type Translate = (key: DashboardTranslationKeys) => string;
 
@@ -17,9 +17,9 @@ function SortableHead({
   className,
 }: {
   label: string;
-  sortKey: keyof Check;
+  sortKey: SortKey;
   sortConfig: SortConfig;
-  onSort: (key: keyof Check) => void;
+  onSort: (key: SortKey) => void;
   className: string;
 }) {
   return (
@@ -95,10 +95,10 @@ function EmptyRow({ t }: { t: Translate }) {
 }
 
 interface HistoryTableProps {
-  checks: Check[];
+  checks: HistoryRun[];
   displayNames: Map<string, string>;
   sortConfig: SortConfig;
-  requestSort: (key: keyof Check) => void;
+  requestSort: (key: SortKey) => void;
   isLoading: boolean;
   language: string;
   t: Translate;
@@ -117,14 +117,14 @@ export function HistoryTable({ checks, displayNames, sortConfig, requestSort, is
               </TableHead>
               <SortableHead
                 label={t("tableScriptName")}
-                sortKey="script_name"
+                sortKey="checkId"
                 sortConfig={sortConfig}
                 onSort={requestSort}
                 className="w-64"
               />
               <SortableHead
                 label={t("tableExecutionTime")}
-                sortKey="execution_time"
+                sortKey="finishedAt"
                 sortConfig={sortConfig}
                 onSort={requestSort}
                 className="hidden lg:table-cell w-52"
@@ -147,7 +147,7 @@ export function HistoryTable({ checks, displayNames, sortConfig, requestSort, is
                 <HistoryRow
                   key={check._id}
                   check={check}
-                  displayName={displayNames.get(check.script_name) ?? check.script_name}
+                  displayName={displayNames.get(check.checkId) ?? check.checkId}
                   language={language}
                   t={t}
                 />

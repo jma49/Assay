@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { buildAnalytics, historyQuery, withTags, type AnalyticsData, type ExecutionRecord, type ScriptSummary, type TimeRange } from "./analytics";
+import { buildAnalytics, historyQuery, runsFromHistory, withTags, type AnalyticsData, type ScriptSummary, type TimeRange } from "./analytics";
 
 /** Loads runs for the filters and the check list, and derives the page's numbers. */
 export function useAnalytics(timeRange: TimeRange, scriptId: string, hashtags: string[]) {
@@ -16,11 +16,11 @@ export function useAnalytics(timeRange: TimeRange, scriptId: string, hashtags: s
     (async () => {
       try {
         const [runsResponse, scriptsResponse] = await Promise.all([
-          fetch(`/api/execution-history?${historyQuery(timeRange, scriptId)}`),
+          fetch(`/api/check-history?${historyQuery(timeRange, scriptId)}`),
           fetch("/api/scripts"),
         ]);
         if (!runsResponse.ok || !scriptsResponse.ok) throw new Error("Failed to fetch data");
-        const runs: ExecutionRecord[] = await runsResponse.json();
+        const runs = runsFromHistory(await runsResponse.json());
         const checks: ScriptSummary[] = await scriptsResponse.json();
         if (cancelled) return;
         setScripts(checks);

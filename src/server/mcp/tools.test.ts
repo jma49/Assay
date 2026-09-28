@@ -12,7 +12,7 @@ vi.mock("@/server/services/checks-read", () => ({
   getCheckDetail: async () => null,
 }));
 
-const caller = (role: UserRole): McpCaller => ({ userId: "u1", name: "Ada", email: "ada@example.com", permissions: ROLE_PERMISSIONS[role], keyId: "k" });
+const caller = (role: UserRole): McpCaller => ({ userId: "u1", name: "Ada", email: "ada@example.com", permissions: ROLE_PERMISSIONS[role], credential: "api-key:k" });
 
 function deps(runCheck: ToolDeps["runCheck"] = vi.fn()) {
   const afterRun = vi.fn<() => void>();

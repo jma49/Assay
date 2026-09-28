@@ -48,4 +48,4 @@ Manrope for everything readable: interface text at 400–600, headings at
 600–700 with slightly tight letter-spacing (`font-display`). Its round forms
 suit the chibi mascot and stay clear in dense tables. JetBrains Mono for
 code, ids and cron expressions. Chinese falls back to the system face
-(PingFang SC, Microsoft YaHei).
+(PingFang SC, Microsoft YaHei, Noto Sans SC / Noto Sans CJK SC).

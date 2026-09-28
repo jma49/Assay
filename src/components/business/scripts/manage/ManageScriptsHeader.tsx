@@ -42,7 +42,7 @@ export function ManageScriptsHeader({ scripts, searchTerm, onSearchChange, langu
           />
         </div>
         <Button asChild size="sm" variant="outline">
-          <Link href="/manage-scripts/edit-history">
+          <Link href="/checks/manage/history">
             <History />
             {t("allScriptsHistory")}
           </Link>

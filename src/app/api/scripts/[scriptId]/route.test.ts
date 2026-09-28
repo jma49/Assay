@@ -17,9 +17,9 @@ const mocks = vi.hoisted(() => ({
 
 const session = { isValid: true, user: { id: "user_alice", fullName: "Alice" }, userEmail: "alice@example.com", isGuest: false };
 
-vi.mock("@/lib/auth/auth-utils", () => ({
+vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth/auth-utils")>()),
   validateApiAuth: async () => (mocks.denied ? { isValid: false, response: mocks.denied } : session),
-  authorizeApiRequest: async () => (mocks.denied ? { isValid: false, response: mocks.denied } : session),
 }));
 vi.mock("@/lib/auth/rbac", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/auth/rbac")>()),
@@ -39,7 +39,6 @@ vi.mock("@/lib/database/mongodb", () => ({
   }),
 }));
 vi.mock("@/lib/cache/redis", () => ({ default: {} }));
-vi.mock("@/lib/cache/cache-utils", () => ({ clearScriptsCache: async () => undefined }));
 vi.mock("@/lib/workflows/version-control", () => ({ createScriptVersion: async () => undefined }));
 vi.mock("@/lib/workflows/edit-history-store", () => ({ recordEditHistoryOnServer: async () => undefined }));
 vi.mock("@/lib/workflows/approval-workflow", async (importOriginal) => ({

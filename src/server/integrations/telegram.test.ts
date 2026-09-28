@@ -4,7 +4,8 @@ import { ObjectId, type Db } from "mongodb";
 vi.mock("@/server/services/destinations", () => ({ saveDestination: vi.fn() }));
 
 import { saveDestination } from "@/server/services/destinations";
-import { handleUpdate, LINKS, parseCallbackData, startCode } from "./telegram";
+import { COLLECTIONS } from "@/lib/database/collections";
+import { handleUpdate, parseCallbackData, startCode } from "./telegram";
 
 describe("startCode", () => {
   it("reads the code from /start, with or without the bot's name", () => {
@@ -50,7 +51,7 @@ describe("handleUpdate linking a chat", () => {
         return { modifiedCount: 1 };
       }),
     };
-    const db = { collection: (name: string) => (name === LINKS ? links : null) } as unknown as Db;
+    const db = { collection: (name: string) => (name === COLLECTIONS.telegramLinks ? links : null) } as unknown as Db;
     return { db, link };
   }
   const update = { update_id: 1, message: { message_id: 1, chat: { id: -1, type: "group", title: "Ops" }, text: "/start abcdefghijklmnop1234" } };

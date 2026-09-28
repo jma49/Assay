@@ -1,4 +1,5 @@
 import type { Db } from "mongodb";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 /**
  * Members who signed up through Clerk keep their role: the first time
@@ -10,7 +11,7 @@ import type { Db } from "mongodb";
 export async function claimLegacyRole(db: Db, user: { id: string; email: string; emailVerified: boolean }): Promise<boolean> {
   if (!user.emailVerified || !user.email) return false;
   const email = user.email.trim().toLowerCase();
-  const roles = db.collection("user_roles");
+  const roles = db.collection(COLLECTIONS.userRoles);
   const legacy = await roles.findOne({
     email: { $regex: `^${email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" },
     userId: { $ne: user.id },

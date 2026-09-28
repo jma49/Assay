@@ -51,7 +51,7 @@ Indexes: `scriptId` unique; `createdAt`.
 | `checkId`, `trigger`, `startedAt`, `finishedAt`, `durationMs` | |
 | `outcome` | `clean` / `issues` / `error` |
 | `rowCount`, `columns` | |
-| `raw_results` | Sample rows: at most 500 and 2 MB |
+| `sample` | Sample rows: at most 500 and 2 MB (`raw_results` on runs saved before 2026-09-28) |
 | `rowKeys` | Fingerprints of up to 5,000 rows, for new / still / fixed |
 | `diff` | `{ added, still, fixed }` against the previous run |
 | `error`, `message`, `findings` | |
@@ -66,8 +66,8 @@ One per run that changed something: `{ type, checkId, runId, from, to,
 rowCount, diff, error, at, workspaceId, fannedOutAt, suppressed, actionKey }`.
 The activity feed and the notification outbox read it.
 
-Indexes: `runId` unique (a retried run never notifies twice); `at`;
-`(checkId, at)`.
+Indexes: `runId` unique (a retried run never notifies twice); `(checkId, at)`;
+TTL on `at`: kept 180 days.
 
 ### `batches`
 
@@ -76,7 +76,11 @@ Progress of "run all" requests. TTL: 7 days after `startedAt`.
 ### `check_actions`
 
 Audit of acknowledge / mute / assign: `{ checkId, action, detail, by,
-source (web | slack | telegram | mcp), at }`. Index `(checkId, at)`.
+source (web | slack | telegram | mcp), at }`. Index `(checkId, at)`; TTL on
+`at`: kept 180 days. The current acknowledge / mute / owner live on the check.
+
+Kept without expiry, as the audit trail: `edit_history`, `approval_requests`,
+`script_versions`.
 
 ## Alerts
 
@@ -94,7 +98,7 @@ source (web | slack | telegram | mcp), at }`. Index `(checkId, at)`.
 | --- | --- |
 | `approval_requests` | A change waiting for review: `requestId`, `scriptId`, `requesterId`, `operationType`, `originalData` (only editable fields are applied), `status` (moves from `pending` once), `reviewedBy`, `applyError`. Indexes: `requestId` unique; `(status, requestedAt)` |
 | `edit_history` | Every create / update / delete with a snapshot and field changes. Indexes: `operationTime`; `(scriptSnapshot.scriptId, operationTime)` |
-| `script_versions` | Full copies per version (`version` here is a semantic string like `1.2.0`, unrelated to `sql_scripts.version`). Index `(scriptId, createdAt)` |
+| `script_versions` | Full copies per version (`version` here is a semantic string like `1.2.0`, unrelated to `sql_scripts.version`). Indexes: `(scriptId, createdAt)`; `(scriptId, version)` unique |
 
 ## People and access
 
@@ -118,19 +122,22 @@ source (web | slack | telegram | mcp), at }`. Index `(checkId, at)`.
 
 ## Legacy fields
 
-Runs saved before 2026-09-27 also carry the fields the old pages read.
-New runs no longer write them, and nothing reads them: the history,
-analysis and report APIs read the new fields and map them to the old
-response shape in `src/server/runs/legacy-view.ts`.
+Runs saved before 2026-09-27 also carry the fields the first version's
+pages read. New runs no longer write them and nothing reads them: the
+APIs and pages use the run's own fields throughout.
 
 | Retired | Read instead |
 | --- | --- |
 | `script_name` | `checkId` |
 | `execution_time` | `finishedAt` |
 | `statusType` (`success` / `attention_needed` / `failure`), `status` | `outcome` |
+| `raw_results` (until 2026-09-28) | `sample` |
 
-Still written under their original names, because pages read them:
-`raw_results` (the sample), `message`, `findings`, `github_run_id`.
+Runs saved before 2026-09-28 keep their sample as `raw_results`; readers go
+through `storedSample()` (`src/server/runs/sample.ts`), which falls back to
+it. The fallback can go once those runs have expired (the last one expires
+on 2026-12-26 with the default retention). `message`, `findings` and
+`github_run_id` keep their names.
 
 Runs saved before the run pipeline only had the legacy fields;
 `scripts/migrations/backfill-run-fields.ts` derived the new ones (dry run,
@@ -138,8 +145,7 @@ then `--apply`; idempotent; applied to production).
 
 The retired fields disappear with their runs through the retention TTL
 (`RUN_RETENTION_DAYS`, 90 days by default), so no data migration is needed.
-The indexes `execution_time_-1` and `script_name_1_execution_time_-1` are no
-longer created by `ensureIndexes`; drop them by hand once they are unused
-(issue #62). Renaming the collections (`sql_scripts` → `checks`,
+The old indexes `execution_time_-1` and `script_name_1_execution_time_-1`
+have been dropped in production (issue #62). Renaming the collections (`sql_scripts` → `checks`,
 `result` → `runs`) comes last, behind a migration script, because every
 deployment's data lives under the old names.

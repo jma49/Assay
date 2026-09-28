@@ -7,6 +7,7 @@ import { parseJson, withAuth } from "@/server/http/route";
 import { mongoBatchStore, runBatch } from "@/server/services/batches";
 import { dispatchNow } from "@/server/services/notify-deps";
 import { runCheckNow } from "@/server/services/run-check-deps";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 const Body = z.object({
   mode: z.enum(["all", "scheduled"]).default("all"),
@@ -25,7 +26,7 @@ export const POST = withAuth(Permission.SCRIPT_EXECUTE, async (request, { princi
 
   const filter = filteredExecution && scriptIds.length > 0 ? { scriptId: { $in: scriptIds } } : mode === "scheduled" ? { isScheduled: true } : {};
   const checks = await db
-    .collection("sql_scripts")
+    .collection(COLLECTIONS.checks)
     .find(filter, { projection: { scriptId: 1, name: 1, isScheduled: 1 } })
     .sort({ createdAt: 1 })
     .toArray();
