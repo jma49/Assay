@@ -1,4 +1,5 @@
-import { toLegacyStatus } from "@/domain/run";
+import type { RunOutcome } from "@/domain/run";
+import { SAMPLE_FIELDS, storedSample } from "@/server/runs/sample";
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { withAuth } from "@/server/http/route";
@@ -31,7 +32,7 @@ export const POST = withAuth(Permission.HISTORY_READ, async (request, { principa
     const results = db.collection(COLLECTIONS.runs);
     const run = await results.findOne(
       { _id: new ObjectId(resultId) },
-      { projection: { checkId: 1, outcome: 1, message: 1, raw_results: 1, aiTriage: 1 } },
+      { projection: { checkId: 1, outcome: 1, message: 1, ...SAMPLE_FIELDS, aiTriage: 1 } },
     );
     if (!run) {
       return NextResponse.json({ error: "Run not found" }, { status: 404 });
@@ -47,9 +48,8 @@ export const POST = withAuth(Permission.HISTORY_READ, async (request, { principa
       return NextResponse.json({ error: "Sign up to run AI triage" }, { status: 403 });
     }
 
-    // The model's prompt speaks of the older status names.
-    const status = toLegacyStatus(run.outcome ?? "clean");
-    if (status === "success") {
+    const outcome: RunOutcome = run.outcome ?? "clean";
+    if (outcome === "clean") {
       return NextResponse.json({ error: "This run passed; there is nothing to triage" }, { status: 400 });
     }
 
@@ -63,12 +63,12 @@ export const POST = withAuth(Permission.HISTORY_READ, async (request, { principa
     const script = await db
       .collection(COLLECTIONS.checks)
       .findOne({ scriptId }, { projection: { name: 1, description: 1, sqlContent: 1 } });
-    const rows = Array.isArray(run.raw_results) ? run.raw_results : [];
+    const rows = storedSample(run);
 
     const triage = await triageRun(
       {
         check: { scriptId, name: script?.name, description: script?.description, sql: script?.sqlContent },
-        run: { status, message, rowCount: rows.length, profile: profileRows(rows) },
+        run: { outcome, message, rowCount: rows.length, profile: profileRows(rows) },
         schema: await getCachedSchema(),
         language,
       },

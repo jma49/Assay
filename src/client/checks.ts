@@ -1,10 +1,11 @@
+import type { RunOutcome } from "@/domain/run";
 import type { Triage } from "@/lib/ai/triage";
 import { sendJson } from "./send-json";
 
 /** What POST /api/run-check answers for a finished run. */
 export interface RunCheckResponse {
   success: boolean;
-  statusType: "success" | "attention_needed" | "failure";
+  outcome: RunOutcome;
   message?: string;
   localizedMessage?: string;
   mongoResultId?: string;
