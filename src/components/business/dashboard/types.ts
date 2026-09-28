@@ -1,27 +1,20 @@
-import type { LegacyStatusType as ExecutionStatusType } from "@/domain/run";
+import type { RunOutcome } from "@/domain/run";
 
 export { dashboardTranslations, type DashboardTranslationKeys, type TranslationRecord } from "./translations";
-
-export const CheckStatus = {
-  SUCCESS: "success",
-  FAILURE: "failure",
-} as const;
 
 export const ITEMS_PER_PAGE = 10;
 export const CHECK_HISTORY_ITEMS_PER_PAGE = 50;
 
-export interface Check {
+/** One run as GET /api/check-history lists it. */
+export interface HistoryRun {
   _id: string;
-  script_name: string;
-  script_id: string;
-  execution_time: string;
-  status: (typeof CheckStatus)[keyof typeof CheckStatus];
-  statusType?: ExecutionStatusType;
+  checkId: string;
+  /** ISO time the run finished. */
+  finishedAt: string;
+  outcome: RunOutcome;
   message: string;
   findings: string;
-  raw_results: Record<string, unknown>[];
   github_run_id?: string | number;
-  createdAt?: Date | string;
 }
 
 export interface ScriptInfo {

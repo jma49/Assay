@@ -1,5 +1,4 @@
 import type { RunOutcome } from "@/domain/run";
-import { outcomeOf } from "@/components/checks/status";
 import { localDayKey } from "@/lib/utils/datetime";
 
 /** A run the page counts. */
@@ -13,10 +12,9 @@ export interface ExecutionRecord {
 /** A run as /api/check-history lists it. */
 interface HistoryRun {
   _id: string;
-  script_name: string;
-  execution_time: string;
-  status?: string;
-  statusType?: string;
+  checkId: string;
+  finishedAt: string;
+  outcome: RunOutcome;
 }
 
 /** Most runs the charts read: the newest ones in the range. */
@@ -26,9 +24,9 @@ const ANALYSIS_RUN_LIMIT = 500;
 export function runsFromHistory(body: { data?: HistoryRun[] } | null): ExecutionRecord[] {
   return (body?.data ?? []).map((run) => ({
     _id: run._id,
-    scriptId: run.script_name,
-    outcome: outcomeOf(run),
-    createdAt: run.execution_time,
+    scriptId: run.checkId,
+    outcome: run.outcome,
+    createdAt: run.finishedAt,
   }));
 }
 
@@ -87,7 +85,7 @@ export function historyQuery(range: TimeRange, scriptId: string, now = new Date(
     params.append("startDate", start.toISOString());
     params.append("endDate", now.toISOString());
   }
-  if (scriptId !== "all") params.append("scriptId", scriptId);
+  if (scriptId !== "all") params.append("checkId", scriptId);
   return params;
 }
 

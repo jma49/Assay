@@ -1,10 +1,8 @@
 "use client";
 
 import { OUTCOME_DOT, OUTCOME_LABEL, OUTCOME_TEXT } from "@/components/checks/status";
-import { toLegacyStatus, type LegacyStatusType, type RunOutcome } from "@/domain/run";
+import type { RunOutcome } from "@/domain/run";
 import { cn } from "@/lib/utils/utils";
-
-type Status = LegacyStatusType;
 
 interface StatusTilesProps {
   total: number;
@@ -13,7 +11,7 @@ interface StatusTilesProps {
   failure: number;
   /** The history filter currently applied; null means all runs. */
   active: string | null;
-  onSelect: (status: Status | null) => void;
+  onSelect: (outcome: RunOutcome | null) => void;
   language: "en" | "zh";
 }
 
@@ -31,14 +29,14 @@ export function StatusTiles({ total, success, attention, failure, active, onSele
   const share = (n: number) => (total > 0 ? `${Math.round((n / total) * 100)}%` : "–");
 
   const outcomeTile = (outcome: RunOutcome, value: number) => ({
-    key: toLegacyStatus(outcome),
+    key: outcome,
     dot: OUTCOME_DOT[outcome],
     label: OUTCOME_LABEL[outcome][language],
     value,
     note: share(value),
     tone: OUTCOME_TEXT[outcome],
   });
-  const tiles: { key: Status | null; dot?: string; label: string; value: number; note: string; tone: string }[] = [
+  const tiles: { key: RunOutcome | null; dot?: string; label: string; value: number; note: string; tone: string }[] = [
     { key: null, label: t.total, value: total, note: "", tone: "text-foreground" },
     outcomeTile("clean", success),
     outcomeTile("issues", attention),

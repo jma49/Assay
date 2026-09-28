@@ -60,7 +60,7 @@ describe("filters", () => {
     const params = historyQuery("7d", "a", now);
     expect(params.get("endDate")).toBe(now.toISOString());
     expect(new Date(params.get("startDate")!).getTime()).toBe(now.getTime() - 7 * 86_400_000);
-    expect(params.get("scriptId")).toBe("a");
+    expect(params.get("checkId")).toBe("a");
     expect(params.get("limit")).toBe("500");
     expect([...historyQuery("all", "all", now).keys()]).toEqual(["limit"]);
   });
@@ -68,9 +68,9 @@ describe("filters", () => {
   it("reads the runs of a check-history body by outcome", () => {
     const body = {
       data: [
-        { _id: "1", script_name: "a", execution_time: "2026-09-26T10:00:00.000Z", status: "success", statusType: "success" },
-        { _id: "2", script_name: "a", execution_time: "2026-09-26T11:00:00.000Z", status: "failure", statusType: "failure" },
-        { _id: "3", script_name: "b", execution_time: "2026-09-26T12:00:00.000Z", status: "success", statusType: "attention_needed" },
+        { _id: "1", checkId: "a", finishedAt: "2026-09-26T10:00:00.000Z", outcome: "clean" as const },
+        { _id: "2", checkId: "a", finishedAt: "2026-09-26T11:00:00.000Z", outcome: "error" as const },
+        { _id: "3", checkId: "b", finishedAt: "2026-09-26T12:00:00.000Z", outcome: "issues" as const },
       ],
     };
     expect(runsFromHistory(body)).toEqual([

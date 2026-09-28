@@ -1,9 +1,9 @@
 import { createLatestRequest } from "@/components/business/edit-history/latest-request";
-import { CHECK_HISTORY_ITEMS_PER_PAGE, type Check } from "../types";
-import { buildCheckHistoryQuery, parseChecks, parsePagination, type HistoryPagination, type HistoryQuery } from "./runs";
+import { CHECK_HISTORY_ITEMS_PER_PAGE, type HistoryRun } from "../types";
+import { buildCheckHistoryQuery, parseRuns, parsePagination, type HistoryPagination, type HistoryQuery } from "./runs";
 
 export type HistoryLoadResult =
-  | { kind: "page"; checks: Check[]; pagination: HistoryPagination | null }
+  | { kind: "page"; checks: HistoryRun[]; pagination: HistoryPagination | null }
   | { kind: "error"; message: string }
   /** A newer request was made meanwhile; its result is the one to show. */
   | { kind: "stale" };
@@ -30,7 +30,7 @@ export function createHistoryLoader(fetchImpl: Fetch = (input, init) => fetch(in
         throw new Error(`获取检查历史失败: ${response.status} ${response.statusText}`);
       }
       const body = await response.json();
-      result = { kind: "page", checks: parseChecks(body) ?? [], pagination: parsePagination(body) };
+      result = { kind: "page", checks: parseRuns(body) ?? [], pagination: parsePagination(body) };
     } catch (err) {
       console.error("[runs] Loading run history failed:", err);
       result = { kind: "error", message: err instanceof Error ? err.message : "数据加载失败" };

@@ -41,8 +41,8 @@ export function RunInfoPanel({
       label: t.scriptId,
       mono: true,
       value: (
-        <Link href={`/checks/${encodeURIComponent(result.scriptId)}`} className="text-primary hover:underline">
-          {result.scriptId}
+        <Link href={`/checks/${encodeURIComponent(result.checkId)}`} className="text-primary hover:underline">
+          {result.checkId}
         </Link>
       ),
     },

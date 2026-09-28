@@ -1,10 +1,10 @@
-import { toLegacyStatus } from "@/domain/run";
 import { NextResponse } from "next/server";
 import { withAuth } from "@/server/http/route";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { ObjectId } from "mongodb";
 import { COLLECTIONS } from "@/lib/database/collections";
+import { storedSample } from "@/server/runs/sample";
 
 export const GET = withAuth<{ resultId: string }>(Permission.HISTORY_READ, async (_request, { params }) => {
   const { resultId } = params;
@@ -31,16 +31,14 @@ export const GET = withAuth<{ resultId: string }>(Permission.HISTORY_READ, async
         )
       : null;
 
-    // The report page still reads the pre-pipeline shape; it is built from the run's current fields.
-    const statusType = toLegacyStatus(run.outcome);
     return NextResponse.json({
-      scriptId: run.checkId,
-      executedAt: run.finishedAt,
-      status: statusType === "failure" ? "failure" : "success",
-      statusType,
-      message: run.message,
-      findings: Array.isArray(run.raw_results) ? run.raw_results : [],
       _id: run._id.toString(),
+      checkId: run.checkId,
+      finishedAt: run.finishedAt,
+      outcome: run.outcome,
+      message: run.message ?? "",
+      findings: run.findings ?? "",
+      sample: storedSample(run),
       ...(script && {
         name: script.name,
         cnName: script.cnName,

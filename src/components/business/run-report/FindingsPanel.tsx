@@ -1,6 +1,6 @@
 import { Database } from "lucide-react";
 import type { RunReportMessages } from "./messages";
-import { tableRows, type ExecutionResult, type Language } from "./run-report";
+import { tableRows, type Language, type RunRows } from "./run-report";
 import { FindingsTable } from "./FindingsTable";
 
 /** The rows a run returned: a table, a plain-text note, or an empty state. */
@@ -9,7 +9,7 @@ export function FindingsPanel({
   language,
   t,
 }: {
-  findings: ExecutionResult["findings"];
+  findings: RunRows;
   language: Language;
   t: RunReportMessages;
 }) {
