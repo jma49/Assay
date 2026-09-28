@@ -2,6 +2,7 @@ import { ObjectId, type Db, type Document } from "mongodb";
 import type { CheckDetail, CheckStateDto, CheckSummary, LatestRun, RunListItem, RunPoint } from "@/contracts/checks";
 import { stateFromHistory, type CheckState, type RunOutcome } from "@/domain/run";
 import { markRows } from "@/server/runs/row-marks";
+import { SAMPLE_FIELDS, storedSample } from "@/server/runs/sample";
 import { toAlertingDto } from "./alert-controls";
 import { COLLECTIONS } from "@/lib/database/collections";
 
@@ -109,7 +110,7 @@ function toRunItem(run: Document): RunListItem {
 async function loadRows(db: Db, runId: string) {
   return db.collection(COLLECTIONS.runs).findOne(
     { _id: new ObjectId(runId) },
-    { projection: { raw_results: 1, rowKeys: 1, columns: 1, message: 1, error: 1 } },
+    { projection: { ...SAMPLE_FIELDS, rowKeys: 1, columns: 1, message: 1, error: 1 } },
   );
 }
 
@@ -128,10 +129,10 @@ export async function getCheckDetail(db: Db, scriptId: string): Promise<CheckDet
       loadRows(db, String(history[0]._id)),
       history[1] ? loadRows(db, String(history[1]._id)) : Promise.resolve(null),
     ]);
-    const latestRows: Record<string, unknown>[] = Array.isArray(latestDoc?.raw_results) ? latestDoc.raw_results : [];
+    const latestRows = storedSample(latestDoc);
     const marked = markRows(
       { rows: latestRows, keys: latestDoc?.rowKeys ?? null },
-      previousDoc ? { rows: Array.isArray(previousDoc.raw_results) ? previousDoc.raw_results : [], keys: previousDoc.rowKeys ?? null } : null,
+      previousDoc ? { rows: storedSample(previousDoc), keys: previousDoc.rowKeys ?? null } : null,
     );
     const point = runPoint(history[0]);
     latest = {

@@ -3,13 +3,16 @@ import { withAuth } from "@/server/http/route";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { checksWithAllTags, historyFilter, historySort, parseHistoryParams } from "@/server/runs/history-query";
-import { LEGACY_VIEW_FIELDS, toLegacyRunView } from "@/server/runs/legacy-view";
+import { SAMPLE_FIELDS, storedSample } from "@/server/runs/sample";
 import { COLLECTIONS } from "@/lib/database/collections";
+
+/** The run fields the list shows; the sample is read only when asked for. */
+const RUN_FIELDS = { checkId: 1, finishedAt: 1, outcome: 1, message: 1, findings: 1, github_run_id: 1 } as const;
 
 export const GET = withAuth(Permission.HISTORY_READ, async (request) => {
   try {
     const params = parseHistoryParams(new URL(request.url).searchParams);
-    const { page, limit, hashtags, includeResults } = params;
+    const { page, limit, hashtags, includeSample } = params;
     const db = await getMongoDbClient().getDb();
 
     let taggedCheckIds: string[] | null = null;
@@ -28,7 +31,7 @@ export const GET = withAuth(Permission.HISTORY_READ, async (request) => {
         ? [[], 0]
         : await Promise.all([
             runs
-              .find(filter, { projection: { ...LEGACY_VIEW_FIELDS, github_run_id: 1, ...(includeResults && { raw_results: 1 }) } })
+              .find(filter, { projection: { ...RUN_FIELDS, ...(includeSample && SAMPLE_FIELDS) } })
               .sort(historySort(params))
               .skip((page - 1) * limit)
               .limit(limit)
@@ -38,15 +41,25 @@ export const GET = withAuth(Permission.HISTORY_READ, async (request) => {
 
     const totalPages = Math.ceil(total / limit);
     return NextResponse.json({
-      data: docs.map((run) => ({ ...toLegacyRunView(run, includeResults), github_run_id: run.github_run_id })),
+      data: docs.map((run) => ({
+        _id: String(run._id),
+        checkId: run.checkId,
+        finishedAt: run.finishedAt,
+        outcome: run.outcome,
+        message: run.message ?? "",
+        findings: run.findings ?? "",
+        github_run_id: run.github_run_id,
+        ...(includeSample && { sample: storedSample(run) }),
+      })),
       pagination: { page, limit, total, totalPages, hasNext: page < totalPages, hasPrev: page > 1 },
       query_info: {
-        script_name: params.scriptName || undefined,
-        status: params.status || undefined,
+        search: params.search || undefined,
+        checkId: params.checkId || undefined,
+        outcome: params.outcome || undefined,
         hashtags: hashtags.length > 0 ? hashtags : undefined,
         sort_by: params.sortBy,
         sort_order: params.sortOrder,
-        include_results: includeResults,
+        include_sample: includeSample,
       },
     });
   } catch (error) {

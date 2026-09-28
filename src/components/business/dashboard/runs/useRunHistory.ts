@@ -1,14 +1,15 @@
 import { useCallback, useState } from "react";
-import type { Check } from "../types";
+import type { RunOutcome } from "@/domain/run";
+import type { HistoryRun } from "../types";
 import { createHistoryLoader, type HistoryLoadResult } from "./history-loader";
-import { DEFAULT_SORT, EMPTY_PAGINATION, nextSort, type HistoryQuery, type SortConfig } from "./runs";
+import { DEFAULT_SORT, EMPTY_PAGINATION, nextSort, type HistoryQuery, type SortConfig, type SortKey } from "./runs";
 
 /** One page of run history plus the filters, sort and pager that pick it. */
 export function useRunHistory(onError: (message: string) => void) {
-  const [checks, setChecks] = useState<Check[]>([]);
+  const [checks, setChecks] = useState<HistoryRun[]>([]);
   const [pagination, setPagination] = useState(EMPTY_PAGINATION);
   const [isLoadingChecks, setIsLoadingChecks] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<RunOutcome | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<SortConfig>(DEFAULT_SORT);
@@ -36,14 +37,14 @@ export function useRunHistory(onError: (message: string) => void) {
 
   const current = (overrides: Partial<HistoryQuery>): HistoryQuery => ({
     page: 1,
-    status: filterStatus,
+    outcome: filterStatus,
     search: searchTerm,
     hashtags: selectedHashtags,
     sort: sortConfig,
     ...overrides,
   });
 
-  const requestSort = (key: keyof Check) => {
+  const requestSort = (key: SortKey) => {
     const sort = nextSort(sortConfig, key);
     setSortConfig(sort);
     setCurrentPage(1);
@@ -55,10 +56,10 @@ export function useRunHistory(onError: (message: string) => void) {
     loadPage(current({ page }));
   };
 
-  const changeStatus = (status: string | null) => {
-    setFilterStatus(status);
+  const changeStatus = (outcome: RunOutcome | null) => {
+    setFilterStatus(outcome);
     setCurrentPage(1);
-    loadPage(current({ status }));
+    loadPage(current({ outcome }));
   };
 
   const changeSearch = (search: string) => {
@@ -74,8 +75,8 @@ export function useRunHistory(onError: (message: string) => void) {
   };
 
   /** Sets the filters without loading, for the first load to pick up. */
-  const presetFilters = (filters: { status: string | null; search?: string; hashtags?: string[] }) => {
-    setFilterStatus(filters.status);
+  const presetFilters = (filters: { outcome: RunOutcome | null; search?: string; hashtags?: string[] }) => {
+    setFilterStatus(filters.outcome);
     if (filters.search !== undefined) setSearchTerm(filters.search);
     if (filters.hashtags !== undefined) setSelectedHashtags(filters.hashtags);
     setCurrentPage(1);

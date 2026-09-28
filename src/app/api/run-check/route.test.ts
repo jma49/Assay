@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   quotaThrows: false,
   isGuest: false,
   quotaSubjects: [] as string[],
-  execute: vi.fn(async (_scriptId: string) => ({ success: true, statusType: "success" }) as Record<string, unknown>),
+  execute: vi.fn(async (_scriptId: string) => ({ success: true, outcome: "clean" }) as Record<string, unknown>),
 }));
 
 vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
@@ -143,7 +143,7 @@ describe("POST /api/run-check", () => {
 
   it("answers 409 while the check is already running", async () => {
     mocks.canExecute = true;
-    mocks.execute.mockResolvedValueOnce({ success: false, statusType: "failure", alreadyRunning: true });
+    mocks.execute.mockResolvedValueOnce({ success: false, outcome: "error", alreadyRunning: true });
     expect((await run({ scriptId: "x" })).status).toBe(409);
   });
 
