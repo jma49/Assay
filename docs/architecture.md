@@ -94,7 +94,7 @@ migration; new fields are added alongside old ones and back-filled.
 { checkId, trigger: { kind: schedule | manual | batch | api, by },
   startedAt, finishedAt, durationMs,
   outcome: error | issues | clean, rowCount, columns,
-  raw_results: sample of at most 500 rows and 2 MB,
+  sample: at most 500 rows and 2 MB,
   rowKeys: fingerprints of up to 5,000 rows,  // for new / still / fixed
   diff, error, message, findings, expiresAt }
 ```
@@ -232,7 +232,7 @@ the legacy routes are still being migrated and keep their own shapes.
   `{ success: false, ... }`.
 - **Paging.** Target: cursor pagination, as `activity` does. `check-history`,
   `edit-history` and `approvals` page by `page` and `limit` (`check-history`
-  up to 500 runs a page, 200 with `include_results`).
+  up to 500 runs a page, 200 with `include_sample`).
 
 ## Front end
 

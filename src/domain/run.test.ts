@@ -4,22 +4,11 @@ import {
   runRetentionDays,
   sampleRows,
   diffRowKeys,
-  fromLegacyStatus,
   isNotable,
   nextCheckState,
   normalizeRow,
-  toLegacyStatus,
   type CheckState,
 } from "./run";
-
-describe("status names", () => {
-  it("maps the stored names both ways", () => {
-    for (const outcome of ["error", "issues", "clean"] as const) {
-      expect(fromLegacyStatus(toLegacyStatus(outcome))).toBe(outcome);
-    }
-    expect(fromLegacyStatus(undefined)).toBe("clean");
-  });
-});
 
 describe("rows", () => {
   it("makes rows JSON-safe", () => {

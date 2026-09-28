@@ -16,7 +16,7 @@ import {
 
 describe("readRunResponse", () => {
   it("returns the run on success", async () => {
-    const run = { _id: "r1", scriptId: "s", status: "success" };
+    const run = { _id: "r1", checkId: "s", outcome: "clean" };
     await expect(readRunResponse(Response.json(run))).resolves.toEqual(run);
   });
 
