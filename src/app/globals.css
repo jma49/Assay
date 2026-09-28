@@ -9,7 +9,7 @@
    clean = it found none. */
 :root {
   --app-font-sans: var(--font-manrope), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
-    "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif;
   /* Headings use the same family, heavier and tighter. */
   --app-font-display: var(--app-font-sans);
   --app-font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
