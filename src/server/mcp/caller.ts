@@ -1,14 +1,19 @@
 import { OAuthError, OAuthErrorCode, type AuthInfo } from "@modelcontextprotocol/server";
 import { emailAllowed } from "@/lib/auth/legacy-accounts";
+import type { McpScope } from "@/lib/auth/mcp-scopes";
 import { getUserRole, Permission, ROLE_PERMISSIONS, UserRole } from "@/lib/auth/rbac";
+import { COLLECTIONS } from "@/lib/database/collections";
+import { getMongoDbClient } from "@/lib/database/mongodb";
+import { userRef } from "@/server/services/revoke-access";
 
-/** Who is calling the MCP server: the owner of the API key, with their role's permissions. */
+/** Who is calling the MCP server: the person behind the API key or OAuth token, with what they may do. */
 export interface McpCaller {
   userId: string;
   name: string;
   email: string;
   permissions: readonly Permission[];
-  keyId: string;
+  /** "api-key:<id>" or "oauth:<client id>". */
+  credential: string;
 }
 
 export interface VerifiedKey {
@@ -19,6 +24,8 @@ export interface VerifiedKey {
 
 export interface CallerDeps {
   verifyKey(token: string): Promise<VerifiedKey | null>;
+  /** Whether the person still lets this OAuth client act for them. */
+  hasConsent(userId: string, clientId: string): Promise<boolean>;
   findUser(id: string): Promise<{ id: string; email: string; name: string } | null>;
   roleOf(userId: string): Promise<UserRole | null>;
 }
@@ -37,20 +44,64 @@ const invalid = (message: string) => new OAuthError(OAuthErrorCode.InvalidToken,
 export async function verifyMcpToken(token: string, deps: CallerDeps, now = new Date()): Promise<AuthInfo> {
   const key = await deps.verifyKey(token);
   if (!key) throw invalid("Invalid or expired API key");
-  const user = await deps.findUser(key.userId);
-  if (!user || !emailAllowed(user.email)) throw invalid("The key's owner cannot use this workspace");
+  const credential = `api-key:${key.keyId}`;
+  const caller = await resolveCaller(key.userId, credential, deps, (role) => ROLE_PERMISSIONS[role]);
+  if (!caller) throw invalid("The key's owner cannot use this workspace");
+  const expiresAt = key.expiresAt ?? new Date(now.getTime() + NO_EXPIRY_WINDOW_MS);
+  return authInfo(token, caller, expiresAt.getTime() / 1000);
+}
+
+const SCOPE_PERMISSION: Record<McpScope, Permission> = {
+  "checks:read": Permission.SCRIPT_READ,
+  "history:read": Permission.HISTORY_READ,
+  "checks:run": Permission.SCRIPT_EXECUTE,
+};
+
+/** The MCP scopes a role can use; granting any other scope would add nothing. */
+export const mcpScopesFor = (role: UserRole): McpScope[] =>
+  (Object.entries(SCOPE_PERMISSION) as [McpScope, Permission][]).filter(([, permission]) => ROLE_PERMISSIONS[role].includes(permission)).map(([scope]) => scope);
+
+/** The claims of an OAuth access token, already verified (signature, issuer, audience, expiry). */
+export interface AccessTokenClaims {
+  sub?: string;
+  scope?: unknown;
+  azp?: unknown;
+  client_id?: unknown;
+  exp?: number;
+}
+
+/**
+ * Resolves the person behind a verified OAuth access token. They can do what
+ * both their current role and the scopes they consented to allow, so a token
+ * granted only `checks:read` cannot run checks even for an admin. Access
+ * tokens are JWTs and cannot be revoked, so the consent is checked on every
+ * request: disconnecting an app or removing someone's role ends its access
+ * at once instead of when the token expires.
+ */
+export async function callerFromAccessToken(token: string, claims: AccessTokenClaims, deps: Omit<CallerDeps, "verifyKey">): Promise<AuthInfo | null> {
+  const clientId = typeof claims.azp === "string" ? claims.azp : typeof claims.client_id === "string" ? claims.client_id : null;
+  if (!claims.sub || !clientId || !(await deps.hasConsent(claims.sub, clientId))) return null;
+  const granted = new Set(typeof claims.scope === "string" ? claims.scope.split(" ") : []);
+  const allowedByScope = new Set(Object.entries(SCOPE_PERMISSION).filter(([scope]) => granted.has(scope)).map(([, permission]) => permission));
+  const caller = await resolveCaller(claims.sub, `oauth:${clientId}`, deps, (role) => ROLE_PERMISSIONS[role].filter((p) => allowedByScope.has(p)));
+  return caller && authInfo(token, caller, claims.exp ?? 0);
+}
+
+async function resolveCaller(userId: string, credential: string, deps: Pick<CallerDeps, "findUser" | "roleOf">, permissionsOf: (role: UserRole) => readonly Permission[]): Promise<McpCaller | null> {
+  const user = await deps.findUser(userId);
+  if (!user || !emailAllowed(user.email)) return null;
   // Signed-in users without a stored role are viewers, as on the web.
   const role = (await deps.roleOf(user.id)) ?? UserRole.VIEWER;
-  const caller: McpCaller = { userId: user.id, name: user.name || user.email.split("@")[0], email: user.email, permissions: ROLE_PERMISSIONS[role], keyId: key.keyId };
-  const expiresAt = key.expiresAt ?? new Date(now.getTime() + NO_EXPIRY_WINDOW_MS);
-  return {
-    token,
-    clientId: `api-key:${key.keyId}`,
-    scopes: [...caller.permissions],
-    expiresAt: Math.floor(expiresAt.getTime() / 1000),
-    extra: { caller },
-  };
+  return { userId: user.id, name: user.name || user.email.split("@")[0], email: user.email, permissions: permissionsOf(role), credential };
 }
+
+const authInfo = (token: string, caller: McpCaller, expiresAtSeconds: number): AuthInfo => ({
+  token,
+  clientId: caller.credential,
+  scopes: [...caller.permissions],
+  expiresAt: Math.floor(expiresAtSeconds),
+  extra: { caller },
+});
 
 export function callerOf(authInfo: AuthInfo | undefined): McpCaller | null {
   const caller = (authInfo?.extra as { caller?: McpCaller } | undefined)?.caller;
@@ -67,6 +118,10 @@ export const defaultCallerDeps = (): CallerDeps => ({
   async findUser(id) {
     const { findUser } = await import("@/lib/auth/server");
     return findUser({ id });
+  },
+  async hasConsent(userId, clientId) {
+    const db = await getMongoDbClient().getDb();
+    return (await db.collection(COLLECTIONS.oauthConsents).countDocuments({ userId: userRef(userId), clientId }, { limit: 1 })) > 0;
   },
   roleOf: getUserRole,
 });
