@@ -70,6 +70,17 @@ plugin) is the authorization server, under `/api/auth`:
   OIDC would treat it as a web client and refuse `http://localhost`.
   Clients created this way can do nothing until a person consents.
   Only admins may create, edit or list clients by hand.
+- **Client ID Metadata Documents** (MCP 2026-07-28, `@better-auth/cimd`):
+  a client may skip registration and use an HTTPS URL as its `client_id`;
+  Assay fetches that JSON document for the client's name and redirect URIs
+  (advertised as `client_id_metadata_document_supported`). Anyone can make
+  Assay fetch such a URL, so it is guarded twice (`src/lib/auth/cimd.ts`):
+  the host must pass the webhook public-address rules, and Better Auth's
+  transport then resolves it once, requires every address to be public,
+  pins the connection to that address (no DNS rebinding) and never follows
+  redirects; HTTPS only, 5 KB, 5 seconds, per-origin fetch budgets. The
+  consent page and Connected apps show the URL's host next to the
+  self-declared name.
 - **Grants:** authorization code with PKCE, and refresh tokens when the
   client asks for `offline_access` (the 401 challenge asks for it). No
   client credentials: every token acts for a person.
