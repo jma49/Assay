@@ -139,7 +139,7 @@ function ConnectCard({
         {t.telegramConnect}
       </Button>
     ) : (
-      <span className="flex h-7 items-center text-[12px] text-subtle-foreground">{t.notSetUp}</span>
+      <span className="flex h-7 items-center text-[12px] text-muted-foreground">{t.notSetUp}</span>
     );
   } else if (oneClick) {
     action = (
@@ -188,7 +188,7 @@ function DeliveryStatus({ destination }: { destination: DestinationDto }) {
   const { language } = useLanguage();
   const t = COPY[language];
   const last = destination.lastDelivery;
-  if (!last) return <span className="text-subtle-foreground">{t.neverSent}</span>;
+  if (!last) return <span className="text-muted-foreground">{t.neverSent}</span>;
   const when = formatRelative(last.at, language);
   return last.ok ? (
     <span className="flex items-center gap-1 text-success" title={formatDateTime(last.at, language)}>
@@ -266,7 +266,7 @@ function DestinationRow({
       <div className="grid min-w-0 flex-1 gap-1">
         <div className="flex min-w-0 items-baseline gap-2">
           <span className="truncate text-[13.5px] font-medium">{destination.name}</span>
-          <span className="truncate font-mono text-[12px] text-subtle-foreground">{destination.label}</span>
+          <span className="truncate font-mono text-[12px] text-muted-foreground">{destination.label}</span>
         </div>
         <div className="flex flex-wrap items-center gap-1.5 text-[12px]">
           {destination.alerts.map((kind) => (
@@ -282,9 +282,9 @@ function DestinationRow({
           {destination.remind && (
             <span className="rounded-md bg-muted px-1.5 py-0.5 text-muted-foreground">{t.remindEvery(destination.remind.afterHours)}</span>
           )}
-          <span className="text-subtle-foreground">·</span>
+          <span className="text-muted-foreground">·</span>
           <span className="text-muted-foreground">{destination.tags.length ? t.tagged(destination.tags.join(", ")) : t.everyCheck}</span>
-          <span className="text-subtle-foreground">·</span>
+          <span className="text-muted-foreground">·</span>
           <span className="text-muted-foreground">{destination.language === "zh" ? "中文" : "English"}</span>
         </div>
         <div className="min-w-0 text-[12px]">{enabled ? <DeliveryStatus destination={destination} /> : <span className="text-muted-foreground">{t.paused}</span>}</div>

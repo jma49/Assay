@@ -82,7 +82,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 function Delta({ check }: { check: CheckSummary }) {
   const state = check.state;
   if (!state || state.outcome === "error" || state.previousRowCount === null || state.previousRowCount === state.rowCount) {
-    return <span className="text-subtle-foreground">—</span>;
+    return <span className="text-muted-foreground">—</span>;
   }
   const diff = state.rowCount - state.previousRowCount;
   return (
@@ -238,7 +238,7 @@ export function ChecksList() {
                     <tr key={`group-${group?.outcome ?? "never"}`} className="border-b bg-background">
                       <td colSpan={7} className="px-4 py-1.5 text-[12px] font-medium text-muted-foreground">
                         {group ? group.title[language] : t.neverRan} · {rows.length}
-                        {group && <span className="font-normal text-subtle-foreground"> — {group.hint[language]}</span>}
+                        {group && <span className="font-normal text-muted-foreground"> — {group.hint[language]}</span>}
                       </td>
                     </tr>,
                     ...rows.map((c) => (
@@ -263,14 +263,14 @@ export function ChecksList() {
                             )}
                             {c.alerting.mutedUntil && <BellOff className="size-3.5 shrink-0 text-muted-foreground" aria-label={t.muted} />}
                           </div>
-                          <span className="block truncate font-mono text-[11.5px] text-subtle-foreground">
+                          <span className="block truncate font-mono text-[11.5px] text-muted-foreground">
                             {c.scriptId}
                             {c.alerting.owner && <span className="font-sans"> · {c.alerting.owner.name}</span>}
                           </span>
                         </td>
                         <td className="px-3 py-2.5 whitespace-nowrap tabular-nums">
                           {!c.state ? (
-                            <span className="text-subtle-foreground">—</span>
+                            <span className="text-muted-foreground">—</span>
                           ) : c.state.outcome === "error" ? (
                             <span className="text-failure">{t.queryError}</span>
                           ) : c.state.rowCount === 0 ? (
