@@ -53,7 +53,8 @@ type Builder = ReturnType<typeof useTemplateBuilder>;
 
 function Field({ id, label, children, className }: { id: string; label: string; children: ReactNode; className?: string }) {
   return (
-    <div className={`grid min-w-0 gap-1.5 ${className ?? ""}`}>
+    // content-start: a taller neighbour (the values box) must not push this label down.
+    <div className={`grid min-w-0 content-start gap-1.5 ${className ?? ""}`}>
       <Label htmlFor={id} className="text-[12.5px] font-medium text-muted-foreground">
         {label}
       </Label>

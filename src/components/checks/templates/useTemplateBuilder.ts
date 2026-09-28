@@ -76,7 +76,16 @@ export function useTemplateBuilder(tables: SchemaTable[]) {
   const result: TemplateResult | null = useMemo(() => {
     // A key column slot that was added but not chosen yet is not a column.
     const columns = form.columns.filter(Boolean);
-    if (!tableRef || columns.length === 0) return null;
+    // Until every input the template needs has something in it, there is
+    // nothing to judge yet: the picker shows a hint rather than an error.
+    const fields = template.fields;
+    const filled =
+      columns.length > 0 &&
+      (!fields.includes("parent") || Boolean(parentRef && form.parentColumn)) &&
+      (!fields.includes("maxAgeHours") || form.hours.trim() !== "") &&
+      (!fields.includes("range") || form.min.trim() !== "" || form.max.trim() !== "") &&
+      (!fields.includes("values") || parseValueList(form.values).length > 0);
+    if (!tableRef || !filled) return null;
     return buildTemplate(
       form.templateId,
       {
@@ -91,7 +100,7 @@ export function useTemplateBuilder(tables: SchemaTable[]) {
       },
       tables,
     );
-  }, [form, tableRef, parentRef, tables]);
+  }, [form, tableRef, parentRef, tables, template.fields]);
 
   const update = (patch: Partial<TemplateForm>) => setForm((current) => ({ ...current, ...patch }));
 
