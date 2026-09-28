@@ -21,7 +21,7 @@ const COPY = {
     empty: "The connected role cannot see any tables.",
     preview: "Creates",
     apply: "Use template",
-    pick: "Choose a table and a column.",
+    pick: "Fill in the fields above to see the check.",
   },
   zh: {
     title: "从模板开始",
@@ -32,7 +32,7 @@ const COPY = {
     empty: "当前连接的角色看不到任何表。",
     preview: "将创建",
     apply: "使用模板",
-    pick: "请选择表和列。",
+    pick: "填写上面的字段后即可看到检查。",
   },
 };
 
@@ -107,7 +107,7 @@ function PickerBody({ tables, initialTable, onApply }: { tables: SchemaTable[]; 
 
   return (
     <div className="grid gap-4">
-      <div role="radiogroup" aria-label={t.templates} className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+      <div role="radiogroup" aria-label={t.templates} className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {TEMPLATES.map((template) => {
           const selected = template.id === form.templateId;
           return (
