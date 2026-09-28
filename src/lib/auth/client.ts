@@ -1,11 +1,16 @@
 "use client";
 
 import { apiKeyClient } from "@better-auth/api-key/client";
+import { oauthProviderClient } from "@better-auth/oauth-provider/client";
 import { lastLoginMethodClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
-/** Same-origin client: the routes live at /api/auth on this app. */
-export const authClient = createAuthClient({ plugins: [apiKeyClient(), lastLoginMethodClient()] });
+/**
+ * Same-origin client: the routes live at /api/auth on this app. The OAuth
+ * provider client passes an MCP client's signed authorization request from
+ * the page URL along with sign-in and consent, so the flow resumes after them.
+ */
+export const authClient = createAuthClient({ plugins: [apiKeyClient(), lastLoginMethodClient(), oauthProviderClient()] });
 
 export const { useSession, signOut } = authClient;
 

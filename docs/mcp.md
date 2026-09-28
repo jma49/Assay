@@ -7,6 +7,17 @@ check returned, run a check, and acknowledge or mute its alerts.
 
 ## Connect
 
+### With OAuth
+
+Clients that implement MCP authorization (claude.ai connectors, Claude
+Code, Cursor, VS Code, …) need only the URL `https://assay.example.com/api/mcp`.
+An unauthenticated request gets a 401 whose `WWW-Authenticate` header points
+at `/.well-known/oauth-protected-resource/api/mcp`; from there the client
+finds the authorization server, registers itself, and sends the person to
+sign in and approve it on `/oauth/consent`.
+
+### With an API key
+
 1. **Settings → API keys → New key.** Copy the key (it is shown once).
 2. Add the server to your agent:
 
@@ -44,14 +55,47 @@ The settings page shows both snippets with your key and URL filled in.
 
 Read tools carry `readOnlyHint`, so clients can run them without asking.
 
+## OAuth
+
+Better Auth's MCP plugin (`@better-auth/mcp`, on the OAuth 2.1 provider
+plugin) is the authorization server, under `/api/auth`:
+
+- **Discovery:** `/.well-known/oauth-protected-resource/api/mcp` (RFC 9728)
+  and `/.well-known/oauth-authorization-server/api/auth` (RFC 8414; the bare
+  path answers too).
+- **Registration:** open dynamic client registration (RFC 7591) at
+  `/api/auth/oauth2/register`, rate limited to 5 a minute per IP. A client
+  that registers only loopback or custom-scheme callbacks and names no
+  `application_type` is registered as a native app (RFC 8252); otherwise
+  OIDC would treat it as a web client and refuse `http://localhost`.
+  Clients created this way can do nothing until a person consents.
+  Only admins may create, edit or list clients by hand.
+- **Grants:** authorization code with PKCE, and refresh tokens when the
+  client asks for `offline_access` (the 401 challenge asks for it). No
+  client credentials: every token acts for a person.
+- **Scopes:** `checks:read`, `history:read`, `checks:run`. A token can do
+  what both the person's current role and its scopes allow. The consent
+  page greys out scopes the role lacks and lets the person untick others.
+- **Tokens:** access tokens are JWTs (1 hour) signed with keys in the
+  `jwks` collection, bound to the `/api/mcp` URL as their audience;
+  refresh tokens last 30 days. Since a JWT cannot be revoked, `/api/mcp`
+  also checks on every request that the person's consent for the client
+  still exists: **Disconnect** under Connected apps, or removing the
+  person's role, ends access at once (a 401 `invalid_token` challenge, so
+  the client offers to reconnect).
+- Collections: `oauthClient`, `oauthConsent`, `oauthRefreshToken`,
+  `oauthClientResource`, `oauthResource`, `jwks`.
+
 ## Security
 
-- **A key can do what its owner's role can do, no more.** The role is read
+- **A key or OAuth token can do what its person's role can do, no more.** The role is read
   on every request: demoting someone limits their keys at once, and tools
   the role cannot use are not even listed (a viewer sees four read tools).
 - Keys are stored hashed (Better Auth API key plugin), start with
   `assay_`, expire after 30, 90 or 365 days, and are rate limited to 120
   requests a minute. Revoking a key takes effect immediately.
+- Bearer tokens starting with `assay_` are checked as API keys; anything
+  else as an OAuth access token.
 - Runs and alert actions go through the same code as the web app: the
   per-check lease, the read-only SQL check, notifications, and the
   `check_actions` audit log (source `mcp`).

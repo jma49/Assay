@@ -13,7 +13,7 @@ vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/auth/auth-utils")>()),
   validateApiAuth: async () => ({ isValid: true, user: { id: "user_admin" }, userEmail: "admin@example.com", isGuest: false }),
 }));
-const revokeAccess = vi.fn(async () => ({ sessions: 1, apiKeys: 1 }));
+const revokeAccess = vi.fn(async () => ({ sessions: 1, apiKeys: 1, oauthApps: 0 }));
 vi.mock("@/server/services/revoke-access", () => ({ revokeAccess: (...args: unknown[]) => revokeAccess(...(args as [])) }));
 vi.mock("@/lib/database/mongodb", () => ({ getMongoDbClient: () => ({ getDb: async () => ({}) }) }));
 vi.mock("@/lib/auth/server", () => ({

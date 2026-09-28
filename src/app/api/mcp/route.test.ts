@@ -3,6 +3,8 @@ import { NextRequest } from "next/server";
 
 const mocks = vi.hoisted(() => ({
   verifiedTokens: [] as string[],
+  oauthTokens: [] as string[],
+  consented: true,
   keyExpiresAt: null as Date | null,
   runCheck: vi.fn(),
 }));
@@ -26,8 +28,19 @@ vi.mock("@/server/mcp/caller", async (importOriginal) => ({
       return token === "assay_good" ? { keyId: "k1", userId: "u1", expiresAt: mocks.keyExpiresAt } : null;
     },
     findUser: async (id: string) => (id === "u1" ? { id: "u1", email: "ada@example.com", name: "Ada" } : null),
+    hasConsent: async () => mocks.consented,
     roleOf: async () => "developer",
   }),
+}));
+// Stands in for JWT verification: only "jwt_good" is a valid access token.
+vi.mock("@/server/mcp/oauth-gate", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/server/mcp/oauth-gate")>()),
+  withOAuthToken: async (request: Request, handler: (request: Request, claims: object) => Promise<Response>) => {
+    const token = request.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";
+    mocks.oauthTokens.push(token);
+    if (token === "jwt_good") return handler(request, { sub: "u1", azp: "claude", scope: "checks:read", exp: Date.now() / 1000 + 600 });
+    return new Response(null, { status: 401, headers: { "www-authenticate": 'Bearer resource_metadata="http://localhost/.well-known/oauth-protected-resource/api/mcp"' } });
+  },
 }));
 
 import { DELETE, GET, POST } from "./route";
@@ -55,14 +68,16 @@ const call = (authorization?: string) =>
 describe("/api/mcp", () => {
   beforeEach(() => {
     mocks.verifiedTokens = [];
+    mocks.oauthTokens = [];
+    mocks.consented = true;
     mocks.keyExpiresAt = null;
     mocks.runCheck.mockClear();
   });
 
-  it("answers 401 with a bearer challenge when no token is sent", async () => {
+  it("answers 401 with the OAuth challenge when no token is sent, so clients can start signing in", async () => {
     const res = await call();
     expect(res.status).toBe(401);
-    expect(res.headers.get("www-authenticate")).toMatch(/^Bearer/);
+    expect(res.headers.get("www-authenticate")).toMatch(/^Bearer resource_metadata=/);
     expect(mocks.verifiedTokens).toEqual([]);
   });
 
@@ -71,10 +86,30 @@ describe("/api/mcp", () => {
     expect(mocks.verifiedTokens).toEqual([]);
   });
 
+  it("checks tokens without the API key prefix as OAuth access tokens", async () => {
+    expect((await call("Bearer jwt_bad")).status).toBe(401);
+    expect(mocks.oauthTokens).toEqual(["jwt_bad"]);
+    expect(mocks.verifiedTokens).toEqual([]);
+  });
+
+  it("lets a valid OAuth access token through while its consent stands", async () => {
+    const res = await call("Bearer jwt_good");
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('"serverInfo"');
+  });
+
+  it("sends a valid access token whose consent was withdrawn back to sign in", async () => {
+    mocks.consented = false;
+    const res = await call("Bearer jwt_good");
+    expect(res.status).toBe(401);
+    expect(res.headers.get("www-authenticate")).toMatch(/error="invalid_token".*resource_metadata="http:\/\/localhost:3000\/\.well-known\/oauth-protected-resource\/api\/mcp"/);
+  });
+
   it("answers 401 for an unknown API key", async () => {
     const res = await call("Bearer assay_bad");
     expect(res.status).toBe(401);
     expect(mocks.verifiedTokens).toEqual(["assay_bad"]);
+    expect(mocks.oauthTokens).toEqual([]);
   });
 
   it("answers 401 for an expired key", async () => {
