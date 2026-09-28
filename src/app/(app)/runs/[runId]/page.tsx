@@ -2,7 +2,6 @@
 
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import { outcomeOf } from "@/components/checks/status";
 import { formatDateTime } from "@/lib/utils/datetime";
 import { useMe } from "@/lib/auth/use-me";
 import { runReportMessages } from "@/components/business/run-report/messages";
@@ -41,16 +40,16 @@ export default function RunReportPage() {
   if (error) return <RunLoadError error={error} t={t} onRetry={retry} onBack={actions.goBack} />;
   if (!result) return <RunNotFound resultId={runId} t={t} onBack={actions.goBack} />;
 
-  const rows = tableRows(result.findings);
-  const outcome = outcomeOf(result);
-  const count = rowCount(result.findings);
+  const rows = tableRows(result.sample);
+  const { outcome } = result;
+  const count = rowCount(result.sample);
   const scriptName = localized(language, result.name, result.cnName);
-  const executedAt = formatDateTime(result.executedAt, language);
-  const title = scriptName ?? result.scriptId;
+  const executedAt = formatDateTime(result.finishedAt, language);
+  const title = scriptName ?? result.checkId;
 
   const exportCsv = () => {
     if (!rows) return;
-    downloadTextFile(buildFindingsCsv(rows), csvFileName(result.scriptId, new Date()), "text/csv;charset=utf-8;");
+    downloadTextFile(buildFindingsCsv(rows), csvFileName(result.checkId, new Date()), "text/csv;charset=utf-8;");
   };
 
   return (
@@ -83,7 +82,7 @@ export default function RunReportPage() {
               subtitle={`${title} · ${executedAt}`}
               message={result.message}
             />
-            <FindingsPanel findings={result.findings} language={language} t={t} />
+            <FindingsPanel findings={result.sample} language={language} t={t} />
           </section>
 
           <RunInfoPanel

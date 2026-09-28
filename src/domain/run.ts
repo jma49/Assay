@@ -8,23 +8,6 @@
  */
 export type RunOutcome = "error" | "issues" | "clean";
 
-/** Stored runs still carry the older names; these map both ways. */
-export type LegacyStatusType = "failure" | "attention_needed" | "success";
-
-const TO_LEGACY: Record<RunOutcome, LegacyStatusType> = {
-  error: "failure",
-  issues: "attention_needed",
-  clean: "success",
-};
-
-export const toLegacyStatus = (outcome: RunOutcome): LegacyStatusType => TO_LEGACY[outcome];
-
-export function fromLegacyStatus(status: string | undefined): RunOutcome {
-  if (status === "failure") return "error";
-  if (status === "attention_needed") return "issues";
-  return "clean";
-}
-
 /** Rows kept on a run for display and export. */
 export const SAMPLE_ROWS = 500;
 /** Rows fingerprinted to tell new, still-open and fixed rows apart between runs. */

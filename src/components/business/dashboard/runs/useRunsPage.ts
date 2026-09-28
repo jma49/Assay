@@ -64,7 +64,7 @@ export function useRunsPage(language: string) {
   const refresh = useCallback(() => loadAll(reload), [loadAll, reload]);
 
   const openFilteredBySearch = (search: string) => {
-    history.presetFilters({ status: null, search, hashtags: [] });
+    history.presetFilters({ outcome: null, search, hashtags: [] });
     toast.info(language === "zh" ? "正在筛选执行历史" : "Filtering run history", {
       description: language === "zh" ? `搜索脚本: ${search}` : `Script: ${search}`,
       duration: 3000,
@@ -73,7 +73,7 @@ export function useRunsPage(language: string) {
     setTimeout(scrollToHistory, 1000);
     setLoading(true);
     setIsFetchingScripts(true);
-    loadPage({ page: 1, status: null, search, hashtags: [], sort: DEFAULT_SORT });
+    loadPage({ page: 1, outcome: null, search, hashtags: [], sort: DEFAULT_SORT });
     Promise.all([loadScripts(), loadOverallStats()])
       .catch((err) => setError(err instanceof Error ? err.message : "数据加载失败"))
       .finally(() => {
@@ -91,7 +91,7 @@ export function useRunsPage(language: string) {
       window.history.replaceState({}, "", searchLink.cleanedHref);
       openFilteredBySearch(searchLink.search);
     } else {
-      loadAll(() => loadPage({ page: 1, status: null, search: "", hashtags: [], sort: DEFAULT_SORT }));
+      loadAll(() => loadPage({ page: 1, outcome: null, search: "", hashtags: [], sort: DEFAULT_SORT }));
     }
     // Runs once on mount; later loads come from the filters and the Run sheet.
     // eslint-disable-next-line react-hooks/exhaustive-deps

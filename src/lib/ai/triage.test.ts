@@ -12,7 +12,7 @@ const rows = [
 
 const input: TriageInput = {
   check: { scriptId: "demo-invalid-customer-emails", name: "Invalid emails", sql: "SELECT * FROM demo.customers" },
-  run: { status: "attention_needed", message: "Found 3 rows", rowCount: rows.length, profile: profileRows(rows) },
+  run: { outcome: "issues", message: "Found 3 rows", rowCount: rows.length, profile: profileRows(rows) },
   schema: "demo.customers(id bigint, email text)",
   language: "en",
 };

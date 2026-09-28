@@ -6,13 +6,14 @@ import { collectHashtags } from "./manual-trigger/script-search";
 import { HistoryFilters } from "./runs/HistoryFilters";
 import { HistoryTable } from "./runs/HistoryTable";
 import { scriptDisplayNames, type SortConfig } from "./runs/runs";
-import type { Check, DashboardTranslationKeys, ScriptInfo } from "./types";
+import type { DashboardTranslationKeys, HistoryRun, ScriptInfo } from "./types";
+import type { SortKey } from "./runs/runs";
 
 /** The jump box only pays off once there are more pages than the shortcuts cover. */
 const JUMP_BOX_MIN_PAGES = 6;
 
 interface CheckHistoryProps {
-  paginatedChecks: Check[];
+  paginatedChecks: HistoryRun[];
   allChecksCount: number;
   totalUnfilteredCount: number;
   totalPages: number;
@@ -25,7 +26,7 @@ interface CheckHistoryProps {
   setSearchTerm: (term: string) => void;
   setSelectedHashtags?: (hashtags: string[]) => void;
   setCurrentPage: (page: number) => void;
-  requestSort: (key: keyof Check) => void;
+  requestSort: (key: SortKey) => void;
   startIndex: number;
   endIndex: number;
   availableScripts?: ScriptInfo[];

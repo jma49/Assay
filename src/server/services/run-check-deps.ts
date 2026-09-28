@@ -1,3 +1,4 @@
+import type { RunOutcome } from "@/domain/run";
 import { ObjectId } from "mongodb";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { createSemaphore } from "@/server/concurrency/semaphore";
@@ -36,10 +37,11 @@ export async function runCheckNow(scriptId: string, trigger: RunTrigger) {
   return runCheck(scriptId, trigger, await defaultRunCheckDeps());
 }
 
-/** The response shape the run buttons and batch progress already read. */
+/** What POST /api/run-check answers. */
 export interface ExecutionResult {
   success: boolean;
-  statusType: "success" | "attention_needed" | "failure";
+  /** "error" too when the check is missing or already running. */
+  outcome: RunOutcome;
   message: string;
   findings: string;
   mongoResultId?: string;
@@ -51,12 +53,12 @@ export interface ExecutionResult {
 
 export function toExecutionResult(result: Awaited<ReturnType<typeof runCheck>>): ExecutionResult {
   if (result.kind === "missing") {
-    return { success: false, statusType: "failure", message: "No check with this id", findings: "Script not found", notFound: true };
+    return { success: false, outcome: "error", message: "No check with this id", findings: "Script not found", notFound: true };
   }
   if (result.kind === "busy") {
     return {
       success: false,
-      statusType: "failure",
+      outcome: "error",
       message: "This check is already running. Its result will appear in the run history.",
       findings: "Already running",
       alreadyRunning: true,
@@ -64,7 +66,7 @@ export function toExecutionResult(result: Awaited<ReturnType<typeof runCheck>>):
   }
   return {
     success: result.outcome !== "error",
-    statusType: result.outcome === "error" ? "failure" : result.outcome === "issues" ? "attention_needed" : "success",
+    outcome: result.outcome,
     message: result.message,
     findings: result.findings,
     mongoResultId: result.runId,
