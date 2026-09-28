@@ -14,7 +14,7 @@ afterEach(() => {
 
 describe("runCheck", () => {
   it("posts the script id and returns the run", async () => {
-    const fetchMock = stubFetch(200, { success: true, statusType: "success", mongoResultId: "r1" });
+    const fetchMock = stubFetch(200, { success: true, outcome: "clean", mongoResultId: "r1" });
     await expect(runCheck("orders")).resolves.toMatchObject({ mongoResultId: "r1" });
     expect(fetchMock).toHaveBeenCalledWith("/api/run-check", {
       method: "POST",

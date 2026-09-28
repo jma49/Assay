@@ -6,7 +6,7 @@ import {
   buildCheckHistoryQuery,
   nextSort,
   pageRange,
-  parseChecks,
+  parseRuns,
   nextScheduledRunOf,
   parsePagination,
   parseScriptList,
@@ -19,7 +19,7 @@ import {
 
 const query = (overrides: Partial<HistoryQuery> = {}): HistoryQuery => ({
   page: 1,
-  status: null,
+  outcome: null,
   search: "",
   hashtags: [],
   sort: DEFAULT_SORT,
@@ -29,54 +29,52 @@ const query = (overrides: Partial<HistoryQuery> = {}): HistoryQuery => ({
 describe("buildCheckHistoryQuery", () => {
   it("asks for a page without the result rows, newest first by default", () => {
     expect(buildCheckHistoryQuery(query(), 50)).toBe(
-      "page=1&limit=50&include_results=false&sort_by=execution_time&sort_order=desc",
+      "page=1&limit=50&include_sample=false&sort_by=finishedAt&sort_order=desc",
     );
   });
 
-  it("adds status, trimmed name search and tags in the order the API has always received them", () => {
+  it("adds the outcome, a trimmed search and tags", () => {
     const params = buildCheckHistoryQuery(
       query({
         page: 3,
-        status: "failure",
+        outcome: "error",
         search: "  orders ",
         hashtags: ["billing", "daily"],
-        sort: { key: "script_name", direction: "ascending" },
+        sort: { key: "checkId", direction: "ascending" },
       }),
       50,
     );
     expect(params).toBe(
-      "page=3&limit=50&include_results=false&status=failure&script_name=orders&hashtags=billing%2Cdaily&sort_by=script_name&sort_order=asc",
+      "page=3&limit=50&include_sample=false&outcome=error&search=orders&hashtags=billing%2Cdaily&sort_by=checkId&sort_order=asc",
     );
   });
 
   it("leaves out a blank search", () => {
-    expect(buildCheckHistoryQuery(query({ search: "   " }), 50)).not.toContain("script_name");
+    expect(buildCheckHistoryQuery(query({ search: "   " }), 50)).not.toContain("search");
   });
 });
 
 describe("sorting", () => {
-  it("maps the table's sort to the API's; anything but the name sorts by time", () => {
-    expect(apiSort({ key: "script_name", direction: "descending" })).toEqual({ sortBy: "script_name", sortOrder: "desc" });
-    expect(apiSort({ key: "", direction: "ascending" })).toEqual({ sortBy: "execution_time", sortOrder: "asc" });
+  it("maps the table's sort to the API's", () => {
+    expect(apiSort({ key: "checkId", direction: "descending" })).toEqual({ sortBy: "checkId", sortOrder: "desc" });
+    expect(apiSort({ key: "finishedAt", direction: "ascending" })).toEqual({ sortBy: "finishedAt", sortOrder: "asc" });
   });
 
   it("flips the sorted column and starts a new one descending", () => {
-    expect(nextSort(DEFAULT_SORT, "execution_time")).toEqual({ key: "execution_time", direction: "ascending" });
-    expect(nextSort({ key: "execution_time", direction: "ascending" }, "execution_time").direction).toBe("descending");
-    expect(nextSort({ key: "execution_time", direction: "ascending" }, "script_name")).toEqual({
-      key: "script_name",
+    expect(nextSort(DEFAULT_SORT, "finishedAt")).toEqual({ key: "finishedAt", direction: "ascending" });
+    expect(nextSort({ key: "finishedAt", direction: "ascending" }, "finishedAt").direction).toBe("descending");
+    expect(nextSort({ key: "finishedAt", direction: "ascending" }, "checkId")).toEqual({
+      key: "checkId",
       direction: "descending",
     });
   });
 });
 
 describe("response parsing", () => {
-  it("normalizes createdAt to a string and rejects a body without a run list", () => {
-    const now = new Date("2026-09-27T00:00:00Z");
-    const checks = parseChecks({ data: [{ _id: "a", createdAt: "2026-09-26" }, { _id: "b" }] }, now);
-    expect(checks?.map((check) => check.createdAt)).toEqual(["2026-09-26", now.toISOString()]);
-    expect(parseChecks({ data: "nope" })).toBeNull();
-    expect(parseChecks(null)).toBeNull();
+  it("reads the run list and rejects a body without one", () => {
+    expect(parseRuns({ data: [{ _id: "a" }, { _id: "b" }] })?.map((run) => run._id)).toEqual(["a", "b"]);
+    expect(parseRuns({ data: "nope" })).toBeNull();
+    expect(parseRuns(null)).toBeNull();
   });
 
   it("keeps only the pagination fields the page uses", () => {
