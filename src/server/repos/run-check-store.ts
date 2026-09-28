@@ -72,8 +72,7 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
         error: run.error,
         message: run.message,
         findings: run.findings,
-        // The sample keeps its original name: the run report and exports read it.
-        raw_results: run.sample,
+        sample: run.sample,
         github_run_id: process.env.GITHUB_RUN_ID,
       };
       // Deleted by the TTL index on expiresAt; runs without it are kept.
