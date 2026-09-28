@@ -29,6 +29,7 @@ describe("COLLECTIONS", () => {
       oauthConsents: "oauthConsent",
       oauthRefreshTokens: "oauthRefreshToken",
       oauthClientResources: "oauthClientResource",
+      oauthResources: "oauthResource",
       jwks: "jwks",
     });
   });
