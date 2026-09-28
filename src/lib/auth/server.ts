@@ -15,6 +15,7 @@ import { enabledProviders } from "./providers";
 import { prepareOAuthCollections, type AuthTable } from "./auth-collections";
 import { cimdOptions } from "./cimd";
 import { withNativeDefault } from "./mcp-clients";
+import { refusedApiKeyUpdate } from "./api-key-update";
 import { MCP_SCOPES, mcpResourceUrl } from "./mcp-scopes";
 import { getUserRole, UserRole } from "./rbac";
 import { COLLECTIONS } from "@/lib/database/collections";
@@ -92,6 +93,10 @@ export const auth = betterAuth({
     before: createAuthMiddleware(async (ctx) => {
       if (ctx.path.startsWith("/oauth2/")) await oauthCollectionsReady(ctx.context.tables as Record<string, AuthTable>);
       if (ctx.path === "/oauth2/register" && ctx.body) return { context: { body: withNativeDefault(ctx.body) } };
+      if (ctx.path === "/api-key/update") {
+        const refused = refusedApiKeyUpdate(ctx.body);
+        if (refused) throw new APIError("FORBIDDEN", { message: refused });
+      }
     }),
   },
   databaseHooks: {

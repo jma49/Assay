@@ -105,6 +105,11 @@ plugin) is the authorization server, under `/api/auth`:
 - Keys are stored hashed (Better Auth API key plugin), start with
   `assay_`, expire after 30, 90 or 365 days, and are rate limited to 120
   requests a minute. Revoking a key takes effect immediately.
+- An owner may rename or disable a key through Better Auth's
+  `/api/auth/api-key/update`, but the auth hook refuses turning a key back
+  on (`enabled: true`) or removing its expiry (`expiresIn: null`); the
+  plugin caps a new expiry at 365 days. Removing someone's role deletes
+  their keys rather than disabling them, so none can come back.
 - Bearer tokens starting with `assay_` are checked as API keys; anything
   else as an OAuth access token.
 - Runs and alert actions go through the same code as the web app: the

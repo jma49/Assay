@@ -10,20 +10,23 @@ import { COLLECTIONS } from "@/lib/database/collections";
 export const userRef = (userId: string) => (ObjectId.isValid(userId) ? { $in: [userId, new ObjectId(userId)] } : userId);
 
 /**
- * Signs someone out everywhere, disables their API keys and disconnects
- * their OAuth apps (MCP clients), for when their role is removed. Sign-up is public, so signing in again makes them a viewer;
- * what this takes away is the access they already held. The session cookie
- * cache can keep a browser signed in for up to its five-minute lifetime.
+ * Signs someone out everywhere, deletes their API keys and disconnects
+ * their OAuth apps (MCP clients), for when their role is removed. Keys are
+ * deleted, not disabled, so nothing can switch them back on. Sign-up is
+ * public, so signing in again makes them a viewer; what this takes away is
+ * the access they already held. The session cookie cache can keep a browser
+ * signed in for up to its five-minute lifetime.
  */
-export async function revokeAccess(db: Db, userId: string, now = new Date()): Promise<{ sessions: number; apiKeys: number; oauthApps: number }> {
+export async function revokeAccess(db: Db, userId: string): Promise<{ sessions: number; apiKeys: number; oauthApps: number }> {
   const user = userRef(userId);
   const [sessions, apiKeys, consents] = await Promise.all([
     db.collection(COLLECTIONS.sessions).deleteMany({ userId: user }),
-    db.collection(COLLECTIONS.apiKeys).updateMany({ referenceId: userId, enabled: { $ne: false } }, { $set: { enabled: false, updatedAt: now } }),
+    // The API key plugin stores referenceId as a string.
+    db.collection(COLLECTIONS.apiKeys).deleteMany({ referenceId: userId }),
     // Without a consent the MCP route refuses the app's access tokens at once,
     // and without refresh tokens it cannot get new ones.
     db.collection(COLLECTIONS.oauthConsents).deleteMany({ userId: user }),
     db.collection(COLLECTIONS.oauthRefreshTokens).deleteMany({ userId: user }),
   ]);
-  return { sessions: sessions.deletedCount, apiKeys: apiKeys.modifiedCount, oauthApps: consents.deletedCount };
+  return { sessions: sessions.deletedCount, apiKeys: apiKeys.deletedCount, oauthApps: consents.deletedCount };
 }
