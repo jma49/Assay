@@ -28,5 +28,6 @@ export const COLLECTIONS = {
   oauthConsents: "oauthConsent",
   oauthRefreshTokens: "oauthRefreshToken",
   oauthClientResources: "oauthClientResource",
+  oauthResources: "oauthResource",
   jwks: "jwks",
 } as const;
