@@ -23,6 +23,8 @@
     "sql:run-scheduled": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/run-all-scripts.ts scheduled",
     "test": "vitest run",
     "test:watch": "vitest",
+    "visual:baseline": "playwright test --update-snapshots=all",
+    "visual": "playwright test",
     "typecheck": "tsc --noEmit -p .",
     "user:set-role": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/set-user-role.ts",
     "telegram:webhook": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/telegram-webhook.ts",
@@ -87,6 +89,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22.15.29",
     "@types/pg": "^8.11.11",

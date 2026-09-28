@@ -90,3 +90,6 @@ logs/
 
 # eval reports
 /evals/results/
+
+# screenshots from `npm run visual`
+/.visual

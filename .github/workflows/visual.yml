@@ -1,0 +1,151 @@
+name: Visual
+
+# Screenshots the base branch and the pull request in one job, against the
+# same seeded data, and compares them. Nothing is committed: screenshots
+# taken on another machine would differ in font rendering. A pull request
+# that changes the look on purpose gets the `visual-change` label; the job
+# then passes, and the report and annotations show what changed.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      mongo:
+        image: mongo:7
+        ports: ["27017:27017"]
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: assay_demo
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:7
+      # Upstash's REST protocol in front of the Redis above.
+      redis-http:
+        image: hiett/serverless-redis-http:latest
+        env:
+          SRH_MODE: env
+          SRH_TOKEN: visual
+          SRH_CONNECTION_STRING: redis://redis:6379
+        ports: ["8079:80"]
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      # Throwaway values for a database that lives only as long as this job.
+      BETTER_AUTH_SECRET: visual-regression-only-not-a-secret
+      MONGODB_URI: mongodb://127.0.0.1:27017/assay_visual
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/assay_demo
+      SEED_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/assay_demo
+      UPSTASH_REDIS_REST_URL: http://127.0.0.1:8079
+      UPSTASH_REDIS_REST_TOKEN: visual
+      DEMO_MODE: "true"
+      # Sign-in shows the provider buttons; nothing ever signs in.
+      GITHUB_CLIENT_ID: visual
+      GITHUB_CLIENT_SECRET: visual
+      GOOGLE_CLIENT_ID: visual
+      GOOGLE_CLIENT_SECRET: visual
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: head
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            head/package-lock.json
+            base/package-lock.json
+
+      - name: Install
+        run: |
+          npm ci --prefix head
+          npm ci --prefix base
+          cd head && npx playwright install --with-deps chromium
+
+      - name: Seed the demo data and run every check twice
+        working-directory: head
+        run: |
+          npm run seed:demo
+          npm run sql:run-all
+          sleep 2
+          npm run sql:run-all
+          # Every page renders with the browser clock frozen here, so relative
+          # times read the same on both sides.
+          echo "VISUAL_NOW=$(date -u -d '+1 hour' +%Y-%m-%dT%H:00:00Z)" >> "$GITHUB_ENV"
+
+      - name: Build and serve the base branch
+        working-directory: base
+        env:
+          BETTER_AUTH_URL: http://localhost:3101
+          APP_URL: http://localhost:3101
+        run: |
+          npm run build
+          nohup npx next start -p 3101 > ../base-server.log 2>&1 &
+          timeout 60 bash -c 'until curl -sf -o /dev/null http://localhost:3101/; do sleep 1; done'
+
+      - name: Screenshot the base branch
+        working-directory: head
+        env:
+          VISUAL_BASE_URL: http://localhost:3101
+        run: npx playwright test --update-snapshots=all
+
+      - name: Build and serve the pull request
+        working-directory: head
+        env:
+          BETTER_AUTH_URL: http://localhost:3102
+          APP_URL: http://localhost:3102
+        run: |
+          npm run build
+          nohup npx next start -p 3102 > ../head-server.log 2>&1 &
+          timeout 60 bash -c 'until curl -sf -o /dev/null http://localhost:3102/; do sleep 1; done'
+
+      - name: Compare
+        working-directory: head
+        continue-on-error: ${{ contains(github.event.pull_request.labels.*.name, 'visual-change') }}
+        env:
+          VISUAL_BASE_URL: http://localhost:3102
+        run: npx playwright test
+
+      - name: Report server errors
+        if: failure()
+        run: |
+          for log in base-server.log head-server.log; do
+            [ -f "$log" ] || continue
+            errors=$(grep -iE -A3 'error|⨯' "$log" | head -40 | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+            [ -n "$errors" ] && echo "::error title=$log::$errors"
+          done
+          true
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-report
+          path: |
+            head/.visual/report
+            head/.visual/results
+            base-server.log
+            head-server.log
+          retention-days: 14
+          if-no-files-found: ignore
