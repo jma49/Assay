@@ -1,6 +1,18 @@
 # API 密钥与 MCP
 
-Assay 提供 [MCP](https://modelcontextprotocol.io) 服务，Claude Code、Claude Desktop、Cursor、Windsurf 等 AI 代理可以借助它处理你的检查：找出出错的检查、读取检查返回的数据行、执行检查，以及对告警确认处理或静音。代理用个人 API 密钥登录。
+Assay 提供 [MCP](https://modelcontextprotocol.io) 服务，Claude Code、Claude Desktop、Cursor、Windsurf 等 AI 代理可以借助它处理你的检查：找出出错的检查、读取检查返回的数据行、执行检查，以及对告警确认处理或静音。代理有两种连接方式：通过 OAuth 让你登录授权，或者使用个人 API 密钥。
+
+## 通过 OAuth 连接（不需要密钥）
+
+支持 MCP 登录的客户端，例如网页版 Claude（**设置 → 连接器 → 添加自定义连接器**）、Claude Code 和 Cursor，只需要 MCP 地址：
+
+```
+https://assay.example.com/api/mcp
+```
+
+客户端会在浏览器里打开 Assay。如果还没登录，先登录，然后 Assay 会询问是否允许这个应用，并显示授权发送到哪里、它能做什么：查看检查、查看执行历史、执行检查和处理告警。你可以取消勾选任意一项；你的角色没有的权限会显示为灰色。Claude Code 可以先运行 `claude mcp add --transport http assay https://assay.example.com/api/mcp`，再用 `/mcp` 登录。
+
+你允许过的应用列在 **API 密钥 → 已连接的应用** 里，点 **断开** 会让它立即失去访问权限。
 
 ## 创建密钥
 
@@ -46,7 +58,8 @@ Cursor、Windsurf 以及其他读取 `mcpServers` 配置的客户端：
 
 ## 安全
 
-- **密钥的权限与你的角色相同，不会更多。** 角色变化时，密钥的权限也随之变化；查看者的代理只能看到四个只读工具。
+- **密钥或已连接应用的权限与你的角色相同，不会更多。** 角色变化时，它们的权限也随之变化；查看者的代理只能看到四个只读工具。已连接的应用还只能做你允许的事。
+- 删除某人的角色会停用他的密钥，并断开他连接的应用。
 - 密钥会过期，你也可以随时 **吊销**，使用它的代理会立即失去访问权限。
 - 每个密钥每分钟最多 120 次请求。
 - 代理发起的执行和告警操作与网页端走同样的规则，包括只读 SQL 校验，并记录为来自 MCP。

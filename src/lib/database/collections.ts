@@ -23,4 +23,10 @@ export const COLLECTIONS = {
   accounts: "account",
   verifications: "verification",
   apiKeys: "apikey",
+  // OAuth for MCP clients (Better Auth's MCP and JWT plugins).
+  oauthClients: "oauthClient",
+  oauthConsents: "oauthConsent",
+  oauthRefreshTokens: "oauthRefreshToken",
+  oauthClientResources: "oauthClientResource",
+  jwks: "jwks",
 } as const;

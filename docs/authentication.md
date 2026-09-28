@@ -39,9 +39,12 @@ variable says. Give the account a role with `npm run user:set-role`.
   calls skip the database; revoking a session takes effect within that time.
 - Roles stay in `user_roles`; permissions are checked by `rbac.ts` as before.
 - **Removing someone's role** on the Members page also deletes their sessions
-  and disables their API keys (within the five-minute cookie cache). Sign-up
-  is public, so if they sign in again they start over as a viewer and must
-  create new keys. At least one active admin always remains.
+  (within the five-minute cookie cache), disables their API keys and
+  disconnects their OAuth apps. Sign-up is public, so if they sign in again
+  they start over as a viewer and must create new keys. At least one active
+  admin always remains.
+- Better Auth is also the OAuth authorization server for MCP clients; see
+  `docs/mcp.md`.
 
 ## Moving from Clerk
 
