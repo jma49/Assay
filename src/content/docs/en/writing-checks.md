@@ -2,6 +2,21 @@
 
 Choose **New check** at the right of the top bar.
 
+## Start from a template
+
+**Start from a template**, above the editor, writes the query for the checks most tables need. Choose a template and a table, then the columns and settings it asks for; the query, name, script ID and descriptions (in both languages) are filled in, and you can still change all of them. **Undo** in the notice puts your previous draft back.
+
+| Template | Finds |
+|---|---|
+| **Missing values** | Rows where a column is empty (NULL). |
+| **Duplicates** | Values of one or more key columns that appear in more than one row. Rows with an empty key are not counted, as with a unique constraint. |
+| **Orphaned references** | Rows whose column points to a value that another table does not have, such as orders of a customer that does not exist. |
+| **Freshness** | One row when the newest timestamp is older than the hours you set, or the table is empty. |
+| **Out of range** | Numbers below a minimum or above a maximum; either bound can be left out. |
+| **Unexpected values** | Values outside a list you allow, one per line, compared as text. Choose whether an empty value is fine. |
+
+The picker lists only the tables and columns the database reports, and offers only columns that suit the template (timestamps for freshness, numbers for ranges). In **Coverage**, **New check for this table** opens this page with the table already chosen.
+
 ## The editor
 
 Write the query on the left. The toolbar above it can:
