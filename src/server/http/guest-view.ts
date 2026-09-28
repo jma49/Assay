@@ -18,11 +18,17 @@ function alerting(value: AlertingDto): AlertingDto {
 
 export const summaryForGuest = (check: CheckSummary): CheckSummary => ({ ...check, alerting: alerting(check.alerting) });
 
+/** Seeded demo checks name their seed script; anyone else stays anonymous. */
+export function authorForGuest(author: string): string;
+export function authorForGuest(author: string | undefined): string | undefined;
+export function authorForGuest(author: string | undefined): string | undefined {
+  return author === "demo-seed" ? author : author ? MEMBER : author;
+}
+
 export const detailForGuest = (check: CheckDetail): CheckDetail => ({
   ...check,
   alerting: alerting(check.alerting),
-  // Seeded demo checks name their seed script; anyone else stays anonymous.
-  author: check.author === "demo-seed" ? check.author : check.author ? MEMBER : undefined,
+  author: authorForGuest(check.author),
 });
 
 export const destinationForGuest = (destination: DestinationDto): DestinationDto => ({ ...destination, createdBy: MEMBER });
