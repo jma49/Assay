@@ -12,7 +12,7 @@ export enum VersionStatus {
 export interface ScriptVersion {
   versionId: string;
   scriptId: string;
-  version: string; // semantic, e.g. "1.1.0"; unrelated to sql_scripts.version
+  version: string; // semantic, e.g. "1.1.0"; unrelated to a check's version
   majorVersion: number;
   minorVersion: number;
   patchVersion: number;
