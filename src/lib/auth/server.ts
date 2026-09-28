@@ -1,8 +1,9 @@
 import { apiKey } from "@better-auth/api-key";
+import { mcp } from "@better-auth/mcp";
 import { betterAuth } from "better-auth";
-import { APIError } from "better-auth/api";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
-import { lastLoginMethod } from "better-auth/plugins";
+import { jwt, lastLoginMethod } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { ObjectId } from "mongodb";
 import { mongoDatabaseName, sharedMongoClient } from "@/lib/database/mongo-connection";
@@ -10,6 +11,11 @@ import redis from "@/lib/cache/redis";
 import { claimLegacyRole, emailAllowed } from "./legacy-accounts";
 import { redisRateLimitStorage, upstashCounterStore } from "./rate-limit-storage";
 import { enabledProviders } from "./providers";
+import { prepareOAuthCollections, type AuthTable } from "./auth-collections";
+import { withNativeDefault } from "./mcp-clients";
+import { MCP_SCOPES, mcpResourceUrl } from "./mcp-scopes";
+import { getUserRole, UserRole } from "./rbac";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 /**
  * Sign-in for Assay: Google and GitHub through Better Auth, with users,
@@ -30,7 +36,7 @@ const db = client.db(mongoDatabaseName());
  * the request.
  */
 export async function findUser(by: { id?: string; email?: string }): Promise<{ id: string; email: string; name: string } | null> {
-  const users = db.collection("user");
+  const users = db.collection(COLLECTIONS.users);
   let doc = null;
   if (by.id && ObjectId.isValid(by.id)) doc = await users.findOne({ _id: new ObjectId(by.id) });
   if (!doc && by.email) {
@@ -39,6 +45,14 @@ export async function findUser(by: { id?: string; email?: string }): Promise<{ i
   }
   return doc ? { id: String(doc._id), email: String(doc.email), name: String(doc.name ?? "") } : null;
 }
+
+// Once per instance, before the first auth request; retried if it failed.
+let oauthCollections: Promise<void> | null = null;
+const oauthCollectionsReady = (tables: Record<string, AuthTable>) =>
+  (oauthCollections ??= prepareOAuthCollections(db, tables).catch((error) => {
+    oauthCollections = null;
+    console.error("[Auth] Could not create the OAuth collections:", error);
+  }));
 
 const providers = enabledProviders();
 
@@ -72,6 +86,12 @@ export const auth = betterAuth({
   rateLimit: process.env.UPSTASH_REDIS_REST_URL
     ? { enabled: process.env.NODE_ENV === "production", customStorage: redisRateLimitStorage(upstashCounterStore(redis)) }
     : undefined,
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path.startsWith("/oauth2/")) await oauthCollectionsReady(ctx.context.tables as Record<string, AuthTable>);
+      if (ctx.path === "/oauth2/register" && ctx.body) return { context: { body: withNativeDefault(ctx.body) } };
+    }),
+  },
   databaseHooks: {
     user: {
       create: {
@@ -94,6 +114,25 @@ export const auth = betterAuth({
       rateLimit: { enabled: true, timeWindow: 60_000, maxRequests: 120 },
       // In seconds, although the plugin's type comment says milliseconds.
       keyExpiration: { defaultExpiresIn: 90 * 24 * 60 * 60, maxExpiresIn: 365 },
+    }),
+    // OAuth for MCP clients that cannot take a pasted key (claude.ai
+    // connectors, ChatGPT, …). Access tokens are JWTs signed with the keys
+    // this plugin keeps, bound to the /api/mcp URL, and valid for an hour.
+    jwt(),
+    mcp({
+      resource: mcpResourceUrl(),
+      loginPage: "/sign-in",
+      consentPage: "/oauth/consent",
+      scopes: ["openid", "profile", "email", "offline_access", ...MCP_SCOPES],
+      // Only people act through these clients: no client_credentials tokens.
+      grantTypes: ["authorization_code", "refresh_token"],
+      // MCP clients register themselves (RFC 7591) before sending anyone to
+      // sign in. A client gets nothing until a person consents, and each
+      // token carries at most that person's role.
+      allowDynamicClientRegistration: true,
+      allowUnauthenticatedClientRegistration: true,
+      // Creating, editing or listing clients by hand is for admins.
+      clientPrivileges: async ({ user }) => Boolean(user && (await getUserRole(user.id)) === UserRole.ADMIN),
     }),
     // Remembers the last provider in a cookie, so the sign-in page can mark it.
     lastLoginMethod(),

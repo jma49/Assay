@@ -29,8 +29,8 @@ export function useCheckDetail(scriptId: string, language: "en" | "zh", { onRan 
     setRunning(true);
     try {
       const body = await checksApi.runCheck(scriptId);
-      if (body.statusType === "failure") toast.error(t.ranError, { description: body.message });
-      else if (body.statusType === "attention_needed") toast.warning(t.ranIssues(body.rowCount ?? 0));
+      if (body.outcome === "error") toast.error(t.ranError, { description: body.message });
+      else if (body.outcome === "issues") toast.warning(t.ranIssues(body.rowCount ?? 0));
       else toast.success(t.ranClean);
       onRan?.();
       reload();

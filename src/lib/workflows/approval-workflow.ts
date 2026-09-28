@@ -3,6 +3,7 @@ import { getMongoDbClient } from "../database/mongodb";
 import { Collection, Document, Db } from "mongodb";
 import { UserRole, Permission, hasPermission } from "../auth/rbac";
 import { createCheck, deleteCheck, updateCheck } from "@/server/services/check-writes";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export enum ApprovalStatus {
   PENDING = "pending",
@@ -59,7 +60,7 @@ async function getDb(): Promise<Db> {
 
 async function getApprovalRequestsCollection(): Promise<Collection<Document>> {
   const db = await getDb();
-  return db.collection("approval_requests");
+  return db.collection(COLLECTIONS.approvalRequests);
 }
 
 function generateRequestId(): string {

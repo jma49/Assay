@@ -5,6 +5,7 @@ import { safeEqual } from "@/server/crypto/secret-box";
 import { ApiError } from "@/server/http/route";
 import { ACTION_IDS } from "@/server/notify/types";
 import { applyAlertingAction, type ActionSource } from "./alert-controls";
+import { COLLECTIONS } from "@/lib/database/collections";
 
 export type ButtonAction = (typeof ACTION_IDS)[keyof typeof ACTION_IDS];
 
@@ -35,7 +36,7 @@ export async function handleAlertButton(
 ): Promise<ButtonResult> {
   const parsed = parseToken(token);
   if (!parsed) return "invalid";
-  const event = await db.collection("events").findOne({ _id: new ObjectId(parsed.eventId) }, { projection: { checkId: 1, at: 1, actionKey: 1 } });
+  const event = await db.collection(COLLECTIONS.events).findOne({ _id: new ObjectId(parsed.eventId) }, { projection: { checkId: 1, at: 1, actionKey: 1 } });
   if (!event?.actionKey || !safeEqual(String(event.actionKey), parsed.key)) return "invalid";
   if (now.getTime() - new Date(event.at).getTime() > BUTTON_TTL_MS) return "expired";
 

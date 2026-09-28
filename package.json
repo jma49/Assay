@@ -23,6 +23,8 @@
     "sql:run-scheduled": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/run-all-scripts.ts scheduled",
     "test": "vitest run",
     "test:watch": "vitest",
+    "visual:baseline": "playwright test --update-snapshots=all",
+    "visual": "playwright test",
     "typecheck": "tsc --noEmit -p .",
     "user:set-role": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/set-user-role.ts",
     "telegram:webhook": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/telegram-webhook.ts",
@@ -30,6 +32,9 @@
   },
   "dependencies": {
     "@better-auth/api-key": "^1.7.6",
+    "@better-auth/core": "1.7.6",
+    "@better-auth/mcp": "^1.7.6",
+    "@better-auth/oauth-provider": "^1.7.6",
     "@codemirror/lang-sql": "^6.8.0",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@modelcontextprotocol/server": "^2.1.0",
@@ -85,6 +90,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22.15.29",
     "@types/pg": "^8.11.11",

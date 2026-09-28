@@ -9,17 +9,17 @@ const mocks = vi.hoisted(() => ({
   quotaThrows: false,
   isGuest: false,
   quotaSubjects: [] as string[],
-  execute: vi.fn(async (_scriptId: string) => ({ success: true, statusType: "success" }) as Record<string, unknown>),
+  execute: vi.fn(async (_scriptId: string) => ({ success: true, outcome: "clean" }) as Record<string, unknown>),
 }));
 
-vi.mock("@/lib/auth/auth-utils", () => ({
+vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth/auth-utils")>()),
   validateApiAuth: async () => ({
     isValid: true,
     user: { id: mocks.isGuest ? "guest_abc" : "user_viewer" },
     userEmail: mocks.isGuest ? "" : "viewer@example.com",
     isGuest: mocks.isGuest,
   }),
-  getUserInfo: () => ({ name: "Viewer", email: "viewer@example.com", timestamp: "now" }),
 }));
 vi.mock("@/lib/auth/rbac", () => ({
   Permission: { SCRIPT_EXECUTE: "script:execute" },
@@ -59,6 +59,7 @@ const run = (body: unknown) =>
       body: JSON.stringify(body),
       headers: { "x-forwarded-for": "9.9.9.9" },
     }),
+    { params: Promise.resolve({}) },
   );
 
 describe("POST /api/run-check", () => {
@@ -142,7 +143,7 @@ describe("POST /api/run-check", () => {
 
   it("answers 409 while the check is already running", async () => {
     mocks.canExecute = true;
-    mocks.execute.mockResolvedValueOnce({ success: false, statusType: "failure", alreadyRunning: true });
+    mocks.execute.mockResolvedValueOnce({ success: false, outcome: "error", alreadyRunning: true });
     expect((await run({ scriptId: "x" })).status).toBe(409);
   });
 

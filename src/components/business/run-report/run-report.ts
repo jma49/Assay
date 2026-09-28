@@ -3,18 +3,21 @@ import type { RunOutcome } from "@/domain/run";
 export type Language = "en" | "zh";
 export type FindingValue = string | number | boolean | null;
 export type FindingDetail = Record<string, FindingValue>;
+/** Result rows, or a plain-text note when there is no table to show. */
+export type RunRows = FindingDetail[] | string;
 
 /** One run as returned by /api/execution-details/[resultId]. */
 export interface ExecutionResult {
-  scriptId: string;
-  executedAt: string;
-  status: string;
-  /** Finer-grained status than `status`, when the runner recorded one. */
-  statusType?: string;
-  message: string;
-  /** Result rows, or a plain-text note when the run returned no table. */
-  findings: FindingDetail[] | string;
   _id: string;
+  checkId: string;
+  /** ISO time the run finished. */
+  finishedAt: string;
+  outcome: RunOutcome;
+  message: string;
+  /** The runner's one-line summary. */
+  findings: string;
+  /** The sample rows the run kept. */
+  sample: FindingDetail[];
   name?: string;
   cnName?: string;
   description?: string;
@@ -35,11 +38,11 @@ export async function readRunResponse(res: Response): Promise<ExecutionResult> {
 }
 
 /** Findings as table rows, or null when the run returned no rows. */
-export function tableRows(findings: ExecutionResult["findings"]): FindingDetail[] | null {
+export function tableRows(findings: RunRows): FindingDetail[] | null {
   return Array.isArray(findings) && findings.length > 0 ? findings : null;
 }
 
-export function rowCount(findings: ExecutionResult["findings"]): number | null {
+export function rowCount(findings: RunRows): number | null {
   return Array.isArray(findings) ? findings.length : null;
 }
 

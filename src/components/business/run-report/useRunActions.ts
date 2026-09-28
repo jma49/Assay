@@ -41,9 +41,9 @@ export function useRunActions(result: ExecutionResult | null, language: Language
     if (!result) return;
     setIsRunningAgain(true);
     try {
-      const data = await checksApi.runCheck(result.scriptId);
+      const data = await checksApi.runCheck(result.checkId);
       if (!data.mongoResultId) throw new Error(data.message || (language === "zh" ? "没有返回执行记录" : "No run came back"));
-      router.push(`/view-execution-result/${data.mongoResultId}`);
+      router.push(`/runs/${data.mongoResultId}`);
     } catch (error) {
       toast.error(language === "zh" ? "执行失败" : "Could not run the check", {
         description: error instanceof Error ? error.message : String(error),

@@ -9,9 +9,13 @@ const mocks = vi.hoisted(() => ({
   removeUserRole: vi.fn(async () => true),
 }));
 
-vi.mock("@/lib/auth/auth-utils", () => ({
+vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth/auth-utils")>()),
   validateApiAuth: async () => ({ isValid: true, user: { id: "user_admin" }, userEmail: "admin@example.com", isGuest: false }),
 }));
+const revokeAccess = vi.fn(async () => ({ sessions: 1, apiKeys: 1, oauthApps: 0 }));
+vi.mock("@/server/services/revoke-access", () => ({ revokeAccess: (...args: unknown[]) => revokeAccess(...(args as [])) }));
+vi.mock("@/lib/database/mongodb", () => ({ getMongoDbClient: () => ({ getDb: async () => ({}) }) }));
 vi.mock("@/lib/auth/server", () => ({
   findUser: async ({ id, email }: { id?: string; email?: string }) => ({ id: id ?? `user_${email}`, email: email ?? `${id}@example.com` }),
 }));
@@ -30,8 +34,8 @@ vi.mock("@/lib/auth/rbac", async (importOriginal) => {
 import { DELETE, POST } from "./route";
 
 const assign = (targetUserId: string, role: string) =>
-  POST(new NextRequest("http://localhost/api/users/roles", { method: "POST", body: JSON.stringify({ targetUserId, role }) }));
-const remove = (userId: string) => DELETE(new NextRequest(`http://localhost/api/users/roles?userId=${userId}`, { method: "DELETE" }));
+  POST(new NextRequest("http://localhost/api/users/roles", { method: "POST", body: JSON.stringify({ targetUserId, role }) }), { params: Promise.resolve({}) });
+const remove = (userId: string) => DELETE(new NextRequest(`http://localhost/api/users/roles?userId=${userId}`, { method: "DELETE" }), { params: Promise.resolve({}) });
 
 beforeEach(() => {
   mocks.callerRole = "admin";
@@ -64,7 +68,10 @@ describe("keeping at least one admin", () => {
     const res = await remove("user_bob");
     expect(res.status).toBe(409);
     expect(mocks.removeUserRole).not.toHaveBeenCalled();
+    expect(revokeAccess).not.toHaveBeenCalled();
     mocks.otherAdmins = true;
     expect((await remove("user_bob")).status).toBe(200);
+    // Removing a role also signs the person out and disables their API keys.
+    expect(revokeAccess).toHaveBeenCalledWith({}, "user_bob");
   });
 });

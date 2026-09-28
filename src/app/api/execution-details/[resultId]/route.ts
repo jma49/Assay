@@ -1,23 +1,13 @@
-import { toLegacyStatus } from "@/domain/run";
-import { NextRequest, NextResponse } from "next/server";
-import { authorizeApiRequest } from "@/lib/auth/auth-utils";
+import { NextResponse } from "next/server";
+import { withAuth } from "@/server/http/route";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { ObjectId } from "mongodb";
+import { COLLECTIONS } from "@/lib/database/collections";
+import { storedSample } from "@/server/runs/sample";
 
-const SQL_SCRIPTS_COLLECTION_NAME = "sql_scripts";
-
-export const GET = async (
-  request: NextRequest,
-  { params }: { params: Promise<{ resultId: string }> }
-) => {
-  const authResult = await authorizeApiRequest(Permission.HISTORY_READ);
-  if (!authResult.isValid) {
-    return authResult.response;
-  }
-
-  const awaitedParams = await params; // <--- await params
-  const resultId = awaitedParams.resultId;
+export const GET = withAuth<{ resultId: string }>(Permission.HISTORY_READ, async (_request, { params }) => {
+  const { resultId } = params;
 
   if (!resultId || !ObjectId.isValid(resultId)) {
     return NextResponse.json({ message: "无效的 Result ID" }, { status: 400 });
@@ -26,8 +16,8 @@ export const GET = async (
   try {
     const mongoDbClient = getMongoDbClient();
     const db = await mongoDbClient.getDb();
-    const historyCollection = db.collection("result");
-    const scriptsCollection = db.collection(SQL_SCRIPTS_COLLECTION_NAME);
+    const historyCollection = db.collection(COLLECTIONS.runs);
+    const scriptsCollection = db.collection(COLLECTIONS.checks);
 
     const run = await historyCollection.findOne({ _id: new ObjectId(resultId) });
     if (!run) {
@@ -41,16 +31,14 @@ export const GET = async (
         )
       : null;
 
-    // The report page still reads the pre-pipeline shape; it is built from the run's current fields.
-    const statusType = toLegacyStatus(run.outcome);
     return NextResponse.json({
-      scriptId: run.checkId,
-      executedAt: run.finishedAt,
-      status: statusType === "failure" ? "failure" : "success",
-      statusType,
-      message: run.message,
-      findings: Array.isArray(run.raw_results) ? run.raw_results : [],
       _id: run._id.toString(),
+      checkId: run.checkId,
+      finishedAt: run.finishedAt,
+      outcome: run.outcome,
+      message: run.message ?? "",
+      findings: run.findings ?? "",
+      sample: storedSample(run),
       ...(script && {
         name: script.name,
         cnName: script.cnName,
@@ -70,4 +58,4 @@ export const GET = async (
       { status: 500 }
     );
   }
-};
+});
