@@ -24,7 +24,7 @@
 - Every list and detail view covers loading, empty and error states, and every user-facing string exists in English and Chinese.
 - A token change edits `globals.css` and `DESIGN.md` in the same commit; run `npx @google/design.md lint DESIGN.md`.
 - Before deleting a CSS class, search for names built in template strings as well as literal ones.
-- Look at the result before calling a UI change done: screenshot each affected route before and after at 375px and 1280px, light and dark (for example `npx playwright screenshot --viewport-size=375,812 --color-scheme=dark <url> <file>`), compare the pairs, and list any intended visual differences in the pull request.
+- Look at the result before calling a UI change done: `npm run build && npm run visual:baseline` before the change and `npm run build && npm run visual` after it (see Verification in `DESIGN.md`; it needs `DEMO_MODE=true` and the demo data). CI runs the same comparison on every pull request; label one that changes the look on purpose `visual-change` and list the intended differences.
 
 ## Commit Messages
 
