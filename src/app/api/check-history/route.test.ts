@@ -39,7 +39,7 @@ vi.mock("@/lib/database/mongodb", () => {
     getMongoDbClient: () => ({
       getDb: async () => ({
         collection: (name: string) =>
-          name === "sql_scripts"
+          name === "checks"
             ? { find: (...args: unknown[]) => (mocks.checksFind(...args), { toArray: async () => mocks.taggedChecks }) }
             : {
                 find: (...args: unknown[]) => (mocks.runsFind(...args), cursor),
