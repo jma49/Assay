@@ -24,7 +24,7 @@ function TopBar() {
     <header className="relative flex min-h-[52px] items-center gap-3 border-b bg-card px-7 py-2.5 max-md:flex-wrap max-md:px-4">
       <div className="flex min-w-0 shrink items-baseline gap-3">
         <span className="truncate text-[13.5px] font-medium">{title}</span>
-        <span ref={setStatusSlot} className="truncate text-[12.5px] text-subtle-foreground empty:hidden max-xl:hidden" />
+        <span ref={setStatusSlot} className="truncate text-[12.5px] text-muted-foreground empty:hidden max-xl:hidden" />
       </div>
       {/* Filled by WindowToolbar: the page's own filters and actions, kept on the right. */}
       <div ref={setToolbarSlot} className="ml-auto flex min-w-0 items-center justify-end gap-2 empty:hidden max-md:flex-wrap" />
