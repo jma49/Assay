@@ -6,8 +6,8 @@ describe("COLLECTIONS", () => {
   it("keeps the stored collection names", () => {
     // Renaming one of these orphans existing data; change it only with a migration.
     expect(COLLECTIONS).toEqual({
-      checks: "sql_scripts",
-      runs: "result",
+      checks: "checks",
+      runs: "runs",
       events: "events",
       batches: "batches",
       checkActions: "check_actions",

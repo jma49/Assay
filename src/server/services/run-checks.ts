@@ -104,7 +104,7 @@ async function release(deps: RunChecksDeps, check: CheckCandidate, slot: Date): 
   }
 }
 
-/** listChecks, claimSlot and releaseSlot over the sql_scripts collection. */
+/** listChecks, claimSlot and releaseSlot over the checks collection. */
 export function mongoRunChecksStore(db: Db): Pick<RunChecksDeps, "listChecks" | "claimSlot" | "releaseSlot"> {
   const checks = db.collection(COLLECTIONS.checks);
   return {
