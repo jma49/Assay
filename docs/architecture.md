@@ -73,10 +73,10 @@ server. `domain` imports nothing from the app.
 
 ## Data model
 
-MongoDB collections. Existing names are kept where a rename would only add a
-migration; new fields are added alongside old ones and back-filled.
+MongoDB collections (see docs/database.md; `checks` and `runs` were renamed
+from `sql_scripts` and `result`, which the app does on start).
 
-**checks** (collection `sql_scripts`)
+**checks** (collection `checks`)
 
 ```
 { scriptId, name, description, sqlContent, hashtags, scope,
@@ -88,7 +88,7 @@ migration; new fields are added alongside old ones and back-filled.
   alerting: { owner, mutedUntil, mutedBy, ack } }
 ```
 
-**runs** (collection `result`)
+**runs** (collection `runs`)
 
 ```
 { checkId, trigger: { kind: schedule | manual | batch | api, by },

@@ -28,6 +28,7 @@
     "typecheck": "tsc --noEmit -p .",
     "user:set-role": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/set-user-role.ts",
     "telegram:webhook": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/telegram-webhook.ts",
+    "migrate:collections": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/migrations/rename-collections.ts",
     "seed:demo": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/demo/seed-demo.ts"
   },
   "dependencies": {
