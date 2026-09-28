@@ -80,3 +80,57 @@ async function rename(db: Db, from: string, to: string): Promise<RenameOutcome> 
     throw error;
   }
 }
+
+export interface MergeResult {
+  /** Old documents whose _id is not in the new collection yet. */
+  missing: number;
+  copied: number;
+  /** Whether every old _id is now in the new collection. */
+  complete: boolean;
+  droppedOld: boolean;
+}
+
+const DUPLICATE_KEY = 11000;
+const BATCH = 500;
+
+/**
+ * Copies documents that exist only under the old name into the new one
+ * (by _id; documents already in the new collection win), checks that every
+ * old _id arrived, and drops the old collection only when asked to and the
+ * copy is complete. Without `apply` it only counts.
+ */
+export async function mergeCollection(db: Db, from: string, to: string, options: { apply: boolean; dropOld: boolean }): Promise<MergeResult> {
+  const source = db.collection(from);
+  const target = db.collection(to);
+  const missingIds = async () => {
+    const ids: unknown[] = [];
+    for await (const { _id } of source.find({}, { projection: { _id: 1 } })) {
+      if (!(await target.countDocuments({ _id }, { limit: 1 }))) ids.push(_id);
+    }
+    return ids;
+  };
+  const before = await missingIds();
+  if (!options.apply) return { missing: before.length, copied: 0, complete: before.length === 0, droppedOld: false };
+
+  let copied = 0;
+  for (let i = 0; i < before.length; i += BATCH) {
+    const docs = await source.find({ _id: { $in: before.slice(i, i + BATCH) } } as object).toArray();
+    try {
+      copied += (await target.insertMany(docs, { ordered: false })).insertedCount;
+    } catch (error) {
+      // Another writer added some of them meanwhile; the rest were inserted.
+      const e = error as { code?: number; result?: { insertedCount?: number }; insertedCount?: number; writeErrors?: { code?: number }[] };
+      const writeErrors = e.writeErrors ?? [];
+      const onlyDuplicates = writeErrors.length > 0 ? writeErrors.every((w) => w.code === DUPLICATE_KEY) : e.code === DUPLICATE_KEY;
+      if (!onlyDuplicates) throw error;
+      copied += e.insertedCount ?? e.result?.insertedCount ?? 0;
+    }
+  }
+  const complete = (await missingIds()).length === 0;
+  let droppedOld = false;
+  if (complete && options.dropOld) {
+    await source.drop();
+    droppedOld = true;
+  }
+  return { missing: before.length, copied, complete, droppedOld };
+}
