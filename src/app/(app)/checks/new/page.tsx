@@ -24,6 +24,8 @@ import { useLanguage } from "@/components/common/LanguageProvider";
 import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
+import { TemplatePicker } from "@/components/checks/templates/TemplatePicker";
+import type { TableRef, TemplateCheck } from "@/lib/checks/templates";
 
 const SCRIPT_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -74,6 +76,8 @@ const copy = {
     submitted: "Submitted for approval",
     submittedDesc: "An admin or manager needs to approve it before it runs.",
     failed: "Could not save the check",
+    templateApplied: "Template applied",
+    undo: "Undo",
   },
   zh: {
     breadcrumb: "脚本",
@@ -88,6 +92,8 @@ const copy = {
     submitted: "已提交审批",
     submittedDesc: "需要管理员或经理审批后才会生效。",
     failed: "保存失败",
+    templateApplied: "已套用模板",
+    undo: "撤销",
   },
 };
 
@@ -110,6 +116,7 @@ export default function NewScriptPage() {
   const [sqlContent, setSqlContent] = useState(INITIAL_SQL);
   const [scriptIdEdited, setScriptIdEdited] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [tableParam, setTableParam] = useState<string | null>(null);
 
   const t = useDashboardT<string>();
 
@@ -117,6 +124,7 @@ export default function NewScriptPage() {
   useEffect(() => {
     const table = new URLSearchParams(window.location.search).get("table");
     if (!table || !TABLE_NAME.test(table)) return;
+    setTableParam(table);
     setSqlContent(starterSqlFor(table));
     const schema = table.includes(".") ? table.split(".")[0] : "";
     if (schema) setFormData((prev) => (prev.scope ? prev : { ...prev, scope: schema }));
@@ -142,6 +150,32 @@ export default function NewScriptPage() {
       return next;
     });
     if (field === "scriptId") setScriptIdEdited(true);
+  };
+
+  // A template replaces the query and the names; the toast can put them back.
+  const applyTemplate = (check: TemplateCheck, table: TableRef) => {
+    const before = { sqlContent, formData, scriptIdEdited };
+    setSqlContent(check.sql);
+    setFormData((prev) => ({
+      ...prev,
+      scriptId: check.scriptId,
+      name: check.name,
+      cnName: check.cnName,
+      description: check.description,
+      cnDescription: check.cnDescription,
+      scope: prev.scope || table.schema,
+    }));
+    setScriptIdEdited(false);
+    toast.success(c.templateApplied, {
+      action: {
+        label: c.undo,
+        onClick: () => {
+          setSqlContent(before.sqlContent);
+          setFormData(before.formData);
+          setScriptIdEdited(before.scriptIdEdited);
+        },
+      },
+    });
   };
 
   const handleSave = async () => {
@@ -203,6 +237,8 @@ export default function NewScriptPage() {
             </Button>
           </div>
         </WindowToolbar>
+
+        <TemplatePicker initialTable={tableParam} onApply={applyTemplate} />
 
         {/* items-stretch + fill keeps the editor and the details panel the same height. */}
         <div className="grid gap-6 lg:grid-cols-12">

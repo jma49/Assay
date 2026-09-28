@@ -16,6 +16,7 @@ const COPY = {
     description: "It will act as you through Assay's MCP server.",
     signedInAs: "Signed in as",
     sendsTo: "Access goes to",
+    publishedBy: "App published by",
     scopes: {
       "checks:read": { title: "Read checks", body: "Checks, their status, SQL and latest problem rows." },
       "history:read": { title: "Read run history", body: "Past runs and the activity feed." },
@@ -36,6 +37,7 @@ const COPY = {
     description: "它会通过 Assay 的 MCP 服务以你的身份操作。",
     signedInAs: "当前账号",
     sendsTo: "授权发送到",
+    publishedBy: "应用发布方",
     scopes: {
       "checks:read": { title: "查看检查", body: "检查、状态、SQL 和最新的问题行。" },
       "history:read": { title: "查看执行历史", body: "过去的执行记录和动态。" },
@@ -54,8 +56,10 @@ const COPY = {
 
 const IDENTITY_SCOPES = new Set(["openid", "profile", "email"]);
 
-export function ConsentPanel({ clientName, redirectHost, scopes, email, role, usable }: {
+export function ConsentPanel({ clientName, clientHost, redirectHost, scopes, email, role, usable }: {
   clientName: string | null;
+  /** For a client that names itself with a metadata URL: that URL's host, which the name cannot fake. */
+  clientHost: string | null;
   redirectHost: string | null;
   scopes: string[];
   email: string;
@@ -101,6 +105,12 @@ export function ConsentPanel({ clientName, redirectHost, scopes, email, role, us
         <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 rounded-lg bg-muted px-3 py-2.5">
           <dt className="text-muted-foreground">{t.signedInAs}</dt>
           <dd className="truncate font-medium">{email}</dd>
+          {clientHost && (
+            <>
+              <dt className="text-muted-foreground">{t.publishedBy}</dt>
+              <dd className="truncate font-mono text-[12px]">{clientHost}</dd>
+            </>
+          )}
           {redirectHost && (
             <>
               <dt className="text-muted-foreground">{t.sendsTo}</dt>
