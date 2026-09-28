@@ -106,7 +106,13 @@ export function ConnectedApps() {
                   <AppWindow className="size-4" />
                 </span>
                 <div className="grid min-w-0 flex-1 gap-0.5">
-                  <span className="truncate text-[13.5px] font-medium">{app.name || t.unnamed}</span>
+                  <div className="flex min-w-0 items-baseline gap-2">
+                    <span className="truncate text-[13.5px] font-medium">{app.name || t.unnamed}</span>
+                    {/* A client named by a metadata URL: show where it is published, which its name cannot fake. */}
+                    {app.clientId.startsWith("https://") && (
+                      <span className="truncate font-mono text-[12px] text-subtle-foreground">{new URL(app.clientId).host}</span>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-x-3 text-[12px] text-muted-foreground">
                     <span title={formatDateTime(app.createdAt, language)}>{t.since(formatRelative(app.createdAt, language))}</span>
                     {app.scopes.length > 0 && <span>{app.scopes.map((scope) => t.scopes[scope]).join(" · ")}</span>}

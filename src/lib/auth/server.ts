@@ -1,4 +1,5 @@
 import { apiKey } from "@better-auth/api-key";
+import { cimd } from "@better-auth/cimd";
 import { mcp } from "@better-auth/mcp";
 import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware } from "better-auth/api";
@@ -12,6 +13,7 @@ import { claimLegacyRole, emailAllowed } from "./legacy-accounts";
 import { redisRateLimitStorage, upstashCounterStore } from "./rate-limit-storage";
 import { enabledProviders } from "./providers";
 import { prepareOAuthCollections, type AuthTable } from "./auth-collections";
+import { cimdOptions } from "./cimd";
 import { withNativeDefault } from "./mcp-clients";
 import { MCP_SCOPES, mcpResourceUrl } from "./mcp-scopes";
 import { getUserRole, UserRole } from "./rbac";
@@ -134,6 +136,9 @@ export const auth = betterAuth({
       // Creating, editing or listing clients by hand is for admins.
       clientPrivileges: async ({ user }) => Boolean(user && (await getUserRole(user.id)) === UserRole.ADMIN),
     }),
+    // Clients that name themselves with a metadata URL instead of registering
+    // (MCP 2026-07-28); see ./cimd.ts for how the fetch is kept safe.
+    cimd(cimdOptions()),
     // Remembers the last provider in a cookie, so the sign-in page can mark it.
     lastLoginMethod(),
     nextCookies(),
