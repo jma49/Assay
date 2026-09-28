@@ -25,7 +25,7 @@ Indexes live in `src/lib/database/indexes.ts` and are created on start-up
 
 ## Checks and runs
 
-### `sql_scripts` — checks
+### `checks`
 
 | Field | |
 | --- | --- |
@@ -44,7 +44,7 @@ Indexes live in `src/lib/database/indexes.ts` and are created on start-up
 
 Indexes: `scriptId` unique; `createdAt`.
 
-### `result` — runs
+### `runs`
 
 | Field | |
 | --- | --- |
@@ -98,7 +98,7 @@ Kept without expiry, as the audit trail: `edit_history`, `approval_requests`,
 | --- | --- |
 | `approval_requests` | A change waiting for review: `requestId`, `scriptId`, `requesterId`, `operationType`, `originalData` (only editable fields are applied), `status` (moves from `pending` once), `reviewedBy`, `applyError`. Indexes: `requestId` unique; `(status, requestedAt)` |
 | `edit_history` | Every create / update / delete with a snapshot and field changes. Indexes: `operationTime`; `(scriptSnapshot.scriptId, operationTime)` |
-| `script_versions` | Full copies per version (`version` here is a semantic string like `1.2.0`, unrelated to `sql_scripts.version`). Indexes: `(scriptId, createdAt)`; `(scriptId, version)` unique |
+| `script_versions` | Full copies per version (`version` here is a semantic string like `1.2.0`, unrelated to a check's `version`). Indexes: `(scriptId, createdAt)`; `(scriptId, version)` unique |
 
 ## People and access
 
@@ -146,6 +146,41 @@ then `--apply`; idempotent; applied to production).
 The retired fields disappear with their runs through the retention TTL
 (`RUN_RETENTION_DAYS`, 90 days by default), so no data migration is needed.
 The old indexes `execution_time_-1` and `script_name_1_execution_time_-1`
-have been dropped in production (issue #62). Renaming the collections (`sql_scripts` → `checks`,
-`result` → `runs`) comes last, behind a migration script, because every
-deployment's data lives under the old names.
+have been dropped in production (issue #62).
+
+## Renamed collections
+
+Checks were stored in `sql_scripts` and runs in `result` until 2026-09.
+Every process renames them before it uses the database: `getDb()` awaits
+`migrateCollectionNames` (`src/lib/database/migrate-collection-names.ts`)
+once, before the background index build, so indexes are never created on an
+empty new collection next to the old one. `renameCollection` is atomic and
+keeps the documents and indexes, and instances starting together may race
+harmlessly. Nothing needs to be run by hand for an ordinary upgrade.
+
+| Old name | New name | On start |
+| --- | --- | --- |
+| `sql_scripts` | `checks` | renamed if only the old name exists |
+| `result` | `runs` | renamed if only the old name exists |
+
+If both names exist, the app uses the new one and never merges on its own:
+that happens when a build from before the rename ran after it (a rollback)
+and wrote to the old name. An empty old collection is dropped; otherwise it
+logs a warning with both counts. Merge with the script:
+
+```bash
+npm run migrate:collections                              # show both names and counts
+npm run migrate:collections -- --merge                   # count old-only documents
+npm run migrate:collections -- --merge --apply           # copy them (documents already in the new collection win)
+npm run migrate:collections -- --merge --apply --drop-old  # then drop the old collection once every document arrived
+```
+
+`--apply` alone renames where only the old name exists, the same as the app.
+
+**Rolling back** to a build from before the rename: that build reads and
+writes `sql_scripts` and `result`. After the rename they no longer exist, so
+it shows no checks or runs, and its first write creates a new, nearly empty
+old-named collection. Before rolling back, rename them back by hand
+(`db.checks.renameCollection("sql_scripts")`,
+`db.runs.renameCollection("result")`); after rolling forward again the app
+renames them once more.
