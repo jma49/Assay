@@ -12,7 +12,7 @@ describe("INDEXES", () => {
   });
 
   it("expires what should not be kept", () => {
-    for (const [collection, field] of [["session", "expiresAt"], ["verification", "expiresAt"], ["result", "expiresAt"], ["batches", "startedAt"]]) {
+    for (const [collection, field] of [["session", "expiresAt"], ["verification", "expiresAt"], ["runs", "expiresAt"], ["batches", "startedAt"]]) {
       const ttl = INDEXES[collection]?.find((i) => field in i.key);
       expect(ttl?.expireAfterSeconds, `${collection}.${field}`).toBeTypeOf("number");
     }
