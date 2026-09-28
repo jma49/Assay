@@ -212,7 +212,7 @@ function SubscriptionFields({ value, onChange }: { value: Subscription; onChange
                 </option>
               ))}
             </select>
-            <span className="text-subtle-foreground">{value.digest.timeZone}</span>
+            <span className="text-muted-foreground">{value.digest.timeZone}</span>
           </label>
         )}
       </div>
@@ -540,7 +540,7 @@ export function TelegramDialog({ open, onClose, onLinked }: { open: boolean; onC
             <p className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
               <Loader2 className="size-3.5 animate-spin" />
               {t.tgWaiting}
-              {link && <span className="text-subtle-foreground">{t.tgExpires(minutes)}</span>}
+              {link && <span className="text-muted-foreground">{t.tgExpires(minutes)}</span>}
             </p>
           </div>
         )}

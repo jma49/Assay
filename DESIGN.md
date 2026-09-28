@@ -15,11 +15,11 @@ colors:
   subtle-foreground: "#7A8394"
   border: "#E3E6EB"
   border-strong: "#D2D7DF"
-  success: "#1D8A57"
+  success: "#19754A"
   success-soft: "#E8F6EE"
-  attention: "#B87408"
+  attention: "#915B06"
   attention-soft: "#FDF4E3"
-  failure: "#C93636"
+  failure: "#BB3232"
   failure-soft: "#FCEDED"
   code-bg: "#F4F5F8"
   primary-dark: "#6F95F2"
@@ -154,11 +154,17 @@ components:
     textColor: "{colors.muted-foreground-dark}"
   sidebar-label:
     backgroundColor: "{colors.sidebar}"
-    textColor: "{colors.subtle-foreground}"
+    textColor: "{colors.muted-foreground}"
     typography: "{typography.label-caps}"
   sidebar-label-dark:
     backgroundColor: "{colors.sidebar-dark}"
-    textColor: "{colors.subtle-foreground-dark}"
+    textColor: "{colors.muted-foreground-dark}"
+  status-dot-idle:
+    backgroundColor: "{colors.subtle-foreground}"
+    size: "{spacing.status-dot}"
+    rounded: "{rounded.full}"
+  status-dot-idle-dark:
+    backgroundColor: "{colors.subtle-foreground-dark}"
   button-primary:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
@@ -251,7 +257,7 @@ Three words decide most calls: **quiet** (the data is loud, the chrome is not), 
 ## Colors
 
 - **Cobalt (`primary`, #2350C8):** the one interactive colour. Primary buttons, links, the active nav item, focus rings, the brand mark. Never a status.
-- **Neutrals** lean slightly blue toward the cobalt. `foreground` for text, `muted-foreground` for secondary text, `subtle-foreground` for the quietest labels, `border` for dividers, `border-strong` for inputs.
+- **Neutrals** lean slightly blue toward the cobalt. `foreground` for text, `muted-foreground` for secondary text, `subtle-foreground` never for text, only for marks (the idle status dot, list markers), `border` for dividers, `border-strong` for inputs.
 - **Status colours are semantic and fixed:** `failure` = the check itself broke (error), `attention` = it found rows (issues), `success` = it found none (clean). Each has a `-soft` tint for its background. They never decorate, and they are never swapped for the accent.
 - Dark theme values carry a `-dark` suffix here; in code the same CSS variable switches under `.dark`, so components never branch on the theme.
 - Colours reach components only through Tailwind utilities mapped in `@theme inline` (`bg-card`, `text-muted-foreground`, `text-attention`, …). No hex values, no raw palette classes (`text-blue-600`), no `dark:` overrides for colour.
@@ -304,20 +310,11 @@ One radius scale derived from `--radius` (0.4rem): `rounded-sm` for checkboxes a
 - Don't add gradients, glows, glass blur, `shadow-lg`, or decorative illustrations to app pages. The beetle is the only illustration, and only on the landing page and brand marks.
 - Don't use pill-shaped uppercase "eyebrow" labels above headlines, rows of identical icon cards, or centred hero-plus-three-cards layouts. `label-caps` is for grouping controls, not for decoration.
 - Don't use arbitrary font sizes (`text-[12.5px]`), arbitrary radii or hex colours in components.
-- Don't put small text (< 18px) in `subtle-foreground` on light surfaces for anything a user must read; it is below AA (see Known issues).
+- Don't put text in `subtle-foreground`, not even a "—" for no value: it is 3.6–3.8:1 on light surfaces, below AA. The quietest text is `muted-foreground` (5.0–5.4:1).
 
-## Known issues
+## Contrast
 
-Measured with WCAG 2.x contrast on the light theme (dark theme passes everywhere):
-
-| Pair | Ratio | Needs | Candidate (same hue) |
-|---|---|---|---|
-| `success` text on its 10% tint | 3.8 | 4.5 | `#19754A` (4.6) |
-| `attention` text on its 10% tint | 3.4 | 4.5 | `#915B06` (4.6) |
-| `failure` text on its 10% tint | 4.5− | 4.5 | `#BB3232` (4.65) |
-| `subtle-foreground` on card / background | 3.6–3.8 | 4.5 | `#656E7E`, but that erases the step to `muted-foreground`; alternative: keep it for icons and ≥ 18px text only |
-
-Decide these before the type migration, since both change what the baseline screenshots show.
+Every text pair in the light theme meets WCAG AA (4.5:1); the dark theme always did. Fixed on 2026-09-27: the light-theme status colours were darkened within their hues (`success` #1D8A57 → #19754A, `attention` #B87408 → #915B06, `failure` #C93636 → #BB3232; `destructive` and `chart-2…4` follow them), and all text moved from `subtle-foreground` to `muted-foreground`. `npx @google/design.md lint` checks every component pair above.
 
 ## Migration
 
@@ -349,6 +346,9 @@ The seven existing variants of the uppercase section label (11/12px, medium/semi
 ## Verification
 
 - Lint this file: `npx @google/design.md lint DESIGN.md` (structure, broken references, contrast of every component pair above).
-- Visual changes are checked against baseline screenshots taken before the change, at 375px and 1280px, light and dark, English and Chinese, for these states: landing (demo on/off), sign-in, docs article, checks list (populated, empty, loading), check detail (clean, issues, broken), check editor dialog, runs list, run report, coverage, data analysis, activity, approvals (with a pending item), members, API keys, notification settings (no destination, one of each channel), guest sidebar, unauthorized.
+- **Screenshots** (`tests/visual/`, Playwright) at 375px and 1280px, light and dark, English and Chinese: landing, sign-in, two docs articles, unauthorized; and as a demo guest, the checks list, a check with issues, a broken check and a clean one, manage checks, runs, a run report, coverage, analysis, activity and notification settings. Every page also fails on console errors.
+- **Locally**, against your own `.env.local` data with `DEMO_MODE=true`: `npm run build && npm run visual:baseline` before the change, then `npm run build && npm run visual` after it. The browser clock is frozen at the baseline's time so relative times match; output stays in the git-ignored `.visual/`.
+- **In CI**, the Visual workflow starts MongoDB, PostgreSQL and Redis, seeds the demo data, runs every check twice, then builds the base branch and the pull request and compares them in one job. A pull request that changes the look on purpose gets the `visual-change` label and lists the expected differences; the job then passes, and annotations name the pages that changed.
 - A pure refactor step (tokens, aliases) must produce no visual diff; a step that intentionally changes sizes lists the expected diffs in its pull request.
-- On the landing page, mask the voxel beetle's canvas in screenshots: it follows the pointer even with reduced motion, and headless browsers without a GPU may render it differently between machines.
+- `tests/visual/stable.css` hides the voxel beetle's contents: it follows the pointer even with reduced motion, and headless browsers without a GPU render it differently between machines.
+- Not covered yet: loading and empty states, dialogs, and pages a guest cannot open (new check, approvals, members, API keys).
