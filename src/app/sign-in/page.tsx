@@ -12,10 +12,13 @@ export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Sign in" };
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ redirect_url?: string }> }) {
-  // Someone already signed in goes straight on to where they were headed.
-  if (await auth.api.getSession({ headers: await headers() })) {
-    redirect(safeRedirect((await searchParams).redirect_url));
+export default async function Page({ searchParams }: { searchParams: Promise<{ redirect_url?: string; sig?: string }> }) {
+  const query = await searchParams;
+  // Someone already signed in goes straight on to where they were headed,
+  // unless an MCP client's authorization request (signed, hence `sig`) asks
+  // them to sign in again.
+  if (!query.sig && (await auth.api.getSession({ headers: await headers() }))) {
+    redirect(safeRedirect(query.redirect_url));
   }
   // The redirect target is read from the query, which needs a Suspense boundary.
   return (

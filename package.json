@@ -30,6 +30,8 @@
   },
   "dependencies": {
     "@better-auth/api-key": "^1.7.6",
+    "@better-auth/mcp": "^1.7.6",
+    "@better-auth/oauth-provider": "^1.7.6",
     "@codemirror/lang-sql": "^6.8.0",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@modelcontextprotocol/server": "^2.1.0",

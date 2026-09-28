@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth/client";
+import { ConnectedApps } from "./ConnectedApps";
 import { useMe } from "@/lib/auth/use-me";
 import { formatDateTime, formatRelative } from "@/lib/utils/datetime";
 
@@ -253,6 +254,8 @@ export function ApiKeysSettings() {
           </ul>
         )}
       </div>
+
+      <ConnectedApps />
 
       <Dialog open={creating} onOpenChange={(open) => { setCreating(open); if (!open) setCreated(null); }}>
         <DialogContent className="sm:max-w-xl">
