@@ -25,6 +25,11 @@ describe("COLLECTIONS", () => {
       accounts: "account",
       verifications: "verification",
       apiKeys: "apikey",
+      oauthClients: "oauthClient",
+      oauthConsents: "oauthConsent",
+      oauthRefreshTokens: "oauthRefreshToken",
+      oauthClientResources: "oauthClientResource",
+      jwks: "jwks",
     });
   });
 
