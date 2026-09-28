@@ -29,7 +29,7 @@ vi.mock("@/lib/database/mongodb", () => ({
         if (name === "approval_requests") {
           return { findOne: async () => mocks.request, updateOne: mocks.requestsUpdate };
         }
-        if (name === "sql_scripts") return { insertOne: mocks.scriptsInsert };
+        if (name === "checks") return { insertOne: mocks.scriptsInsert };
         return { insertOne: async () => ({ acknowledged: true }) };
       },
     }),

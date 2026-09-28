@@ -117,4 +117,4 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 
 - [ ] 生产库执行 `DOTENV_CONFIG_PATH=<生产环境变量文件> npx tsx -r dotenv/config scripts/migrations/mark-demo-seed.ts`，确认列表后加 `--apply`。之后演示访客仍能执行示例检查（现在依据 `demoSeed` 标记，而不是作者名）。
 - [ ] 生产库执行 `scripts/migrations/backfill-run-fields.ts`（先预览，再加 `--apply`；幂等），为旧执行记录补上 `checkId` / `finishedAt` / `outcome` / `rowCount`。执行记录、分析页的数字与部署前一致。部署前已跑过一次；部署后再跑一次，覆盖期间旧代码写入的记录。
-- [ ] 生产库执行 `scripts/migrations/set-run-expiry.ts`（先不加参数预览，再加 `--apply`），旧执行记录按 `RUN_RETENTION_DAYS`（默认 90 天）设置过期时间。MongoDB 里 `result` 集合出现 `expiresAt_1` TTL 索引。
+- [ ] 生产库执行 `scripts/migrations/set-run-expiry.ts`（先不加参数预览，再加 `--apply`），旧执行记录按 `RUN_RETENTION_DAYS`（默认 90 天）设置过期时间。MongoDB 里 `runs` 集合（旧名 `result`）出现 `expiresAt_1` TTL 索引。

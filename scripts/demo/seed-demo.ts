@@ -71,7 +71,7 @@ async function seedScripts(): Promise<void> {
       scriptId: { $nin: demoChecks.map((c) => c.scriptId) },
     });
     console.log(
-      `MongoDB sql_scripts: upserted ${demoChecks.length} demo checks, removed ${deletedCount} stale ones`
+      `MongoDB checks: upserted ${demoChecks.length} demo checks, removed ${deletedCount} stale ones`
     );
 
     const approvals = (await mongo.getDb()).collection(COLLECTIONS.approvalRequests);

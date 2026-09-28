@@ -1,10 +1,10 @@
 /**
- * MongoDB collection names. Some keep the first version's names (a rename
- * would only add a migration): checks live in `sql_scripts`, runs in `result`.
+ * MongoDB collection names. Checks and runs were stored as `sql_scripts` and
+ * `result` until 2026-09; `migrate-collection-names.ts` renames them on start.
  */
 export const COLLECTIONS = {
-  checks: "sql_scripts",
-  runs: "result",
+  checks: "checks",
+  runs: "runs",
   events: "events",
   batches: "batches",
   checkActions: "check_actions",
