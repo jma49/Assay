@@ -45,10 +45,10 @@ export function RunHistory({ runs, t, language }: { runs: RunListItem[]; t: Copy
                   <span className="space-x-2">
                     {run.diff.added > 0 && <span className="text-failure">+{run.diff.added}</span>}
                     {run.diff.fixed > 0 && <span className="text-success">−{run.diff.fixed}</span>}
-                    {run.diff.added === 0 && run.diff.fixed === 0 && <span className="text-subtle-foreground">—</span>}
+                    {run.diff.added === 0 && run.diff.fixed === 0 && <span className="text-muted-foreground">—</span>}
                   </span>
                 ) : (
-                  <span className="text-subtle-foreground">—</span>
+                  <span className="text-muted-foreground">—</span>
                 )}
               </td>
               <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums max-sm:hidden">

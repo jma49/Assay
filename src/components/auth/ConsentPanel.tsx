@@ -128,7 +128,7 @@ export function ConsentPanel({ clientName, redirectHost, scopes, email, role, us
           {scopes.includes("offline_access") && <li className="pl-7 text-muted-foreground">{t.offline}</li>}
         </ul>
 
-        <p className="text-[12px] text-subtle-foreground">{t.roleNote(role)}</p>
+        <p className="text-[12px] text-muted-foreground">{t.roleNote(role)}</p>
 
         {(failed || nothingChosen) && (
           <p role="alert" className="rounded-lg bg-failure-soft px-3 py-2.5 text-failure">

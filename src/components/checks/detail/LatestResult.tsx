@@ -85,7 +85,7 @@ export function LatestResult({ latest, t }: { latest: LatestRun; t: Copy }) {
               </tr>
             ))}
             {latest.fixed.map((values, i) => (
-              <tr key={`fixed-${i}`} className="border-b text-subtle-foreground last:border-0">
+              <tr key={`fixed-${i}`} className="border-b text-muted-foreground last:border-0">
                 <td className="px-4 py-2">
                   <span className="rounded-md bg-success-soft px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap text-success">{t.markFixed}</span>
                 </td>
