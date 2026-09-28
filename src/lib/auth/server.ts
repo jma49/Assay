@@ -11,6 +11,7 @@ import redis from "@/lib/cache/redis";
 import { claimLegacyRole, emailAllowed } from "./legacy-accounts";
 import { redisRateLimitStorage, upstashCounterStore } from "./rate-limit-storage";
 import { enabledProviders } from "./providers";
+import { prepareOAuthCollections, type AuthTable } from "./auth-collections";
 import { withNativeDefault } from "./mcp-clients";
 import { MCP_SCOPES, mcpResourceUrl } from "./mcp-scopes";
 import { getUserRole, UserRole } from "./rbac";
@@ -44,6 +45,14 @@ export async function findUser(by: { id?: string; email?: string }): Promise<{ i
   }
   return doc ? { id: String(doc._id), email: String(doc.email), name: String(doc.name ?? "") } : null;
 }
+
+// Once per instance, before the first auth request; retried if it failed.
+let oauthCollections: Promise<void> | null = null;
+const oauthCollectionsReady = (tables: Record<string, AuthTable>) =>
+  (oauthCollections ??= prepareOAuthCollections(db, tables).catch((error) => {
+    oauthCollections = null;
+    console.error("[Auth] Could not create the OAuth collections:", error);
+  }));
 
 const providers = enabledProviders();
 
@@ -79,6 +88,7 @@ export const auth = betterAuth({
     : undefined,
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path.startsWith("/oauth2/")) await oauthCollectionsReady(ctx.context.tables as Record<string, AuthTable>);
       if (ctx.path === "/oauth2/register" && ctx.body) return { context: { body: withNativeDefault(ctx.body) } };
     }),
   },

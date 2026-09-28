@@ -47,21 +47,27 @@ export const INDEXES: Record<string, IndexDescription[]> = {
   [COLLECTIONS.oauthConsents]: [{ key: { userId: 1, clientId: 1 } }],
   [COLLECTIONS.oauthRefreshTokens]: [{ key: { token: 1 }, unique: true }, { key: { userId: 1 } }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
   [COLLECTIONS.oauthClientResources]: [{ key: { clientId: 1 } }],
+  // Every instance seeds the MCP resource on start; uniqueness stops
+  // concurrent cold starts from inserting it more than once.
+  [COLLECTIONS.oauthResources]: [{ key: { identifier: 1 }, unique: true }],
   // Pending Telegram links expire on their own.
   [COLLECTIONS.telegramLinks]: [{ key: { codeHash: 1 }, unique: true }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
   // Batches only matter while someone watches their progress; keep a week.
   [COLLECTIONS.batches]: [{ key: { executionId: 1 }, unique: true }, { key: { startedAt: 1 }, expireAfterSeconds: 7 * 24 * 60 * 60 }],
 };
 
-export async function ensureIndexes(db: Db): Promise<void> {
+/** Creates the indexes of every collection, or only of `only`. */
+export async function ensureIndexes(db: Db, only?: readonly string[]): Promise<void> {
   await Promise.all(
-    Object.entries(INDEXES).map(async ([collection, indexes]) => {
-      try {
-        await db.collection(collection).createIndexes(indexes);
-      } catch (error) {
-        // A failed index (e.g. duplicates blocking a unique one) must not take the app down.
-        console.error(`[MongoDB] Could not create indexes on ${collection}:`, error);
-      }
-    }),
+    Object.entries(INDEXES)
+      .filter(([collection]) => !only || only.includes(collection))
+      .map(async ([collection, indexes]) => {
+        try {
+          await db.collection(collection).createIndexes(indexes);
+        } catch (error) {
+          // A failed index (e.g. duplicates blocking a unique one) must not take the app down.
+          console.error(`[MongoDB] Could not create indexes on ${collection}:`, error);
+        }
+      }),
   );
 }

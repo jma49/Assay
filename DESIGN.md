@@ -258,7 +258,7 @@ Three words decide most calls: **quiet** (the data is loud, the chrome is not), 
 
 ## Typography
 
-Manrope for everything readable, JetBrains Mono for SQL, ids, cron expressions and numbers that line up in columns. Chinese falls back to PingFang SC / Microsoft YaHei.
+Manrope for everything readable, JetBrains Mono for SQL, ids, cron expressions and numbers that line up in columns. Chinese falls back to a named Simplified Chinese face: PingFang SC (Apple), Microsoft YaHei (Windows), Noto Sans SC / Noto Sans CJK SC (Linux, Android). Name the face rather than leaving CJK to `system-ui`: the generic fallback picks a CJK font by the page language, which the language switch sets only after hydration, so Chinese text could render with Japanese glyph shapes.
 
 The scale in the front matter is the **target**: every text size maps to one of its levels, exposed as `text-<level>` utilities (see Migration). Roles:
 
