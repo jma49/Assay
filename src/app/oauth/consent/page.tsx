@@ -32,6 +32,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Que
   return (
     <ConsentPanel
       clientName={client?.client_name || null}
+      // A metadata-document client's id is the HTTPS URL it is published at.
+      clientHost={clientId.startsWith("https://") ? hostOf(clientId) : null}
       redirectHost={hostOf(first(query.redirect_uri))}
       scopes={(first(query.scope) ?? "").split(" ").filter(Boolean)}
       email={session.user.email}
