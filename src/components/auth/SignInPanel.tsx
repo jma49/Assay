@@ -171,7 +171,9 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
       setBusy(null);
       return;
     }
-    window.location.assign(callbackURL);
+    // During an MCP client's authorization the server answers with where the flow continues.
+    const next = (result.data as { url?: unknown } | null)?.url;
+    window.location.assign(typeof next === "string" ? next : callbackURL);
   };
 
   const switchHref = `${mode === "signIn" ? "/sign-up" : "/sign-in"}${search.get("redirect_url") ? `?redirect_url=${encodeURIComponent(callbackURL)}` : ""}`;

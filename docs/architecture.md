@@ -152,15 +152,20 @@ extended protocol, where PostgreSQL refuses a second statement, inside
 database itself: point `DATABASE_URL` at a role that can only SELECT, e.g.
 
 ```sql
-CREATE ROLE assay_reader LOGIN PASSWORD '...';
-GRANT USAGE ON SCHEMA public, demo TO assay_reader;
-GRANT SELECT ON ALL TABLES IN SCHEMA public, demo TO assay_reader;
-ALTER ROLE assay_reader SET default_transaction_read_only = on;
-ALTER ROLE assay_reader SET statement_timeout = '60s';
+CREATE ROLE assay_readonly LOGIN PASSWORD '...';
+GRANT USAGE ON SCHEMA public, demo TO assay_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA public, demo TO assay_readonly;
+ALTER ROLE assay_readonly SET default_transaction_read_only = on;
+ALTER ROLE assay_readonly SET statement_timeout = '60s';
 ```
 
+Create the role with SQL as the database owner. On Neon, a role made in the
+console joins `neon_superuser`, which carries `pg_write_all_data`, so it is
+not read-only whatever its grants say; check with
+`SELECT pg_has_role('assay_readonly', 'pg_write_all_data', 'USAGE')` (must be false).
+
 `npm run seed:demo` recreates the `demo` schema through `SEED_DATABASE_URL`
-and gives `assay_reader` its grants back when that role exists.
+and gives `assay_readonly` its grants back when that role exists.
 
 `runDueChecks` claims each due slot atomically (already in place) and runs
 the claimed checks with bounded concurrency. `runBatch` records a batch

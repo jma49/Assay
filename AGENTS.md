@@ -16,6 +16,16 @@
 
 - Keep files small: a page is a shell over a data hook and section components; pure logic lives in a `.ts` module with tests. See `docs/architecture.md`.
 
+## UI Changes
+
+- Read `DESIGN.md` before touching `src/components`, `src/app` or `globals.css`. It holds the tokens, the type scale, the component rules and the migration order for the current refactor.
+- Style only through tokens: colour utilities from `@theme inline` (`bg-card`, `text-muted-foreground`, `text-attention`, …), the `text-<level>` type scale, the `rounded-sm|md|lg|xl|full` radii. No hex values, raw palette classes (`text-blue-600`), arbitrary sizes (`text-[12.5px]`, `rounded-[5px]`) or `dark:` colour overrides in components.
+- When you touch a file that still uses arbitrary sizes, migrate that file using the mapping in `DESIGN.md`; do not mix old and new sizes within one component.
+- Every list and detail view covers loading, empty and error states, and every user-facing string exists in English and Chinese.
+- A token change edits `globals.css` and `DESIGN.md` in the same commit; run `npx @google/design.md lint DESIGN.md`.
+- Before deleting a CSS class, search for names built in template strings as well as literal ones.
+- Look at the result before calling a UI change done: screenshot each affected route before and after at 375px and 1280px, light and dark (for example `npx playwright screenshot --viewport-size=375,812 --color-scheme=dark <url> <file>`), compare the pairs, and list any intended visual differences in the pull request.
+
 ## Commit Messages
 
 - Write commit messages in English.

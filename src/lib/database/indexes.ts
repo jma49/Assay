@@ -41,6 +41,12 @@ export const INDEXES: Record<string, IndexDescription[]> = {
   [COLLECTIONS.accounts]: [{ key: { userId: 1 } }, { key: { providerId: 1, accountId: 1 }, unique: true }],
   [COLLECTIONS.verifications]: [{ key: { identifier: 1 } }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
   [COLLECTIONS.apiKeys]: [{ key: { key: 1 }, unique: true }, { key: { referenceId: 1 } }],
+  // OAuth for MCP clients: every MCP request checks the consent, every
+  // refresh looks up its token; expired refresh tokens go away on their own.
+  [COLLECTIONS.oauthClients]: [{ key: { clientId: 1 }, unique: true }],
+  [COLLECTIONS.oauthConsents]: [{ key: { userId: 1, clientId: 1 } }],
+  [COLLECTIONS.oauthRefreshTokens]: [{ key: { token: 1 }, unique: true }, { key: { userId: 1 } }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
+  [COLLECTIONS.oauthClientResources]: [{ key: { clientId: 1 } }],
   // Pending Telegram links expire on their own.
   [COLLECTIONS.telegramLinks]: [{ key: { codeHash: 1 }, unique: true }, { key: { expiresAt: 1 }, expireAfterSeconds: 0 }],
   // Batches only matter while someone watches their progress; keep a week.

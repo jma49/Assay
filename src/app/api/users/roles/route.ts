@@ -187,7 +187,7 @@ export const DELETE = withAuth(Permission.USER_MANAGE, async (request, { princip
     const success = await removeUserRole(targetUserId);
 
     if (success) {
-      // Removing a role also takes away the access already held: sessions and API keys.
+      // Removing a role also takes away the access already held: sessions, API keys and OAuth apps.
       const revoked = await revokeAccess(await getMongoDbClient().getDb(), targetUserId);
       return NextResponse.json({
         success: true,
