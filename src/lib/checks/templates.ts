@@ -271,7 +271,7 @@ function freshness(from: string, where: string, table: TableRef, column: string,
   const name = commentText(column);
   return check(
     [
-      `SELECT max(${col}) AS latest, now() - max(${col}) AS age`,
+      `SELECT max(${col}) AS latest, date_trunc('minute', now() - max(${col}))::text AS age`,
       `FROM ${from}`,
       // No GROUP BY: one row when the newest value is too old or missing, none otherwise.
       `HAVING max(${col}) IS NULL`,

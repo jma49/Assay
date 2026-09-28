@@ -72,7 +72,7 @@ describe("templates", () => {
     );
     expect(body(built("freshness", { columns: ["created_at"], maxAgeHours: 24 }))).toBe(
       [
-        `SELECT max("created_at") AS latest, now() - max("created_at") AS age`,
+        `SELECT max("created_at") AS latest, date_trunc('minute', now() - max("created_at"))::text AS age`,
         `FROM "demo"."orders"`,
         `HAVING max("created_at") IS NULL`,
         `    OR max("created_at") < now() - interval '24 hours';`,
