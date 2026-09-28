@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@better-auth/api-key": "^1.7.6",
+    "@better-auth/cimd": "1.7.6",
     "@better-auth/core": "1.7.6",
     "@better-auth/mcp": "^1.7.6",
     "@better-auth/oauth-provider": "^1.7.6",
