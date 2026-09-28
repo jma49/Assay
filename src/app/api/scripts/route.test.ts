@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
 
 const mocks = vi.hoisted(() => ({
   denied: null as Response | null,
   authorized: true,
   role: "admin" as string | null,
   existing: null as Record<string, unknown> | null,
+  guest: false,
+  listed: [] as Record<string, unknown>[],
   insertOne: vi.fn(async (_doc: Record<string, unknown>) => ({ insertedId: "mongo_1" })),
   findOne: vi.fn(),
   createApprovalRequest: vi.fn(async (..._args: unknown[]) => "req_1" as string | null),
@@ -16,7 +19,9 @@ vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
   validateApiAuth: async () =>
     mocks.denied
       ? { isValid: false, response: mocks.denied }
-      : { isValid: true, user: { id: "user_alice", fullName: "Alice" }, userEmail: "alice@example.com", isGuest: false },
+      : mocks.guest
+        ? { isValid: true, user: { id: "guest_1", fullName: "Guest" }, userEmail: "", isGuest: true }
+        : { isValid: true, user: { id: "user_alice", fullName: "Alice" }, userEmail: "alice@example.com", isGuest: false },
 }));
 vi.mock("@/lib/auth/rbac", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/auth/rbac")>()),
@@ -29,7 +34,7 @@ vi.mock("@/lib/database/mongodb", () => ({
       collection: () => ({
         findOne: mocks.findOne,
         insertOne: mocks.insertOne,
-        find: () => ({ sort: () => ({ toArray: async () => [] }) }),
+        find: () => ({ sort: () => ({ toArray: async () => mocks.listed }) }),
       }),
     }),
   }),
@@ -142,6 +147,20 @@ describe("POST /api/scripts", () => {
 describe("GET /api/scripts", () => {
   beforeEach(() => {
     mocks.denied = null;
+    mocks.guest = false;
+    mocks.listed = [];
+  });
+
+  const listed = (author: string) => ({ _id: new ObjectId(), scriptId: "c", name: "C", author, sqlContent: "SELECT 1", createdAt: new Date(), updatedAt: new Date() });
+
+  it("hides member handles from guests", async () => {
+    mocks.listed = [listed("ada@example.com"), listed("demo-seed")];
+    mocks.guest = true;
+    const guest = await (await GET(new NextRequest("http://localhost/api/scripts"), { params: Promise.resolve({}) })).json();
+    expect(guest.map((s: { author: string }) => s.author)).toEqual(["Teammate", "demo-seed"]);
+    mocks.guest = false;
+    const member = await (await GET(new NextRequest("http://localhost/api/scripts"), { params: Promise.resolve({}) })).json();
+    expect(member[0].author).toBe("ada@example.com");
   });
 
   it("returns the auth response when script:read is refused", async () => {
