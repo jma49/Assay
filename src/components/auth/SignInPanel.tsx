@@ -242,7 +242,7 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
                   {errorText}
                 </p>
               )}
-              {(providers.google || providers.github) && <p className="text-[12px] text-subtle-foreground">{t.privacy}</p>}
+              {(providers.google || providers.github) && <p className="text-[12px] text-muted-foreground">{t.privacy}</p>}
             </div>
 
             {providers.password && (

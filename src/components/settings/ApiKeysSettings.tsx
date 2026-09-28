@@ -233,7 +233,7 @@ export function ApiKeysSettings() {
                   <div className="grid min-w-0 flex-1 gap-0.5">
                     <div className="flex min-w-0 items-baseline gap-2">
                       <span className="truncate text-[13.5px] font-medium">{key.name || "—"}</span>
-                      {key.start && <span className="font-mono text-[12px] text-subtle-foreground">{key.start}…</span>}
+                      {key.start && <span className="font-mono text-[12px] text-muted-foreground">{key.start}…</span>}
                     </div>
                     <div className="flex flex-wrap gap-x-3 text-[12px] text-muted-foreground">
                       <span title={key.lastRequest ? formatDateTime(key.lastRequest, language) : undefined}>
