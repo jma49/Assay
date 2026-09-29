@@ -30,7 +30,6 @@ export function HashtagInput({
   maxTags = 10,
 }: HashtagInputProps) {
   const [inputValue, setInputValue] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
 
   const validateHashtag = (tag: string): boolean => {
     const cleaned = tag.trim().toLowerCase();
@@ -85,14 +84,14 @@ export function HashtagInput({
       
       <div
         className={cn(
-          "min-h-[2.25rem] rounded-md border border-input bg-card px-2.5 py-1.5 text-[13px] shadow-xs transition-colors",
-          "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-          isFocused && "ring-2 ring-ring ring-offset-2",
+          // As tall as an Input (32px) while empty; the same focus ring as one.
+          "min-h-8 rounded-md border border-input bg-card px-2.5 py-[3px] text-[13px] shadow-xs transition-[color,box-shadow]",
+          "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50",
           disabled && "cursor-not-allowed opacity-50",
           className
         )}
       >
-        <div className="flex flex-wrap gap-1.5 mb-2">
+        {hashtags.length > 0 && <div className="flex flex-wrap gap-1.5 pt-1 pb-1.5">
           {hashtags.map((tag, index) => (
             <Badge
               key={index}
@@ -114,7 +113,7 @@ export function HashtagInput({
               )}
             </Badge>
           ))}
-        </div>
+        </div>}
 
         {!disabled && hashtags.length < maxTags && (
           <div className="flex items-center gap-2">
@@ -123,10 +122,8 @@ export function HashtagInput({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
               placeholder={placeholder}
-              className="border-0 bg-transparent shadow-none px-0 py-0 h-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="h-6 border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0"
               disabled={disabled}
             />
             {inputValue.trim() && (
