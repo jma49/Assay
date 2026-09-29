@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { SqlScript } from "@/components/business/dashboard/types";
 import {
   applyFieldChange,
-  classifyDelete,
-  classifySave,
+  approvalNotice,
   createPayload,
   emptyForm,
   formFromScript,
@@ -138,30 +137,9 @@ describe("payloads", () => {
   });
 });
 
-describe("classifySave", () => {
-  it("treats 409 as a conflict even when the body asks for approval", () => {
-    expect(classifySave({ ok: false, status: 409 }, { requiresApproval: true }, "edit")).toEqual({ kind: "conflict" });
-  });
-
-  it("reports approval from both failed and successful responses", () => {
-    expect(classifySave({ ok: false, status: 202 }, { requiresApproval: true, message: "m" }, "edit")).toEqual({ kind: "approval", message: "m" });
-    expect(classifySave({ ok: true, status: 200 }, { requiresApproval: true, message: "m" }, "add")).toEqual({ kind: "approval", message: "m" });
-  });
-
-  it("prefers the server message and falls back to the status", () => {
-    expect(classifySave({ ok: false, status: 400 }, { message: "bad" }, "add")).toEqual({ kind: "failed", message: "bad" });
-    expect(classifySave({ ok: false, status: 500 }, null, "edit")).toEqual({ kind: "failed", message: "Failed to edit script: 500" });
-  });
-
-  it("marks a plain success as saved", () => {
-    expect(classifySave({ ok: true, status: 200 }, { success: true }, "edit")).toEqual({ kind: "saved" });
-  });
-});
-
-describe("classifyDelete", () => {
-  it("maps failures, approvals and deletes", () => {
-    expect(classifyDelete({ ok: false, status: 403 }, {})).toEqual({ kind: "failed", message: "Failed to delete script: 403" });
-    expect(classifyDelete({ ok: true, status: 200 }, { requiresApproval: true, message: "m" })).toEqual({ kind: "approval", message: "m" });
-    expect(classifyDelete({ ok: true, status: 200 }, {})).toEqual({ kind: "deleted" });
+describe("approvalNotice", () => {
+  it("explains the wait in the reader's language, not the server's", () => {
+    expect(approvalNotice("zh", "delete")).toMatchObject({ title: "删除申请已提交", description: "管理员审批后才会生效。" });
+    expect(approvalNotice("en", "save").title).toBe("Submitted for approval");
   });
 });

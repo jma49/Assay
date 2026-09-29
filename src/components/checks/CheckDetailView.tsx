@@ -30,7 +30,7 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
   });
 
   if (error) {
-    return <NotFoundState title={error === "No check with this id" ? t.notFound : error} backHref="/checks" backLabel={t.back} />;
+    return <NotFoundState title={error} backHref="/checks" backLabel={t.back} />;
   }
 
   if (loading && !check) {

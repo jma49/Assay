@@ -100,8 +100,8 @@ export function firstInvalid(errors: FieldErrors): InvalidField | null {
 }
 
 /** A save the API refused because the id is taken, shown on the id field instead of a toast. */
-export function saveErrorField(message: string, language: Language): FieldErrors | null {
-  return /already exists/i.test(message) ? { scriptId: MESSAGES[language].takenId } : null;
+export function saveErrorField(code: string | undefined, language: Language): FieldErrors | null {
+  return code === "id_taken" ? { scriptId: MESSAGES[language].takenId } : null;
 }
 
 /** Where to go after saving: the new check, or the list when it waits for approval (it does not exist yet). */

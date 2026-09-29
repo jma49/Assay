@@ -23,6 +23,7 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
+import { apiErrorMessage } from "@/client/send-json";
 import { formatDateTime } from "@/lib/utils/datetime";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { DashboardTranslationKeys } from "@/components/business/dashboard/types";
@@ -87,10 +88,8 @@ export function EditHistoryDialog({
         const response = await fetch(`/api/edit-history?${params}`);
         
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          const errorMessage = errorData.error || 
-            `HTTP ${response.status}: ${response.statusText}`;
-          throw new Error(errorMessage);
+          const errorData = await response.json().catch(() => null);
+          throw new Error(apiErrorMessage(errorData) || `HTTP ${response.status}: ${response.statusText}`);
         }
 
         const data = await response.json();
