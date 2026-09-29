@@ -1,351 +1,58 @@
-/** @jsxImportSource react */
-import React, { useState } from "react";
-import {
-  Clock,
-  CheckCircle2,
-  X,
-  Loader2,
-  AlertTriangle,
-  Database,
-  TrendingUp,
-} from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { OUTCOME_DOT, OUTCOME_LABEL, OUTCOME_TEXT } from "@/components/checks/status";
+import type { BatchItemView } from "@/contracts/batches";
+import { cn } from "@/lib/utils/utils";
+import { batchCounts, itemOutcome } from "./manual-trigger/batch-progress";
+import { triggerCopy } from "./manual-trigger/copy";
 
-export interface ScriptExecutionStatus {
-  scriptId: string;
-  scriptName: string;
-  isScheduled: boolean;
-  status: "pending" | "running" | "completed" | "failed" | "attention_needed";
-  startTime?: Date;
-  endTime?: Date;
-  message?: string;
-  findings?: string;
-  mongoResultId?: string;
-}
-
-interface BatchExecutionProgressProps {
-  isVisible: boolean;
-  scripts: ScriptExecutionStatus[];
-  onClose: () => void;
-  onCancel?: () => void;
-  language: string;
-}
-
-export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
-  isVisible,
-  scripts,
-  onClose,
-  onCancel,
-  language,
-}) => {
-  const [isMinimized, setIsMinimized] = useState(false);
-
-  const stats = {
-    total: scripts.length,
-    pending: scripts.filter((s) => s.status === "pending").length,
-    running: scripts.filter((s) => s.status === "running").length,
-    completed: scripts.filter((s) => s.status === "completed").length,
-    failed: scripts.filter((s) => s.status === "failed").length,
-    attention: scripts.filter((s) => s.status === "attention_needed").length,
-  };
-
-  const progress =
-    ((stats.completed + stats.failed + stats.attention) / stats.total) * 100;
-  const isExecuting = stats.running > 0 || stats.pending > 0;
-  const isCompleted = stats.pending === 0 && stats.running === 0;
-
-  const getStatusIcon = (status: ScriptExecutionStatus["status"]) => {
-    switch (status) {
-      case "pending":
-        return <Clock className="h-4 w-4 text-muted-foreground" />;
-      case "running":
-        return <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />;
-      case "completed":
-        return <CheckCircle2 className="h-4 w-4 text-success" />;
-      case "failed":
-        return <X className="h-4 w-4 text-failure" />;
-      case "attention_needed":
-        return <AlertTriangle className="h-4 w-4 text-attention" />;
-      default:
-        return <Clock className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
-
-  const getStatusText = (status: ScriptExecutionStatus["status"]) => {
-    switch (status) {
-      case "pending":
-        return language === "zh" ? "等待" : "Pending";
-      case "running":
-        return language === "zh" ? "执行中" : "Running";
-      case "completed":
-        return language === "zh" ? "完成" : "Complete";
-      case "failed":
-        return language === "zh" ? "失败" : "Failed";
-      case "attention_needed":
-        return language === "zh" ? "关注" : "Attention";
-      default:
-        return status;
-    }
-  };
-
-  const getStatusColor = (status: ScriptExecutionStatus["status"]) => {
-    switch (status) {
-      case "pending":
-        return "default";
-      case "running":
-        return "default";
-      case "completed":
-        return "default";
-      case "failed":
-        return "destructive";
-      case "attention_needed":
-        return "secondary";
-      default:
-        return "default";
-    }
-  };
-
-  const formatDuration = (startTime?: Date, endTime?: Date) => {
-    if (!startTime) return "-";
-    const end = endTime || new Date();
-    const duration = Math.floor((end.getTime() - startTime.getTime()) / 1000);
-
-    if (duration < 60) {
-      return `${duration}s`;
-    } else if (duration < 3600) {
-      return `${Math.floor(duration / 60)}m ${duration % 60}s`;
-    } else {
-      return `${Math.floor(duration / 3600)}h ${Math.floor((duration % 3600) / 60)}m`;
-    }
-  };
-
-  if (!isVisible) return null;
+/** A bulk run's checks as they finish, each with its outcome and a link to its report. */
+export function BatchExecutionProgress({ items, language }: { items: BatchItemView[]; language: string }) {
+  const copy = triggerCopy(language);
+  const lang = language === "zh" ? "zh" : "en";
+  const counts = batchCounts(items);
+  const percent = items.length > 0 ? (counts.done / items.length) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card
-        className={`w-full max-w-6xl bg-card transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300 ${
-          isMinimized ? "h-auto" : "max-h-[90vh]"
-        }`}
-      >
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10 ring-2 ring-primary/20">
-                <Database className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  {language === "zh"
-                    ? "批量执行进度"
-                    : "Batch Execution Progress"}
-                  {isExecuting && (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  )}
-                </CardTitle>
-                <CardDescription>
-                  {language === "zh"
-                    ? `执行进度: ${stats.completed + stats.failed + stats.attention}/${stats.total} 个脚本`
-                    : `Progress: ${stats.completed + stats.failed + stats.attention}/${stats.total} scripts`}
-                </CardDescription>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsMinimized(!isMinimized)}
-                className="h-8 w-8 p-0"
-              >
-                <TrendingUp
-                  className={`h-4 w-4 transition-transform ${isMinimized ? "rotate-180" : ""}`}
-                />
-              </Button>
-              {isExecuting && onCancel && (
-                <Button variant="outline" size="sm" onClick={onCancel}>
-                  {language === "zh" ? "取消" : "Cancel"}
-                </Button>
+    <section aria-live="polite" className="space-y-3">
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-[13px]">
+          <span className="font-medium">{copy.progress(counts.done, items.length)}</span>
+          <span className="text-muted-foreground tabular-nums">{copy.finishedSummary(counts.clean, counts.issues, counts.error)}</span>
+        </div>
+        <Progress value={percent} className="h-1" aria-label={copy.progress(counts.done, items.length)} />
+      </div>
+      <ul className="max-h-72 divide-y overflow-y-auto rounded-lg shadow-border">
+        {items.map((item) => {
+          const outcome = itemOutcome(item.status);
+          const label = outcome ? OUTCOME_LABEL[outcome][lang] : item.status === "running" ? copy.runningItem : copy.pending;
+          return (
+            <li key={item.scriptId} className="flex items-center gap-3 px-3 py-2 text-[13px]">
+              {item.status === "running" ? (
+                <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" aria-hidden />
+              ) : (
+                <span className={cn("status-dot shrink-0", outcome ? OUTCOME_DOT[outcome] : "status-dot-idle")} aria-hidden />
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>{language === "zh" ? "整体进度" : "Overall Progress"}</span>
-              <span>{Math.round(progress)}%</span>
-            </div>
-            <Progress value={progress} className="h-2" />
-          </div>
-
-          {/* Statistics */}
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
-            <div className="text-center p-2 bg-muted/20 rounded-lg">
-              <div className="text-lg font-bold text-foreground">
-                {stats.total}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {language === "zh" ? "总计" : "Total"}
-              </div>
-            </div>
-            <div className="text-center p-2 bg-muted rounded-lg">
-              <div className="text-lg font-bold text-muted-foreground">
-                {stats.running}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {language === "zh" ? "执行中" : "Running"}
-              </div>
-            </div>
-            <div className="text-center p-2 bg-muted rounded-lg">
-              <div className="text-lg font-bold text-muted-foreground">
-                {stats.pending}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {language === "zh" ? "等待" : "Pending"}
-              </div>
-            </div>
-            <div className="text-center p-2 bg-success/10 rounded-lg">
-              <div className="text-lg font-bold text-success">
-                {stats.completed}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {language === "zh" ? "成功" : "Success"}
-              </div>
-            </div>
-            <div className="text-center p-2 bg-attention/10 rounded-lg">
-              <div className="text-lg font-bold text-attention">
-                {stats.attention}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {language === "zh" ? "关注" : "Attention"}
-              </div>
-            </div>
-            <div className="text-center p-2 bg-failure/10 rounded-lg">
-              <div className="text-lg font-bold text-failure">
-                {stats.failed}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {language === "zh" ? "失败" : "Failed"}
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-
-        {!isMinimized && (
-          <CardContent className="pt-0">
-            <Separator className="mb-4" />
-
-            {/* Script List */}
-            <ScrollArea className="h-96 pr-4">
-              <div className="space-y-3">
-                {scripts.map((script, index) => (
-                  <div
-                    key={script.scriptId}
-                    className={`flex items-center gap-3 p-4 rounded-lg border transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200 ${
-                      script.status === "running"
-                        ? "border-border bg-muted  "
-                        : script.status === "failed"
-                          ? "border-failure/30 bg-failure/10  "
-                          : script.status === "attention_needed"
-                            ? "border-attention/30 bg-attention/10  "
-                            : script.status === "completed"
-                              ? "border-success/30 bg-success/10  "
-                              : "border-border bg-card"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <span className="text-sm font-mono text-muted-foreground w-8 text-center">
-                        #{index + 1}
-                      </span>
-                      {getStatusIcon(script.status)}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-foreground truncate max-w-md">
-                          {script.scriptName || script.scriptId}
-                        </h4>
-                        {script.isScheduled && (
-                          <Badge
-                            variant="outline"
-                            className="text-xs flex-shrink-0"
-                          >
-                            {language === "zh" ? "定时" : "Scheduled"}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground truncate max-w-md">
-                        {script.scriptId}
-                      </p>
-                      {script.message && (
-                        <p
-                          className="text-xs text-muted-foreground mt-1 truncate max-w-md"
-                          title={script.message}
-                        >
-                          {script.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col items-end gap-2 flex-shrink-0 min-w-[120px]">
-                      <Badge
-                        variant={getStatusColor(script.status)}
-                        className="text-xs whitespace-nowrap"
-                      >
-                        {getStatusText(script.status)}
-                      </Badge>
-                      <div className="text-xs text-muted-foreground text-right">
-                        {formatDuration(script.startTime, script.endTime)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-
-            {/* Status Message */}
-            {isCompleted && (
-              <Alert className="mt-4">
-                <CheckCircle2 className="h-4 w-4" />
-                <AlertDescription>
-                  {language === "zh"
-                    ? `批量执行完成！成功: ${stats.completed}, 需要关注: ${stats.attention}, 失败: ${stats.failed}`
-                    : `Batch execution completed! Success: ${stats.completed}, Attention: ${stats.attention}, Failed: ${stats.failed}`}
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-2 mt-4">
-              {isCompleted && (
-                <Button onClick={onClose}>
-                  {language === "zh" ? "关闭" : "Close"}
-                </Button>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate">{item.scriptName || item.scriptId}</span>
+                {outcome === "error" && item.message && (
+                  <span className="block truncate font-mono text-[12px] text-muted-foreground" title={item.message}>
+                    {item.message}
+                  </span>
+                )}
+              </span>
+              {outcome && item.mongoResultId ? (
+                <Link href={`/runs/${item.mongoResultId}`} className={cn("shrink-0 hover:underline", OUTCOME_TEXT[outcome])}>
+                  {label}
+                </Link>
+              ) : (
+                <span className={cn("shrink-0", outcome ? OUTCOME_TEXT[outcome] : "text-muted-foreground")}>{label}</span>
               )}
-            </div>
-          </CardContent>
-        )}
-      </Card>
-    </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
-};
+}
