@@ -10,7 +10,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "eval": "vitest run --config vitest.evals.config.mts",
     "clean": "rm -rf .next .next-dev node_modules/.cache",
     "sql:run": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/run-sql.ts",
