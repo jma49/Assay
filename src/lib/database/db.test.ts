@@ -31,6 +31,12 @@ describe("pool creation logging", () => {
     expect(logged).not.toMatch(/user:|pass@/);
   });
 
+  it("says which CAs verify TLS", () => {
+    const url = "postgres://db.internal/prod";
+    expect(poolLogLine(url, { rejectUnauthorized: true }, {})).toBe("[db] Pool for postgres://db.internal/prod with TLS verified against the system CAs");
+    expect(poolLogLine(url, { ca: "ca", cert: "c" }, {})).toMatch(/configured CA and a client certificate$/);
+  });
+
   it("names the host outside CI and nothing in public CI logs", () => {
     const url = "postgres://owner:s3cret@db.internal:5432/prod?password=s3cret";
     expect(poolLogLine(url, undefined, {})).toBe("[db] Pool for postgres://****@db.internal:5432/prod?password=****");
