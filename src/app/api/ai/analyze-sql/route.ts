@@ -4,6 +4,8 @@ import { parseJson, withAuth } from "@/server/http/route";
 import { aiError, guardAiRequest } from "@/server/http/ai-guard";
 import { Permission } from "@/lib/auth/rbac";
 import { getCachedSchema } from "@/lib/database/db-schema";
+import { DataSourceId } from "@/contracts/data-sources";
+import { requireSource } from "@/server/services/data-sources";
 import { generateContentWithRetry, logTokenUsage } from "@/lib/utils/ai-utils";
 
 const Body = z.object({
@@ -11,6 +13,8 @@ const Body = z.object({
   analysisType: z.enum(["explain", "optimize"]),
   /** The reader's language; the answer is written in it. */
   language: z.enum(["en", "zh"]).catch("en"),
+  /** The source the editor has selected; its schema is the context. */
+  dataSourceId: DataSourceId.optional(),
 });
 
 const ASK = {
@@ -38,11 +42,12 @@ function analysisPrompt(sql: string, type: keyof typeof ASK, schema: string, lan
 }
 
 export const POST = withAuth(Permission.SCRIPT_CREATE, async (request, { principal }) => {
-  const { sql, analysisType, language } = await parseJson(request, Body);
+  const { sql, analysisType, language, dataSourceId } = await parseJson(request, Body);
   await guardAiRequest(principal.id, { sql });
+  const source = await requireSource(dataSourceId);
 
   try {
-    const prompt = analysisPrompt(sql, analysisType, await getCachedSchema(), language);
+    const prompt = analysisPrompt(sql, analysisType, await getCachedSchema(source), language);
     const analysis = await generateContentWithRetry(prompt, { feature: "analyze-sql", userId: principal.id });
     logTokenUsage(prompt, analysis, `analyze-sql ${analysisType}`);
     return NextResponse.json({ analysis, analysisType, success: true });

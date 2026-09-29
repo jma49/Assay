@@ -23,7 +23,7 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
         // `lease: null` also matches documents without a lease.
         { scriptId, $or: [{ lease: null }, { "lease.until": { $lte: now } }] },
         { $set: { lease: { runId, until } } },
-        { returnDocument: "after", projection: { scriptId: 1, sqlContent: 1, state: 1, createdAt: 1, pendingEvents: 1 } },
+        { returnDocument: "after", projection: { scriptId: 1, sqlContent: 1, dataSourceId: 1, state: 1, createdAt: 1, pendingEvents: 1 } },
       );
       if (check) {
         return {
@@ -31,6 +31,7 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
           check: {
             scriptId,
             sqlContent: String(check.sqlContent ?? ""),
+            dataSourceId: typeof check.dataSourceId === "string" ? check.dataSourceId : null,
             state: check.state ?? null,
             createdAt: check.createdAt instanceof Date ? check.createdAt : null,
             pendingEvents: Array.isArray(check.pendingEvents) ? (check.pendingEvents as CheckEvent[]) : [],

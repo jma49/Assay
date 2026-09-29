@@ -3,6 +3,7 @@
  *   tsx scripts/run-sql.ts <scriptId>
  */
 import db from "@/lib/database/db";
+import { closeSourcePools } from "@/server/datasource/sources";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { errorKind, inPublicCi } from "@/lib/utils/public-log";
 import { runCheckNow } from "@/server/services/run-check-deps";
@@ -23,7 +24,7 @@ async function main() {
     console.log(`${scriptId}: ${resultDetail(result, inPublicCi())}`);
     if (result.kind === "missing" || result.outcome === "error") process.exitCode = 1;
   } finally {
-    await db.closePool();
+    await Promise.all([db.closePool(), closeSourcePools()]);
     await getMongoDbClient().closeConnection();
   }
 }

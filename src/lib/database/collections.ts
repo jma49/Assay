@@ -17,6 +17,7 @@ export const COLLECTIONS = {
   notificationDestinations: "notification_destinations",
   notificationDeliveries: "notification_deliveries",
   notificationReminders: "notification_reminders",
+  dataSources: "data_sources",
   // Better Auth's collections.
   users: "user",
   sessions: "session",

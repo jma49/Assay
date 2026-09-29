@@ -8,6 +8,9 @@ import { ApprovalStatus } from "@/lib/types/approval";
 import { authorProblem, ownsCheck, readVersion } from "@/lib/workflows/check-fields";
 import { ApiError } from "@/server/http/route";
 import { fileChangeRequest, needsReview } from "./approvals";
+import { assertDataSourceExists } from "./data-sources";
+import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
+import { DEFAULT_SOURCE_ID } from "@/domain/data-source";
 import { createCheck, deleteCheck, updateCheck, type CheckActor } from "./check-writes";
 
 /**
@@ -48,6 +51,7 @@ export async function submitNewCheck(db: Db, input: NewCheckInput, actor: CheckA
     throw new ApiError(409, "id_taken", `A check with the id '${input.scriptId}' already exists`);
   }
   assertReadOnly(input.sqlContent);
+  await assertDataSourceExists(db, DEFAULT_WORKSPACE_ID, input.dataSourceId);
   const role = await roleOf(actor);
 
   const fields = {
@@ -63,6 +67,7 @@ export async function submitNewCheck(db: Db, input: NewCheckInput, actor: CheckA
     sqlContent: input.sqlContent,
     isScheduled: input.isScheduled || false,
     cronSchedule: input.cronSchedule || "",
+    dataSourceId: input.dataSourceId || DEFAULT_SOURCE_ID,
   };
 
   if (needsReview(role)) {
@@ -126,6 +131,7 @@ export async function submitCheckEdit(db: Db, scriptId: string, input: CheckEdit
   const badSchedule = scheduleProblem(input.isScheduled, input.cronSchedule);
   if (badSchedule) throw invalid(badSchedule);
   if (input.sqlContent) assertReadOnly(input.sqlContent);
+  await assertDataSourceExists(db, DEFAULT_WORKSPACE_ID, input.dataSourceId);
 
   const existing = await checks(db).findOne({ scriptId });
   if (!existing) throw notFound(scriptId);
@@ -164,8 +170,8 @@ export async function submitCheckEdit(db: Db, scriptId: string, input: CheckEdit
 
 /** The editable fields of the stored check, the base an edit request is merged onto. */
 function pickFromExisting(existing: Document): Document {
-  const { name, cnName, description, cnDescription, scope, cnScope, author, hashtags, sqlContent, isScheduled, cronSchedule } = existing;
-  return { name, cnName, description, cnDescription, scope, cnScope, author, hashtags, sqlContent, isScheduled, cronSchedule };
+  const { name, cnName, description, cnDescription, scope, cnScope, author, hashtags, sqlContent, isScheduled, cronSchedule, dataSourceId } = existing;
+  return { name, cnName, description, cnDescription, scope, cnScope, author, hashtags, sqlContent, isScheduled, cronSchedule, dataSourceId };
 }
 
 /** Deleting any check is recorded as a request; it needs review unless you are an admin. */

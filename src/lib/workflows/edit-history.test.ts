@@ -40,6 +40,13 @@ describe("buildEditHistoryEntry", () => {
     ).toBeNull();
   });
 
+  it("records moving a check to another data source, but not naming the built-in one it already used", () => {
+    const moved = buildEditHistoryEntry({ scriptId: "demo-check", operation: "update", oldData: script, newData: { ...script, dataSourceId: "billing" } });
+    expect(moved?.changes).toEqual([{ field: "dataSourceId", oldValue: undefined, newValue: "billing" }]);
+    const same = buildEditHistoryEntry({ scriptId: "demo-check", operation: "update", oldData: script, newData: { ...script, dataSourceId: "default" } });
+    expect(same).toBeNull();
+  });
+
   it("snapshots the removed script on delete", () => {
     const entry = buildEditHistoryEntry({ scriptId: "demo-check", operation: "delete", oldData: script });
 

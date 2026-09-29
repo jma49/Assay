@@ -1,3 +1,4 @@
+import { sourceIdOf } from "@/domain/data-source";
 import { ScriptSnapshot } from "./edit-history-schema";
 
 export interface ChangeDetail {
@@ -35,6 +36,7 @@ function getObjectChanges(
     "isScheduled",
     "cronSchedule",
     "sqlContent",
+    "dataSourceId",
   ];
 
   for (const key of allKeys) {
@@ -42,7 +44,10 @@ function getObjectChanges(
 
     const oldValue = oldObj?.[key];
     const newValue = newObj?.[key];
-    if (normalizeValue(oldValue) !== normalizeValue(newValue)) {
+    // A check without a source runs against `default`; setting it explicitly changes nothing.
+    const same =
+      key === "dataSourceId" ? sourceIdOf(oldObj) === sourceIdOf(newObj) : normalizeValue(oldValue) === normalizeValue(newValue);
+    if (!same) {
       changes.push({
         field: key,
         oldValue: oldValue,
