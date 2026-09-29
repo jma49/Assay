@@ -204,7 +204,9 @@
   --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* Type scale (DESIGN.md). Body levels leave the weight to the element, so font-medium etc. still apply. */
+  /* Type scale (DESIGN.md). Body levels leave the weight to the element, so font-medium etc. still apply.
+     Body, caption and label line heights are whole even pixels, so text of mixed levels centred in one
+     row (a table row, a toolbar) lands on the same baseline instead of a pixel apart. */
   --text-display-lg: 38px;
   --text-display-lg--line-height: 1.08;
   --text-display-lg--letter-spacing: -0.025em;
@@ -229,15 +231,15 @@
   --text-title-sm--line-height: 1.4;
   --text-title-sm--font-weight: 600;
   --text-body-lg: 15px;
-  --text-body-lg--line-height: 1.75;
+  --text-body-lg--line-height: calc(26 / 15);
   --text-body-md: 14px;
-  --text-body-md--line-height: 1.5;
+  --text-body-md--line-height: calc(20 / 14);
   --text-body-sm: 13px;
-  --text-body-sm--line-height: 1.45;
+  --text-body-sm--line-height: calc(20 / 13);
   --text-caption: 12px;
-  --text-caption--line-height: 1.4;
+  --text-caption--line-height: calc(16 / 12);
   --text-label-caps: 11px;
-  --text-label-caps--line-height: 1.3;
+  --text-label-caps--line-height: calc(14 / 11);
   --text-label-caps--letter-spacing: 0.06em;
   --text-label-caps--font-weight: 600;
   --text-stat: 24px;
@@ -259,6 +261,13 @@
   body {
     @apply bg-background text-foreground font-sans;
     font-size: 14px;
+  }
+
+  /* iOS Safari zooms into a focused field under 16px, so fields start at 16px
+     on phones; Input and Textarea take their scale level from `sm:` up. */
+  [data-slot="input"],
+  [data-slot="textarea"] {
+    font-size: 16px;
   }
 
   ::selection {
