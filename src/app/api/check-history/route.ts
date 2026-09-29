@@ -2,17 +2,17 @@ import { NextResponse } from "next/server";
 import { withAuth } from "@/server/http/route";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
+import { cappedCount, pagination } from "@/server/http/paging";
 import { checksWithAllTags, historyFilter, historySort, parseHistoryParams } from "@/server/runs/history-query";
-import { SAMPLE_FIELDS, storedSample } from "@/server/runs/sample";
 import { COLLECTIONS } from "@/lib/database/collections";
 
-/** The run fields the list shows; the sample is read only when asked for. */
+/** The run fields the list shows; never the sample or the row fingerprints. */
 const RUN_FIELDS = { checkId: 1, finishedAt: 1, outcome: 1, message: 1, findings: 1, github_run_id: 1 } as const;
 
 export const GET = withAuth(Permission.HISTORY_READ, async (request) => {
   try {
     const params = parseHistoryParams(new URL(request.url).searchParams);
-    const { page, limit, hashtags, includeSample } = params;
+    const { page, limit, hashtags } = params;
     const db = await getMongoDbClient().getDb();
 
     let taggedCheckIds: string[] | null = null;
@@ -26,20 +26,19 @@ export const GET = withAuth(Permission.HISTORY_READ, async (request) => {
 
     const filter = historyFilter(params, taggedCheckIds);
     const runs = db.collection(COLLECTIONS.runs);
-    const [docs, total] =
+    const [docs, count] =
       taggedCheckIds?.length === 0
-        ? [[], 0]
+        ? [[], { total: 0, capped: false }]
         : await Promise.all([
             runs
-              .find(filter, { projection: { ...RUN_FIELDS, ...(includeSample && SAMPLE_FIELDS) } })
+              .find(filter, { projection: RUN_FIELDS })
               .sort(historySort(params))
               .skip((page - 1) * limit)
               .limit(limit)
               .toArray(),
-            runs.countDocuments(filter),
+            cappedCount(runs, filter),
           ]);
 
-    const totalPages = Math.ceil(total / limit);
     return NextResponse.json({
       data: docs.map((run) => ({
         _id: String(run._id),
@@ -49,9 +48,8 @@ export const GET = withAuth(Permission.HISTORY_READ, async (request) => {
         message: run.message ?? "",
         findings: run.findings ?? "",
         github_run_id: run.github_run_id,
-        ...(includeSample && { sample: storedSample(run) }),
       })),
-      pagination: { page, limit, total, totalPages, hasNext: page < totalPages, hasPrev: page > 1 },
+      pagination: pagination(page, limit, count),
       query_info: {
         search: params.search || undefined,
         checkId: params.checkId || undefined,
@@ -59,7 +57,6 @@ export const GET = withAuth(Permission.HISTORY_READ, async (request) => {
         hashtags: hashtags.length > 0 ? hashtags : undefined,
         sort_by: params.sortBy,
         sort_order: params.sortOrder,
-        include_sample: includeSample,
       },
     });
   } catch (error) {

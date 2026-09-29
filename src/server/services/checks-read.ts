@@ -2,7 +2,7 @@ import { ObjectId, type Db, type Document } from "mongodb";
 import type { CheckDetail, CheckStateDto, CheckSummary, LatestRun, RunListItem, RunPoint } from "@/contracts/checks";
 import { stateFromHistory, type CheckState, type RunOutcome } from "@/domain/run";
 import { markRows } from "@/server/runs/row-marks";
-import { SAMPLE_FIELDS, storedSample } from "@/server/runs/sample";
+import { responseSample, SAMPLE_FIELDS } from "@/server/runs/sample";
 import { toAlertingDto } from "./alert-controls";
 import { COLLECTIONS } from "@/lib/database/collections";
 
@@ -129,10 +129,10 @@ export async function getCheckDetail(db: Db, scriptId: string): Promise<CheckDet
       loadRows(db, String(history[0]._id)),
       history[1] ? loadRows(db, String(history[1]._id)) : Promise.resolve(null),
     ]);
-    const latestRows = storedSample(latestDoc);
+    const latestRows = responseSample(latestDoc);
     const marked = markRows(
       { rows: latestRows, keys: latestDoc?.rowKeys ?? null },
-      previousDoc ? { rows: storedSample(previousDoc), keys: previousDoc.rowKeys ?? null } : null,
+      previousDoc ? { rows: responseSample(previousDoc), keys: previousDoc.rowKeys ?? null } : null,
     );
     const point = runPoint(history[0]);
     latest = {
