@@ -1,200 +1,112 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { AlertCircle, Calendar, History, Loader2, User } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  History,
-  User,
-  Calendar,
-  Edit,
-  Plus,
-  Trash2,
-  AlertCircle,
-  Loader2,
-} from "lucide-react";
-import { apiErrorMessage } from "@/client/send-json";
-import { formatDateTime } from "@/lib/utils/datetime";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { DashboardTranslationKeys } from "@/components/business/dashboard/types";
+import { EMPTY_FILTERS, fieldLabel, formatChangeValue, historyDescription } from "@/components/business/edit-history/edit-history";
+import { OperationBadge, OperationIcon } from "@/components/business/edit-history/OperationBadge";
+import { useEditHistory } from "@/components/business/edit-history/useEditHistory";
+import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
+import { formatDateTime } from "@/lib/utils/datetime";
 
-interface EditHistoryItem {
-  _id: string;
-  scriptId: string;
-  operation: "create" | "update" | "delete";
-  userId: string;
-  userEmail?: string;
-  userName?: string;
-  changes?: {
-    field: string;
-    fieldDisplayName: string;
-    fieldDisplayNameCn: string;
-    oldValue: unknown;
-    newValue: unknown;
-  }[];
-  operationTime: string;
-  description?: string;
-  descriptionCn?: string;
-}
+type Translate = (key: DashboardTranslationKeys | string) => string;
 
 interface EditHistoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   scriptId?: string;
-  t: (key: DashboardTranslationKeys | string) => string;
+  t: Translate;
 }
 
-export function EditHistoryDialog({
-  open,
-  onOpenChange,
-  scriptId,
-  t,
-}: EditHistoryDialogProps) {
-  const { language } = useLanguage();
-  const [histories, setHistories] = useState<EditHistoryItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
+const PAGE_SIZE = 20;
+/** The dialog is wider than the history table, so it shows more of a changed value. */
+const VALUE_LENGTH = 100;
 
-  const fetchHistories = useCallback(
-    async (page: number = 1) => {
-      if (!scriptId) {
-        console.warn("fetchHistories: scriptId为空，跳过请求");
-        return;
-      }
+/** One create, update or delete, with the fields it changed. */
+function HistoryEntry({ history, t, language, last }: { history: EditHistoryRecord; t: Translate; language: string; last: boolean }) {
+  const description = historyDescription(history, language);
+  return (
+    <Card className="relative mx-1">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <OperationIcon operation={history.operation} />
+            <div>
+              <CardTitle className="text-sm">
+                <OperationBadge operation={history.operation} t={t} />
+              </CardTitle>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                <div className="flex items-center gap-1">
+                  <User className="w-3 h-3" />
+                  <span>{history.userName || history.userEmail || history.userId}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  <span>{formatDateTime(history.operationTime, language)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
 
-      setLoading(true);
-      setError(null);
+      {history.changes && history.changes.length > 0 && (
+        <CardContent className="pt-0">
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-foreground">{t("changesDetails")}：</h4>
+            {history.changes.map((change, index) => (
+              <div key={index} className="bg-muted rounded-lg p-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm font-medium text-foreground">{fieldLabel(change, language) || change.field}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <span className="text-muted-foreground">{t("originalValue")}：</span>
+                    <div className="mt-1 p-2 bg-failure/10 border border-failure/30 rounded text-failure font-mono">
+                      {formatChangeValue(change.oldValue, t, VALUE_LENGTH)}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">{t("newValue")}：</span>
+                    <div className="mt-1 p-2 bg-success/10 border border-success/30 rounded text-success font-mono">
+                      {formatChangeValue(change.newValue, t, VALUE_LENGTH)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      )}
 
-      try {
-        const params = new URLSearchParams({
-          scriptId,
-          page: page.toString(),
-          limit: "20",
-        });
+      {description && (
+        <CardContent className="pt-0">
+          <div className="text-sm text-muted-foreground">
+            <span className="font-medium">{t("description")}：</span>
+            {description}
+          </div>
+        </CardContent>
+      )}
 
-        console.log("正在获取编辑历史:", { scriptId, page });
-        const response = await fetch(`/api/edit-history?${params}`);
-        
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => null);
-          throw new Error(apiErrorMessage(errorData) || `HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        console.log("编辑历史获取成功:", data);
-        
-        if (!data.histories || !Array.isArray(data.histories)) {
-          console.warn("API返回数据格式异常:", data);
-          setHistories([]);
-          setTotalPages(0);
-          setCurrentPage(1);
-          return;
-        }
-        
-        setHistories(data.histories);
-        setTotalPages(data.pagination?.totalPages || 1);
-        setCurrentPage(page);
-      } catch (err) {
-        console.error("Failed to fetch edit history:", err);
-        const errorMessage = err instanceof Error 
-          ? err.message 
-          : (t("editHistoryErrorUnknown") || "获取编辑历史失败");
-        setError(errorMessage);
-        setHistories([]);
-        setTotalPages(0);
-        setCurrentPage(1);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [scriptId, t],
+      {!last && <Separator className="mt-2" />}
+    </Card>
   );
+}
 
-  useEffect(() => {
-    if (open && scriptId) {
-      fetchHistories(1);
-    }
-  }, [open, scriptId, fetchHistories]);
-
-  const getOperationIcon = (operation: string) => {
-    switch (operation) {
-      case "create":
-        return <Plus className="w-4 h-4 text-success" />;
-      case "update":
-        return <Edit className="w-4 h-4 text-muted-foreground" />;
-      case "delete":
-        return <Trash2 className="w-4 h-4 text-failure" />;
-      default:
-        return <History className="w-4 h-4 text-muted-foreground" />;
-    }
-  };
-
-  const getOperationBadgeColor = (operation: string) => {
-    switch (operation) {
-      case "create":
-        return "bg-success/10 text-success border-success/30";
-      case "update":
-        return "bg-muted text-foreground border-border";
-      case "delete":
-        return "bg-failure/10 text-failure border-failure/30";
-      default:
-        return "bg-muted text-foreground border-border";
-    }
-  };
-
-  const getOperationText = (operation: string) => {
-    switch (operation) {
-      case "create":
-        return t("operationCreate");
-      case "update":
-        return t("operationUpdate");
-      case "delete":
-        return t("operationDelete");
-      default:
-        return operation;
-    }
-  };
-
-  const formatValue = (value: unknown) => {
-    if (value === null || value === undefined) {
-      return t("noData");
-    }
-    if (typeof value === "boolean") {
-      return value ? t("scheduled") : t("manual");
-    }
-    if (typeof value === "string" && value.length > 100) {
-      return value.substring(0, 100) + "...";
-    }
-    return String(value);
-  };
-
-  const getFieldDisplayName = (field: string) => {
-    const fieldNames: Record<string, string> = {
-      name: "脚本名称",
-      cnName: "中文名称",
-      description: "描述",
-      cnDescription: "中文描述",
-      scope: "作用域",
-      cnScope: "中文作用域",
-      author: "作者",
-      isScheduled: "是否定时执行",
-      cronSchedule: "定时设置",
-      sqlContent: "SQL内容",
-    };
-    return fieldNames[field] || field;
-  };
+/** One check's edit history, from the manage page. */
+export function EditHistoryDialog({ open, onOpenChange, scriptId, t }: EditHistoryDialogProps) {
+  const { language } = useLanguage();
+  const { histories, loading, error, currentPage, totalPages, fetchHistories } = useEditHistory({
+    scriptId,
+    pageSize: PAGE_SIZE,
+    enabled: open && Boolean(scriptId),
+  });
+  const goTo = (page: number) => fetchHistories(EMPTY_FILTERS, page);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -229,125 +141,28 @@ export function EditHistoryDialog({
             ) : (
               <div className="space-y-3">
                 {histories.map((history, index) => (
-                  <Card key={history._id || index} className="relative mx-1">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {getOperationIcon(history.operation)}
-                        <div>
-                          <CardTitle className="text-sm">
-                            <Badge
-                              variant="outline"
-                              className={getOperationBadgeColor(
-                                history.operation,
-                              )}
-                            >
-                              {getOperationText(history.operation)}
-                            </Badge>
-                          </CardTitle>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                            <div className="flex items-center gap-1">
-                              <User className="w-3 h-3" />
-                              <span>
-                                {history.userName ||
-                                  history.userEmail ||
-                                  history.userId}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              <span>
-                                {formatDateTime(history.operationTime, language)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  {history.changes && history.changes.length > 0 && (
-                    <CardContent className="pt-0">
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-foreground">
-                          {t("changesDetails")}：
-                        </h4>
-                        {history.changes.map((change, changeIndex) => (
-                          <div
-                            key={changeIndex}
-                            className="bg-muted rounded-lg p-2"
-                          >
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-sm font-medium text-foreground">
-                                {change.fieldDisplayNameCn ||
-                                  change.fieldDisplayName ||
-                                  getFieldDisplayName(change.field)}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4 text-xs">
-                              <div>
-                                <span className="text-muted-foreground">
-                                  {t("originalValue")}：
-                                </span>
-                                <div className="mt-1 p-2 bg-failure/10 border border-failure/30 rounded text-failure font-mono">
-                                  {formatValue(change.oldValue)}
-                                </div>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">
-                                  {t("newValue")}：
-                                </span>
-                                <div className="mt-1 p-2 bg-success/10 border border-success/30 rounded text-success font-mono">
-                                  {formatValue(change.newValue)}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  )}
-
-                  {(history.descriptionCn || history.description) && (
-                    <CardContent className="pt-0">
-                      <div className="text-sm text-muted-foreground">
-                        <span className="font-medium">
-                          {t("description")}：
-                        </span>
-                        {history.descriptionCn || history.description}
-                      </div>
-                    </CardContent>
-                  )}
-
-                  {index < histories.length - 1 && (
-                    <Separator className="mt-2" />
-                  )}
-                </Card>
-                              ))}
-                </div>
-              )}
-            </div>
-          </ScrollArea>
+                  <HistoryEntry
+                    key={String(history._id ?? index)}
+                    history={history}
+                    t={t}
+                    language={language}
+                    last={index === histories.length - 1}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4 px-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fetchHistories(currentPage - 1)}
-              disabled={currentPage <= 1 || loading}
-            >
+            <Button variant="outline" size="sm" onClick={() => goTo(currentPage - 1)} disabled={currentPage <= 1 || loading}>
               {t("previous")}
             </Button>
             <span className="text-sm text-muted-foreground">
               {t("pageInfoShort")} {currentPage}/{totalPages}
             </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fetchHistories(currentPage + 1)}
-              disabled={currentPage >= totalPages || loading}
-            >
+            <Button variant="outline" size="sm" onClick={() => goTo(currentPage + 1)} disabled={currentPage >= totalPages || loading}>
               {t("next")}
             </Button>
           </div>
