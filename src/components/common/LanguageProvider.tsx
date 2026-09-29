@@ -27,6 +27,13 @@ interface LanguageProviderProps {
 // render use English so they match; the saved choice applies right after.
 const languageStore = createLanguageStore("assay-language", () => (typeof window === "undefined" ? undefined : window.localStorage));
 
+/**
+ * The reader's language right now. Effects that run on the first render see
+ * English from `useLanguage()` (the hydration snapshot); anything they show
+ * immediately, such as a toast, should ask here instead.
+ */
+export const currentLanguage = () => languageStore.getSnapshot();
+
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const language = useSyncExternalStore(languageStore.subscribe, languageStore.getSnapshot, languageStore.getServerSnapshot);
   const setLanguage = languageStore.set;
