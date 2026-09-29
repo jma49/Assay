@@ -41,6 +41,7 @@ Indexes live in `src/lib/database/indexes.ts` and are created on start-up
 | `pendingEvents` | Events committed with `state` but not yet written to `events`; normally empty (see [Concurrency](#concurrency)) |
 | `alerting` | `{ owner, mutedUntil, mutedBy, ack: { since, by, at } }` |
 | `demoSeed` | `true` on the seeded demo checks only; lets demo viewers run them |
+| `currentVersionId`, `currentVersion`, `currentVersionOrder` | The current `script_versions` record; `currentVersionOrder` sorts like the version, so a slower save never moves it back |
 | `approvalStatus`, `approvalRequestId`, `createdAt`, `updatedAt` | |
 
 Indexes: `scriptId` unique; `createdAt`.
@@ -118,7 +119,8 @@ Kept without expiry, as the audit trail: `edit_history`, `approval_requests`,
 | A batch outliving its function (`maxDuration`, 300 s) | Checks start only while a whole run (`CHECK_TIMEOUT_MS` + 15 s) fits before the deadline; the rest are marked `skipped`. Alerts go out in the last 30 s even if a run is still going |
 | Two dispatchers sending one alert | `notification_deliveries` unique per event and destination; each delivery claimed with a conditional update |
 | Two digests / reminders | `claimDigest` and `claimReminder` compare-and-set |
-| Two people editing a check | `version` |
+| Two people editing a check | `version`, applied with `findOneAndUpdate`, whose returned document is the edit history's "before" |
+| Two saves recording a version at once | The unique `(scriptId, version)` index lets one take a number; the other retries with the next. The current flag moves only after the insert and only downwards (each save demotes lower versions, and itself if a higher one exists) |
 | Approve racing reject | `status: "pending"` in the update filter |
 | Acknowledging a problem that just changed | `state.since` in the update filter |
 | A Telegram code used twice | claimed with `findOneAndUpdate` on `destinationId: null` |
