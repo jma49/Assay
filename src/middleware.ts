@@ -1,4 +1,4 @@
-import { getSessionCookie } from "better-auth/cookies";
+import { sessionCookieOf } from "@/lib/auth/session-cookie";
 import { NextResponse, type NextRequest } from "next/server";
 import { GUEST_COOKIE, guestIdFromToken } from "@/lib/auth/guest";
 
@@ -63,7 +63,7 @@ export default function middleware(req: NextRequest) {
   }
 
   const { pathname } = req.nextUrl;
-  if (isPublicRoute(pathname) || getSessionCookie(req)) return NextResponse.next();
+  if (isPublicRoute(pathname) || sessionCookieOf(req.headers.get("cookie"))) return NextResponse.next();
 
   if (guestIdFromToken(req.cookies.get(GUEST_COOKIE)?.value)) {
     if (isGuestRoute(pathname)) return NextResponse.next();
