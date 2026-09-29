@@ -221,7 +221,8 @@ export async function deleteDataSource(db: Db, workspaceId: string, sourceId: st
   if (sourceId === DEFAULT_SOURCE_ID) throw builtInRefused();
   const inUse = await countChecksUsing(db, sourceId);
   if (inUse > 0) {
-    throw new ApiError(409, "source_in_use", `${inUse} ${inUse === 1 ? "check uses" : "checks use"} this data source; move them to another source first`);
+    const which = inUse === 1 ? "1 check uses this data source; move it" : `${inUse} checks use this data source; move them`;
+    throw new ApiError(409, "source_in_use", `${which} to another source first`);
   }
   if (!(await deleteSourceDoc(db, workspaceId, sourceId))) throw notFound(sourceId);
   deps.forget(sourceId);
