@@ -28,7 +28,9 @@ import { CHANNEL_KINDS, type ChannelKind } from "@/domain/notify";
 import { formatDateTime, formatRelative } from "@/lib/utils/datetime";
 import { cn } from "@/lib/utils/utils";
 import { ALERT_LABEL, CHANNEL_META, ChannelIcon } from "./channels";
-import { EditDestinationDialog, PasteDestinationDialog, TelegramDialog } from "./DestinationDialogs";
+import { EditDestinationDialog } from "./EditDestinationDialog";
+import { PasteDestinationDialog } from "./PasteDestinationDialog";
+import { TelegramDialog } from "./TelegramDialog";
 
 const COPY = {
   en: {
