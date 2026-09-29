@@ -81,7 +81,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
               type="button"
               onClick={() => setPrompt(example)}
               disabled={isGenerating}
-              className="rounded-md border bg-card px-2 py-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
+              className="rounded-md border bg-card px-2 py-1 text-caption text-muted-foreground transition-colors hover:text-foreground"
             >
               {example}
             </button>
@@ -92,7 +92,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 px-2 text-[12px]"
+            className="h-7 px-2 text-caption"
             onClick={() => onAnalyze("explain")}
             disabled={isAnalyzing || !value.trim()}
           >
@@ -103,7 +103,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 px-2 text-[12px]"
+            className="h-7 px-2 text-caption"
             onClick={() => onAnalyze("optimize")}
             disabled={isAnalyzing || !value.trim()}
           >

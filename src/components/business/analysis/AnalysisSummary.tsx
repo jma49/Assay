@@ -15,18 +15,18 @@ export function AnalysisSummary({ data, language }: { data: AnalyticsData; langu
   return (
     <dl className="grid grid-cols-2 overflow-hidden rounded-xl bg-card shadow-border lg:grid-cols-4">
       <div className="flex flex-col gap-0.5 px-5 py-4">
-        <dt className="text-[12px] text-muted-foreground">{copy.runs}</dt>
-        <dd className="text-[24px] leading-tight font-semibold tabular-nums">{data.totalExecutions.toLocaleString()}</dd>
-        <dd className="text-[12px] text-muted-foreground">{copy.acrossChecks(data.totalScripts)}</dd>
+        <dt className="text-caption text-muted-foreground">{copy.runs}</dt>
+        <dd className="text-stat leading-tight tabular-nums">{data.totalExecutions.toLocaleString()}</dd>
+        <dd className="text-caption text-muted-foreground">{copy.acrossChecks(data.totalScripts)}</dd>
       </div>
       {OUTCOMES.map((outcome, i) => (
         <div key={outcome} className={cn("flex flex-col gap-0.5 border-l px-5 py-4", i === 1 && "max-lg:border-t max-lg:border-l-0", i === 2 && "max-lg:border-t")}>
-          <dt className="flex items-center gap-2 text-[12px] text-muted-foreground">
+          <dt className="flex items-center gap-2 text-caption text-muted-foreground">
             <span className={cn("status-dot", OUTCOME_DOT[outcome])} aria-hidden />
             {OUTCOME_LABEL[outcome][lang]}
           </dt>
-          <dd className="text-[24px] leading-tight font-semibold tabular-nums">{data.statusDistribution[outcome].toLocaleString()}</dd>
-          <dd className="text-[12px] text-muted-foreground">{copy.shareOfRuns(share(data.statusDistribution[outcome]))}</dd>
+          <dd className="text-stat leading-tight tabular-nums">{data.statusDistribution[outcome].toLocaleString()}</dd>
+          <dd className="text-caption text-muted-foreground">{copy.shareOfRuns(share(data.statusDistribution[outcome]))}</dd>
         </div>
       ))}
     </dl>

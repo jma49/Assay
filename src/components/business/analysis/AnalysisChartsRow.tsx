@@ -19,8 +19,8 @@ export function AnalysisSection({ title, hint, children }: { title: string; hint
   return (
     <section className="overflow-hidden rounded-xl bg-card shadow-border">
       <header className="flex items-baseline justify-between gap-3 border-b px-4 py-2.5">
-        <h2 className="text-[13.5px] font-medium">{title}</h2>
-        {hint && <span className="text-[12px] text-muted-foreground">{hint}</span>}
+        <h2 className="text-body-md font-medium">{title}</h2>
+        {hint && <span className="text-caption text-muted-foreground">{hint}</span>}
       </header>
       {children}
     </section>

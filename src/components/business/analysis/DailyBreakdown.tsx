@@ -19,7 +19,7 @@ export function DailyBreakdown({ days, hint, language }: { days: DailyTrendPoint
     <AnalysisSection title={copy.byDay} hint={hint}>
       <ul className="divide-y">
         {[...days].reverse().map((day) => (
-          <li key={day.date} className="grid grid-cols-[7.5rem_minmax(0,1fr)_15rem] items-center gap-4 px-4 py-2.5 text-[13px] max-sm:grid-cols-[5.5rem_minmax(0,1fr)] max-sm:gap-x-3">
+          <li key={day.date} className="grid grid-cols-[7.5rem_minmax(0,1fr)_15rem] items-center gap-4 px-4 py-2.5 text-body-sm max-sm:grid-cols-[5.5rem_minmax(0,1fr)] max-sm:gap-x-3">
             <time dateTime={day.date} className="tabular-nums">
               {formatDayKey(day.date, language, { weekday: true })}
             </time>
