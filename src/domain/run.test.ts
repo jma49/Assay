@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   runExpiresAt,
   runRetentionDays,
+  jsonBytes,
   sampleRows,
   diffRowKeys,
   isNotable,
@@ -95,6 +96,21 @@ describe("sampleRows", () => {
     expect(sampleRows(rows, 5)).toHaveLength(5);
     expect(sampleRows(rows, 10, 360)).toHaveLength(3); // each row is 117 bytes
     expect(sampleRows([{ huge: "x".repeat(1000) }], 10, 100)).toHaveLength(0);
+  });
+
+  it("counts UTF-8 bytes, not string length, so non-ASCII rows cannot pass the budget", () => {
+    const row = { text: "中".repeat(1000) }; // 1,011 characters, 3,011 bytes
+    expect(JSON.stringify(row).length).toBeLessThan(2000);
+    expect(jsonBytes(row)).toBe(3011);
+    expect(sampleRows([row], 10, 2000)).toHaveLength(0);
+  });
+
+  it("keeps the kept rows, serialised, within the budget", () => {
+    const rows = Array.from({ length: 500 }, (_, i) => ({ i, text: "é".repeat(50 + (i % 7)) }));
+    const kept = sampleRows(rows, 500, 10_000);
+    expect(kept.length).toBeGreaterThan(0);
+    expect(jsonBytes(kept)).toBeLessThanOrEqual(10_000);
+    expect(jsonBytes(sampleRows(rows, 500, 10_000 + 200))).toBeGreaterThan(jsonBytes(kept));
   });
 });
 
