@@ -12,6 +12,7 @@ import { profileRows } from "@/lib/ai/row-profile";
 import { triageRun, type Triage } from "@/lib/ai/triage";
 import { aiModel } from "@/lib/ai/model";
 import { COLLECTIONS } from "@/lib/database/collections";
+import { findRun, saveTriage } from "@/server/repos/runs";
 
 const Body = z.object({
   resultId: z.string().refine((id) => ObjectId.isValid(id), "Invalid run id"),
@@ -28,11 +29,7 @@ export const POST = withAuth(Permission.HISTORY_READ, async (request, { principa
   const { resultId, language } = await parseJson(request, Body);
 
   const db = await getMongoDbClient().getDb();
-  const results = db.collection(COLLECTIONS.runs);
-  const run = await results.findOne(
-    { _id: new ObjectId(resultId) },
-    { projection: { checkId: 1, outcome: 1, message: 1, ...SAMPLE_FIELDS, aiTriage: 1 } },
-  );
+  const run = await findRun(db, resultId, { checkId: 1, outcome: 1, message: 1, ...SAMPLE_FIELDS, aiTriage: 1 });
   if (!run) throw new ApiError(404, "not_found", "No run with this id");
 
   const cached = run.aiTriage?.[language] as Triage | undefined;
@@ -69,9 +66,6 @@ export const POST = withAuth(Permission.HISTORY_READ, async (request, { principa
     throw aiError(error);
   }
 
-  await results.updateOne(
-    { _id: run._id },
-    { $set: { [`aiTriage.${language}`]: { ...triage, model: String(aiModel()), createdAt: new Date() } } },
-  );
+  await saveTriage(db, run._id, language, { ...triage, model: String(aiModel()), createdAt: new Date() });
   return NextResponse.json({ triage, cached: false });
 });

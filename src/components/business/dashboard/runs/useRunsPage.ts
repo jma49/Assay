@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import type { CheckStats } from "@/lib/database/check-stats";
+import type { CheckStats } from "@/contracts/runs";
 import type { ScriptInfo } from "../types";
 import { DEFAULT_SORT, EMPTY_STATS, nextScheduledRunOf, parseScriptList, takeSearchParam } from "./runs";
 import { useRunHistory } from "./useRunHistory";

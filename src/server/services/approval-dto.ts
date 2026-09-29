@@ -1,11 +1,21 @@
 import type { ApprovalRequestDto } from "@/lib/types/approval";
-import type { ApprovalRequest } from "./approval-workflow";
+import type { ApprovalRequest } from "@/server/repos/approval-store";
 
 /** The SQL a request carries: its own copy, or the one inside the change for older requests. */
 export function requestSql(request: Pick<ApprovalRequest, "sqlContent" | "originalData">): string | undefined {
   if (request.sqlContent) return request.sqlContent;
   const fromData = request.originalData?.sqlContent;
   return typeof fromData === "string" ? fromData : undefined;
+}
+
+/**
+ * The name of the check a request changes, from the change itself. The
+ * request's title is generated text ("Create check: …", "创建脚本: …" on
+ * older ones), so it is only the fallback.
+ */
+function changedCheckName(request: Pick<ApprovalRequest, "originalData" | "title" | "scriptId">): string {
+  const name = request.originalData?.name;
+  return (typeof name === "string" && name) || request.title || request.scriptId;
 }
 
 /**
@@ -18,9 +28,9 @@ export function toApprovalDto(request: ApprovalRequest, currentSql?: string): Ap
   return {
     id: request.requestId,
     scriptId: request.scriptId,
-    scriptName: request.title || request.scriptId,
-    scriptType: request.scriptType as string as ApprovalRequestDto["scriptType"],
-    status: request.status as string as ApprovalRequestDto["status"],
+    scriptName: changedCheckName(request),
+    scriptType: request.scriptType,
+    status: request.status,
     requesterEmail: request.requesterEmail,
     requesterId: request.requesterId,
     createdAt: request.requestedAt.toISOString(),
@@ -41,7 +51,6 @@ export function toApprovalDto(request: ApprovalRequest, currentSql?: string): Ap
         : [],
     isComplete: request.status !== "pending",
     comment: request.reviewComment,
-    reason: request.description,
     operationType: request.operationType,
     sqlContent: requestSql(request),
     ...(currentSql !== undefined && { currentSqlContent: currentSql }),

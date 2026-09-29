@@ -59,10 +59,6 @@ export function ApprovalCard({ approval, language, t, busy, onDecide }: Approval
         )}
       </div>
 
-      {approval.reason && (
-        <blockquote className="mt-4 border-l-2 pl-3 text-sm text-muted-foreground">{approval.reason}</blockquote>
-      )}
-
       <div className="mt-3">
         <ApprovalSql approval={approval} copy={copy} />
       </div>

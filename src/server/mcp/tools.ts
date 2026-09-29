@@ -1,4 +1,4 @@
-import { ObjectId, type Db } from "mongodb";
+import type { Db } from "mongodb";
 import { z } from "zod";
 import type { CheckSummary } from "@/contracts/checks";
 import { MAX_MUTE_HOURS } from "@/domain/alerting";
@@ -12,7 +12,7 @@ import { getCheckDetail, listChecks } from "@/server/services/checks-read";
 import { responseSample, sampleSlice } from "@/server/runs/sample";
 import type { RunCheckResult } from "@/server/services/run-check";
 import type { McpCaller } from "./caller";
-import { COLLECTIONS } from "@/lib/database/collections";
+import { findRun } from "@/server/repos/runs";
 
 export interface ToolDeps {
   db(): Promise<Db>;
@@ -159,12 +159,15 @@ export function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
         max_rows: z.number().int().min(1).max(MAX_ROWS).default(MAX_ROWS),
       }),
       async handler({ run_id, max_rows }) {
-        const run = await (await deps.db())
-          .collection(COLLECTIONS.runs)
-          .findOne(
-            { _id: new ObjectId(run_id) },
-            { projection: { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, columns: 1, error: 1, ...sampleSlice(max_rows) } },
-          );
+        const run = await findRun(await deps.db(), run_id, {
+          checkId: 1,
+          finishedAt: 1,
+          outcome: 1,
+          rowCount: 1,
+          columns: 1,
+          error: 1,
+          ...sampleSlice(max_rows),
+        });
         if (!run) throw new Error(`No run with id ${run_id}`);
         const rows = responseSample(run);
         return {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { SchemaTable } from "@/lib/database/db-schema";
+import type { SchemaTable } from "@/contracts/schema";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { tableReferences } from "@/lib/sql/table-references";
 import { buildTemplate, columnFits, parseValueList, templateScriptId, TEMPLATES, type TemplateCheck, type TemplateId, type TemplateInput } from "./templates";
