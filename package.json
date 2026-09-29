@@ -97,7 +97,7 @@
     "@types/three": "^0.186.0",
     "dotenv": "^18.0.4",
     "eslint": "^9",
-    "eslint-config-next": "^15.5.26",
+    "eslint-config-next": "^16.3.6",
     "knip": "^6.38.0",
     "postcss": "^8.5.28",
     "tailwindcss": "^4",
