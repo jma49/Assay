@@ -320,7 +320,7 @@ Every text pair in the light theme meets WCAG AA (4.5:1); the dark theme always 
 
 Refactor in this order, one step per pull request, each with a before/after screenshot comparison (see Verification):
 
-1. **Tokens.** Add the typography scale to `@theme` in `globals.css` as `--text-<level>` with `--line-height`, `--letter-spacing` and `--font-weight` sub-properties, so `text-body-sm` etc. exist. No component changes yet.
+1. **Tokens.** Done: the scale is in `@theme` in `globals.css` as `--text-<level>` with `--line-height`, `--letter-spacing` and `--font-weight` sub-properties, so `text-body-sm` etc. exist. Only headings, `label-caps` and `stat` carry a weight; body levels and `caption` inherit theirs, so `font-medium` and a parent's weight still apply. `cn()` registers the level names with tailwind-merge (`src/lib/utils/utils.ts`); a new level must be added there too, or `cn("text-body-sm", "text-muted-foreground")` drops the size.
 2. **Primitives.** `src/components/ui/*` onto the scale (`Button` default → `text-body-sm`, `size="sm"` → `text-caption`).
 3. **Shell.** `AppShell`, `Sidebar`, `PageHeader`, `AuthShell`, `DocsShell`.
 4. **Pages**, one feature folder at a time, busiest first: `checks/`, `notifications/`, `settings/`, `business/scripts/`, then the rest.
