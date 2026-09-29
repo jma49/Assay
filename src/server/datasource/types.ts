@@ -4,7 +4,7 @@ export interface StatementResult {
   rowCount: number;
 }
 
-export interface RunOptions {
+interface RunOptions {
   /** One deadline for the whole script, not per statement. */
   timeoutMs: number;
   /** Rows kept per statement; the rest are counted and dropped as they stream in. */

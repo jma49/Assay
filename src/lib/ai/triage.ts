@@ -4,7 +4,7 @@ import { z } from "zod";
 import { aiModel, gatewayOptions } from "@/lib/ai/model";
 import type { ColumnProfile } from "@/lib/ai/row-profile";
 
-export const triageSchema = z.object({
+const triageSchema = z.object({
   kind: z
     .enum(["data_issue", "check_error", "needs_review"])
     .describe("data_issue: the rows are real problems; check_error: the query itself failed or is wrong; needs_review: cannot tell"),

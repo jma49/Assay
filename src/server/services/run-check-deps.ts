@@ -37,7 +37,7 @@ export function checkTimeoutMs(env: Record<string, string | undefined> = process
 // runs queues here instead of exhausting the PostgreSQL pool.
 const executions = createSemaphore(Math.max(1, Number(process.env.CHECK_CONCURRENCY) || 4));
 
-export async function defaultRunCheckDeps(): Promise<RunCheckDeps> {
+async function defaultRunCheckDeps(): Promise<RunCheckDeps> {
   const db = await getMongoDbClient().getDb();
   return {
     store: mongoRunCheckStore(db),

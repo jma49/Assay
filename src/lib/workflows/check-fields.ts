@@ -1,7 +1,7 @@
 import { isReservedAuthor } from "@/lib/security/demo-sandbox";
 
 /** What people may set on a check. Everything else (state, lease, alerting, demoSeed, …) is the server's. */
-export const EDITABLE_CHECK_FIELDS = [
+const EDITABLE_CHECK_FIELDS = [
   "name",
   "cnName",
   "description",

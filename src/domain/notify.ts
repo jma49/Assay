@@ -49,7 +49,7 @@ export interface AlertMessage {
   actions?: AlertActions;
 }
 
-export interface AlertActions {
+interface AlertActions {
   token: string;
   acknowledge: string;
   mute: string;

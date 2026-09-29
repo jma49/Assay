@@ -5,7 +5,7 @@ import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
 import { toStoredEvent } from "@/server/repos/notify-store";
 import { COLLECTIONS } from "@/lib/database/collections";
 
-export const ACTIVITY_PAGE_SIZE = 40;
+const ACTIVITY_PAGE_SIZE = 40;
 
 /** Which stored events each filter shows; an alert kind is derived from type and outcome. */
 const KIND_FILTER: Record<AlertKind, Filter<Document>> = {

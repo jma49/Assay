@@ -15,7 +15,7 @@ import type { Semaphore } from "@/server/concurrency/semaphore";
 import type { DataSource } from "@/server/datasource/types";
 import { fingerprintRow } from "@/server/runs/fingerprint";
 
-export type TriggerKind = "manual" | "schedule" | "batch" | "api";
+type TriggerKind = "manual" | "schedule" | "batch" | "api";
 
 export interface RunTrigger {
   kind: TriggerKind;

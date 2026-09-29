@@ -14,7 +14,7 @@ import {
 } from "./history-query";
 
 /** The run fields the list shows; never the sample or the row fingerprints. */
-export const LIST_FIELDS = { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, error: 1, message: 1, findings: 1, github_run_id: 1 } as const;
+const LIST_FIELDS = { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, error: 1, message: 1, findings: 1, github_run_id: 1 } as const;
 
 /**
  * One page of the run history and how many runs match. Hashtags, the name

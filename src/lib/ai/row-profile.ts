@@ -9,7 +9,7 @@ export interface ColumnProfile {
   distinct: number;
 }
 
-export const PROFILE_ROW_LIMIT = 50;
+const PROFILE_ROW_LIMIT = 50;
 
 function typeOf(value: unknown): string {
   if (value === null || value === undefined) return "null";

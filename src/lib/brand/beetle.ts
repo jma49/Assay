@@ -14,7 +14,7 @@ export interface Voxel {
   color: string;
 }
 
-export const BEETLE_COLORS = {
+const BEETLE_COLORS = {
   shellLight: "#5B82E6",
   shell: "#2350C8",
   shellDark: "#1A3D9E",
@@ -60,7 +60,7 @@ function tube(points: [number, number, number][], radius: number): Set<string> {
 }
 
 /** Voxels per design unit: the shapes below are in design units and sampled this finely. */
-export const BEETLE_RESOLUTION = 3;
+const BEETLE_RESOLUTION = 3;
 
 /**
  * A chibi beetle, like a vinyl toy: one round shell with a glossy patch,
