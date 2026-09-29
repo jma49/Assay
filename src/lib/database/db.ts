@@ -3,6 +3,7 @@ import https from "node:https";
 import type { ConnectionOptions } from "node:tls";
 import pg, { Pool, type PoolClient, type PoolConfig, type QueryResult } from "pg";
 import { redactConnectionString } from "./redact-connection-string";
+import { inPublicCi } from "@/lib/utils/public-log";
 
 // BIGINT (OID 20) as strings: JavaScript numbers lose precision past 2^53 and JSON cannot hold BigInt.
 pg.types.setTypeParser(20, (value: string) => value);
@@ -50,6 +51,15 @@ export async function tlsOptions(env: Env = process.env, read = readCertificate)
   return ssl;
 }
 
+/**
+ * What pool creation logs. Public CI logs (the scheduled workflow) get no
+ * host, database or user; elsewhere the connection string is redacted.
+ */
+export function poolLogLine(connectionString: string, ssl: ConnectionOptions | undefined, env: Env = process.env): string {
+  const tls = ssl ? ` with TLS verified against the configured CA${ssl.cert ? " and a client certificate" : ""}` : "";
+  return inPublicCi(env) ? `[db] Pool created${tls}` : `[db] Pool for ${redactConnectionString(connectionString)}${tls}`;
+}
+
 async function createPool(): Promise<Pool> {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) throw new Error("DATABASE_URL is not set");
@@ -62,9 +72,7 @@ async function createPool(): Promise<Pool> {
   };
   const ssl = await tlsOptions();
   if (ssl) config.ssl = ssl;
-  console.log(
-    `[db] Pool for ${redactConnectionString(connectionString)}${ssl ? ` with TLS verified against the configured CA${ssl.cert ? " and a client certificate" : ""}` : ""}`,
-  );
+  console.log(poolLogLine(connectionString, ssl));
   const pool = new Pool(config);
   // An idle client dropped by the server emits 'error' on the pool; unhandled, it would crash the process.
   pool.on("error", (error) => console.error("[db] Idle PostgreSQL client error:", error.message));

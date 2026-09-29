@@ -21,7 +21,20 @@ A self-hosted workspace has two options:
 
 ### GitHub Actions (recommended)
 
-`.github/workflows/sql-check-cron.yml` starts the runner every 30 minutes. Add `DATABASE_URL` and `MONGODB_URI` as repository secrets and it begins on the default branch; without them it skips quietly. You can also start it by hand from the Actions tab, choosing `scheduled` (checks that are due) or `all` (every check now).
+`.github/workflows/sql-check-cron.yml` starts the runner every 30 minutes. Add `DATABASE_URL` and `MONGODB_URI` as repository secrets and it begins on the default branch; without them it skips quietly. You can also start it by hand from the Actions tab, choosing `scheduled` (checks that are due) or `all` (every check now), or entering a **check_id** to run just that check. Alerts go out after a run started by hand too.
+
+The runner reads the same settings as the app, so give GitHub the ones you set on your host; any you leave out take their defaults:
+
+| Name | Set as | Needed when |
+|---|---|---|
+| `DATABASE_URL`, `MONGODB_URI` | Secret | Always |
+| `APP_URL`, `CRON_SECRET` | Secret | To send alerts right after a scheduled run |
+| `CA_CERT_BLOB_URL`, `CLIENT_CERT_BLOB_URL`, `CLIENT_KEY_BLOB_URL` | Secret | PostgreSQL uses a private CA or client certificates |
+| `MONGODB_DB_NAME` | Variable | `MONGODB_URI` names no database and you use another name than the default |
+| `CHECK_TIMEOUT_MS`, `RUN_RETENTION_DAYS` | Variable | You changed them on your host |
+| `CHECK_CONCURRENCY`, `PG_POOL_MAX` | Variable | Optional; checks run at once and PostgreSQL connections |
+
+Secrets go under **Settings → Secrets and variables → Actions → Secrets**, the others under **Variables**. The workflow's log is public in a public repository, so it shows only each check's id, outcome and row count; errors stay in the app.
 
 To see what would run without running anything:
 

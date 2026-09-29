@@ -10,7 +10,7 @@ Clients that support MCP sign-in, such as Claude on the web (**Settings → Conn
 https://assay.example.com/api/mcp
 ```
 
-The client opens Assay in your browser. Sign in if you are not already, and Assay asks whether to allow the app, showing where access goes and what it may do: read checks, read run history, and run checks and handle alerts. You can untick any of them; ones your role does not have are greyed out. For Claude Code, `claude mcp add --transport http assay https://assay.example.com/api/mcp` and then `/mcp` starts the sign-in.
+The client opens Assay in your browser. Sign in if you are not already, and Assay asks whether to allow the app, showing where access goes and what it may do: read checks, read run history, and run checks and handle alerts. You can untick any of them; ones your role does not have are greyed out. An app that named itself when it registered is marked **Unverified app**: allow it only if you just started connecting it and you recognise the host your access goes to. For Claude Code, `claude mcp add --transport http assay https://assay.example.com/api/mcp` and then `/mcp` starts the sign-in.
 
 Apps you allowed are listed under **API keys → Connected apps**. **Disconnect** ends an app's access at once.
 
@@ -59,7 +59,7 @@ For Cursor, Windsurf and other clients that read `mcpServers`:
 ## Security
 
 - **A key or connected app can do what your role can do, and no more.** If your role changes, so do they; a viewer's agent sees only the four tools that read. A connected app is further limited to what you allowed.
-- Removing someone's role disables their keys and disconnects their apps.
+- Removing someone's role deletes their keys and disconnects their apps.
 - Keys expire, and you can **Revoke** one at any time: agents using it lose access at once.
 - Each key may make 120 requests a minute.
 - Runs and alert actions from an agent go through the same rules as the web app, including the read-only SQL checks, and are recorded as coming from MCP.

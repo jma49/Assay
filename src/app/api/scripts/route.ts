@@ -3,6 +3,7 @@ import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { Collection, Document, ObjectId } from "mongodb";
 import { withAuth } from "@/server/http/route";
+import { authorForGuest } from "@/server/http/guest-view";
 import { authorProblem } from "@/lib/workflows/check-fields";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { Permission, getUserRole } from "@/lib/auth/rbac";
@@ -253,7 +254,7 @@ export const POST = withAuth(Permission.SCRIPT_CREATE, async (request, { princip
 
 // The middleware only guarantees a signed-in user; reading scripts (and
 // their SQL) also needs script:read, as on the other script routes.
-export const GET = withAuth(Permission.SCRIPT_READ, async () => {
+export const GET = withAuth(Permission.SCRIPT_READ, async (_request, { principal }) => {
   try {
     const collection = await getSqlScriptsCollection();
     const scriptsFromDb = await collection
@@ -294,7 +295,7 @@ export const GET = withAuth(Permission.SCRIPT_READ, async () => {
         cnDescription: doc.cnDescription || "",
         scope: doc.scope || "",
         cnScope: doc.cnScope || "",
-        author: doc.author,
+        author: principal.isGuest ? authorForGuest(doc.author) : doc.author,
         hashtags: doc.hashtags || [],
         sqlContent: doc.sqlContent,
         isScheduled: doc.isScheduled || false,
