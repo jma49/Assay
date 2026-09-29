@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { revokeAccess } from "@/server/services/revoke-access";
 import { forgetCachedUser } from "@/server/mcp/caller";
 import { findUser } from "@/lib/auth/server";
-import { withAuth } from "@/server/http/route";
+import { ApiError, parseJson, withAuth } from "@/server/http/route";
 import {
   UserRole,
   Permission,
@@ -15,198 +16,88 @@ import {
   hasOtherActiveAdmin,
 } from "@/lib/auth/rbac";
 
-const LAST_ADMIN = { success: false, code: "last_admin", message: "至少需要保留一名管理员" };
+const lastAdmin = () => new ApiError(409, "last_admin", "Keep at least one admin");
 
-interface SetUserRoleRequest {
-  /** Who gets the role: their user id, or the email they signed up with. */
-  targetUserId?: string;
-  targetEmail?: string;
-  role: UserRole;
-}
+const Assignment = z
+  .object({
+    /** Who gets the role: their user id, or the email they signed up with. */
+    targetUserId: z.string().optional(),
+    targetEmail: z.string().optional(),
+    role: z.enum(UserRole),
+  })
+  .refine((body) => body.targetUserId || body.targetEmail, "Send targetUserId or targetEmail");
 
 /**
  * GET: every active member and their role. Admins (user:manage) and
  * managers (user:role:assign) may read the list.
  */
 export const GET = withAuth({ anyOf: [Permission.USER_MANAGE, Permission.USER_ROLE_ASSIGN] }, async () => {
-  try {
-    const userRoles = await getAllUserRoles();
-
-    return NextResponse.json({
-      success: true,
-      data: userRoles,
-      count: userRoles.length,
-    });
-  } catch (error) {
-    console.error("[API] 获取用户角色列表失败:", error);
-    return NextResponse.json(
-      { success: false, message: "获取用户角色列表时发生错误" },
-      { status: 500 }
-    );
-  }
+  const userRoles = await getAllUserRoles();
+  return NextResponse.json({ success: true, data: userRoles, count: userRoles.length });
 });
 
 /**
  * POST: gives a signed-up person a role.
  */
 export const POST = withAuth(Permission.USER_ROLE_ASSIGN, async (request, { principal }) => {
-  try {
-    const userEmail = principal.email;
+  const { targetUserId: requestedId, targetEmail: requestedEmail, role } = await parseJson(request, Assignment);
 
-    const body: SetUserRoleRequest = await request.json();
-    const { role } = body;
+  // The person must have signed up; their id and email come from the user store.
+  const target = await findUser({ id: requestedId, email: requestedEmail });
+  if (!target) throw new ApiError(404, "user_not_found", "No such user; they need to sign in once first");
+  const targetUserId = target.id;
 
-    if ((!body.targetUserId && !body.targetEmail) || !role) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "缺少必要参数：targetUserId 或 targetEmail, role",
-        },
-        { status: 400 }
-      );
-    }
-
-    // The person must have signed up; their id and email come from the user store.
-    const target = await findUser({ id: body.targetUserId, email: body.targetEmail });
-    if (!target) {
-      return NextResponse.json(
-        { success: false, message: "目标用户不存在：请先让对方登录一次" },
-        { status: 404 }
-      );
-    }
-    const targetUserId = target.id;
-
-    if (!Object.values(UserRole).includes(role)) {
-      return NextResponse.json(
-        { success: false, message: "无效的角色类型" },
-        { status: 400 }
-      );
-    }
-
-    const currentUserRole = principal.role;
-    if (!currentUserRole) {
-      return NextResponse.json(
-        { success: false, message: "无法获取当前用户角色" },
-        { status: 403 }
-      );
-    }
-
-    if (!canManageRole(currentUserRole, role)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `权限不足：${currentUserRole} 角色无法分配 ${role} 角色`,
-        },
-        { status: 403 }
-      );
-    }
-
-    // The caller must also be allowed to manage the role the target holds
-    // now, or a manager could demote an admin by "assigning" them viewer.
-    const existingRole = await getUserRole(targetUserId);
-    if (existingRole && !canManageRole(currentUserRole, existingRole)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `权限不足：${currentUserRole} 角色无法修改 ${existingRole} 用户的角色`,
-        },
-        { status: 403 }
-      );
-    }
-
-    const targetEmail = target.email;
-
-    // Demoting the last admin would leave nobody able to manage roles.
-    if (existingRole === UserRole.ADMIN && role !== UserRole.ADMIN && !(await hasOtherActiveAdmin(targetUserId))) {
-      return NextResponse.json(LAST_ADMIN, { status: 409 });
-    }
-
-    // Only admins may change their own role.
-    if (targetUserId === principal.id && currentUserRole !== UserRole.ADMIN) {
-      return NextResponse.json(
-        { success: false, message: "不能修改自己的角色" },
-        { status: 403 }
-      );
-    }
-
-    const success = await setUserRole(
-      targetUserId,
-      targetEmail,
-      role,
-      userEmail
-    );
-
-    if (success) {
-      return NextResponse.json({
-        success: true,
-        message: `用户 ${targetEmail} 的角色已设置为 ${role}`,
-        data: { targetUserId, targetEmail, role },
-      });
-    } else {
-      return NextResponse.json(
-        { success: false, message: "设置用户角色失败" },
-        { status: 500 }
-      );
-    }
-  } catch (error) {
-    console.error("[API] 设置用户角色失败:", error);
-    return NextResponse.json(
-      { success: false, message: "设置用户角色时发生错误" },
-      { status: 500 }
-    );
+  const currentUserRole = principal.role;
+  if (!currentUserRole) throw new ApiError(403, "role_unknown", "Your role could not be read");
+  if (!canManageRole(currentUserRole, role)) {
+    throw new ApiError(403, "role_not_allowed", `A ${currentUserRole} cannot assign the ${role} role`);
   }
+
+  // The caller must also be allowed to manage the role the target holds
+  // now, or a manager could demote an admin by "assigning" them viewer.
+  const existingRole = await getUserRole(targetUserId);
+  if (existingRole && !canManageRole(currentUserRole, existingRole)) {
+    throw new ApiError(403, "role_not_allowed", `A ${currentUserRole} cannot change the role of a ${existingRole}`);
+  }
+
+  // Demoting the last admin would leave nobody able to manage roles.
+  if (existingRole === UserRole.ADMIN && role !== UserRole.ADMIN && !(await hasOtherActiveAdmin(targetUserId))) {
+    throw lastAdmin();
+  }
+
+  // Only admins may change their own role.
+  if (targetUserId === principal.id && currentUserRole !== UserRole.ADMIN) {
+    throw new ApiError(403, "own_role", "You cannot change your own role");
+  }
+
+  if (!(await setUserRole(targetUserId, target.email, role, principal.email))) {
+    throw new ApiError(500, "internal", "Saving the role failed");
+  }
+  return NextResponse.json({
+    success: true,
+    message: `${target.email} is now ${role}`,
+    data: { targetUserId, targetEmail: target.email, role },
+  });
 });
 
 /**
  * DELETE: removes someone's role. Admins only.
  */
 export const DELETE = withAuth(Permission.USER_MANAGE, async (request, { principal }) => {
-  try {
+  const targetUserId = new URL(request.url).searchParams.get("userId");
+  if (!targetUserId) throw new ApiError(400, "invalid_input", "Missing userId");
 
-    const { searchParams } = new URL(request.url);
-    const targetUserId = searchParams.get("userId");
+  // Nobody removes their own role.
+  if (targetUserId === principal.id) throw new ApiError(403, "own_role", "You cannot remove your own role");
 
-    if (!targetUserId) {
-      return NextResponse.json(
-        { success: false, message: "缺少参数：userId" },
-        { status: 400 }
-      );
-    }
-
-    // Nobody removes their own role.
-    if (targetUserId === principal.id) {
-      return NextResponse.json(
-        { success: false, message: "不能删除自己的角色" },
-        { status: 403 }
-      );
-    }
-
-    if ((await getUserRole(targetUserId)) === UserRole.ADMIN && !(await hasOtherActiveAdmin(targetUserId))) {
-      return NextResponse.json(LAST_ADMIN, { status: 409 });
-    }
-
-    const success = await removeUserRole(targetUserId);
-
-    if (success) {
-      // Removing a role also takes away the access already held: sessions, API keys and OAuth apps.
-      const revoked = await revokeAccess(await getMongoDbClient().getDb(), targetUserId);
-      forgetCachedUser(targetUserId);
-      return NextResponse.json({
-        success: true,
-        message: "用户角色已删除",
-        data: { targetUserId, revoked },
-      });
-    } else {
-      return NextResponse.json(
-        { success: false, message: "删除用户角色失败或用户不存在" },
-        { status: 404 }
-      );
-    }
-  } catch (error) {
-    console.error("[API] 删除用户角色失败:", error);
-    return NextResponse.json(
-      { success: false, message: "删除用户角色时发生错误" },
-      { status: 500 }
-    );
+  if ((await getUserRole(targetUserId)) === UserRole.ADMIN && !(await hasOtherActiveAdmin(targetUserId))) {
+    throw lastAdmin();
   }
+
+  if (!(await removeUserRole(targetUserId))) throw new ApiError(404, "not_found", "No role to remove for this user");
+
+  // Removing a role also takes away the access already held: sessions, API keys and OAuth apps.
+  const revoked = await revokeAccess(await getMongoDbClient().getDb(), targetUserId);
+  forgetCachedUser(targetUserId);
+  return NextResponse.json({ success: true, message: "Role removed", data: { targetUserId, revoked } });
 });

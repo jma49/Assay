@@ -49,7 +49,7 @@ describe("keeping at least one admin", () => {
   it("refuses to demote the last admin, including yourself", async () => {
     const res = await assign("user_admin", "viewer");
     expect(res.status).toBe(409);
-    expect((await res.json()).code).toBe("last_admin");
+    expect((await res.json()).error.code).toBe("last_admin");
     expect(mocks.setUserRole).not.toHaveBeenCalled();
   });
 

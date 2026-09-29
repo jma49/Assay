@@ -106,7 +106,7 @@ describe("PUT /api/scripts/[scriptId]", () => {
   it("requires the version the edit started from", async () => {
     const res = await update({ name: "Renamed" });
     expect(res.status).toBe(428);
-    expect((await res.json()).code).toBe("version_required");
+    expect((await res.json()).error.code).toBe("version_required");
     expect(mocks.updateOne).not.toHaveBeenCalled();
   });
 
@@ -122,7 +122,7 @@ describe("PUT /api/scripts/[scriptId]", () => {
     mocks.matchedCount = 0;
     const res = await update({ name: "Renamed", version: 3 });
     expect(res.status).toBe(409);
-    expect((await res.json()).code).toBe("conflict");
+    expect((await res.json()).error.code).toBe("conflict");
   });
 
   it("answers 404, not a conflict, when the check vanished meanwhile", async () => {
