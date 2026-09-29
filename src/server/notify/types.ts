@@ -21,7 +21,7 @@ export type DeliveryOutcome =
   | { kind: "retry"; error: string; retryAfterMs?: number }
   | { kind: "failed"; error: string };
 
-export interface ChannelContext {
+interface ChannelContext {
   now: Date;
   env: Record<string, string | undefined>;
 }

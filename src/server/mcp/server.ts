@@ -3,7 +3,7 @@ import { ApiError } from "@/server/http/route";
 import type { McpCaller } from "./caller";
 import { toolsFor, type ToolDeps } from "./tools";
 
-export const MCP_SERVER_INFO = { name: "assay", version: "1.0.0" };
+const MCP_SERVER_INFO = { name: "assay", version: "1.0.0" };
 
 /** Errors the caller can act on are shown as they are; anything else stays in the server log. */
 function errorText(error: unknown): string {

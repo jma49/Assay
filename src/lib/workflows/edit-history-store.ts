@@ -45,7 +45,7 @@ function defaultDescriptions(
 }
 
 /** Inserts one edit_history record. Server only. */
-export async function insertEditHistory(entry: {
+async function insertEditHistory(entry: {
   scriptId: string;
   operation: RecordEditHistoryParams["operation"];
   changes: ChangeDetail[];

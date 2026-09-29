@@ -4,8 +4,8 @@ import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { singleStatement } from "@/lib/sql/single-statement";
 import { splitStatements } from "@/lib/sql/statements";
 
-export const DRY_RUN_TIMEOUT_MS = 10_000;
-export const DRY_RUN_SAMPLE_ROWS = 5;
+const DRY_RUN_TIMEOUT_MS = 10_000;
+const DRY_RUN_SAMPLE_ROWS = 5;
 
 export type DryRunResult =
   | { ok: true; rowCount: number; sample: Record<string, unknown>[] }

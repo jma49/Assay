@@ -5,7 +5,7 @@ import type { HistoryRun, ScriptInfo } from "../types";
 
 /** Sort by when the run finished, or by the check's name in the reader's language. */
 export type SortKey = "finishedAt" | "name";
-export type SortDirection = "ascending" | "descending";
+type SortDirection = "ascending" | "descending";
 
 export interface SortConfig {
   key: SortKey;

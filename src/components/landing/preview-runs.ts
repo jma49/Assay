@@ -1,5 +1,5 @@
 /** Sample runs for the landing page's product preview, shaped like the demo database. */
-export type Text = { en: string; zh: string };
+type Text = { en: string; zh: string };
 
 export interface PreviewRun {
   id: string;

@@ -56,7 +56,7 @@ const MESSAGES = {
   },
 };
 
-export type OperationType = NonNullable<ApprovalRequest["operationType"]>;
+type OperationType = NonNullable<ApprovalRequest["operationType"]>;
 
 const COPY = {
   en: {

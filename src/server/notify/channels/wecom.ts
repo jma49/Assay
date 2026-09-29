@@ -17,7 +17,7 @@ function clip(text: string): string {
  * breaks are flattened so text cannot start its own heading or quote. This
  * keeps a check name or error from posing as a [link](https://…).
  */
-export const wecomText = (text: string) =>
+const wecomText = (text: string) =>
   text
     .replace(/[\r\n]+/g, " ")
     .replace(/</g, "＜")
