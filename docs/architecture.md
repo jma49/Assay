@@ -5,7 +5,9 @@ today's code. Each phase ships on its own and keeps the app working.
 
 ## Constraints
 
-- **Runtime:** Next.js App Router on Vercel Functions (Fluid Compute). Many
+- **Runtime:** Next.js App Router on Vercel Functions with Fluid Compute
+  (`"fluid": true` in vercel.json; routes that run checks set `maxDuration =
+  300`, which Hobby only accepts with Fluid on). Many
   short-lived instances share nothing in memory; anything that must survive a
   request or be seen by another instance lives in MongoDB or Redis.
 - **Stores:** MongoDB Atlas holds Assay's own data. The monitored database is
