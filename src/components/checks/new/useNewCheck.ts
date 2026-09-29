@@ -65,7 +65,8 @@ export function useNewCheck(language: Language) {
   const [tableParam, setTableParam] = useState<string | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
 
-  // Coverage links here with ?table=schema.table.
+  // Coverage links here with ?table=schema.table. The page is prerendered, so
+  // the query string is read after mount to keep hydration matching.
   useEffect(() => {
     const table = tableFromSearch(window.location.search);
     if (!table) return;
@@ -76,10 +77,12 @@ export function useNewCheck(language: Language) {
   }, []);
 
   // Prefill the author once the signed-in user is known; the API falls back to it anyway.
-  useEffect(() => {
-    const defaultAuthor = user?.name;
-    if (defaultAuthor) setFormData((prev) => (prev.author ? prev : { ...prev, author: defaultAuthor }));
-  }, [user]);
+  const defaultAuthor = user?.name;
+  const [prefilledAuthor, setPrefilledAuthor] = useState<string | undefined>(undefined);
+  if (defaultAuthor && defaultAuthor !== prefilledAuthor) {
+    setPrefilledAuthor(defaultAuthor);
+    setFormData((prev) => (prev.author ? prev : { ...prev, author: defaultAuthor }));
+  }
 
   const clearError = (...fields: InvalidField[]) =>
     setErrors((prev) => (fields.some((field) => prev[field]) ? Object.fromEntries(Object.entries(prev).filter(([key]) => !fields.includes(key as InvalidField))) : prev));

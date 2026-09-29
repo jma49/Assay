@@ -31,7 +31,7 @@ function useFadeInStyle() {
 }
 
 /** The Runs page: overall numbers, the run history and the Run sheet. */
-const Dashboard = () => {
+const Dashboard = ({ initialSearch = "" }: { initialSearch?: string }) => {
   const { language } = useLanguage();
   const t = useDashboardT();
 
@@ -48,7 +48,7 @@ const Dashboard = () => {
     setRunSheetOpen(true);
   }, []);
 
-  const runs = useRunsPage(language);
+  const runs = useRunsPage(language, initialSearch);
   const { history, overallStats, availableScripts, loading, isFetchingScripts } = runs;
   const trigger = useTriggerCheck(availableScripts, runs.refresh, language === "zh" ? "zh" : "en");
   useFadeInStyle();

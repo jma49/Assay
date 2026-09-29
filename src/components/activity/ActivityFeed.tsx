@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { BellOff, BellRing, CheckCircle2, Clock, Hand, XCircle } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { APP_CONTAINER } from "@/components/layout/app-container";
@@ -11,6 +11,7 @@ import { OUTCOME_DOT, OUTCOME_LABEL } from "@/components/checks/status";
 import { apiErrorCodeText } from "@/client/api-errors";
 import { useApi } from "@/client/use-api";
 import type { ActivityDelivery, ActivityItem, ActivityPage } from "@/contracts/activity";
+import { addPage, type FeedPage } from "./pages";
 import type { AlertKind } from "@/domain/notify";
 import { formatDate, formatDateTime, formatTime } from "@/lib/utils/datetime";
 import { cn } from "@/lib/utils/utils";
@@ -169,7 +170,7 @@ export function ActivityFeed() {
   const t = COPY[language];
   const [filter, setFilter] = useState<Filter>("all");
   const [cursor, setCursor] = useState<string | null>(null);
-  const [pages, setPages] = useState<{ cursor: string | null; items: ActivityItem[] }[]>([]);
+  const [pages, setPages] = useState<FeedPage[]>([]);
   const query = FILTER_KINDS[filter].join(",");
   const url = `/api/activity?${new URLSearchParams({ ...(query && { kind: query }), ...(cursor && { cursor }) })}`;
   const { data, dataUrl, error, errorCode, loading } = useApi<ActivityPage>(url);
@@ -180,14 +181,13 @@ export function ActivityFeed() {
     setPages([]);
   };
 
-  // "Show older" appends a page; the first page replaces everything. Data
-  // still showing from the previous URL is ignored.
-  useEffect(() => {
-    if (!data || dataUrl !== url) return;
-    setPages((previous) =>
-      cursor === null ? [{ cursor, items: data.items }] : previous.some((p) => p.cursor === cursor) ? previous : [...previous, { cursor, items: data.items }],
-    );
-  }, [data, dataUrl, url, cursor]);
+  // Each response for the current URL is added once, while rendering (data
+  // still showing from the previous URL is ignored).
+  const [added, setAdded] = useState<ActivityPage | null>(null);
+  if (data && dataUrl === url && added !== data) {
+    setAdded(data);
+    setPages((previous) => addPage(previous, cursor, data.items));
+  }
 
   const items = useMemo(() => pages.flatMap((page) => page.items), [pages]);
   const groups = useMemo(() => {

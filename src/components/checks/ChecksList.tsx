@@ -131,9 +131,10 @@ export function ChecksList() {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const checks = useMemo(() => data?.checks ?? [], [data]);
+  // "Changed in 24 hours" counts from when the page opened; the list is not refetched while it stays open.
+  const [now] = useState(() => Date.now());
 
   const counts = useMemo(() => {
-    const now = Date.now();
     const of = (o: RunOutcome) => checks.filter((c) => c.state?.outcome === o);
     return {
       error: of("error").length,
@@ -142,7 +143,7 @@ export function ChecksList() {
       clean: of("clean").length,
       changed: checks.filter((c) => c.state && now - new Date(c.state.since).getTime() < DAY_MS).length,
     };
-  }, [checks]);
+  }, [checks, now]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
