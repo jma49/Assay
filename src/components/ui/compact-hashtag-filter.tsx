@@ -94,13 +94,15 @@ export function CompactHashtagFilter({
               <div className="relative flex items-center gap-2 min-w-0 flex-1">
                 <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
                 <span className="truncate">
-                  {selectedHashtags.length === 0 ? (
-                    language === "zh" ? "标签筛选" : "Tags"
-                  ) : (
-                    language === "zh" 
+                  {selectedHashtags.length === 0
+                    ? language === "zh"
+                      ? "标签筛选"
+                      : "Tags"
+                    : language === "zh"
                       ? `已选择 ${selectedHashtags.length} 个标签`
-                      : `${selectedHashtags.length} tags selected`
-                  )}
+                      : selectedHashtags.length === 1
+                        ? "1 tag selected"
+                        : `${selectedHashtags.length} tags selected`}
                 </span>
               </div>
 

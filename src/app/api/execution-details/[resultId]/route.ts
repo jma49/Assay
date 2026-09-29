@@ -40,6 +40,8 @@ export const GET = withAuth<{ resultId: string }>(Permission.HISTORY_READ, async
       checkId: run.checkId,
       finishedAt: run.finishedAt,
       outcome: run.outcome,
+      rowCount: typeof run.rowCount === "number" ? run.rowCount : null,
+      error: run.error ?? null,
       message: run.message ?? "",
       findings: run.findings ?? "",
       sample: responseSample(run),

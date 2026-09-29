@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Pencil, Play } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
+import { NotFoundState } from "@/components/common/NotFoundState";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import { WindowToolbar } from "@/components/layout/WindowChrome";
 import { Button } from "@/components/ui/button";
@@ -29,14 +30,7 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
   });
 
   if (error) {
-    return (
-      <div className={`${APP_CONTAINER} py-16 text-center`}>
-        <p className="text-[14px]">{error === "No check with this id" ? t.notFound : error}</p>
-        <Link href="/checks" className="mt-3 inline-block text-[13px] font-medium text-primary hover:underline">
-          {t.back}
-        </Link>
-      </div>
-    );
+    return <NotFoundState title={error === "No check with this id" ? t.notFound : error} backHref="/checks" backLabel={t.back} />;
   }
 
   if (loading && !check) {
