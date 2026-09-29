@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import type { DashboardTranslationKeys, SqlScript } from "@/components/business/dashboard/types";
-import { approvalNotice, classifyDelete, type Language } from "./script-form";
+import { apiErrorText } from "@/client/api-errors";
+import { sendJson } from "@/client/send-json";
+import { approvalNotice, type Language } from "./script-form";
 
 type Translate = (key: DashboardTranslationKeys | string) => string;
 
@@ -20,15 +22,9 @@ export function useScriptDelete(language: Language, t: Translate, reload: () => 
     if (!target) return;
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/scripts/${target.scriptId}`, { method: "DELETE" });
-      const body = response.ok
-        ? await response.json()
-        : await response.json().catch(() => ({ message: t("scriptDeleteError") }));
-      const outcome = classifyDelete(response, body);
-
-      if (outcome.kind === "failed") throw new Error(outcome.message);
-      if (outcome.kind === "approval") {
-        const { title, ...options } = approvalNotice(language, outcome.message, "delete");
+      const body = await sendJson<{ requiresApproval?: boolean }>(`/api/scripts/${target.scriptId}`, "DELETE");
+      if (body.requiresApproval) {
+        const { title, ...options } = approvalNotice(language, "delete");
         toast.success(title, options);
         return;
       }
@@ -36,7 +32,7 @@ export function useScriptDelete(language: Language, t: Translate, reload: () => 
       reload();
     } catch (err) {
       console.error("Failed to delete script:", err);
-      toast.error(t("scriptDeleteError"), { description: err instanceof Error ? err.message : String(err) });
+      toast.error(t("scriptDeleteError"), { description: apiErrorText(err, language) });
     } finally {
       setIsSubmitting(false);
       setIsOpen(false);

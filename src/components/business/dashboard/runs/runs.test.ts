@@ -13,7 +13,6 @@ import {
   passRate,
   scriptDisplayNames,
   takeSearchParam,
-  triggerErrorMessage,
   type HistoryQuery,
 } from "./runs";
 
@@ -132,15 +131,6 @@ describe("takeSearchParam", () => {
   it("ignores a missing or empty search", () => {
     expect(takeSearchParam("https://assay.test/runs")).toBeNull();
     expect(takeSearchParam("https://assay.test/runs?search=")).toBeNull();
-  });
-});
-
-describe("triggerErrorMessage", () => {
-  it("prefers the API's localized message, then the error's own", () => {
-    expect(triggerErrorMessage(new Error("boom", { cause: { localizedMessage: "出错了" } }))).toBe("出错了");
-    expect(triggerErrorMessage(new Error("boom"))).toBe("boom");
-    expect(triggerErrorMessage(new Error(""))).toBe("Trigger failed");
-    expect(triggerErrorMessage("boom")).toBe("Trigger failed");
   });
 });
 

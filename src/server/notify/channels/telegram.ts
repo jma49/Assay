@@ -33,7 +33,7 @@ export function telegramKeyboard(actions: { token: string; acknowledge: string; 
 /** Telegram has no incoming webhooks: the bot posts to a chat it was added to. */
 export const telegram: Channel = {
   kind: "telegram",
-  validateUrl: () => "Telegram is connected through the bot, not a URL",
+  validateUrl: () => "url_not_a_webhook",
   request(message, secret, { env }) {
     const text = [
       `${EMOJI[message.tone]} <b>${escapeHtml(message.title)}</b>`,

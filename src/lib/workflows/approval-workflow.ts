@@ -48,6 +48,9 @@ export interface ApprovalRequest {
   sqlContent?: string; // kept separately so reviewers can read it
 }
 
+/** The outcome of approving or rejecting; a refusal carries a stable code for the client. */
+export type ReviewResult = { success: true; message: string } | { success: false; code: string; message: string };
+
 let cachedDb: Db | null = null;
 
 async function getDb(): Promise<Db> {
@@ -129,13 +132,13 @@ export function isAutoApprovalEligible(
 
   if (requesterRole === UserRole.ADMIN) {
     console.log(
-      `[Approval] 管理员操作自动通过: ${operationType} - ${scriptType}`
+      `[Approval] Admin change applies without review: ${operationType} - ${scriptType}`
     );
     return true;
   }
 
   console.log(
-    `[Approval] 普通用户操作需要审批: ${operationType} - ${scriptType}`
+    `[Approval] Change needs review: ${operationType} - ${scriptType}`
   );
   return false;
 }
@@ -145,7 +148,7 @@ export function getRequiredApprovers(
   operationType: "create" | "update" | "delete" = "create"
 ): string[] {
   console.log(
-    `[Approval] 操作需要审批人: ${operationType} - ${scriptType} -> ${UserRole.ADMIN}`
+    `[Approval] Required approvers: ${operationType} - ${scriptType} -> ${UserRole.ADMIN}`
   );
   return [UserRole.ADMIN];
 }
@@ -193,7 +196,7 @@ export async function createApprovalRequest(
       reviewedAt: autoApprovalEligible ? now : undefined,
       reviewedBy: autoApprovalEligible ? "system" : undefined,
       reviewerEmail: autoApprovalEligible ? "system@auto-approval" : undefined,
-      reviewComment: autoApprovalEligible ? "自动审批通过" : undefined,
+      reviewComment: autoApprovalEligible ? "Approved automatically" : undefined,
       updatedAt: now,
       autoApprovalEligible,
       requiredApprovers,
@@ -210,7 +213,7 @@ export async function createApprovalRequest(
 
     return null;
   } catch (error) {
-    console.error("[Approval] 创建审批请求失败:", error);
+    console.error("[Approval] Creating an approval request failed:", error);
     return null;
   }
 }
@@ -220,7 +223,7 @@ export async function approveScript(
   approverId: string,
   approverEmail: string,
   comment?: string
-): Promise<{ success: boolean; message: string }> {
+): Promise<ReviewResult> {
   try {
     const collection = await getApprovalRequestsCollection();
 
@@ -229,24 +232,25 @@ export async function approveScript(
       Permission.SCRIPT_APPROVE
     );
     if (!hasApprovalPermission) {
-      return { success: false, message: "权限不足：无审批权限" };
+      return { success: false, code: "forbidden", message: "You may not approve requests" };
     }
 
     const request = await collection.findOne({ requestId });
     if (!request) {
-      return { success: false, message: "审批请求不存在" };
+      return { success: false, code: "request_not_found", message: "No request with this id" };
     }
 
     if (request.status !== ApprovalStatus.PENDING) {
       return {
         success: false,
-        message: `审批请求当前状态为 ${request.status}，无法审批`,
+        code: "already_decided",
+        message: `The request is ${request.status}, not pending`,
       };
     }
 
     // Separation of duties: whoever asked for a change cannot approve it.
     if (request.requesterId === approverId) {
-      return { success: false, message: "不能审批自己提交的申请" };
+      return { success: false, code: "own_request", message: "You cannot approve your own request" };
     }
 
     // The status only moves from pending once: of two approvers, or an
@@ -280,16 +284,16 @@ export async function approveScript(
           { requestId },
           { $set: { applyError: error instanceof Error ? error.message : String(error), updatedAt: new Date() } },
         );
-        return { success: false, message: "审批已通过，但应用变更失败，请查看审批记录" };
+        return { success: false, code: "apply_failed", message: "Approved, but applying the change failed; see the request" };
       }
 
-      return { success: true, message: "脚本审批通过" };
+      return { success: true, message: "Approved" };
     }
 
-    return { success: false, message: "这条申请已被其他人处理" };
+    return { success: false, code: "already_decided", message: "Someone else already decided this request" };
   } catch (error) {
-    console.error("[Approval] 审批脚本失败:", error);
-    return { success: false, message: "审批处理时发生错误" };
+    console.error("[Approval] Approving failed:", error);
+    return { success: false, code: "internal", message: "Approving failed" };
   }
 }
 
@@ -298,7 +302,7 @@ export async function rejectScript(
   reviewerId: string,
   reviewerEmail: string,
   comment: string
-): Promise<{ success: boolean; message: string }> {
+): Promise<ReviewResult> {
   try {
     const collection = await getApprovalRequestsCollection();
 
@@ -307,18 +311,19 @@ export async function rejectScript(
       Permission.SCRIPT_REJECT
     );
     if (!hasRejectPermission) {
-      return { success: false, message: "权限不足：无拒绝权限" };
+      return { success: false, code: "forbidden", message: "You may not reject requests" };
     }
 
     const request = await collection.findOne({ requestId });
     if (!request) {
-      return { success: false, message: "审批请求不存在" };
+      return { success: false, code: "request_not_found", message: "No request with this id" };
     }
 
     if (request.status !== ApprovalStatus.PENDING) {
       return {
         success: false,
-        message: `审批请求当前状态为 ${request.status}，无法拒绝`,
+        code: "already_decided",
+        message: `The request is ${request.status}, not pending`,
       };
     }
 
@@ -339,14 +344,14 @@ export async function rejectScript(
 
     if (updateResult.modifiedCount > 0) {
 
-      console.log(`[Approval] 脚本已被拒绝: ${requestId} by ${reviewerEmail}`);
-      return { success: true, message: "脚本已被拒绝" };
+      console.log(`[Approval] Rejected ${requestId} by ${reviewerEmail}`);
+      return { success: true, message: "Rejected" };
     }
 
-    return { success: false, message: "这条申请已被其他人处理" };
+    return { success: false, code: "already_decided", message: "Someone else already decided this request" };
   } catch (error) {
-    console.error("[Approval] 拒绝脚本失败:", error);
-    return { success: false, message: "拒绝处理时发生错误" };
+    console.error("[Approval] Rejecting failed:", error);
+    return { success: false, code: "internal", message: "Rejecting failed" };
   }
 }
 
@@ -431,7 +436,7 @@ export async function getPendingApprovals(
       },
     };
   } catch (error) {
-    console.error("[Approval] 获取待审批列表失败:", error);
+    console.error("[Approval] Listing pending requests failed:", error);
     return {
       data: [],
       pagination: { page, limit, total: 0, totalPages: 0 },
@@ -512,7 +517,7 @@ export async function getCompletedApprovals(
       },
     };
   } catch (error) {
-    console.error("[Approval] 获取已完成审批列表失败:", error);
+    console.error("[Approval] Listing decided requests failed:", error);
     return {
       data: [],
       pagination: { page, limit, total: 0, totalPages: 0 },
@@ -549,7 +554,7 @@ async function executeApprovedOperation(request: ApprovalRequest): Promise<void>
           approvalRequestId: request.requestId,
         },
         actor,
-        "脚本创建（审批通过）",
+        "Created (approved)",
         "minor",
       );
       return;
@@ -562,7 +567,7 @@ async function executeApprovedOperation(request: ApprovalRequest): Promise<void>
         { ...pickEditable(data), approvalStatus: ApprovalStatus.APPROVED, approvalRequestId: request.requestId },
         readVersion(data.baseVersion),
         actor,
-        "脚本更新（审批通过）",
+        "Updated (approved)",
       );
       if (result.kind === "conflict") {
         throw new Error("The check changed after this request was made; submit the change again against the current version");

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { sendJson } from "@/client/send-json";
+import { apiErrorText } from "@/client/api-errors";
+import { apiErrorCode, sendJson } from "@/client/send-json";
 import type { ScriptFormData } from "@/components/business/scripts/ScriptMetadataForm";
 import { useCurrentUser } from "@/lib/auth/client";
 import { useMe } from "@/lib/auth/use-me";
@@ -140,10 +141,9 @@ export function useNewCheck(language: Language) {
       else toast.success(c.saved);
       router.push(afterSaveHref(formData.scriptId, Boolean(result.requiresApproval)));
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      const fieldError = saveErrorField(message, language);
+      const fieldError = saveErrorField(apiErrorCode(error), language);
       if (fieldError) showErrors(fieldError);
-      else toast.error(c.failed, { description: message });
+      else toast.error(c.failed, { description: apiErrorText(error, language) });
     } finally {
       setIsSaving(false);
     }

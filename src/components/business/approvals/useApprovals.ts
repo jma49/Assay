@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiErrorText } from "@/client/api-errors";
 import { sendJson } from "@/client/send-json";
 import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
 import {
@@ -102,7 +103,7 @@ export function useApprovals(language: Language) {
       await Promise.all([loadPendingApprovals(), loadApprovalHistory(historyPage)]);
     } catch (err) {
       console.error("[approvals] Decision failed:", err);
-      toast.error(err instanceof Error ? err.message : approvalMessages(language).decisionFailed);
+      toast.error(apiErrorText(err, language, approvalMessages(language).decisionFailed));
     } finally {
       setActionLoading(null);
     }

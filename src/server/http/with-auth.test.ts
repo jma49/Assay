@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/auth/auth-utils")>()),
-  validateApiAuth: async (_language: string, options: { allowGuest?: boolean } = {}) => {
+  validateApiAuth: async (options: { allowGuest?: boolean } = {}) => {
     mocks.allowGuestAsked = options.allowGuest;
     if (mocks.caller === "user") return { isValid: true, user: { id: "user_1", fullName: "Ada" }, userEmail: "ada@example.com", isGuest: false };
     if (mocks.caller === "guest" && options.allowGuest) return { isValid: true, user: { id: "guest_1", fullName: "Guest" }, userEmail: "", isGuest: true };
@@ -56,7 +56,7 @@ describe("withAuth", () => {
   it("answers 403 without the permission, before the handler runs", async () => {
     const { status, body, principal } = await call(Permission.SCRIPT_UPDATE);
     expect(status).toBe(403);
-    expect(body).toEqual({ success: false, message: "Forbidden: Insufficient permissions" });
+    expect(body).toEqual({ error: { code: "forbidden", message: "You do not have permission to do this" } });
     expect(principal).toBeUndefined();
   });
 

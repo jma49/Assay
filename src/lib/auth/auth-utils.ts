@@ -4,29 +4,6 @@ import { emailAllowed } from "@/lib/auth/legacy-accounts";
 import { NextResponse } from "next/server";
 import { getUserRole, Permission, ensureDefaultRole } from "@/lib/auth/rbac";
 
-export const authMessages = {
-  en: {
-    unauthorizedSignIn: "Unauthorized: Please sign in",
-    unauthorizedUserNotFound: "Unauthorized: User not found",
-    unauthorizedEmailNotFound: "Unauthorized: Email address not found",
-    unauthorizedInvalidDomain: "Unauthorized: Only invited users are allowed",
-    authenticationError: "Authentication error",
-    forbidden: "Forbidden: Insufficient permissions",
-    restrictedAccess: "Access Restricted",
-    contactAdmin: "Please contact administrator for access",
-  },
-  zh: {
-    unauthorizedSignIn: "未授权：请先登录",
-    unauthorizedUserNotFound: "未授权：找不到用户信息",
-    unauthorizedEmailNotFound: "未授权：找不到邮箱地址",
-    unauthorizedInvalidDomain: "未授权：只允许受邀用户访问",
-    authenticationError: "认证错误",
-    forbidden: "权限不足",
-    restrictedAccess: "访问受限",
-    contactAdmin: "请联系管理员申请访问权限",
-  },
-};
-
 /** Whether the email may use this workspace, per ALLOWED_EMAIL_DOMAINS. */
 export const isValidEmailDomain = (email: string) => emailAllowed(email);
 
@@ -45,21 +22,22 @@ export async function currentGuestId(): Promise<string | null> {
   return guestIdFromToken(store.get(GUEST_COOKIE)?.value);
 }
 
+/** A refusal in the API's error shape, `{ error: { code, message } }`. */
+function refusal(status: number, code: string, message: string) {
+  return { isValid: false, response: NextResponse.json({ error: { code, message } }, { status }) } as const;
+}
+
 /**
  * The signed-in caller of an API route, checked against ALLOWED_EMAIL_DOMAINS.
  * Guests are refused unless the route opts in with allowGuest. Routes use it
  * through withAuth (server/http/route.ts), which also checks permissions.
  */
-export async function validateApiAuth(
-  language: "en" | "zh" = "en",
-  options: { allowGuest?: boolean } = {},
-) {
+export async function validateApiAuth(options: { allowGuest?: boolean } = {}) {
   try {
     // Loaded on first use: the module opens a MongoDB client, which modules
     // that only import helpers from here (and their tests) should not do.
     const { auth } = await import("@/lib/auth/server");
     const session = await auth.api.getSession({ headers: await headers() });
-    const messages = authMessages[language];
 
     if (!session && options.allowGuest) {
       const guestId = await currentGuestId();
@@ -69,37 +47,12 @@ export async function validateApiAuth(
       }
     }
 
-    if (!session) {
-      return {
-        isValid: false,
-        response: NextResponse.json(
-          { success: false, message: messages.unauthorizedSignIn },
-          { status: 401 }
-        ),
-      } as const;
-    }
+    if (!session) return refusal(401, "unauthorized", "Sign in to continue");
 
     const user: AuthUser = { id: session.user.id, fullName: session.user.name || null };
     const userEmail = session.user.email;
-
-    if (!userEmail) {
-      return {
-        isValid: false,
-        response: NextResponse.json(
-          { success: false, message: messages.unauthorizedEmailNotFound },
-          { status: 401 }
-        ),
-      } as const;
-    }
-    if (!isValidEmailDomain(userEmail)) {
-      return {
-        isValid: false,
-        response: NextResponse.json(
-          { success: false, message: messages.unauthorizedInvalidDomain },
-          { status: 403 }
-        ),
-      } as const;
-    }
+    if (!userEmail) return refusal(401, "unauthorized", "This account has no email address");
+    if (!isValidEmailDomain(userEmail)) return refusal(403, "email_not_allowed", "Only invited users may use this workspace");
 
     // Everyone who signs in starts as a viewer.
     try {
@@ -109,21 +62,9 @@ export async function validateApiAuth(
       console.error("[Auth] Assigning the default role failed:", error);
     }
 
-    return {
-      isValid: true,
-      user,
-      userEmail,
-      isGuest: false,
-    } as const;
+    return { isValid: true, user, userEmail, isGuest: false } as const;
   } catch (error) {
-    console.error("API auth validation error:", error);
-    const messages = authMessages[language];
-    return {
-      isValid: false,
-      response: NextResponse.json(
-        { success: false, message: messages.authenticationError },
-        { status: 500 }
-      ),
-    } as const;
+    console.error("[Auth] Validating the session failed:", error);
+    return refusal(500, "internal", "Something went wrong");
   }
 }

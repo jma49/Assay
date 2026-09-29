@@ -8,6 +8,7 @@ import { APP_CONTAINER } from "@/components/layout/app-container";
 import { WindowToolbar } from "@/components/layout/WindowChrome";
 import { ChannelIcon } from "@/components/notifications/channels";
 import { OUTCOME_DOT, OUTCOME_LABEL } from "@/components/checks/status";
+import { apiErrorCodeText } from "@/client/api-errors";
 import { useApi } from "@/client/use-api";
 import type { ActivityDelivery, ActivityItem, ActivityPage } from "@/contracts/activity";
 import type { AlertKind } from "@/domain/notify";
@@ -171,7 +172,7 @@ export function ActivityFeed() {
   const [pages, setPages] = useState<{ cursor: string | null; items: ActivityItem[] }[]>([]);
   const query = FILTER_KINDS[filter].join(",");
   const url = `/api/activity?${new URLSearchParams({ ...(query && { kind: query }), ...(cursor && { cursor }) })}`;
-  const { data, dataUrl, error, loading } = useApi<ActivityPage>(url);
+  const { data, dataUrl, error, errorCode, loading } = useApi<ActivityPage>(url);
 
   const changeFilter = (next: Filter) => {
     setFilter(next);
@@ -222,7 +223,7 @@ export function ActivityFeed() {
 
       {error && !data ? (
         <p className="rounded-xl bg-failure-soft p-4 text-[13px] text-failure">
-          {t.loadFailed}: {error}
+          {t.loadFailed}: {apiErrorCodeText(errorCode, language) ?? error}
         </p>
       ) : loading && items.length === 0 ? (
         <div className="space-y-3">

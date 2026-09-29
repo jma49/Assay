@@ -206,8 +206,9 @@ queue can replace the inline runner later without changing services.
 
 ## API conventions
 
-These are the target conventions. The routes built on `server/` follow them;
-the legacy routes are still being migrated and keep their own shapes.
+Auth and errors hold for every route. Input parsing and paging are the
+target; the routes carried over from the first version are still being
+moved onto them.
 
 - **Auth.** Every route declares who may call it through `withAuth`
   (`src/server/http/route.ts`): a permission, `{ anyOf: [...] }` (e.g.
@@ -216,7 +217,7 @@ the legacy routes are still being migrated and keep their own shapes.
   because demo mode widens it). Guests are opt-in: a permission lets them in
   only when it is in `GUEST_PERMISSIONS` (`script:read`, `history:read`),
   `signedIn` only with `allowGuest` (`me`, `run-check`). Refusals answer
-  `{ success: false, message }` with 401 or 403. Routes with their own
+  401 or 403 in the error shape below. Routes with their own
   check: `auth/[...all]` (Better Auth), `mcp` (API key),
   `notifications/dispatch` (`CRON_SECRET`), the Slack and Telegram callbacks
   (signatures).
@@ -233,11 +234,14 @@ the legacy routes are still being migrated and keep their own shapes.
     one run's report.
 - **Input.** Target: parsed with a zod schema at the edge (`parseJson`).
   Only the alerting and notifications contracts are zod today.
-- **Errors.** Target: `{ error: { code, message } }` with the matching HTTP
-  status (`errorResponse`). Errors thrown out of a handler get it; the
-  routes carried over from the first version still catch their own and
-  answer `{ error: "..." }`, `{ message: "..." }` or
-  `{ success: false, ... }`.
+- **Errors.** Every route answers `{ error: { code, message } }` with the
+  matching HTTP status: a handler throws `ApiError(status, code, message)`
+  and `withAuth` turns it into that shape (`errorResponse`); anything else
+  becomes a logged 500 `internal` that says nothing about internals. The
+  `message` is English. The `code` is stable, and the UI shows it in the
+  reader's language (`src/client/api-errors.ts`), falling back to the
+  message for codes it does not know. The exceptions are protocol shapes:
+  JSON-RPC errors on `/api/mcp` and empty 401s to chat-app callbacks.
 - **Paging.** Target: cursor pagination, as `activity` does. `check-history`,
   `edit-history` and `approvals` page by `page` and `limit` (`check-history`
   up to 500 runs a page, without their rows). `check-history` and

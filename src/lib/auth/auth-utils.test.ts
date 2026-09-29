@@ -49,7 +49,7 @@ describe("validateApiAuth", () => {
     mocks.guestToken = newGuestToken();
 
     expect((await validateApiAuth()).isValid).toBe(false);
-    const allowed = await validateApiAuth("en", { allowGuest: true });
+    const allowed = await validateApiAuth({ allowGuest: true });
     expect(allowed.isValid && allowed.isGuest).toBe(true);
     expect(allowed.isValid && allowed.user.id).toBe(`guest_${mocks.guestToken}`);
   });
