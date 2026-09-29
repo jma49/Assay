@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { useApi } from "@/client/use-api";
+import { apiErrorCodeText, apiErrorText } from "@/client/api-errors";
 import { sendJson } from "@/client/send-json";
 import type { DestinationDto, DestinationsResponse } from "@/contracts/notifications";
 import { CHANNEL_KINDS, type ChannelKind } from "@/domain/notify";
@@ -232,7 +233,7 @@ function DestinationRow({
       onChanged();
     } catch (cause) {
       setEnabled(!next);
-      toast.error(cause instanceof Error ? cause.message : String(cause));
+      toast.error(apiErrorText(cause, language));
     }
   };
 
@@ -244,7 +245,7 @@ function DestinationRow({
       else toast.error(t.testFailed(result.error ?? ""));
       onChanged();
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : String(cause));
+      toast.error(apiErrorText(cause, language));
     } finally {
       setTesting(false);
     }
@@ -256,7 +257,7 @@ function DestinationRow({
       toast.success(t.removed);
       onChanged();
     } catch (cause) {
-      toast.error(cause instanceof Error ? cause.message : String(cause));
+      toast.error(apiErrorText(cause, language));
     }
   };
 
@@ -340,7 +341,7 @@ export function NotificationSettings() {
   const search = useSearchParams();
   const { language } = useLanguage();
   const t = COPY[language];
-  const { data, error, loading, reload } = useApi<DestinationsResponse>("/api/notifications/destinations");
+  const { data, error, errorCode, loading, reload } = useApi<DestinationsResponse>("/api/notifications/destinations");
   const [pasteKind, setPasteKind] = useState<PasteKind | null>(null);
   const [telegramOpen, setTelegramOpen] = useState(false);
   const [editing, setEditing] = useState<DestinationDto | null>(null);
@@ -370,7 +371,7 @@ export function NotificationSettings() {
     return (
       <div className={`${APP_CONTAINER} py-6`}>
         <p className="rounded-xl bg-failure-soft p-4 text-[13px] text-failure">
-          {t.loadFailed}: {error}
+          {t.loadFailed}: {apiErrorCodeText(errorCode, language) ?? error}
         </p>
       </div>
     );
