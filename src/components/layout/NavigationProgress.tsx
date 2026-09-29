@@ -27,9 +27,12 @@ export function NavigationProgress() {
     return () => document.removeEventListener("click", onClick, true);
   }, []);
 
-  useEffect(() => {
-    setPhase((current) => (current === "loading" ? "done" : current));
-  }, [pathname]);
+  // The path changed: the next page is here. Adjusted while rendering, as React recommends for state that follows a value.
+  const [shownPath, setShownPath] = useState(pathname);
+  if (pathname !== shownPath) {
+    setShownPath(pathname);
+    if (phase === "loading") setPhase("done");
+  }
 
   useEffect(() => {
     if (phase !== "done") return;
