@@ -36,6 +36,7 @@ Vercel 免费版在 2026-09-26 触发了部署频率限制，之后合并的改�
 ## 定时执行（PR #19）
 
 - [ ] 在 GitHub 仓库 Settings → Secrets 添加 `DATABASE_URL`、`MONGODB_URI`（没有它们工作流会静默跳过）。
+- [ ] 与 Vercel 保持一致：用了证书就加 Secrets `CA_CERT_BLOB_URL`、`CLIENT_CERT_BLOB_URL`、`CLIENT_KEY_BLOB_URL`；改过的 `MONGODB_DB_NAME`、`CHECK_TIMEOUT_MS`、`RUN_RETENTION_DAYS` 加为 Variables（完整列表见 /docs/scheduling）。
 - [ ] 合并到 main 后，Actions 里「Scheduled SQL checks」每 30 分钟出现一次运行；定时检查按计划时间只执行一次。
 - [ ] Dashboard 状态栏的「下次定时检查」与最近的 cron 时间一致。
 

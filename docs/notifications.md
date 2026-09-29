@@ -61,6 +61,12 @@ least once: a dispatcher that dies between sending and recording may send an
 alert again. A new destination never receives events from before it existed,
 and events older than 24 hours are never sent.
 
+Check names and error text are written by people and databases, so each
+channel escapes them for its own format (Slack mrkdwn, including the
+notification fallback; Discord markdown; Telegram HTML; WeCom markdown,
+which has no escape and gets full-width `＜＞［］` instead). Only the link
+to the check is ever a link, and Discord never pings anyone.
+
 ## Server setup
 
 | Variable | Needed for |

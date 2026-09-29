@@ -69,6 +69,38 @@ describe("payloads", () => {
     expect(payload.markdown.content).toContain("[Open check](https://assay.example/checks/orders)");
   });
 
+  describe("with a hostile check name and error", () => {
+    const hostile = buildAlertMessage(
+      { type: "check.outcome_changed", from: "clean", to: "error", rowCount: 0, diff: null, error: "[Re-authenticate](https://evil.example)\n# Urgent </font><@123>", at: now },
+      { name: "<!channel> <https://evil.example|Open check> </font>[Re-authenticate](https://evil.example)" },
+      { language: "en", url: "https://assay.example/checks/orders" },
+    );
+    const send = (kind: keyof typeof CHANNELS, secret: object) => JSON.parse(CHANNELS[kind].request(hostile, secret, context).body);
+
+    it("slack escapes the notification fallback as well as the blocks", () => {
+      const payload = send("slack", { url: "https://hooks.slack.com/services/x" });
+      expect(payload.text).not.toMatch(/<!channel>|<https:/);
+      expect(payload.text).toContain("&lt;!channel&gt; &lt;https://evil.example|Open check&gt;");
+      expect(JSON.stringify(payload.blocks)).not.toMatch(/<!channel>|<https:/);
+      expect(payload.blocks.at(-1).elements[0].url).toBe("https://assay.example/checks/orders");
+    });
+
+    it("discord escapes markdown in the description", () => {
+      const description: string = send("discord", { url: "https://discord.com/api/webhooks/1/a" }).embeds[0].description;
+      expect(description).toContain("\\[Re\\-authenticate\\]\\(https\\://evil.example\\)");
+      expect(description).not.toMatch(/(^|[^\\])[[\]()<>#]/);
+    });
+
+    it("wecom keeps only its own link and font tag", () => {
+      const content: string = send("wecom", { url: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=k" }).markdown.content;
+      expect(content.match(/\]\(/g)).toHaveLength(1);
+      expect(content).toContain("[Open check](https://assay.example/checks/orders)");
+      expect(content.match(/<\/?font/g)).toEqual(["<font", "</font"]);
+      expect(content).not.toContain("\n# Urgent");
+      expect(content).toContain("［Re-authenticate］(https://evil.example)");
+    });
+  });
+
   it("the generic webhook signs timestamp and body", () => {
     const request = CHANNELS.webhook.request(message, { url: "https://example.com/h", signingSecret: "s" }, context);
     const timestamp = request.headers["x-assay-timestamp"];
