@@ -32,9 +32,10 @@ variable says. Give the account a role with `npm run user:set-role`.
 ## How it fits together
 
 - `/api/auth/*` is Better Auth's handler (OAuth redirects, callbacks, session).
-- The middleware only checks that a session cookie exists, to redirect
-  signed-out visitors without a database call. Every page and API route
-  verifies the session itself (`validateApiAuth`, `withAuth`).
+- The proxy (`src/proxy.ts`, Next.js's former middleware) only checks that a
+  session cookie exists, to redirect signed-out visitors without a database
+  call. Every page and API route verifies the session itself
+  (`validateApiAuth`, `withAuth`).
 - A signed session cookie caches the session for five minutes, so most API
   calls skip the database; revoking a session takes effect within that time.
 - Roles stay in `user_roles`; permissions are checked by `rbac.ts` as before.

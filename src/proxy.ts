@@ -1,4 +1,4 @@
-import { sessionCookieOf } from "@/lib/auth/session-cookie";
+import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 import { GUEST_COOKIE, guestIdFromToken } from "@/lib/auth/guest";
 
@@ -56,14 +56,14 @@ const isGuestRoute = matcher([
  * signed-out visitors are sent to sign in without a database call. Every
  * page and API route verifies the session itself before showing data.
  */
-export default function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   // Fail closed: without a secret no session can be trusted anywhere.
   if (!process.env.BETTER_AUTH_SECRET) {
     return new NextResponse("Authentication is not configured", { status: 503 });
   }
 
   const { pathname } = req.nextUrl;
-  if (isPublicRoute(pathname) || sessionCookieOf(req.headers.get("cookie"))) return NextResponse.next();
+  if (isPublicRoute(pathname) || getSessionCookie(req)) return NextResponse.next();
 
   if (guestIdFromToken(req.cookies.get(GUEST_COOKIE)?.value)) {
     if (isGuestRoute(pathname)) return NextResponse.next();

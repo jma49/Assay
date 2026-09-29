@@ -5,7 +5,7 @@ import { isDemoMode } from "@/lib/security/demo-sandbox";
  * a signed-up viewer (read, and run the seeded checks under an IP budget),
  * and sign-up is public anyway, so the cookie needs no signature: forging
  * it only grants what anyone can get by signing up. Off unless DEMO_MODE.
- * Edge-safe: the middleware imports it.
+ * The proxy imports it on every request, so it makes no database calls.
  */
 export const GUEST_COOKIE = "assay_guest";
 export const GUEST_COOKIE_MAX_AGE = 60 * 60 * 24;

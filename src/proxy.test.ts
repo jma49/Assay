@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
-import middleware from "./middleware";
+import { proxy } from "./proxy";
 
 const run = async (path: string, cookie?: string) =>
-  middleware(new NextRequest(`http://localhost${path}`, cookie ? { headers: { cookie } } : undefined));
+  proxy(new NextRequest(`http://localhost${path}`, cookie ? { headers: { cookie } } : undefined));
 
 const SESSION = "better-auth.session_token=abc.def";
 
 const GUEST = `assay_guest=${"a".repeat(32)}`;
 
-describe("middleware", () => {
+describe("proxy", () => {
   beforeEach(() => {
     process.env.BETTER_AUTH_SECRET = "test-secret-test-secret-test-secret";
   });
@@ -91,6 +91,18 @@ describe("middleware", () => {
     const res = await run("/checks/manage", SESSION);
 
     expect(res.headers.get("location")).toBeNull();
+  });
+
+  it("accepts every session cookie name Better Auth sets", async () => {
+    for (const cookie of ["__Secure-better-auth.session_token=secure; other=1", "better-auth-session_token=legacy"]) {
+      expect((await run("/checks/manage", cookie)).headers.get("location"), cookie).toBeNull();
+    }
+  });
+
+  it("does not count an empty session cookie or the session cache as a session", async () => {
+    for (const cookie of ["better-auth.session_token=", "better-auth.session_data=cached", "theme=dark"]) {
+      expect(new URL((await run("/checks/manage", cookie)).headers.get("location")!).pathname, cookie).toBe("/sign-in");
+    }
   });
 
   describe("demo guests", () => {
