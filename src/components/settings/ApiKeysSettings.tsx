@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Plus } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { APP_CONTAINER } from "@/components/layout/app-container";
@@ -24,6 +24,8 @@ import { CreateKeyDialog } from "./CreateKeyDialog";
 import { Endpoint } from "./KeySnippets";
 import { useApiKeys } from "./useApiKeys";
 
+const noChanges = () => () => {};
+
 /** Settings → API keys: personal keys for the MCP server. */
 export function ApiKeysSettings() {
   const { language } = useLanguage();
@@ -32,9 +34,8 @@ export function ApiKeysSettings() {
   const { keys, create, revoke } = useApiKeys(Boolean(me && !me.guest), t);
   const [creating, setCreating] = useState(false);
   const [revoking, setRevoking] = useState<KeyRow | null>(null);
-  // The full URL is only known in the browser; reading it after mount keeps server and client HTML the same.
-  const [endpoint, setEndpoint] = useState("/api/mcp");
-  useEffect(() => setEndpoint(`${window.location.origin}/api/mcp`), []);
+  // The full URL is only known in the browser; the server and hydration use the path, so their HTML matches.
+  const endpoint = useSyncExternalStore(noChanges, () => `${window.location.origin}/api/mcp`, () => "/api/mcp");
 
   if (me?.guest) {
     return (

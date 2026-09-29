@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, Copy, Loader2 } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { Button } from "@/components/ui/button";
@@ -61,16 +61,21 @@ export function PasteDestinationDialog({
   const [urlError, setUrlError] = useState<string | null>(null);
   const [createdSecret, setCreatedSecret] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!kind) return;
-    const channel = CHANNEL_META[kind].name[language];
-    setSubscription({ name: language === "zh" ? `${channel}告警` : `${channel} alerts`, alerts: [...ALERT_KINDS], tags: "", language, digest: defaultDigest(), remindAfter: 0 });
-    setUrl("");
-    setSigningSecret("");
-    setError(null);
-    setUrlError(null);
-    setCreatedSecret(null);
-  }, [kind, language]);
+  // Opening for a channel (or switching language) starts the form over, adjusted while rendering.
+  const formFor = kind ? `${kind} ${language}` : null;
+  const [shownFor, setShownFor] = useState(formFor);
+  if (formFor !== shownFor) {
+    setShownFor(formFor);
+    if (kind) {
+      const channel = CHANNEL_META[kind].name[language];
+      setSubscription({ name: language === "zh" ? `${channel}告警` : `${channel} alerts`, alerts: [...ALERT_KINDS], tags: "", language, digest: defaultDigest(), remindAfter: 0 });
+      setUrl("");
+      setSigningSecret("");
+      setError(null);
+      setUrlError(null);
+      setCreatedSecret(null);
+    }
+  }
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
