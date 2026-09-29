@@ -88,7 +88,7 @@
     "@eslint/eslintrc": "^3",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^22.15.29",
+    "@types/node": "^24.19.0",
     "@types/pg": "^8.23.1",
     "@types/pg-cursor": "^2.7.2",
     "@types/react": "^19",
