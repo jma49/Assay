@@ -20,7 +20,7 @@
 
 - Read `DESIGN.md` before touching `src/components`, `src/app` or `globals.css`. It holds the tokens, the type scale, the component rules and the migration order for the current refactor.
 - Style only through tokens: colour utilities from `@theme inline` (`bg-card`, `text-muted-foreground`, `text-attention`, …), the `text-<level>` type scale, the `rounded-sm|md|lg|xl|full` radii. No hex values, raw palette classes (`text-blue-600`), arbitrary sizes (`text-[12.5px]`, `rounded-[5px]`) or `dark:` colour overrides in components.
-- When you touch a file that still uses arbitrary sizes, migrate that file using the mapping in `DESIGN.md`; do not mix old and new sizes within one component.
+- Text sizes are `text-<level>` utilities only; `src/lib/type-scale.test.ts` fails on `text-[Npx]`, Tailwind's default sizes and literal CSS font sizes. The table in `DESIGN.md` (Migration) picks a level for a size that is not on the scale.
 - Every list and detail view covers loading, empty and error states, and every user-facing string exists in English and Chinese.
 - A token change edits `globals.css` and `DESIGN.md` in the same commit; run `npx @google/design.md lint DESIGN.md`.
 - Before deleting a CSS class, search for names built in template strings as well as literal ones.

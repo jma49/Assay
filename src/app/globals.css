@@ -302,12 +302,6 @@
 }
 
 /* Legacy class names still used by pages that are not rebuilt yet. */
-.unified-card {
-  background-color: var(--card);
-  border-radius: calc(var(--radius) + 4px);
-  box-shadow: var(--shadow-border);
-}
-
 .icon-container {
   display: flex;
   width: 2.25rem;
@@ -316,10 +310,6 @@
   justify-content: center;
   border-radius: var(--radius);
   background-color: var(--muted);
-}
-
-.text-gradient {
-  color: var(--foreground);
 }
 
 .slide-in-right,
