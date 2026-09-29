@@ -20,6 +20,13 @@ updates:
       # ESLint 10. Drop this once an eslint-config-next release supports 10.
       - dependency-name: "eslint"
         versions: [">=10"]
+      # TypeScript 7 (the native compiler) has no JavaScript API yet, and
+      # typescript-eslint, which eslint-config-next uses, refuses to load
+      # with it. `tsc` and `next build` already work with 7 once tsconfig drops
+      # `baseUrl` and `downlevelIteration`. Revisit when a typescript-eslint
+      # release accepts TypeScript 7.
+      - dependency-name: "typescript"
+        versions: [">=7"]
 
   - package-ecosystem: github-actions
     directory: /
