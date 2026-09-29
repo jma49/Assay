@@ -57,17 +57,17 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-[13px] font-medium">
+      <Label htmlFor={id} className="text-body-sm font-medium">
         {label}
         {required && <span className="text-failure">*</span>}
       </Label>
       {children}
       {error ? (
-        <p id={`${id}-error`} className="text-[12px] text-failure">
+        <p id={`${id}-error`} className="text-caption text-failure">
           {error}
         </p>
       ) : (
-        hint && <p className="text-[12px] text-muted-foreground">{hint}</p>
+        hint && <p className="text-caption text-muted-foreground">{hint}</p>
       )}
     </div>
   );
@@ -79,7 +79,7 @@ const invalidProps = (id: string, error: string | undefined) =>
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-4 border-t pt-5 first:border-t-0 first:pt-0">
-      <h3 className="text-[12px] font-medium tracking-wide text-muted-foreground uppercase">
+      <h3 className="text-label-caps uppercase text-muted-foreground">
         {title}
       </h3>
       {children}
@@ -141,7 +141,7 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
             onChange={handleChange}
             placeholder="duplicate-orders"
             disabled={isEditMode}
-            className="font-mono text-[13px] [font-variant-ligatures:none]"
+            className="font-mono text-body-sm [font-variant-ligatures:none]"
           />
         </Field>
 
@@ -196,10 +196,10 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
       <Section title={zh ? "定时执行" : "Schedule"}>
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-0.5">
-            <Label htmlFor="isScheduled" className="text-[13px] font-medium">
+            <Label htmlFor="isScheduled" className="text-body-sm font-medium">
               {zh ? "按计划自动执行" : "Run on a schedule"}
             </Label>
-            <p className="text-[12px] text-muted-foreground">
+            <p className="text-caption text-muted-foreground">
               {zh ? "关闭时只能手动执行" : "When off, the check only runs manually"}
             </p>
           </div>
@@ -220,11 +220,11 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
             language={language}
           />
         )}
-        {errors.cronSchedule && <p className="text-[12px] text-failure">{errors.cronSchedule}</p>}
+        {errors.cronSchedule && <p className="text-caption text-failure">{errors.cronSchedule}</p>}
       </Section>
 
       <details className="group border-t pt-5" open={hasChineseContent}>
-        <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-sm text-[13px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-sm text-body-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
           <ChevronRight className="size-4 text-muted-foreground transition-transform group-open:rotate-90" />
           {zh ? "中文名称与描述" : "Chinese name and description"}
           <span className="font-normal text-muted-foreground">{zh ? "（可选）" : "(optional)"}</span>

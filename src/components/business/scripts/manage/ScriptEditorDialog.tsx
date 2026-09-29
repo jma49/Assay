@@ -73,7 +73,7 @@ export function ScriptEditorDialog({
             isEditMode={mode === "edit"}
           />
           <div>
-            <label className="text-sm font-medium mb-1 block">
+            <label className="text-body-md font-medium mb-1 block">
               {t("fieldSqlContent")}{" "}
               <span className="text-destructive">*</span>
             </label>
@@ -82,7 +82,7 @@ export function ScriptEditorDialog({
         </div>
         <DialogFooter className="pt-4 border-t">
           {/* The editor's status bar already reports the read-only check. */}
-          <div className="flex-1 text-[13px]">
+          <div className="flex-1 text-body-sm">
             {hint && <span className="text-attention">{hint}</span>}
           </div>
 

@@ -37,10 +37,10 @@ function HistoryEntry({ history, t, language, last }: { history: EditHistoryReco
           <div className="flex items-center gap-3">
             <OperationIcon operation={history.operation} />
             <div>
-              <CardTitle className="text-sm">
+              <CardTitle className="text-body-md">
                 <OperationBadge operation={history.operation} t={t} />
               </CardTitle>
-              <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+              <div className="flex items-center gap-4 text-caption text-muted-foreground mt-1">
                 <div className="flex items-center gap-1">
                   <User className="w-3 h-3" />
                   <span>{history.userName || history.userEmail || history.userId}</span>
@@ -58,13 +58,13 @@ function HistoryEntry({ history, t, language, last }: { history: EditHistoryReco
       {history.changes && history.changes.length > 0 && (
         <CardContent className="pt-0">
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-foreground">{t("changesDetails")}：</h4>
+            <h4 className="text-body-md font-medium text-foreground">{t("changesDetails")}：</h4>
             {history.changes.map((change, index) => (
               <div key={index} className="bg-muted rounded-lg p-2">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-medium text-foreground">{fieldLabel(change, language) || change.field}</span>
+                  <span className="text-body-md font-medium text-foreground">{fieldLabel(change, language) || change.field}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-2 gap-4 text-caption">
                   <div>
                     <span className="text-muted-foreground">{t("originalValue")}：</span>
                     <div className="mt-1 p-2 bg-failure/10 border border-failure/30 rounded text-failure font-mono">
@@ -86,7 +86,7 @@ function HistoryEntry({ history, t, language, last }: { history: EditHistoryReco
 
       {description && (
         <CardContent className="pt-0">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-body-md text-muted-foreground">
             <span className="font-medium">{t("description")}：</span>
             {description}
           </div>
@@ -159,7 +159,7 @@ export function EditHistoryDialog({ open, onOpenChange, scriptId, t }: EditHisto
             <Button variant="outline" size="sm" onClick={() => goTo(currentPage - 1)} disabled={currentPage <= 1 || loading}>
               {t("previous")}
             </Button>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-body-md text-muted-foreground">
               {t("pageInfoShort")} {currentPage}/{totalPages}
             </span>
             <Button variant="outline" size="sm" onClick={() => goTo(currentPage + 1)} disabled={currentPage >= totalPages || loading}>
