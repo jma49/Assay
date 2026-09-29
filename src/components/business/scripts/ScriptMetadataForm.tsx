@@ -34,6 +34,8 @@ interface ScriptMetadataFormProps {
   t?: (key: DashboardTranslationKeys | string) => string;
   /** Script ID cannot change once the script exists. */
   isEditMode?: boolean;
+  /** Messages for fields that stop the save; each marks its field invalid. */
+  errors?: Partial<Record<"name" | "scriptId" | "cronSchedule", string>>;
   className?: string;
 }
 
@@ -42,12 +44,15 @@ function Field({
   label,
   required,
   hint,
+  error,
   children,
 }: {
   id: string;
   label: string;
   required?: boolean;
   hint?: React.ReactNode;
+  /** Replaces the hint and names the field's problem; the input carries aria-invalid itself. */
+  error?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -57,10 +62,19 @@ function Field({
         {required && <span className="text-failure">*</span>}
       </Label>
       {children}
-      {hint && <p className="text-[12px] text-muted-foreground">{hint}</p>}
+      {error ? (
+        <p id={`${id}-error`} className="text-[12px] text-failure">
+          {error}
+        </p>
+      ) : (
+        hint && <p className="text-[12px] text-muted-foreground">{hint}</p>
+      )}
     </div>
   );
 }
+
+const invalidProps = (id: string, error: string | undefined) =>
+  error ? { "aria-invalid": true, "aria-describedby": `${id}-error` } : {};
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -77,6 +91,7 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
   formData,
   onFormChange,
   isEditMode = false,
+  errors = {},
   className,
 }) => {
   const { language } = useLanguage();
@@ -94,10 +109,11 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
   return (
     <div className={cn("space-y-5", className)}>
       <Section title={zh ? "基本信息" : "Details"}>
-        <Field id="name" label={zh ? "名称" : "Name"} required>
+        <Field id="name" label={zh ? "名称" : "Name"} required error={errors.name}>
           <Input
             id="name"
             name="name"
+            {...invalidProps("name", errors.name)}
             value={formData.name}
             onChange={handleChange}
             placeholder={zh ? "例如：重复下单" : "e.g. Duplicate orders"}
@@ -106,8 +122,9 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
 
         <Field
           id="scriptId"
-          label={zh ? "脚本 ID" : "Script ID"}
+          label={zh ? "检查 ID" : "Check ID"}
           required
+          error={errors.scriptId}
           hint={
             isEditMode
               ? zh ? "创建后不可修改" : "Cannot be changed after creation"
@@ -119,11 +136,12 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
           <Input
             id="scriptId"
             name="scriptId"
+            {...invalidProps("scriptId", errors.scriptId)}
             value={formData.scriptId}
             onChange={handleChange}
             placeholder="duplicate-orders"
             disabled={isEditMode}
-            className="font-mono text-[13px]"
+            className="font-mono text-[13px] [font-variant-ligatures:none]"
           />
         </Field>
 
@@ -202,12 +220,14 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
             language={language}
           />
         )}
+        {errors.cronSchedule && <p className="text-[12px] text-failure">{errors.cronSchedule}</p>}
       </Section>
 
       <details className="group border-t pt-5" open={hasChineseContent}>
-        <summary className="flex cursor-pointer list-none items-center gap-1.5 text-[12px] font-medium tracking-wide text-muted-foreground uppercase">
-          <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
-          {zh ? "中文信息（可选）" : "Chinese translation (optional)"}
+        <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-sm text-[13px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+          <ChevronRight className="size-4 text-muted-foreground transition-transform group-open:rotate-90" />
+          {zh ? "中文名称与描述" : "Chinese name and description"}
+          <span className="font-normal text-muted-foreground">{zh ? "（可选）" : "(optional)"}</span>
         </summary>
         <div className="mt-4 space-y-4">
           <Field id="cnName" label="名称">
