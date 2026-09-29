@@ -23,6 +23,16 @@ Redis; any Node.js host works the same way (`npm run build && npm start`).
 | Alerts | `ASSAY_SECRET_KEY` (never change it once channels are stored: it decrypts their secrets), `APP_URL`, `CRON_SECRET` |
 | Optional | `AI_ENABLED=true` with AI Gateway, `DEMO_MODE=true` (the public demo only), the Slack, Discord and Telegram app settings ([notifications.md](notifications.md)), `ALLOWED_EMAIL_DOMAINS`, run limits (`CHECK_TIMEOUT_MS`, `CHECK_CONCURRENCY`, `PG_POOL_MAX`, `RUN_RETENTION_DAYS`) |
 
+**TLS to PostgreSQL is always verified when `DATABASE_URL` asks for it.**
+With `sslmode` set to `prefer`, `require`, `verify-ca` or `verify-full`, Assay
+removes the parameter and connects with full verification: the certificate
+chain against the system CAs (or `CA_CERT_BLOB_URL` when set) and the host
+name. This is what pg 8 does today, made explicit so pg 9's weaker libpq
+meaning of `require` never applies and pg's deprecation warning is not
+printed. `sslmode=require` in an existing URL needs no change;
+`sslmode=disable` stays plaintext (local development), and URLs naming
+certificate files (`sslrootcert`, `sslcert`, `sslkey`) are left to pg.
+
 OAuth callbacks are `<BETTER_AUTH_URL>/api/auth/callback/google` and
 `…/github`; set `BETTER_AUTH_URL` and `APP_URL` to the public URL.
 
