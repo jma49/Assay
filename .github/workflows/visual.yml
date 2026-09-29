@@ -20,15 +20,17 @@ jobs:
   compare:
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    # Images pinned by digest (the tag kept for readers), like the actions:
+    # a moved tag cannot change what runs. Update both together.
     services:
       mongo:
-        image: mongo:7
+        image: mongo:7@sha256:9854f7139445d766a9523571d6f047530c45547460ffcf8259eb2bf4264632ca
         ports: ["27017:27017"]
         options: >-
           --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
           --health-interval 5s --health-timeout 5s --health-retries 20
       postgres:
-        image: postgres:16
+        image: postgres:16@sha256:1a6ab3f5345eb6dbe04a1349529caabdb0ab09293a09590fad07b2246bfa4b54
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -37,10 +39,10 @@ jobs:
         options: >-
           --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 20
       redis:
-        image: redis:7
+        image: redis:7@sha256:c6eabf748fc7a61dbb5a705c78bcf3d6377b1127a97d0ce965c11c44ba46896f
       # Upstash's REST protocol in front of the Redis above.
       redis-http:
-        image: hiett/serverless-redis-http:latest
+        image: hiett/serverless-redis-http:latest@sha256:5b0bb9239fce53abf87b2018a7a0deb9ec7bd900c5360738fe5fbeeb426f9150
         env:
           SRH_MODE: env
           SRH_TOKEN: visual
