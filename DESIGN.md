@@ -272,7 +272,7 @@ Three words decide most calls: **quiet** (the data is loud, the chrome is not), 
 
 Manrope for everything readable, JetBrains Mono for SQL, ids, cron expressions and numbers that line up in columns. Chinese falls back to a named Simplified Chinese face: PingFang SC (Apple), Microsoft YaHei (Windows), Noto Sans SC / Noto Sans CJK SC (Linux, Android). Name the face rather than leaving CJK to `system-ui`: the generic fallback picks a CJK font by the page language, which the language switch sets only after hydration, so Chinese text could render with Japanese glyph shapes.
 
-The scale in the front matter is the **target**: every text size maps to one of its levels, exposed as `text-<level>` utilities (see Migration). Roles:
+The scale in the front matter is the whole set of sizes: every text size is one of its levels, used as a `text-<level>` utility (a test enforces it; see Migration). Roles:
 
 - `display-*`: landing page and docs titles only; `display-xl` is the landing hero alone.
 - `headline`, `title`, `title-sm`: page titles, section headings, dialog titles.
@@ -325,30 +325,29 @@ Every text pair in the light theme meets WCAG AA (4.5:1); the dark theme always 
 
 ## Migration
 
-Refactor in this order, one step per pull request, each with a before/after screenshot comparison (see Verification):
+The type-scale migration is done (September 2026, one pull request per step): tokens; primitives; the app, auth and docs shells; the pages by feature folder; the landing page, whose `--l-*` aliases gave way to the app tokens; and the clean-up of `.unified-card` and `.text-gradient`. Every text size in `src` is now a `text-<level>` utility, and CSS reads `var(--text-<level>)`.
 
-1. **Tokens.** Done: the scale is in `@theme` in `globals.css` as `--text-<level>` with `--line-height`, `--letter-spacing` and `--font-weight` sub-properties, so `text-body-sm` etc. exist. Only headings, `label-caps` and `stat` carry a weight; body levels and `caption` inherit theirs, so `font-medium` and a parent's weight still apply. `cn()` registers the level names with tailwind-merge (`src/lib/utils/utils.ts`); a new level must be added there too, or `cn("text-body-sm", "text-muted-foreground")` drops the size.
-2. **Primitives.** `src/components/ui/*` onto the scale (`Button` default → `text-body-sm`, `size="sm"` → `text-caption`).
-3. **Shell.** `AppShell`, `Sidebar`, `PageHeader`, `AuthShell`, `DocsShell`.
-4. **Pages**, one feature folder at a time, busiest first: `checks/`, `notifications/`, `settings/`, `business/scripts/`, then the rest.
-5. **Landing.** Replace the `--l-*` aliases in `landing.css` with the app tokens directly (`text-muted-foreground`, `border-border`); they are one-to-one and add a second vocabulary.
-6. **Clean-up.** Delete `.unified-card` and `.text-gradient` (no users). Before deleting any other class, search for template-built names too: `status-dot-success | attention_needed | failure` look unused but `CoveragePanes.tsx` builds them as `` `status-dot-${tone}` ``.
+- **Guard.** `src/lib/type-scale.test.ts` runs with `npm test` and fails on any `text-[Npx]` or Tailwind default size (`text-xs|sm|base|lg|xl|2xl…`, with or without a variant) in `src/**/*.{ts,tsx}`, and on a literal `px`/`rem` `font-size` in `src/**/*.css`. Its one allowed literal is the 16px phone size for fields (below). Test files are not scanned.
+- **Levels in `cn()`.** `cn()` registers the level names with tailwind-merge (`src/lib/utils/utils.ts`). A new level goes there too, or `cn("text-body-sm", "text-muted-foreground")` drops the size.
+- **Weights.** Only headings, `label-caps` and `stat` carry a weight; body levels and `caption` inherit theirs, so `font-medium` and a parent's weight still apply.
+- **Fields on phones.** `Input` and `Textarea` take their level from `sm:` up. Below that a base rule in `globals.css` keeps `[data-slot=input|textarea]` at 16px, because iOS Safari zooms into a focused field set any smaller. A raw `<input>` styled like a field opts in with `data-slot="input"`.
+- **Before deleting a class**, search for template-built names too: `status-dot-success | attention_needed | failure` look unused, but `CoveragePanes.tsx` builds them as `` `status-dot-${tone}` ``.
 
-Size mapping for step 2–5 (arbitrary → level):
+Choosing a level for a size that is not on the scale:
 
-| Now | Level |
+| Size | Level |
 |---|---|
-| `text-[11px]`, `text-[11.5px]` | `label-caps` if uppercase, else `caption` |
-| `text-xs`, `text-[12px]`, `text-[12.5px]` in compact controls | `caption` |
-| `text-[12.5px]` elsewhere, `text-[13px]` | `body-sm` |
-| `text-[13.5px]`, `text-sm`, `text-[14px]` | `body-md` |
-| `text-[15px]`, `text-base` | `body-lg` |
-| `text-[17px]`, `text-lg`, `text-[19px]` | `title-sm` |
-| `text-xl`, `text-[20px]` | `title` |
-| `text-2xl`, `text-[24px]` | `headline` (or `stat` for numbers) |
-| `text-[28px]`, `text-[34px]`, `text-[38px]` | `display-sm`, `display-md`, `display-lg` |
+| 10.5–11.5px | `label-caps` if uppercase, else `caption` |
+| 12px, 12.5px in compact controls (h-6/h-7 buttons, chips, metadata rows) | `caption` |
+| 12.5px elsewhere (code, error boxes, form text), 13px | `body-sm` |
+| 13.5px, 14px | `body-md` |
+| 15–16px | `body-lg` |
+| 17–19px | `title-sm` |
+| 20px | `title` |
+| 24–26px | `headline` (or `stat` for numbers) |
+| 28px, 30px; 34px, 36px; 38px; 46–52px | `display-sm`; `display-md`; `display-lg`; `display-xl` |
 
-The seven existing variants of the uppercase section label (11/12px, medium/semibold/bold, `tracking-wide|wider|widest`, muted/subtle) all become `text-label-caps uppercase text-muted-foreground`.
+The uppercase section label has one style: `text-label-caps uppercase text-muted-foreground`.
 
 ## Verification
 
