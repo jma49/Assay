@@ -5,7 +5,7 @@ import { createHistoryLoader, type HistoryLoadResult } from "./history-loader";
 import { DEFAULT_SORT, EMPTY_PAGINATION, nextSort, type HistoryQuery, type SortConfig, type SortKey } from "./runs";
 
 /** One page of run history plus the filters, sort and pager that pick it. */
-export function useRunHistory(onError: (message: string) => void) {
+export function useRunHistory(onError: (message: string) => void, language: "en" | "zh") {
   const [checks, setChecks] = useState<HistoryRun[]>([]);
   const [pagination, setPagination] = useState(EMPTY_PAGINATION);
   const [isLoadingChecks, setIsLoadingChecks] = useState(false);
@@ -32,7 +32,10 @@ export function useRunHistory(onError: (message: string) => void) {
     },
     [onError],
   );
-  const loadPage = useCallback((query: HistoryQuery) => showResult(loader.load(query)), [loader, showResult]);
+  const loadPage = useCallback(
+    (query: HistoryQuery) => showResult(loader.load({ ...query, language })),
+    [loader, showResult, language],
+  );
   const reload = useCallback(() => showResult(loader.reload()), [loader, showResult]);
 
   const current = (overrides: Partial<HistoryQuery>): HistoryQuery => ({
