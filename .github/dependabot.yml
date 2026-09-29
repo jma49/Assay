@@ -9,6 +9,12 @@ updates:
     groups:
       npm-minor-patch:
         update-types: [minor, patch]
+    ignore:
+      # @types/node follows the production runtime (Node 24 on Vercel), not the
+      # latest Node release: newer types describe APIs the runtime lacks. Raise
+      # this bound together with the Vercel Node version and CI's setup-node.
+      - dependency-name: "@types/node"
+        versions: [">=25"]
 
   - package-ecosystem: github-actions
     directory: /
