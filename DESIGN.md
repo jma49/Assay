@@ -42,6 +42,12 @@ colors:
   failure-soft-dark: "#331B1D"
   code-bg-dark: "#12161C"
 typography:
+  display-xl:
+    fontFamily: Manrope
+    fontSize: 52px
+    fontWeight: 700
+    lineHeight: 1.08
+    letterSpacing: -0.025em
   display-lg:
     fontFamily: Manrope
     fontSize: 38px
@@ -268,7 +274,7 @@ Manrope for everything readable, JetBrains Mono for SQL, ids, cron expressions a
 
 The scale in the front matter is the **target**: every text size maps to one of its levels, exposed as `text-<level>` utilities (see Migration). Roles:
 
-- `display-*`: landing page and docs titles only.
+- `display-*`: landing page and docs titles only; `display-xl` is the landing hero alone.
 - `headline`, `title`, `title-sm`: page titles, section headings, dialog titles.
 - `body-md` (14px) is the page default; `body-sm` (13px) is the workhorse for tables, buttons, form controls and the sidebar; `body-lg` (15px) is for docs prose and landing copy.
 - `caption` (12px): metadata, timestamps, badges, helper text.
