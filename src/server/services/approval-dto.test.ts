@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { toApprovalDto } from "./approval-dto";
-import { ApprovalStatus, ScriptType, type ApprovalRequest } from "./approval-workflow";
+import { ApprovalStatus, ScriptType } from "@/lib/types/approval";
+import type { ApprovalRequest } from "@/server/repos/approval-store";
 
 const base: ApprovalRequest = {
   requestId: "req_1",
@@ -31,7 +32,6 @@ describe("toApprovalDto", () => {
       operationType: "update",
       sqlContent: "SELECT 2",
       currentSqlContent: "SELECT 1",
-      reason: "Tighten the window",
       isComplete: false,
       currentApprovers: [],
     });
@@ -64,7 +64,8 @@ describe("toApprovalDto", () => {
     ]);
   });
 
-  it("falls back to the check id when the request has no title", () => {
+  it("names the check from the change, then the title, then the id", () => {
+    expect(toApprovalDto({ ...base, originalData: { name: "Orders v2" } }).scriptName).toBe("Orders v2");
     expect(toApprovalDto({ ...base, title: "" }).scriptName).toBe("orders-check");
   });
 });

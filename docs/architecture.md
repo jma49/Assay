@@ -37,24 +37,30 @@ src/
   domain/        Pure types and rules: run outcome, check state, diffs,
                  schedules, notifications, digests. No I/O, unit-tested.
   server/
-    services/    Use cases: runCheck, batches, checks read model,
-                 notifications dispatcher, alert controls, destinations.
-    repos/       MongoDB access for runs, checks state and the outbox.
-    runs/        Run history queries and the legacy response shape.
+    services/    Use cases: runCheck, batches, checks read model, check
+                 changes (create / edit / delete, applied or filed for
+                 review), approvals, notifications dispatcher, alert
+                 controls, destinations.
+    repos/       MongoDB access: runs, run-check state, approval requests
+                 and the notification outbox.
+    runs/        Run history query, the run report, samples and row
+                 fingerprints.
     datasource/  The checked database (PostgreSQL), read-only.
-    notify/      Channels (Slack, Discord, Telegram, Feishu, WeCom, webhook),
-                 SSRF guard, sending.
+    notify/      Channels (Slack, Discord, Telegram, Feishu, WeCom, webhook)
+                 and sending.
+    net/         SSRF guard: public-address checks and a pinned fetch, for
+                 webhooks and CIMD client metadata.
     integrations/ OAuth installs and chat-app callbacks.
     mcp/         MCP server: caller, tools, permissions.
-    http/        withAuth and route helpers.
+    http/        withAuth, ApiError, the AI guard and route helpers.
     crypto/      Sealed secrets (AES-256-GCM).
     concurrency/ Semaphore for bounded parallel runs.
   lib/           Older shared code: auth (Better Auth, RBAC), database
                  (Mongo client, indexes, Postgres pool), SQL validation,
-                 approval and version workflows, cache, utilities.
-  contracts/     API input and output types shared with the client; the
-                 alerting and notifications contracts are zod schemas, the
-                 others (activity, checks) plain TypeScript types.
+                 edit history and version records, cache, utilities.
+  contracts/     API input and output types shared with the client; check
+                 input, alerting and notifications are zod schemas, the
+                 others (activity, checks, runs, schema) plain types.
   client/        Typed fetch helpers and `useApi`, a plain fetch hook
                  (no cache or deduplication).
   app/           Routes. API routes are thin adapters over services.
@@ -206,9 +212,8 @@ queue can replace the inline runner later without changing services.
 
 ## API conventions
 
-Auth and errors hold for every route. Input parsing and paging are the
-target; the routes carried over from the first version are still being
-moved onto them.
+Auth, input and errors hold for every route. Cursor paging is the target;
+the lists carried over from the first version still page by number.
 
 - **Auth.** Every route declares who may call it through `withAuth`
   (`src/server/http/route.ts`): a permission, `{ anyOf: [...] }` (e.g.
@@ -232,8 +237,10 @@ moved onto them.
     table; the Analysis page asks for up to 500 in a date range);
     `check-history/stats` counts them; `execution-details/[resultId]` is
     one run's report.
-- **Input.** Target: parsed with a zod schema at the edge (`parseJson`).
-  Only the alerting and notifications contracts are zod today.
+- **Input.** JSON bodies are parsed with a zod schema at the edge
+  (`parseJson`); an invalid one answers 400 `invalid_input` with the
+  issues. Query strings go through small parsers (`parseHistoryParams`,
+  `parseEditHistoryQuery`) that refuse unknown values.
 - **Errors.** Every route answers `{ error: { code, message } }` with the
   matching HTTP status: a handler throws `ApiError(status, code, message)`
   and `withAuth` turns it into that shape (`errorResponse`); anything else

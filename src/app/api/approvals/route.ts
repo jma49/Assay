@@ -1,16 +1,11 @@
-import { intParam } from "@/lib/utils/query-params";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { ApiError, parseJson, withAuth } from "@/server/http/route";
 import { Permission, requirePermission } from "@/lib/auth/rbac";
-import {
-  getPendingApprovals,
-  approveScript,
-  rejectScript,
-  getCompletedApprovals,
-  getCurrentSql,
-} from "@/lib/workflows/approval-workflow";
-import { toApprovalDto } from "@/lib/workflows/approval-dto";
+import { getMongoDbClient } from "@/lib/database/mongodb";
+import { intParam } from "@/lib/utils/query-params";
+import { ApiError, parseJson, withAuth } from "@/server/http/route";
+import { approveRequest, decidedApprovals, pendingApprovals, rejectRequest } from "@/server/services/approvals";
+import { actorOf } from "@/server/services/check-writes";
 
 const REVIEWERS = { anyOf: [Permission.SCRIPT_APPROVE, Permission.SCRIPT_REJECT] };
 
@@ -27,11 +22,11 @@ export const GET = withAuth(REVIEWERS, async (request, { principal }) => {
   const { searchParams } = new URL(request.url);
   const page = intParam(searchParams.get("page"), 1, 1, 10_000);
   const limit = intParam(searchParams.get("limit"), 20, 1, 100);
+  const db = await getMongoDbClient().getDb();
 
   if (searchParams.get("action") === "history") {
-    const result = await getCompletedApprovals(page, limit);
-    const data = result.data.map((request) => toApprovalDto(request));
-    return NextResponse.json({ success: true, action: "history", data, pagination: result.pagination, count: data.length });
+    const { data, pagination } = await decidedApprovals(db, page, limit);
+    return NextResponse.json({ success: true, action: "history", data, pagination, count: data.length });
   }
 
   // What the reviewer may do with each request.
@@ -39,25 +34,13 @@ export const GET = withAuth(REVIEWERS, async (request, { principal }) => {
     requirePermission(principal.id, Permission.SCRIPT_APPROVE),
     requirePermission(principal.id, Permission.SCRIPT_REJECT),
   ]);
-  const result = await getPendingApprovals(principal.id, page, limit);
-  // Edits and deletes are shown against the check's live SQL.
-  const changesExisting = (request: (typeof result.data)[number]) => request.operationType !== "create";
-  const currentSql = await getCurrentSql(result.data.filter(changesExisting).map((request) => request.scriptId));
-  const data = result.data.map((request) =>
-    toApprovalDto(request, changesExisting(request) ? currentSql.get(request.scriptId) : undefined),
-  );
-
+  const { data, pagination } = await pendingApprovals(db, page, limit);
   return NextResponse.json({
     success: true,
     action: "pending",
     data,
-    pagination: result.pagination,
-    user_info: {
-      userId: principal.id,
-      email: principal.email,
-      canApprove: canApprove.authorized,
-      canReject: canReject.authorized,
-    },
+    pagination,
+    user_info: { userId: principal.id, email: principal.email, canApprove: canApprove.authorized, canReject: canReject.authorized },
   });
 });
 
@@ -73,15 +56,14 @@ export const POST = withAuth(REVIEWERS, async (request, { principal }) => {
     throw new ApiError(403, "forbidden", `You may not ${action} requests`);
   }
 
-  const result =
-    action === "approve"
-      ? await approveScript(requestId, principal.id, principal.email, comment)
-      : await rejectScript(requestId, principal.id, principal.email, comment ?? "");
-  if (!result.success) throw new ApiError(400, result.code, result.message);
+  const db = await getMongoDbClient().getDb();
+  const reviewer = actorOf(principal);
+  if (action === "approve") await approveRequest(db, requestId, reviewer, comment);
+  else await rejectRequest(db, requestId, reviewer, comment ?? "");
 
   return NextResponse.json({
     success: true,
-    message: result.message,
+    message: action === "approve" ? "Approved" : "Rejected",
     data: { requestId, action, reviewedBy: principal.email, reviewedAt: new Date(), comment },
   });
 });

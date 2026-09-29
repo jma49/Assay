@@ -1,4 +1,4 @@
-import type { SchemaTable } from "@/lib/database/db-schema";
+import type { SchemaTable } from "@/contracts/schema";
 import { tableReferences } from "@/lib/sql/table-references";
 
 export interface CoverageScript {

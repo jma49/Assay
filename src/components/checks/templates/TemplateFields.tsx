@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import type { SchemaColumn, SchemaTable } from "@/lib/database/db-schema";
+import type { SchemaColumn, SchemaTable } from "@/contracts/schema";
 import { columnFits, MAX_DUPLICATE_KEY_COLUMNS } from "@/lib/checks/templates";
 import { tableKey, type TemplateForm, type useTemplateBuilder } from "./useTemplateBuilder";
 

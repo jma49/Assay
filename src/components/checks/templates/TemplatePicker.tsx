@@ -6,7 +6,7 @@ import { apiErrorCodeText } from "@/client/api-errors";
 import { useApi } from "@/client/use-api";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { Button } from "@/components/ui/button";
-import type { SchemaTable } from "@/lib/database/db-schema";
+import type { SchemaTable } from "@/contracts/schema";
 import { TEMPLATES, type TableRef, type TemplateCheck } from "@/lib/checks/templates";
 import { cn } from "@/lib/utils/utils";
 import { FIELDS_COPY, TemplateFields } from "./TemplateFields";

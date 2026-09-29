@@ -11,7 +11,6 @@ export const STATUS_LABEL_KEYS: Record<ApprovalStatus, DashboardTranslationKeys>
   [ApprovalStatus.APPROVED]: "approved",
   [ApprovalStatus.REJECTED]: "rejected",
   [ApprovalStatus.WITHDRAWN]: "withdrawn",
-  [ApprovalStatus.DRAFT]: "draft",
 };
 
 export const SCRIPT_TYPE_LABEL_KEYS: Record<ScriptType, DashboardTranslationKeys> = {
