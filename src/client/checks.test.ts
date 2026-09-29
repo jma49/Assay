@@ -24,7 +24,7 @@ describe("runCheck", () => {
   });
 
   it("throws the API's message when the run is refused", async () => {
-    stubFetch(429, { success: false, message: "Demo limit reached" });
+    stubFetch(429, { error: { code: "demo_limit_reached", message: "Demo limit reached" } });
     await expect(runCheck("orders")).rejects.toThrow("Demo limit reached");
   });
 });
@@ -36,17 +36,17 @@ describe("triage", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/ai/triage", expect.objectContaining({ body: JSON.stringify({ resultId: "r1", language: "zh" }) }));
   });
 
-  it("throws the API's error string", async () => {
-    stubFetch(400, { error: "This run passed; there is nothing to triage" });
+  it("throws the API's error message", async () => {
+    stubFetch(400, { error: { code: "nothing_to_triage", message: "This run passed; there is nothing to triage" } });
     await expect(triage("r1", "en")).rejects.toThrow("This run passed; there is nothing to triage");
   });
 });
 
 describe("apiErrorMessage", () => {
-  it("reads nested, string and top-level messages", () => {
+  it("reads the message of the one error shape only", () => {
     expect(apiErrorMessage({ error: { message: "nested" } })).toBe("nested");
-    expect(apiErrorMessage({ error: "flat" })).toBe("flat");
-    expect(apiErrorMessage({ message: "top" })).toBe("top");
+    expect(apiErrorMessage({ error: "flat" })).toBeUndefined();
+    expect(apiErrorMessage({ message: "top" })).toBeUndefined();
     expect(apiErrorMessage(null)).toBeUndefined();
     expect(apiErrorMessage({})).toBeUndefined();
   });
