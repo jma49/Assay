@@ -2,6 +2,7 @@ import fs from "node:fs";
 import https from "node:https";
 import type { ConnectionOptions } from "node:tls";
 import pg, { Pool, type PoolClient, type PoolConfig, type QueryResult } from "pg";
+import { pgConnection } from "./pg-connection";
 import { redactConnectionString } from "./redact-connection-string";
 import { inPublicCi } from "@/lib/utils/public-log";
 
@@ -38,8 +39,9 @@ function readCertificate(url: string): Promise<Buffer> {
 /**
  * TLS options from CA_CERT_BLOB_URL (and, for client certificates, both
  * CLIENT_CERT_BLOB_URL and CLIENT_KEY_BLOB_URL). The server's certificate
- * is verified against that CA. Without a CA, TLS follows DATABASE_URL
- * (e.g. sslmode=require).
+ * is verified against that CA. Without a CA, TLS follows DATABASE_URL:
+ * an sslmode that asks for TLS gets full verification against the system
+ * CAs (see pgConnection).
  */
 export async function tlsOptions(env: Env = process.env, read = readCertificate): Promise<ConnectionOptions | undefined> {
   if (!env.CA_CERT_BLOB_URL) return undefined;
@@ -56,13 +58,15 @@ export async function tlsOptions(env: Env = process.env, read = readCertificate)
  * host, database or user; elsewhere the connection string is redacted.
  */
 export function poolLogLine(connectionString: string, ssl: ConnectionOptions | undefined, env: Env = process.env): string {
-  const tls = ssl ? ` with TLS verified against the configured CA${ssl.cert ? " and a client certificate" : ""}` : "";
+  const verifiedAgainst = ssl?.ca ? "the configured CA" : "the system CAs";
+  const tls = ssl ? ` with TLS verified against ${verifiedAgainst}${ssl.cert ? " and a client certificate" : ""}` : "";
   return inPublicCi(env) ? `[db] Pool created${tls}` : `[db] Pool for ${redactConnectionString(connectionString)}${tls}`;
 }
 
 async function createPool(): Promise<Pool> {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error("DATABASE_URL is not set");
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) throw new Error("DATABASE_URL is not set");
+  const { connectionString, ssl } = pgConnection(databaseUrl, await tlsOptions());
   const config: PoolConfig = {
     connectionString,
     // Never wait forever for a free connection (checks are bounded by a semaphore, dry runs are not).
@@ -70,7 +74,6 @@ async function createPool(): Promise<Pool> {
     connectionTimeoutMillis: 10_000,
     idleTimeoutMillis: 30_000,
   };
-  const ssl = await tlsOptions();
   if (ssl) config.ssl = ssl;
   console.log(poolLogLine(connectionString, ssl));
   const pool = new Pool(config);
