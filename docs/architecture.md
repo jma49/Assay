@@ -94,7 +94,7 @@ from `sql_scripts` and `result`, which the app does on start).
 { checkId, trigger: { kind: schedule | manual | batch | api, by },
   startedAt, finishedAt, durationMs,
   outcome: error | issues | clean, rowCount, columns,
-  sample: at most 500 rows and 2 MB,
+  sample: at most 500 rows and 1 MB (UTF-8),
   rowKeys: fingerprints of up to 5,000 rows,  // for new / still / fixed
   diff, error, message, findings, expiresAt }
 ```
@@ -130,16 +130,19 @@ started by a person, the schedule, a batch, or an agent.
    PostgreSQL connection pool. When a slot frees up the lease is renewed,
    so time spent queueing does not eat into it; a run whose lease was taken
    meanwhile stops without querying. `CHECK_TIMEOUT_MS` (30 s by default,
-   clamped to 1 s – 5 min) is one deadline for the whole script: each
+   clamped to 1 s – 255 s so a run fits in one 300 s function with time to
+   save it and send its alert) is one deadline for the whole script: each
    statement gets `statement_timeout` set to the time left. Rows are read
    through a cursor; at most 5,000 are kept per run and the rest are only
    counted, so the row count stays exact.
-3. **Record** the run: exact count, a sample (500 rows, 2 MB at most),
+3. **Record** the run: exact count, a sample (500 rows, 1 MB at most),
    fingerprints of the kept rows, duration.
 4. **Transition.** Compare with the check's previous state and update it
    with the lease's `runId` as a fencing token: a run whose lease expired
    cannot overwrite a newer result. When the status or the set of rows
-   changes, write an event.
+   changes, the event goes onto the check in the same update
+   (`pendingEvents`), is then written to `events` and removed; if the
+   process dies in between, the next run or dispatch writes it.
 5. **Release** the lease.
 
 **Read-only, in layers.** A check's SQL passes the static validator
@@ -170,7 +173,10 @@ and gives `assay_readonly` its grants back when that role exists.
 `runDueChecks` claims each due slot atomically (already in place) and runs
 the claimed checks with bounded concurrency. `runBatch` records a batch
 document and processes its checks the same way; progress is read from
-MongoDB, so any instance can report it.
+MongoDB, so any instance can report it. A batch runs inside one function
+(`maxDuration` 300 s, the Hobby limit, on every route that runs checks): a
+check starts only while a whole run still fits before the deadline, the
+rest are marked `skipped`, and alerts are sent in the 30 s kept back.
 
 ## Concurrency rules
 
@@ -232,7 +238,14 @@ the legacy routes are still being migrated and keep their own shapes.
   `{ success: false, ... }`.
 - **Paging.** Target: cursor pagination, as `activity` does. `check-history`,
   `edit-history` and `approvals` page by `page` and `limit` (`check-history`
-  up to 500 runs a page, 200 with `include_sample`).
+  up to 500 runs a page, without their rows). `check-history` and
+  `edit-history` count at most 10,000 matches (`totalCapped` beyond; the UI
+  shows "10000+"), use the collection's metadata when unfiltered, and no page
+  starts past the count (`src/server/http/paging.ts`).
+- **Response size.** Vercel refuses responses over 4.5 MB. A response carries
+  at most two run samples (a check's page: the latest run and the one
+  before), each trimmed to 1 MB of UTF-8 (`responseSample`); lists never
+  carry samples or row fingerprints.
 
 ## Front end
 

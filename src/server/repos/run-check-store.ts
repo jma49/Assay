@@ -16,7 +16,6 @@ const DUPLICATE_KEY = 11000;
 export function mongoRunCheckStore(db: Db): RunCheckStore {
   const checks = db.collection(COLLECTIONS.checks);
   const runs = db.collection(COLLECTIONS.runs);
-  const events = db.collection(COLLECTIONS.events);
 
   return {
     async acquireLease(scriptId, runId, until, now) {
@@ -24,10 +23,19 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
         // `lease: null` also matches documents without a lease.
         { scriptId, $or: [{ lease: null }, { "lease.until": { $lte: now } }] },
         { $set: { lease: { runId, until } } },
-        { returnDocument: "after", projection: { scriptId: 1, sqlContent: 1, state: 1 } },
+        { returnDocument: "after", projection: { scriptId: 1, sqlContent: 1, state: 1, createdAt: 1, pendingEvents: 1 } },
       );
       if (check) {
-        return { kind: "acquired", check: { scriptId, sqlContent: String(check.sqlContent ?? ""), state: check.state ?? null } };
+        return {
+          kind: "acquired",
+          check: {
+            scriptId,
+            sqlContent: String(check.sqlContent ?? ""),
+            state: check.state ?? null,
+            createdAt: check.createdAt instanceof Date ? check.createdAt : null,
+            pendingEvents: Array.isArray(check.pendingEvents) ? (check.pendingEvents as CheckEvent[]) : [],
+          },
+        };
       }
       const existing = await checks.findOne({ scriptId }, { projection: { lease: 1 } });
       if (!existing) return { kind: "missing" };
@@ -40,9 +48,12 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
       return Array.isArray(run?.rowKeys) ? (run.rowKeys as string[]) : null;
     },
 
-    async historicalState(scriptId) {
+    async historicalState(scriptId, notBefore) {
       const history = await runs
-        .find({ checkId: scriptId }, { projection: { outcome: 1, rowCount: 1, finishedAt: 1 } })
+        .find(
+          { checkId: scriptId, ...(notBefore && { finishedAt: { $gte: notBefore } }) },
+          { projection: { outcome: 1, rowCount: 1, finishedAt: 1 } },
+        )
         .sort({ finishedAt: -1 })
         .limit(HISTORY_LIMIT)
         .toArray();
@@ -81,8 +92,12 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
       await runs.insertOne(doc);
     },
 
-    async commitState(scriptId, runId, state) {
-      const result = await checks.updateOne({ scriptId, "lease.runId": runId }, { $set: { state }, $unset: { lease: "" } });
+    async commitState(scriptId, runId, state, event) {
+      // One document, one update: the state and its not-yet-written event land together.
+      const result = await checks.updateOne(
+        { scriptId, "lease.runId": runId },
+        { $set: { state }, $unset: { lease: "" }, ...(event && { $push: { pendingEvents: event } }) } as Document,
+      );
       return result.matchedCount > 0;
     },
 
@@ -96,11 +111,39 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
     },
 
     async recordEvent(event: CheckEvent) {
-      try {
-        await events.insertOne({ ...event, workspaceId: DEFAULT_WORKSPACE_ID });
-      } catch (error) {
-        if ((error as { code?: number }).code !== DUPLICATE_KEY) throw error;
-      }
+      await insertEvent(db, event);
     },
   };
+}
+
+/** Writes an event (a duplicate means another writer got there first), then clears it from the check. */
+async function insertEvent(db: Db, event: CheckEvent): Promise<void> {
+  try {
+    await db.collection(COLLECTIONS.events).insertOne({ ...event, workspaceId: DEFAULT_WORKSPACE_ID });
+  } catch (error) {
+    if ((error as { code?: number }).code !== DUPLICATE_KEY) throw error;
+  }
+  await db.collection(COLLECTIONS.checks).updateOne({ scriptId: event.checkId }, { $pull: { pendingEvents: { runId: event.runId } } } as Document);
+}
+
+/**
+ * Writes the events runs committed but never wrote (their process died
+ * between the two steps). The dispatcher calls it before fanning out, so an
+ * alert is at most one dispatch late. Safe to run concurrently with runs and
+ * other dispatchers: events are unique per run.
+ */
+export async function repairPendingEvents(db: Db, limit = 100): Promise<number> {
+  const stranded = await db
+    .collection(COLLECTIONS.checks)
+    .find({ "pendingEvents.0": { $exists: true } }, { projection: { pendingEvents: 1 } })
+    .limit(limit)
+    .toArray();
+  let written = 0;
+  for (const check of stranded) {
+    for (const event of check.pendingEvents as CheckEvent[]) {
+      await insertEvent(db, event);
+      written++;
+    }
+  }
+  return written;
 }

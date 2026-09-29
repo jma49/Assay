@@ -4,7 +4,7 @@ Choose **New check** at the right of the top bar.
 
 ## Start from a template
 
-**Start from a template**, above the editor, writes the query for the checks most tables need. Choose a template and a table, then the columns and settings it asks for; the query, name, script ID and descriptions (in both languages) are filled in, and you can still change all of them. **Undo** in the notice puts your previous draft back.
+**Start from a template**, above the editor, writes the query for the checks most tables need. Choose a template and a table, then the columns and settings it asks for; the query, name, check ID and descriptions (in both languages) are filled in, and you can still change all of them. **Undo** in the notice puts your previous draft back.
 
 | Template | Finds |
 |---|---|
@@ -32,7 +32,7 @@ The status line under the editor tells you straight away whether the SQL is allo
 | Field | Notes |
 |---|---|
 | **Name** | Shown everywhere. Required. |
-| **Script ID** | Generated from the name: lowercase letters, numbers and hyphens. Used in links and in history. |
+| **Check ID** | Generated from the name: lowercase letters, numbers and hyphens. Used in links and in history. |
 | **Description** | What the check looks for and why it matters. |
 | **Scope** | The part of the data it covers, such as *orders*. |
 | **Tags** | Up to eight, for grouping and filtering. |

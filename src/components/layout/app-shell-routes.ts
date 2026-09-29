@@ -22,11 +22,14 @@ export function pageTitle(pathname: string): Label | undefined {
 }
 
 /**
- * Pages that lead with their own filled action (a check's page, a run's
- * report, the new-check form itself), so the top bar hides "New check".
+ * Where the top bar offers "New check": the lists of checks, where making one
+ * is the next thing people do. Other pages keep only their own actions.
  */
-export function pageHasOwnAction(pathname: string): boolean {
-  if (pathname.startsWith("/runs/")) return true;
-  if (!pathname.startsWith("/checks/")) return false;
-  return pathname !== "/checks/manage" && !pathname.startsWith("/checks/manage/");
+export function offersNewCheck(pathname: string): boolean {
+  return pathname === "/checks" || pathname === "/checks/manage";
+}
+
+/** Check pages title the browser tab with the check's own name. */
+export function namesItsOwnTab(pathname: string): boolean {
+  return /^\/checks\/[^/]+$/.test(pathname) && pathname !== "/checks/new" && pathname !== "/checks/manage";
 }

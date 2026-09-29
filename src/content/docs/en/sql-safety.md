@@ -20,7 +20,7 @@ Each check runs inside `BEGIN READ ONLY`, so PostgreSQL itself refuses to write 
 
 ## 3. A time limit
 
-The whole script has `CHECK_TIMEOUT_MS` to finish, 30 seconds by default: each statement runs with a `statement_timeout` of the time left, so PostgreSQL itself stops a slow query. A stopped check is marked **failed**.
+The whole script has `CHECK_TIMEOUT_MS` to finish, 30 seconds by default: each statement runs with a `statement_timeout` of the time left, so PostgreSQL itself stops a slow query. A stopped check is marked **Broken**.
 
 > Validation cannot see inside user-defined functions. Give Assay a database user that can only `SELECT`, and the database enforces the rest.
 

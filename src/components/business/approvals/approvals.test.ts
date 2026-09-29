@@ -1,6 +1,40 @@
 import { describe, expect, it } from "vitest";
 import { ApprovalStatus } from "@/lib/types/approval";
-import { approvalMessages, clampPage, decisionToast, pageCount, pageSlice, statusTone } from "./approvals";
+import { approvalCopy, approvalMessages, clampPage, decisionToast, pageCount, pageSlice, sqlView, statusTone } from "./approvals";
+
+describe("sqlView", () => {
+  it("diffs a pending edit against the live SQL", () => {
+    expect(sqlView({ operationType: "update", sqlContent: "SELECT 2", currentSqlContent: "SELECT 1" })).toEqual({
+      kind: "diff",
+      before: "SELECT 1",
+      after: "SELECT 2",
+    });
+  });
+
+  it("shows the proposed SQL for a new check, or an edit whose check is gone or already decided", () => {
+    expect(sqlView({ operationType: "create", sqlContent: "SELECT 1" })).toEqual({ kind: "sql", sql: "SELECT 1", removed: false });
+    expect(sqlView({ operationType: "update", sqlContent: "SELECT 2" })).toEqual({ kind: "sql", sql: "SELECT 2", removed: false });
+  });
+
+  it("shows the SQL a delete removes", () => {
+    expect(sqlView({ operationType: "delete", sqlContent: "SELECT 0", currentSqlContent: "SELECT 1" })).toEqual({
+      kind: "sql",
+      sql: "SELECT 1",
+      removed: true,
+    });
+  });
+
+  it("says when there is nothing to show", () => {
+    expect(sqlView({ operationType: "create" })).toEqual({ kind: "none" });
+  });
+});
+
+describe("approvalCopy", () => {
+  it("has the same labels in both languages", () => {
+    expect(Object.keys(approvalCopy("zh")).sort()).toEqual(Object.keys(approvalCopy("en")).sort());
+    expect(approvalCopy("en").changeCount(3, 1)).toBe("+3 −1 lines");
+  });
+});
 
 describe("statusTone", () => {
   it("colours approved green, rejected red and everything else as needing attention", () => {

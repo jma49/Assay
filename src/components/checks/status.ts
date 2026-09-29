@@ -32,6 +32,13 @@ export const OUTCOME_TEXT: Record<RunOutcome, string> = {
   clean: "text-success",
 };
 
+/** The status colours as CSS values, for charts that cannot take a class. */
+export const OUTCOME_COLOR: Record<RunOutcome, string> = {
+  error: "var(--failure)",
+  issues: "var(--attention)",
+  clean: "var(--success)",
+};
+
 /** A schedule in words where it has a common shape, otherwise the cron itself. */
 export function scheduleLabel(cron: string | null, language: "en" | "zh"): string {
   if (!cron) return language === "zh" ? "手动" : "Manual";

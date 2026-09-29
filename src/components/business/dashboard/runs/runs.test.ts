@@ -40,12 +40,13 @@ describe("buildCheckHistoryQuery", () => {
         outcome: "error",
         search: "  orders ",
         hashtags: ["billing", "daily"],
-        sort: { key: "checkId", direction: "ascending" },
+        sort: { key: "name", direction: "ascending" },
+        language: "zh",
       }),
       50,
     );
     expect(params).toBe(
-      "page=3&limit=50&include_sample=false&outcome=error&search=orders&hashtags=billing%2Cdaily&sort_by=checkId&sort_order=asc",
+      "page=3&limit=50&include_sample=false&outcome=error&search=orders&hashtags=billing%2Cdaily&sort_by=name&sort_order=asc&lang=zh",
     );
   });
 
@@ -56,17 +57,15 @@ describe("buildCheckHistoryQuery", () => {
 
 describe("sorting", () => {
   it("maps the table's sort to the API's", () => {
-    expect(apiSort({ key: "checkId", direction: "descending" })).toEqual({ sortBy: "checkId", sortOrder: "desc" });
+    expect(apiSort({ key: "name", direction: "descending" })).toEqual({ sortBy: "name", sortOrder: "desc" });
     expect(apiSort({ key: "finishedAt", direction: "ascending" })).toEqual({ sortBy: "finishedAt", sortOrder: "asc" });
   });
 
-  it("flips the sorted column and starts a new one descending", () => {
+  it("flips the sorted column; names start A to Z, times newest first", () => {
     expect(nextSort(DEFAULT_SORT, "finishedAt")).toEqual({ key: "finishedAt", direction: "ascending" });
     expect(nextSort({ key: "finishedAt", direction: "ascending" }, "finishedAt").direction).toBe("descending");
-    expect(nextSort({ key: "finishedAt", direction: "ascending" }, "checkId")).toEqual({
-      key: "checkId",
-      direction: "descending",
-    });
+    expect(nextSort({ key: "finishedAt", direction: "ascending" }, "name")).toEqual({ key: "name", direction: "ascending" });
+    expect(nextSort({ key: "name", direction: "ascending" }, "finishedAt")).toEqual({ key: "finishedAt", direction: "descending" });
   });
 });
 
@@ -80,10 +79,12 @@ describe("response parsing", () => {
   it("keeps only the pagination fields the page uses", () => {
     expect(parsePagination({ pagination: { total: 120, totalPages: 3, hasNext: true, hasPrev: false, page: 1 } })).toEqual({
       total: 120,
+      totalCapped: false,
       totalPages: 3,
       hasNext: true,
       hasPrev: false,
     });
+    expect(parsePagination({ pagination: { total: 10000, totalCapped: true, totalPages: 200, hasNext: true, hasPrev: false } })).toMatchObject({ totalCapped: true });
     expect(parsePagination({})).toBeNull();
   });
 

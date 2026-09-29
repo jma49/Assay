@@ -1,5 +1,6 @@
 "use client";
 
+import { APP_CONTAINER } from "@/components/layout/app-container";
 import { useState } from "react";
 import { WindowStatusBar } from "@/components/layout/WindowChrome";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -19,7 +20,7 @@ export default function GlobalEditHistoryPage() {
   const { language } = useLanguage();
   const t = useDashboardT<string>();
 
-  const { histories, loading, error, currentPage, totalPages, totalRecords, fetchHistories, retry } = useEditHistory();
+  const { histories, loading, error, currentPage, totalPages, totalRecords, totalCapped, fetchHistories, retry } = useEditHistory();
   const [filters, setFilters] = useState<HistoryFilters>(EMPTY_FILTERS);
   const [selectedHistory, setSelectedHistory] = useState<EditHistoryRecord | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
@@ -44,11 +45,11 @@ export default function GlobalEditHistoryPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+      <div className={`${APP_CONTAINER} py-6`}>
         <div className="space-y-6 animate-fadeIn">
           <PageHeader title={t("allScriptsHistory")} description={t("editHistoryDescGlobal")} />
           <WindowStatusBar>
-            {language === "zh" ? `共 ${totalRecords} 次修改` : `${totalRecords} changes`}
+            {language === "zh" ? `共 ${totalRecords}${totalCapped ? "+" : ""} 次修改` : `${totalRecords}${totalCapped ? "+" : ""} changes`}
           </WindowStatusBar>
 
           <EditHistoryToolbar
@@ -78,7 +79,7 @@ export default function GlobalEditHistoryPage() {
               <Pagination
                 page={currentPage}
                 totalPages={totalPages}
-                pageInfo={formatPageInfo(t, { currentPage, totalPages, totalRecords, pageSize: ITEMS_PER_PAGE })}
+                pageInfo={formatPageInfo(t, { currentPage, totalPages, totalRecords, totalCapped, pageSize: ITEMS_PER_PAGE })}
                 t={t}
                 onPageChange={(page) => fetchHistories(filters, page)}
                 disabled={loading}

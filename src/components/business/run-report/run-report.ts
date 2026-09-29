@@ -13,6 +13,9 @@ export interface ExecutionResult {
   /** ISO time the run finished. */
   finishedAt: string;
   outcome: RunOutcome;
+  /** Null on runs saved before the field existed. */
+  rowCount?: number | null;
+  error?: string | null;
   message: string;
   /** The runner's one-line summary. */
   findings: string;
@@ -28,11 +31,13 @@ export interface ExecutionResult {
 }
 
 /**
- * Reads /api/execution-details; a failure becomes an Error with the API's
- * message, or the HTTP status when the body is not JSON (e.g. a proxy page).
+ * Reads /api/execution-details: the run, null when there is no run with that
+ * id (404, or 400 for a malformed id), or an Error with the API's message, or
+ * the HTTP status when the body is not JSON (e.g. a proxy page).
  */
-export async function readRunResponse(res: Response): Promise<ExecutionResult> {
+export async function readRunResponse(res: Response): Promise<ExecutionResult | null> {
   if (res.ok) return res.json();
+  if (res.status === 404 || res.status === 400) return null;
   const body: { message?: string } | null = await res.json().catch(() => null);
   throw new Error(body?.message || `Error: ${res.status}`);
 }

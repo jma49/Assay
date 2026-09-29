@@ -12,6 +12,7 @@ export function useEditHistory() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [totalCapped, setTotalCapped] = useState(false);
   const requests = useRef(createLatestRequest({ filters: EMPTY_FILTERS, page: 1 }));
 
   // A newer request supersedes one still in flight, so the table always matches the latest filters.
@@ -33,6 +34,7 @@ export function useEditHistory() {
       setHistories(data.histories || []);
       setTotalPages(data.pagination?.totalPages || 0);
       setTotalRecords(data.pagination?.total || 0);
+      setTotalCapped(data.pagination?.totalCapped === true);
       setCurrentPage(data.pagination?.page || 1);
     } catch (err) {
       if (isStale()) return;
@@ -55,5 +57,5 @@ export function useEditHistory() {
     fetchHistories();
   }, [fetchHistories]);
 
-  return { histories, loading, error, currentPage, totalPages, totalRecords, fetchHistories, retry };
+  return { histories, loading, error, currentPage, totalPages, totalRecords, totalCapped, fetchHistories, retry };
 }

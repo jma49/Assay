@@ -354,7 +354,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         <div className="flex min-w-0 items-center gap-3 text-[13px]">
           <span className="font-medium">SQL</span>
           <span className="text-muted-foreground tabular-nums">
-            {getLineCount(value)} {t("codeStatisticsLines")}
+            {getLineCount(value)} {t(getLineCount(value) === 1 ? "codeStatisticsLine" : "codeStatisticsLines")}
           </span>
         </div>
 

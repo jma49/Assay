@@ -3,7 +3,8 @@ import type { CheckStats } from "@/lib/database/check-stats";
 import { nextRunAt } from "@/lib/scheduling/due-slot";
 import type { HistoryRun, ScriptInfo } from "../types";
 
-export type SortKey = "finishedAt" | "checkId";
+/** Sort by when the run finished, or by the check's name in the reader's language. */
+export type SortKey = "finishedAt" | "name";
 export type SortDirection = "ascending" | "descending";
 
 export interface SortConfig {
@@ -15,12 +16,14 @@ export const DEFAULT_SORT: SortConfig = { key: "finishedAt", direction: "descend
 
 export interface HistoryPagination {
   total: number;
+  /** More runs match than the server counts (10,000); `total` is that cap. */
+  totalCapped: boolean;
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
 }
 
-export const EMPTY_PAGINATION: HistoryPagination = { total: 0, totalPages: 0, hasNext: false, hasPrev: false };
+export const EMPTY_PAGINATION: HistoryPagination = { total: 0, totalCapped: false, totalPages: 0, hasNext: false, hasPrev: false };
 
 export const EMPTY_STATS: CheckStats = { totalCount: 0, successCount: 0, failureCount: 0, needsAttentionCount: 0 };
 
@@ -31,6 +34,8 @@ export interface HistoryQuery {
   search: string;
   hashtags: string[];
   sort: SortConfig;
+  /** The language names are sorted in. */
+  language?: "en" | "zh";
 }
 
 /** The sort field and order /api/check-history understands; the table only sorts by check or time. */
@@ -38,9 +43,9 @@ export function apiSort(sort: SortConfig): { sortBy: SortKey; sortOrder: "asc" |
   return { sortBy: sort.key, sortOrder: sort.direction === "ascending" ? "asc" : "desc" };
 }
 
-/** Clicking the sorted column flips it; a new column starts newest/last first. */
+/** Clicking the sorted column flips it; a new column starts where people expect: names A to Z, time newest first. */
 export function nextSort(current: SortConfig, key: SortKey): SortConfig {
-  if (current.key !== key) return { key, direction: "descending" };
+  if (current.key !== key) return { key, direction: key === "name" ? "ascending" : "descending" };
   return { key, direction: current.direction === "ascending" ? "descending" : "ascending" };
 }
 
@@ -58,6 +63,7 @@ export function buildCheckHistoryQuery(query: HistoryQuery, pageSize: number): s
   if (query.hashtags.length > 0) params.set("hashtags", query.hashtags.join(","));
   params.set("sort_by", sortBy);
   params.set("sort_order", sortOrder);
+  if (sortBy === "name") params.set("lang", query.language ?? "en");
   return params.toString();
 }
 
@@ -70,8 +76,8 @@ export function parseRuns(body: unknown): HistoryRun[] | null {
 export function parsePagination(body: unknown): HistoryPagination | null {
   const pagination = (body as { pagination?: HistoryPagination } | null)?.pagination;
   if (!pagination) return null;
-  const { total, totalPages, hasNext, hasPrev } = pagination;
-  return { total, totalPages, hasNext, hasPrev };
+  const { total, totalCapped, totalPages, hasNext, hasPrev } = pagination;
+  return { total, totalCapped: totalCapped === true, totalPages, hasNext, hasPrev };
 }
 
 /** The checks in a GET /api/scripts body, by name (the order the Run sheet lists and preselects them in). */

@@ -1,9 +1,10 @@
 import dynamic from "next/dynamic";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { ReactNode } from "react";
 import type { AnalyticsData } from "./analytics";
+import { analysisCopy } from "./copy";
 
 // recharts is the bulk of this page's JavaScript; load it after the page shell.
-const chartPlaceholder = () => <div className="h-full animate-pulse rounded-md bg-muted/40" />;
+const chartPlaceholder = () => <div className="skeleton-shimmer h-full rounded-md" />;
 const StatusPieChart = dynamic(() => import("./AnalysisCharts").then((m) => m.StatusPieChart), {
   ssr: false,
   loading: chartPlaceholder,
@@ -13,61 +14,34 @@ const TrendLineChart = dynamic(() => import("./AnalysisCharts").then((m) => m.Tr
   loading: chartPlaceholder,
 });
 
-export function AnalysisChartsRow({ data, t }: { data: AnalyticsData; t: (key: string) => string }) {
+/** A section card with a one-line header; every section on the page uses it so edges and headers line up. */
+export function AnalysisSection({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <Card className="relative overflow-hidden gap-0 py-0">
+    <section className="overflow-hidden rounded-xl bg-card shadow-border">
+      <header className="flex items-baseline justify-between gap-3 border-b px-4 py-2.5">
+        <h2 className="text-[13.5px] font-medium">{title}</h2>
+        {hint && <span className="text-[12px] text-muted-foreground">{hint}</span>}
+      </header>
+      {children}
+    </section>
+  );
+}
 
-        <CardHeader className="relative border-b px-6 py-4">
-          <div className="flex items-center gap-4">
-            <div className="space-y-2">
-              <CardTitle>
-                {t('statusDistribution')}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">{t('executionResultsStats')}</p>
-            </div>
-          </div>
-        </CardHeader>
-
-                          <CardContent className="relative px-6 py-6">
-          <div className="h-80">
-            <StatusPieChart
-              success={data.statusDistribution.success}
-              failed={data.statusDistribution.failed}
-              attention={data.statusDistribution.attention_needed}
-              labels={{ success: t("successLabel"), failed: t("failedLabel"), attention: t("attentionLabel") }}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="relative overflow-hidden gap-0 py-0">
-
-        <CardHeader className="relative border-b px-6 py-4">
-          <div className="flex items-center gap-4">
-            <div className="space-y-2">
-              <CardTitle>
-                {t('executionTrend')}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">{t('recent14DaysTrend')}</p>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="relative px-6 py-6">
-          <div className="h-80">
-            <TrendLineChart
-              data={data.dailyTrend.slice(-14)}
-              labels={{
-                date: t("date"),
-                total: t("totalExecutions"),
-                success: t("successfulExecutions"),
-                failed: t("failedExecutions"),
-              }}
-            />
-          </div>
-        </CardContent>
-      </Card>
+export function AnalysisChartsRow({ data, rangeLabel, language }: { data: AnalyticsData; rangeLabel: string; language: string }) {
+  const copy = analysisCopy(language);
+  const lang = language === "zh" ? "zh" : "en";
+  return (
+    <div className="grid gap-5 lg:grid-cols-2">
+      <AnalysisSection title={copy.outcomes} hint={rangeLabel}>
+        <div className="h-72 p-4">
+          <StatusPieChart counts={data.statusDistribution} language={lang} />
+        </div>
+      </AnalysisSection>
+      <AnalysisSection title={copy.perDay} hint={rangeLabel}>
+        <div className="h-72 p-4">
+          <TrendLineChart data={data.dailyTrend} language={lang} allRunsLabel={copy.allRuns} />
+        </div>
+      </AnalysisSection>
     </div>
   );
 }

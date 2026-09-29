@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { withReadOnlyTransaction } from "./db";
+import { poolLogLine, withReadOnlyTransaction } from "./db";
 
 const client = vi.hoisted(() => {
   process.env.DATABASE_URL = "postgres://user:pass@localhost:5432/db";
@@ -27,8 +27,18 @@ describe("pool creation logging", () => {
     await withReadOnlyTransaction(async () => undefined);
 
     const logged = JSON.stringify(consoleLog.mock.calls);
-    expect(logged).toContain("postgres://user:****@localhost:5432/db");
-    expect(logged).not.toContain("pass@");
+    expect(logged).toContain("[db] Pool");
+    expect(logged).not.toMatch(/user:|pass@/);
+  });
+
+  it("names the host outside CI and nothing in public CI logs", () => {
+    const url = "postgres://owner:s3cret@db.internal:5432/prod?password=s3cret";
+    expect(poolLogLine(url, undefined, {})).toBe("[db] Pool for postgres://****@db.internal:5432/prod?password=****");
+    for (const env of [{ CI: "true" }, { GITHUB_ACTIONS: "true" }]) {
+      const line = poolLogLine(url, { ca: "ca" }, env);
+      expect(line).toBe("[db] Pool created with TLS verified against the configured CA");
+      expect(line).not.toMatch(/owner|db\.internal|prod|s3cret/);
+    }
   });
 });
 

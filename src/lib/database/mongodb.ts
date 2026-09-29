@@ -30,7 +30,7 @@ class MongoDbClient {
     // old one. A failure is forgotten so the next call retries.
     state.assayRenames ??= migrateCollectionNames(db)
       .then((results) => {
-        const moved = results.filter((r) => r.outcome === "renamed" || r.outcome === "dropped-empty-old");
+        const moved = results.filter((r) => r.outcome === "renamed");
         if (moved.length) console.log("[MongoDB] Collections renamed:", moved.map((r) => `${r.from} → ${r.to} (${r.outcome})`).join(", "));
       })
       .catch((error) => {

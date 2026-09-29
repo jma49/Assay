@@ -1,49 +1,34 @@
 "use client";
 
-import {
-  CartesianGrid,
-  Cell,
-  Legend,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { CHART_COLORS } from "./chart-colors";
+import { CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { OUTCOME_COLOR, OUTCOME_LABEL } from "@/components/checks/status";
+import type { RunOutcome } from "@/domain/run";
+import { formatDayKey } from "@/lib/utils/datetime";
+import type { DailyTrendPoint, OutcomeCounts } from "./analytics";
+
+// Chart ink resolves to the design tokens, so it follows light and dark mode.
+const INK = { text: "var(--foreground)", muted: "var(--muted-foreground)", grid: "var(--border)", surface: "var(--popover)" };
 
 const tooltipStyle = {
   contentStyle: {
-    backgroundColor: CHART_COLORS.background,
-    border: `1px solid ${CHART_COLORS.border}`,
-    borderRadius: "6px",
-    fontSize: "13px",
+    backgroundColor: INK.surface,
+    border: `1px solid ${INK.grid}`,
+    borderRadius: "var(--radius-lg)",
+    fontSize: "12px",
+    color: INK.text,
   },
-  labelStyle: { color: "var(--foreground)", fontWeight: 500 },
+  labelStyle: { color: INK.text, fontWeight: 500 },
+  itemStyle: { padding: 0 },
 };
 
-const legendStyle = { paddingTop: "16px", fontSize: "13px" };
+const legendStyle = { paddingTop: "12px", fontSize: "12px", color: INK.muted };
+const OUTCOMES: RunOutcome[] = ["error", "issues", "clean"];
+// Series names in the legend stay neutral text; the marker carries the colour.
+const legendText = (value: string) => <span style={{ color: INK.muted }}>{value}</span>;
 
-export function StatusPieChart({
-  success,
-  failed,
-  attention,
-  labels,
-}: {
-  success: number;
-  failed: number;
-  attention: number;
-  labels: { success: string; failed: string; attention: string };
-}) {
-  const total = success + failed + attention || 1;
-  const data = [
-    { name: labels.success, value: success, color: CHART_COLORS.chartGreen },
-    { name: labels.failed, value: failed, color: CHART_COLORS.chartRed },
-    { name: labels.attention, value: attention, color: CHART_COLORS.chartOrange },
-  ];
+export function StatusPieChart({ counts, language }: { counts: OutcomeCounts; language: "en" | "zh" }) {
+  const total = counts.error + counts.issues + counts.clean || 1;
+  const data = OUTCOMES.map((outcome) => ({ name: OUTCOME_LABEL[outcome][language], value: counts[outcome], color: OUTCOME_COLOR[outcome] }));
 
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -52,11 +37,11 @@ export function StatusPieChart({
           data={data}
           cx="50%"
           cy="50%"
-          innerRadius={70}
-          outerRadius={115}
-          paddingAngle={2}
+          innerRadius="55%"
+          outerRadius="85%"
+          paddingAngle={1}
           dataKey="value"
-          stroke="var(--background)"
+          stroke="var(--card)"
           strokeWidth={2}
           // Sectors stay empty while requestAnimationFrame is paused (background tabs).
           isAnimationActive={false}
@@ -65,52 +50,28 @@ export function StatusPieChart({
             <Cell key={entry.name} fill={entry.color} />
           ))}
         </Pie>
-        <Tooltip
-          formatter={(value: number, name: string) => [
-            `${value} (${((value / total) * 100).toFixed(1)}%)`,
-            name,
-          ]}
-          {...tooltipStyle}
-        />
-        <Legend wrapperStyle={legendStyle} />
+        <Tooltip formatter={(value: number, name: string) => [`${value} (${((value / total) * 100).toFixed(1)}%)`, name]} {...tooltipStyle} />
+        <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} formatter={legendText} />
       </PieChart>
     </ResponsiveContainer>
   );
 }
 
-export function TrendLineChart({
-  data,
-  labels,
-}: {
-  data: { date: string; executions: number; successes: number; failures: number }[];
-  labels: { date: string; total: string; success: string; failed: string };
-}) {
+export function TrendLineChart({ data, language, allRunsLabel }: { data: DailyTrendPoint[]; language: "en" | "zh"; allRunsLabel: string }) {
   const series = [
-    { key: "executions", name: labels.total, color: CHART_COLORS.chartBlue },
-    { key: "successes", name: labels.success, color: CHART_COLORS.chartGreen },
-    { key: "failures", name: labels.failed, color: CHART_COLORS.chartRed },
+    { key: "runs", name: allRunsLabel, color: INK.muted },
+    ...OUTCOMES.map((outcome) => ({ key: outcome, name: OUTCOME_LABEL[outcome][language], color: OUTCOME_COLOR[outcome] })),
   ];
+  const format = (key: string) => formatDayKey(key, language);
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="2 2" stroke={CHART_COLORS.border} vertical={false} />
-        <XAxis
-          dataKey="date"
-          tickFormatter={(value) => {
-            const date = new Date(value);
-            return `${date.getMonth() + 1}/${date.getDate()}`;
-          }}
-          stroke={CHART_COLORS.muted}
-          fontSize={12}
-          tickMargin={8}
-        />
-        <YAxis stroke={CHART_COLORS.muted} fontSize={12} tickMargin={8} allowDecimals={false} />
-        <Tooltip
-          labelFormatter={(value) => `${labels.date}: ${new Date(value).toLocaleDateString()}`}
-          {...tooltipStyle}
-        />
-        <Legend wrapperStyle={legendStyle} />
+      <LineChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="2 2" stroke={INK.grid} vertical={false} />
+        <XAxis dataKey="date" tickFormatter={format} stroke={INK.muted} fontSize={12} tickMargin={8} minTickGap={16} />
+        <YAxis stroke={INK.muted} fontSize={12} tickMargin={8} allowDecimals={false} />
+        <Tooltip labelFormatter={(key: string) => formatDayKey(key, language, { weekday: true })} {...tooltipStyle} />
+        <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} formatter={legendText} />
         {series.map((s) => (
           <Line
             key={s.key}
@@ -118,9 +79,11 @@ export function TrendLineChart({
             dataKey={s.key}
             name={s.name}
             stroke={s.color}
-            strokeWidth={2}
-            dot={{ r: 3, fill: s.color, strokeWidth: 0 }}
-            activeDot={{ r: 5 }}
+            strokeWidth={s.key === "runs" ? 1.5 : 2}
+            strokeDasharray={s.key === "runs" ? "4 3" : undefined}
+            dot={data.length <= 31 ? { r: 2.5, fill: s.color, strokeWidth: 0 } : false}
+            activeDot={{ r: 4 }}
+            isAnimationActive={false}
           />
         ))}
       </LineChart>

@@ -7,7 +7,9 @@ import {
   approveScript,
   rejectScript,
   getCompletedApprovals,
+  getCurrentSql,
 } from "@/lib/workflows/approval-workflow";
+import { toApprovalDto } from "@/lib/workflows/approval-dto";
 
 const REVIEWERS = { anyOf: [Permission.SCRIPT_APPROVE, Permission.SCRIPT_REJECT] };
 
@@ -25,98 +27,42 @@ export const GET = withAuth(REVIEWERS, async (request, { principal }) => {
 
     const action = searchParams.get("action") === "history" ? "history" : "pending";
 
+    const page = intParam(searchParams.get("page"), 1, 1, 10_000);
+    const limit = intParam(searchParams.get("limit"), 20, 1, 100);
+
     if (action === "history") {
-      const page = intParam(searchParams.get("page"), 1, 1, 10_000);
-      const limit = intParam(searchParams.get("limit"), 20, 1, 100);
-
       const result = await getCompletedApprovals(page, limit);
-
-      const transformedHistoryData = result.data.map((request) => ({
-        id: request.requestId,
-        scriptId: request.scriptId,
-        scriptName: request.title || `脚本 ${request.scriptId}`,
-        scriptType: request.scriptType,
-        status: request.status,
-        requesterEmail: request.requesterEmail,
-        requesterId: request.requesterId,
-        createdAt: request.requestedAt.toISOString(),
-        updatedAt: request.updatedAt.toISOString(),
-        requiredApprovers: request.requiredApprovers,
-        currentApprovers: request.reviewedBy
-          ? [
-              {
-                userId: request.reviewedBy,
-                email: request.reviewerEmail || "unknown",
-                role: "reviewer",
-                decision:
-                  request.status === "approved"
-                    ? ("approved" as const)
-                    : ("rejected" as const),
-                comment: request.reviewComment,
-                timestamp:
-                  request.reviewedAt?.toISOString() || new Date().toISOString(),
-              },
-            ]
-          : [],
-        isComplete: true,
-        comment: request.reviewComment,
-        reason: request.description,
-      }));
+      const data = result.data.map((request) => toApprovalDto(request));
 
       return NextResponse.json({
         success: true,
         action: "history",
-        data: transformedHistoryData,
+        data,
         pagination: result.pagination,
-        count: transformedHistoryData.length,
-      });
-    } else {
-      const page = intParam(searchParams.get("page"), 1, 1, 10_000);
-      const limit = intParam(searchParams.get("limit"), 20, 1, 100);
-
-      const result = await getPendingApprovals(principal.id, page, limit);
-
-      const transformedData = result.data.map((request) => ({
-        id: request.requestId,
-        scriptId: request.scriptId,
-        scriptName: request.title || `脚本 ${request.scriptId}`,
-        scriptType: request.scriptType,
-        status: request.status,
-        requesterEmail: request.requesterEmail,
-        requesterId: request.requesterId,
-        createdAt: request.requestedAt.toISOString(),
-        updatedAt: request.updatedAt.toISOString(),
-        requiredApprovers: request.requiredApprovers,
-        currentApprovers: (request.currentApprovers || []).map((approver) => ({
-          userId: request.reviewedBy || approver,
-          email: request.reviewerEmail || "unknown",
-          role: "reviewer",
-          decision:
-            request.status === "approved"
-              ? ("approved" as const)
-              : ("rejected" as const),
-          comment: request.reviewComment,
-          timestamp:
-            request.reviewedAt?.toISOString() || new Date().toISOString(),
-        })),
-        isComplete: request.status !== "pending",
-        comment: request.reviewComment,
-        reason: request.description,
-      }));
-
-      return NextResponse.json({
-        success: true,
-        action: "pending",
-        data: transformedData,
-        pagination: result.pagination,
-        user_info: {
-          userId: principal.id,
-          email: userEmail,
-          canApprove: hasApprovalPermission.authorized,
-          canReject: hasRejectPermission.authorized,
-        },
+        count: data.length,
       });
     }
+
+    const result = await getPendingApprovals(principal.id, page, limit);
+    // Edits and deletes are shown against the check's live SQL.
+    const changesExisting = (request: (typeof result.data)[number]) => request.operationType !== "create";
+    const currentSql = await getCurrentSql(result.data.filter(changesExisting).map((request) => request.scriptId));
+    const data = result.data.map((request) =>
+      toApprovalDto(request, changesExisting(request) ? currentSql.get(request.scriptId) : undefined),
+    );
+
+    return NextResponse.json({
+      success: true,
+      action: "pending",
+      data,
+      pagination: result.pagination,
+      user_info: {
+        userId: principal.id,
+        email: userEmail,
+        canApprove: hasApprovalPermission.authorized,
+        canReject: hasRejectPermission.authorized,
+      },
+    });
   } catch (error) {
     console.error("[API] 获取审批信息失败:", error);
     return NextResponse.json(

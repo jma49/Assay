@@ -1,5 +1,5 @@
 import { ObjectId, type Db, type Document } from "mongodb";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { RunDocument } from "@/server/services/run-check";
 import { mongoRunCheckStore } from "./run-check-store";
 
@@ -26,6 +26,18 @@ const run: RunDocument = {
   message: "Found 2 records",
   findings: "2 rows",
 };
+
+describe("historicalState", () => {
+  it("ignores runs from before the check was created (an earlier check with the same id)", async () => {
+    const find = vi.fn(() => ({ sort: () => ({ limit: () => ({ toArray: async () => [] }) }) }));
+    const db = { collection: () => ({ find }) } as unknown as Db;
+    const createdAt = new Date("2026-09-20T00:00:00Z");
+    await mongoRunCheckStore(db).historicalState("orders", createdAt);
+    expect((find.mock.calls[0] as unknown[])[0]).toEqual({ checkId: "orders", finishedAt: { $gte: createdAt } });
+    await mongoRunCheckStore(db).historicalState("orders", null);
+    expect((find.mock.calls[1] as unknown[])[0]).toEqual({ checkId: "orders" });
+  });
+});
 
 describe("saveRun", () => {
   it("writes the run's own fields and the sample, but not the retired legacy ones", async () => {

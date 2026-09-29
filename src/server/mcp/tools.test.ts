@@ -61,3 +61,15 @@ describe("run_check", () => {
     await expect(find(UserRole.DEVELOPER, "run_check", missing).handler({ check_id: "x" })).rejects.toThrow("No check with id x");
   });
 });
+
+describe("get_run", () => {
+  it("reads only the rows it returns", async () => {
+    const findOne = vi.fn(async () => ({ checkId: "orders", finishedAt: new Date("2026-09-28T00:00:00Z"), rowCount: 900, sample: [{ id: 1 }, { id: 2 }] }));
+    const d = { ...deps(), db: async () => ({ collection: () => ({ findOne }) }) as never };
+    const result = await find(UserRole.VIEWER, "get_run", d).handler({ run_id: "a".repeat(24), max_rows: 2 });
+    const { projection } = (findOne.mock.calls[0] as unknown as [unknown, { projection: Record<string, unknown> }])[1];
+    expect(projection).toMatchObject({ sample: { $slice: 2 }, raw_results: { $slice: 2 } });
+    expect(projection).not.toHaveProperty("rowKeys");
+    expect(result).toMatchObject({ row_count: 900, rows: [{ id: "1" }, { id: "2" }] });
+  });
+});

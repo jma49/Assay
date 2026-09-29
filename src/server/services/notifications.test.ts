@@ -151,11 +151,15 @@ function memoryStore(events: StoredEvent[], destinations: Destination[], checkEx
       reminderCounts.set(key, sent + 1);
       return true;
     },
+    async releaseReminder(destinationId, checkId, since, sent) {
+      const key = `${destinationId}|${checkId}|${since.toISOString()}`;
+      if ((reminderCounts.get(key) ?? 0) === sent) reminderCounts.set(key, sent - 1);
+    },
     async problemToken() {
       return "65f000000000000000000001.abcdefghijklmn_-";
     },
   };
-  return { store, deliveries, fanned };
+  return { store, deliveries, fanned, reminderCounts };
 }
 
 function deps(store: NotifyStore, outcomes: DeliveryOutcome[] = [{ kind: "sent" }], clock = { now: t0 }) {
@@ -380,6 +384,28 @@ describe("dispatchNotifications", () => {
       await dispatchNotifications(d);
     }
     expect(send).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not count a reminder that could not be sent, so the next dispatch tries again", async () => {
+    const since = new Date(t0.getTime() - 5 * 3_600_000);
+    const problem: OpenProblem = { checkId: "orders", name: "Orders", outcome: "error", rowCount: 0, since };
+    const { store, reminderCounts } = memoryStore([], [destination({ remind: { afterHours: 4 }, createdAt: new Date(t0.getTime() - 86_400_000) })], {}, [problem]);
+    const { deps: d, send } = deps(store, [{ kind: "failed", error: "channel gone" }, { kind: "sent" }]);
+    expect((await dispatchNotifications(d)).reminders).toBe(0);
+    expect([...reminderCounts.values()]).toEqual([0]);
+    expect((await dispatchNotifications(d)).reminders).toBe(1);
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+
+  it("reads open problems and digest summaries once per workspace and tag set", async () => {
+    const since = new Date(t0.getTime() - 5 * 3_600_000);
+    const problem: OpenProblem = { checkId: "orders", name: "Orders", outcome: "error", rowCount: 0, since };
+    const created = new Date(t0.getTime() - 86_400_000);
+    const many = [1, 2, 3].map((i) => destination({ id: `d${i}`, remind: { afterHours: 4 }, createdAt: created, tags: i === 3 ? ["finance"] : [] }));
+    const { store } = memoryStore([], many, {}, [problem]);
+    const openProblems = vi.spyOn(store, "openProblems");
+    await dispatchNotifications(deps(store).deps);
+    expect(openProblems).toHaveBeenCalledTimes(2);
   });
 
   it("stops reminding once the problem is acknowledged or muted, or the kind is not wanted", async () => {

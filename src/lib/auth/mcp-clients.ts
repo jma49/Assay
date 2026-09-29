@@ -10,6 +10,21 @@ export function withNativeDefault(body: Record<string, unknown>): Record<string,
   return body.redirect_uris.every(isNativeRedirect) ? { ...body, application_type: "native" } : body;
 }
 
+/**
+ * The host a Client ID Metadata Document client is published at: its
+ * client_id is that https URL, so the host is proven by the fetch. Any other
+ * client registered itself and chose its own name, so it has none and the
+ * consent page marks it unverified.
+ */
+export function metadataDocumentHost(clientId: string): string | null {
+  if (!clientId.startsWith("https://")) return null;
+  try {
+    return new URL(clientId).host || null;
+  } catch {
+    return null;
+  }
+}
+
 function isNativeRedirect(uri: unknown): boolean {
   if (typeof uri !== "string") return false;
   try {
