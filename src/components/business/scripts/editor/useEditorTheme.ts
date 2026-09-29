@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { okaidia } from "@uiw/codemirror-theme-okaidia";
 import { githubLight } from "@uiw/codemirror-theme-github";
@@ -24,6 +24,24 @@ const THEMES = {
 
 const isTheme = (name: unknown): name is keyof typeof THEMES => typeof name === "string" && name in THEMES;
 
+const STORAGE_KEY = "editor-theme";
+const fallbackFor = (appTheme: string | undefined): keyof typeof THEMES => (appTheme === "dark" ? "tokyoNight" : "eclipse");
+
+function readSaved(): keyof typeof THEMES | null {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return isTheme(saved) ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+// EditorThemeSettings saves the choice, then announces it with this event.
+function subscribe(onChange: () => void) {
+  window.addEventListener("editorThemeChange", onChange);
+  return () => window.removeEventListener("editorThemeChange", onChange);
+}
+
 /**
  * The editor's colour theme: the one picked in EditorThemeSettings (kept in
  * localStorage and announced with an `editorThemeChange` event), else one
@@ -31,27 +49,13 @@ const isTheme = (name: unknown): name is keyof typeof THEMES => typeof name === 
  */
 export function useEditorTheme() {
   const { theme: appTheme } = useTheme();
-  const [name, setName] = useState<keyof typeof THEMES>("eclipse");
+  const saved = useSyncExternalStore(subscribe, readSaved, () => null);
+  const name = saved ?? fallbackFor(appTheme);
 
+  // Without a saved choice, remember the one matching the app's mode.
   useEffect(() => {
-    const saved = localStorage.getItem("editor-theme");
-    if (isTheme(saved)) {
-      setName(saved);
-    } else {
-      const fallback = appTheme === "dark" ? "tokyoNight" : "eclipse";
-      setName(fallback);
-      localStorage.setItem("editor-theme", fallback);
-    }
+    if (readSaved() === null) localStorage.setItem(STORAGE_KEY, fallbackFor(appTheme));
   }, [appTheme]);
-
-  useEffect(() => {
-    const onChange = (event: Event) => {
-      const next = (event as CustomEvent<{ theme?: unknown }>).detail?.theme;
-      if (isTheme(next)) setName(next);
-    };
-    window.addEventListener("editorThemeChange", onChange);
-    return () => window.removeEventListener("editorThemeChange", onChange);
-  }, []);
 
   return useMemo(() => THEMES[name] ?? (appTheme === "dark" ? tokyoNight : eclipse), [name, appTheme]);
 }

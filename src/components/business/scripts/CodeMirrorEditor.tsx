@@ -59,7 +59,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   const isZh = language === "zh";
   const aiAvailable = useMe()?.ai === true;
   const theme = useEditorTheme();
-  const extensions = useMemo(postgresExtensions, []);
+  const extensions = useMemo(() => postgresExtensions(), []);
   const assistant = useSqlAssistant(value, language, onChange);
   const [showPreview, setShowPreview] = useState(false);
   const [showAI, setShowAI] = useState(false);
