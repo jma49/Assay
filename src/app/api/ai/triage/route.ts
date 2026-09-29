@@ -13,6 +13,9 @@ import { triageRun, type Triage } from "@/lib/ai/triage";
 import { aiModel } from "@/lib/ai/model";
 import { COLLECTIONS } from "@/lib/database/collections";
 import { findRun, saveTriage } from "@/server/repos/runs";
+import { sourceIdOf } from "@/domain/data-source";
+import { UnknownDataSourceError } from "@/server/datasource/registry";
+import { resolveSource } from "@/server/datasource/sources";
 
 const Body = z.object({
   resultId: z.string().refine((id) => ObjectId.isValid(id), "Invalid run id"),
@@ -47,8 +50,13 @@ export const POST = withAuth(Permission.HISTORY_READ, async (request, { principa
   const scriptId = String(run.checkId ?? "");
   const script = await db
     .collection(COLLECTIONS.checks)
-    .findOne({ scriptId }, { projection: { name: 1, description: 1, sqlContent: 1 } });
+    .findOne({ scriptId }, { projection: { name: 1, description: 1, sqlContent: 1, dataSourceId: 1 } });
   const rows = storedSample(run);
+  // The schema of the source the check runs against; a source deleted since leaves triage without one.
+  const schema = await resolveSource(sourceIdOf(script)).then(getCachedSchema, (error: unknown) => {
+    if (error instanceof UnknownDataSourceError) return "(the check's data source no longer exists)";
+    throw error;
+  });
 
   let triage: Triage;
   try {
@@ -56,7 +64,7 @@ export const POST = withAuth(Permission.HISTORY_READ, async (request, { principa
       {
         check: { scriptId, name: script?.name, description: script?.description, sql: script?.sqlContent },
         run: { outcome, message, rowCount: rows.length, profile: profileRows(rows) },
-        schema: await getCachedSchema(),
+        schema,
         language,
       },
       { userId: principal.id },

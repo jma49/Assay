@@ -37,25 +37,38 @@ async function runStatement(client: PoolClient, statement: string, maxRows: numb
   }
 }
 
-/** The monitored PostgreSQL database, reached through the shared pool in a read-only transaction. */
-export const postgresDataSource: DataSource = {
-  runReadOnly(statements, { timeoutMs, maxRows }) {
-    return withReadOnlyTransaction(async (client) => {
-      const deadline = Date.now() + timeoutMs;
-      const results: StatementResult[] = [];
-      for (const statement of statements) {
-        // The server cancels a slow statement; a client-side timer would leave it running.
-        const remaining = Math.floor(deadline - Date.now());
-        if (remaining <= 0) throw new QueryTimeoutError(timeoutMs);
-        await client.query(`SET LOCAL statement_timeout = ${remaining}`);
-        try {
-          results.push(await runStatement(client, statement, maxRows));
-        } catch (error) {
-          if ((error as { code?: string }).code === QUERY_CANCELED) throw new QueryTimeoutError(timeoutMs);
-          throw error;
+/** Runs fn on one connection inside a READ ONLY transaction (readOnlyTransaction on a source's pool). */
+export type ReadOnlyRunner = <T>(fn: (client: PoolClient) => Promise<T>) => Promise<T>;
+
+/** A PostgreSQL source: checks go through runReadOnly, the schema browser and dry runs through `transaction`. */
+export interface PostgresSource extends DataSource {
+  transaction: ReadOnlyRunner;
+}
+
+/** A PostgreSQL database reached through `transaction`, always in a read-only transaction. */
+export function postgresSource(transaction: ReadOnlyRunner): PostgresSource {
+  return {
+    transaction,
+    runReadOnly: (statements, { timeoutMs, maxRows }) =>
+      transaction(async (client) => {
+        const deadline = Date.now() + timeoutMs;
+        const results: StatementResult[] = [];
+        for (const statement of statements) {
+          // The server cancels a slow statement; a client-side timer would leave it running.
+          const remaining = Math.floor(deadline - Date.now());
+          if (remaining <= 0) throw new QueryTimeoutError(timeoutMs);
+          await client.query(`SET LOCAL statement_timeout = ${remaining}`);
+          try {
+            results.push(await runStatement(client, statement, maxRows));
+          } catch (error) {
+            if ((error as { code?: string }).code === QUERY_CANCELED) throw new QueryTimeoutError(timeoutMs);
+            throw error;
+          }
         }
-      }
-      return results;
-    });
-  },
-};
+        return results;
+      }),
+  };
+}
+
+/** DATABASE_URL, the built-in source. */
+export const defaultPostgresSource = postgresSource((fn) => withReadOnlyTransaction(fn));

@@ -29,6 +29,8 @@ export interface CheckSummary {
   scope?: string;
   /** Cron in UTC, or null for manual checks. */
   schedule: string | null;
+  /** The data source it runs against; `default` is DATABASE_URL. */
+  dataSourceId: string;
   state: CheckStateDto | null;
   alerting: AlertingDto;
   /** Up to the last 30 runs, oldest first. */
@@ -62,6 +64,8 @@ export interface CheckDetail extends CheckSummary {
   sql: string;
   author?: string;
   createdAt?: string;
+  /** Its source, when there is more than one to tell apart; `name` is null for one deleted since. */
+  dataSource: { id: string; name: string | null } | null;
   runs: RunListItem[];
   latest: LatestRun | null;
 }

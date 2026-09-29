@@ -63,30 +63,34 @@ export function poolLogLine(connectionString: string, ssl: ConnectionOptions | u
   return inPublicCi(env) ? `[db] Pool created${tls}` : `[db] Pool for ${redactConnectionString(connectionString)}${tls}`;
 }
 
-async function createPool(): Promise<Pool> {
+/** A pool with the settings every source shares; `label` names it in logs, never with secrets. */
+export function openPool(config: PoolConfig, label: string): Pool {
+  // Never wait forever for a free connection (checks are bounded by a semaphore, dry runs are not).
+  const pool = new Pool({ connectionTimeoutMillis: 10_000, idleTimeoutMillis: 30_000, ...config });
+  // An idle client dropped by the server emits 'error' on the pool; unhandled, it would crash the process.
+  pool.on("error", (error) => console.error(`[db] Idle PostgreSQL client error (${label}):`, error.message));
+  return pool;
+}
+
+/** How pg connects to DATABASE_URL, the built-in source, with its TLS settings from the environment. */
+export async function defaultConnectionConfig(): Promise<{ connectionString: string; ssl?: ConnectionOptions }> {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error("DATABASE_URL is not set");
   const { connectionString, ssl } = pgConnection(databaseUrl, await tlsOptions());
-  const config: PoolConfig = {
-    connectionString,
-    // Never wait forever for a free connection (checks are bounded by a semaphore, dry runs are not).
-    max: Number(process.env.PG_POOL_MAX) || 10,
-    connectionTimeoutMillis: 10_000,
-    idleTimeoutMillis: 30_000,
-  };
-  if (ssl) config.ssl = ssl;
+  return ssl ? { connectionString, ssl } : { connectionString };
+}
+
+async function createDefaultPool(): Promise<Pool> {
+  const { connectionString, ssl } = await defaultConnectionConfig();
   console.log(poolLogLine(connectionString, ssl));
-  const pool = new Pool(config);
-  // An idle client dropped by the server emits 'error' on the pool; unhandled, it would crash the process.
-  pool.on("error", (error) => console.error("[db] Idle PostgreSQL client error:", error.message));
-  return pool;
+  return openPool({ connectionString, ssl, max: Number(process.env.PG_POOL_MAX) || 10 }, "default");
 }
 
 const shared = globalThis as unknown as { assayPgPool?: Promise<Pool> | null };
 
-/** The process's one pool. The promise is shared, so concurrent first calls cannot create two. */
-function getPool(): Promise<Pool> {
-  shared.assayPgPool ??= createPool().catch((error) => {
+/** The process's pool for DATABASE_URL. The promise is shared, so concurrent first calls cannot create two. */
+function getDefaultPool(): Promise<Pool> {
+  shared.assayPgPool ??= createDefaultPool().catch((error) => {
     shared.assayPgPool = null;
     throw error;
   });
@@ -94,12 +98,12 @@ function getPool(): Promise<Pool> {
 }
 
 export async function query(text: string, params?: unknown[]): Promise<QueryResult> {
-  return (await getPool()).query(text, params);
+  return (await getDefaultPool()).query(text, params);
 }
 
-/** Runs fn on a single connection inside a READ ONLY transaction; the database rejects any write. */
-export async function withReadOnlyTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
-  const client = await (await getPool()).connect();
+/** Runs fn on one connection of `pool` inside a READ ONLY transaction; the database rejects any write. */
+export async function readOnlyTransaction<T>(pool: Pool, fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client = await pool.connect();
   let broken: Error | undefined;
   try {
     await client.query("BEGIN READ ONLY");
@@ -118,7 +122,12 @@ export async function withReadOnlyTransaction<T>(fn: (client: PoolClient) => Pro
   }
 }
 
-/** Closes the pool, for scripts that must exit. */
+/** readOnlyTransaction on the DATABASE_URL pool. */
+export async function withReadOnlyTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  return readOnlyTransaction(await getDefaultPool(), fn);
+}
+
+/** Closes the DATABASE_URL pool, for scripts that must exit. */
 export async function closePool(): Promise<void> {
   const pool = shared.assayPgPool;
   shared.assayPgPool = null;

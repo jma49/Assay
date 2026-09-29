@@ -180,6 +180,24 @@ describe("PUT /api/scripts/[scriptId]", () => {
     expect(mocks.fileChangeRequest).not.toHaveBeenCalled();
   });
 
+  it("refuses to move a check to a data source that does not exist", async () => {
+    mocks.findOne.mockImplementation(async (filter: { sourceId?: string }) => ("sourceId" in filter ? null : mocks.existing));
+    const res = await update({ dataSourceId: "gone", version: 3 });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("unknown_data_source");
+    expect(mocks.updateOne).not.toHaveBeenCalled();
+  });
+
+  it("sends moving someone else's check to another data source for review, like any field", async () => {
+    mocks.existing = othersCheck;
+    mocks.findOne.mockImplementation(async (filter: { sourceId?: string }) => ("sourceId" in filter ? { sourceId: "billing" } : mocks.existing));
+    const res = await update({ dataSourceId: "billing", version: 3 });
+    expect((await res.json()).requiresApproval).toBe(true);
+    expect(mocks.updateOne).not.toHaveBeenCalled();
+    const { originalData } = mocks.fileChangeRequest.mock.calls[0][1] as { originalData: Record<string, unknown> };
+    expect(originalData.dataSourceId).toBe("billing");
+  });
+
   it("lets admins change someone else's check directly", async () => {
     mocks.existing = othersCheck;
     mocks.role = "admin";

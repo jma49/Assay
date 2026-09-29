@@ -6,10 +6,16 @@ import { toolsFor, type ToolDeps } from "./tools";
 
 vi.mock("@/server/services/checks-read", () => ({
   listChecks: async (): Promise<Partial<CheckSummary>[]> => [
-    { scriptId: "orders", name: "Duplicate orders", tags: ["finance"], schedule: null, state: { outcome: "issues", rowCount: 3, previousRowCount: 1, since: "s", lastRunAt: "l", lastRunId: "r" }, alerting: { owner: null, mutedUntil: null, mutedBy: null, acknowledged: null } },
-    { scriptId: "ship", name: "Shipping", tags: [], schedule: "0 9 * * *", state: null, alerting: { owner: { id: "u", name: "ada" }, mutedUntil: null, mutedBy: null, acknowledged: null } },
+    { scriptId: "orders", name: "Duplicate orders", tags: ["finance"], schedule: null, dataSourceId: "billing", state: { outcome: "issues", rowCount: 3, previousRowCount: 1, since: "s", lastRunAt: "l", lastRunId: "r" }, alerting: { owner: null, mutedUntil: null, mutedBy: null, acknowledged: null } },
+    { scriptId: "ship", name: "Shipping", tags: [], schedule: "0 9 * * *", dataSourceId: "default", state: null, alerting: { owner: { id: "u", name: "ada" }, mutedUntil: null, mutedBy: null, acknowledged: null } },
   ],
   getCheckDetail: async () => null,
+}));
+vi.mock("@/server/services/data-sources", () => ({
+  listSourceOptions: async () => [
+    { sourceId: "default", name: "Primary", engine: "postgres" },
+    { sourceId: "billing", name: "Billing", engine: "postgres" },
+  ],
 }));
 
 const caller = (role: UserRole): McpCaller => ({ userId: "u1", name: "Ada", email: "ada@example.com", permissions: ROLE_PERMISSIONS[role], credential: "api-key:k" });
@@ -23,7 +29,7 @@ const find = (role: UserRole, name: string, d = deps()) => toolsFor(caller(role)
 
 describe("toolsFor", () => {
   it("lists only what the role allows", () => {
-    expect(toolsFor(caller(UserRole.VIEWER), deps()).map((t) => t.name)).toEqual(["list_checks", "get_check", "get_run", "list_activity"]);
+    expect(toolsFor(caller(UserRole.VIEWER), deps()).map((t) => t.name)).toEqual(["list_checks", "get_check", "list_data_sources", "get_run", "list_activity"]);
     expect(toolsFor(caller(UserRole.DEVELOPER), deps()).map((t) => t.name)).toContain("run_check");
   });
 
@@ -31,6 +37,18 @@ describe("toolsFor", () => {
     for (const tool of toolsFor(caller(UserRole.ADMIN), deps())) {
       expect(tool.annotations.readOnlyHint, tool.name).toBe(tool.name.startsWith("list_") || tool.name.startsWith("get_"));
     }
+  });
+});
+
+describe("list_data_sources", () => {
+  it("lists ids, names and engines only, and checks name their source", async () => {
+    expect(await find(UserRole.VIEWER, "list_data_sources").handler({})).toEqual({
+      data_sources: [
+        { id: "default", name: "Primary", engine: "postgres" },
+        { id: "billing", name: "Billing", engine: "postgres" },
+      ],
+    });
+    expect(await find(UserRole.VIEWER, "list_checks").handler({ tag: "finance" })).toMatchObject({ checks: [{ id: "orders", data_source: "billing" }] });
   });
 });
 
