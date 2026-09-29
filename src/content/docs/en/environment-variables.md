@@ -11,7 +11,7 @@ Copy `.env.example` to `.env.local` for local work, or add these to your host.
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth client; callback `/api/auth/callback/google`. |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth app; callback `/api/auth/callback/github`. |
 | `MONGODB_URI` | MongoDB connection string. The database is the one named in its path, else `MONGODB_DB_NAME`, else `sql_script_monitoring`; users, roles, checks and runs all live there. |
-| `DATABASE_URL` | The PostgreSQL database checks run against. |
+| `DATABASE_URL` | The built-in data source: the PostgreSQL database checks run against unless they name another data source (Settings → Data sources). |
 | `UPSTASH_REDIS_REST_URL` | Upstash Redis REST URL. |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token. |
 
@@ -24,6 +24,8 @@ At least one sign-in provider (Google or GitHub) must be set.
 | `CHECK_TIMEOUT_MS` | How long a check's whole script may run, all statements together, before PostgreSQL stops it. Default 30000 (30 s); values are kept between 1000 and 300000. |
 | `CHECK_CONCURRENCY` | How many checks one server instance runs at the same time; more wait for a free slot. Default 4. |
 | `PG_POOL_MAX` | Most connections one server instance opens to `DATABASE_URL`. Default 10. |
+| `PG_SOURCE_POOL_MAX` | Most connections one server instance opens to each data source added in Settings. Default 3. |
+| `ALLOW_PRIVATE_DATA_SOURCES` | `true` lets added data sources use hosts on private networks (10.x, 192.168.x, localhost, `*.internal`), and lets those skip TLS. Off by default, so a connection string cannot reach internal services or the cloud metadata endpoint. Turn it on when self-hosting next to a private database. |
 | `SEED_DATABASE_URL` | Optional. A role that may create tables, used only by `npm run seed:demo`. Lets `DATABASE_URL` be a SELECT-only role. |
 | `RUN_RETENTION_DAYS` | Days a run is kept before MongoDB deletes it. Default 90; `0` keeps runs forever. |
 
@@ -35,7 +37,7 @@ See [Notifications](/docs/notifications).
 
 | Variable | Purpose |
 |---|---|
-| `ASSAY_SECRET_KEY` | Needed for alerts: 32 random bytes, base64 (`openssl rand -base64 32`). Encrypts channel secrets and signs OAuth state. Without it no destination can be saved; changing it makes saved ones unreadable. |
+| `ASSAY_SECRET_KEY` | Needed for alerts and data sources: 32 random bytes, base64 (`openssl rand -base64 32`). Encrypts channel secrets and data source connection strings, and signs OAuth state. Without it no destination or data source can be saved; changing it makes saved ones unreadable. |
 | `APP_URL` | Public URL used in alert links and one-click redirects. On Vercel the production domain is used when unset. |
 | `CRON_SECRET` | Bearer token the scheduled workflow sends to `POST /api/notifications/dispatch`. Unset, that endpoint refuses every call. Add it, with `APP_URL`, as a GitHub Actions secret too. |
 | `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET` | Enable **Add to Slack**. Redirect URL `<APP_URL>/api/integrations/slack/callback`. |

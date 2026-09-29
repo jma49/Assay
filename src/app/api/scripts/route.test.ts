@@ -134,6 +134,22 @@ describe("POST /api/scripts", () => {
     expect((await create({ ...validBody, scriptId: "Bad Id" })).status).toBe(400);
   });
 
+  it("runs a new check against the built-in source unless it names another", async () => {
+    await create(validBody);
+    expect(inserted().dataSourceId).toBe("default");
+  });
+
+  it("refuses a data source that does not exist, and accepts one that does", async () => {
+    mocks.findOne.mockImplementation(async (filter: { sourceId?: string }) => (filter.sourceId === "billing" ? { sourceId: "billing" } : null));
+    const res = await create({ ...validBody, dataSourceId: "gone" });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("unknown_data_source");
+    expect(mocks.insertOne).not.toHaveBeenCalled();
+
+    expect((await create({ ...validBody, dataSourceId: "billing" })).status).toBe(201);
+    expect(inserted().dataSourceId).toBe("billing");
+  });
+
   it("files an approval request instead of creating for non-admins", async () => {
     mocks.role = "developer";
     const res = await create(validBody);

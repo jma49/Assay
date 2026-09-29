@@ -13,6 +13,7 @@ const EDITABLE_CHECK_FIELDS = [
   "sqlContent",
   "isScheduled",
   "cronSchedule",
+  "dataSourceId",
 ] as const;
 
 /** Only the editable fields of a payload, e.g. one stored on an approval request. */

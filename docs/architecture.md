@@ -10,8 +10,10 @@ today's code. Each phase ships on its own and keeps the app working.
   300`, which Hobby only accepts with Fluid on). Many
   short-lived instances share nothing in memory; anything that must survive a
   request or be seen by another instance lives in MongoDB or Redis.
-- **Stores:** MongoDB Atlas holds Assay's own data. The monitored database is
-  PostgreSQL, reached read-only. Upstash Redis holds counters and short caches.
+- **Stores:** MongoDB Atlas holds Assay's own data. The monitored databases
+  are PostgreSQL data sources, reached read-only: `DATABASE_URL` (the
+  built-in `default`) and any an admin adds in Settings. Upstash Redis holds
+  counters and short caches.
 - **Scheduling:** GitHub Actions (every 30 minutes) or a small always-on
   scheduler starts runs; Assay itself keeps no clock.
 - **Open source and self-hosted:** everything must work with a single
@@ -45,15 +47,19 @@ src/
                  and the notification outbox.
     runs/        Run history query, the run report, samples and row
                  fingerprints.
-    datasource/  The checked database (PostgreSQL), read-only.
+    datasource/  The checked databases: the DataSource adapter (PostgreSQL),
+                 the registry of pools per source, and the connection guard
+                 (private hosts, TLS, DNS rebinding).
     notify/      Channels (Slack, Discord, Telegram, Feishu, WeCom, webhook)
                  and sending.
     net/         SSRF guard: public-address checks and a pinned fetch, for
-                 webhooks and CIMD client metadata.
+                 webhooks and CIMD client metadata (data sources reuse the
+                 address check).
     integrations/ OAuth installs and chat-app callbacks.
     mcp/         MCP server: caller, tools, permissions.
     http/        withAuth, ApiError, the AI guard and route helpers.
-    crypto/      Sealed secrets (AES-256-GCM).
+    crypto/      Sealed secrets (AES-256-GCM): channel secrets and data
+                 source connection strings.
     concurrency/ Semaphore for bounded parallel runs.
   lib/           Older shared code: auth (Better Auth, RBAC), database
                  (Mongo client, indexes, Postgres pool), SQL validation,
@@ -88,6 +94,7 @@ from `sql_scripts` and `result`, which the app does on start).
 
 ```
 { scriptId, name, description, sqlContent, hashtags, scope,
+  dataSourceId,                        // missing = "default" (DATABASE_URL)
   isScheduled, cronSchedule,           // cron, UTC
   author, createdBy, updatedBy,
   version,                            // optimistic concurrency for edits
@@ -122,6 +129,18 @@ A unique index on `runId` makes writing an event idempotent.
 **batches**: `{ executionId, requestedBy, scripts: [{ scriptId, status, ... }],
 totalScripts, startedAt, completedAt, isActive }`.
 
+**data_sources**: the databases added in Settings (see [Data sources](#data-sources)).
+
+```
+{ sourceId, name, engine: "postgres",
+  connection,                          // sealed connection string, never returned
+  display,                             // "user@host:port/db", what pages show
+  createdBy, createdAt, updatedBy, updatedAt,
+  version,                             // keys pools and schema caches
+  lastTest: { ok, at, error, serverVersion, currentUser, readOnly, writeAccess } | null,
+  workspaceId }
+```
+
 [database.md](database.md) lists every collection, field and index.
 
 ## Running a check
@@ -132,7 +151,8 @@ started by a person, the schedule, a batch, or an agent.
 1. **Lease.** `findOneAndUpdate` sets `lease = { runId, until }` only when
    there is no live lease. If a run is already in progress, the caller gets
    that run's id instead of starting a second one.
-2. **Execute** through the check's `DataSource` in a read-only transaction.
+2. **Execute** through the check's `DataSource` (resolved from its
+   `dataSourceId` by the registry) in a read-only transaction.
    Each instance limits concurrent executions (a semaphore of
    `CHECK_CONCURRENCY`, 4 by default) so a burst cannot exhaust the
    PostgreSQL connection pool. When a slot frees up the lease is renewed,
@@ -160,7 +180,8 @@ statement must start with SELECT, WITH, EXPLAIN or DO, so a bare `END` cannot
 close the transaction. Each statement is then sent on its own over the
 extended protocol, where PostgreSQL refuses a second statement, inside
 `BEGIN READ ONLY` with a `statement_timeout`. The strongest layer is the
-database itself: point `DATABASE_URL` at a role that can only SELECT, e.g.
+database itself: point `DATABASE_URL` (and every data source) at a role that
+can only SELECT, e.g.
 
 ```sql
 CREATE ROLE assay_readonly LOGIN PASSWORD '...';
@@ -177,6 +198,58 @@ not read-only whatever its grants say; check with
 
 `npm run seed:demo` recreates the `demo` schema through `SEED_DATABASE_URL`
 and gives `assay_readonly` its grants back when that role exists.
+
+## Data sources
+
+A check runs against one data source: `dataSourceId` names it, and a check
+without one uses `default`, the built-in source from `DATABASE_URL` (shown
+in Settings as coming from the environment; it is never edited or deleted
+there, and is absent when `DATABASE_URL` is unset). Admins add more in
+Settings → Data sources (`datasource:manage`, admin only); anyone who reads
+checks may list their names, ids, engines and `display` (demo guests get no
+`display`). PostgreSQL is the only engine; `engine` and the `DataSource`
+interface leave room for others.
+
+- **Registry** (`src/server/datasource/registry.ts`): resolves a source id
+  to something checks, dry runs and the schema browser run on. One pg pool
+  per added source per instance (`PG_SOURCE_POOL_MAX`, 3 by default), keyed
+  by the source's `version`: after an edit the next resolve opens a new
+  pool and ends the old one. Records are cached for 5 s, so another
+  instance picks up an edit within that. The built-in source keeps its own
+  pool and TLS settings (`CA_CERT_BLOB_URL` …). The per-process semaphore
+  (`CHECK_CONCURRENCY`) is shared by all sources.
+- **Schema** (`/api/schema?source=`, coverage, and the AI helpers) is
+  cached in Redis per source and version (`db_schema:v3:<id>:<version>`).
+  Dry runs and AI drafts use the source the editor has selected; triage uses
+  the check's.
+- **Secrets.** The connection string is sealed with `ASSAY_SECRET_KEY`
+  (AES-256-GCM) before it is stored, never returned by an API (pages get
+  `display`), and never logged; pool logs name only the source id, and not
+  even that in public CI logs.
+- **SSRF.** An admin types the host, so it could point at internal
+  services or the cloud metadata endpoint. Saving or testing resolves the
+  host and refuses private, loopback and link-local addresses (and names
+  like `localhost`, `*.internal`) unless `ALLOW_PRIVATE_DATA_SOURCES=true`.
+  Every connection then resolves the host again through a lookup that
+  refuses private addresses (a socket handed to pg with that lookup), so a
+  name that later resolves elsewhere (DNS rebinding) cannot connect. pg
+  still sees the host name, so TLS sends it as SNI (Neon routes by it) and
+  verifies the certificate against it. Only URL connection strings with
+  `sslmode`, `channel_binding`, `application_name`, `options` and
+  `connect_timeout` are accepted: `host`/`hostaddr` would bypass the check
+  and the certificate-file parameters would read the server's disk.
+- **TLS.** Verified TLS (certificate chain and host name, through
+  `pgConnection`) is required, and applied when `sslmode` is missing.
+  `sslmode=disable`, `allow` and `no-verify` are accepted only for a private
+  host with private hosts allowed.
+- **Test.** `POST /api/data-sources/test` (unsaved) and
+  `/api/data-sources/[id]/test` connect once (5 s), read the server version,
+  the role, and whether it could write (superuser, `pg_write_all_data`,
+  write privileges on a table, `CREATE` on the database) inside `READ ONLY`,
+  and warn when it could. Six tests per person per minute.
+- **Deleting** a source is refused (409 `source_in_use`) while checks use
+  it. A change request that names a source deleted while it waited fails
+  to apply.
 
 `runDueChecks` claims each due slot atomically (already in place) and runs
 the claimed checks with bounded concurrency. `runBatch` records a batch
@@ -282,7 +355,8 @@ the lists carried over from the first version still page by number.
 ## Extension points
 
 - **DataSource:** `runReadOnly(statements, { timeoutMs, maxRows })`. PostgreSQL
-  today; MySQL, BigQuery or Snowflake later as adapters.
+  today; MySQL, BigQuery or Snowflake later as adapters: a value of
+  `engine`, an adapter, and a branch in the registry's pool factory.
 - **Channel:** `request(message, secret)` and `interpretOk(body)` in
   `src/server/notify/channels/`. A new service is one file and an entry in
   `CHANNELS`; the outbox, retries and settings page need no change.

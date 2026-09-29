@@ -58,6 +58,17 @@ const TEXT: Record<string, Record<Language, string>> = {
   not_configured: { en: "This is not set up on the server.", zh: "服务器尚未配置此功能。" },
   nothing_to_acknowledge: { en: "This check has no open problem.", zh: "这个检查没有待处理的问题。" },
   stale: { en: "The check changed; reload and try again.", zh: "检查已变化，请刷新后重试。" },
+
+  unknown_data_source: { en: "That data source no longer exists. Pick another one.", zh: "这个数据源已不存在，请选择其他数据源。" },
+  invalid_connection_string: { en: "Use the URL form: postgres://user:password@host:5432/database", zh: "请使用 URL 格式：postgres://user:password@host:5432/database" },
+  unsupported_parameter: { en: "The connection string has a parameter Assay does not accept.", zh: "连接串中含有不支持的参数。" },
+  host_not_public: { en: "The host is on a private network. Self-hosted deployments can allow it with ALLOW_PRIVATE_DATA_SOURCES=true.", zh: "该主机位于内网。自托管部署可设置 ALLOW_PRIVATE_DATA_SOURCES=true 允许。" },
+  host_not_found: { en: "The host could not be found. Check the connection string.", zh: "找不到该主机，请检查连接串。" },
+  tls_required: { en: "Use TLS for a public host: sslmode=require or verify-full.", zh: "公网主机必须使用 TLS：sslmode=require 或 verify-full。" },
+  source_id_taken: { en: "A data source with this ID already exists.", zh: "这个数据源 ID 已被使用。" },
+  source_id_reserved: { en: "This ID is reserved; pick another.", zh: "这个 ID 已被保留，请换一个。" },
+  source_in_use: { en: "Checks still use this data source. Move them to another source first.", zh: "仍有检查在使用这个数据源，请先把它们改到其他数据源。" },
+  built_in_source: { en: "The built-in source comes from DATABASE_URL; change it in the environment.", zh: "内置数据源来自 DATABASE_URL，请在环境变量中修改。" },
 };
 
 /** The localized text for an error code, or undefined when the code has none. */

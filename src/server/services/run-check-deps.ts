@@ -2,7 +2,7 @@ import type { RunOutcome } from "@/domain/run";
 import { ObjectId } from "mongodb";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { createSemaphore } from "@/server/concurrency/semaphore";
-import { postgresDataSource } from "@/server/datasource/postgres";
+import { resolveSource } from "@/server/datasource/sources";
 import { mongoRunCheckStore } from "@/server/repos/run-check-store";
 import { runCheck, type RunCheckDeps, type RunTrigger } from "./run-check";
 
@@ -41,7 +41,7 @@ async function defaultRunCheckDeps(): Promise<RunCheckDeps> {
   const db = await getMongoDbClient().getDb();
   return {
     store: mongoRunCheckStore(db),
-    source: postgresDataSource,
+    sources: async (sourceId) => (await resolveSource(sourceId)).source,
     executions,
     newRunId: () => new ObjectId().toHexString(),
     now: () => new Date(),

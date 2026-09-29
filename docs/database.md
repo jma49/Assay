@@ -2,8 +2,9 @@
 
 Assay keeps everything it owns in one MongoDB database: the one named in the
 path of `MONGODB_URI`, else `MONGODB_DB_NAME`, else `sql_script_monitoring`
-(`src/lib/database/mongo-connection.ts`). The PostgreSQL database in
-`DATABASE_URL` is the one being checked; Assay only reads it, through a
+(`src/lib/database/mongo-connection.ts`). The PostgreSQL databases being
+checked are its data sources: `DATABASE_URL` (the built-in `default`) and
+those in [`data_sources`](#data_sources); Assay only reads them, through a
 read-only transaction.
 
 Indexes live in `src/lib/database/indexes.ts` and are created on start-up
@@ -32,6 +33,7 @@ Indexes live in `src/lib/database/indexes.ts` and are created on start-up
 | `scriptId` | The check's id, unique, used in URLs |
 | `name`, `cnName`, `description`, `cnDescription`, `scope`, `cnScope`, `hashtags` | What people see |
 | `sqlContent` | The read-only query |
+| `dataSourceId` | The [data source](#data_sources) it runs against. New checks store it; checks created before data sources have none, which means `default` (`DATABASE_URL`) |
 | `isScheduled`, `cronSchedule` | Schedule (cron, UTC) |
 | `author` | Display label only; never trusted |
 | `createdBy`, `updatedBy` | From the session |
@@ -90,6 +92,27 @@ source (web | slack | telegram | mcp), at }`. Index `(checkId, at)`; TTL on
 
 Kept without expiry, as the audit trail: `edit_history`, `approval_requests`,
 `script_versions`.
+
+## Data sources
+
+### `data_sources`
+
+The PostgreSQL databases added in Settings → Data sources, besides the
+built-in `default` from `DATABASE_URL` (which has no document). See
+[architecture.md](architecture.md#data-sources) for the security rules.
+
+| Field | |
+| --- | --- |
+| `sourceId` | The id checks name in `dataSourceId`; `default` and `test` are reserved |
+| `name`, `engine` | What people see; `engine` is `postgres` |
+| `connection` | The connection string, sealed with `ASSAY_SECRET_KEY` (AES-256-GCM). Never returned by an API or logged |
+| `display` | `user@host:port/database`, shown instead of the connection string |
+| `version` | Incremented by every edit; edits apply only onto the version they started from (409 otherwise). Pools and schema caches are keyed by it |
+| `lastTest` | `{ ok, at, error, serverVersion, currentUser, readOnly, writeAccess }` from the last connection test, or null; cleared when the connection changes |
+| `createdBy`, `createdAt`, `updatedBy`, `updatedAt`, `workspaceId` | |
+
+Indexes: `(workspaceId, sourceId)` unique. A source is deleted only while no
+check uses it.
 
 ## Alerts
 

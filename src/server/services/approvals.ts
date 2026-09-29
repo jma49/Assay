@@ -17,6 +17,9 @@ import {
 } from "@/server/repos/approval-store";
 import { toApprovalDto } from "./approval-dto";
 import { createCheck, deleteCheck, updateCheck, type CheckActor } from "./check-writes";
+import { findSourceDoc } from "@/server/repos/data-source-store";
+import { DEFAULT_SOURCE_ID } from "@/domain/data-source";
+import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
 
 /**
  * Review of check changes: who needs it, filing a request, and approving or
@@ -145,6 +148,12 @@ export async function rejectRequest(db: Db, requestId: string, reviewer: CheckAc
   if (!(await decideApprovalRequest(db, requestId, ApprovalStatus.REJECTED, reviewer, comment))) throw decidedElsewhere();
 }
 
+/** A source deleted while the request waited would leave the check pointing at nothing. */
+async function assertSourceStillExists(db: Db, sourceId: unknown): Promise<void> {
+  if (typeof sourceId !== "string" || !sourceId || sourceId === DEFAULT_SOURCE_ID) return;
+  if (!(await findSourceDoc(db, DEFAULT_WORKSPACE_ID, sourceId))) throw new Error(`The data source ${sourceId} no longer exists`);
+}
+
 /**
  * Applies an approved change to the check it is about, through the same
  * writes a direct edit uses. An update only lands on the version the request
@@ -153,6 +162,7 @@ export async function rejectRequest(db: Db, requestId: string, reviewer: CheckAc
 async function applyChange(db: Db, request: ApprovalRequest): Promise<void> {
   const actor = { id: request.requesterId, email: request.requesterEmail };
   const data = request.originalData ?? {};
+  await assertSourceStillExists(db, request.operationType === "delete" ? undefined : data.dataSourceId);
 
   switch (request.operationType) {
     case "create": {
