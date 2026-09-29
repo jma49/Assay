@@ -72,7 +72,7 @@ export function CreateKeyDialog({
               <Input id="key-name" required maxLength={60} autoFocus placeholder={t.namePlaceholder} value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="grid gap-1.5">
-              <span className="text-[13px] font-medium">{t.expires}</span>
+              <span className="text-body-sm font-medium">{t.expires}</span>
               <div className="inline-flex w-fit rounded-md bg-muted p-0.5" role="radiogroup" aria-label={t.expires}>
                 {EXPIRY_DAYS.map((n) => (
                   <button
@@ -81,7 +81,7 @@ export function CreateKeyDialog({
                     role="radio"
                     aria-checked={days === n}
                     onClick={() => setDays(n)}
-                    className={`h-7 rounded-[5px] px-3 text-[12.5px] font-medium transition-[background-color,color] duration-150 ${days === n ? "bg-card text-foreground shadow-border" : "text-muted-foreground hover:text-foreground"}`}
+                    className={`h-7 rounded-[5px] px-3 text-caption font-medium transition-[background-color,color] duration-150 ${days === n ? "bg-card text-foreground shadow-border" : "text-muted-foreground hover:text-foreground"}`}
                   >
                     {t.days(n)}
                   </button>
