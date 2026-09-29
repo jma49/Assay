@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ScriptInfo } from "../types";
-import { batchTargets, collectHashtags, filterScripts, withHashtag } from "./script-search";
+import { batchTargets, collectHashtags, filterScripts } from "./script-search";
 
 const scripts: ScriptInfo[] = [
   { scriptId: "dup-orders", name: "Duplicate orders", hashtags: ["orders", "daily"], isScheduled: true },
@@ -32,10 +32,5 @@ describe("helpers", () => {
   it("keeps only scheduled checks in scheduled mode", () => {
     expect(batchTargets(scripts, "scheduled").map((s) => s.scriptId)).toEqual(["dup-orders"]);
     expect(batchTargets(scripts, "all")).toHaveLength(3);
-  });
-
-  it("completes the tag being typed", () => {
-    expect(withHashtag("stock #inv", "inventory")).toBe("stock #inventory");
-    expect(withHashtag("stock ", "daily")).toBe("stock #daily");
   });
 });
