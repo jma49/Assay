@@ -2,8 +2,7 @@ import type { Db } from "mongodb";
 import { createSemaphore } from "@/server/concurrency/semaphore";
 import type { RunCheckResult, RunTrigger } from "./run-check";
 import { COLLECTIONS } from "@/lib/database/collections";
-
-export type BatchItemStatus = "pending" | "running" | "completed" | "attention_needed" | "failed";
+import type { BatchItemStatus } from "@/contracts/batches";
 
 export interface BatchItem {
   scriptId: string;
@@ -36,12 +35,12 @@ export interface BatchStore {
 }
 
 export function itemStatus(result: RunCheckResult): Pick<BatchItem, "status" | "message" | "findings" | "mongoResultId"> {
-  if (result.kind === "missing") return { status: "failed", message: "No check with this id" };
+  if (result.kind === "missing") return { status: "error", message: "No check with this id" };
   if (result.kind === "busy") {
-    return { status: "failed", message: "Already running; its result will appear in the run history." };
+    return { status: "error", message: "Already running; its result will appear in the run history." };
   }
   return {
-    status: result.outcome === "error" ? "failed" : result.outcome === "issues" ? "attention_needed" : "completed",
+    status: result.outcome,
     message: result.message,
     findings: result.findings,
     mongoResultId: result.runId,
@@ -74,7 +73,7 @@ export async function runBatch(
           try {
             fields = itemStatus(await deps.run(item.scriptId, { kind: "batch" }));
           } catch (error) {
-            fields = { status: "failed", message: error instanceof Error ? error.message : String(error) };
+            fields = { status: "error", message: error instanceof Error ? error.message : String(error) };
           }
           await deps.store.updateItem(executionId, item.scriptId, { ...fields, endTime: deps.now() });
         }),
@@ -83,6 +82,14 @@ export async function runBatch(
   } finally {
     await deps.store.finish(executionId, deps.now());
   }
+}
+
+// Batches written before the run-outcome vocabulary stored these statuses.
+const LEGACY_STATUS: Record<string, BatchItemStatus> = { completed: "clean", attention_needed: "issues", failed: "error" };
+
+/** An item's status in today's vocabulary, whichever one it was stored in. */
+export function currentItemStatus(status: string): BatchItemStatus {
+  return LEGACY_STATUS[status] ?? (status as BatchItemStatus);
 }
 
 // A batch that never finished (its function was stopped) stops showing as active after this.
@@ -97,6 +104,7 @@ export function mongoBatchStore(db: Db): BatchStore {
     async get(executionId) {
       const batch = await batches.findOne({ executionId }, { projection: { _id: 0 } });
       if (!batch) return null;
+      batch.scripts = batch.scripts.map((item) => ({ ...item, status: currentItemStatus(item.status) }));
       const stale = batch.isActive && Date.now() - new Date(batch.startedAt).getTime() > BATCH_STALE_MS;
       return stale ? { ...batch, isActive: false } : batch;
     },
