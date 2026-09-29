@@ -50,6 +50,8 @@ export interface SqlScript {
   hashtags?: string[];
   isScheduled?: boolean;
   cronSchedule?: string;
+  /** The data source it runs against; `default` (DATABASE_URL) when missing. */
+  dataSourceId?: string;
   createdAt?: Date | string; // Allow string for API response, Date for client state
   updatedAt?: Date | string; // Allow string for API response, Date for client state
   /** Incremented by every edit; a save sends it back so concurrent edits are caught. */

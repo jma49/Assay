@@ -10,6 +10,7 @@ const TITLES: [string, Label][] = [
   ["/activity", { en: "Activity", zh: "动态" }],
   ["/settings/notifications", { en: "Notifications", zh: "通知" }],
   ["/settings/api-keys", { en: "API keys", zh: "API 密钥" }],
+  ["/settings/data-sources", { en: "Data sources", zh: "数据源" }],
   ["/runs/", { en: "Run", zh: "执行结果" }],
   ["/runs", { en: "Runs", zh: "执行记录" }],
   ["/coverage", { en: "Coverage", zh: "覆盖情况" }],

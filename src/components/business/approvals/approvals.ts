@@ -74,6 +74,7 @@ const COPY = {
     commentPlaceholder: "Add a note for the author",
     rejectLabel: "Reason",
     rejectPlaceholder: "Tell the author what to change",
+    dataSource: "Data source the check runs against",
   },
   zh: {
     operation: { create: "新建检查", update: "修改", delete: "删除" } satisfies Record<OperationType, string>,
@@ -90,6 +91,7 @@ const COPY = {
     commentPlaceholder: "给作者留言",
     rejectLabel: "理由",
     rejectPlaceholder: "告诉作者需要改什么",
+    dataSource: "检查读取的数据源",
   },
 };
 
