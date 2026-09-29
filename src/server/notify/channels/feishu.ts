@@ -12,7 +12,7 @@ export function feishuSign(timestamp: string, secret: string): string {
 /** Feishu (and Lark) group bots: an interactive card with a button to the check. */
 export const feishu: Channel = {
   kind: "feishu",
-  validateUrl: (url) => expectHost(url, ["open.feishu.cn", "open.larksuite.com"], "/open-apis/bot/v2/hook/", "Feishu"),
+  validateUrl: (url) => expectHost(url, ["open.feishu.cn", "open.larksuite.com"], "/open-apis/bot/v2/hook/"),
   request(message, secret, { now }) {
     const card = {
       header: { title: { tag: "plain_text", content: message.title }, template: TEMPLATE[message.tone] },

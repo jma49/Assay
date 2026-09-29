@@ -8,7 +8,7 @@ const mrkdwn = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;
 
 export const slack: Channel = {
   kind: "slack",
-  validateUrl: (url) => expectHost(url, ["hooks.slack.com"], "/services/", "Slack"),
+  validateUrl: (url) => expectHost(url, ["hooks.slack.com"], "/services/"),
   request(message, secret) {
     const blocks = [
       { type: "section", text: { type: "mrkdwn", text: `${EMOJI[message.tone]} *${mrkdwn(message.title)}*` } },

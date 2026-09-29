@@ -29,8 +29,8 @@ export const wecomText = (text: string) =>
 export const wecom: Channel = {
   kind: "wecom",
   validateUrl: (url) =>
-    expectHost(url, ["qyapi.weixin.qq.com"], "/cgi-bin/webhook/send", "WeCom") ??
-    (url.searchParams.get("key") ? null : "The WeCom webhook URL needs its key"),
+    expectHost(url, ["qyapi.weixin.qq.com"], "/cgi-bin/webhook/send") ??
+    (url.searchParams.get("key") ? null : "url_missing_key"),
   request(message, secret) {
     const content = clip(
       [

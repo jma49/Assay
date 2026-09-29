@@ -13,7 +13,7 @@ export const discordMarkdown = (text: string) => text.replace(/[\\*_~`|<>[\]()#\
 export const discord: Channel = {
   kind: "discord",
   validateUrl: (url) =>
-    expectHost(url, ["discord.com", "discordapp.com", "canary.discord.com", "ptb.discord.com"], "/api/webhooks/", "Discord"),
+    expectHost(url, ["discord.com", "discordapp.com", "canary.discord.com", "ptb.discord.com"], "/api/webhooks/"),
   request(message, secret) {
     const body = {
       username: "Assay",

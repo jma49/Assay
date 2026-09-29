@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { apiErrorText } from "@/client/api-errors";
 import { apiErrorCode, sendJson } from "@/client/send-json";
 import type { DestinationDto, TelegramLinkDto, TelegramLinkStatus } from "@/contracts/notifications";
 import type { DigestSettings } from "@/domain/digest";
@@ -36,6 +37,7 @@ const COPY = {
     saving: "Saving…",
     needOneAlert: "Pick at least one kind of alert, or turn on the daily summary",
     hostNotFound: (host: string) => `Couldn't resolve host ${host}. Check the URL.`,
+    wrongService: (service: string) => `This is not a ${service} webhook URL.`,
     digest: "Daily summary",
     digestHint: "What is broken or has issues, and what changed in the last 24 hours.",
     digestAt: "at",
@@ -75,6 +77,7 @@ const COPY = {
     saving: "保存中…",
     needOneAlert: "至少选择一种告警，或开启每日汇总",
     hostNotFound: (host: string) => `无法解析主机 ${host}，请检查地址。`,
+    wrongService: (service: string) => `这不是${service}的 Webhook 地址。`,
     digest: "每日汇总",
     digestHint: "出错和有问题的检查，以及过去 24 小时的变化。",
     digestAt: "时间",
@@ -311,11 +314,11 @@ export function PasteDestinationDialog({
       if (result.signingSecret) setCreatedSecret(result.signingSecret);
       else onClose();
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : String(cause);
       const code = apiErrorCode(cause);
       if (code === "host_not_found") setUrlError(t.hostNotFound(hostOf(url)));
-      else if (code === "invalid_url") setUrlError(message);
-      else setError(message);
+      else if (code === "url_wrong_service") setUrlError(t.wrongService(CHANNEL_META[kind].name[language]));
+      else if (code?.startsWith("url_")) setUrlError(apiErrorText(cause, language));
+      else setError(apiErrorText(cause, language));
       document.getElementById("destination-url")?.focus();
     } finally {
       setSaving(false);
@@ -442,7 +445,7 @@ export function EditDestinationDialog({
       onSaved();
       onClose();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause));
+      setError(apiErrorText(cause, language));
     } finally {
       setSaving(false);
     }
@@ -499,7 +502,7 @@ export function TelegramDialog({ open, onClose, onLinked }: { open: boolean; onC
     setError(null);
     sendJson<TelegramLinkDto>("/api/integrations/telegram/links", "POST", { language })
       .then((created) => !cancelled && setLink(created))
-      .catch((cause) => !cancelled && setError(cause instanceof Error ? cause.message : String(cause)));
+      .catch((cause) => !cancelled && setError(apiErrorText(cause, language)));
     return () => {
       cancelled = true;
     };
