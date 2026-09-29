@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils/utils";
-import { cleanRunMessage } from "@/lib/utils/run-message";
 import { OUTCOME_DOT, OUTCOME_TEXT } from "@/components/checks/status";
 import type { RunOutcome } from "@/domain/run";
 
@@ -8,12 +7,13 @@ export function RunHeadline({
   outcome,
   headline,
   subtitle,
-  message,
+  errorText,
 }: {
   outcome: RunOutcome;
   headline: string;
   subtitle: string;
-  message: string;
+  /** The query's error, shown under the headline of a broken run. */
+  errorText: string | null;
 }) {
   return (
     <header className="rounded-xl bg-card shadow-border flex items-start gap-3  px-5 py-4">
@@ -23,8 +23,8 @@ export function RunHeadline({
         <p className="mt-1 text-[13px] text-muted-foreground">
           {subtitle}
         </p>
-        {outcome === "error" && message && (
-          <p className="mt-2 font-mono text-[13px] break-words">{cleanRunMessage(message)}</p>
+        {errorText && (
+          <p className="mt-2 font-mono text-[13px] break-words">{errorText}</p>
         )}
       </div>
     </header>

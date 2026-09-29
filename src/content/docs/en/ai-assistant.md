@@ -6,7 +6,7 @@ When the workspace sets `AI_ENABLED=true`, three helpers are available; otherwis
 |---|---|---|
 | **Generate SQL** | Editor toolbar, **AI** | Developers and above |
 | **Explain / optimise SQL** | Editor toolbar, **AI** | Developers and above |
-| **Triage** | Full report of a failed or flagged run | Everyone |
+| **Triage** | Full report of a broken run or one with issues | Everyone |
 
 The AI sees your question, the SQL and the table structure of the database, never the data rows.
 

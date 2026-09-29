@@ -53,7 +53,7 @@ export function TemplatePicker({ initialTable, onApply }: { initialTable?: strin
   const tables = data?.tables ?? [];
 
   return (
-    <section className="rounded-lg border bg-card">
+    <section className="rounded-xl bg-card shadow-border">
       <button
         type="button"
         aria-expanded={open}
@@ -65,7 +65,7 @@ export function TemplatePicker({ initialTable, onApply }: { initialTable?: strin
         </span>
         <span className="grid min-w-0 flex-1 gap-0.5">
           <span className="text-[14px] font-semibold">{t.title}</span>
-          <span className="text-[12.5px] text-muted-foreground">{t.hint}</span>
+          <span className="text-[12px] text-muted-foreground">{t.hint}</span>
         </span>
         <ChevronDown className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
@@ -79,7 +79,15 @@ export function TemplatePicker({ initialTable, onApply }: { initialTable?: strin
           ) : tables.length === 0 ? (
             <p className="text-[13px] text-muted-foreground">{t.empty}</p>
           ) : (
-            <PickerBody tables={tables} initialTable={initialTable} onApply={onApply} />
+            <PickerBody
+              tables={tables}
+              initialTable={initialTable}
+              onApply={(check, table) => {
+                onApply(check, table);
+                // Done with templates: fold the picker so the filled-in editor comes up.
+                setOpen(false);
+              }}
+            />
           )}
         </div>
       )}
@@ -132,7 +140,7 @@ function PickerBody({ tables, initialTable, onApply }: { tables: SchemaTable[]; 
       <TemplateFields builder={builder} tables={tables} t={FIELDS_COPY[language]} />
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
-        <p className={cn("min-w-0 flex-1 text-[12.5px]", problem ? "text-failure" : "text-muted-foreground")}>
+        <p className={cn("min-w-0 flex-1 text-[12px]", problem ? "text-failure" : "text-muted-foreground")}>
           {problem ?? (check ? (
             <>
               {t.preview} <span className="font-medium text-foreground">{language === "zh" ? check.cnName : check.name}</span>

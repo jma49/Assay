@@ -8,9 +8,9 @@ No. Checks are validated, run in a read-only transaction and have a time limit. 
 
 PostgreSQL. Any database that speaks the PostgreSQL protocol, such as Neon or Supabase, works too.
 
-## What counts as a failed check?
+## What counts as a broken check?
 
-One that could not run: a syntax error, a missing table, a timeout. A check that runs and returns rows **needs attention**; that is a finding, not a failure.
+One that could not run: a syntax error, a missing table, a timeout. A check that runs and returns rows has **Issues**; that is a finding, not a breakage.
 
 ## Why can't I run or edit checks?
 

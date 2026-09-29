@@ -117,7 +117,7 @@ export function HistoryTable({ checks, displayNames, sortConfig, requestSort, is
               </TableHead>
               <SortableHead
                 label={t("tableScriptName")}
-                sortKey="checkId"
+                sortKey="name"
                 sortConfig={sortConfig}
                 onSort={requestSort}
                 className="w-64"

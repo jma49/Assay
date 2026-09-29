@@ -12,18 +12,18 @@ Open [the demo](https://assay.majincheng.com) and choose **Try the live demo**. 
 
 The sidebar on the left takes you to each section: **Checks**, **Runs**, **Coverage** and **Analysis**, plus **Approvals** and **Members** if your role allows. **Runs** shows:
 
-- **Totals** — how many runs passed, need attention or failed.
-- **Check History** — every run, newest first, with a filter per status.
+- **Totals** — how many runs were **Broken**, found **Issues** or came back **Clean**.
+- **Run history** — every run, newest first, with a filter per status.
 
 ## Step 3 — Run a check
 
 1. Open **Runs** and choose **Run a check…** in the top bar.
-2. Pick a check such as *Duplicate orders* and choose **Run Check**.
-3. When it finishes, the new run appears at the top of **Check History**.
+2. Pick a check such as *Duplicate orders* and choose **Run**.
+3. When it finishes, the new run appears at the top of the run history.
 
 ## Step 4 — Read the result
 
-Open **View report** on the run. A check that returned no rows **passed**. A check that returned rows **needs attention**, and the rows are listed so you can see exactly what is wrong. A check that could not run **failed**, with the error.
+Open **View report** on the run. A check that returned no rows is **Clean**. A check that returned rows has **Issues**, and the rows are listed so you can see exactly what is wrong. A check whose query could not run is **Broken**, with the error.
 
 ## See also
 

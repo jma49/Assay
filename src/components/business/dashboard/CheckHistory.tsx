@@ -64,7 +64,7 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
     <Card className="relative gap-0 overflow-hidden py-0">
       <CardHeader className="relative border-b px-6 py-4">
         <CardDescription className="text-[13px]">
-          {t("historyDesc").replace("%s", String(totalUnfilteredCount))} · {t("viewAndManageAllRecords")}
+          {t("historyDesc").replace("%s", String(totalUnfilteredCount))}
         </CardDescription>
         <HistoryFilters
           t={t}

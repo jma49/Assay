@@ -2,7 +2,9 @@
 
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/components/common/LanguageProvider";
+import { APP_CONTAINER } from "@/components/layout/app-container";
 import { formatDateTime } from "@/lib/utils/datetime";
+import { runErrorText } from "@/lib/utils/run-message";
 import { useMe } from "@/lib/auth/use-me";
 import { runReportMessages } from "@/components/business/run-report/messages";
 import {
@@ -37,12 +39,13 @@ export default function RunReportPage() {
   const actions = useRunActions(result, language);
 
   if (loading) return <RunReportSkeleton />;
-  if (error) return <RunLoadError error={error} t={t} onRetry={retry} onBack={actions.goBack} />;
-  if (!result) return <RunNotFound resultId={runId} t={t} onBack={actions.goBack} />;
+  if (error) return <RunLoadError error={error} t={t} onRetry={retry} />;
+  if (!result) return <RunNotFound t={t} />;
 
   const rows = tableRows(result.sample);
   const { outcome } = result;
-  const count = rowCount(result.sample);
+  // The stored count is exact; the sample holds at most 500 rows. Older runs only have the sample.
+  const count = result.rowCount ?? rowCount(result.sample);
   const scriptName = localized(language, result.name, result.cnName);
   const executedAt = formatDateTime(result.finishedAt, language);
   const title = scriptName ?? result.checkId;
@@ -53,7 +56,7 @@ export default function RunReportPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className={`${APP_CONTAINER} py-6`}>
       <h1 className="sr-only">{t.executionDetails}</h1>
       <RunReportToolbar
         language={language}
@@ -73,27 +76,25 @@ export default function RunReportPage() {
         onBack={actions.goBack}
       />
 
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        <div className="grid gap-6 lg:grid-cols-12 animate-fadeIn">
-          <section className="min-w-0 space-y-5 lg:col-span-8">
-            <RunHeadline
-              outcome={outcome}
-              headline={runHeadline(outcome, count, language)}
-              subtitle={`${title} · ${executedAt}`}
-              message={result.message}
-            />
-            <FindingsPanel findings={result.sample} language={language} t={t} />
-          </section>
-
-          <RunInfoPanel
-            result={result}
+      <div className="grid gap-6 lg:grid-cols-12">
+        <section className="min-w-0 space-y-5 lg:col-span-8">
+          <RunHeadline
             outcome={outcome}
-            scriptName={scriptName}
-            executedAt={executedAt}
-            language={language}
-            t={t}
+            headline={runHeadline(outcome, count, language)}
+            subtitle={`${title} · ${executedAt}`}
+            errorText={runErrorText(result)}
           />
-        </div>
+          <FindingsPanel findings={result.sample} language={language} t={t} />
+        </section>
+
+        <RunInfoPanel
+          result={result}
+          outcome={outcome}
+          scriptName={scriptName}
+          executedAt={executedAt}
+          language={language}
+          t={t}
+        />
       </div>
 
       <RunTriageDialog

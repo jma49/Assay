@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface ApiState<T> {
   data: T | null;
@@ -8,8 +8,11 @@ export interface ApiState<T> {
   dataUrl: string | null;
   error: string | null;
   loading: boolean;
-  /** Fetches again, keeping the current data on screen until the new one arrives. */
-  reload: () => void;
+  /**
+   * Fetches again, keeping the current data on screen until the new one arrives.
+   * Resolves once that fetch has settled, so a caller can wait for fresh data.
+   */
+  reload: () => Promise<void>;
 }
 
 /** GETs JSON from an API route; errors carry the route's message when it sent one. */
@@ -19,29 +22,47 @@ export function useApi<T>(url: string | null): ApiState<T> {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(Boolean(url));
   const [version, setVersion] = useState(0);
+  const waiting = useRef<(() => void)[]>([]);
+  const hasUrl = useRef(Boolean(url));
+  hasUrl.current = Boolean(url);
 
   useEffect(() => {
     if (!url) return;
     const controller = new AbortController();
+    const current = () => !controller.signal.aborted;
     setLoading(true);
     fetch(url, { signal: controller.signal })
       .then(async (response) => {
         const body = await response.json().catch(() => null);
+        // An abort can land while the body is read; a superseded response must not overwrite newer data.
+        if (!current()) return;
         if (!response.ok) throw new Error(body?.error?.message ?? body?.message ?? response.statusText);
         setData(body as T);
         setDataUrl(url);
         setError(null);
       })
       .catch((cause) => {
-        if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : String(cause));
+        if (current()) setError(cause instanceof Error ? cause.message : String(cause));
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!current()) return;
+        setLoading(false);
+        const settled = waiting.current;
+        waiting.current = [];
+        settled.forEach((resolve) => resolve());
       });
-    // A reason marks this as a deliberate cancel (unmount or a newer request), not a failure.
-    return () => controller.abort(new DOMException("Superseded", "AbortError"));
+    // Cancelled on unmount or when a newer request replaces this one; the handlers above ignore it.
+    return () => controller.abort();
   }, [url, version]);
 
-  const reload = useCallback(() => setVersion((v) => v + 1), []);
+  const reload = useCallback(
+    () =>
+      new Promise<void>((resolve) => {
+        if (!hasUrl.current) return resolve();
+        waiting.current.push(resolve);
+        setVersion((v) => v + 1);
+      }),
+    [],
+  );
   return { data, dataUrl, error, loading, reload };
 }

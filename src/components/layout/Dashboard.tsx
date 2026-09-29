@@ -50,7 +50,7 @@ const Dashboard = () => {
 
   const runs = useRunsPage(language);
   const { history, overallStats, availableScripts, loading, isFetchingScripts } = runs;
-  const trigger = useTriggerCheck(availableScripts, runs.refresh);
+  const trigger = useTriggerCheck(availableScripts, runs.refresh, language === "zh" ? "zh" : "en");
   useFadeInStyle();
 
   const { startIndex, endIndex } = pageRange(history.currentPage, history.pagination.total, CHECK_HISTORY_ITEMS_PER_PAGE);
