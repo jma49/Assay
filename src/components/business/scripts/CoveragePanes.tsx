@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,16 +13,17 @@ export type CoverageState = CoverageReport | "loading" | "error" | null;
 
 /** Loads the coverage report the first time `enabled` is true; it reads the database schema. */
 export function useCoverage(enabled: boolean): CoverageState {
-  const [state, setState] = useState<CoverageState>(null);
+  const [result, setResult] = useState<CoverageReport | "error" | null>(null);
+  const requested = useRef(false);
   useEffect(() => {
-    if (!enabled || state !== null) return;
-    setState("loading");
+    if (!enabled || requested.current) return;
+    requested.current = true;
     fetch("/api/coverage")
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-      .then((report: CoverageReport) => setState(report))
-      .catch(() => setState("error"));
-  }, [enabled, state]);
-  return state;
+      .then((report: CoverageReport) => setResult(report))
+      .catch(() => setResult("error"));
+  }, [enabled]);
+  return result ?? (enabled ? "loading" : null);
 }
 
 /** A row of the list: a database table, or a table checks read that no longer exists. */
@@ -101,9 +102,11 @@ export function CoveragePanes({
     return coverageRows(coverage, scripts).filter((row) => !q || row.table.toLowerCase().includes(q));
   }, [coverage, scripts, searchTerm]);
 
-  useEffect(() => {
-    if (!rows.some((row) => row.table === selectedTable)) setSelectedTable(rows[0]?.table ?? null);
-  }, [rows, selectedTable]);
+  // Keep a table selected: the first one whenever the selection leaves the list (adjusted while rendering).
+  if (!rows.some((row) => row.table === selectedTable)) {
+    const first = rows[0]?.table ?? null;
+    if (first !== selectedTable) setSelectedTable(first);
+  }
 
   const selected = rows.find((row) => row.table === selectedTable) ?? null;
   const notice =
