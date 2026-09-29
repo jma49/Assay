@@ -20,7 +20,7 @@
 
 ## 数据存在哪里
 
-- **PostgreSQL**：检查要读取的数据库。
+- **PostgreSQL**：检查要读取的数据库，即 `DATABASE_URL` 以及管理员添加的其他 [数据源](/docs/data-sources)。
 - **MongoDB**：检查本身、执行历史、版本、审批记录和用户角色。
 - **Redis（Upstash）**：缓存，让页面更快。
 

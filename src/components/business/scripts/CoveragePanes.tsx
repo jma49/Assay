@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,22 +8,19 @@ import type { SqlScript } from "@/components/business/dashboard/types";
 import type { CoverageReport } from "@/lib/coverage/coverage";
 import { cn } from "@/lib/utils/utils";
 import { listKeyHandler } from "./list-keys";
+import { useApi } from "@/client/use-api";
+import { DEFAULT_SOURCE_ID } from "@/domain/data-source";
 
 export type CoverageState = CoverageReport | "loading" | "error" | null;
 
-/** Loads the coverage report the first time `enabled` is true; it reads the database schema. */
-export function useCoverage(enabled: boolean): CoverageState {
-  const [result, setResult] = useState<CoverageReport | "error" | null>(null);
-  const requested = useRef(false);
-  useEffect(() => {
-    if (!enabled || requested.current) return;
-    requested.current = true;
-    fetch("/api/coverage")
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-      .then((report: CoverageReport) => setResult(report))
-      .catch(() => setResult("error"));
-  }, [enabled]);
-  return result ?? (enabled ? "loading" : null);
+/** Loads the coverage report of a data source while `enabled`; it reads that database's schema. */
+export function useCoverage(enabled: boolean, sourceId: string = DEFAULT_SOURCE_ID): CoverageState {
+  const url = `/api/coverage?source=${encodeURIComponent(sourceId)}`;
+  const { data, dataUrl, error } = useApi<CoverageReport>(enabled ? url : null);
+  if (!enabled) return null;
+  if (error) return "error";
+  // A report for another source is not shown while this one loads.
+  return data && dataUrl === url ? data : "loading";
 }
 
 /** A row of the list: a database table, or a table checks read that no longer exists. */
@@ -84,6 +81,7 @@ export function CoveragePanes({
   searchTerm,
   language,
   checkHref,
+  sourceId = DEFAULT_SOURCE_ID,
 }: {
   coverage: CoverageState;
   scripts: SqlScript[];
@@ -91,6 +89,8 @@ export function CoveragePanes({
   language: string;
   /** Where a check listed under a table links to. */
   checkHref: (scriptId: string) => string;
+  /** The data source the report is for; a new check for a table starts on it. */
+  sourceId?: string;
 }) {
   const zh = language === "zh";
   const t = zh ? COPY.zh : COPY.en;
@@ -182,7 +182,9 @@ export function CoveragePanes({
 
             {!selected.missing && (
               <Button asChild size="sm" variant={selected.checks.length > 0 ? "outline" : "default"}>
-                <Link href={`/checks/new?table=${encodeURIComponent(selected.table)}`}>
+                <Link
+                  href={`/checks/new?table=${encodeURIComponent(selected.table)}${sourceId === DEFAULT_SOURCE_ID ? "" : `&source=${encodeURIComponent(sourceId)}`}`}
+                >
                   <Plus />
                   {t.newCheck}
                 </Link>

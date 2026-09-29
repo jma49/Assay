@@ -18,11 +18,12 @@ A **check** is a read-only SQL query whose returned rows are problems: duplicate
 - **Clean** — no rows. **Issues** — rows that need attention, each marked new, still open or fixed since the last run. **Broken** — the query itself fails.
 - **Alerts** go to Slack, Discord, Telegram, Feishu, WeCom or a signed webhook when a check breaks, finds rows, gets new rows or recovers; with acknowledge, mute, owners, a daily summary and reminders.
 - **Agents** (Claude Code, Cursor, …) can list, read and run checks through the MCP server, signing in with OAuth (the client opens a browser to sign in and consent) or with a personal API key.
+- **Data sources**: `DATABASE_URL` is the built-in database; admins can add more PostgreSQL databases (connection strings encrypted, private hosts refused unless allowed) and each check picks the one it runs against.
 - **Review**: changes by non-admins go through approval; every edit is recorded in the edit history.
 
 ## Stack
 
-Next.js 15 (App Router) · TypeScript · Tailwind v4 · MongoDB (checks, runs, users) · PostgreSQL (the database being checked) · Upstash Redis (cache, rate limits) · Better Auth (Google, GitHub) · Vitest.
+Next.js 15 (App Router) · TypeScript · Tailwind v4 · MongoDB (checks, runs, users) · PostgreSQL (the databases being checked) · Upstash Redis (cache, rate limits) · Better Auth (Google, GitHub) · Vitest.
 
 ## Quick start
 

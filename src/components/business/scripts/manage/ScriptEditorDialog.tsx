@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import type { DashboardTranslationKeys } from "@/components/business/dashboard/types";
 import { ScriptMetadataForm, type ScriptFormData } from "../ScriptMetadataForm";
+import { useDataSourceOptions } from "@/components/checks/data-source/useDataSourceOptions";
 import { stillNeededHint, toFormMetadata, type DialogMode, type Language, type ScriptFormState } from "./script-form";
 
 // CodeMirror and its themes are large; load them only where the editor renders.
@@ -51,6 +52,7 @@ export function ScriptEditorDialog({
 }: ScriptEditorDialogProps) {
   const formMetadata = toFormMetadata(form);
   const hint = stillNeededHint(form, sql, language);
+  const dataSources = useDataSourceOptions(language, open);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -71,13 +73,14 @@ export function ScriptEditorDialog({
             onFormChange={onFieldChange}
             t={t}
             isEditMode={mode === "edit"}
+            dataSources={dataSources}
           />
           <div>
             <label className="text-body-md font-medium mb-1 block">
               {t("fieldSqlContent")}{" "}
               <span className="text-destructive">*</span>
             </label>
-            <CodeMirrorEditor value={sql} onChange={onSqlChange} minHeight="250px" t={t} />
+            <CodeMirrorEditor value={sql} onChange={onSqlChange} minHeight="250px" t={t} dataSourceId={formMetadata.dataSourceId} />
           </div>
         </div>
         <DialogFooter className="pt-4 border-t">

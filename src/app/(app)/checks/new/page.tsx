@@ -67,7 +67,7 @@ export default function NewCheckPage() {
         <p className="text-body-sm text-muted-foreground">{c.lead}</p>
       </header>
 
-      <TemplatePicker initialTable={form.tableParam} onApply={form.applyTemplate} />
+      <TemplatePicker initialTable={form.tableParam} sourceId={form.formData.dataSourceId} onApply={form.applyTemplate} />
 
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="min-w-0 lg:col-span-8">
@@ -77,7 +77,14 @@ export default function NewCheckPage() {
             aria-invalid={form.errors.sql ? true : undefined}
             aria-describedby={form.errors.sql ? "new-check-sql-error" : undefined}
           >
-            <CodeMirrorEditor value={form.sqlContent} onChange={form.changeSql} minHeight="480px" fill t={t} />
+            <CodeMirrorEditor
+              value={form.sqlContent}
+              onChange={form.changeSql}
+              minHeight="480px"
+              fill
+              t={t}
+              dataSourceId={form.formData.dataSourceId}
+            />
           </div>
           {form.errors.sql && (
             <p id="new-check-sql-error" className="mt-1.5 text-caption text-failure">
@@ -86,7 +93,13 @@ export default function NewCheckPage() {
           )}
         </div>
         <aside className="self-start rounded-xl bg-card p-5 shadow-border lg:col-span-4">
-          <ScriptMetadataForm formData={form.formData} onFormChange={form.changeField} errors={form.errors} t={t} />
+          <ScriptMetadataForm
+            formData={form.formData}
+            onFormChange={form.changeField}
+            errors={form.errors}
+            dataSources={form.dataSources}
+            t={t}
+          />
         </aside>
       </div>
     </div>
