@@ -2,7 +2,7 @@
 
 import "./landing.css";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTheme } from "next-themes";
 import { useCurrentUser } from "@/lib/auth/client";
 import { CalendarClock, Check, GitPullRequest, Moon, ShieldCheck, Sparkles, Sun } from "lucide-react";
@@ -13,6 +13,7 @@ import { PREVIEW_RUNS } from "./preview-runs";
 import { BrandMark } from "@/components/common/BrandMark";
 import { VoxelBeetle } from "@/components/brand/VoxelBeetle";
 import { HighlightedLine } from "@/components/code/HighlightedLine";
+import { useHydrated } from "@/components/common/use-hydrated";
 
 /** Shared horizontal frame: every section aligns to the same left and right edges. */
 const CONTAINER = "mx-auto w-full max-w-[1120px] px-4 sm:px-6";
@@ -32,8 +33,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 
 function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useHydrated();
 
   return (
     <button
