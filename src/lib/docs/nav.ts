@@ -25,6 +25,7 @@ export const DOCS_NAV: DocsGroup[] = [
     pages: [
       { slug: "writing-checks", title: { en: "Writing checks", zh: "编写检查" } },
       { slug: "running-checks", title: { en: "Running checks", zh: "执行检查" } },
+      { slug: "data-sources", title: { en: "Data sources", zh: "数据源" } },
       { slug: "scheduling", title: { en: "Scheduling", zh: "定时执行" } },
       { slug: "run-history", title: { en: "Run history and results", zh: "执行历史与结果" } },
       { slug: "analysis", title: { en: "Analysis", zh: "数据分析" } },

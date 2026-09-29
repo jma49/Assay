@@ -20,7 +20,7 @@ Checks can only read. Every check is validated when it is saved and again before
 
 ## Where things live
 
-- **PostgreSQL** — the database your checks read.
+- **PostgreSQL** — the databases your checks read: `DATABASE_URL` and any [data sources](/docs/data-sources) an admin added.
 - **MongoDB** — the checks themselves, their run history, versions, approvals and user roles.
 - **Redis (Upstash)** — a cache that keeps pages fast.
 
