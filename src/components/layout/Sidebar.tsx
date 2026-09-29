@@ -107,7 +107,7 @@ export function Sidebar() {
           if (items.length === 0) return null;
           return (
             <div key={section.title.en} className="flex flex-col gap-0.5 max-md:flex-row">
-              <p className="px-2 pb-1 text-[11px] font-medium tracking-wider text-muted-foreground uppercase max-md:hidden">
+              <p className="px-2 pb-1 text-label-caps uppercase text-muted-foreground max-md:hidden">
                 {section.title[language]}
               </p>
               {items.map((item) => {
@@ -119,7 +119,7 @@ export function Sidebar() {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-[13.5px] whitespace-nowrap transition-colors",
+                      "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-body-sm whitespace-nowrap transition-colors",
                       active
                         ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
                         : "text-sidebar-foreground hover:bg-muted hover:text-foreground",
@@ -137,16 +137,16 @@ export function Sidebar() {
 
       <div className="mt-auto flex flex-col gap-3 max-md:mt-0 max-md:ml-auto max-md:flex-row max-md:items-center">
         {guest && (
-          <div className="rounded-lg border bg-card p-2.5 text-[12.5px] text-muted-foreground max-md:hidden">
+          <div className="rounded-lg border bg-card p-2.5 text-caption text-muted-foreground max-md:hidden">
             <p className="font-medium text-foreground">{t.guestTitle}</p>
             <p className="mt-0.5">{t.guestBody}</p>
             <Link
               href="/sign-up?redirect_url=/checks"
-              className="mt-2 flex h-7 items-center justify-center rounded-md bg-primary text-[12.5px] font-medium text-primary-foreground transition-[filter,scale] duration-150 ease-out hover:brightness-110 active:scale-[0.96]"
+              className="mt-2 flex h-7 items-center justify-center rounded-md bg-primary text-caption font-medium text-primary-foreground transition-[filter,scale] duration-150 ease-out hover:brightness-110 active:scale-[0.96]"
             >
               {t.signUp}
             </Link>
-            <a href="/demo/exit" className="mt-1.5 block text-center text-[12px] hover:text-foreground">
+            <a href="/demo/exit" className="mt-1.5 block text-center text-caption hover:text-foreground">
               {t.leave}
             </a>
           </div>
@@ -159,7 +159,7 @@ export function Sidebar() {
           )}
           <button
             type="button"
-            className="h-7 rounded-md px-1.5 text-[12px] text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="h-7 rounded-md px-1.5 text-caption text-muted-foreground hover:bg-muted hover:text-foreground"
             onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
           >
             {language === "zh" ? "EN" : "中文"}
