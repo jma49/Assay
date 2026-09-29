@@ -1,5 +1,6 @@
 import type { DigestSettings } from "@/domain/digest";
 import type { AlertKind } from "@/domain/notify";
+import type { DestinationDto } from "@/contracts/notifications";
 
 /** The copy of the destination dialogs. */
 export const COPY = {
@@ -107,6 +108,18 @@ export function hostOf(value: string): string {
 }
 
 /** New summaries go out at 09:00 in the browser's own time zone. */
+/** The edit form's starting values for a saved destination. */
+export function subscriptionOf(destination: DestinationDto): Subscription {
+  return {
+    name: destination.name,
+    alerts: destination.alerts,
+    tags: destination.tags.join(", "),
+    language: destination.language,
+    digest: destination.digest ?? defaultDigest(),
+    remindAfter: destination.remind?.afterHours ?? 0,
+  };
+}
+
 export function defaultDigest(): DigestSettings {
   return { enabled: false, hour: 9, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" };
 }
