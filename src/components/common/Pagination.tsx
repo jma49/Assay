@@ -62,7 +62,7 @@ export function Pagination({
   };
 
   return (
-    <CardFooter className={cn("flex flex-col sm:flex-row items-center justify-between border-t px-5 py-3 text-xs gap-2", layer("relative z-10"))}>
+    <CardFooter className={cn("flex flex-col sm:flex-row items-center justify-between border-t px-5 py-3 text-caption gap-2", layer("relative z-10"))}>
       <div className="text-muted-foreground text-center sm:text-left">{pageInfo}</div>
       <div className={cn("flex items-center gap-2", layer("relative z-20"))}>
         <Button
@@ -70,7 +70,7 @@ export function Pagination({
           size="sm"
           onClick={() => onPageChange(Math.max(page - 1, 1))}
           disabled={page === 1 || disabled}
-          className={cn("h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150", layer("relative z-30"))}
+          className={cn("h-7 px-2 text-caption transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150", layer("relative z-30"))}
         >
           <ChevronLeft className="h-3.5 w-3.5 mr-1" />
           <span className="hidden sm:inline">{t("previous")}</span>
@@ -83,7 +83,7 @@ export function Pagination({
                 variant="ghost"
                 size="sm"
                 onClick={() => onPageChange(1)}
-                className={cn("h-6 px-1 text-xs text-muted-foreground hover:text-foreground", layer("relative z-40"))}
+                className={cn("h-6 px-1 text-caption text-muted-foreground hover:text-foreground", layer("relative z-40"))}
                 title={t("jumpToFirst")}
               >
                 1
@@ -92,9 +92,9 @@ export function Pagination({
             {page > 3 && <span className="text-muted-foreground">...</span>}
           </div>
 
-          <span className="text-muted-foreground text-xs">{t("pageNumber")}</span>
-          <span className="font-medium text-xs min-w-[1.5rem] text-center">{page}</span>
-          <span className="text-muted-foreground text-xs">
+          <span className="text-muted-foreground text-caption">{t("pageNumber")}</span>
+          <span className="font-medium text-caption min-w-[1.5rem] text-center">{page}</span>
+          <span className="text-muted-foreground text-caption">
             {t("of")} {totalPages} {t("pages")}
           </span>
 
@@ -105,7 +105,7 @@ export function Pagination({
                 variant="ghost"
                 size="sm"
                 onClick={() => onPageChange(totalPages)}
-                className={cn("h-6 px-1 text-xs text-muted-foreground hover:text-foreground", layer("relative z-40"))}
+                className={cn("h-6 px-1 text-caption text-muted-foreground hover:text-foreground", layer("relative z-40"))}
                 title={t("jumpToLast")}
               >
                 {totalPages}
@@ -126,7 +126,7 @@ export function Pagination({
                   onKeyDown={handleJumpKeyDown}
                   placeholder={t("jumpToPage")}
                   className={cn(
-                    "w-12 h-6 px-1 text-xs text-center border border-input bg-card rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring",
+                    "w-12 h-6 px-1 text-caption text-center border border-input bg-card rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring",
                     layer("relative z-50"),
                   )}
                   style={pointerStyle}
@@ -136,7 +136,7 @@ export function Pagination({
                   variant="outline"
                   size="sm"
                   disabled={jumpPage === null}
-                  className={cn("h-6 px-2 text-xs", layer("relative z-50"))}
+                  className={cn("h-6 px-2 text-caption", layer("relative z-50"))}
                   title={t("pageJump")}
                   style={pointerStyle}
                 >
@@ -152,7 +152,7 @@ export function Pagination({
           size="sm"
           onClick={() => onPageChange(Math.min(page + 1, totalPages))}
           disabled={page === totalPages || disabled}
-          className={cn("h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150", layer("relative z-30"))}
+          className={cn("h-7 px-2 text-caption transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150", layer("relative z-30"))}
         >
           <span className="hidden sm:inline">{t("next")}</span>
           <ChevronRight className="h-3.5 w-3.5 ml-1" />

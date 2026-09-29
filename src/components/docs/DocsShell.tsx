@@ -74,6 +74,7 @@ function DocsSearch({ index }: { index: DocsSearchEntry[] }) {
       <input
         ref={inputRef}
         type="search"
+        data-slot="input"
         value={query}
         placeholder={`${t.search}  ⌘K`}
         aria-label={t.search}
@@ -89,12 +90,12 @@ function DocsSearch({ index }: { index: DocsSearchEntry[] }) {
           else return;
           event.preventDefault();
         }}
-        className="h-8 w-full rounded-md border border-input bg-card pr-3 pl-8 text-base shadow-xs sm:text-[13px] outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+        className="h-8 w-full rounded-md border border-input bg-card pr-3 pl-8 shadow-xs sm:text-body-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
       />
       {query.trim() && (
         <ul className="absolute top-full right-0 z-50 mt-1.5 w-[340px] rounded-lg border bg-popover p-1 text-popover-foreground shadow-md" role="listbox">
           {results.length === 0 ? (
-            <li className="px-3 py-2 text-[13px] text-muted-foreground">{t.noResults}</li>
+            <li className="px-3 py-2 text-body-sm text-muted-foreground">{t.noResults}</li>
           ) : (
             results.map((result, i) => (
               <li key={result.href + i} role="option" aria-selected={i === active}>
@@ -107,8 +108,8 @@ function DocsSearch({ index }: { index: DocsSearchEntry[] }) {
                     i === active && "bg-muted",
                   )}
                 >
-                  <span className="block truncate text-[13px] font-medium">{result.title}</span>
-                  <span className={cn("block truncate text-[12px]", "text-muted-foreground")}>
+                  <span className="block truncate text-body-sm font-medium">{result.title}</span>
+                  <span className={cn("block truncate text-caption", "text-muted-foreground")}>
                     {result.context}
                   </span>
                 </button>
@@ -128,7 +129,7 @@ function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
     <nav aria-label="Docs" className="space-y-5">
       {DOCS_NAV.map((group) => (
         <div key={group.title.en}>
-          <p className="px-3 pb-1 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+          <p className="px-3 pb-1 text-label-caps uppercase text-muted-foreground">
             {group.title[language]}
           </p>
           <ul>
@@ -142,7 +143,7 @@ function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
                     onClick={onNavigate}
                     aria-current={current ? "page" : undefined}
                     className={cn(
-                      "block rounded-[4px] px-3 py-1 text-[13px]",
+                      "block rounded-[4px] px-3 py-1 text-body-sm",
                       current ? "bg-primary-soft font-medium text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
@@ -173,10 +174,10 @@ export function DocsShell({ index, children }: { index: DocsSearchEntry[]; child
           <Link href="/">
             <BrandMark />
           </Link>
-          <Link href="/docs" className="text-[13.5px] font-medium whitespace-nowrap max-sm:hidden">
+          <Link href="/docs" className="text-body-md font-medium whitespace-nowrap max-sm:hidden">
             {t.help}
           </Link>
-          <a href={GITHUB_URL} className="text-[13.5px] text-muted-foreground hover:text-foreground max-sm:hidden">
+          <a href={GITHUB_URL} className="text-body-md text-muted-foreground hover:text-foreground max-sm:hidden">
             GitHub
           </a>
           <div className="ml-auto flex items-center gap-2 whitespace-nowrap">
@@ -185,7 +186,7 @@ export function DocsShell({ index, children }: { index: DocsSearchEntry[]; child
             </div>
             <button
               type="button"
-              className="h-8 rounded-md px-2 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="h-8 rounded-md px-2 text-body-sm text-muted-foreground hover:bg-muted hover:text-foreground"
               onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
             >
               {language === "zh" ? "EN" : "中文"}
@@ -200,7 +201,7 @@ export function DocsShell({ index, children }: { index: DocsSearchEntry[]; child
             </button>
             <Link
               href="/checks"
-              className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground shadow-xs hover:brightness-110 transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]"
+              className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-body-sm font-medium text-primary-foreground shadow-xs hover:brightness-110 transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]"
             >
               {t.openApp}
             </Link>
@@ -221,7 +222,7 @@ export function DocsShell({ index, children }: { index: DocsSearchEntry[]; child
           <div className="mb-4 flex items-center gap-2 lg:hidden">
             <button
               type="button"
-              className="inline-flex h-8 items-center rounded-md bg-card px-3 text-[13px] shadow-border"
+              className="inline-flex h-8 items-center rounded-md bg-card px-3 text-body-sm shadow-border"
               aria-expanded={contentsOpen}
               onClick={() => setContentsOpen((open) => !open)}
             >
