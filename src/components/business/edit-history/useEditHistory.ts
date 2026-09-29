@@ -11,10 +11,13 @@ interface EditHistoryPage {
   pagination?: { page?: number; totalPages?: number; total?: number; totalCapped?: boolean };
 }
 
-/** Loads one page of the global edit history for the given filters. */
-export function useEditHistory() {
+/**
+ * Loads one page of the edit history for the given filters: all checks, or
+ * only `scriptId`. It loads the first page once `enabled` (by default at once).
+ */
+export function useEditHistory({ scriptId, pageSize = ITEMS_PER_PAGE, enabled = true }: { scriptId?: string; pageSize?: number; enabled?: boolean } = {}) {
   const [histories, setHistories] = useState<EditHistoryRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -23,14 +26,15 @@ export function useEditHistory() {
   const requests = useRef(createLatestRequest({ filters: EMPTY_FILTERS, page: 1 }));
 
   // A newer request supersedes one still in flight, so the table always matches the latest filters.
-  const fetchHistories = useCallback(async (filters: HistoryFilters = EMPTY_FILTERS, page = 1) => {
+  const fetchHistories = useCallback(async (shown: HistoryFilters = EMPTY_FILTERS, page = 1) => {
+    const filters = scriptId ? { ...shown, scriptId } : shown;
     const token = requests.current.start({ filters, page });
     const isStale = () => !requests.current.isLatest(token);
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/edit-history?${buildHistoryQuery(filters, page, ITEMS_PER_PAGE)}`);
+      const response = await fetch(`/api/edit-history?${buildHistoryQuery(filters, page, pageSize)}`);
       const data = await readJson<EditHistoryPage>(response, "Failed to fetch edit history");
       if (isStale()) return;
       setHistories(data.histories || []);
@@ -48,7 +52,7 @@ export function useEditHistory() {
     } finally {
       if (!isStale()) setLoading(false);
     }
-  }, []);
+  }, [scriptId, pageSize]);
 
   const retry = useCallback(() => {
     const { filters, page } = requests.current.latestParams();
@@ -56,8 +60,8 @@ export function useEditHistory() {
   }, [fetchHistories]);
 
   useEffect(() => {
-    fetchHistories();
-  }, [fetchHistories]);
+    if (enabled) fetchHistories();
+  }, [enabled, fetchHistories]);
 
   return { histories, loading, error, currentPage, totalPages, totalRecords, totalCapped, fetchHistories, retry };
 }
