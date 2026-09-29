@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { sendJson } from "@/client/send-json";
 import type { DestinationDto } from "@/contracts/notifications";
 import { ChannelIcon } from "./channels";
 import { SubscriptionFields } from "./SubscriptionFields";
-import { COPY, defaultDigest, subscriptionBody, type Subscription } from "./subscription";
+import { COPY, defaultDigest, subscriptionBody, subscriptionOf, type Subscription } from "./subscription";
 
 /** Changes what a destination receives: name, alert kinds, tags, language, summary and reminders. */
 export function EditDestinationDialog({
@@ -28,18 +28,15 @@ export function EditDestinationDialog({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!destination) return;
-    setSubscription({
-      name: destination.name,
-      alerts: destination.alerts,
-      tags: destination.tags.join(", "),
-      language: destination.language,
-      digest: destination.digest ?? defaultDigest(),
-      remindAfter: destination.remind?.afterHours ?? 0,
-    });
-    setError(null);
-  }, [destination]);
+  // A newly opened destination starts the form over (adjusted while rendering).
+  const [shown, setShown] = useState(destination);
+  if (destination !== shown) {
+    setShown(destination);
+    if (destination) {
+      setSubscription(subscriptionOf(destination));
+      setError(null);
+    }
+  }
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
