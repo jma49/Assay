@@ -46,7 +46,8 @@ The settings page shows both snippets with your key and URL filled in.
 | Tool | Needs | What it does |
 | --- | --- | --- |
 | `list_checks` | read | Checks with status (broken / issues / clean / never_run), rows, owner, acknowledged, muted; filter by status, tag, text |
-| `get_check` | read | SQL, schedule, last runs, and the latest rows marked new or still, with how many were fixed |
+| `get_check` | read | SQL, schedule, data source, last runs, and the latest rows marked new or still, with how many were fixed |
+| `list_data_sources` | read | The databases checks run against: id, name and engine (never connection details) |
 | `get_run` | history | Rows of one run (up to 50) |
 | `list_activity` | history | Recent outcome changes and new rows, and where alerts went |
 | `run_check` | execute | Runs a check now (read-only SQL); alerts go out as for any run |

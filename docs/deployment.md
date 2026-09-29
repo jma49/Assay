@@ -20,8 +20,18 @@ Redis; any Node.js host works the same way (`npm run build && npm start`).
 | --- | --- |
 | Sign-in | `BETTER_AUTH_SECRET` (`openssl rand -base64 32`), `BETTER_AUTH_URL`, and `GOOGLE_CLIENT_ID/SECRET` and/or `GITHUB_CLIENT_ID/SECRET` |
 | Data | `MONGODB_URI` (and `MONGODB_DB_NAME` unless the URI names the database), `DATABASE_URL` pointing at a SELECT-only role ([architecture.md](architecture.md#running-a-check)), `UPSTASH_REDIS_REST_URL/TOKEN` |
-| Alerts | `ASSAY_SECRET_KEY` (never change it once channels are stored: it decrypts their secrets), `APP_URL`, `CRON_SECRET` |
-| Optional | `AI_ENABLED=true` with AI Gateway, `DEMO_MODE=true` (the public demo only), the Slack, Discord and Telegram app settings ([notifications.md](notifications.md)), `ALLOWED_EMAIL_DOMAINS`, run limits (`CHECK_TIMEOUT_MS`, `CHECK_CONCURRENCY`, `PG_POOL_MAX`, `RUN_RETENTION_DAYS`) |
+| Alerts and data sources | `ASSAY_SECRET_KEY` (required to add data sources or alert channels; never change it once they are stored: it decrypts their secrets), `APP_URL`, `CRON_SECRET` |
+| Optional | `AI_ENABLED=true` with AI Gateway, `DEMO_MODE=true` (the public demo only), the Slack, Discord and Telegram app settings ([notifications.md](notifications.md)), `ALLOWED_EMAIL_DOMAINS`, run limits (`CHECK_TIMEOUT_MS`, `CHECK_CONCURRENCY`, `PG_POOL_MAX`, `PG_SOURCE_POOL_MAX`, `RUN_RETENTION_DAYS`), `ALLOW_PRIVATE_DATA_SOURCES` (below) |
+
+**Data sources.** Besides `DATABASE_URL`, admins can add PostgreSQL
+databases in Settings → Data sources; their connection strings are sealed
+with `ASSAY_SECRET_KEY`. Hosts on private networks (10.x, 192.168.x,
+localhost, `*.internal`, link-local) are refused, so a connection string
+cannot reach internal services or the cloud metadata endpoint. A
+self-hosted deployment whose databases sit on a private network sets
+`ALLOW_PRIVATE_DATA_SOURCES=true`; such hosts may then also use
+`sslmode=disable`. Public hosts always use verified TLS. Each instance
+opens at most `PG_SOURCE_POOL_MAX` (3) connections per added source.
 
 **TLS to PostgreSQL is always verified when `DATABASE_URL` asks for it.**
 With `sslmode` set to `prefer`, `require`, `verify-ca` or `verify-full`, Assay
@@ -39,7 +49,7 @@ OAuth callbacks are `<BETTER_AUTH_URL>/api/auth/callback/google` and
 **Scheduled runs** come from `.github/workflows/sql-check-cron.yml` every 30
 minutes. It needs the repository secrets `DATABASE_URL`, `MONGODB_URI`,
 `APP_URL` and `CRON_SECRET` (plus the certificate URLs if PostgreSQL uses
-them); `MONGODB_DB_NAME` and the run limits go in repository variables with
+them, and `ASSAY_SECRET_KEY` once checks use an added data source); `MONGODB_DB_NAME` and the run limits go in repository variables with
 the same values as the app. Without the secrets the workflow skips quietly.
 A self-hosted setup can call `npm run sql:run-scheduled` from cron instead.
 
