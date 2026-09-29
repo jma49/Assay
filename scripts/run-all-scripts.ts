@@ -8,6 +8,8 @@ import db from "@/lib/database/db";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { runCheckNow } from "@/server/services/run-check-deps";
 import { mongoRunChecksStore, runChecks, type RunMode } from "@/server/services/run-checks";
+import { errorKind, inPublicCi } from "@/lib/utils/public-log";
+import { reportLine } from "./lib/run-report";
 
 function parseArgs(argv: string[]): { mode: RunMode; dryRun: boolean } | null {
   if (argv.includes("--help") || argv.includes("-h")) return null;
@@ -34,19 +36,8 @@ async function main() {
       { ...mongoRunChecksStore(mongo), run: runCheckNow },
     );
 
-    for (const report of reports) {
-      const detail =
-        report.status === "ran"
-          ? report.result.kind === "completed"
-            ? `${report.result.outcome}, ${report.result.rowCount} rows`
-            : report.result.kind === "busy"
-              ? "already running"
-              : "not found"
-          : report.status === "failed"
-            ? report.error
-            : report.status.replace("_", " ");
-      console.log(`- ${report.scriptId}: ${detail}`);
-    }
+    const publicLog = inPublicCi();
+    for (const report of reports) console.log(reportLine(report, publicLog));
     const ran = reports.filter((r) => r.status === "ran").length;
     const failed = reports.filter((r) => r.status === "failed").length;
     console.log(`${args.dryRun ? "Dry run" : "Done"}: ${ran} ran, ${failed} failed, ${reports.length - ran - failed} skipped.`);
@@ -58,6 +49,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error("Running checks failed:", error);
+  // Public CI logs get the error's type only; its text can hold data or hosts.
+  console.error("Running checks failed:", inPublicCi() ? errorKind(error) : error);
   process.exit(1);
 });
