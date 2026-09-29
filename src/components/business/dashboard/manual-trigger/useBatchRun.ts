@@ -40,7 +40,7 @@ export function useBatchRun(language: string) {
         stop();
         const copy = triggerCopy(language);
         const counts = batchCounts(batch.scripts);
-        toast.success(copy.finished, { description: copy.finishedSummary(counts.clean, counts.issues, counts.error), duration: 5000 });
+        toast.success(copy.finished, { description: copy.finishedSummary(counts.clean, counts.issues, counts.error) + (counts.skipped > 0 ? copy.skippedSummary(counts.skipped) : ""), duration: 5000 });
       } catch (error) {
         if (!isAbort(error)) console.error("[batch] Polling the run status failed:", error);
       }
