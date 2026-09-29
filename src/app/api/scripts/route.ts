@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { getMongoDbClient } from "@/lib/database/mongodb";
-import { Collection, Document, ObjectId } from "mongodb";
-import { withAuth } from "@/server/http/route";
+import { Document, ObjectId } from "mongodb";
+import { ApiError, withAuth } from "@/server/http/route";
 import { authorForGuest } from "@/server/http/guest-view";
 import { authorProblem } from "@/lib/workflows/check-fields";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
@@ -35,291 +35,156 @@ function isValidScriptId(scriptId: string): boolean {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(scriptId);
 }
 
-async function getSqlScriptsCollection(): Promise<Collection<Document>> {
-  const mongoDbClient = getMongoDbClient();
-  const db = await mongoDbClient.getDb();
-  // As per previous correction, assuming MONGODB_URI points to sql_script_result
-  // or the default db in MongoDbClient is configured accordingly.
-  return db.collection(COLLECTIONS.checks);
-}
+const invalid = (message: string) => new ApiError(400, "invalid_input", message);
 
 export const POST = withAuth(Permission.SCRIPT_CREATE, async (request, { principal }) => {
-  try {
-    const userEmail = principal.email;
+  const userEmail = principal.email;
+  const body = await request.json().catch(() => {
+    throw new ApiError(400, "invalid_json", "The request body must be JSON");
+  });
+  const { scriptId, name, cnName, description, cnDescription, scope, cnScope, author, hashtags, sqlContent, isScheduled, cronSchedule } =
+    body as NewScriptData;
 
-    const body = await request.json();
-    const {
+  if (!scriptId) throw invalid("scriptId is required");
+  if (!isValidScriptId(scriptId)) throw invalid("Invalid scriptId format. Use lowercase letters, numbers, and hyphens.");
+  if (!name || typeof name !== "string") throw invalid("name is required and must be a string");
+  if (!sqlContent || typeof sqlContent !== "string") throw invalid("sqlContent is required and must be a string");
+  const badAuthor = authorProblem(author);
+  if (badAuthor) throw invalid(badAuthor);
+  // An invalid cron would be saved and then silently never run.
+  const badSchedule = scheduleProblem(isScheduled, cronSchedule ?? (isScheduled ? "" : undefined));
+  if (badSchedule) throw invalid(badSchedule);
+
+  const db = await getMongoDbClient().getDb();
+  if (await db.collection(COLLECTIONS.checks).findOne({ scriptId })) {
+    throw new ApiError(409, "id_taken", `A check with the id '${scriptId}' already exists`);
+  }
+
+  // Only read-only SQL may be saved.
+  const securityCheck = validateReadOnlySql(sqlContent);
+  if (!securityCheck.isValid) throw new ApiError(403, "unsafe_sql", securityCheck.reasonEn ?? "Only read-only SQL may be saved");
+
+  const userRole = await getUserRole(principal.id);
+  if (!userRole) throw new ApiError(500, "role_unknown", "Your role could not be read");
+
+  const fields = {
+    scriptId,
+    name,
+    cnName: cnName || "",
+    description: description || "",
+    cnDescription: cnDescription || "",
+    scope: scope || "",
+    cnScope: cnScope || "",
+    author: author || userEmail.split("@")[0],
+    hashtags: hashtags || [],
+    sqlContent,
+    isScheduled: isScheduled || false,
+    cronSchedule: cronSchedule || "",
+  };
+
+  // Everyone but admins goes through approval.
+  if (!isAutoApprovalEligible(analyzeScriptType(sqlContent), userRole, "create")) {
+    const requestId = await createApprovalRequest(
       scriptId,
-      name,
-      cnName,
-      description,
-      cnDescription,
-      scope,
-      cnScope,
-      author,
-      hashtags,
-      sqlContent,
-      isScheduled,
-      cronSchedule,
-    } = body as NewScriptData;
-
-    if (!scriptId) {
-      return NextResponse.json(
-        { message: "scriptId is required" },
-        { status: 400 }
-      );
-    }
-    if (!isValidScriptId(scriptId)) {
-      return NextResponse.json(
-        {
-          message:
-            "Invalid scriptId format. Use lowercase letters, numbers, and hyphens.",
-        },
-        { status: 400 }
-      );
-    }
-    if (!name || typeof name !== "string") {
-      return NextResponse.json(
-        { message: "name is required and must be a string" },
-        { status: 400 }
-      );
-    }
-    if (!sqlContent || typeof sqlContent !== "string") {
-      return NextResponse.json(
-        { message: "sqlContent is required and must be a string" },
-        { status: 400 }
-      );
-    }
-    const badAuthor = authorProblem(author);
-    if (badAuthor) {
-      return NextResponse.json({ message: badAuthor }, { status: 400 });
-    }
-    // An invalid cron would be saved and then silently never run.
-    const badSchedule = scheduleProblem(isScheduled, cronSchedule ?? (isScheduled ? "" : undefined));
-    if (badSchedule) {
-      return NextResponse.json({ message: badSchedule }, { status: 400 });
-    }
-
-    const collection = await getSqlScriptsCollection();
-
-    const existingScript = await collection.findOne({ scriptId });
-    if (existingScript) {
-      return NextResponse.json(
-        { message: `Script with ID '${scriptId}' already exists` },
-        { status: 409 }
-      ); // 409 Conflict
-    }
-
-    // Only read-only SQL may be saved.
-    const securityCheck = validateReadOnlySql(sqlContent);
-    if (!securityCheck.isValid) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "SQL内容安全检查失败",
-          reason: securityCheck.reason,
-          policy:
-            "本系统严格限制只允许查询操作（SELECT语句）。禁止所有数据修改（INSERT/UPDATE/DELETE）和结构修改（CREATE/ALTER/DROP）操作。",
-        },
-        { status: 403 }
-      ); // 403 Forbidden
-    }
-
-    const userRole = await getUserRole(principal.id);
-    if (!userRole) {
-      return NextResponse.json(
-        { success: false, message: "无法获取用户角色信息" },
-        { status: 500 }
-      );
-    }
-
-    const autoApprovalEligible = isAutoApprovalEligible(
-      analyzeScriptType(sqlContent),
+      principal.id,
+      userEmail,
       userRole,
-      "create"
-    );
-
-    // Everyone but admins goes through approval.
-    if (!autoApprovalEligible) {
-      const requestId = await createApprovalRequest(
-        scriptId,
-        principal.id,
-        userEmail,
-        userRole,
-        sqlContent,
-        `创建脚本: ${name}`,
-        `用户 ${userEmail} 申请创建脚本 "${name}"`,
-        "medium",
-        "create",
-        {
-          scriptId,
-          name,
-          cnName: cnName || "",
-          description: description || "",
-          cnDescription: cnDescription || "",
-          scope: scope || "",
-          cnScope: cnScope || "",
-          author: author || userEmail.split("@")[0],
-          hashtags: hashtags || [],
-          sqlContent,
-          isScheduled: isScheduled || false,
-          cronSchedule: cronSchedule || "",
-        }
-      );
-
-      if (requestId) {
-        console.log(`[Script] 创建脚本审批请求已创建: ${requestId}`);
-
-        return NextResponse.json(
-          {
-            success: true,
-            message: "创建脚本申请已提交，等待管理员审批",
-            approvalRequestId: requestId,
-            requiresApproval: true,
-            policy: "根据安全策略，创建脚本需要管理员审批",
-            securityPolicy: "系统已确认这是安全的查询操作",
-          },
-          { status: 200 }
-        );
-      } else {
-        return NextResponse.json(
-          { success: false, message: "创建审批请求失败" },
-          { status: 500 }
-        );
-      }
-    }
-
-    console.log(`[Script] 管理员创建脚本，自动审批通过，直接创建: ${scriptId}`);
-
-    const newScriptDocument = {
-      scriptId,
-      name,
-      cnName: cnName || "",
-      description: description || "",
-      cnDescription: cnDescription || "",
-      scope: scope || "",
-      cnScope: cnScope || "",
-      author: author || userEmail.split("@")[0],
-      hashtags: hashtags || [],
       sqlContent,
-      isScheduled: isScheduled || false,
-      cronSchedule: cronSchedule || "",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      approvalStatus: ApprovalStatus.APPROVED,
-      approvalRequestId: null,
-      // Who made it, from the session: ownership and audit never trust the author label.
-      createdBy: { id: principal.id, email: userEmail },
-      updatedBy: { id: principal.id, email: userEmail },
-      version: 1,
-    };
+      `Create check: ${name}`,
+      `${userEmail} asks to create the check "${name}"`,
+      "medium",
+      "create",
+      fields,
+    );
+    if (!requestId) throw new ApiError(500, "internal", "Filing the approval request failed");
+    return NextResponse.json({
+      success: true,
+      message: "Submitted for approval",
+      approvalRequestId: requestId,
+      requiresApproval: true,
+    });
+  }
 
-    const mongoId = await createCheck(await getMongoDbClient().getDb(), newScriptDocument, { id: principal.id, email: userEmail }, "脚本创建", "major");
-    const message = autoApprovalEligible
-      ? "查询脚本创建成功（管理员自动审批通过）"
-      : "查询脚本创建成功";
-
-    return NextResponse.json(
+  const now = new Date();
+  const actor = { id: principal.id, email: userEmail };
+  try {
+    const mongoId = await createCheck(
+      db,
       {
-        success: true,
-        message,
-        scriptId: newScriptDocument.scriptId,
-        mongoId,
-        approvalStatus: newScriptDocument.approvalStatus,
-        securityPolicy: "系统已确认这是安全的查询操作",
-        policy: autoApprovalEligible
-          ? "管理员创建脚本，自动审批通过"
-          : "脚本创建成功",
+        ...fields,
+        createdAt: now,
+        updatedAt: now,
+        approvalStatus: ApprovalStatus.APPROVED,
+        approvalRequestId: null,
+        // Who made it, from the session: ownership and audit never trust the author label.
+        createdBy: actor,
+        updatedBy: actor,
+        version: 1,
       },
-      { status: 201 }
+      actor,
+      "Created",
+      "major",
+    );
+    return NextResponse.json(
+      { success: true, message: "Check created", scriptId, mongoId, approvalStatus: ApprovalStatus.APPROVED },
+      { status: 201 },
     );
   } catch (error) {
     // Two creates with the same id at once: the unique index lets one through.
-    if ((error as { code?: number }).code === 11000) {
-      return NextResponse.json({ message: "A check with this ID already exists" }, { status: 409 });
-    }
-    console.error("Error creating script:", error);
-    if (error instanceof SyntaxError) {
-      return NextResponse.json(
-        { message: "Invalid JSON in request body" },
-        { status: 400 }
-      );
-    }
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
+    if ((error as { code?: number }).code === 11000) throw new ApiError(409, "id_taken", "A check with this id already exists");
+    throw error;
   }
 });
 
 // The middleware only guarantees a signed-in user; reading scripts (and
 // their SQL) also needs script:read, as on the other script routes.
 export const GET = withAuth(Permission.SCRIPT_READ, async (_request, { principal }) => {
-  try {
-    const collection = await getSqlScriptsCollection();
-    const scriptsFromDb = await collection
-      .find({})
-      .sort({ createdAt: -1 })
-      .toArray();
+  const db = await getMongoDbClient().getDb();
+  const scriptsFromDb = await db.collection(COLLECTIONS.checks).find({}).sort({ createdAt: -1 }).toArray();
 
-    interface ScriptDocumentFromDb extends Document {
-      _id: ObjectId;
-      scriptId: string;
-      name: string;
-      cnName?: string;
-      description?: string;
-      cnDescription?: string;
-      scope?: string;
-      cnScope?: string;
-      author: string;
-      hashtags?: string[];
-      sqlContent: string;
-      isScheduled?: boolean;
-      cronSchedule?: string;
-      createdAt: Date | string;
-      updatedAt: Date | string;
-    }
-
-    const scripts = scriptsFromDb.map((docUncasted) => {
-      const doc = docUncasted as ScriptDocumentFromDb;
-      const { _id, createdAt, updatedAt } = doc;
-      // Listed field by field: the document also holds who created it (with
-      // their email), the run lease and alerting state, which readers,
-      // including demo guests, must not receive.
-      return {
-        _id: _id.toString(),
-        scriptId: doc.scriptId,
-        name: doc.name,
-        cnName: doc.cnName || "",
-        description: doc.description || "",
-        cnDescription: doc.cnDescription || "",
-        scope: doc.scope || "",
-        cnScope: doc.cnScope || "",
-        author: principal.isGuest ? authorForGuest(doc.author) : doc.author,
-        hashtags: doc.hashtags || [],
-        sqlContent: doc.sqlContent,
-        isScheduled: doc.isScheduled || false,
-        cronSchedule: doc.cronSchedule || "",
-        version: typeof doc.version === "number" ? doc.version : undefined,
-        createdAt:
-          createdAt instanceof Date
-            ? createdAt.toISOString()
-            : String(createdAt),
-        updatedAt:
-          updatedAt instanceof Date
-            ? updatedAt.toISOString()
-            : String(updatedAt),
-      };
-    });
-
-    return NextResponse.json(scripts, { status: 200 });
-  } catch (error) {
-    console.error("[scripts] Listing checks failed:", error);
-
-
-    return NextResponse.json(
-      { message: "获取脚本列表失败" },
-      { status: 500 }
-    );
+  interface ScriptDocumentFromDb extends Document {
+    _id: ObjectId;
+    scriptId: string;
+    name: string;
+    cnName?: string;
+    description?: string;
+    cnDescription?: string;
+    scope?: string;
+    cnScope?: string;
+    author: string;
+    hashtags?: string[];
+    sqlContent: string;
+    isScheduled?: boolean;
+    cronSchedule?: string;
+    createdAt: Date | string;
+    updatedAt: Date | string;
   }
+
+  const scripts = scriptsFromDb.map((docUncasted) => {
+    const doc = docUncasted as ScriptDocumentFromDb;
+    const { _id, createdAt, updatedAt } = doc;
+    // Listed field by field: the document also holds who created it (with
+    // their email), the run lease and alerting state, which readers,
+    // including demo guests, must not receive.
+    return {
+      _id: _id.toString(),
+      scriptId: doc.scriptId,
+      name: doc.name,
+      cnName: doc.cnName || "",
+      description: doc.description || "",
+      cnDescription: doc.cnDescription || "",
+      scope: doc.scope || "",
+      cnScope: doc.cnScope || "",
+      author: principal.isGuest ? authorForGuest(doc.author) : doc.author,
+      hashtags: doc.hashtags || [],
+      sqlContent: doc.sqlContent,
+      isScheduled: doc.isScheduled || false,
+      cronSchedule: doc.cronSchedule || "",
+      version: typeof doc.version === "number" ? doc.version : undefined,
+      createdAt: createdAt instanceof Date ? createdAt.toISOString() : String(createdAt),
+      updatedAt: updatedAt instanceof Date ? updatedAt.toISOString() : String(updatedAt),
+    };
+  });
+
+  return NextResponse.json(scripts);
 });

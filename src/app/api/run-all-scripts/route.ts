@@ -3,7 +3,7 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
-import { parseJson, withAuth } from "@/server/http/route";
+import { ApiError, parseJson, withAuth } from "@/server/http/route";
 import { mongoBatchStore, runBatch, runBatchAndDispatch } from "@/server/services/batches";
 import { dispatchNow } from "@/server/services/notify-deps";
 import {
@@ -48,8 +48,7 @@ export const POST = withAuth(Permission.SCRIPT_EXECUTE, async (request, { princi
     .toArray();
 
   if (checks.length === 0) {
-    const message = filteredExecution ? "None of the selected checks exist." : "There are no checks to run.";
-    return NextResponse.json({ success: false, message, localizedMessage: message });
+    throw new ApiError(404, "no_checks", filteredExecution ? "None of the selected checks exist" : "There are no checks to run");
   }
 
   const executionId = randomUUID();
@@ -78,11 +77,9 @@ export const POST = withAuth(Permission.SCRIPT_EXECUTE, async (request, { princi
     }),
   );
 
-  const message = `Running ${checks.length} checks`;
   return NextResponse.json({
     success: true,
-    message,
-    localizedMessage: message,
+    message: `Running ${checks.length} checks`,
     executionId,
     scriptCount: checks.length,
     mode,
