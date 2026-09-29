@@ -1,5 +1,5 @@
 import type { RunOutcome } from "@/domain/run";
-import { localDayKey } from "@/lib/utils/datetime";
+import { dayKeysBetween, localDayKey } from "@/lib/utils/datetime";
 
 /** A run the page counts. */
 export interface ExecutionRecord {
@@ -33,55 +33,72 @@ export function runsFromHistory(body: { data?: HistoryRun[] } | null): Execution
 export interface ScriptSummary {
   scriptId: string;
   name?: string;
+  cnName?: string;
   hashtags?: string[];
 }
+
+export type OutcomeCounts = Record<RunOutcome, number>;
 
 export interface ScriptAnalytics {
   scriptId: string;
   scriptName: string;
-  totalExecutions: number;
-  successCount: number;
-  failedCount: number;
-  attentionCount: number;
-  successRate: number;
-  lastExecution: string;
+  cnName?: string;
+  runs: number;
+  counts: OutcomeCounts;
+  /** Share of runs that came back clean, 0–100. */
+  cleanRate: number;
+  lastRun: string;
 }
 
+/** One calendar day in the viewer's time zone. */
 export interface DailyTrendPoint {
+  /** "YYYY-MM-DD" */
   date: string;
-  executions: number;
-  successes: number;
-  failures: number;
+  runs: number;
+  clean: number;
+  issues: number;
+  error: number;
 }
 
 export interface AnalyticsData {
   totalExecutions: number;
   totalScripts: number;
-  overallSuccessRate: number;
+  /** Share of runs that came back clean, 0–100. */
+  cleanRate: number;
+  /** Every day of the range, oldest first, including days without runs. */
   dailyTrend: DailyTrendPoint[];
   scriptAnalytics: ScriptAnalytics[];
-  statusDistribution: { success: number; failed: number; attention_needed: number };
+  statusDistribution: OutcomeCounts;
 }
 
 export const TIME_RANGES = {
-  "7d": { label: "last7Days", days: 7 },
-  "30d": { label: "last30Days", days: 30 },
-  "90d": { label: "last90Days", days: 90 },
-  all: { label: "allTime", days: null },
+  "7d": { days: 7 },
+  "30d": { days: 30 },
+  "90d": { days: 90 },
+  all: { days: null },
 } as const;
 
 export type TimeRange = keyof typeof TIME_RANGES;
 export const DEFAULT_TIME_RANGE: TimeRange = "7d";
 
-const rate = (part: number, whole: number) => (whole > 0 ? (part / whole) * 100 : 0);
+/** Days listed one by one under the charts; longer ranges show the most recent ones. */
+export const DAILY_BREAKDOWN_DAYS = 14;
 
-/** The check-history query for a time range and check ("all" for every check). */
+const rate = (part: number, whole: number) => (whole > 0 ? (part / whole) * 100 : 0);
+const noRuns = (): OutcomeCounts => ({ error: 0, issues: 0, clean: 0 });
+
+/**
+ * The check-history query for a time range and check ("all" for every check).
+ * A range of N days starts at local midnight N - 1 days ago, so it covers
+ * exactly the days the trend shows.
+ */
 export function historyQuery(range: TimeRange, scriptId: string, now = new Date()): URLSearchParams {
   const params = new URLSearchParams({ limit: String(ANALYSIS_RUN_LIMIT) });
   const days = TIME_RANGES[range].days;
   if (days) {
     const start = new Date(now);
-    start.setDate(now.getDate() - days);
+    start.setDate(now.getDate() - (days - 1));
+    start.setHours(0, 0, 0, 0);
     params.append("startDate", start.toISOString());
     params.append("endDate", now.toISOString());
   }
@@ -89,23 +106,38 @@ export function historyQuery(range: TimeRange, scriptId: string, now = new Date(
   return params;
 }
 
-function dailyTrend(executions: ExecutionRecord[]): DailyTrendPoint[] {
-  const days = new Map<string, DailyTrendPoint>();
-  for (const execution of executions) {
-    const date = localDayKey(execution.createdAt);
-    const day = days.get(date) ?? { date, executions: 0, successes: 0, failures: 0 };
-    day.executions++;
-    if (execution.outcome === "clean") day.successes++;
-    else day.failures++;
-    days.set(date, day);
+/**
+ * The days a range covers, in the viewer's time zone: the last `days` days
+ * up to today, or for "all" from the first run's day to today.
+ */
+export function rangeDays(range: TimeRange, executions: ExecutionRecord[], now = new Date(), timeZone?: string): string[] {
+  const today = localDayKey(now, timeZone);
+  const days = TIME_RANGES[range].days;
+  if (days) {
+    const first = new Date(now);
+    first.setDate(now.getDate() - (days - 1));
+    return dayKeysBetween(localDayKey(first, timeZone), today);
   }
-  return [...days.values()].sort((a, b) => a.date.localeCompare(b.date));
+  if (executions.length === 0) return [];
+  const earliest = executions.reduce((min, e) => (e.createdAt < min ? e.createdAt : min), executions[0].createdAt);
+  return dayKeysBetween(localDayKey(earliest, timeZone), today);
 }
 
-/** Highest pass rate first; near-equal rates fall back to the run count. */
-function byPassRate(a: ScriptAnalytics, b: ScriptAnalytics): number {
-  if (Math.abs(a.successRate - b.successRate) < 0.1) return b.totalExecutions - a.totalExecutions;
-  return b.successRate - a.successRate;
+function dailyTrend(executions: ExecutionRecord[], days: string[], timeZone?: string): DailyTrendPoint[] {
+  const byDay = new Map<string, DailyTrendPoint>(days.map((date) => [date, { date, runs: 0, ...noRuns() }]));
+  for (const execution of executions) {
+    const day = byDay.get(localDayKey(execution.createdAt, timeZone));
+    if (!day) continue;
+    day.runs++;
+    day[execution.outcome]++;
+  }
+  return [...byDay.values()];
+}
+
+/** Highest clean rate first; near-equal rates fall back to the run count. */
+function byCleanRate(a: ScriptAnalytics, b: ScriptAnalytics): number {
+  if (Math.abs(a.cleanRate - b.cleanRate) < 0.1) return b.runs - a.runs;
+  return b.cleanRate - a.cleanRate;
 }
 
 function scriptAnalytics(executions: ExecutionRecord[], scripts: ScriptSummary[]): ScriptAnalytics[] {
@@ -115,27 +147,24 @@ function scriptAnalytics(executions: ExecutionRecord[], scripts: ScriptSummary[]
       {
         scriptId: script.scriptId,
         scriptName: script.name || script.scriptId,
-        totalExecutions: 0,
-        successCount: 0,
-        failedCount: 0,
-        attentionCount: 0,
-        successRate: 0,
-        lastExecution: "",
+        cnName: script.cnName,
+        runs: 0,
+        counts: noRuns(),
+        cleanRate: 0,
+        lastRun: "",
       },
     ]),
   );
   for (const execution of executions) {
     const analytics = byId.get(execution.scriptId);
     if (!analytics) continue;
-    analytics.totalExecutions++;
-    if (execution.outcome === "clean") analytics.successCount++;
-    else if (execution.outcome === "error") analytics.failedCount++;
-    else analytics.attentionCount++;
-    if (execution.createdAt > analytics.lastExecution) analytics.lastExecution = execution.createdAt;
+    analytics.runs++;
+    analytics.counts[execution.outcome]++;
+    if (execution.createdAt > analytics.lastRun) analytics.lastRun = execution.createdAt;
   }
   return [...byId.values()]
-    .map((analytics) => ({ ...analytics, successRate: rate(analytics.successCount, analytics.totalExecutions) }))
-    .sort(byPassRate);
+    .map((analytics) => ({ ...analytics, cleanRate: rate(analytics.counts.clean, analytics.runs) }))
+    .sort(byCleanRate);
 }
 
 /** Runs of checks carrying every selected tag (all runs when none is selected). */
@@ -147,14 +176,19 @@ export function withTags(executions: ExecutionRecord[], scripts: ScriptSummary[]
   return executions.filter((execution) => tagged.has(execution.scriptId));
 }
 
-export function buildAnalytics(executions: ExecutionRecord[], scripts: ScriptSummary[]): AnalyticsData {
-  const count = (outcome: RunOutcome) => executions.filter((e) => e.outcome === outcome).length;
-  const statusDistribution = { success: count("clean"), failed: count("error"), attention_needed: count("issues") };
+export function buildAnalytics(
+  executions: ExecutionRecord[],
+  scripts: ScriptSummary[],
+  range: TimeRange,
+  { now = new Date(), timeZone }: { now?: Date; timeZone?: string } = {},
+): AnalyticsData {
+  const statusDistribution = noRuns();
+  for (const execution of executions) statusDistribution[execution.outcome]++;
   return {
     totalExecutions: executions.length,
     totalScripts: scripts.length,
-    overallSuccessRate: rate(statusDistribution.success, executions.length),
-    dailyTrend: dailyTrend(executions),
+    cleanRate: rate(statusDistribution.clean, executions.length),
+    dailyTrend: dailyTrend(executions, rangeDays(range, executions, now, timeZone), timeZone),
     scriptAnalytics: scriptAnalytics(executions, scripts),
     statusDistribution,
   };

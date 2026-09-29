@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { buildAnalytics, historyQuery, runsFromHistory, withTags, type AnalyticsData, type ScriptSummary, type TimeRange } from "./analytics";
 
 /** Loads runs for the filters and the check list, and derives the page's numbers. */
@@ -7,6 +7,7 @@ export function useAnalytics(timeRange: TimeRange, scriptId: string, hashtags: s
   const [scripts, setScripts] = useState<ScriptSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const tagKey = hashtags.join(",");
 
   useEffect(() => {
@@ -19,16 +20,16 @@ export function useAnalytics(timeRange: TimeRange, scriptId: string, hashtags: s
           fetch(`/api/check-history?${historyQuery(timeRange, scriptId)}`),
           fetch("/api/scripts"),
         ]);
-        if (!runsResponse.ok || !scriptsResponse.ok) throw new Error("Failed to fetch data");
+        if (!runsResponse.ok || !scriptsResponse.ok) throw new Error(`HTTP ${runsResponse.ok ? scriptsResponse.status : runsResponse.status}`);
         const runs = runsFromHistory(await runsResponse.json());
         const checks: ScriptSummary[] = await scriptsResponse.json();
         if (cancelled) return;
         setScripts(checks);
-        setData(buildAnalytics(withTags(runs, checks, tagKey ? tagKey.split(",") : []), checks));
+        setData(buildAnalytics(withTags(runs, checks, tagKey ? tagKey.split(",") : []), checks, timeRange));
       } catch (err) {
         if (cancelled) return;
         console.error("[analysis] Loading analytics failed:", err);
-        setError(err instanceof Error ? err.message : "Unknown error");
+        setError(err instanceof Error ? err.message : String(err));
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -36,7 +37,8 @@ export function useAnalytics(timeRange: TimeRange, scriptId: string, hashtags: s
     return () => {
       cancelled = true;
     };
-  }, [timeRange, scriptId, tagKey]);
+  }, [timeRange, scriptId, tagKey, attempt]);
 
-  return { data, scripts, isLoading, error };
+  const reload = useCallback(() => setAttempt((n) => n + 1), []);
+  return { data, scripts, isLoading, error, reload };
 }

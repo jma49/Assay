@@ -84,15 +84,15 @@ export function CompactHashtagFilter({
               size="sm"
               disabled={disabled}
               className={cn(
-                // Opens a menu, so it reads as an Aqua pop-up rather than a pill.
-                "h-10 px-4 justify-between gap-2 text-sm font-medium flex-1 rounded-[6px]",
+                // A control like the selects next to it: same height, text and radius.
+                "h-8 px-2.5 justify-between gap-2 text-[13px] font-normal flex-1 rounded-md",
                 "group relative"
               )}
             >
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               
               <div className="relative flex items-center gap-2 min-w-0 flex-1">
-                <Filter className="h-4 w-4 text-primary shrink-0" />
+                <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
                 <span className="truncate">
                   {selectedHashtags.length === 0 ? (
                     language === "zh" ? "标签筛选" : "Tags"
