@@ -50,6 +50,7 @@ describe("form setup", () => {
       hashtags: [],
       isScheduled: false,
       cronSchedule: "",
+      dataSourceId: "default",
     });
   });
 });
@@ -128,6 +129,11 @@ describe("payloads", () => {
     });
     expect(payload).not.toHaveProperty("scriptId");
     expect(payload).not.toHaveProperty("_id");
+  });
+
+  it("sends the data source once one is chosen, and none for a check that never named one", () => {
+    expect(updatePayload({ ...formFromScript(script), dataSourceId: "billing" }, "SELECT 1", "SELECT 1").dataSourceId).toBe("billing");
+    expect(toFormMetadata(formFromScript(script)).dataSourceId).toBe("default");
   });
 
   it("sends changed SQL and version 0 for a check that never had one", () => {

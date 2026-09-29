@@ -9,6 +9,8 @@ import { ScheduleSelector } from "@/components/ui/schedule-selector";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { DashboardTranslationKeys } from "@/components/business/dashboard/types";
 import { cn } from "@/lib/utils/utils";
+import { DataSourceSelect } from "@/components/checks/data-source/DataSourceSelect";
+import type { DataSourceOption } from "@/components/checks/data-source/useDataSourceOptions";
 
 export interface ScriptFormData {
   scriptId: string;
@@ -22,6 +24,8 @@ export interface ScriptFormData {
   hashtags: string[];
   isScheduled: boolean;
   cronSchedule: string;
+  /** The data source the check runs against; `default` is DATABASE_URL. */
+  dataSourceId: string;
 }
 
 interface ScriptMetadataFormProps {
@@ -36,6 +40,8 @@ interface ScriptMetadataFormProps {
   isEditMode?: boolean;
   /** Messages for fields that stop the save; each marks its field invalid. */
   errors?: Partial<Record<"name" | "scriptId" | "cronSchedule", string>>;
+  /** The sources to choose from; the picker shows only when there is more than one. */
+  dataSources?: DataSourceOption[];
   className?: string;
 }
 
@@ -92,6 +98,7 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
   onFormChange,
   isEditMode = false,
   errors = {},
+  dataSources = [],
   className,
 }) => {
   const { language } = useLanguage();
@@ -109,6 +116,13 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
   return (
     <div className={cn("space-y-5", className)}>
       <Section title={zh ? "基本信息" : "Details"}>
+        <DataSourceSelect
+          value={formData.dataSourceId}
+          options={dataSources}
+          onChange={(sourceId) => onFormChange("dataSourceId", sourceId)}
+          language={language}
+        />
+
         <Field id="name" label={zh ? "名称" : "Name"} required error={errors.name}>
           <Input
             id="name"

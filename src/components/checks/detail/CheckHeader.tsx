@@ -1,4 +1,6 @@
+import { Database } from "lucide-react";
 import type { CheckDetail } from "@/contracts/checks";
+import { sourceName } from "@/components/settings/data-sources/data-sources";
 import { formatDateTime, formatRelative } from "@/lib/utils/datetime";
 import { cn } from "@/lib/utils/utils";
 import { AlertBadges } from "../AlertControls";
@@ -42,6 +44,12 @@ export function CheckHeader({
       {description && <p className="max-w-[70ch] text-pretty text-body-md text-muted-foreground">{description}</p>}
       <p className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-muted-foreground">
         <span className="font-mono">{check.scriptId}</span>
+        {check.dataSource && (
+          <span className="inline-flex items-center gap-1" title={check.dataSource.id}>
+            <Database className="size-3.5" aria-hidden />
+            {check.dataSource.name === null ? check.dataSource.id : sourceName({ sourceId: check.dataSource.id, name: check.dataSource.name }, language)}
+          </span>
+        )}
         <span>{scheduleLabel(check.schedule, language)}</span>
         {state && <span title={formatDateTime(state.lastRunAt, language)}>{formatRelative(state.lastRunAt, language)}</span>}
       </p>

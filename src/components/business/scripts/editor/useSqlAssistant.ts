@@ -8,10 +8,11 @@ type DryRun = { ok: true; rowCount: number } | { ok: false; error: string };
 
 /**
  * The editor's AI calls: drafting a query from a request (dry-run on the
- * server) and explaining or optimizing the current one. Results and failures
- * are reported with toasts; `onDraft` puts a drafted query in the editor.
+ * server) and explaining or optimizing the current one, both against the
+ * schema of `dataSourceId`. Results and failures are reported with toasts;
+ * `onDraft` puts a drafted query in the editor.
  */
-export function useSqlAssistant(sql: string, language: "en" | "zh", onDraft: (sql: string) => void) {
+export function useSqlAssistant(sql: string, language: "en" | "zh", onDraft: (sql: string) => void, dataSourceId?: string) {
   const zh = language === "zh";
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -28,7 +29,7 @@ export function useSqlAssistant(sql: string, language: "en" | "zh", onDraft: (sq
     }
     setIsGenerating(true);
     try {
-      const data = await sendJson<{ success?: boolean; sql?: string; dryRun?: DryRun }>("/api/ai/generate-sql", "POST", { prompt });
+      const data = await sendJson<{ success?: boolean; sql?: string; dryRun?: DryRun }>("/api/ai/generate-sql", "POST", { prompt, dataSourceId });
       if (!data.success || !data.sql) throw new Error(zh ? "AI 返回的数据格式有误" : "The AI answer was malformed");
       onDraft(data.sql);
       const dryRun = data.dryRun;
@@ -62,7 +63,7 @@ export function useSqlAssistant(sql: string, language: "en" | "zh", onDraft: (sq
     setIsAnalyzing(true);
     setAnalysis((current) => ({ ...current, type }));
     try {
-      const data = await sendJson<{ success?: boolean; analysis?: string }>("/api/ai/analyze-sql", "POST", { sql, analysisType: type, language });
+      const data = await sendJson<{ success?: boolean; analysis?: string }>("/api/ai/analyze-sql", "POST", { sql, analysisType: type, language, dataSourceId });
       if (!data.success || !data.analysis) throw new Error(zh ? "AI 返回的数据格式有误" : "The AI answer was malformed");
       setAnalysis({ type, text: data.analysis, open: true });
       const title = type === "explain" ? (zh ? "AI解释已生成" : "Explanation ready") : zh ? "AI优化建议已生成" : "Suggestions ready";

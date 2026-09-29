@@ -1,3 +1,4 @@
+import { DEFAULT_SOURCE_ID, SOURCE_ID_PATTERN } from "@/domain/data-source";
 import type { ScriptFormData } from "@/components/business/scripts/ScriptMetadataForm";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
@@ -31,6 +32,7 @@ export const EMPTY_FORM: ScriptFormData = {
   hashtags: [],
   isScheduled: false,
   cronSchedule: "",
+  dataSourceId: DEFAULT_SOURCE_ID,
 };
 
 const MESSAGES = {
@@ -62,6 +64,12 @@ export function toScriptId(name: string): string {
 }
 
 /** The table a coverage link (`?table=schema.table`) asks for; only plain identifiers count. */
+/** The data source a coverage link (`?source=`) asks for; only valid ids count. */
+export function sourceFromSearch(search: string): string | null {
+  const source = new URLSearchParams(search).get("source");
+  return source && SOURCE_ID_PATTERN.test(source) ? source : null;
+}
+
 export function tableFromSearch(search: string): string | null {
   const table = new URLSearchParams(search).get("table");
   return table && TABLE_NAME.test(table) ? table : null;

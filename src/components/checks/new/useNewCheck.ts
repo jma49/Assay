@@ -6,6 +6,7 @@ import { apiErrorCode, sendJson } from "@/client/send-json";
 import type { ScriptFormData } from "@/components/business/scripts/ScriptMetadataForm";
 import { useCurrentUser } from "@/lib/auth/client";
 import { useMe } from "@/lib/auth/use-me";
+import { pickSource, useDataSourceOptions } from "@/components/checks/data-source/useDataSourceOptions";
 import type { TableRef, TemplateCheck } from "@/lib/checks/templates";
 import {
   EMPTY_FORM,
@@ -14,6 +15,7 @@ import {
   firstInvalid,
   saveErrorField,
   starterSqlFor,
+  sourceFromSearch,
   tableFromSearch,
   toScriptId,
   validateNewCheck,
@@ -65,12 +67,15 @@ export function useNewCheck(language: Language) {
   const [tableParam, setTableParam] = useState<string | null>(null);
   const [errors, setErrors] = useState<FieldErrors>({});
 
-  // Coverage links here with ?table=schema.table. The page is prerendered, so
-  // the query string is read after mount to keep hydration matching.
+  // Coverage links here with ?table=schema.table (and ?source= for its data
+  // source). The page is prerendered, so the query string is read after
+  // mount to keep hydration matching.
   useEffect(() => {
+    const source = sourceFromSearch(window.location.search);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only input (prerendered page), read once after hydration
+    if (source) setFormData((prev) => ({ ...prev, dataSourceId: source }));
     const table = tableFromSearch(window.location.search);
     if (!table) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only input (prerendered page), read once after hydration
     setTableParam(table);
     setSqlContent(starterSqlFor(table));
     const schema = table.includes(".") ? table.split(".")[0] : "";
@@ -84,6 +89,11 @@ export function useNewCheck(language: Language) {
     setPrefilledAuthor(defaultAuthor);
     setFormData((prev) => (prev.author ? prev : { ...prev, author: defaultAuthor }));
   }
+
+  // Once the sources are known, a form pointing at none of them (no DATABASE_URL, or a stale link) takes the first.
+  const dataSources = useDataSourceOptions(language);
+  const shownSource = pickSource(formData.dataSourceId, dataSources);
+  if (shownSource !== formData.dataSourceId) setFormData((prev) => ({ ...prev, dataSourceId: shownSource }));
 
   const clearError = (...fields: InvalidField[]) =>
     setErrors((prev) => (fields.some((field) => prev[field]) ? Object.fromEntries(Object.entries(prev).filter(([key]) => !fields.includes(key as InvalidField))) : prev));
@@ -157,6 +167,7 @@ export function useNewCheck(language: Language) {
     /** Null until the user's permissions are known. */
     canCreate: me ? me.permissions.includes("script:create") : null,
     formData,
+    dataSources,
     sqlContent,
     tableParam,
     errors,
