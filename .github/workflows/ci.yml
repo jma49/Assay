@@ -34,6 +34,10 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Unused files, exports and dependencies (knip.json).
+      - name: Dead code
+        run: npx knip
+
       - name: Test
         run: npm test
 
