@@ -22,7 +22,7 @@ export const POST = withAuth(Permission.SCRIPT_CREATE, async (request, { princip
   );
 });
 
-// The middleware only guarantees a signed-in user; reading checks (and
+// The proxy only guarantees a signed-in user; reading checks (and
 // their SQL) also needs script:read, as on the other script routes.
 export const GET = withAuth(Permission.SCRIPT_READ, async (_request, { principal }) => {
   const checks = await listCheckDefinitions(await getMongoDbClient().getDb());

@@ -15,6 +15,11 @@ updates:
       # this bound together with the Vercel Node version and CI's setup-node.
       - dependency-name: "@types/node"
         versions: [">=25"]
+      # eslint-config-next 16 bundles eslint-plugin-react, -import and
+      # -jsx-a11y, which accept ESLint <= 9; eslint-plugin-react crashes on
+      # ESLint 10. Drop this once an eslint-config-next release supports 10.
+      - dependency-name: "eslint"
+        versions: [">=10"]
 
   - package-ecosystem: github-actions
     directory: /
