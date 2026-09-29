@@ -17,7 +17,7 @@ A **check** is a read-only SQL query whose returned rows are problems: duplicate
 
 - **Clean** — no rows. **Issues** — rows that need attention, each marked new, still open or fixed since the last run. **Broken** — the query itself fails.
 - **Alerts** go to Slack, Discord, Telegram, Feishu, WeCom or a signed webhook when a check breaks, finds rows, gets new rows or recovers; with acknowledge, mute, owners, a daily summary and reminders.
-- **Agents** (Claude Code, Cursor, …) can list, read and run checks through the MCP server with personal API keys.
+- **Agents** (Claude Code, Cursor, …) can list, read and run checks through the MCP server, signing in with OAuth (the client opens a browser to sign in and consent) or with a personal API key.
 - **Review**: changes by non-admins go through approval; every edit is recorded in the edit history.
 
 ## Stack
@@ -45,9 +45,9 @@ Scheduled checks run from GitHub Actions (`.github/workflows/sql-check-cron.yml`
 | [docs/database.md](docs/database.md) | Collections, fields, indexes, retention, concurrency |
 | [docs/authentication.md](docs/authentication.md) | Sign-in, roles, moving from Clerk |
 | [docs/notifications.md](docs/notifications.md) | Alert channels, delivery model, setup |
-| [docs/mcp.md](docs/mcp.md) | Connecting agents, tools, security |
+| [docs/mcp.md](docs/mcp.md) | Connecting agents (OAuth or API key), tools, security |
 | [docs/brand.md](docs/brand.md) | The beetle, colours, type |
-| [docs/post-deploy-checklist.md](docs/post-deploy-checklist.md) | What to verify after each production deploy |
+| [docs/deployment.md](docs/deployment.md) | Configuration, scheduled runs, first deploy and a smoke test after each one |
 | [scripts/README.md](scripts/README.md) | Command-line tools and migrations |
 | `/docs` in the app | User guide (English and Chinese) |
 
@@ -55,6 +55,7 @@ Scheduled checks run from GitHub Actions (`.github/workflows/sql-check-cron.yml`
 
 ```bash
 npm run typecheck && npm run lint && npm test   # before every commit (see AGENTS.md)
+npx knip                                          # unused files, exports and dependencies (CI runs it)
 npm run build
 ```
 
