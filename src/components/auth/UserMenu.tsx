@@ -34,6 +34,8 @@ export function UserMenu({ user }: { user: CurrentUser }) {
           <span className="truncate text-[12px] text-muted-foreground">{user.email}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {/* A full load on purpose: nothing of the signed-in session may stay in client state. */}
+        {/* eslint-disable-next-line @next/next/no-location-assign-relative-destination */}
         <DropdownMenuItem onSelect={() => void signOut().then(() => window.location.assign("/"))}>
           <LogOut />
           {language === "zh" ? "退出登录" : "Sign out"}

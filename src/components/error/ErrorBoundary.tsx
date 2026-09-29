@@ -95,6 +95,8 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   private handleGoHome = () => {
+    // A full load on purpose: after a render error the client state cannot be trusted.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = '/checks';
   };
 
