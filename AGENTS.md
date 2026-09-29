@@ -16,6 +16,19 @@
 
 - Keep files small: a page is a shell over a data hook and section components; pure logic lives in a `.ts` module with tests. See `docs/architecture.md`.
 
+## Repository Hygiene
+
+The repository is public: anything committed stays readable in history even after a later commit deletes it.
+
+- Never commit secrets or env files. `.env.example` holds placeholders only; real values live in `.env.local` and Vercel. Test fixtures use obviously fake credentials (`user:pass`).
+- Never commit runtime data or generated output: database and Redis dumps, logs, `evals/results/`, `.visual/`, Playwright reports, `.next/`, `*.tsbuildinfo`, `node_modules/`.
+- Personal tool files stay local: `.claude/settings.local.json`, `.claude/worktrees/`, `CLAUDE.local.md`, `.cursor/`, `.vscode/`, `.DS_Store`.
+- When a new tool or script writes files into the repo, add its output to `.gitignore` in the same change.
+- Stage paths explicitly and read `git status` and `git diff --cached` before committing; do not `git add -A` blindly.
+- Delete files that are no longer used (boilerplate assets, placeholder directories) in the change that makes them unused.
+- If something sensitive was committed, a follow-up delete is not enough: stop and tell the maintainer, since it needs credential rotation and a history rewrite.
+- Delete a branch once its PR is merged, and remove agent worktrees (`git worktree remove`) when the work is done.
+
 ## UI Changes
 
 - Read `DESIGN.md` before touching `src/components`, `src/app` or `globals.css`. It holds the tokens, the type scale, the component rules and the migration order for the current refactor.
