@@ -108,9 +108,21 @@ export function passRate(stats: CheckStats): number {
   return stats.totalCount > 0 ? Math.round((stats.successCount / stats.totalCount) * 100) : 0;
 }
 
+/** The check the Run sheet runs: the one picked, else the first; none while the list is empty. */
+export function selectedCheckId(chosen: string, scripts: ScriptInfo[]): string {
+  if (scripts.length === 0) return "";
+  return chosen || scripts[0].scriptId;
+}
+
+/** The `?search=` a link to the run history carries (e.g. from a check's page), trimmed; "" for none. */
+export function searchLinkOf(value: string | string[] | undefined): string {
+  const first = Array.isArray(value) ? value[0] : value;
+  return first?.trim() ?? "";
+}
+
 /**
- * The `?search=` a link to the run history carries (e.g. from a check's page),
- * and the same URL without it so a reload does not apply it again.
+ * The `?search=` a link to the run history carries, and the same URL
+ * without it so a reload does not apply it again.
  */
 export function takeSearchParam(href: string): { search: string; cleanedHref: string } | null {
   const url = new URL(href);

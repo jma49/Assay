@@ -5,12 +5,13 @@ import { createHistoryLoader, type HistoryLoadResult } from "./history-loader";
 import { DEFAULT_SORT, EMPTY_PAGINATION, nextSort, type HistoryQuery, type SortConfig, type SortKey } from "./runs";
 
 /** One page of run history plus the filters, sort and pager that pick it. */
-export function useRunHistory(onError: (message: string) => void, language: "en" | "zh") {
+export function useRunHistory(onError: (message: string) => void, language: "en" | "zh", initialSearch = "") {
   const [checks, setChecks] = useState<HistoryRun[]>([]);
   const [pagination, setPagination] = useState(EMPTY_PAGINATION);
-  const [isLoadingChecks, setIsLoadingChecks] = useState(false);
+  // The page loads the first page on mount.
+  const [isLoadingChecks, setIsLoadingChecks] = useState(true);
   const [filterStatus, setFilterStatus] = useState<RunOutcome | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<SortConfig>(DEFAULT_SORT);
   const [currentPage, setCurrentPage] = useState(1);
@@ -77,14 +78,6 @@ export function useRunHistory(onError: (message: string) => void, language: "en"
     loadPage(current({ hashtags }));
   };
 
-  /** Sets the filters without loading, for the first load to pick up. */
-  const presetFilters = (filters: { outcome: RunOutcome | null; search?: string; hashtags?: string[] }) => {
-    setFilterStatus(filters.outcome);
-    if (filters.search !== undefined) setSearchTerm(filters.search);
-    if (filters.hashtags !== undefined) setSelectedHashtags(filters.hashtags);
-    setCurrentPage(1);
-  };
-
   return {
     checks,
     pagination,
@@ -102,6 +95,5 @@ export function useRunHistory(onError: (message: string) => void, language: "en"
     changeStatus,
     changeSearch,
     changeHashtags,
-    presetFilters,
   };
 }
