@@ -12,18 +12,31 @@ export type RunOutcome = "error" | "issues" | "clean";
 export const SAMPLE_ROWS = 500;
 /** Rows fingerprinted to tell new, still-open and fixed rows apart between runs. */
 export const FINGERPRINT_ROWS = 5_000;
-/** Bytes of sample rows kept on a run, well under MongoDB's 16 MB document limit even with wide rows. */
-export const SAMPLE_BYTES = 2 * 1024 * 1024;
+/**
+ * UTF-8 bytes of sample rows kept on a run, and the most a response carries
+ * per sample. A check's page sends two samples (the latest run and the one
+ * before, to mark new rows), so 1 MB each keeps it well under Vercel's
+ * 4.5 MB response limit.
+ */
+export const SAMPLE_BYTES = 1024 * 1024;
+
+const utf8 = new TextEncoder();
+
+/** Bytes a value takes as UTF-8 JSON (string length would count UTF-16 units, undercounting non-ASCII text up to 3x). */
+export function jsonBytes(value: unknown): number {
+  return utf8.encode(JSON.stringify(value) ?? "").length;
+}
 
 /**
  * The rows kept for display: at most SAMPLE_ROWS, and fewer when they are
- * wide, so a run document stays small. The row count is kept separately.
+ * wide, so a run document and any response carrying it stay small. The row
+ * count is kept separately.
  */
 export function sampleRows(rows: readonly Record<string, unknown>[], maxRows = SAMPLE_ROWS, maxBytes = SAMPLE_BYTES): Record<string, unknown>[] {
   const kept: Record<string, unknown>[] = [];
-  let bytes = 0;
+  let bytes = 2; // the array's brackets
   for (const row of rows.slice(0, maxRows)) {
-    bytes += JSON.stringify(row).length;
+    bytes += jsonBytes(row) + 1; // and its comma
     if (bytes > maxBytes) break;
     kept.push(row);
   }
