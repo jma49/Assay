@@ -1,10 +1,13 @@
 "use client";
 
+import { useId } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { ApprovalAction, ApprovalRequest, Language, Translate } from "./approvals";
+import { ApprovalSql } from "./ApprovalSql";
+import { approvalCopy, type ApprovalAction, type ApprovalRequest, type Language, type Translate } from "./approvals";
 
 interface ApprovalDecisionDialogProps {
   open: boolean;
@@ -19,7 +22,10 @@ interface ApprovalDecisionDialogProps {
   t: Translate;
 }
 
-/** Confirms an approve or reject decision with an optional comment. */
+/**
+ * Confirms an approve or reject decision with the SQL in view: an optional
+ * comment to approve, a required reason to reject (the API refuses one without).
+ */
 export function ApprovalDecisionDialog({
   open,
   onOpenChange,
@@ -33,26 +39,31 @@ export function ApprovalDecisionDialog({
   t,
 }: ApprovalDecisionDialogProps) {
   const approving = action === "approve";
+  const copy = approvalCopy(language);
+  const commentId = useId();
+  const missingReason = !approving && comment.trim() === "";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{approving ? t("approveScript") : t("rejectScript")}</DialogTitle>
-          <DialogDescription>
-            {approval && `${language === "zh" ? "脚本" : "Script"}: ${approval.scriptName} (${approval.scriptId})`}
-          </DialogDescription>
+          {approval && (
+            <DialogDescription>
+              {approval.scriptName} · <span className="font-mono">{approval.scriptId}</span>
+            </DialogDescription>
+          )}
         </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium">
-              {approving ? t("approvalReason") : t("rejectReasonPlaceholder")}
-            </label>
+        <div className="min-w-0 space-y-4">
+          {approval && <ApprovalSql key={approval.id} approval={approval} copy={copy} defaultOpen />}
+          <div className="space-y-1.5">
+            <Label htmlFor={commentId}>{approving ? copy.commentLabel : copy.rejectLabel}</Label>
             <Textarea
+              id={commentId}
               value={comment}
               onChange={(e) => onCommentChange(e.target.value)}
-              placeholder={approving ? t("approvalReasonPlaceholder") : t("rejectReasonPlaceholder")}
-              className="mt-1"
+              placeholder={approving ? copy.commentPlaceholder : copy.rejectPlaceholder}
+              required={!approving}
             />
           </div>
         </div>
@@ -61,11 +72,11 @@ export function ApprovalDecisionDialog({
             {t("cancel")}
           </Button>
           <Button
+            variant={approving ? "default" : "destructive"}
             onClick={onSubmit}
-            disabled={submitting}
-            className={approving ? "bg-success hover:bg-success" : "bg-failure hover:bg-failure"}
+            disabled={submitting || missingReason}
           >
-            {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {submitting && <Loader2 className="size-4 animate-spin" />}
             {approving ? t("approve") : t("reject")}
           </Button>
         </DialogFooter>
