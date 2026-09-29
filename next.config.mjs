@@ -22,15 +22,8 @@ const CONTENT_SECURITY_POLICY = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  env: {
-    NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version || "0.2.1",
-  },
   experimental: {
     optimizePackageImports: ["lucide-react"],
-  },
-  typescript: {
-    ignoreBuildErrors: false,
-    tsconfigPath: "./tsconfig.json",
   },
   compiler: {
     removeConsole:
@@ -84,22 +77,9 @@ const nextConfig = {
   async redirects() {
     return LEGACY_PAGE_REDIRECTS;
   },
-  async rewrites() {
-    return [
-      // In development, a stale layout.css request would 404; serve an empty stylesheet instead.
-      ...(process.env.NODE_ENV === "development"
-        ? [
-            {
-              source: "/_next/static/css/app/layout.css",
-              destination: "/api/css-fallback",
-            },
-          ]
-        : []),
-    ];
-  },
 };
 
-// The dev server writes to its own folder, so `npm run build` or `preview`
+// The dev server writes to its own folder, so `npm run build`
 // while `npm run dev` is running cannot overwrite its files and break it.
 export default function config(phase) {
   return phase === PHASE_DEVELOPMENT_SERVER ? { ...nextConfig, distDir: ".next-dev" } : nextConfig;
