@@ -180,8 +180,11 @@ harmlessly. Nothing needs to be run by hand for an ordinary upgrade.
 
 If both names exist, the app uses the new one and never merges on its own:
 that happens when a build from before the rename ran after it (a rollback)
-and wrote to the old name. An empty old collection is dropped; otherwise it
-logs a warning with both counts. Merge with the script:
+and wrote to the old name. An empty old collection is renamed aside to
+`<old>_orphaned_<time>` and a warning logged, never dropped: an old build
+still serving could write to it between the count and a drop. Drop the
+orphan once nothing writes the old name. If the old collection holds
+documents, it logs a warning with both counts. Merge with the script:
 
 ```bash
 npm run migrate:collections                              # show both names and counts
@@ -191,6 +194,7 @@ npm run migrate:collections -- --merge --apply --drop-old  # then drop the old c
 ```
 
 `--apply` alone renames where only the old name exists, the same as the app.
+The merge looks up old ids in the new collection 500 at a time.
 
 **Rolling back** to a build from before the rename: that build reads and
 writes `sql_scripts` and `result`. After the rename they no longer exist, so
@@ -199,3 +203,24 @@ old-named collection. Before rolling back, rename them back by hand
 (`db.checks.renameCollection("sql_scripts")`,
 `db.runs.renameCollection("result")`); after rolling forward again the app
 renames them once more.
+
+### Future renames: a release step, not first request
+
+The 2026-09 rename ran on the first request after the deploy, and that
+is fragile, so do the next one differently:
+
+- **The cron runs `main` before Vercel serves it.** The scheduled workflow
+  checks out `main` and runs checks from GitHub Actions within minutes of a
+  push, while the Vercel build for the same commit may still be running and
+  the old build still answers requests. For that window the new code (cron)
+  and the old code (web) use different collection names, each creating
+  what it misses.
+- **So rename explicitly, as a step of the release:** first ship a build
+  that reads both names (new first) and writes the new one; run the rename
+  with the migration script once that build is live everywhere; only then
+  ship the build that knows the new name alone. Pause the cron workflow
+  (or let it skip) for the release if the old and new builds cannot
+  share the data.
+- Checking in the cron whether the deployed version matches its commit
+  was considered and left out: it needs a Vercel API token in the
+  workflow and still races the alias switch.
