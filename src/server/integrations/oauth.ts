@@ -61,7 +61,7 @@ const PROVIDERS: Record<OAuthKind, Provider> = {
 export const OAUTH_NONCE_COOKIE = "assay_oauth_nonce";
 const STATE_TTL_MS = 10 * 60 * 1000;
 
-export const redirectUri = (kind: OAuthKind, baseUrl: string) => `${baseUrl}/api/integrations/${kind}/callback`;
+const redirectUri = (kind: OAuthKind, baseUrl: string) => `${baseUrl}/api/integrations/${kind}/callback`;
 
 interface State {
   kind: OAuthKind;

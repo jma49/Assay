@@ -11,7 +11,7 @@ export function telegramApi(method: string, env: Record<string, string | undefin
   return `https://api.telegram.org/bot${token}/${method}`;
 }
 
-export function telegramOk(body: string): DeliveryOutcome {
+function telegramOk(body: string): DeliveryOutcome {
   try {
     const parsed = JSON.parse(body) as { ok?: boolean; description?: string };
     return parsed.ok === false ? { kind: "failed", error: parsed.description ?? "Telegram refused the message" } : { kind: "sent" };
@@ -21,7 +21,7 @@ export function telegramOk(body: string): DeliveryOutcome {
 }
 
 /** callback_data is capped at 64 bytes: "<action>:<eventId>.<key>" fits with room to spare. */
-export function telegramKeyboard(actions: { token: string; acknowledge: string; mute: string }) {
+function telegramKeyboard(actions: { token: string; acknowledge: string; mute: string }) {
   return [
     [
       { text: `✅ ${actions.acknowledge}`, callback_data: `${ACTION_IDS.acknowledge}:${actions.token}` },
@@ -33,7 +33,7 @@ export function telegramKeyboard(actions: { token: string; acknowledge: string; 
 /** Telegram has no incoming webhooks: the bot posts to a chat it was added to. */
 export const telegram: Channel = {
   kind: "telegram",
-  validateUrl: () => "Telegram is connected through the bot, not a URL",
+  validateUrl: () => "url_not_a_webhook",
   request(message, secret, { env }) {
     const text = [
       `${EMOJI[message.tone]} <b>${escapeHtml(message.title)}</b>`,

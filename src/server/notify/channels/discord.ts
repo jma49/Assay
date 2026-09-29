@@ -8,12 +8,12 @@ const COLOR = { failure: 0xd1242f, attention: 0xbf8700, success: 0x1a7f37 };
  * error text cannot become a disguised [link](https://…), a heading or a
  * <#channel> reference. Discord drops the backslash before any punctuation.
  */
-export const discordMarkdown = (text: string) => text.replace(/[\\*_~`|<>[\]()#\-:@]/g, "\\$&");
+const discordMarkdown = (text: string) => text.replace(/[\\*_~`|<>[\]()#\-:@]/g, "\\$&");
 
 export const discord: Channel = {
   kind: "discord",
   validateUrl: (url) =>
-    expectHost(url, ["discord.com", "discordapp.com", "canary.discord.com", "ptb.discord.com"], "/api/webhooks/", "Discord"),
+    expectHost(url, ["discord.com", "discordapp.com", "canary.discord.com", "ptb.discord.com"], "/api/webhooks/"),
   request(message, secret) {
     const body = {
       username: "Assay",

@@ -1,11 +1,11 @@
 import type { RunOutcome } from "@/domain/run";
-import type { CheckStats } from "@/lib/database/check-stats";
+import type { CheckStats } from "@/contracts/runs";
 import { nextRunAt } from "@/lib/scheduling/due-slot";
 import type { HistoryRun, ScriptInfo } from "../types";
 
 /** Sort by when the run finished, or by the check's name in the reader's language. */
 export type SortKey = "finishedAt" | "name";
-export type SortDirection = "ascending" | "descending";
+type SortDirection = "ascending" | "descending";
 
 export interface SortConfig {
   key: SortKey;
@@ -118,16 +118,6 @@ export function takeSearchParam(href: string): { search: string; cleanedHref: st
   if (!search) return null;
   url.searchParams.delete("search");
   return { search: search.trim(), cleanedHref: url.toString() };
-}
-
-/** The message to show when triggering a run failed, preferring the API's localized one. */
-export function triggerErrorMessage(err: unknown): string {
-  if (!(err instanceof Error)) return "Trigger failed";
-  const cause = err.cause;
-  if (cause && typeof cause === "object" && typeof (cause as { localizedMessage?: unknown }).localizedMessage === "string") {
-    return (cause as { localizedMessage: string }).localizedMessage;
-  }
-  return err.message || "Trigger failed";
 }
 
 /** Each check's name in the UI language, keyed by the id the history rows carry. */

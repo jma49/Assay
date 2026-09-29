@@ -1,17 +1,6 @@
 import redis from "../cache/redis";
+import type { SchemaTable } from "@/contracts/schema";
 import { withReadOnlyTransaction } from "./db";
-
-export interface SchemaColumn {
-  name: string;
-  type: string;
-  nullable: boolean;
-}
-
-export interface SchemaTable {
-  schema: string;
-  name: string;
-  columns: SchemaColumn[];
-}
 
 interface ColumnRow {
   table_schema: string;

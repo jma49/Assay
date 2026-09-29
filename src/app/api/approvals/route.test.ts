@@ -20,7 +20,6 @@ vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
 vi.mock("@/lib/auth/rbac", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/auth/rbac")>()),
   requirePermission: async (_userId: string, permission: string) => ({ authorized: mocks.permissions.has(permission) }),
-  hasPermission: async (_userId: string, permission: string) => mocks.permissions.has(permission),
 }));
 vi.mock("@/lib/database/mongodb", () => ({
   getMongoDbClient: () => ({

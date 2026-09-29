@@ -17,7 +17,7 @@ export interface McpCaller {
   credential: string;
 }
 
-export interface VerifiedKey {
+interface VerifiedKey {
   keyId: string;
   userId: string;
   expiresAt: Date | null;

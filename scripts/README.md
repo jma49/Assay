@@ -14,10 +14,11 @@ resolves the `@/` alias.
 | `set-user-role.ts` | Assigns a role to someone who has signed in, by email. |
 | `backfill-check-state.ts [--dry-run] [--recompute]` | Rebuilds each check's state from its run history. |
 | `telegram-webhook.ts [--delete]` | Points the Telegram bot at this deployment. |
-| `migrations/*.ts [--apply]` | One-off data migrations; dry run unless `--apply`. All three have been applied to production: |
+| `migrations/*.ts [--apply]` | One-off data migrations; dry run unless `--apply`. All four have been applied to production (the rename ran on start on 2026-09-28, after a backup); the rename also runs by itself on start: |
 | `migrations/mark-demo-seed.ts` | Marks the sample checks `demoSeed: true`, which demo access relies on. |
 | `migrations/set-run-expiry.ts` | Gives older runs `expiresAt`, so the retention TTL covers them. |
 | `migrations/backfill-run-fields.ts` | Gives pre-pipeline runs `checkId`, `finishedAt`, `outcome`, `rowCount`. |
+| `migrations/rename-collections.ts` (`npm run migrate:collections`) | Renames `sql_scripts` → `checks` and `result` → `runs`. The app does this on start; the script shows the state first and, with `--merge`, copies an old collection into the new one when both hold documents (`--drop-old` then drops the old one once every document arrived). |
 | `brand/render-icons.ts` | Regenerates the favicon from the beetle grid. |
 
 The database connections come from `DATABASE_URL` and `MONGODB_URI`; load

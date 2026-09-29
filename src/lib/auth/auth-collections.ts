@@ -5,7 +5,7 @@ import { COLLECTIONS } from "@/lib/database/collections";
 import { ensureIndexes } from "@/lib/database/indexes";
 
 /** Collections Better Auth's OAuth provider writes inside transactions. */
-export const OAUTH_COLLECTIONS = [
+const OAUTH_COLLECTIONS = [
   COLLECTIONS.oauthClients,
   COLLECTIONS.oauthClientResources,
   COLLECTIONS.oauthResources,

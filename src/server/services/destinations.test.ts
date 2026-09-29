@@ -4,8 +4,8 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import { open } from "@/server/crypto/secret-box";
 import { createPastedDestination } from "./destinations";
 
-vi.mock("@/server/notify/safe-url", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@/server/notify/safe-url")>();
+vi.mock("@/server/net/safe-url", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/server/net/safe-url")>();
   return {
     ...original,
     assertPublicHost: async (host: string) => {
@@ -46,7 +46,7 @@ describe("createPastedDestination", () => {
     const { db, inserted } = fakeDb();
     await expect(
       createPastedDestination(db, "default", by, { ...base, kind: "slack", url: "https://example.com/services/x" }),
-    ).rejects.toMatchObject({ status: 400, code: "invalid_url" });
+    ).rejects.toMatchObject({ status: 400, code: "url_wrong_service" });
     expect(inserted).toHaveLength(0);
   });
 
@@ -57,7 +57,7 @@ describe("createPastedDestination", () => {
     expect(JSON.parse(open(String(inserted[0].sealed))).signingSecret).toBe(signingSecret);
     await expect(
       createPastedDestination(db, "default", by, { ...base, kind: "webhook", url: "https://internal.example/in" }),
-    ).rejects.toMatchObject({ status: 400 });
+    ).rejects.toMatchObject({ status: 400, code: "url_not_public" });
     await expect(
       createPastedDestination(db, "default", by, { ...base, kind: "webhook", url: "https://typo.example/in" }),
     ).rejects.toMatchObject({ status: 400, code: "host_not_found", message: "Couldn't resolve host typo.example. Check the URL." });

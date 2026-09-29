@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { SchemaTable } from "@/lib/database/db-schema";
+import type { SchemaTable } from "@/contracts/schema";
 import { computeCoverage } from "./coverage";
 
 const table = (schema: string, name: string): SchemaTable => ({

@@ -21,7 +21,7 @@ export interface DestinationDto {
 }
 
 /** Which one-click connections this deployment has credentials for. */
-export interface NotificationSetup {
+interface NotificationSetup {
   canManage: boolean;
   /** Without ASSAY_SECRET_KEY no destination can be saved. */
   secretKey: boolean;

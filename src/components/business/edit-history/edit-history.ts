@@ -2,7 +2,6 @@ import { describePage } from "@/lib/utils/pagination";
 import type { EditHistoryFilter, EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
 
 export type Translate = (key: string) => string;
-export type Operation = EditHistoryRecord["operation"];
 export type OperationFilter = NonNullable<EditHistoryFilter["operation"]>;
 export type FieldChange = NonNullable<EditHistoryRecord["changes"]>[number];
 
@@ -13,6 +12,8 @@ export interface HistoryFilters {
   operation: OperationFilter;
   dateFrom: string;
   dateTo: string;
+  /** One check only, matched exactly (the history dialog on the manage page). */
+  scriptId?: string;
 }
 
 export const EMPTY_FILTERS: HistoryFilters = {
@@ -41,6 +42,7 @@ export function buildHistoryQuery(filters: HistoryFilters, page: number, pageSiz
   const author = filters.author.trim();
   const dateFrom = parseDateInput(filters.dateFrom);
   const dateTo = parseDateInput(filters.dateTo);
+  if (filters.scriptId) params.set("scriptId", filters.scriptId);
   if (scriptName) params.set("scriptName", scriptName);
   if (author) params.set("author", author);
   if (filters.operation !== "all") params.set("operation", filters.operation);
@@ -85,10 +87,10 @@ export function operationLabel(operation: string, t: Translate): string {
 const MAX_VALUE_LENGTH = 50;
 
 /** A changed field's old or new value, shortened for the diff view. */
-export function formatChangeValue(value: unknown, t: Translate): string {
+export function formatChangeValue(value: unknown, t: Translate, maxLength = MAX_VALUE_LENGTH): string {
   if (value === null || value === undefined) return t("noData");
   if (typeof value === "boolean") return value ? t("scheduled") : t("manual");
-  if (typeof value === "string" && value.length > MAX_VALUE_LENGTH) return value.substring(0, MAX_VALUE_LENGTH) + "...";
+  if (typeof value === "string" && value.length > maxLength) return value.substring(0, maxLength) + "...";
   return String(value);
 }
 

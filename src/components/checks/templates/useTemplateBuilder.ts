@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { SchemaTable } from "@/lib/database/db-schema";
+import type { SchemaTable } from "@/contracts/schema";
 import {
   buildTemplate,
   columnFits,
@@ -15,7 +15,7 @@ import {
 /** Select values for tables: JSON keeps a schema or name containing "." unambiguous. */
 export const tableKey = (table: TableRef) => JSON.stringify([table.schema, table.name]);
 
-export function tableFromKey(key: string): TableRef | undefined {
+function tableFromKey(key: string): TableRef | undefined {
   try {
     const [schema, name] = JSON.parse(key) as unknown[];
     return typeof schema === "string" && typeof name === "string" ? { schema, name } : undefined;

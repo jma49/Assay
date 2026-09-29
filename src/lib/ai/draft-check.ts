@@ -3,7 +3,7 @@ import { z } from "zod";
 import { aiModel, gatewayOptions } from "@/lib/ai/model";
 import { dryRunCheck, type DryRunResult } from "@/lib/sql/dry-run";
 
-export const checkDraftSchema = z.object({
+const checkDraftSchema = z.object({
   name: z.string().describe("Short title of the check, in the language of the request"),
   scriptId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).describe("kebab-case id"),
   description: z.string().describe("One sentence: what a returned row means"),
@@ -24,7 +24,7 @@ export interface DraftCheckResult {
 
 const MAX_ATTEMPTS = 2;
 
-export function draftCheckPrompt(request: string, schema: string, previous?: { sql: string; error: string }) {
+function draftCheckPrompt(request: string, schema: string, previous?: { sql: string; error: string }) {
   const repair = previous
     ? `\n\nYour previous query failed when run:\n${previous.sql}\nError: ${previous.error}\nFix it.`
     : "";

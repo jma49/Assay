@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { apiErrorText } from "@/client/api-errors";
+import { readJson } from "@/client/send-json";
 import type { BatchItemView, BatchView } from "@/contracts/batches";
 import type { ScriptInfo } from "../types";
 import { triggerCopy } from "./copy";
@@ -67,8 +69,8 @@ export function useBatchRun(language: string) {
           body: JSON.stringify({ mode, scriptIds: targets.map((script) => script.scriptId), filteredExecution: filtered }),
           signal: startAbort.current.signal,
         });
-        const result = await response.json();
-        if (!response.ok || !result.executionId) throw new Error(result.message || copy.startFailed);
+        const result = await readJson<{ executionId?: string }>(response, copy.startFailed);
+        if (!result.executionId) throw new Error(copy.startFailed);
         setExecutionId(result.executionId);
         setItems(
           targets.map((script) => ({
@@ -81,7 +83,7 @@ export function useBatchRun(language: string) {
         toast.success(copy.started, { duration: 3000 });
       } catch (error) {
         if (isAbort(error)) return;
-        toast.error(copy.startFailed, { description: error instanceof Error ? error.message : undefined, duration: 8000 });
+        toast.error(copy.startFailed, { description: apiErrorText(error, language === "zh" ? "zh" : "en"), duration: 8000 });
         setIsRunning(false);
       }
     },

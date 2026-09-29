@@ -14,8 +14,8 @@ export function webhookSignature(secret: string, timestamp: string, body: string
 export const webhook: Channel = {
   kind: "webhook",
   validateUrl(url) {
-    if (url.protocol !== "https:") return "Webhook URLs must use https";
-    if (url.username || url.password) return "Put credentials in a header on your side, not in the URL";
+    if (url.protocol !== "https:") return "url_not_https";
+    if (url.username || url.password) return "url_has_credentials";
     return null;
   },
   request(message, secret, { now }) {

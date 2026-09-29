@@ -7,7 +7,6 @@ export interface RunCheckResponse {
   success: boolean;
   outcome: RunOutcome;
   message?: string;
-  localizedMessage?: string;
   mongoResultId?: string;
   rowCount?: number;
 }

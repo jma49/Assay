@@ -9,7 +9,7 @@ const StatusPieChart = dynamic(() => import("./AnalysisCharts").then((m) => m.St
   ssr: false,
   loading: chartPlaceholder,
 });
-const TrendLineChart = dynamic(() => import("./AnalysisCharts").then((m) => m.TrendLineChart), {
+const DailyTrendChart = dynamic(() => import("./AnalysisCharts").then((m) => m.DailyTrendChart), {
   ssr: false,
   loading: chartPlaceholder,
 });
@@ -39,7 +39,7 @@ export function AnalysisChartsRow({ data, rangeLabel, language }: { data: Analyt
       </AnalysisSection>
       <AnalysisSection title={copy.perDay} hint={rangeLabel}>
         <div className="h-72 p-4">
-          <TrendLineChart data={data.dailyTrend} language={lang} allRunsLabel={copy.allRuns} />
+          <DailyTrendChart data={data.dailyTrend} language={lang} allRunsLabel={copy.allRuns} />
         </div>
       </AnalysisSection>
     </div>

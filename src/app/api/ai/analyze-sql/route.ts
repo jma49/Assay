@@ -1,89 +1,53 @@
 import { NextResponse } from "next/server";
-import { withAuth } from "@/server/http/route";
+import { z } from "zod";
+import { parseJson, withAuth } from "@/server/http/route";
+import { aiError, guardAiRequest } from "@/server/http/ai-guard";
 import { Permission } from "@/lib/auth/rbac";
-import { guardAiRequest } from "@/lib/security/ai-guard";
 import { getCachedSchema } from "@/lib/database/db-schema";
-import {
-  generateContentWithRetry,
-  getAIErrorMessage,
-  logTokenUsage,
-} from "@/lib/utils/ai-utils";
+import { generateContentWithRetry, logTokenUsage } from "@/lib/utils/ai-utils";
+
+const Body = z.object({
+  sql: z.string().min(1),
+  analysisType: z.enum(["explain", "optimize"]),
+  /** The reader's language; the answer is written in it. */
+  language: z.enum(["en", "zh"]).catch("en"),
+});
+
+const ASK = {
+  explain: ["Explain this SQL query", ["What it is for", "How it runs", "Performance considerations"]],
+  optimize: ["Suggest how to optimize this SQL query", ["Performance bottlenecks", "Index suggestions", "An optimized query, if one helps"]],
+} as const;
+
+const REPLY_IN = { en: "English", zh: "Simplified Chinese" } as const;
+
+/** The prompt for one analysis, with the table schema as context. */
+function analysisPrompt(sql: string, type: keyof typeof ASK, schema: string, language: keyof typeof REPLY_IN): string {
+  const [task, points] = ASK[type];
+  return [
+    `${task} (table schema: ${schema})`,
+    "",
+    "```sql",
+    sql,
+    "```",
+    "",
+    "Cover briefly:",
+    ...points.map((point, index) => `${index + 1}. ${point}`),
+    "",
+    `Answer in Markdown, in ${REPLY_IN[language]}.`,
+  ].join("\n");
+}
 
 export const POST = withAuth(Permission.SCRIPT_CREATE, async (request, { principal }) => {
+  const { sql, analysisType, language } = await parseJson(request, Body);
+  await guardAiRequest(principal.id, { sql });
+
   try {
-    const { sql, analysisType } = await request.json();
-
-    const refused = await guardAiRequest(principal.id, { sql });
-    if (refused) {
-      return refused;
-    }
-
-    if (!sql || typeof sql !== "string") {
-      return NextResponse.json(
-        { error: "请提供有效的SQL语句" },
-        { status: 400 }
-      );
-    }
-
-    if (!analysisType || !["explain", "optimize"].includes(analysisType)) {
-      return NextResponse.json(
-        { error: "分析类型必须是 explain 或 optimize" },
-        { status: 400 }
-      );
-    }
-
-    // The table schema gives the model context for the query.
-    const schema = await getCachedSchema();
-
-    let aiPrompt = "";
-
-    if (analysisType === "explain") {
-      aiPrompt = `解释SQL查询 (表结构: ${schema})
-
-\`\`\`sql
-${sql}
-\`\`\`
-
-简要说明:
-1. 查询目的
-2. 执行逻辑
-3. 性能考虑
-
-用Markdown格式，中文回复。`;
-    } else if (analysisType === "optimize") {
-      aiPrompt = `优化SQL查询 (表结构: ${schema})
-
-\`\`\`sql
-${sql}
-\`\`\`
-
-提供:
-1. 性能瓶颈
-2. 索引建议
-3. 优化后SQL (如需要)
-
-用Markdown格式，中文回复。`;
-    }
-
-    const analysis = await generateContentWithRetry(aiPrompt, { feature: "analyze-sql", userId: principal.id });
-
-    logTokenUsage(aiPrompt, analysis, `分析SQL-${analysisType}`);
-
-    return NextResponse.json({
-      analysis,
-      analysisType,
-      success: true,
-    });
+    const prompt = analysisPrompt(sql, analysisType, await getCachedSchema(), language);
+    const analysis = await generateContentWithRetry(prompt, { feature: "analyze-sql", userId: principal.id });
+    logTokenUsage(prompt, analysis, `analyze-sql ${analysisType}`);
+    return NextResponse.json({ analysis, analysisType, success: true });
   } catch (error) {
-    console.error("[AI Analyze SQL] 错误:", error);
-
-    const errorMessage = getAIErrorMessage(error);
-
-    return NextResponse.json(
-      {
-        error: errorMessage,
-      },
-      { status: 500 }
-    );
+    console.error("[AI analyze SQL] The model call failed:", error);
+    throw aiError(error);
   }
 });

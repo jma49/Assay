@@ -208,7 +208,7 @@ function ScheduleDemo({ lang }: { lang: Language }) {
   );
 }
 
-export const RECENT_RUNS: { en: string; zh: string; status: Status; found: number }[] = [
+const RECENT_RUNS: { en: string; zh: string; status: Status; found: number }[] = [
   { en: "Duplicate orders", zh: "重复下单", status: "attention", found: 6 },
   { en: "Negative inventory", zh: "库存为负", status: "attention", found: 3 },
   { en: "Refunds larger than payment", zh: "退款超过支付金额", status: "passed", found: 0 },

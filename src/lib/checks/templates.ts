@@ -1,4 +1,4 @@
-import type { SchemaColumn, SchemaTable } from "@/lib/database/db-schema";
+import type { SchemaColumn, SchemaTable } from "@/contracts/schema";
 import { commentText, numericLiteral, quoteIdent, quoteLiteral, quoteTable } from "@/lib/sql/quote";
 
 /**
@@ -16,7 +16,7 @@ import { commentText, numericLiteral, quoteIdent, quoteLiteral, quoteTable } fro
 export type TemplateId = "not-null" | "duplicates" | "orphans" | "freshness" | "out-of-range" | "accepted-values";
 
 /** What a template asks for, besides the table. */
-export type TemplateField = "column" | "columns" | "parent" | "maxAgeHours" | "range" | "values";
+type TemplateField = "column" | "columns" | "parent" | "maxAgeHours" | "range" | "values";
 
 /** Which columns suit a template. */
 export type ColumnKind = "any" | "groupable" | "time" | "number";
@@ -125,9 +125,9 @@ export interface TemplateCheck {
 export type TemplateResult = { ok: true; check: TemplateCheck } | { ok: false; error: Bilingual };
 
 export const MAX_DUPLICATE_KEY_COLUMNS = 5;
-export const MAX_ACCEPTED_VALUES = 100;
-export const MAX_VALUE_LENGTH = 200;
-export const MAX_AGE_HOURS = 24 * 366;
+const MAX_ACCEPTED_VALUES = 100;
+const MAX_VALUE_LENGTH = 200;
+const MAX_AGE_HOURS = 24 * 366;
 
 const fail = (en: string, zh: string): TemplateResult => ({ ok: false, error: { en, zh } });
 

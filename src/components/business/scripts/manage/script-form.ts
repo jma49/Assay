@@ -84,7 +84,7 @@ export function toFormMetadata(form: ScriptFormState): ScriptFormData {
 }
 
 /** Fields the save button refuses to go without. */
-export function missingRequiredFields(form: ScriptFormState, sql: string, language: Language): string[] {
+function missingRequiredFields(form: ScriptFormState, sql: string, language: Language): string[] {
   const zh = isZh(language);
   const missing: string[] = [];
   if (!form.scriptId?.trim()) missing.push(zh ? "脚本ID" : "script ID");
@@ -161,40 +161,6 @@ export function updatePayload(form: ScriptFormState, sql: string, initialSql: st
   return payload;
 }
 
-interface ApiBody {
-  message?: string;
-  requiresApproval?: boolean;
-}
-
-export type SaveOutcome =
-  | { kind: "saved" }
-  | { kind: "conflict" }
-  | { kind: "approval"; message?: string }
-  | { kind: "failed"; message: string };
-
-const asBody = (body: unknown): ApiBody => (body && typeof body === "object" ? (body as ApiBody) : {});
-
-/** Reads a save response. A 409 means another save won the optimistic-concurrency race. */
-export function classifySave(response: { ok: boolean; status: number }, body: unknown, mode: DialogMode): SaveOutcome {
-  const data = asBody(body);
-  if (!response.ok) {
-    if (response.status === 409) return { kind: "conflict" };
-    if (data.requiresApproval) return { kind: "approval", message: data.message };
-    return { kind: "failed", message: data.message || `Failed to ${mode} script: ${response.status}` };
-  }
-  if (data.requiresApproval) return { kind: "approval", message: data.message };
-  return { kind: "saved" };
-}
-
-export type DeleteOutcome = { kind: "deleted" } | { kind: "approval"; message?: string } | { kind: "failed"; message: string };
-
-export function classifyDelete(response: { ok: boolean; status: number }, body: unknown): DeleteOutcome {
-  const data = asBody(body);
-  if (!response.ok) return { kind: "failed", message: data.message || `Failed to delete script: ${response.status}` };
-  if (data.requiresApproval) return { kind: "approval", message: data.message };
-  return { kind: "deleted" };
-}
-
 export function conflictNotice(language: Language): Notice {
   const zh = isZh(language);
   return {
@@ -206,11 +172,12 @@ export function conflictNotice(language: Language): Notice {
   };
 }
 
-export function approvalNotice(language: Language, message: string | undefined, action: "save" | "delete"): Notice {
+export function approvalNotice(language: Language, action: "save" | "delete"): Notice {
   const zh = isZh(language);
   const title =
     action === "delete"
       ? zh ? "删除申请已提交" : "Deletion submitted for approval"
       : zh ? "申请已提交" : "Submitted for approval";
-  return { title, description: message, duration: 6000 };
+  const description = zh ? "管理员审批后才会生效。" : "It takes effect once an admin approves it.";
+  return { title, description, duration: 6000 };
 }
