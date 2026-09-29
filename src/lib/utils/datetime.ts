@@ -99,13 +99,31 @@ export function localDayKey(value: Date | string | number, timeZone?: string): s
   return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
 }
 
-/** Day number and short month of a "YYYY-MM-DD" key, without any time-zone shift. */
-export function dayKeyParts(key: string, language: string): { day: string; month: string } {
+const keyDate = (key: string): Date | null => {
   const [year, month, day] = key.split("-").map(Number);
-  if (!year || !month || !day) return { day: EMPTY, month: "" };
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return {
-    day: String(day),
-    month: new Intl.DateTimeFormat(localeOf(language), { timeZone: "UTC", month: "short" }).format(date),
-  };
+  return year && month && day ? new Date(Date.UTC(year, month - 1, day)) : null;
+};
+
+/** A "YYYY-MM-DD" day key as a short date ("Sep 24", "9月24日"), without any time-zone shift. */
+export function formatDayKey(key: string, language: string, options: { weekday?: boolean } = {}): string {
+  const date = keyDate(key);
+  if (!date) return EMPTY;
+  return new Intl.DateTimeFormat(localeOf(language), {
+    timeZone: "UTC",
+    month: "short",
+    day: "numeric",
+    ...(options.weekday && { weekday: "short" }),
+  }).format(date);
+}
+
+/** Every day key from `first` to `last`, both included, oldest first. */
+export function dayKeysBetween(first: string, last: string): string[] {
+  const start = keyDate(first);
+  const end = keyDate(last);
+  if (!start || !end) return [];
+  const keys: string[] = [];
+  for (let time = start.getTime(); time <= end.getTime(); time += 86_400_000) {
+    keys.push(new Date(time).toISOString().slice(0, 10));
+  }
+  return keys;
 }
