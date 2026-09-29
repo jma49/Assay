@@ -29,11 +29,12 @@ export function useCheckDetail(scriptId: string, language: "en" | "zh", { onRan 
     setRunning(true);
     try {
       const body = await checksApi.runCheck(scriptId);
+      // Stay "Running…" until the page shows the new run, so the toast never contradicts it.
+      await reload();
+      onRan?.();
       if (body.outcome === "error") toast.error(t.ranError, { description: body.message });
       else if (body.outcome === "issues") toast.warning(t.ranIssues(body.rowCount ?? 0));
       else toast.success(t.ranClean);
-      onRan?.();
-      reload();
     } catch (cause) {
       toast.error(t.runFailed, { description: cause instanceof Error ? cause.message : String(cause) });
     } finally {
