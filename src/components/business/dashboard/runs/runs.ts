@@ -1,5 +1,5 @@
 import type { RunOutcome } from "@/domain/run";
-import type { CheckStats } from "@/lib/database/check-stats";
+import type { CheckStats } from "@/contracts/runs";
 import { nextRunAt } from "@/lib/scheduling/due-slot";
 import type { HistoryRun, ScriptInfo } from "../types";
 

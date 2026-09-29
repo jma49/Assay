@@ -1,4 +1,4 @@
-import type { SchemaColumn, SchemaTable } from "@/lib/database/db-schema";
+import type { SchemaColumn, SchemaTable } from "@/contracts/schema";
 import { commentText, numericLiteral, quoteIdent, quoteLiteral, quoteTable } from "@/lib/sql/quote";
 
 /**
