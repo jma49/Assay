@@ -317,11 +317,18 @@ the lists carried over from the first version still page by number.
 5. **Own sign-in.** Better Auth with Google and GitHub, users in MongoDB;
    Clerk roles move over on the first verified sign-in. *Done
    ([authentication.md](authentication.md)).*
-6. **MCP server.** Personal API keys and `/api/mcp` with read, run and
-   alert tools. *Done ([mcp.md](mcp.md)).*
+6. **MCP server.** `/api/mcp` with read, run and alert tools, for personal
+   API keys and OAuth 2.1 sign-in: discovery, dynamic registration, Client
+   ID Metadata Documents (CIMD, fetched behind the SSRF guard), a consent
+   page with scopes, and Connected apps to disconnect. *Done
+   ([mcp.md](mcp.md)).*
 7. **Clean-up.** Remove legacy modules and pages, add end-to-end tests for
    the main flows. *In progress: dead code removed (#61); the oversized
    legacy pages split into tested modules, hooks and sections (#82, #84,
    #87–#89, #91); run readers moved to the new fields and the retired
    fields no longer written (#80, #90); API route tests (#83); one auth
-   style and fewer duplicate endpoints (#102). End-to-end tests remain.*
+   style and fewer duplicate endpoints (#102); one error shape, the check
+   changes, approvals and runs moved behind services and repositories,
+   the largest components split, knip in CI, and tests for the security
+   and outbox modules (#157–#162).
+   End-to-end tests remain.*
