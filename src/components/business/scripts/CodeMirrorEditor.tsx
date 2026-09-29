@@ -16,6 +16,8 @@ import { AlignLeft, Code, Eye, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
 import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { toast } from "sonner";
+import { apiErrorText } from "@/client/api-errors";
+import { sendJson } from "@/client/send-json";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { DashboardTranslationKeys } from "../dashboard/types";
 import EditorThemeSettings from "./EditorThemeSettings";
@@ -230,7 +232,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
     } catch (error) {
       console.error("SQL formatting failed:", error);
       toast.error(isZh ? "格式化失败" : "Could not format the query", {
-        description: error instanceof Error ? error.message : "未知错误",
+        description: error instanceof Error ? error.message : isZh ? "未知错误" : "Unknown error",
         duration: 5000,
       });
     } finally {
@@ -248,20 +250,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
     setIsGenerating(true);
     try {
-      const response = await fetch('/api/ai/generate-sql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'AI生成SQL失败');
-      }
-
-      const data = await response.json();
+      const data = await sendJson<{ success?: boolean; sql?: string; dryRun?: unknown }>("/api/ai/generate-sql", "POST", { prompt });
 
       if (data.success && data.sql) {
         onChange(data.sql);
@@ -282,12 +271,12 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
           });
         }
       } else {
-        throw new Error('AI返回数据格式错误');
+        throw new Error(isZh ? "AI 返回的数据格式有误" : "The AI answer was malformed");
       }
     } catch (error) {
       console.error('AI SQL generation failed:', error);
       toast.error(isZh ? "AI生成SQL失败" : "Could not generate a query", {
-        description: error instanceof Error ? error.message : '未知错误',
+        description: apiErrorText(error, language),
         duration: 5000,
       });
     } finally {
@@ -304,23 +293,11 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
     setIsAnalyzing(true);
     setAnalysisType(type);
     try {
-      const response = await fetch('/api/ai/analyze-sql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sql: value,
-          analysisType: type
-        }),
+      const data = await sendJson<{ success?: boolean; analysis?: string }>("/api/ai/analyze-sql", "POST", {
+        sql: value,
+        analysisType: type,
+        language,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'AI分析SQL失败');
-      }
-
-      const data = await response.json();
 
       if (data.success && data.analysis) {
         setAnalysisResult(data.analysis);
@@ -330,12 +307,12 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
           duration: 3000,
         });
       } else {
-        throw new Error('AI返回数据格式错误');
+        throw new Error(isZh ? "AI 返回的数据格式有误" : "The AI answer was malformed");
       }
     } catch (error) {
       console.error('AI SQL analysis failed:', error);
       toast.error(isZh ? "AI分析SQL失败" : "Could not analyze the query", {
-        description: error instanceof Error ? error.message : '未知错误',
+        description: apiErrorText(error, language),
         duration: 5000,
       });
     } finally {
