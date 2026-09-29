@@ -30,9 +30,11 @@ export function sampleRows(rows: readonly Record<string, unknown>[], maxRows = S
   return kept;
 }
 
-/** Days a run is kept (RUN_RETENTION_DAYS, 90 by default); 0 keeps runs forever. */
+/** Days a run is kept (RUN_RETENTION_DAYS, 90 by default, also when empty); 0 keeps runs forever. */
 export function runRetentionDays(env: Record<string, string | undefined> = process.env): number {
-  const days = Number(env.RUN_RETENTION_DAYS ?? 90);
+  const raw = env.RUN_RETENTION_DAYS?.trim();
+  if (!raw) return 90;
+  const days = Number(raw);
   return Number.isFinite(days) && days >= 0 ? days : 90;
 }
 

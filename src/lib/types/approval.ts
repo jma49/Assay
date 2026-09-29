@@ -35,6 +35,11 @@ export interface ApprovalRequestDto {
   isComplete: boolean;
   comment?: string;
   reason?: string;
+  operationType?: "create" | "update" | "delete";
+  /** The SQL the request would put live (for a delete, the SQL being removed). */
+  sqlContent?: string;
+  /** The check's live SQL, sent with pending edits so reviewers can see the diff. */
+  currentSqlContent?: string;
 }
 export enum UserRole {
   ADMIN = "admin",

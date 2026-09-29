@@ -27,6 +27,8 @@ At least one sign-in provider (Google or GitHub) must be set.
 | `SEED_DATABASE_URL` | Optional. A role that may create tables, used only by `npm run seed:demo`. Lets `DATABASE_URL` be a SELECT-only role. |
 | `RUN_RETENTION_DAYS` | Days a run is kept before MongoDB deletes it. Default 90; `0` keeps runs forever. |
 
+The scheduled GitHub workflow runs checks outside your host, so it needs these too, along with `MONGODB_DB_NAME` and the certificate URLs; [Scheduling](/docs/scheduling) lists which to add as secrets and which as variables.
+
 ## Alerts
 
 See [Notifications](/docs/notifications).

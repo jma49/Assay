@@ -27,6 +27,8 @@
 | `SEED_DATABASE_URL` | 可选。只给 `npm run seed:demo` 用的、能建表的账号。有了它，`DATABASE_URL` 就可以换成只读账号。 |
 | `RUN_RETENTION_DAYS` | 执行记录保留多少天后由 MongoDB 删除。默认 90；`0` 表示永久保留。 |
 
+GitHub 定时工作流在托管平台之外执行检查，所以也需要这些配置，以及 `MONGODB_DB_NAME` 和证书地址；哪些加为 Secret、哪些加为 Variable 见 [定时执行](/docs/scheduling)。
+
 ## 告警
 
 见 [通知](/docs/notifications)。
