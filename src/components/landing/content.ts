@@ -177,7 +177,7 @@ const en: LandingCopy = {
       },
       {
         q: "Which databases can I check?",
-        a: "PostgreSQL today. The target is whatever DATABASE_URL points to, including managed services such as Neon or RDS.",
+        a: "PostgreSQL today, including managed services such as Neon or RDS. DATABASE_URL is the built-in source, and admins can add more databases in Settings; each check picks the one it runs against.",
       },
       {
         q: "What counts as a failed check?",
@@ -316,7 +316,7 @@ const zh: LandingCopy = {
       },
       {
         q: "可以检查哪些数据库？",
-        a: "目前支持 PostgreSQL。检查对象就是 DATABASE_URL 指向的库，Neon、RDS 等托管服务都可以。",
+        a: "目前支持 PostgreSQL，Neon、RDS 等托管服务都可以。DATABASE_URL 是内置数据源，管理员还可以在设置中添加更多数据库，每个检查选择自己读取的库。",
       },
       {
         q: "什么情况算检查失败？",

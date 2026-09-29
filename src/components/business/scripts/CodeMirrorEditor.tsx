@@ -25,6 +25,8 @@ interface CodeMirrorEditorProps extends Omit<ReactCodeMirrorProps, "value" | "on
   minHeight?: string;
   /** Grow to the parent's height (minHeight stays the floor). */
   fill?: boolean;
+  /** The source the check runs against: the AI assistant drafts and dry-runs on it. */
+  dataSourceId?: string;
   t?: (key: DashboardTranslationKeys | string) => string;
 }
 
@@ -53,6 +55,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   minHeight = "300px",
   fill = false,
   t = (key) => key.toString(),
+  dataSourceId,
   ...rest
 }) => {
   const { language } = useLanguage();
@@ -60,7 +63,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   const aiAvailable = useMe()?.ai === true;
   const theme = useEditorTheme();
   const extensions = useMemo(() => postgresExtensions(), []);
-  const assistant = useSqlAssistant(value, language, onChange);
+  const assistant = useSqlAssistant(value, language, onChange, dataSourceId);
   const [showPreview, setShowPreview] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [isFormatting, setIsFormatting] = useState(false);

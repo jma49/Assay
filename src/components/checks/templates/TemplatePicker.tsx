@@ -42,7 +42,16 @@ const COPY = {
  * only once opened, and hands the built check to `onApply`; the page decides
  * what to fill in.
  */
-export function TemplatePicker({ initialTable, onApply }: { initialTable?: string | null; onApply: (check: TemplateCheck, table: TableRef) => void }) {
+export function TemplatePicker({
+  initialTable,
+  sourceId,
+  onApply,
+}: {
+  initialTable?: string | null;
+  /** The data source whose tables to offer. */
+  sourceId?: string;
+  onApply: (check: TemplateCheck, table: TableRef) => void;
+}) {
   const { language } = useLanguage();
   const t = COPY[language];
   // Opened from the coverage view for a table: the templates are what that link is for.
@@ -52,7 +61,7 @@ export function TemplatePicker({ initialTable, onApply }: { initialTable?: strin
     setOpenedFor(initialTable);
     if (initialTable) setOpen(true);
   }
-  const { data, error, errorCode, loading } = useApi<{ tables: SchemaTable[] }>(open ? "/api/schema" : null);
+  const { data, error, errorCode, loading } = useApi<{ tables: SchemaTable[] }>(open ? `/api/schema${sourceId ? `?source=${encodeURIComponent(sourceId)}` : ""}` : null);
   const tables = data?.tables ?? [];
 
   return (
@@ -83,6 +92,7 @@ export function TemplatePicker({ initialTable, onApply }: { initialTable?: strin
             <p className="text-body-sm text-muted-foreground">{t.empty}</p>
           ) : (
             <PickerBody
+              key={sourceId}
               tables={tables}
               initialTable={initialTable}
               onApply={(check, table) => {

@@ -53,6 +53,7 @@ export function toApprovalDto(request: ApprovalRequest, currentSql?: string): Ap
     comment: request.reviewComment,
     operationType: request.operationType,
     sqlContent: requestSql(request),
+    ...(typeof request.originalData?.dataSourceId === "string" && { dataSourceId: request.originalData.dataSourceId }),
     ...(currentSql !== undefined && { currentSqlContent: currentSql }),
   };
 }

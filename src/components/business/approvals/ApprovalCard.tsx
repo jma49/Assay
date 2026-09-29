@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Database } from "lucide-react";
+import { DEFAULT_SOURCE_ID } from "@/domain/data-source";
 import { ApprovalStatus } from "@/lib/types/approval";
 import { ApprovalSql } from "./ApprovalSql";
 import {
@@ -44,6 +46,15 @@ export function ApprovalCard({ approval, language, t, busy, onDecide }: Approval
           <p className="text-body-sm text-muted-foreground">
             {approval.requesterEmail} · {new Date(approval.createdAt).toLocaleString(locale)} ·{" "}
             <span className="font-mono">{approval.scriptId}</span>
+            {approval.dataSourceId && approval.dataSourceId !== DEFAULT_SOURCE_ID && (
+              <>
+                {" · "}
+                <span className="inline-flex items-center gap-1 align-middle" title={copy.dataSource}>
+                  <Database className="size-3.5" aria-hidden />
+                  <span className="font-mono">{approval.dataSourceId}</span>
+                </span>
+              </>
+            )}
           </p>
         </div>
 
