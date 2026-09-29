@@ -10,7 +10,7 @@ Assay 提供 [MCP](https://modelcontextprotocol.io) 服务，Claude Code、Claud
 https://assay.example.com/api/mcp
 ```
 
-客户端会在浏览器里打开 Assay。如果还没登录，先登录，然后 Assay 会询问是否允许这个应用，并显示授权发送到哪里、它能做什么：查看检查、查看执行历史、执行检查和处理告警。你可以取消勾选任意一项；你的角色没有的权限会显示为灰色。Claude Code 可以先运行 `claude mcp add --transport http assay https://assay.example.com/api/mcp`，再用 `/mcp` 登录。
+客户端会在浏览器里打开 Assay。如果还没登录，先登录，然后 Assay 会询问是否允许这个应用，并显示授权发送到哪里、它能做什么：查看检查、查看执行历史、执行检查和处理告警。你可以取消勾选任意一项；你的角色没有的权限会显示为灰色。自行注册、名字由自己填写的应用会标为 **未验证的应用**：只有在你刚刚主动连接它、并且认得接收授权的主机时才允许。Claude Code 可以先运行 `claude mcp add --transport http assay https://assay.example.com/api/mcp`，再用 `/mcp` 登录。
 
 你允许过的应用列在 **API 密钥 → 已连接的应用** 里，点 **断开** 会让它立即失去访问权限。
 

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ConsentPanel } from "@/components/auth/ConsentPanel";
 import { auth } from "@/lib/auth/server";
 import { getUserRole, UserRole } from "@/lib/auth/rbac";
+import { metadataDocumentHost } from "@/lib/auth/mcp-clients";
 import { mcpScopesFor } from "@/server/mcp/caller";
 
 export const dynamic = "force-dynamic";
@@ -32,8 +33,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Que
   return (
     <ConsentPanel
       clientName={client?.client_name || null}
-      // A metadata-document client's id is the HTTPS URL it is published at.
-      clientHost={clientId.startsWith("https://") ? hostOf(clientId) : null}
+      // Null for a self-registered client, which the panel marks unverified.
+      clientHost={metadataDocumentHost(clientId)}
       redirectHost={hostOf(first(query.redirect_uri))}
       scopes={(first(query.scope) ?? "").split(" ").filter(Boolean)}
       email={session.user.email}

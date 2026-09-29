@@ -138,6 +138,10 @@ export const auth = betterAuth({
       // token carries at most that person's role.
       allowDynamicClientRegistration: true,
       allowUnauthenticatedClientRegistration: true,
+      // A client registers once per connection, so 3 per IP in 10 minutes is
+      // plenty; the default 5 a minute lets anyone fill the consent page
+      // with look-alike clients.
+      rateLimit: { register: { window: 600, max: 3 } },
       // Creating, editing or listing clients by hand is for admins.
       clientPrivileges: async ({ user }) => Boolean(user && (await getUserRole(user.id)) === UserRole.ADMIN),
     }),
