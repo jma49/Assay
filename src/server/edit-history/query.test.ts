@@ -34,7 +34,11 @@ describe("parseEditHistoryQuery", () => {
       operationTime: { $gte: new Date("2026-09-01T00:00:00.000Z"), $lt: new Date("2026-09-03T00:00:00.000Z") },
     });
     expect(ok("scriptName=a.b").filter).toEqual({
-      $or: [{ searchableScriptName: { $regex: "a\\.b", $options: "i" } }, { "scriptSnapshot.scriptId": { $regex: "a\\.b", $options: "i" } }],
+      $or: [
+        { searchableScriptName: { $regex: "a\\.b", $options: "i" } },
+        { searchableScriptNameCn: { $regex: "a\\.b", $options: "i" } },
+        { "scriptSnapshot.scriptId": { $regex: "a\\.b", $options: "i" } },
+      ],
     });
     expect(ok("operation=all").filter).toEqual({});
   });

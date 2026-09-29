@@ -41,7 +41,7 @@ export function parseEditHistoryQuery(params: URLSearchParams): ParsedEditHistor
   const scriptName = params.get("scriptName");
   if (scriptName) {
     const text = containsText(scriptName);
-    filter.$or = [{ searchableScriptName: text }, { "scriptSnapshot.scriptId": text }];
+    filter.$or = [{ searchableScriptName: text }, { searchableScriptNameCn: text }, { "scriptSnapshot.scriptId": text }];
   }
   const author = params.get("author");
   if (author) filter.searchableAuthor = containsText(author);
