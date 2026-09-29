@@ -1,18 +1,6 @@
-/* Aliases onto the app-wide tokens in globals.css. */
 .landing {
-  --l-bg: var(--background);
-  --l-fg: var(--foreground);
-  --l-muted: var(--muted-foreground);
-  --l-panel: var(--muted);
-  --l-line: var(--border);
-  --l-code-bg: color-mix(in srgb, var(--muted) 60%, var(--background));
-  --l-success: var(--success);
-  --l-attention: var(--attention);
-  --l-failure: var(--failure);
-  --l-accent: var(--primary);
-
-  background: var(--l-bg);
-  color: var(--l-fg);
+  background: var(--background);
+  color: var(--foreground);
 }
 
 .landing .display {

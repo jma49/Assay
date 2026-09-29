@@ -19,16 +19,16 @@ import { useHydrated } from "@/components/common/use-hydrated";
 const CONTAINER = "mx-auto w-full max-w-[1120px] px-4 sm:px-6";
 
 const secondaryButton =
-  "inline-flex h-9 items-center justify-center rounded-md bg-card px-4 text-[13.5px] font-medium shadow-border hover:shadow-border-hover transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]";
+  "inline-flex h-9 items-center justify-center rounded-md bg-card px-4 text-body-md font-medium shadow-border hover:shadow-border-hover transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]";
 const heroPrimaryButton =
-  "inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-[14px] font-medium text-primary-foreground shadow-xs hover:brightness-110 transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]";
+  "inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-body-md font-medium text-primary-foreground shadow-xs hover:brightness-110 transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]";
 const heroSecondaryButton =
-  "inline-flex h-11 items-center justify-center rounded-md bg-card px-6 text-[14px] font-medium shadow-border hover:shadow-border-hover transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]";
+  "inline-flex h-11 items-center justify-center rounded-md bg-card px-6 text-body-md font-medium shadow-border hover:shadow-border-hover transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]";
 
 const WHY_ICONS = [ShieldCheck, CalendarClock, GitPullRequest, Sparkles];
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
-  return <p className="text-[12px] font-medium tracking-wider text-(--l-muted) uppercase">{children}</p>;
+  return <p className="text-label-caps uppercase text-muted-foreground">{children}</p>;
 }
 
 function ThemeToggle() {
@@ -40,7 +40,7 @@ function ThemeToggle() {
       type="button"
       aria-label="Toggle color theme"
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-      className="inline-flex size-8 items-center justify-center rounded-md text-(--l-muted) hover:text-(--l-fg)"
+      className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
     >
       {mounted && resolvedTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
     </button>
@@ -57,7 +57,7 @@ function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void
           <BrandMark />
         </Link>
         <div className="flex items-center gap-1 sm:gap-2">
-          <div className="hidden items-center gap-6 pr-4 text-[14px] text-foreground/80 md:flex">
+          <div className="hidden items-center gap-6 pr-4 text-body-md text-foreground/80 md:flex">
             <a href="#features" className="hover:text-foreground">{t.features}</a>
             <a href="#self-host" className="hover:text-foreground">{t.quickStart}</a>
             <a href="#faq" className="hover:text-foreground">{t.faq}</a>
@@ -67,7 +67,7 @@ function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void
           <button
             type="button"
             onClick={() => setLang(lang === "en" ? "zh" : "en")}
-            className="inline-flex h-8 items-center rounded-md px-2 text-[13px] text-(--l-muted) hover:text-(--l-fg)"
+            className="inline-flex h-8 items-center rounded-md px-2 text-body-sm text-muted-foreground hover:text-foreground"
           >
             {lang === "en" ? "中文" : "EN"}
           </button>
@@ -76,11 +76,11 @@ function Nav({ lang, setLang }: { lang: Language; setLang: (l: Language) => void
           {!session.isLoaded ? (
             <span className="ml-1 inline-block h-8 w-[118px]" aria-hidden />
           ) : session.user ? (
-            <Link href="/checks" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
+            <Link href="/checks" className={`${secondaryButton} ml-1 h-8 px-3 text-body-sm`}>
               {t.openApp}
             </Link>
           ) : (
-            <Link href="/sign-in?redirect_url=/checks" className={`${secondaryButton} ml-1 h-8 px-3 text-[13px]`}>
+            <Link href="/sign-in?redirect_url=/checks" className={`${secondaryButton} ml-1 h-8 px-3 text-body-sm`}>
               {t.signIn}
             </Link>
           )}
@@ -102,7 +102,7 @@ function ProductPreview({ lang }: { lang: Language }) {
         ? zh ? "通过" : "Passed"
         : zh ? `发现 ${run.rows?.length ?? 0} 条` : `${run.rows?.length ?? 0} found`;
   const statusColor =
-    run.status === "failed" ? "var(--l-failure)" : run.status === "passed" ? "var(--l-success)" : "var(--l-attention)";
+    run.status === "failed" ? "var(--failure)" : run.status === "passed" ? "var(--success)" : "var(--attention)";
 
   return (
     <DemoFrame
@@ -113,11 +113,11 @@ function ProductPreview({ lang }: { lang: Language }) {
       elevated
     >
       <div className="grid h-full bg-card md:grid-cols-12">
-        <aside className="border-(--l-line) bg-sidebar max-md:border-b md:col-span-4 md:border-r">
-          <p className="px-4 pt-4 pb-2 text-[12px] font-medium tracking-wider text-(--l-muted) uppercase max-md:hidden">
+        <aside className="border-border bg-sidebar max-md:border-b md:col-span-4 md:border-r">
+          <p className="px-4 pt-4 pb-2 text-label-caps uppercase text-muted-foreground max-md:hidden">
             {zh ? "最近执行" : "Recent runs"}
           </p>
-          <ul className="text-[13px] max-md:flex max-md:gap-1 max-md:overflow-x-auto max-md:p-2" aria-label={zh ? "最近执行" : "Recent runs"}>
+          <ul className="text-body-sm max-md:flex max-md:gap-1 max-md:overflow-x-auto max-md:p-2" aria-label={zh ? "最近执行" : "Recent runs"}>
             {PREVIEW_RUNS.map((item) => {
               const active = item.id === run.id;
               return (
@@ -127,12 +127,12 @@ function ProductPreview({ lang }: { lang: Language }) {
                     aria-pressed={active}
                     onClick={() => setSelected(item.id)}
                     className={`flex w-full items-center gap-2.5 px-4 py-2 text-left transition-[background-color] duration-150 max-md:rounded-md max-md:px-3 ${
-                      active ? "bg-primary-soft font-medium" : "hover:bg-(--l-panel)"
+                      active ? "bg-primary-soft font-medium" : "hover:bg-muted"
                     }`}
                   >
                     <StatusDot status={item.status} />
                     <span className="flex-1 truncate">{item.name[lang]}</span>
-                    <span className="tabular-nums text-(--l-muted) max-md:hidden">
+                    <span className="tabular-nums text-muted-foreground max-md:hidden">
                       {item.status === "failed" ? "—" : (item.rows?.length ?? 0)}
                     </span>
                   </button>
@@ -142,32 +142,32 @@ function ProductPreview({ lang }: { lang: Language }) {
           </ul>
         </aside>
         <div className="flex min-w-0 flex-col md:col-span-8" aria-live="polite">
-          <div className="flex items-baseline justify-between gap-4 border-b border-(--l-line) px-5 py-4">
+          <div className="flex items-baseline justify-between gap-4 border-b border-border px-5 py-4">
             <div className="min-w-0">
-              <p className="display truncate text-[20px] font-bold">{run.name[lang]}</p>
-              <p className="mt-1 truncate text-[13px] text-(--l-muted)">{run.description[lang]}</p>
+              <p className="display truncate text-title font-bold">{run.name[lang]}</p>
+              <p className="mt-1 truncate text-body-sm text-muted-foreground">{run.description[lang]}</p>
             </div>
-            <span className="shrink-0 text-[13px] font-medium" style={{ color: statusColor }}>
+            <span className="shrink-0 text-body-sm font-medium" style={{ color: statusColor }}>
               {statusText}
             </span>
           </div>
           {run.status === "failed" ? (
-            <pre className="mono m-5 overflow-x-auto rounded-lg bg-(--l-code-bg) p-4 text-[12.5px] leading-6 whitespace-pre text-(--l-failure)">
+            <pre className="mono m-5 overflow-x-auto rounded-lg bg-code p-4 text-body-sm leading-6 whitespace-pre text-failure">
               {run.error}
             </pre>
           ) : run.status === "passed" ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 p-10 text-center">
-              <span className="grid size-10 place-items-center rounded-full bg-[color-mix(in_srgb,var(--l-success)_14%,transparent)] text-(--l-success)">
+              <span className="grid size-10 place-items-center rounded-full bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-success">
                 <Check className="size-5" />
               </span>
-              <p className="text-[14px] font-medium">{zh ? "没有返回任何行" : "No rows returned"}</p>
-              <p className="text-[13px] text-(--l-muted)">{zh ? "这个检查通过了。" : "This check passed."}</p>
+              <p className="text-body-md font-medium">{zh ? "没有返回任何行" : "No rows returned"}</p>
+              <p className="text-body-sm text-muted-foreground">{zh ? "这个检查通过了。" : "This check passed."}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-[13px]">
+              <table className="w-full text-body-sm">
                 <thead>
-                  <tr className="border-b border-(--l-line) text-(--l-muted)">
+                  <tr className="border-b border-border text-muted-foreground">
                     {run.columns?.map((column, i) => (
                       <th key={column.en} className={`px-5 py-2.5 font-normal ${run.numeric?.includes(i) ? "text-right" : "text-left"}`}>
                         {column[lang]}
@@ -177,7 +177,7 @@ function ProductPreview({ lang }: { lang: Language }) {
                 </thead>
                 <tbody className="tabular-nums">
                   {run.rows?.map((row) => (
-                    <tr key={String(row[0])} className="border-b border-(--l-line) last:border-0">
+                    <tr key={String(row[0])} className="border-b border-border last:border-0">
                       {row.map((cell, i) => (
                         <td key={i} className={`px-5 py-2.5 whitespace-nowrap ${run.numeric?.includes(i) ? "text-right" : ""}`}>
                           {typeof cell === "object" ? cell[lang] : cell}
@@ -206,10 +206,10 @@ function FeatureSection({ lang, index }: { lang: Language; index: number }) {
       <div className={CONTAINER}>
         <div className="max-w-[640px]">
           <Eyebrow>{section.eyebrow}</Eyebrow>
-          <h2 className="display mt-4 text-[30px] leading-tight font-bold tracking-tight text-(--l-fg) sm:text-[38px]">
+          <h2 className="display mt-4 text-display-sm leading-tight font-bold tracking-tight text-foreground sm:text-display-lg">
             {section.title}
           </h2>
-          <p className="mt-4 text-pretty text-[16px] leading-7 text-(--l-muted)">{section.lead}</p>
+          <p className="mt-4 text-pretty text-body-lg leading-7 text-muted-foreground">{section.lead}</p>
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-12 md:gap-8">
           <div className={`order-2 min-w-0 md:col-span-8 ${mirrored ? "md:order-2" : "md:order-1"}`}>
@@ -227,13 +227,13 @@ function FeatureSection({ lang, index }: { lang: Language; index: number }) {
                   aria-selected={i === active}
                   onClick={() => setActive(i)}
                   className={`group w-full rounded-lg py-3 pr-3 pl-4 text-left transition-[background-color] duration-150 ${
-                    i === active ? "bg-primary-soft" : "hover:bg-(--l-panel)"
+                    i === active ? "bg-primary-soft" : "hover:bg-muted"
                   }`}
                 >
-                  <span className="block text-[14px] font-medium">
+                  <span className="block text-body-md font-medium">
                     {item.title}
                   </span>
-                  <span className="mt-1 block text-[13px] leading-5 text-(--l-muted)">
+                  <span className="mt-1 block text-body-sm leading-5 text-muted-foreground">
                     {item.body}
                   </span>
                 </button>
@@ -263,10 +263,10 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
           <div className={`${CONTAINER} relative`}>
             <div className="mx-auto max-w-[980px] text-center">
               <VoxelBeetle className="mx-auto -mt-8 mb-2 h-[190px] w-full max-w-[340px] sm:h-[220px]" />
-              <h1 className="display text-balance text-[38px] leading-[1.08] font-bold tracking-tight sm:text-[46px] lg:text-[52px] lg:whitespace-nowrap">
+              <h1 className="display text-balance text-display-lg leading-[1.08] font-bold tracking-tight sm:text-display-xl lg:whitespace-nowrap">
                 {t.hero.title}
               </h1>
-              <p className="mx-auto mt-5 max-w-[560px] text-pretty text-[17px] leading-7 text-(--l-muted)">
+              <p className="mx-auto mt-5 max-w-[560px] text-pretty text-title-sm leading-7 font-normal text-muted-foreground">
                 {t.hero.subtitle}
               </p>
               <div className="mt-8 flex justify-center gap-3">
@@ -278,7 +278,7 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
                 </a>
               </div>
               {session.isLoaded && !session.user && (
-                <p className="mt-4 text-[13px] text-(--l-muted)">{demo ? t.hero.guestNote : t.hero.demoNote}</p>
+                <p className="mt-4 text-body-sm text-muted-foreground">{demo ? t.hero.guestNote : t.hero.demoNote}</p>
               )}
             </div>
             <div className="mt-14 sm:mt-16">
@@ -291,11 +291,11 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
           <div className={CONTAINER}>
             <div className="max-w-[640px]">
               <Eyebrow>{t.why.eyebrow}</Eyebrow>
-              <h2 className="display mt-3 text-[28px] leading-tight font-bold tracking-tight sm:text-[34px]">
+              <h2 className="display mt-3 text-display-sm leading-tight font-bold tracking-tight sm:text-display-md">
                 {t.why.title}
               </h2>
             </div>
-            <div className="mt-10 grid gap-px overflow-hidden rounded-xl border bg-(--l-line) sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-10 grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 lg:grid-cols-4">
               {t.why.cards.map((card, i) => {
                 const Icon = WHY_ICONS[i % WHY_ICONS.length];
                 return (
@@ -304,8 +304,8 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
                   <span className="mb-4 inline-flex size-9 items-center justify-center rounded-md bg-primary-soft text-primary">
                     <Icon className="size-[18px]" />
                   </span>
-                  <h3 className="display text-[19px] font-bold">{card.title}</h3>
-                  <p className="mt-2 text-[14px] leading-6 text-(--l-muted)">{card.body}</p>
+                  <h3 className="display text-title-sm font-bold">{card.title}</h3>
+                  <p className="mt-2 text-body-md leading-6 text-muted-foreground">{card.body}</p>
                 </div>
                 );
               })}
@@ -317,23 +317,23 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
           <FeatureSection key={section.id} lang={language} index={i} />
         ))}
 
-        <section id="self-host" className="bg-(--l-panel) py-20 sm:py-24">
+        <section id="self-host" className="bg-muted py-20 sm:py-24">
           <div className={`${CONTAINER} grid gap-10 md:grid-cols-2 md:gap-8`}>
             <div>
               <Eyebrow>{t.quickStart.eyebrow}</Eyebrow>
-              <h2 className="display mt-3 text-[28px] leading-tight font-bold tracking-tight sm:text-[34px]">
+              <h2 className="display mt-3 text-display-sm leading-tight font-bold tracking-tight sm:text-display-md">
                 {t.quickStart.title}
               </h2>
-              <p className="mt-4 text-[16px] leading-7 text-(--l-muted)">{t.quickStart.body}</p>
+              <p className="mt-4 text-body-lg leading-7 text-muted-foreground">{t.quickStart.body}</p>
               <Link
                 href="/docs/deployment"
-                className="mt-6 inline-block text-[14px] underline underline-offset-4 hover:opacity-80"
+                className="mt-6 inline-block text-body-md underline underline-offset-4 hover:opacity-80"
               >
                 {t.quickStart.readme} →
               </Link>
             </div>
             <DemoFrame title="Terminal" bodyClassName="" chrome>
-              <pre className="mono overflow-x-auto bg-(--l-code-bg) px-4 py-4 text-[13px] leading-6">
+              <pre className="mono overflow-x-auto bg-code px-4 py-4 text-body-sm leading-6">
                 {QUICK_START.split("\n").map((line, i) => (
                   <div key={i} className="whitespace-pre">
                     {line ? <HighlightedLine text={line} language="shell" /> : " "}
@@ -344,19 +344,19 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
           </div>
         </section>
 
-        <section id="faq" className="border-t border-(--l-line) py-20 sm:py-24">
+        <section id="faq" className="border-t border-border py-20 sm:py-24">
           <div className={`${CONTAINER} grid gap-8 md:grid-cols-12`}>
-            <h2 className="display text-[28px] leading-tight font-bold tracking-tight md:col-span-4 sm:text-[34px]">
+            <h2 className="display text-display-sm leading-tight font-bold tracking-tight md:col-span-4 sm:text-display-md">
               {t.faq.title}
             </h2>
-            <div className="border-t border-(--l-line) md:col-span-8">
+            <div className="border-t border-border md:col-span-8">
               {t.faq.items.map((item) => (
-                <details key={item.q} className="group border-b border-(--l-line)">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-[15px] font-medium">
+                <details key={item.q} className="group border-b border-border">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-body-lg leading-normal font-medium">
                     {item.q}
-                    <span className="text-(--l-muted) transition-transform group-open:rotate-45">+</span>
+                    <span className="text-muted-foreground transition-transform group-open:rotate-45">+</span>
                   </summary>
-                  <p className="pb-4 text-[14px] leading-6 text-(--l-muted)">{item.a}</p>
+                  <p className="pb-4 text-body-md leading-6 text-muted-foreground">{item.a}</p>
                 </details>
               ))}
             </div>
@@ -364,17 +364,17 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
         </section>
       </main>
 
-      <footer className="border-t border-(--l-line) py-10">
-        <div className={`${CONTAINER} flex flex-col gap-3 text-[13px] text-(--l-muted) sm:flex-row sm:items-center sm:justify-between`}>
+      <footer className="border-t border-border py-10">
+        <div className={`${CONTAINER} flex flex-col gap-3 text-body-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between`}>
           <span>
-            <span className="display text-[15px] font-bold text-(--l-fg)">{BRAND}</span> · {t.footer}
+            <span className="display text-body-lg leading-normal font-bold text-foreground">{BRAND}</span> · {t.footer}
           </span>
           <span className="flex gap-6">
             <a href={GITHUB_URL} className="hover:text-foreground">GitHub</a>
             {session.user ? (
-              <Link href="/checks" className="hover:text-(--l-fg)">{t.nav.openApp}</Link>
+              <Link href="/checks" className="hover:text-foreground">{t.nav.openApp}</Link>
             ) : (
-              <Link href="/sign-in?redirect_url=/checks" className="hover:text-(--l-fg)">{t.nav.signIn}</Link>
+              <Link href="/sign-in?redirect_url=/checks" className="hover:text-foreground">{t.nav.signIn}</Link>
             )}
           </span>
         </div>

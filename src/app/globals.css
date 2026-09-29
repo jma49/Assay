@@ -207,6 +207,10 @@
   /* Type scale (DESIGN.md). Body levels leave the weight to the element, so font-medium etc. still apply.
      Body, caption and label line heights are whole even pixels, so text of mixed levels centred in one
      row (a table row, a toolbar) lands on the same baseline instead of a pixel apart. */
+  --text-display-xl: 52px;
+  --text-display-xl--line-height: 1.08;
+  --text-display-xl--letter-spacing: -0.025em;
+  --text-display-xl--font-weight: 700;
   --text-display-lg: 38px;
   --text-display-lg--line-height: 1.08;
   --text-display-lg--letter-spacing: -0.025em;
