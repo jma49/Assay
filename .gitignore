@@ -1,7 +1,13 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-.cursor/rules
-# dependencies
+
+# editors and personal agent tooling
+.cursor/
 .vscode
+.claude/settings.local.json
+.claude/worktrees/
+CLAUDE.local.md
+
+# dependencies
 /node_modules
 /.pnp
 .pnp.*
@@ -13,6 +19,8 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
 
 # next.js
 /.next/
@@ -25,11 +33,8 @@
 # production
 /build
 
-# misc
-.DS_Store
-*.pem
-
 # debug
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -37,6 +42,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -80,12 +86,6 @@ Temporary Items
 
 # redis dump
 *.rdb
-
-logs/
-
-
-
-!.env.example
 
 # eval reports
 /evals/results/
