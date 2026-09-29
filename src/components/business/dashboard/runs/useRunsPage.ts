@@ -4,6 +4,7 @@ import type { CheckStats } from "@/contracts/runs";
 import type { ScriptInfo } from "../types";
 import { DEFAULT_SORT, EMPTY_STATS, nextScheduledRunOf, parseScriptList, takeSearchParam } from "./runs";
 import { useRunHistory } from "./useRunHistory";
+import { currentLanguage } from "@/components/common/LanguageProvider";
 
 const scrollToHistory = () => document.getElementById("execution-history")?.scrollIntoView({ behavior: "smooth" });
 
@@ -74,8 +75,9 @@ export function useRunsPage(language: string, initialSearch = "") {
     const searchLink = takeSearchParam(window.location.href);
     if (searchLink) window.history.replaceState({}, "", searchLink.cleanedHref);
     if (initialSearch) {
-      toast.info(language === "zh" ? "正在筛选执行历史" : "Filtering the run history", {
-        description: language === "zh" ? `检查：${initialSearch}` : `Check: ${initialSearch}`,
+      const zh = currentLanguage() === "zh";
+      toast.info(zh ? "正在筛选执行历史" : "Filtering the run history", {
+        description: zh ? `检查：${initialSearch}` : `Check: ${initialSearch}`,
         duration: 3000,
       });
       // Leave time for the filtered history to load before scrolling to it.
