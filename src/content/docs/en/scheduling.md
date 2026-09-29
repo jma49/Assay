@@ -21,7 +21,7 @@ A self-hosted workspace has two options:
 
 ### GitHub Actions (recommended)
 
-`.github/workflows/sql-check-cron.yml` starts the runner every 30 minutes. Add `DATABASE_URL` and `MONGODB_URI` as repository secrets and it begins on the default branch; without them it skips quietly. You can also start it by hand from the Actions tab, choosing `scheduled` (checks that are due) or `all` (every check now).
+`.github/workflows/sql-check-cron.yml` starts the runner every 30 minutes. Add `DATABASE_URL` and `MONGODB_URI` as repository secrets and it begins on the default branch; without them it skips quietly. You can also start it by hand from the Actions tab, choosing `scheduled` (checks that are due) or `all` (every check now), or entering a **check_id** to run just that check. Alerts go out after a run started by hand too.
 
 The runner reads the same settings as the app, so give GitHub the ones you set on your host; any you leave out take their defaults:
 
