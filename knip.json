@@ -5,7 +5,6 @@
     "tests/visual/stable.css"
   ],
   "ignoreDependencies": [
-    "eslint",
     "eslint-config-next"
   ],
   "ignoreIssues": {
