@@ -24,6 +24,7 @@ const FIELD_DISPLAY_NAMES: Record<string, { en: string; cn: string }> = {
   isScheduled: { en: "Scheduled", cn: "是否定时执行" },
   cronSchedule: { en: "Cron Schedule", cn: "定时设置" },
   sqlContent: { en: "SQL Content", cn: "SQL内容" },
+  dataSourceId: { en: "Data source", cn: "数据源" },
 };
 
 function defaultDescriptions(

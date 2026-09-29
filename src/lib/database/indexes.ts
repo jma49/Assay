@@ -20,6 +20,8 @@ export const INDEXES: Record<string, IndexDescription[]> = {
   [COLLECTIONS.events]: [{ key: { runId: 1 }, unique: true }, { key: { at: 1 }, expireAfterSeconds: ACTIVITY_RETENTION_SECONDS }, { key: { checkId: 1, at: -1 } }],
   [COLLECTIONS.checkActions]: [{ key: { checkId: 1, at: -1 } }, { key: { at: 1 }, expireAfterSeconds: ACTIVITY_RETENTION_SECONDS }],
   [COLLECTIONS.notificationDestinations]: [{ key: { workspaceId: 1, createdAt: 1 } }],
+  // Checks name their source by id, so an id is taken once per workspace.
+  [COLLECTIONS.dataSources]: [{ key: { workspaceId: 1, sourceId: 1 }, unique: true }],
   // One delivery per event and destination, so fan-out can run anywhere, any number of times.
   [COLLECTIONS.notificationDeliveries]: [
     { key: { eventId: 1, destinationId: 1 }, unique: true },

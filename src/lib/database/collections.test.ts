@@ -20,6 +20,7 @@ describe("COLLECTIONS", () => {
       notificationDestinations: "notification_destinations",
       notificationDeliveries: "notification_deliveries",
       notificationReminders: "notification_reminders",
+      dataSources: "data_sources",
       users: "user",
       sessions: "session",
       accounts: "account",

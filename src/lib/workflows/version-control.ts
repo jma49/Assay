@@ -27,6 +27,8 @@ export interface ScriptVersion {
   author: string;
   hashtags?: string[];
   sqlContent: string;
+  /** Missing on versions saved before data sources, and for the built-in one. */
+  dataSourceId?: string;
 
   createdBy: string;
   createdByEmail: string;
@@ -133,6 +135,7 @@ export async function createScriptVersion(
     author: string;
     hashtags?: string[];
     sqlContent: string;
+    dataSourceId?: string;
   },
   createdBy: string,
   createdByEmail: string,
@@ -170,6 +173,7 @@ export async function createScriptVersion(
         author: scriptData.author,
         hashtags: scriptData.hashtags || [],
         sqlContent: scriptData.sqlContent,
+        ...(scriptData.dataSourceId && { dataSourceId: scriptData.dataSourceId }),
 
         createdBy,
         createdByEmail,

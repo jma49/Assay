@@ -30,9 +30,10 @@ Assay 本身不常驻一个时钟，需要有东西去启动定时执行器。�
 | `DATABASE_URL`、`MONGODB_URI` | Secret | 必需 |
 | `APP_URL`、`CRON_SECRET` | Secret | 定时执行后立即发送告警 |
 | `CA_CERT_BLOB_URL`、`CLIENT_CERT_BLOB_URL`、`CLIENT_KEY_BLOB_URL` | Secret | PostgreSQL 使用私有 CA 或客户端证书 |
+| `ASSAY_SECRET_KEY` | Secret | 有检查使用在设置中添加的数据源 |
 | `MONGODB_DB_NAME` | Variable | `MONGODB_URI` 里没有数据库名，且你用的不是默认名称 |
 | `CHECK_TIMEOUT_MS`、`RUN_RETENTION_DAYS` | Variable | 你在托管平台上改过它们 |
-| `CHECK_CONCURRENCY`、`PG_POOL_MAX` | Variable | 可选；同时执行的检查数和 PostgreSQL 连接数 |
+| `CHECK_CONCURRENCY`、`PG_POOL_MAX`、`PG_SOURCE_POOL_MAX` | Variable | 可选；同时执行的检查数和 PostgreSQL 连接数 |
 
 Secret 加在 **Settings → Secrets and variables → Actions → Secrets**，其余加在 **Variables**。公开仓库的工作流日志是公开的，所以日志里只显示每个检查的 ID、结果和行数；错误信息只保存在应用里。
 
