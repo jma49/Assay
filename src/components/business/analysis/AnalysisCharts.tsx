@@ -77,7 +77,13 @@ export function DailyTrendChart({ data, language, allRunsLabel }: { data: DailyT
           labelFormatter={(key: string) => `${formatDayKey(key, language, { weekday: true })} · ${allRunsLabel} ${totals.get(key) ?? 0}`}
           {...tooltipStyle}
         />
-        <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} formatter={legendText} />
+        {/* Listed in the same order as the outcomes chart (broken, issues, clean), not the stacking order. */}
+        <Legend
+          wrapperStyle={legendStyle}
+          iconSize={8}
+          formatter={legendText}
+          payload={OUTCOMES.map((outcome) => ({ id: outcome, value: OUTCOME_LABEL[outcome][language], type: "circle" as const, color: OUTCOME_COLOR[outcome] }))}
+        />
         {stack.map((outcome) => (
           <Bar
             key={outcome}
