@@ -1,237 +1,97 @@
-import { useState, type ChangeEvent, type FormEvent, type KeyboardEvent } from "react";
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { useState } from "react";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
-import { formatDateTime } from "@/lib/utils/datetime";
+import { OUTCOME_DOT, OUTCOME_LABEL } from "@/components/checks/status";
+import type { RunOutcome } from "@/domain/run";
+import { formatDateTime, formatRelative } from "@/lib/utils/datetime";
+import { pagerLabel } from "@/lib/utils/pagination";
 import { cn } from "@/lib/utils/utils";
 import type { ScriptAnalytics } from "./analytics";
+import { AnalysisSection } from "./AnalysisChartsRow";
+import { analysisCopy } from "./copy";
 
-const NAVIGATION_KEYS = ["ArrowLeft", "ArrowRight", "Delete", "Backspace", "Tab"];
+const PAGE_SIZE = 10;
+const OUTCOMES: RunOutcome[] = ["error", "issues", "clean"];
 
-/** Per-check pass rates, paged. Remount (via key) to go back to the first page. */
-export function ScriptPerformanceTable({ scripts, language, t }: { scripts: ScriptAnalytics[]; language: string; t: (key: string) => string }) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageInput, setPageInput] = useState("");
-  const totalPages = Math.ceil(scripts.length / ITEMS_PER_PAGE);
-
-  const handlePageInputChange = (e: ChangeEvent<HTMLInputElement>) => setPageInput(e.target.value);
-
-  const handlePageInputSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const page = parseInt(pageInput, 10);
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-      setPageInput("");
-    }
-  };
-
-  const handlePageInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") handlePageInputSubmit(e);
-    if (!/[\d\b]/.test(e.key) && !NAVIGATION_KEYS.includes(e.key)) e.preventDefault();
-  };
-
-  const start = (currentPage - 1) * ITEMS_PER_PAGE + 1;
-  const end = Math.min(currentPage * ITEMS_PER_PAGE, scripts.length);
-  const pageInfo = [start, end, scripts.length, currentPage, totalPages].reduce(
-    (text: string, value) => text.replace("%s", String(value)),
-    t("pageInfo"),
-  );
+/** Per-check outcome counts and clean rate, paged. Remount (via key) to go back to the first page. */
+export function ScriptPerformanceTable({ scripts, hint, language }: { scripts: ScriptAnalytics[]; hint: string; language: string }) {
+  const copy = analysisCopy(language);
+  const lang = language === "zh" ? "zh" : "en";
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(scripts.length / PAGE_SIZE));
+  const rows = scripts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const name = (script: ScriptAnalytics) => (lang === "zh" && script.cnName) || script.scriptName;
 
   return (
-    <Card className="relative overflow-hidden gap-0 py-0">
-
-      <CardHeader className="relative border-b px-6 py-4">
-        <div className="flex items-center gap-4">
-          <div className="space-y-2">
-            <CardTitle>
-              {t("scriptPerformanceAnalysis")}
-            </CardTitle>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead>
-              <tr className="border-b text-[13px] text-muted-foreground">
-                <th className="h-10 px-6 text-left font-normal">{language === "zh" ? "脚本" : "Script"}</th>
-                <th className="h-10 w-20 px-4 text-right font-normal">{t("executionsLabel")}</th>
-                <th className="h-10 w-20 px-4 text-right font-normal">{t("successLabel")}</th>
-                <th className="h-10 w-20 px-4 text-right font-normal">{t("attentionLabel")}</th>
-                <th className="h-10 w-20 px-4 text-right font-normal">{t("failedLabel")}</th>
-                <th className="h-10 w-48 px-4 text-left font-normal">{t("successRateLabel")}</th>
-                <th className="h-10 w-56 px-6 text-right font-normal">{t("lastExecution")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {scripts
-                              .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
-                .map((script) => (
-                  <tr key={script.scriptId} className="hover:bg-muted/40">
-                    <td className="max-w-0 px-6 py-3">
-                      <p className="truncate font-medium" title={script.scriptName}>
-                        {script.scriptName}
-                      </p>
-                      <p className="truncate font-mono text-[12px] text-muted-foreground">
-                        {script.scriptId}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">{script.totalExecutions}</td>
-                    <td className={cn("px-4 py-3 text-right tabular-nums", script.successCount ? "text-success" : "text-muted-foreground")}>{script.successCount}</td>
-                    <td className={cn("px-4 py-3 text-right tabular-nums", script.attentionCount ? "text-attention" : "text-muted-foreground")}>{script.attentionCount}</td>
-                    <td className={cn("px-4 py-3 text-right tabular-nums", script.failedCount ? "text-failure" : "text-muted-foreground")}>{script.failedCount}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                          <div
-                            className={cn(
-                              "h-full rounded-full",
-                              script.successRate >= 80 ? "bg-success" : script.successRate > 0 ? "bg-attention" : "bg-failure",
-                            )}
-                            style={{ width: `${Math.max(script.successRate, 2)}%` }}
-                          />
-                        </div>
-                        <span className="w-12 text-right text-[13px] tabular-nums">
-                          {script.successRate.toFixed(0)}%
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3 text-right text-[13px] whitespace-nowrap text-muted-foreground tabular-nums">
-                      {script.lastExecution ? formatDateTime(script.lastExecution, language) : "—"}
-                    </td>
-                  </tr>
+    <AnalysisSection title={copy.byCheck} hint={hint}>
+      <div className="overflow-x-auto">
+        <table className="w-full sm:min-w-[720px] text-[13px]">
+          <thead>
+            <tr className="border-b text-[12px] text-muted-foreground">
+              <th className="px-4 py-2 text-left font-medium">{copy.check}</th>
+              <th className="w-20 px-3 py-2 text-right font-medium max-sm:w-12">{copy.runs}</th>
+              {OUTCOMES.map((outcome) => (
+                <th key={outcome} className="w-20 px-3 py-2 text-right font-medium max-sm:hidden">
+                  {OUTCOME_LABEL[outcome][lang]}
+                </th>
+              ))}
+              <th className="w-44 px-3 py-2 text-left font-medium max-sm:w-28">{copy.cleanRate}</th>
+              <th className="w-32 px-4 py-2 text-right font-medium max-sm:hidden">{copy.lastRun}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((script) => (
+              <tr key={script.scriptId} className="border-b last:border-0">
+                <td className="max-w-0 px-4 py-2.5">
+                  <Link href={`/checks/${encodeURIComponent(script.scriptId)}`} className="block truncate font-medium hover:underline" title={name(script)}>
+                    {name(script)}
+                  </Link>
+                  <span className="block truncate font-mono text-[12px] text-muted-foreground">{script.scriptId}</span>
+                </td>
+                <td className="px-3 py-2.5 text-right tabular-nums">{script.runs}</td>
+                {OUTCOMES.map((outcome) => (
+                  <td key={outcome} className={cn("px-3 py-2.5 text-right tabular-nums max-sm:hidden", script.counts[outcome] === 0 && "text-muted-foreground")}>
+                    <span className="inline-flex items-center justify-end gap-1.5">
+                      {script.counts[outcome] > 0 && <span className={cn("status-dot", OUTCOME_DOT[outcome])} aria-hidden />}
+                      {script.counts[outcome]}
+                    </span>
+                  </td>
                 ))}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-
-      {scripts.length > ITEMS_PER_PAGE && (
-        <CardFooter className="flex flex-col sm:flex-row items-center justify-between border-t px-5 py-3 text-xs gap-2 relative z-10">
-          <div className="text-muted-foreground text-center sm:text-left">
-            {pageInfo}
-          </div>
-          <div className="flex items-center gap-2 relative z-20">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
-              disabled={currentPage === 1}
-              className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150 relative z-30"
-            >
-              <ChevronLeft className="h-3.5 w-3.5 mr-1" />
-              <span className="hidden sm:inline">{t("previous")}</span>
-            </Button>
-
-            <div className="flex items-center gap-1.5 px-2 relative z-30">
-              {(() => {
-                const totalPages = Math.ceil(scripts.length / ITEMS_PER_PAGE);
-                return (
-                  <>
-                    <div className="hidden md:flex items-center gap-1">
-                      {currentPage > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setCurrentPage(1)}
-                          className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground relative z-40"
-                          title={t("jumpToFirst")}
-                        >
-                          1
-                        </Button>
-                      )}
-                      {currentPage > 3 && (
-                        <span className="text-muted-foreground">...</span>
-                      )}
-                    </div>
-
-                    <span className="text-muted-foreground text-xs">
-                      {t("pageNumber")}
-                    </span>
-                    <span className="font-medium text-xs min-w-[1.5rem] text-center">
-                      {currentPage}
-                    </span>
-                    <span className="text-muted-foreground text-xs">
-                      {t("of")} {totalPages} {t("pages")}
-                    </span>
-
-                    <div className="hidden md:flex items-center gap-1">
-                      {currentPage < totalPages - 2 && (
-                        <span className="text-muted-foreground">...</span>
-                      )}
-                      {currentPage < totalPages && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setCurrentPage(totalPages)}
-                          className="h-6 px-1 text-xs text-muted-foreground hover:text-foreground relative z-40"
-                          title={t("jumpToLast")}
-                        >
-                          {totalPages}
-                        </Button>
-                      )}
-                    </div>
-
-                    {totalPages > 2 && (
-                      <div className="hidden lg:flex items-center gap-1 ml-2 relative z-40">
-                        <MoreHorizontal className="h-3 w-3 text-muted-foreground" />
-                        <form
-                          onSubmit={handlePageInputSubmit}
-                          className="flex items-center gap-1"
-                        >
-                          <input
-                            type="number"
-                            min="1"
-                            max={totalPages}
-                            value={pageInput}
-                            onChange={handlePageInputChange}
-                            onKeyDown={handlePageInputKeyDown}
-                            placeholder={t("jumpToPage")}
-                            className="w-12 h-6 px-1 text-xs text-center border border-input bg-card rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring relative z-50"
-                            style={{ pointerEvents: "auto" }}
-                          />
-                          <Button
-                            type="submit"
-                            variant="outline"
-                            size="sm"
-                            disabled={
-                              !pageInput ||
-                              isNaN(parseInt(pageInput, 10)) ||
-                              parseInt(pageInput, 10) < 1 ||
-                              parseInt(pageInput, 10) > totalPages
-                            }
-                            className="h-6 px-2 text-xs relative z-50"
-                            title={t("pageJump")}
-                            style={{ pointerEvents: "auto" }}
-                          >
-                            {t("pageJump")}
-                          </Button>
-                        </form>
+                <td className="px-3 py-2.5">
+                  {script.runs > 0 ? (
+                    <div className="flex items-center gap-3">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-foreground/60" style={{ width: `${script.cleanRate}%` }} />
                       </div>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
+                      <span className="w-10 text-right tabular-nums">{script.cleanRate.toFixed(0)}%</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-2.5 text-right whitespace-nowrap text-muted-foreground tabular-nums max-sm:hidden" title={script.lastRun ? formatDateTime(script.lastRun, language) : undefined}>
+                  {script.lastRun ? formatRelative(script.lastRun, language) : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const totalPages = Math.ceil(scripts.length / ITEMS_PER_PAGE);
-                setCurrentPage(Math.min(currentPage + 1, totalPages));
-              }}
-              disabled={currentPage === Math.ceil(scripts.length / ITEMS_PER_PAGE)}
-              className="h-7 px-2 text-xs transition-[color,background-color,border-color,box-shadow,opacity,width] duration-150 relative z-30"
-            >
-              <span className="hidden sm:inline">{t("next")}</span>
-              <ChevronRight className="h-3.5 w-3.5 ml-1" />
-            </Button>
-          </div>
-        </CardFooter>
+      {scripts.length > PAGE_SIZE && (
+        <nav aria-label={copy.byCheck} className="flex items-center justify-end gap-2 border-t px-4 py-2 text-[12px] text-muted-foreground">
+          <span className="tabular-nums" aria-live="polite">
+            {pagerLabel(page, PAGE_SIZE, scripts.length, language)}
+          </span>
+          <Button variant="ghost" size="icon" className="size-7" aria-label={copy.previousPage} disabled={page === 1} onClick={() => setPage(page - 1)}>
+            <ChevronLeft />
+          </Button>
+          <Button variant="ghost" size="icon" className="size-7" aria-label={copy.nextPage} disabled={page === totalPages} onClick={() => setPage(page + 1)}>
+            <ChevronRight />
+          </Button>
+        </nav>
       )}
-    </Card>
+    </AnalysisSection>
   );
 }
