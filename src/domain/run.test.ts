@@ -119,6 +119,10 @@ describe("run retention", () => {
     expect(runRetentionDays({})).toBe(90);
     expect(runRetentionDays({ RUN_RETENTION_DAYS: "30" })).toBe(30);
     expect(runRetentionDays({ RUN_RETENTION_DAYS: "abc" })).toBe(90);
+    expect(runRetentionDays({ RUN_RETENTION_DAYS: "0" })).toBe(0);
+    // An unset GitHub Actions variable arrives as an empty string: the default, not "forever".
+    expect(runRetentionDays({ RUN_RETENTION_DAYS: "" })).toBe(90);
+    expect(runRetentionDays({ RUN_RETENTION_DAYS: " " })).toBe(90);
     const at = new Date("2026-09-27T00:00:00Z");
     expect(runExpiresAt(at, 30)?.toISOString()).toBe("2026-10-27T00:00:00.000Z");
     expect(runExpiresAt(at, 0)).toBeNull();

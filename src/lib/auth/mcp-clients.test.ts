@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { withNativeDefault } from "./mcp-clients";
+import { metadataDocumentHost, withNativeDefault } from "./mcp-clients";
+
+describe("metadataDocumentHost", () => {
+  it("gives the host of a metadata-document client id", () => {
+    expect(metadataDocumentHost("https://claude.ai/oauth/mcp-client.json")).toBe("claude.ai");
+  });
+
+  it("gives nothing for self-registered clients, which are unverified", () => {
+    expect(metadataDocumentHost("aBcD1234randomId")).toBeNull();
+    expect(metadataDocumentHost("http://evil.example/client.json")).toBeNull();
+    expect(metadataDocumentHost("https://")).toBeNull();
+    expect(metadataDocumentHost("")).toBeNull();
+  });
+});
 
 describe("withNativeDefault", () => {
   it("registers loopback and custom-scheme callbacks as native apps", () => {

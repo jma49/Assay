@@ -16,6 +16,11 @@ on:
         options:
           - scheduled
           - all
+      check_id:
+        description: "Optional: run only this check now (its script ID); the mode is then ignored"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -44,9 +49,21 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          # The same settings the app has on Vercel, so a scheduled run
+          # behaves like one started in the app. Optional: an unset secret or
+          # variable arrives empty, which the app treats as unset.
           CA_CERT_BLOB_URL: ${{ secrets.CA_CERT_BLOB_URL }}
+          CLIENT_CERT_BLOB_URL: ${{ secrets.CLIENT_CERT_BLOB_URL }}
+          CLIENT_KEY_BLOB_URL: ${{ secrets.CLIENT_KEY_BLOB_URL }}
+          MONGODB_DB_NAME: ${{ vars.MONGODB_DB_NAME }}
+          CHECK_TIMEOUT_MS: ${{ vars.CHECK_TIMEOUT_MS }}
+          CHECK_CONCURRENCY: ${{ vars.CHECK_CONCURRENCY }}
+          PG_POOL_MAX: ${{ vars.PG_POOL_MAX }}
+          RUN_RETENTION_DAYS: ${{ vars.RUN_RETENTION_DAYS }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           EXECUTION_MODE: ${{ github.event.inputs.execution_mode || 'scheduled' }}
+          # Inputs go through env, never ${{ }} in the script, so they cannot inject shell.
+          CHECK_ID: ${{ github.event.inputs.check_id }}
           NODE_ENV: production
         run: |
           # Forks and fresh copies have no secrets yet: skip instead of failing.
@@ -54,7 +71,11 @@ jobs:
             echo "::notice::DATABASE_URL or MONGODB_URI is not set; skipping scheduled checks."
             exit 0
           fi
-          npx tsx scripts/run-all-scripts.ts "$EXECUTION_MODE"
+          if [ -n "$CHECK_ID" ]; then
+            npx tsx scripts/run-all-scripts.ts "--check=$CHECK_ID"
+          else
+            npx tsx scripts/run-all-scripts.ts "$EXECUTION_MODE"
+          fi
 
       - name: Send alerts
         # Alerts are sent by the app, which holds the channel secrets; this

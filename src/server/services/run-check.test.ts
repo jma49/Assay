@@ -14,7 +14,9 @@ import {
 
 /** An in-memory store with the same lease and fencing rules as the MongoDB one. */
 function memoryStore(checks: CheckToRun[]) {
-  const docs = new Map(checks.map((c) => [c.scriptId, { ...c, lease: null as { runId: string; until: Date } | null }]));
+  const docs = new Map(
+    checks.map((c) => [c.scriptId, { ...c, lease: null as { runId: string; until: Date } | null, pendingEvents: [] as CheckEvent[] }]),
+  );
   const runs: RunDocument[] = [];
   const events: CheckEvent[] = [];
   const store: RunCheckStore = {
@@ -23,7 +25,7 @@ function memoryStore(checks: CheckToRun[]) {
       if (!doc) return { kind: "missing" };
       if (doc.lease && doc.lease.until > now) return { kind: "busy", runId: doc.lease.runId };
       doc.lease = { runId, until };
-      return { kind: "acquired", check: { scriptId, sqlContent: doc.sqlContent, state: doc.state } };
+      return { kind: "acquired", check: { scriptId, sqlContent: doc.sqlContent, state: doc.state, pendingEvents: [...doc.pendingEvents] } };
     },
     async historicalState() {
       return null;
@@ -34,11 +36,12 @@ function memoryStore(checks: CheckToRun[]) {
     async saveRun(run) {
       runs.push(run);
     },
-    async commitState(scriptId, runId, state) {
+    async commitState(scriptId, runId, state, event) {
       const doc = docs.get(scriptId)!;
       if (doc.lease?.runId !== runId) return false;
       doc.state = state;
       doc.lease = null;
+      if (event) doc.pendingEvents.push(event);
       return true;
     },
     async releaseLease(scriptId, runId) {
@@ -53,6 +56,8 @@ function memoryStore(checks: CheckToRun[]) {
     },
     async recordEvent(event) {
       if (!events.some((e) => e.runId === event.runId)) events.push(event);
+      const doc = docs.get(event.checkId);
+      if (doc) doc.pendingEvents = doc.pendingEvents.filter((e) => e.runId !== event.runId);
     },
   };
   return { store, docs, runs, events };
@@ -184,6 +189,35 @@ describe("runCheck", () => {
   it("reports an unknown check", async () => {
     const { store } = memoryStore([]);
     expect(await runCheck("nope", { kind: "manual" }, deps(store, rowsSource([[]])))).toEqual({ kind: "missing" });
+  });
+});
+
+describe("alerts survive a failure after the state is saved", () => {
+  it("keeps the event on the check with the new state when writing it fails, and the next run writes it first", async () => {
+    const { store, docs, events } = memoryStore([CHECK]);
+    const recordEvent = store.recordEvent;
+    store.recordEvent = vi.fn(async () => Promise.reject(new Error("mongo blip")));
+    const d = deps(store, rowsSource([[{ id: 1 }], [{ id: 1 }]]));
+
+    const first = await runCheck(CHECK.scriptId, { kind: "schedule" }, d);
+    expect(first).toMatchObject({ kind: "completed", outcome: "issues", stateUpdated: true });
+    expect(events).toHaveLength(0);
+    const doc = docs.get(CHECK.scriptId)!;
+    expect(doc.state).toMatchObject({ outcome: "issues" });
+    expect(doc.pendingEvents).toMatchObject([{ runId: "run1", type: "check.outcome_changed", to: "issues" }]);
+
+    // The next run sees the same outcome, so it has no event of its own, but it writes the stranded one.
+    store.recordEvent = recordEvent;
+    await runCheck(CHECK.scriptId, { kind: "schedule" }, d);
+    expect(events.map((e) => e.runId)).toEqual(["run1"]);
+    expect(doc.pendingEvents).toEqual([]);
+  });
+
+  it("clears the pending event once it is written", async () => {
+    const { store, docs, events } = memoryStore([CHECK]);
+    await runCheck(CHECK.scriptId, { kind: "schedule" }, deps(store, rowsSource([[{ id: 1 }]])));
+    expect(events).toHaveLength(1);
+    expect(docs.get(CHECK.scriptId)!.pendingEvents).toEqual([]);
   });
 });
 
