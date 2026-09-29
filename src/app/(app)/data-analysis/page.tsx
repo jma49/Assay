@@ -53,8 +53,8 @@ export default function DataAnalysisPage() {
 
       {error ? (
         <div className="rounded-xl bg-card px-6 py-10 text-center shadow-border">
-          <p className="text-[14px] font-medium">{copy.loadFailed}</p>
-          <p className="mt-1 font-mono text-[12px] text-muted-foreground">{error}</p>
+          <p className="text-body-md font-medium">{copy.loadFailed}</p>
+          <p className="mt-1 font-mono text-caption text-muted-foreground">{error}</p>
           <Button variant="outline" size="sm" className="mt-4" onClick={reload}>
             {copy.retry}
           </Button>
@@ -73,8 +73,8 @@ export default function DataAnalysisPage() {
           <AnalysisSummary data={data} language={language} />
           {data.totalExecutions === 0 ? (
             <div className="rounded-xl bg-card px-6 py-12 text-center shadow-border">
-              <p className="text-[14px]">{copy.empty}</p>
-              <p className="mt-1 text-[13px] text-muted-foreground">{copy.emptyHint}</p>
+              <p className="text-body-md">{copy.empty}</p>
+              <p className="mt-1 text-body-sm text-muted-foreground">{copy.emptyHint}</p>
             </div>
           ) : (
             <>

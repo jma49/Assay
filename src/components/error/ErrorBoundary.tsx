@@ -144,7 +144,7 @@ ${this.state.errorInfo?.componentStack}
               <div className="flex justify-center mb-4">
                 <AlertTriangle className="h-12 w-12 text-failure" />
               </div>
-              <CardTitle className="text-2xl text-failure">
+              <CardTitle className="text-headline text-failure">
                 页面出现错误
               </CardTitle>
               <CardDescription>
@@ -171,7 +171,7 @@ ${this.state.errorInfo?.componentStack}
               {(process.env.NODE_ENV === 'development' || this.props.showDetails) && 
                this.state.error && (
                 <Alert className="bg-failure/10 border-failure/30">
-                  <AlertDescription className="text-sm font-mono">
+                  <AlertDescription className="text-body-md font-mono">
                     <strong>错误消息:</strong>
                     <br />
                     {this.state.error.message}
@@ -182,7 +182,7 @@ ${this.state.errorInfo?.componentStack}
                         <br />
                         <strong>堆栈信息:</strong>
                         <br />
-                        <pre className="whitespace-pre-wrap text-xs overflow-auto max-h-40">
+                        <pre className="whitespace-pre-wrap text-caption overflow-auto max-h-40">
                           {this.state.error.stack}
                         </pre>
                       </>

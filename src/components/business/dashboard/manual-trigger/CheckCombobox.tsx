@@ -62,12 +62,12 @@ export function CheckCombobox({ id, checks, value, onChange, language, disabled 
           aria-expanded={open}
           aria-controls={listId}
           disabled={disabled}
-          className="flex h-8 w-full min-w-0 items-center gap-2 rounded-md border border-input bg-card px-2.5 text-left text-[13px] shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-8 w-full min-w-0 items-center gap-2 rounded-md border border-input bg-card px-2.5 text-left text-body-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <span className={cn("min-w-0 flex-1 truncate", !selected && "text-muted-foreground")}>
             {selected ? displayName(selected, language) : copy.choose}
           </span>
-          {selected && <span className="shrink-0 truncate font-mono text-[12px] text-muted-foreground max-sm:hidden">{selected.scriptId}</span>}
+          {selected && <span className="shrink-0 truncate font-mono text-caption text-muted-foreground max-sm:hidden">{selected.scriptId}</span>}
           <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
         </button>
       </PopoverTrigger>
@@ -85,11 +85,11 @@ export function CheckCombobox({ id, checks, value, onChange, language, disabled 
             setActive(0);
           }}
           onKeyDown={onKeyDown}
-          className="h-9 w-full border-b bg-transparent px-3 text-[13px] outline-none placeholder:text-muted-foreground"
+          className="h-9 w-full border-b bg-transparent px-3 text-body-sm outline-none placeholder:text-muted-foreground"
         />
         <ul id={listId} role="listbox" aria-label={copy.check} className="max-h-64 overflow-y-auto p-1">
           {matches.length === 0 ? (
-            <li className="px-2 py-3 text-center text-[13px] text-muted-foreground">{copy.noMatch}</li>
+            <li className="px-2 py-3 text-center text-body-sm text-muted-foreground">{copy.noMatch}</li>
           ) : (
             matches.map((check, index) => (
               <li
@@ -101,13 +101,13 @@ export function CheckCombobox({ id, checks, value, onChange, language, disabled 
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => choose(check)}
                 className={cn(
-                  "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-[13px]",
+                  "flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-body-sm",
                   index === active && "bg-muted",
                 )}
               >
                 <Check className={cn("size-4 shrink-0 text-primary", check.scriptId !== value && "invisible")} aria-hidden />
                 <span className="min-w-0 flex-1 truncate">{displayName(check, language)}</span>
-                <span className="shrink-0 truncate font-mono text-[12px] text-muted-foreground max-sm:hidden">{check.scriptId}</span>
+                <span className="shrink-0 truncate font-mono text-caption text-muted-foreground max-sm:hidden">{check.scriptId}</span>
               </li>
             ))
           )}
