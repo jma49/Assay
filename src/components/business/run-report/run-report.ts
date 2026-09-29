@@ -2,7 +2,7 @@ import { readJson } from "@/client/send-json";
 import type { RunOutcome } from "@/domain/run";
 
 export type Language = "en" | "zh";
-export type FindingValue = string | number | boolean | null;
+type FindingValue = string | number | boolean | null;
 export type FindingDetail = Record<string, FindingValue>;
 /** Result rows, or a plain-text note when there is no table to show. */
 export type RunRows = FindingDetail[] | string;

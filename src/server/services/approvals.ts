@@ -28,7 +28,7 @@ import { createCheck, deleteCheck, updateCheck, type CheckActor } from "./check-
  * Classifies a script by its SQL. Only read-only checks can be saved today
  * (the validator refuses the rest); the classes stay for the review record.
  */
-export function analyzeScriptType(sqlContent: string): ScriptType {
+function analyzeScriptType(sqlContent: string): ScriptType {
   const upperSql = sqlContent.toUpperCase().trim();
   const has = (keywords: string[]) => keywords.some((keyword) => upperSql.includes(keyword));
   if (has(["GRANT", "REVOKE", "CREATE USER", "DROP USER", "ALTER USER", "BACKUP", "RESTORE", "SHUTDOWN", "KILL"])) {

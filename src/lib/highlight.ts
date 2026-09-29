@@ -2,7 +2,7 @@
  * A small line highlighter for the landing page's code samples (SQL and a
  * shell). Enough for short, known snippets; the app's editor has its own.
  */
-export type TokenKind = "keyword" | "string" | "number" | "comment" | "function" | "flag" | "punctuation" | "plain";
+type TokenKind = "keyword" | "string" | "number" | "comment" | "function" | "flag" | "punctuation" | "plain";
 
 export interface Token {
   text: string;

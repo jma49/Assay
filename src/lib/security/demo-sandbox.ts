@@ -4,7 +4,7 @@
  * unless DEMO_MODE=true on the server, only covers checks the demo seed
  * marked with `demoSeed: true` (a field no API writes), and is rate limited.
  */
-export const DEMO_AUTHOR = "demo-seed";
+const DEMO_AUTHOR = "demo-seed";
 
 /**
  * Whether an author label is reserved for the demo seed. The label is only
@@ -59,7 +59,7 @@ export function demoRunBudgets(
 }
 
 /** Proxies in front of a self-hosted server that append to x-forwarded-for, when TRUSTED_PROXY_COUNT is unset. */
-export const DEFAULT_TRUSTED_PROXY_COUNT = 1;
+const DEFAULT_TRUSTED_PROXY_COUNT = 1;
 
 function trustedProxyCount(env: Record<string, string | undefined>): number {
   const raw = env.TRUSTED_PROXY_COUNT?.trim();

@@ -2,7 +2,6 @@ import { describePage } from "@/lib/utils/pagination";
 import type { EditHistoryFilter, EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
 
 export type Translate = (key: string) => string;
-export type Operation = EditHistoryRecord["operation"];
 export type OperationFilter = NonNullable<EditHistoryFilter["operation"]>;
 export type FieldChange = NonNullable<EditHistoryRecord["changes"]>[number];
 

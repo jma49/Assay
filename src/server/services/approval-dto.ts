@@ -2,7 +2,7 @@ import type { ApprovalRequestDto } from "@/lib/types/approval";
 import type { ApprovalRequest } from "@/server/repos/approval-store";
 
 /** The SQL a request carries: its own copy, or the one inside the change for older requests. */
-export function requestSql(request: Pick<ApprovalRequest, "sqlContent" | "originalData">): string | undefined {
+function requestSql(request: Pick<ApprovalRequest, "sqlContent" | "originalData">): string | undefined {
   if (request.sqlContent) return request.sqlContent;
   const fromData = request.originalData?.sqlContent;
   return typeof fromData === "string" ? fromData : undefined;

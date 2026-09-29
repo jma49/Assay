@@ -1,7 +1,7 @@
 import type { Db } from "mongodb";
 import { COLLECTIONS } from "@/lib/database/collections";
 
-export enum VersionStatus {
+enum VersionStatus {
   DRAFT = "draft",
   ACTIVE = "active",
   ARCHIVED = "archived",
@@ -107,7 +107,7 @@ const higherThan = ({ majorVersion: M, minorVersion: m, patchVersion: p }: Versi
 });
 
 /** One number that sorts like the version, for a conditional update on the check. */
-export const versionOrder = ({ majorVersion, minorVersion, patchVersion }: VersionParts) =>
+const versionOrder = ({ majorVersion, minorVersion, patchVersion }: VersionParts) =>
   majorVersion * 1e10 + minorVersion * 1e5 + patchVersion;
 
 /**

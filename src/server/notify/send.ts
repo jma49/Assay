@@ -10,7 +10,7 @@ export interface SendDeps {
   resolve: Resolver;
 }
 
-export const defaultSendDeps: SendDeps = { fetch: pinnedFetch, resolve: dnsResolver };
+const defaultSendDeps: SendDeps = { fetch: pinnedFetch, resolve: dnsResolver };
 
 function retryAfterMs(header: string | null): number | undefined {
   if (!header) return undefined;
