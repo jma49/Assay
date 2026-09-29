@@ -1,5 +1,4 @@
-import { getMongoDbClient } from "../database/mongodb";
-import { Collection, Document } from "mongodb";
+import type { Db } from "mongodb";
 import { COLLECTIONS } from "@/lib/database/collections";
 
 export enum VersionStatus {
@@ -45,18 +44,6 @@ export interface ScriptVersion {
   rollbackCount?: number;
 }
 
-async function getScriptVersionsCollection(): Promise<Collection<Document>> {
-  const mongoDbClient = getMongoDbClient();
-  const db = await mongoDbClient.getDb();
-  return db.collection(COLLECTIONS.scriptVersions);
-}
-
-async function getSqlScriptsCollection(): Promise<Collection<Document>> {
-  const mongoDbClient = getMongoDbClient();
-  const db = await mongoDbClient.getDb();
-  return db.collection(COLLECTIONS.checks);
-}
-
 function generateVersionId(): string {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2);
@@ -97,23 +84,44 @@ function generateNextVersion(
   }
 }
 
-/** Throws when the read fails: guessing "no versions yet" would start a second 1.0.0. */
-async function getLatestVersion(scriptId: string): Promise<string | null> {
-  const collection = await getScriptVersionsCollection();
-  const latestVersion = await collection.findOne(
-    { scriptId },
-    {
-      projection: { version: 1 },
-      sort: { majorVersion: -1, minorVersion: -1, patchVersion: -1 },
-    }
-  );
-  return latestVersion ? latestVersion.version : null;
-}
+const DUPLICATE_KEY = 11000;
+const MAX_ATTEMPTS = 10;
+
+type VersionParts = { majorVersion: number; minorVersion: number; patchVersion: number };
+
+/** Versions ordered below `parts` (semantic order, not insertion order). */
+const lowerThan = ({ majorVersion: M, minorVersion: m, patchVersion: p }: VersionParts) => ({
+  $or: [
+    { majorVersion: { $lt: M } },
+    { majorVersion: M, minorVersion: { $lt: m } },
+    { majorVersion: M, minorVersion: m, patchVersion: { $lt: p } },
+  ],
+});
+
+const higherThan = ({ majorVersion: M, minorVersion: m, patchVersion: p }: VersionParts) => ({
+  $or: [
+    { majorVersion: { $gt: M } },
+    { majorVersion: M, minorVersion: { $gt: m } },
+    { majorVersion: M, minorVersion: m, patchVersion: { $gt: p } },
+  ],
+});
+
+/** One number that sorts like the version, for a conditional update on the check. */
+export const versionOrder = ({ majorVersion, minorVersion, patchVersion }: VersionParts) =>
+  majorVersion * 1e10 + minorVersion * 1e5 + patchVersion;
 
 /**
  * Records a new version of a check and makes it the current one.
+ *
+ * Two saves at once both see the same latest version; the unique index on
+ * (scriptId, version) lets only one insert it, and the other retries with
+ * the next number, so every save gets a record. The current flag moves
+ * only after the insert succeeded and only downwards: each writer demotes
+ * the versions below its own, and demotes its own if a higher one already
+ * exists, so whatever the interleaving the highest version stays current.
  */
 export async function createScriptVersion(
+  db: Db,
   scriptId: string,
   scriptData: {
     name: string;
@@ -130,115 +138,74 @@ export async function createScriptVersion(
   createdByEmail: string,
   changeType: ScriptVersion["changeType"] = "create",
   changeDescription?: string,
-  versionType: "major" | "minor" | "patch" = "patch"
+  versionType: "major" | "minor" | "patch" = "patch",
 ): Promise<string | null> {
+  const versions = db.collection(COLLECTIONS.scriptVersions);
   try {
-    const collection = await getScriptVersionsCollection();
-
-    const latestVersion = await getLatestVersion(scriptId);
-    const newVersion = generateNextVersion(latestVersion, versionType);
-    const { major, minor, patch } = parseVersion(newVersion);
-
-    const versionId = generateVersionId();
-    const now = new Date();
-
-    // Only one version is current; a first version has none to demote.
-    if (latestVersion) {
-      await collection.updateMany(
-        { scriptId, isCurrentVersion: true },
-        { $set: { isCurrentVersion: false, status: VersionStatus.ARCHIVED } }
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      // Throws when the read fails: guessing "no versions yet" would start a second 1.0.0.
+      const latest = await versions.findOne(
+        { scriptId },
+        { projection: { version: 1, versionId: 1 }, sort: { majorVersion: -1, minorVersion: -1, patchVersion: -1 } },
       );
-    }
+      const newVersion = generateNextVersion(latest?.version ?? null, versionType);
+      const { major, minor, patch } = parseVersion(newVersion);
+      const parts: VersionParts = { majorVersion: major, minorVersion: minor, patchVersion: patch };
+      const versionId = generateVersionId();
 
-    const versionData: ScriptVersion = {
-      versionId,
-      scriptId,
-      version: newVersion,
-      majorVersion: major,
-      minorVersion: minor,
-      patchVersion: patch,
-      status: VersionStatus.ACTIVE,
-      isCurrentVersion: true,
+      const versionData: ScriptVersion = {
+        versionId,
+        scriptId,
+        version: newVersion,
+        ...parts,
+        status: VersionStatus.ACTIVE,
+        isCurrentVersion: true,
 
-      name: scriptData.name,
-      cnName: scriptData.cnName,
-      description: scriptData.description,
-      cnDescription: scriptData.cnDescription,
-      scope: scriptData.scope,
-      cnScope: scriptData.cnScope,
-      author: scriptData.author,
-      hashtags: scriptData.hashtags || [],
-      sqlContent: scriptData.sqlContent,
+        name: scriptData.name,
+        cnName: scriptData.cnName,
+        description: scriptData.description,
+        cnDescription: scriptData.cnDescription,
+        scope: scriptData.scope,
+        cnScope: scriptData.cnScope,
+        author: scriptData.author,
+        hashtags: scriptData.hashtags || [],
+        sqlContent: scriptData.sqlContent,
 
-      createdBy,
-      createdByEmail,
-      createdAt: now,
+        createdBy,
+        createdByEmail,
+        createdAt: new Date(),
 
-      changeType,
-      changeDescription,
-      previousVersionId: latestVersion
-        ? (await getVersionId(scriptId, latestVersion)) || undefined
-        : undefined,
+        changeType,
+        changeDescription,
+        previousVersionId: latest?.versionId || undefined,
 
-      executionCount: 0,
-      rollbackCount: 0,
-    };
+        executionCount: 0,
+        rollbackCount: 0,
+      };
 
-    const result = await collection.insertOne(versionData);
+      try {
+        await versions.insertOne({ ...versionData });
+      } catch (error) {
+        if ((error as { code?: number }).code === DUPLICATE_KEY) continue; // another save took this number
+        throw error;
+      }
 
-    if (result.acknowledged) {
-      console.log(
-        `[VersionControl] 脚本版本已创建: ${scriptId} v${newVersion}`
+      const archived = { $set: { isCurrentVersion: false, status: VersionStatus.ARCHIVED } };
+      await versions.updateMany({ scriptId, isCurrentVersion: true, versionId: { $ne: versionId }, ...lowerThan(parts) }, archived);
+      if (await versions.countDocuments({ scriptId, ...higherThan(parts) }, { limit: 1 })) {
+        await versions.updateOne({ versionId }, archived);
+        return versionId;
+      }
+      const order = versionOrder(parts);
+      await db.collection(COLLECTIONS.checks).updateOne(
+        { scriptId, $or: [{ currentVersionOrder: { $exists: false } }, { currentVersionOrder: { $lt: order } }] },
+        { $set: { currentVersionId: versionId, currentVersion: newVersion, currentVersionOrder: order } },
       );
-
-      await updateMainScriptVersion(scriptId, versionId, newVersion);
-
       return versionId;
     }
-
-    return null;
+    throw new Error(`No free version number after ${MAX_ATTEMPTS} attempts`);
   } catch (error) {
-    console.error("[VersionControl] 创建脚本版本失败:", error);
+    console.error(`[VersionControl] Recording a version of ${scriptId} failed:`, error);
     return null;
-  }
-}
-
-async function getVersionId(
-  scriptId: string,
-  version: string
-): Promise<string | null> {
-  try {
-    const collection = await getScriptVersionsCollection();
-    const versionDoc = await collection.findOne(
-      { scriptId, version },
-      { projection: { versionId: 1 } }
-    );
-
-    return versionDoc ? versionDoc.versionId : null;
-  } catch (error) {
-    console.error("[VersionControl] 获取版本ID失败:", error);
-    return null;
-  }
-}
-
-async function updateMainScriptVersion(
-  scriptId: string,
-  versionId: string,
-  version: string
-): Promise<void> {
-  try {
-    const collection = await getSqlScriptsCollection();
-    await collection.updateOne(
-      { scriptId },
-      {
-        $set: {
-          currentVersionId: versionId,
-          currentVersion: version,
-          updatedAt: new Date(),
-        },
-      }
-    );
-  } catch (error) {
-    console.error("[VersionControl] 更新主脚本版本信息失败:", error);
   }
 }

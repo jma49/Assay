@@ -32,6 +32,9 @@ vi.mock("@/lib/database/mongodb", () => ({
       collection: () => ({
         findOne: mocks.findOne,
         updateOne: mocks.updateOne,
+        // updateCheck's conditional update; recorded through updateOne so the assertions stay in one place.
+        findOneAndUpdate: async (filter: unknown, update: unknown) =>
+          ((await mocks.updateOne(filter, update)) as { matchedCount: number }).matchedCount ? mocks.existing : null,
         countDocuments: mocks.countDocuments,
         deleteOne: mocks.deleteOne,
       }),
