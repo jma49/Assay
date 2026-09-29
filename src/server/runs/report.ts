@@ -1,6 +1,5 @@
 import type { Db } from "mongodb";
 import { COLLECTIONS } from "@/lib/database/collections";
-import { authorForGuest } from "@/server/http/guest-view";
 import { findRun } from "@/server/repos/runs";
 import { responseSample, SAMPLE_FIELDS } from "./sample";
 
@@ -11,10 +10,9 @@ const CHECK_FIELDS = { name: 1, cnName: 1, description: 1, cnDescription: 1, sco
 
 /**
  * One run's report (/runs/[runId]): the run with a trimmed sample and the
- * check it belongs to, or null when there is no such run. Guests see a
- * member's handle instead of their email.
+ * check it belongs to, or null when there is no such run.
  */
-export async function runReport(db: Db, runId: string, viewer: { isGuest: boolean }) {
+export async function runReport(db: Db, runId: string) {
   const run = await findRun(db, runId, REPORT_FIELDS);
   if (!run) return null;
   const check = run.checkId ? await db.collection(COLLECTIONS.checks).findOne({ scriptId: run.checkId }, { projection: CHECK_FIELDS }) : null;
@@ -36,7 +34,7 @@ export async function runReport(db: Db, runId: string, viewer: { isGuest: boolea
       cnDescription: check.cnDescription,
       scope: check.scope,
       cnScope: check.cnScope,
-      author: viewer.isGuest ? authorForGuest(check.author) : check.author,
+      author: check.author as string | undefined,
     }),
   };
 }
