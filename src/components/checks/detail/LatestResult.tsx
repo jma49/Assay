@@ -10,13 +10,13 @@ export function LatestResult({ latest, t }: { latest: LatestRun; t: Copy }) {
     return (
       <div className="space-y-3 p-5">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[13px] font-medium text-failure">{t.failed}</p>
-          <Link href={`/runs/${latest.runId}`} className="inline-flex items-center gap-0.5 text-[12px] font-medium text-primary hover:underline">
+          <p className="text-body-sm font-medium text-failure">{t.failed}</p>
+          <Link href={`/runs/${latest.runId}`} className="inline-flex items-center gap-0.5 text-caption font-medium text-primary hover:underline">
             {t.fullReport}
             <ChevronRight className="size-3.5" />
           </Link>
         </div>
-        <pre className="overflow-x-auto rounded-lg bg-code p-4 font-mono text-[12.5px] leading-6 whitespace-pre-wrap text-failure">{latest.message}</pre>
+        <pre className="overflow-x-auto rounded-lg bg-code p-4 font-mono text-body-sm leading-6 whitespace-pre-wrap text-failure">{latest.message}</pre>
       </div>
     );
   }
@@ -24,8 +24,8 @@ export function LatestResult({ latest, t }: { latest: LatestRun; t: Copy }) {
     return (
       <div className="flex flex-col items-center gap-1.5 px-6 py-12 text-center">
         <span className="grid size-10 place-items-center rounded-full bg-success-soft text-success">✓</span>
-        <p className="text-[14px] font-medium">{t.noRows}</p>
-        <p className="text-[13px] text-muted-foreground">
+        <p className="text-body-md font-medium">{t.noRows}</p>
+        <p className="text-body-sm text-muted-foreground">
           {t.passed} {latest.fixed.length > 0 && t.fixedRows(latest.fixed.length)}
         </p>
       </div>
@@ -36,7 +36,7 @@ export function LatestResult({ latest, t }: { latest: LatestRun; t: Copy }) {
   const columns = latest.columns.length > 0 ? latest.columns : Object.keys(latest.rows[0]?.values ?? {});
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2 border-b px-4 py-2.5 text-[12px]">
+      <div className="flex flex-wrap items-center gap-2 border-b px-4 py-2.5 text-caption">
         <span className="text-muted-foreground">{latest.compared ? t.compared : t.firstRun}</span>
         {latest.compared && (
           <>
@@ -51,9 +51,9 @@ export function LatestResult({ latest, t }: { latest: LatestRun; t: Copy }) {
         </Link>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-[13px]">
+        <table className="w-full text-body-sm">
           <thead>
-            <tr className="border-b text-[12px] text-muted-foreground">
+            <tr className="border-b text-caption text-muted-foreground">
               {latest.compared && <th className="w-24 px-4 py-2 text-left font-medium" />}
               {columns.map((column) => (
                 <th key={column} className="px-4 py-2 text-left font-mono font-medium whitespace-nowrap">
@@ -69,7 +69,7 @@ export function LatestResult({ latest, t }: { latest: LatestRun; t: Copy }) {
                   <td className="px-4 py-2">
                     <span
                       className={cn(
-                        "rounded-md px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap",
+                        "rounded-md px-1.5 py-0.5 text-caption font-medium whitespace-nowrap",
                         row.mark === "new" ? "bg-failure-soft text-failure" : "bg-muted text-muted-foreground",
                       )}
                     >
@@ -87,7 +87,7 @@ export function LatestResult({ latest, t }: { latest: LatestRun; t: Copy }) {
             {latest.fixed.map((values, i) => (
               <tr key={`fixed-${i}`} className="border-b text-muted-foreground last:border-0">
                 <td className="px-4 py-2">
-                  <span className="rounded-md bg-success-soft px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap text-success">{t.markFixed}</span>
+                  <span className="rounded-md bg-success-soft px-1.5 py-0.5 text-caption font-medium whitespace-nowrap text-success">{t.markFixed}</span>
                 </td>
                 {columns.map((column) => (
                   <td key={column} className="max-w-[280px] truncate px-4 py-2 whitespace-nowrap line-through decoration-border-strong">
@@ -100,7 +100,7 @@ export function LatestResult({ latest, t }: { latest: LatestRun; t: Copy }) {
         </table>
       </div>
       {latest.rowCount > latest.rows.length && (
-        <p className="border-t px-4 py-2.5 text-[12px] text-muted-foreground">{t.shownOf(latest.rows.length, latest.rowCount)}</p>
+        <p className="border-t px-4 py-2.5 text-caption text-muted-foreground">{t.shownOf(latest.rows.length, latest.rowCount)}</p>
       )}
     </div>
   );

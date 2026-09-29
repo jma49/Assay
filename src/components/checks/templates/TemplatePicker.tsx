@@ -67,8 +67,8 @@ export function TemplatePicker({ initialTable, onApply }: { initialTable?: strin
           <LayoutTemplate className="size-4" />
         </span>
         <span className="grid min-w-0 flex-1 gap-0.5">
-          <span className="text-[14px] font-semibold">{t.title}</span>
-          <span className="text-[12px] text-muted-foreground">{t.hint}</span>
+          <span className="text-body-md font-semibold">{t.title}</span>
+          <span className="text-caption text-muted-foreground">{t.hint}</span>
         </span>
         <ChevronDown className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} />
       </button>
@@ -76,11 +76,11 @@ export function TemplatePicker({ initialTable, onApply }: { initialTable?: strin
       {open && (
         <div className="border-t px-4 pt-4 pb-4">
           {loading && !data ? (
-            <p className="text-[13px] text-muted-foreground">{t.loading}</p>
+            <p className="text-body-sm text-muted-foreground">{t.loading}</p>
           ) : error ? (
-            <p className="text-[13px] text-failure">{apiErrorCodeText(errorCode, language) ?? (error || t.failed)}</p>
+            <p className="text-body-sm text-failure">{apiErrorCodeText(errorCode, language) ?? (error || t.failed)}</p>
           ) : tables.length === 0 ? (
-            <p className="text-[13px] text-muted-foreground">{t.empty}</p>
+            <p className="text-body-sm text-muted-foreground">{t.empty}</p>
           ) : (
             <PickerBody
               tables={tables}
@@ -133,8 +133,8 @@ function PickerBody({ tables, initialTable, onApply }: { tables: SchemaTable[]; 
                 selected ? "bg-primary-soft shadow-[0_0_0_1.5px_var(--primary)]" : "bg-muted/60 hover:bg-muted",
               )}
             >
-              <span className={cn("text-[13px] font-medium", selected && "text-primary")}>{template.title[language]}</span>
-              <span className="line-clamp-2 text-[12px] leading-4 text-muted-foreground">{template.summary[language]}</span>
+              <span className={cn("text-body-sm font-medium", selected && "text-primary")}>{template.title[language]}</span>
+              <span className="line-clamp-2 text-caption leading-4 text-muted-foreground">{template.summary[language]}</span>
             </button>
           );
         })}
@@ -143,7 +143,7 @@ function PickerBody({ tables, initialTable, onApply }: { tables: SchemaTable[]; 
       <TemplateFields builder={builder} tables={tables} t={FIELDS_COPY[language]} />
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
-        <p className={cn("min-w-0 flex-1 text-[12px]", problem ? "text-failure" : "text-muted-foreground")}>
+        <p className={cn("min-w-0 flex-1 text-caption", problem ? "text-failure" : "text-muted-foreground")}>
           {problem ?? (check ? (
             <>
               {t.preview} <span className="font-medium text-foreground">{language === "zh" ? check.cnName : check.name}</span>
