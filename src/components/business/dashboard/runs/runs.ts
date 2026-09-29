@@ -3,7 +3,8 @@ import type { CheckStats } from "@/lib/database/check-stats";
 import { nextRunAt } from "@/lib/scheduling/due-slot";
 import type { HistoryRun, ScriptInfo } from "../types";
 
-export type SortKey = "finishedAt" | "checkId";
+/** Sort by when the run finished, or by the check's name in the reader's language. */
+export type SortKey = "finishedAt" | "name";
 export type SortDirection = "ascending" | "descending";
 
 export interface SortConfig {
@@ -33,6 +34,8 @@ export interface HistoryQuery {
   search: string;
   hashtags: string[];
   sort: SortConfig;
+  /** The language names are sorted in. */
+  language?: "en" | "zh";
 }
 
 /** The sort field and order /api/check-history understands; the table only sorts by check or time. */
@@ -40,9 +43,9 @@ export function apiSort(sort: SortConfig): { sortBy: SortKey; sortOrder: "asc" |
   return { sortBy: sort.key, sortOrder: sort.direction === "ascending" ? "asc" : "desc" };
 }
 
-/** Clicking the sorted column flips it; a new column starts newest/last first. */
+/** Clicking the sorted column flips it; a new column starts where people expect: names A to Z, time newest first. */
 export function nextSort(current: SortConfig, key: SortKey): SortConfig {
-  if (current.key !== key) return { key, direction: "descending" };
+  if (current.key !== key) return { key, direction: key === "name" ? "ascending" : "descending" };
   return { key, direction: current.direction === "ascending" ? "descending" : "ascending" };
 }
 
@@ -60,6 +63,7 @@ export function buildCheckHistoryQuery(query: HistoryQuery, pageSize: number): s
   if (query.hashtags.length > 0) params.set("hashtags", query.hashtags.join(","));
   params.set("sort_by", sortBy);
   params.set("sort_order", sortOrder);
+  if (sortBy === "name") params.set("lang", query.language ?? "en");
   return params.toString();
 }
 

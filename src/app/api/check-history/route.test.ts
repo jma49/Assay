@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   limit: vi.fn(),
   countDocuments: vi.fn(),
   estimatedDocumentCount: vi.fn(),
+  aggregate: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
@@ -44,6 +45,7 @@ vi.mock("@/lib/database/mongodb", () => {
             ? { find: (...args: unknown[]) => (mocks.checksFind(...args), { toArray: async () => mocks.taggedChecks }) }
             : {
                 find: (...args: unknown[]) => (mocks.runsFind(...args), cursor),
+                aggregate: (...args: unknown[]) => (mocks.aggregate(...args), { toArray: async () => mocks.runs }),
                 countDocuments: async (...args: unknown[]) => (mocks.countDocuments(...args), mocks.total),
                 estimatedDocumentCount: async () => (mocks.estimatedDocumentCount(), mocks.total),
               },
@@ -75,7 +77,7 @@ describe("GET /api/check-history", () => {
     mocks.taggedChecks = [];
     mocks.runs = [run];
     mocks.total = 1;
-    for (const fn of [mocks.checksFind, mocks.runsFind, mocks.sort, mocks.skip, mocks.limit, mocks.countDocuments, mocks.estimatedDocumentCount]) fn.mockClear();
+    for (const fn of [mocks.checksFind, mocks.runsFind, mocks.sort, mocks.skip, mocks.limit, mocks.countDocuments, mocks.estimatedDocumentCount, mocks.aggregate]) fn.mockClear();
   });
 
   it("returns the auth response when the caller is not signed in", async () => {
@@ -102,6 +104,8 @@ describe("GET /api/check-history", () => {
         checkId: "orders-check",
         finishedAt: "2026-09-01T00:00:00.000Z",
         outcome: "issues",
+        rowCount: null,
+        error: null,
         message: "2 rows",
         findings: "dupes",
         github_run_id: 42,
@@ -122,6 +126,21 @@ describe("GET /api/check-history", () => {
     expect(mocks.limit).toHaveBeenCalledWith(25);
     const { pagination } = await res.json();
     expect(pagination).toEqual({ page: 2, limit: 25, total: 120, totalCapped: false, totalPages: 5, hasNext: true, hasPrev: true });
+  });
+
+  it("sorts by the check's name in the asked language, and searches names too", async () => {
+    mocks.taggedChecks = [
+      { scriptId: "z-orders", name: "Duplicate orders" } as { scriptId: string },
+      { scriptId: "a-emails", name: "Invalid emails" } as { scriptId: string },
+    ];
+    await history("?sort_by=name&sort_order=asc&lang=en&search=duplicate");
+    expect(mocks.runsFind).not.toHaveBeenCalled();
+    const [pipeline] = mocks.aggregate.mock.calls[0] as [Record<string, unknown>[]];
+    expect(pipeline[0]).toEqual({
+      $match: { $or: [{ checkId: { $regex: "duplicate", $options: "i" } }, { checkId: { $in: ["z-orders"] } }] },
+    });
+    expect(JSON.stringify(pipeline[1])).toContain('["z-orders","a-emails"]');
+    expect(mocks.countDocuments).toHaveBeenCalledWith(pipeline[0].$match, expect.anything());
   });
 
   it("clamps the page size", async () => {

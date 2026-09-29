@@ -9,7 +9,7 @@ const HISTORY_MAX_LIMIT = 500;
 export interface HistoryParams {
   page: number;
   limit: number;
-  /** Text search on the check id. */
+  /** Text search on the check id and, through `nameMatches`, the check's names. */
   search: string | null;
   /** One check, matched exactly. */
   checkId: string | null;
@@ -18,9 +18,20 @@ export interface HistoryParams {
   endDate: Date | null;
   outcome: RunOutcome | null;
   hashtags: string[];
-  sortBy: "finishedAt" | "checkId";
+  /** `name` orders by the check's name in `language`; `checkId` is kept for older clients. */
+  sortBy: "finishedAt" | "checkId" | "name";
   sortOrder: "asc" | "desc";
+  language: "en" | "zh";
 }
+
+/** The check fields the name search and name sort read. */
+export interface CheckName {
+  scriptId: string;
+  name?: string;
+  cnName?: string;
+}
+
+const SORT_KEYS = ["finishedAt", "checkId", "name"] as const;
 
 const OUTCOMES: readonly RunOutcome[] = ["clean", "issues", "error"];
 const outcomeParam = (value: string | null): RunOutcome | null => (OUTCOMES.includes(value as RunOutcome) ? (value as RunOutcome) : null);
@@ -47,23 +58,31 @@ export function parseHistoryParams(searchParams: URLSearchParams): HistoryParams
     endDate: dateParam(searchParams.get("endDate")),
     outcome: outcomeParam(searchParams.get("outcome")),
     hashtags: (searchParams.get("hashtags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean),
-    sortBy: searchParams.get("sort_by") === "checkId" ? "checkId" : "finishedAt",
+    sortBy: SORT_KEYS.find((key) => key === searchParams.get("sort_by")) ?? "finishedAt",
     sortOrder: searchParams.get("sort_order") === "asc" ? "asc" : "desc",
+    language: searchParams.get("lang") === "zh" ? "zh" : "en",
   };
 }
 
 /**
  * The run filter for the history list. `taggedCheckIds` is the checks
- * carrying every selected hashtag, or null when no hashtag is selected.
+ * carrying every selected hashtag, or null when no hashtag is selected;
+ * `nameMatches` the checks whose name contains the search.
  */
-export function historyFilter(params: HistoryParams, taggedCheckIds: string[] | null): Record<string, unknown> {
+export function historyFilter(
+  params: HistoryParams,
+  taggedCheckIds: string[] | null,
+  nameMatches: string[] = [],
+): Record<string, unknown> {
   const filter: Record<string, unknown> = {};
+  const byName = params.search !== null && nameMatches.length > 0;
   const checkId = {
-    ...(params.search && containsText(params.search)),
+    ...(params.search && !byName && containsText(params.search)),
     ...(taggedCheckIds && { $in: taggedCheckIds }),
     ...(params.checkId && { $eq: params.checkId }),
   };
   if (Object.keys(checkId).length > 0) filter.checkId = checkId;
+  if (byName) filter.$or = [{ checkId: containsText(params.search!) }, { checkId: { $in: nameMatches } }];
   if (params.outcome) filter.outcome = params.outcome;
   if (params.startDate || params.endDate) {
     filter.finishedAt = { ...(params.startDate && { $gte: params.startDate }), ...(params.endDate && { $lte: params.endDate }) };
@@ -71,7 +90,57 @@ export function historyFilter(params: HistoryParams, taggedCheckIds: string[] | 
   return filter;
 }
 
-/** By check (newest first within one), or by time. */
+const displayName = (check: CheckName, language: "en" | "zh") =>
+  (language === "zh" ? check.cnName || check.name : check.name) || check.scriptId;
+
+/** Checks whose English or Chinese name contains the search, ignoring case. */
+export function checksMatchingName(checks: CheckName[], search: string): string[] {
+  const text = search.trim().toLowerCase();
+  if (!text) return [];
+  return checks
+    .filter((check) => [check.name, check.cnName].some((name) => name?.toLowerCase().includes(text)))
+    .map((check) => check.scriptId);
+}
+
+/** Check ids in the order their names read in `language`. */
+export function checkNameOrder(checks: CheckName[], language: "en" | "zh"): string[] {
+  const collator = new Intl.Collator(language === "zh" ? "zh-CN" : "en", { sensitivity: "base", numeric: true });
+  return [...checks]
+    .sort((a, b) => collator.compare(displayName(a, language), displayName(b, language)))
+    .map((check) => check.scriptId);
+}
+
+/**
+ * One page of runs ordered by their check's name (newest first within a
+ * check). Runs of checks that no longer exist sort after the named ones.
+ */
+export function nameSortPipeline(
+  filter: Record<string, unknown>,
+  order: string[],
+  params: Pick<HistoryParams, "sortOrder" | "page" | "limit">,
+  projection: Record<string, 1>,
+): Record<string, unknown>[] {
+  const direction = params.sortOrder === "asc" ? 1 : -1;
+  return [
+    { $match: filter },
+    {
+      $addFields: {
+        _nameRank: {
+          $let: {
+            vars: { rank: { $indexOfArray: [order, "$checkId"] } },
+            in: { $cond: [{ $lt: ["$$rank", 0] }, order.length, "$$rank"] },
+          },
+        },
+      },
+    },
+    { $sort: { _nameRank: direction, checkId: direction, finishedAt: -1 } },
+    { $skip: (params.page - 1) * params.limit },
+    { $limit: params.limit },
+    { $project: projection },
+  ];
+}
+
+/** By check id (newest first within one), or by time; sorting by name goes through `nameSortPipeline`. */
 export function historySort(params: HistoryParams): Record<string, 1 | -1> {
   const direction = params.sortOrder === "asc" ? 1 : -1;
   if (params.sortBy === "checkId") return { checkId: direction, finishedAt: -1 };
