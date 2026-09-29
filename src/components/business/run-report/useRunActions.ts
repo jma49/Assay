@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { apiErrorText } from "@/client/api-errors";
 import * as checksApi from "@/client/checks";
 import { triageToMarkdown } from "@/lib/ai/triage-format";
 import type { ExecutionResult, Language } from "./run-report";
@@ -30,7 +31,7 @@ export function useRunActions(result: ExecutionResult | null, language: Language
       setIsTriageOpen(true);
     } catch (error) {
       toast.error(language === "zh" ? "AI 分诊失败" : "AI triage failed", {
-        description: error instanceof Error ? error.message : String(error),
+        description: apiErrorText(error, language),
       });
     } finally {
       setIsTriaging(false);
@@ -46,7 +47,7 @@ export function useRunActions(result: ExecutionResult | null, language: Language
       router.push(`/runs/${data.mongoResultId}`);
     } catch (error) {
       toast.error(language === "zh" ? "执行失败" : "Could not run the check", {
-        description: error instanceof Error ? error.message : String(error),
+        description: apiErrorText(error, language),
       });
     } finally {
       setIsRunningAgain(false);

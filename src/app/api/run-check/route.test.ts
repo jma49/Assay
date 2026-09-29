@@ -116,6 +116,7 @@ describe("POST /api/run-check", () => {
     const res = await run({ scriptId: "demo-duplicate-orders" });
     expect(res.status).toBe(429);
     expect(res.headers.get("Retry-After")).toBe("60");
+    expect((await res.json()).error).toMatchObject({ code: "demo_limit_reached" });
     expect(mocks.execute).not.toHaveBeenCalled();
   });
 
@@ -144,7 +145,9 @@ describe("POST /api/run-check", () => {
   it("answers 409 while the check is already running", async () => {
     mocks.canExecute = true;
     mocks.execute.mockResolvedValueOnce({ success: false, outcome: "error", alreadyRunning: true });
-    expect((await run({ scriptId: "x" })).status).toBe(409);
+    const res = await run({ scriptId: "x" });
+    expect(res.status).toBe(409);
+    expect((await res.json()).error.code).toBe("already_running");
   });
 
   it("rejects a missing or non-string scriptId", async () => {

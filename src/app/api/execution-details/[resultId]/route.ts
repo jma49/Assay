@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { withAuth } from "@/server/http/route";
+import { ApiError, withAuth } from "@/server/http/route";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { ObjectId } from "mongodb";
@@ -12,56 +12,39 @@ const RUN_FIELDS = { checkId: 1, finishedAt: 1, outcome: 1, message: 1, findings
 
 export const GET = withAuth<{ resultId: string }>(Permission.HISTORY_READ, async (_request, { principal, params }) => {
   const { resultId } = params;
+  if (!resultId || !ObjectId.isValid(resultId)) throw new ApiError(400, "invalid_input", "Invalid run id");
 
-  if (!resultId || !ObjectId.isValid(resultId)) {
-    return NextResponse.json({ message: "无效的 Result ID" }, { status: 400 });
-  }
+  const db = await getMongoDbClient().getDb();
+  const run = await db.collection(COLLECTIONS.runs).findOne({ _id: new ObjectId(resultId) }, { projection: RUN_FIELDS });
+  if (!run) throw new ApiError(404, "not_found", "No run with this id");
 
-  try {
-    const mongoDbClient = getMongoDbClient();
-    const db = await mongoDbClient.getDb();
-    const historyCollection = db.collection(COLLECTIONS.runs);
-    const scriptsCollection = db.collection(COLLECTIONS.checks);
-
-    const run = await historyCollection.findOne({ _id: new ObjectId(resultId) }, { projection: RUN_FIELDS });
-    if (!run) {
-      return NextResponse.json({ message: "未找到执行结果" }, { status: 404 });
-    }
-
-    const script = run.checkId
-      ? await scriptsCollection.findOne(
+  const script = run.checkId
+    ? await db
+        .collection(COLLECTIONS.checks)
+        .findOne(
           { scriptId: run.checkId },
           { projection: { name: 1, cnName: 1, description: 1, cnDescription: 1, scope: 1, cnScope: 1, author: 1 } },
         )
-      : null;
+    : null;
 
-    return NextResponse.json({
-      _id: run._id.toString(),
-      checkId: run.checkId,
-      finishedAt: run.finishedAt,
-      outcome: run.outcome,
-      rowCount: typeof run.rowCount === "number" ? run.rowCount : null,
-      error: run.error ?? null,
-      message: run.message ?? "",
-      findings: run.findings ?? "",
-      sample: responseSample(run),
-      ...(script && {
-        name: script.name,
-        cnName: script.cnName,
-        description: script.description,
-        cnDescription: script.cnDescription,
-        scope: script.scope,
-        cnScope: script.cnScope,
-        author: principal.isGuest ? authorForGuest(script.author) : script.author,
-      }),
-    });
-  } catch (error) {
-    console.error("[API] Reading a run failed:", error);
-    return NextResponse.json(
-      {
-        message: "服务器内部错误",
-      },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({
+    _id: run._id.toString(),
+    checkId: run.checkId,
+    finishedAt: run.finishedAt,
+    outcome: run.outcome,
+    rowCount: typeof run.rowCount === "number" ? run.rowCount : null,
+    error: run.error ?? null,
+    message: run.message ?? "",
+    findings: run.findings ?? "",
+    sample: responseSample(run),
+    ...(script && {
+      name: script.name,
+      cnName: script.cnName,
+      description: script.description,
+      cnDescription: script.cnDescription,
+      scope: script.scope,
+      cnScope: script.cnScope,
+      author: principal.isGuest ? authorForGuest(script.author) : script.author,
+    }),
+  });
 });

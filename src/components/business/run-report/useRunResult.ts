@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { readRunResponse, type ExecutionResult } from "./run-report";
+import { apiErrorText } from "@/client/api-errors";
+import { readRunResponse, type ExecutionResult, type Language } from "./run-report";
 
 /** Loads one run from /api/execution-details; `retry` loads it again. */
-export function useRunResult(resultId: string | undefined, missingIdMessage: string) {
+export function useRunResult(resultId: string | undefined, missingIdMessage: string, language: Language) {
   const [result, setResult] = useState<ExecutionResult | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
@@ -18,7 +19,7 @@ export function useRunResult(resultId: string | undefined, missingIdMessage: str
       })
       .catch((err) => {
         console.error("[run-report] Loading run details failed:", err);
-        setError(err.message);
+        setError(err);
         setLoading(false);
       });
   }, [resultId, retryCount]);
@@ -30,5 +31,6 @@ export function useRunResult(resultId: string | undefined, missingIdMessage: str
   };
 
   if (!resultId) return { result: null, loading: false, error: missingIdMessage, retry };
-  return { result, loading, error, retry };
+  // Localized when shown, so switching the language also switches the message.
+  return { result, loading, error: error ? apiErrorText(error, language) : null, retry };
 }

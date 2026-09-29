@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { withAuth } from "@/server/http/route";
+import { z } from "zod";
+import { ApiError, parseJson, withAuth, type Principal } from "@/server/http/route";
 import { Permission, requirePermission } from "@/lib/auth/rbac";
 import redis from "@/lib/cache/redis";
 import { getMongoDbClient } from "@/lib/database/mongodb";
@@ -15,93 +16,55 @@ export const maxDuration = 300;
 
 const DEMO_WINDOW_SECONDS = 60 * 60;
 
+const Body = z.object({ scriptId: z.string().min(1) });
+
+/**
+ * A demo run by someone without script:execute: only a seeded demo check,
+ * within the hourly budgets. Demo runs widen access, so a Redis failure
+ * refuses them (fail closed).
+ */
+async function assertDemoRunAllowed(principal: Principal, scriptId: string, headers: Headers): Promise<void> {
+  const db = await getMongoDbClient().getDb();
+  const script = await db.collection(COLLECTIONS.checks).findOne({ scriptId }, { projection: { demoSeed: 1 } });
+  if (runAccess({ canExecute: false, demoMode: true, demoSeed: script?.demoSeed }) === "forbidden") {
+    throw new ApiError(403, "demo_samples_only", "In the demo, viewers can run the sample checks only");
+  }
+  for (const budget of demoRunBudgets({ id: principal.id, isGuest: principal.isGuest }, clientIp(headers))) {
+    let quota: Awaited<ReturnType<typeof consumeQuota>>;
+    try {
+      quota = await consumeQuota(redis, budget.subject, Date.now(), budget.limit, DEMO_WINDOW_SECONDS, "demo-run");
+    } catch (error) {
+      console.error("[API] Demo run quota check failed:", error);
+      throw new ApiError(503, "demo_busy", "The demo is busy; try again shortly");
+    }
+    if (!quota.allowed) {
+      throw new ApiError(429, "demo_limit_reached", `Demo limit reached: ${budget.limit} runs per hour`, {
+        "Retry-After": String(quota.retryAfterSeconds),
+      });
+    }
+  }
+}
+
 /**
  * Runs one check now. Needs script:execute, except in demo mode, where viewers and guests may
  * run the seeded demo checks within an hourly budget.
  */
 export const POST = withAuth({ signedIn: true, allowGuest: true }, async (request, { principal }) => {
-  try {
-    const body = await request.json();
-    const { scriptId } = body;
+  const { scriptId } = await parseJson(request, Body);
 
-    if (!scriptId || typeof scriptId !== "string") {
-      return NextResponse.json(
-        { success: false, message: "Missing scriptId" },
-        { status: 400 },
-      );
-    }
-
-    const canExecute = principal.isGuest
-      ? false
-      : (await requirePermission(principal.id, Permission.SCRIPT_EXECUTE)).authorized;
-    const demoMode = isDemoMode();
-    if (!canExecute && !demoMode) {
-      return NextResponse.json(
-        { success: false, message: "Forbidden: Insufficient permissions" },
-        { status: 403 },
-      );
-    }
-
-    if (!canExecute) {
-      const db = await getMongoDbClient().getDb();
-      const script = await db
-        .collection(COLLECTIONS.checks)
-        .findOne({ scriptId }, { projection: { demoSeed: 1 } });
-      const access = runAccess({ canExecute, demoMode, demoSeed: script?.demoSeed });
-      if (access === "forbidden") {
-        return NextResponse.json(
-          { success: false, message: "In the demo, viewers can run the sample checks only." },
-          { status: 403 },
-        );
-      }
-      // Demo runs widen access, so a Redis failure refuses them (fail closed).
-      let quota = { allowed: true, retryAfterSeconds: 0 };
-      let limit = 0;
-      try {
-        for (const budget of demoRunBudgets({ id: principal.id, isGuest: principal.isGuest }, clientIp(request.headers))) {
-          quota = await consumeQuota(redis, budget.subject, Date.now(), budget.limit, DEMO_WINDOW_SECONDS, "demo-run");
-          limit = budget.limit;
-          if (!quota.allowed) break;
-        }
-      } catch (error) {
-        console.error("[API] Demo run quota check failed:", error);
-        return NextResponse.json(
-          { success: false, message: "The demo is busy, please try again shortly." },
-          { status: 503 },
-        );
-      }
-      if (!quota.allowed) {
-        return NextResponse.json(
-          { success: false, message: `Demo limit reached: ${limit} runs per hour.` },
-          { status: 429, headers: { "Retry-After": String(quota.retryAfterSeconds) } },
-        );
-      }
-    }
-
-    const result = toExecutionResult(
-      await runCheckNow(scriptId, { kind: "manual", by: { id: principal.id, name: principal.name } }),
-    );
-    if (result.alreadyRunning) {
-      return NextResponse.json(result, { status: 409 });
-    }
-    if (result.notFound) {
-      return NextResponse.json(result, { status: 404 });
-    }
-    dispatchAfterResponse();
-
-    return NextResponse.json({
-      ...result,
-      executedBy: {
-        email: principal.email,
-        name: principal.name,
-        timestamp: new Date().toISOString(),
-      },
-    });
-  } catch (error) {
-    console.error(`[API] Running a check for ${principal.name} failed:`, error);
-    return NextResponse.json(
-      { success: false, message: "Failed to execute script" },
-      { status: 500 },
-    );
+  const canExecute = principal.isGuest ? false : (await requirePermission(principal.id, Permission.SCRIPT_EXECUTE)).authorized;
+  if (!canExecute) {
+    if (!isDemoMode()) throw new ApiError(403, "forbidden", "You do not have permission to do this");
+    await assertDemoRunAllowed(principal, scriptId, request.headers);
   }
+
+  const result = toExecutionResult(await runCheckNow(scriptId, { kind: "manual", by: { id: principal.id, name: principal.name } }));
+  if (result.alreadyRunning) throw new ApiError(409, "already_running", result.message);
+  if (result.notFound) throw new ApiError(404, "not_found", result.message);
+  dispatchAfterResponse();
+
+  return NextResponse.json({
+    ...result,
+    executedBy: { email: principal.email, name: principal.name, timestamp: new Date().toISOString() },
+  });
 });

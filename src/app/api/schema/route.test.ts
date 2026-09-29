@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/auth/auth-utils")>()),
   // Like the real one: a guest session only passes where the route lets guests in.
-  validateApiAuth: async (_language: string, options?: { allowGuest?: boolean }) =>
+  validateApiAuth: async (options?: { allowGuest?: boolean }) =>
     mocks.guest && !options?.allowGuest
       ? { isValid: false, response: new Response(null, { status: 403 }) }
       : { isValid: true, user: { id: "u1", fullName: null }, userEmail: "d@example.com", isGuest: mocks.guest },

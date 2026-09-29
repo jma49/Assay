@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiErrorCodeText, apiErrorText } from "@/client/api-errors";
 import * as checksApi from "@/client/checks";
 import { useApi } from "@/client/use-api";
 import type { CheckDetail } from "@/contracts/checks";
@@ -11,9 +12,10 @@ export function useCheckDetail(scriptId: string, language: "en" | "zh", { onRan 
   const t = COPY[language];
   const zh = language === "zh";
   const me = useMe();
-  const { data, error, loading, reload } = useApi<{ check: CheckDetail }>(`/api/checks/${encodeURIComponent(scriptId)}`);
+  const { data, error: loadError, errorCode, loading, reload } = useApi<{ check: CheckDetail }>(`/api/checks/${encodeURIComponent(scriptId)}`);
   const [running, setRunning] = useState(false);
   const check = data?.check;
+  const error = errorCode === "not_found" ? t.notFound : (apiErrorCodeText(errorCode, language) ?? loadError);
 
   // The tab title names the check once it has loaded.
   const title = check ? (zh ? check.cnName || check.name : check.name) : null;
@@ -36,7 +38,7 @@ export function useCheckDetail(scriptId: string, language: "en" | "zh", { onRan 
       else if (body.outcome === "issues") toast.warning(t.ranIssues(body.rowCount ?? 0));
       else toast.success(t.ranClean);
     } catch (cause) {
-      toast.error(t.runFailed, { description: cause instanceof Error ? cause.message : String(cause) });
+      toast.error(t.runFailed, { description: apiErrorText(cause, language) });
     } finally {
       setRunning(false);
     }

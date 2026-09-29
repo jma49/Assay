@@ -1,4 +1,4 @@
-import { APICallError, generateText, RetryError, type LanguageModel } from "ai";
+import { generateText, type LanguageModel } from "ai";
 import { aiModel, gatewayOptions } from "@/lib/ai/model";
 
 /**
@@ -19,40 +19,15 @@ export async function generateContentWithRetry(
   return content;
 }
 
-function statusOf(error: unknown): number | undefined {
-  if (RetryError.isInstance(error)) return statusOf(error.lastError);
-  if (APICallError.isInstance(error)) return error.statusCode;
-  return undefined;
-}
-
-/** A message safe to show users; the raw error stays in the server log. */
-export function getAIErrorMessage(error: unknown): string {
-  const status = statusOf(error);
-  if (status === 429) {
-    return "AI服务当前繁忙，请稍后重试。";
-  }
-  if (status === 401 || status === 403) {
-    return "AI服务未配置或无权访问，请联系管理员。";
-  }
-  if (status === 402) {
-    return "AI服务额度不足，请联系管理员。";
-  }
-  return "AI服务暂时不可用，请稍后重试。";
-}
-
 /** A rough token count: about 4 characters per token in English, 1.5 in Chinese. */
-export function estimateTokens(text: string): number {
+function estimateTokens(text: string): number {
   const chineseChars = (text.match(/[一-鿿]/g) || []).length;
   const englishChars = text.length - chineseChars;
   return Math.ceil(chineseChars / 1.5 + englishChars / 4);
 }
 
 export function logTokenUsage(prompt: string, response: string, operation: string) {
-  const promptTokens = estimateTokens(prompt);
-  const responseTokens = estimateTokens(response);
-  console.log(`🔢 [${operation}] Token使用量:`, {
-    input: promptTokens,
-    output: responseTokens,
-    total: promptTokens + responseTokens,
-  });
+  const input = estimateTokens(prompt);
+  const output = estimateTokens(response);
+  console.log(`[AI] ${operation} token estimate:`, { input, output, total: input + output });
 }

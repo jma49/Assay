@@ -1,12 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { apiErrorCode, readJson } from "./send-json";
 
 export interface ApiState<T> {
   data: T | null;
   /** The URL `data` came from; differs from the current URL while a new request is in flight. */
   dataUrl: string | null;
   error: string | null;
+  /** The API's `error.code` for `error`, when it sent one (see src/client/api-errors.ts). */
+  errorCode: string | null;
   loading: boolean;
   /**
    * Fetches again, keeping the current data on screen until the new one arrives.
@@ -15,11 +18,11 @@ export interface ApiState<T> {
   reload: () => Promise<void>;
 }
 
-/** GETs JSON from an API route; errors carry the route's message when it sent one. */
+/** GETs JSON from an API route; errors carry the route's message and code when it sent them. */
 export function useApi<T>(url: string | null): ApiState<T> {
   const [data, setData] = useState<T | null>(null);
   const [dataUrl, setDataUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; code: string | null } | null>(null);
   const [loading, setLoading] = useState(Boolean(url));
   const [version, setVersion] = useState(0);
   const waiting = useRef<(() => void)[]>([]);
@@ -32,17 +35,16 @@ export function useApi<T>(url: string | null): ApiState<T> {
     const current = () => !controller.signal.aborted;
     setLoading(true);
     fetch(url, { signal: controller.signal })
-      .then(async (response) => {
-        const body = await response.json().catch(() => null);
+      .then((response) => readJson<T>(response))
+      .then((body) => {
         // An abort can land while the body is read; a superseded response must not overwrite newer data.
         if (!current()) return;
-        if (!response.ok) throw new Error(body?.error?.message ?? body?.message ?? response.statusText);
-        setData(body as T);
+        setData(body);
         setDataUrl(url);
         setError(null);
       })
       .catch((cause) => {
-        if (current()) setError(cause instanceof Error ? cause.message : String(cause));
+        if (current()) setError({ message: cause instanceof Error ? cause.message : String(cause), code: apiErrorCode(cause) ?? null });
       })
       .finally(() => {
         if (!current()) return;
@@ -64,5 +66,5 @@ export function useApi<T>(url: string | null): ApiState<T> {
       }),
     [],
   );
-  return { data, dataUrl, error, loading, reload };
+  return { data, dataUrl, error: error?.message ?? null, errorCode: error?.code ?? null, loading, reload };
 }

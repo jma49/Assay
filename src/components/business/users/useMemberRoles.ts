@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { apiErrorText } from "@/client/api-errors";
 import { sendJson } from "@/client/send-json";
 import { UserRole } from "@/lib/types/approval";
 import type { DashboardTranslationKeys } from "@/components/business/dashboard/types";
@@ -77,7 +78,7 @@ export function useMemberRoles(language: string, t: (key: DashboardTranslationKe
       return true;
     } catch (err) {
       console.error("[members] Assigning a role failed:", err);
-      toast.error(err instanceof Error ? err.message : failed);
+      toast.error(apiErrorText(err, zh ? "zh" : "en", failed));
       return false;
     } finally {
       setActionLoading(null);
@@ -94,7 +95,7 @@ export function useMemberRoles(language: string, t: (key: DashboardTranslationKe
       loadMembers();
     } catch (err) {
       console.error("[members] Changing a role failed:", err);
-      toast.error(err instanceof Error ? err.message : failed);
+      toast.error(apiErrorText(err, zh ? "zh" : "en", failed));
     } finally {
       setActionLoading(null);
     }
@@ -114,7 +115,7 @@ export function useMemberRoles(language: string, t: (key: DashboardTranslationKe
       loadMembers();
     } catch (err) {
       console.error("[members] Removing a role failed:", err);
-      toast.error(err instanceof Error ? err.message : failed);
+      toast.error(apiErrorText(err, zh ? "zh" : "en", failed));
     } finally {
       setActionLoading(null);
     }
