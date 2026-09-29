@@ -5,9 +5,9 @@ import type { DemoKind, Language } from "./content";
 type Status = "passed" | "attention" | "failed";
 
 const STATUS_COLOR: Record<Status, string> = {
-  passed: "var(--l-success)",
-  attention: "var(--l-attention)",
-  failed: "var(--l-failure)",
+  passed: "var(--success)",
+  attention: "var(--attention)",
+  failed: "var(--failure)",
 };
 
 const STATUS_LABEL: Record<Language, Record<Status, string>> = {
@@ -59,7 +59,7 @@ export function DemoFrame({
         elevated ? "shadow-[var(--shadow-border),0_24px_60px_-24px_rgba(22,27,38,0.35)]" : ""
       }`}
     >
-      <div className="flex h-10 items-center justify-between gap-4 border-b bg-card px-4 text-[13px] text-foreground">
+      <div className="flex h-10 items-center justify-between gap-4 border-b bg-card px-4 text-body-sm text-foreground">
         <span className="flex min-w-0 items-center gap-3">
           {chrome && (
             <span aria-hidden className="flex shrink-0 gap-1.5">
@@ -79,10 +79,10 @@ export function DemoFrame({
 
 function Code({ lines }: { lines: string[] }) {
   return (
-    <pre className="mono flex-1 overflow-hidden bg-(--l-code-bg) px-4 py-3 text-[13px] leading-6">
+    <pre className="mono flex-1 overflow-hidden bg-code px-4 py-3 text-body-sm leading-6">
       {lines.map((line, i) => (
         <div key={i} className="flex gap-4">
-          <span className="w-4 shrink-0 text-right text-(--l-muted) select-none">{i + 1}</span>
+          <span className="w-4 shrink-0 text-right text-muted-foreground select-none">{i + 1}</span>
           <span className="whitespace-pre">
             <HighlightedLine text={line} language="sql" />
           </span>
@@ -103,9 +103,9 @@ function Table({
 }) {
   const align = (i: number) => (alignRight.includes(i) ? "text-right" : "text-left");
   return (
-    <table className="w-full text-[13px]">
+    <table className="w-full text-body-sm">
       <thead>
-        <tr className="border-b border-(--l-line) text-(--l-muted)">
+        <tr className="border-b border-border text-muted-foreground">
           {head.map((h, i) => (
             <th key={h} className={`px-4 py-2.5 font-normal ${align(i)}`}>
               {h}
@@ -115,7 +115,7 @@ function Table({
       </thead>
       <tbody>
         {rows.map((row, r) => (
-          <tr key={r} className="border-b border-(--l-line) last:border-0">
+          <tr key={r} className="border-b border-border last:border-0">
             {row.map((cell, i) => (
               <td key={i} className={`px-4 py-2.5 tabular-nums ${align(i)}`}>
                 {cell}
@@ -143,14 +143,14 @@ function ValidatorDemo({ lang }: { lang: Language }) {
   return (
     <DemoFrame title="paid-orders-missing-payment.sql" meta="PostgreSQL">
       <Code lines={MISSING_PAYMENT_SQL} />
-      <div className="space-y-2 border-t border-(--l-line) px-4 py-3 text-[13px]">
+      <div className="space-y-2 border-t border-border px-4 py-3 text-body-sm">
         <div className="flex items-center justify-between gap-4">
           <StatusText status="passed" lang={lang} />
-          <span className="text-(--l-muted)">{zh ? "只读查询，可以保存" : "Read-only, ready to save"}</span>
+          <span className="text-muted-foreground">{zh ? "只读查询，可以保存" : "Read-only, ready to save"}</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <span className="mono truncate text-(--l-muted) line-through">DELETE FROM demo.payments …</span>
-          <span style={{ color: "var(--l-failure)" }} className="shrink-0">
+          <span className="mono truncate text-muted-foreground line-through">DELETE FROM demo.payments …</span>
+          <span style={{ color: "var(--failure)" }} className="shrink-0">
             {zh ? "已拦截：禁止 DELETE" : "Blocked: DELETE is not allowed"}
           </span>
         </div>
@@ -163,8 +163,8 @@ function AiDemo({ lang }: { lang: Language }) {
   const zh = lang === "zh";
   return (
     <DemoFrame title={zh ? "AI 生成 SQL" : "Generate with AI"} meta="Gemini">
-      <div className="border-b border-(--l-line) px-4 py-3 text-[14px]">
-        <span className="text-(--l-muted)">{zh ? "描述：" : "Prompt: "}</span>
+      <div className="border-b border-border px-4 py-3 text-body-md">
+        <span className="text-muted-foreground">{zh ? "描述：" : "Prompt: "}</span>
         {zh ? "找出已支付但没有支付记录的订单" : "Orders marked paid that have no payment record"}
       </div>
       <Code lines={MISSING_PAYMENT_SQL} />
@@ -180,7 +180,7 @@ function VersionsDemo({ lang }: { lang: Language }) {
         head={[zh ? "版本" : "Version", zh ? "作者" : "Author", zh ? "说明" : "Note", ""]}
         alignRight={[3]}
         rows={[
-          ["v3", "jincheng", zh ? "改为按订单汇总" : "Group by order", <span key="c" className="text-(--l-muted)">{zh ? "当前" : "Current"}</span>],
+          ["v3", "jincheng", zh ? "改为按订单汇总" : "Group by order", <span key="c" className="text-muted-foreground">{zh ? "当前" : "Current"}</span>],
           ["v2", "alex", zh ? "忽略已退款" : "Ignore refunds", <span key="r" className="underline underline-offset-4">{zh ? "回滚" : "Roll back"}</span>],
           ["v1", "alex", zh ? "初始版本" : "Initial version", <span key="r" className="underline underline-offset-4">{zh ? "回滚" : "Roll back"}</span>],
         ]}
@@ -242,22 +242,22 @@ function TrendsDemo({ lang }: { lang: Language }) {
   return (
     <DemoFrame title={zh ? "通过率" : "Pass rate"} meta={zh ? "近 7 天" : "Last 7 days"}>
       <div className="flex h-full flex-col px-4 pt-6 pb-4">
-        <div className="grid flex-1 grid-cols-7 items-end gap-3 border-b border-(--l-line)">
+        <div className="grid flex-1 grid-cols-7 items-end gap-3 border-b border-border">
           {PASS_RATES.map((rate, i) => (
             <div key={i} className="flex h-full flex-col justify-end gap-1.5 text-center">
-              <span className="text-[12px] text-(--l-muted) tabular-nums">{rate}%</span>
+              <span className="text-caption text-muted-foreground tabular-nums">{rate}%</span>
               <div
                 className="mx-auto w-6 rounded-t-sm"
                 style={{
                   height: `${rate * 0.8}%`,
-                  background: rate < 80 ? "var(--l-attention)" : "var(--l-fg)",
+                  background: rate < 80 ? "var(--attention)" : "var(--foreground)",
                   opacity: rate < 80 ? 0.9 : 0.35,
                 }}
               />
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-3 pt-2 text-center text-[12px] text-(--l-muted)">
+        <div className="grid grid-cols-7 gap-3 pt-2 text-center text-caption text-muted-foreground">
           {days.map((d, i) => (
             <span key={i}>{d}</span>
           ))}
@@ -269,8 +269,8 @@ function TrendsDemo({ lang }: { lang: Language }) {
 
 function ApprovalsDemo({ lang }: { lang: Language }) {
   const zh = lang === "zh";
-  const pending = <span key="p" style={{ color: "var(--l-attention)" }}>{zh ? "待审批" : "Pending"}</span>;
-  const approved = <span key="a" style={{ color: "var(--l-success)" }}>{zh ? "已通过" : "Approved"}</span>;
+  const pending = <span key="p" style={{ color: "var(--attention)" }}>{zh ? "待审批" : "Pending"}</span>;
+  const approved = <span key="a" style={{ color: "var(--success)" }}>{zh ? "已通过" : "Approved"}</span>;
   return (
     <DemoFrame title={zh ? "审批" : "Approvals"} meta={zh ? "2 个待处理" : "2 pending"}>
       <Table
@@ -290,7 +290,7 @@ function ApprovalsDemo({ lang }: { lang: Language }) {
 function RolesDemo({ lang }: { lang: Language }) {
   const zh = lang === "zh";
   const yes = <span key="y">✓</span>;
-  const no = <span key="n" className="text-(--l-muted)">—</span>;
+  const no = <span key="n" className="text-muted-foreground">—</span>;
   return (
     <DemoFrame title={zh ? "角色与权限" : "Roles and permissions"}>
       <Table
@@ -311,16 +311,16 @@ function AuditDemo({ lang }: { lang: Language }) {
   const zh = lang === "zh";
   return (
     <DemoFrame title={zh ? "编辑历史" : "Edit history"} meta="demo-duplicate-orders">
-      <div className="border-b border-(--l-line) px-4 py-3 text-[13px] text-(--l-muted)">
+      <div className="border-b border-border px-4 py-3 text-body-sm text-muted-foreground">
         sam · {zh ? "2 小时前" : "2 hours ago"} · {zh ? "修改 SQL" : "Updated SQL"}
       </div>
-      <pre className="mono flex-1 overflow-x-auto bg-(--l-code-bg) px-4 py-3 text-[13px] leading-6">
-        <div className="text-(--l-muted)">  JOIN demo.orders b</div>
-        <div className="text-(--l-muted)">    ON b.customer_id = a.customer_id</div>
-        <div style={{ color: "var(--l-failure)" }}>-  AND b.created_at &lt; a.created_at + interval &apos;1 hour&apos;</div>
-        <div style={{ color: "var(--l-success)" }}>+  AND b.total = a.total</div>
-        <div style={{ color: "var(--l-success)" }}>+  AND b.created_at BETWEEN a.created_at</div>
-        <div style={{ color: "var(--l-success)" }}>+      AND a.created_at + interval &apos;5 minutes&apos;</div>
+      <pre className="mono flex-1 overflow-x-auto bg-code px-4 py-3 text-body-sm leading-6">
+        <div className="text-muted-foreground">  JOIN demo.orders b</div>
+        <div className="text-muted-foreground">    ON b.customer_id = a.customer_id</div>
+        <div style={{ color: "var(--failure)" }}>-  AND b.created_at &lt; a.created_at + interval &apos;1 hour&apos;</div>
+        <div style={{ color: "var(--success)" }}>+  AND b.total = a.total</div>
+        <div style={{ color: "var(--success)" }}>+  AND b.created_at BETWEEN a.created_at</div>
+        <div style={{ color: "var(--success)" }}>+      AND a.created_at + interval &apos;5 minutes&apos;</div>
       </pre>
     </DemoFrame>
   );
