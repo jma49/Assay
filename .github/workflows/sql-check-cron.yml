@@ -44,7 +44,17 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          # The same settings the app has on Vercel, so a scheduled run
+          # behaves like one started in the app. Optional: an unset secret or
+          # variable arrives empty, which the app treats as unset.
           CA_CERT_BLOB_URL: ${{ secrets.CA_CERT_BLOB_URL }}
+          CLIENT_CERT_BLOB_URL: ${{ secrets.CLIENT_CERT_BLOB_URL }}
+          CLIENT_KEY_BLOB_URL: ${{ secrets.CLIENT_KEY_BLOB_URL }}
+          MONGODB_DB_NAME: ${{ vars.MONGODB_DB_NAME }}
+          CHECK_TIMEOUT_MS: ${{ vars.CHECK_TIMEOUT_MS }}
+          CHECK_CONCURRENCY: ${{ vars.CHECK_CONCURRENCY }}
+          PG_POOL_MAX: ${{ vars.PG_POOL_MAX }}
+          RUN_RETENTION_DAYS: ${{ vars.RUN_RETENTION_DAYS }}
           GITHUB_RUN_ID: ${{ github.run_id }}
           EXECUTION_MODE: ${{ github.event.inputs.execution_mode || 'scheduled' }}
           NODE_ENV: production

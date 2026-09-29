@@ -23,6 +23,19 @@ Assay 本身不常驻一个时钟，需要有东西去启动定时执行器。�
 
 `.github/workflows/sql-check-cron.yml` 每 30 分钟启动一次执行器。把 `DATABASE_URL` 和 `MONGODB_URI` 加到仓库的 Secrets 后，它就会在默认分支上开始运行；没有配置时会静默跳过。也可以在 Actions 页面手动运行，选择 `scheduled`（到点的检查）或 `all`（立即执行全部）。
 
+执行器读取的配置和应用相同，所以在托管平台上设置过的，也要在 GitHub 上设置；没有设置的使用默认值：
+
+| 名称 | 设置为 | 何时需要 |
+|---|---|---|
+| `DATABASE_URL`、`MONGODB_URI` | Secret | 必需 |
+| `APP_URL`、`CRON_SECRET` | Secret | 定时执行后立即发送告警 |
+| `CA_CERT_BLOB_URL`、`CLIENT_CERT_BLOB_URL`、`CLIENT_KEY_BLOB_URL` | Secret | PostgreSQL 使用私有 CA 或客户端证书 |
+| `MONGODB_DB_NAME` | Variable | `MONGODB_URI` 里没有数据库名，且你用的不是默认名称 |
+| `CHECK_TIMEOUT_MS`、`RUN_RETENTION_DAYS` | Variable | 你在托管平台上改过它们 |
+| `CHECK_CONCURRENCY`、`PG_POOL_MAX` | Variable | 可选；同时执行的检查数和 PostgreSQL 连接数 |
+
+Secret 加在 **Settings → Secrets and variables → Actions → Secrets**，其余加在 **Variables**。公开仓库的工作流日志是公开的，所以日志里只显示每个检查的 ID、结果和行数；错误信息只保存在应用里。
+
 想只看会执行哪些检查、而不真正执行：
 
 ```bash
