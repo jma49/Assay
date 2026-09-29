@@ -1,5 +1,6 @@
 "use client";
 
+import { APP_CONTAINER } from "@/components/layout/app-container";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
@@ -61,7 +62,7 @@ const ManageScriptsContent = () => {
 
   return (
     <div className="min-h-screen    ">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+      <div className={`${APP_CONTAINER} py-6`}>
         <div className="space-y-4 animate-fadeIn">
           <ManageScriptsHeader
             scripts={scripts}

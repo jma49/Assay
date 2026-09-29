@@ -4,12 +4,16 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import { open } from "@/server/crypto/secret-box";
 import { createPastedDestination } from "./destinations";
 
-vi.mock("@/server/notify/safe-url", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/server/notify/safe-url")>()),
-  assertPublicHost: async (host: string) => {
-    if (host === "internal.example") throw new Error("Webhook host is not public");
-  },
-}));
+vi.mock("@/server/notify/safe-url", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/server/notify/safe-url")>();
+  return {
+    ...original,
+    assertPublicHost: async (host: string) => {
+      if (host === "internal.example") throw new Error("Webhook host is not public");
+      if (host === "typo.example") throw new original.HostNotFoundError(host);
+    },
+  };
+});
 
 beforeAll(() => {
   process.env.ASSAY_SECRET_KEY = randomBytes(32).toString("base64");
@@ -54,6 +58,9 @@ describe("createPastedDestination", () => {
     await expect(
       createPastedDestination(db, "default", by, { ...base, kind: "webhook", url: "https://internal.example/in" }),
     ).rejects.toMatchObject({ status: 400 });
+    await expect(
+      createPastedDestination(db, "default", by, { ...base, kind: "webhook", url: "https://typo.example/in" }),
+    ).rejects.toMatchObject({ status: 400, code: "host_not_found", message: "Couldn't resolve host typo.example. Check the URL." });
   });
 });
 

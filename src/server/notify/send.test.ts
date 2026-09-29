@@ -44,6 +44,14 @@ describe("sendRequest", () => {
     expect(outcome).toEqual({ kind: "retry", error: "connect failed for <url>" });
   });
 
+  it("says a host did not resolve instead of fetch's generic failure", async () => {
+    const fetch = vi.fn(async (..._args: unknown[]) => {
+      throw Object.assign(new TypeError("fetch failed"), { cause: { code: "ENOTFOUND" } });
+    });
+    const outcome = await sendRequest(CHANNELS.slack, request, { fetch, resolve: publicDns });
+    expect(outcome).toEqual({ kind: "retry", error: `Couldn't resolve host ${new URL(request.url).hostname}` });
+  });
+
   it("refuses generic webhooks that resolve to private hosts", async () => {
     const fetch = reply(200);
     const outcome = await sendRequest(CHANNELS.webhook, request, { fetch, resolve: async () => ["169.254.169.254"] });
