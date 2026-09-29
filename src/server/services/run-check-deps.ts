@@ -8,8 +8,9 @@ import { runCheck, type RunCheckDeps, type RunTrigger } from "./run-check";
 
 /**
  * How long a Vercel function that runs checks may live, in seconds. Fluid
- * Compute allows up to 300 s on the Hobby plan (800 s on paid plans); Assay
- * assumes Hobby. Every route that runs checks exports `maxDuration` with this
+ * Compute (turned on in vercel.json) allows up to 300 s on the Hobby plan
+ * (800 s on paid plans); without it Hobby caps functions at 60 s and Vercel
+ * refuses the deployment. Assay assumes Hobby. Every route that runs checks exports `maxDuration` with this
  * value (a literal there, because Next.js reads it statically; a test keeps
  * them equal).
  */
