@@ -2,16 +2,22 @@ import type { RunOutcome } from "@/domain/run";
 import { SAMPLE_FIELDS, storedSample } from "@/server/runs/sample";
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
-import { withAuth } from "@/server/http/route";
+import { z } from "zod";
+import { ApiError, parseJson, withAuth } from "@/server/http/route";
+import { aiError, guardAiRequest } from "@/server/http/ai-guard";
 import { Permission } from "@/lib/auth/rbac";
-import { guardAiRequest } from "@/lib/security/ai-guard";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { getCachedSchema } from "@/lib/database/db-schema";
 import { profileRows } from "@/lib/ai/row-profile";
 import { triageRun, type Triage } from "@/lib/ai/triage";
 import { aiModel } from "@/lib/ai/model";
-import { getAIErrorMessage } from "@/lib/utils/ai-utils";
 import { COLLECTIONS } from "@/lib/database/collections";
+import { findRun, saveTriage } from "@/server/repos/runs";
+
+const Body = z.object({
+  resultId: z.string().refine((id) => ObjectId.isValid(id), "Invalid run id"),
+  language: z.enum(["en", "zh"]).catch("en"),
+});
 
 /**
  * Triage of one flagged or failed run. The client sends only the run id:
@@ -20,52 +26,33 @@ import { COLLECTIONS } from "@/lib/database/collections";
  * language and the answer is stored on the run.
  */
 export const POST = withAuth(Permission.HISTORY_READ, async (request, { principal }) => {
-  const body = await request.json().catch(() => ({}));
-  const resultId = typeof body.resultId === "string" ? body.resultId : "";
-  const language: "en" | "zh" = body.language === "zh" ? "zh" : "en";
-  if (!ObjectId.isValid(resultId)) {
-    return NextResponse.json({ error: "Invalid result id" }, { status: 400 });
-  }
+  const { resultId, language } = await parseJson(request, Body);
 
+  const db = await getMongoDbClient().getDb();
+  const run = await findRun(db, resultId, { checkId: 1, outcome: 1, message: 1, ...SAMPLE_FIELDS, aiTriage: 1 });
+  if (!run) throw new ApiError(404, "not_found", "No run with this id");
+
+  const cached = run.aiTriage?.[language] as Triage | undefined;
+  if (cached) return NextResponse.json({ triage: cached, cached: true });
+
+  // Guests may read saved triage but never start a model call.
+  if (principal.isGuest) throw new ApiError(403, "sign_up_required", "Sign up to run AI triage");
+
+  const outcome: RunOutcome = run.outcome ?? "clean";
+  if (outcome === "clean") throw new ApiError(400, "nothing_to_triage", "This run passed; there is nothing to triage");
+
+  const message = typeof run.message === "string" ? run.message : "";
+  await guardAiRequest(principal.id, { errorMessage: message });
+
+  const scriptId = String(run.checkId ?? "");
+  const script = await db
+    .collection(COLLECTIONS.checks)
+    .findOne({ scriptId }, { projection: { name: 1, description: 1, sqlContent: 1 } });
+  const rows = storedSample(run);
+
+  let triage: Triage;
   try {
-    const db = await getMongoDbClient().getDb();
-    const results = db.collection(COLLECTIONS.runs);
-    const run = await results.findOne(
-      { _id: new ObjectId(resultId) },
-      { projection: { checkId: 1, outcome: 1, message: 1, ...SAMPLE_FIELDS, aiTriage: 1 } },
-    );
-    if (!run) {
-      return NextResponse.json({ error: "Run not found" }, { status: 404 });
-    }
-
-    const cached = run.aiTriage?.[language] as Triage | undefined;
-    if (cached) {
-      return NextResponse.json({ triage: cached, cached: true });
-    }
-
-    // Guests may read saved triage but never start a model call.
-    if (principal.isGuest) {
-      return NextResponse.json({ error: "Sign up to run AI triage" }, { status: 403 });
-    }
-
-    const outcome: RunOutcome = run.outcome ?? "clean";
-    if (outcome === "clean") {
-      return NextResponse.json({ error: "This run passed; there is nothing to triage" }, { status: 400 });
-    }
-
-    const message = typeof run.message === "string" ? run.message : "";
-    const refused = await guardAiRequest(principal.id, { errorMessage: message });
-    if (refused) {
-      return refused;
-    }
-
-    const scriptId = String(run.checkId ?? "");
-    const script = await db
-      .collection(COLLECTIONS.checks)
-      .findOne({ scriptId }, { projection: { name: 1, description: 1, sqlContent: 1 } });
-    const rows = storedSample(run);
-
-    const triage = await triageRun(
+    triage = await triageRun(
       {
         check: { scriptId, name: script?.name, description: script?.description, sql: script?.sqlContent },
         run: { outcome, message, rowCount: rows.length, profile: profileRows(rows) },
@@ -74,14 +61,11 @@ export const POST = withAuth(Permission.HISTORY_READ, async (request, { principa
       },
       { userId: principal.id },
     );
-
-    await results.updateOne(
-      { _id: run._id },
-      { $set: { [`aiTriage.${language}`]: { ...triage, model: String(aiModel()), createdAt: new Date() } } },
-    );
-    return NextResponse.json({ triage, cached: false });
   } catch (error) {
-    console.error("[AI Triage] error:", error);
-    return NextResponse.json({ error: getAIErrorMessage(error) }, { status: 500 });
+    console.error("[AI triage] The model call failed:", error);
+    throw aiError(error);
   }
+
+  await saveTriage(db, run._id, language, { ...triage, model: String(aiModel()), createdAt: new Date() });
+  return NextResponse.json({ triage, cached: false });
 });

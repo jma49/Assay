@@ -1,4 +1,4 @@
-import type { SchemaTable } from "@/lib/database/db-schema";
+import type { SchemaTable } from "@/contracts/schema";
 import { tableReferences } from "@/lib/sql/table-references";
 
 export interface CoverageScript {
@@ -8,7 +8,7 @@ export interface CoverageScript {
   sqlContent: string;
 }
 
-export interface TableCoverage {
+interface TableCoverage {
   table: string;
   columnCount: number;
   checks: { scriptId: string; name: string; cnName?: string }[];

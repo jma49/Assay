@@ -7,8 +7,8 @@ import type { LanguageModel } from "ai";
  * AI_GATEWAY_MODEL overrides the default; the fallback is tried when the
  * primary model fails.
  */
-export const DEFAULT_MODEL = "anthropic/claude-haiku-4.5";
-export const FALLBACK_MODELS = ["google/gemini-3-flash"];
+const DEFAULT_MODEL = "anthropic/claude-haiku-4.5";
+const FALLBACK_MODELS = ["google/gemini-3-flash"];
 
 export function aiModel(): LanguageModel {
   return process.env.AI_GATEWAY_MODEL || DEFAULT_MODEL;

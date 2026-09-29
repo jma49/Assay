@@ -1,10 +1,9 @@
 import { loadEnv } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
 /** Evals call a real model; they run only through `npm run eval`, never with `npm test`. */
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  resolve: { tsconfigPaths: true },
   test: {
     include: ["evals/**/*.eval.ts"],
     environment: "node",

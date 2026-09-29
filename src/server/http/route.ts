@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ZodError, type ZodType } from "zod";
-import { authMessages, GUEST_PERMISSIONS, validateApiAuth } from "@/lib/auth/auth-utils";
+import { GUEST_PERMISSIONS, validateApiAuth } from "@/lib/auth/auth-utils";
 import { requirePermission, type Permission, type UserRole } from "@/lib/auth/rbac";
 
 /** Who is calling a route: a signed-in user, or a demo guest where the route allows one. */
@@ -13,20 +13,26 @@ export interface Principal {
   role?: UserRole;
 }
 
-/** An error the caller can act on. Anything else becomes a generic 500. */
+/**
+ * An error the caller can act on. Anything else becomes a generic 500.
+ * `code` is stable: the client localizes by it (src/client/api-errors.ts);
+ * `message` is English, for logs, API users and a fallback.
+ */
 export class ApiError extends Error {
   constructor(
     readonly status: number,
     readonly code: string,
     message: string,
+    readonly headers?: Record<string, string>,
   ) {
     super(message);
   }
 }
 
+/** The one error shape every route answers: `{ error: { code, message } }` with the matching status. */
 export function errorResponse(error: unknown): NextResponse {
   if (error instanceof ApiError) {
-    return NextResponse.json({ error: { code: error.code, message: error.message } }, { status: error.status });
+    return NextResponse.json({ error: { code: error.code, message: error.message } }, { status: error.status, headers: error.headers });
   }
   if (error instanceof ZodError) {
     const issues = error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message }));
@@ -67,7 +73,7 @@ function accessRule(access: Access): { permissions: readonly Permission[]; allow
 /** The caller, or the refusal: 401 when not signed in, 403 outside the allowed domains or without the permission. */
 async function authorize(access: Access): Promise<Principal | Response> {
   const { permissions, allowGuest } = accessRule(access);
-  const auth = await validateApiAuth("en", { allowGuest });
+  const auth = await validateApiAuth({ allowGuest });
   if (!auth.isValid) return auth.response;
   const principal: Principal = {
     id: auth.user.id,
@@ -81,12 +87,12 @@ async function authorize(access: Access): Promise<Principal | Response> {
     const { authorized, userRole } = await requirePermission(principal.id, permission);
     if (authorized) return { ...principal, role: userRole };
   }
-  return NextResponse.json({ success: false, message: authMessages.en.forbidden }, { status: 403 });
+  return errorResponse(new ApiError(403, "forbidden", "You do not have permission to do this"));
 }
 
 /**
- * A route handler behind an access rule. Refusals answer
- * `{ success: false, message }`; errors map to `{ error: { code, message } }`.
+ * A route handler behind an access rule. Refusals and thrown errors answer
+ * `{ error: { code, message } }` (errorResponse).
  */
 export function withAuth<P extends Record<string, string | string[]> = Record<string, string>>(
   access: Access,

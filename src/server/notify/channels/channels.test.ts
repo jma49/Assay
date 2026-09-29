@@ -19,17 +19,17 @@ describe("validateUrl", () => {
 
   it("accepts each service's own webhook hosts only", () => {
     expect(valid("slack", "https://hooks.slack.com/services/T0/B0/xyz")).toBeNull();
-    expect(valid("slack", "https://hooks.slack.com.evil.io/services/T0")).not.toBeNull();
+    expect(valid("slack", "https://hooks.slack.com.evil.io/services/T0")).toBe("url_wrong_service");
     expect(valid("slack", "http://hooks.slack.com/services/T0")).not.toBeNull();
     expect(valid("discord", "https://discord.com/api/webhooks/1/abc")).toBeNull();
     expect(valid("discord", "https://discord.com/users/1")).not.toBeNull();
     expect(valid("feishu", "https://open.feishu.cn/open-apis/bot/v2/hook/abc")).toBeNull();
     expect(valid("feishu", "https://open.larksuite.com/open-apis/bot/v2/hook/abc")).toBeNull();
     expect(valid("wecom", "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=abc")).toBeNull();
-    expect(valid("wecom", "https://qyapi.weixin.qq.com/cgi-bin/webhook/send")).not.toBeNull();
+    expect(valid("wecom", "https://qyapi.weixin.qq.com/cgi-bin/webhook/send")).toBe("url_missing_key");
     expect(valid("webhook", "https://example.com/hook")).toBeNull();
-    expect(valid("webhook", "http://example.com/hook")).not.toBeNull();
-    expect(valid("webhook", "https://user:pw@example.com/hook")).not.toBeNull();
+    expect(valid("webhook", "http://example.com/hook")).toBe("url_not_https");
+    expect(valid("webhook", "https://user:pw@example.com/hook")).toBe("url_has_credentials");
   });
 });
 

@@ -3,7 +3,6 @@ export enum ApprovalStatus {
   APPROVED = "approved",
   REJECTED = "rejected",
   WITHDRAWN = "withdrawn",
-  DRAFT = "draft",
 }
 export enum ScriptType {
   READ_ONLY = "read_only",
@@ -34,7 +33,6 @@ export interface ApprovalRequestDto {
   }>;
   isComplete: boolean;
   comment?: string;
-  reason?: string;
   operationType?: "create" | "update" | "delete";
   /** The SQL the request would put live (for a delete, the SQL being removed). */
   sqlContent?: string;

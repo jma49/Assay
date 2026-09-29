@@ -7,14 +7,14 @@ import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
 import { open, seal } from "@/server/crypto/secret-box";
 import { ApiError } from "@/server/http/route";
 import { CHANNELS } from "@/server/notify/channels";
-import { HostNotFoundError, assertPublicHost } from "@/server/notify/safe-url";
+import { HostNotFoundError, assertPublicHost } from "@/server/net/safe-url";
 import { sendRequest } from "@/server/notify/send";
-import type { DeliveryOutcome, DestinationSecret } from "@/server/notify/types";
+import { URL_PROBLEM_MESSAGES, type DeliveryOutcome, type DestinationSecret } from "@/server/notify/types";
 import { COLLECTIONS } from "@/lib/database/collections";
 import { toDestination } from "@/server/repos/notify-store";
 import type { Destination } from "./notifications";
 
-export function toDestinationDto(destination: Destination): DestinationDto {
+function toDestinationDto(destination: Destination): DestinationDto {
   const last = destination.lastDelivery;
   return {
     id: destination.id,
@@ -101,13 +101,13 @@ export async function createPastedDestination(
 ): Promise<{ destination: DestinationDto; signingSecret?: string }> {
   const url = new URL(input.url);
   const problem = CHANNELS[input.kind].validateUrl(url);
-  if (problem) throw new ApiError(400, "invalid_url", problem);
+  if (problem) throw new ApiError(400, problem, URL_PROBLEM_MESSAGES[problem]);
   if (input.kind === "webhook") {
     try {
       await assertPublicHost(url.hostname);
     } catch (cause) {
       if (cause instanceof HostNotFoundError) throw new ApiError(400, "host_not_found", `${cause.message}. Check the URL.`);
-      throw new ApiError(400, "invalid_url", "The webhook host must be a public address");
+      throw new ApiError(400, "url_not_public", "The webhook host must be a public address");
     }
   }
   const secret: DestinationSecret = { url: url.toString() };

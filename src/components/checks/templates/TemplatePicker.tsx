@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LayoutTemplate } from "lucide-react";
+import { apiErrorCodeText } from "@/client/api-errors";
 import { useApi } from "@/client/use-api";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { Button } from "@/components/ui/button";
-import type { SchemaTable } from "@/lib/database/db-schema";
+import type { SchemaTable } from "@/contracts/schema";
 import { TEMPLATES, type TableRef, type TemplateCheck } from "@/lib/checks/templates";
 import { cn } from "@/lib/utils/utils";
 import { FIELDS_COPY, TemplateFields } from "./TemplateFields";
@@ -49,7 +50,7 @@ export function TemplatePicker({ initialTable, onApply }: { initialTable?: strin
   useEffect(() => {
     if (initialTable) setOpen(true);
   }, [initialTable]);
-  const { data, error, loading } = useApi<{ tables: SchemaTable[] }>(open ? "/api/schema" : null);
+  const { data, error, errorCode, loading } = useApi<{ tables: SchemaTable[] }>(open ? "/api/schema" : null);
   const tables = data?.tables ?? [];
 
   return (
@@ -75,7 +76,7 @@ export function TemplatePicker({ initialTable, onApply }: { initialTable?: strin
           {loading && !data ? (
             <p className="text-[13px] text-muted-foreground">{t.loading}</p>
           ) : error ? (
-            <p className="text-[13px] text-failure">{error || t.failed}</p>
+            <p className="text-[13px] text-failure">{apiErrorCodeText(errorCode, language) ?? (error || t.failed)}</p>
           ) : tables.length === 0 ? (
             <p className="text-[13px] text-muted-foreground">{t.empty}</p>
           ) : (

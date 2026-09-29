@@ -35,7 +35,7 @@ export interface BatchStore {
   finish(executionId: string, at: Date): Promise<void>;
 }
 
-export function itemStatus(result: RunCheckResult): Pick<BatchItem, "status" | "message" | "findings" | "mongoResultId"> {
+function itemStatus(result: RunCheckResult): Pick<BatchItem, "status" | "message" | "findings" | "mongoResultId"> {
   if (result.kind === "missing") return { status: "error", message: "No check with this id" };
   if (result.kind === "busy") {
     return { status: "error", message: "Already running; its result will appear in the run history." };
@@ -135,7 +135,7 @@ export function currentItemStatus(status: string): BatchItemStatus {
 
 // A batch that never finished (its function was stopped) stops showing as active after this:
 // no function lives longer than FUNCTION_MAX_DURATION_S (300 s), so a minute more is plenty.
-export const BATCH_STALE_MS = 6 * 60_000;
+const BATCH_STALE_MS = 6 * 60_000;
 
 const STOPPED_MESSAGE = "The batch stopped before this check finished. See the run history, or run it again.";
 

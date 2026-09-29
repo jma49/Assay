@@ -8,6 +8,7 @@ import { useLanguage } from "@/components/common/LanguageProvider";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
 import { Input } from "@/components/ui/input";
+import { apiErrorCodeText } from "@/client/api-errors";
 import { useApi } from "@/client/use-api";
 import type { CheckSummary } from "@/contracts/checks";
 import type { RunOutcome } from "@/domain/run";
@@ -126,7 +127,7 @@ export function ChecksList() {
   const { language } = useLanguage();
   const t = COPY[language];
   const zh = language === "zh";
-  const { data, error, loading } = useApi<{ checks: CheckSummary[] }>("/api/checks");
+  const { data, error, errorCode, loading } = useApi<{ checks: CheckSummary[] }>("/api/checks");
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const checks = useMemo(() => data?.checks ?? [], [data]);
@@ -218,7 +219,7 @@ export function ChecksList() {
 
         {error ? (
           <p className="px-6 py-10 text-center text-[13px] text-muted-foreground">
-            {t.loadFailed}: {error}
+            {t.loadFailed}: {apiErrorCodeText(errorCode, language) ?? error}
           </p>
         ) : pending ? (
           <div className="space-y-2 p-4" aria-busy>

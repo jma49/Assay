@@ -7,7 +7,7 @@ import { CardFooter } from "@/components/ui/card";
 import { isJumpInputKey, parseJumpPage } from "@/lib/utils/pagination";
 import { cn } from "@/lib/utils/utils";
 
-export type PaginationKey =
+type PaginationKey =
   | "previous"
   | "next"
   | "jumpToFirst"

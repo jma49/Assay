@@ -7,7 +7,7 @@ export const RENAMED_COLLECTIONS: readonly (readonly [string, string])[] = [
   ["result", COLLECTIONS.runs],
 ];
 
-export type RenameOutcome =
+type RenameOutcome =
   | "renamed" // old moved to new
   | "already-done" // only new exists
   | "nothing" // neither exists (a new deployment)

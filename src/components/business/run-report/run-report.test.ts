@@ -21,12 +21,12 @@ describe("readRunResponse", () => {
   });
 
   it("reads a missing or malformed id as no run", async () => {
-    await expect(readRunResponse(Response.json({ message: "not found" }, { status: 404 }))).resolves.toBeNull();
-    await expect(readRunResponse(Response.json({ message: "bad id" }, { status: 400 }))).resolves.toBeNull();
+    await expect(readRunResponse(Response.json({ error: { code: "not_found", message: "not found" } }, { status: 404 }))).resolves.toBeNull();
+    await expect(readRunResponse(Response.json({ error: { code: "invalid_input", message: "bad id" } }, { status: 400 }))).resolves.toBeNull();
   });
 
   it("uses the API's message on failure", async () => {
-    await expect(readRunResponse(Response.json({ message: "Not allowed" }, { status: 403 }))).rejects.toThrow("Not allowed");
+    await expect(readRunResponse(Response.json({ error: { code: "forbidden", message: "Not allowed" } }, { status: 403 }))).rejects.toThrow("Not allowed");
   });
 
   it("falls back to the status when the error body is not JSON", async () => {

@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   listed: [] as Record<string, unknown>[],
   insertOne: vi.fn(async (_doc: Record<string, unknown>) => ({ insertedId: "mongo_1" })),
   findOne: vi.fn(),
-  createApprovalRequest: vi.fn(async (..._args: unknown[]) => "req_1" as string | null),
+  fileChangeRequest: vi.fn(async (..._args: unknown[]) => "req_1"),
 }));
 
 vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
@@ -42,9 +42,9 @@ vi.mock("@/lib/database/mongodb", () => ({
 vi.mock("@/lib/cache/redis", () => ({ default: {} }));
 vi.mock("@/lib/workflows/version-control", () => ({ createScriptVersion: async () => undefined }));
 vi.mock("@/lib/workflows/edit-history-store", () => ({ recordEditHistoryOnServer: async () => undefined }));
-vi.mock("@/lib/workflows/approval-workflow", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/workflows/approval-workflow")>()),
-  createApprovalRequest: (...args: unknown[]) => mocks.createApprovalRequest(...args),
+vi.mock("@/server/services/approvals", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/server/services/approvals")>()),
+  fileChangeRequest: (...args: unknown[]) => mocks.fileChangeRequest(...args),
 }));
 
 import { GET, POST } from "./route";
@@ -64,7 +64,7 @@ describe("POST /api/scripts", () => {
     mocks.existing = null;
     mocks.findOne.mockReset().mockImplementation(async () => mocks.existing);
     mocks.insertOne.mockClear();
-    mocks.createApprovalRequest.mockClear().mockResolvedValue("req_1");
+    mocks.fileChangeRequest.mockClear().mockResolvedValue("req_1");
   });
 
   it("returns the auth response when the caller is not signed in", async () => {
@@ -111,7 +111,7 @@ describe("POST /api/scripts", () => {
       expect((await create({ ...validBody, author })).status).toBe(400);
     }
     expect(mocks.insertOne).not.toHaveBeenCalled();
-    expect(mocks.createApprovalRequest).not.toHaveBeenCalled();
+    expect(mocks.fileChangeRequest).not.toHaveBeenCalled();
   });
 
   it("refuses SQL that is not read-only", async () => {
@@ -139,7 +139,7 @@ describe("POST /api/scripts", () => {
     const res = await create(validBody);
     expect(res.status).toBe(200);
     expect((await res.json()).requiresApproval).toBe(true);
-    expect(mocks.createApprovalRequest).toHaveBeenCalledOnce();
+    expect(mocks.fileChangeRequest).toHaveBeenCalledOnce();
     expect(mocks.insertOne).not.toHaveBeenCalled();
   });
 });

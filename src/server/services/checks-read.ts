@@ -1,12 +1,16 @@
-import { ObjectId, type Db, type Document } from "mongodb";
+import type { Db, Document } from "mongodb";
 import type { CheckDetail, CheckStateDto, CheckSummary, LatestRun, RunListItem, RunPoint } from "@/contracts/checks";
 import { stateFromHistory, type CheckState, type RunOutcome } from "@/domain/run";
 import { markRows } from "@/server/runs/row-marks";
 import { responseSample, SAMPLE_FIELDS } from "@/server/runs/sample";
 import { toAlertingDto } from "./alert-controls";
 import { COLLECTIONS } from "@/lib/database/collections";
+import { findRun, latestRunsOf } from "@/server/repos/runs";
 
-export const HISTORY_LENGTH = 30;
+const HISTORY_LENGTH = 30;
+
+/** What the history strip and the runs table read of each run. */
+const POINT_FIELDS = { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, trigger: 1, diff: 1, durationMs: 1 } as const;
 
 const CHECK_FIELDS = {
   _id: 0,
@@ -73,16 +77,7 @@ export function toSummary(check: Document, historyNewestFirst: (RunPoint & { run
  * aggregation over all checks would rank every retained run on each load.
  */
 async function recentRuns(db: Db, scriptIds: string[], limit: number) {
-  const runs = db.collection(COLLECTIONS.runs);
-  const lists = await Promise.all(
-    scriptIds.map((checkId) =>
-      runs
-        .find({ checkId }, { projection: { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, trigger: 1, diff: 1, durationMs: 1 } })
-        .sort({ finishedAt: -1 })
-        .limit(limit)
-        .toArray(),
-    ),
-  );
+  const lists = await Promise.all(scriptIds.map((checkId) => latestRunsOf(db, checkId, limit, POINT_FIELDS)));
   return new Map<string, Document[]>(scriptIds.map((checkId, index) => [checkId, lists[index]]));
 }
 
@@ -108,10 +103,7 @@ function toRunItem(run: Document): RunListItem {
 }
 
 async function loadRows(db: Db, runId: string) {
-  return db.collection(COLLECTIONS.runs).findOne(
-    { _id: new ObjectId(runId) },
-    { projection: { ...SAMPLE_FIELDS, rowKeys: 1, columns: 1, message: 1, error: 1 } },
-  );
+  return findRun(db, runId, { ...SAMPLE_FIELDS, rowKeys: 1, columns: 1, message: 1, error: 1 });
 }
 
 export async function getCheckDetail(db: Db, scriptId: string): Promise<CheckDetail | null> {
@@ -156,4 +148,35 @@ export async function getCheckDetail(db: Db, scriptId: string): Promise<CheckDet
     runs: history.map(toRunItem),
     latest,
   };
+}
+
+const iso = (value: unknown) => (value instanceof Date ? value.toISOString() : String(value));
+
+/**
+ * Every check's definition with its SQL and `version`, newest first
+ * (GET /api/scripts: the editor, the Runs page, Analysis). Listed field by
+ * field: the document also holds who created it (with their email), the run
+ * lease and alerting state, which readers, demo guests included, must not
+ * receive.
+ */
+export async function listCheckDefinitions(db: Db) {
+  const checks = await db.collection(COLLECTIONS.checks).find({}).sort({ createdAt: -1 }).toArray();
+  return checks.map((doc) => ({
+    _id: doc._id.toString(),
+    scriptId: String(doc.scriptId),
+    name: doc.name,
+    cnName: doc.cnName || "",
+    description: doc.description || "",
+    cnDescription: doc.cnDescription || "",
+    scope: doc.scope || "",
+    cnScope: doc.cnScope || "",
+    author: doc.author as string | undefined,
+    hashtags: doc.hashtags || [],
+    sqlContent: doc.sqlContent,
+    isScheduled: doc.isScheduled || false,
+    cronSchedule: doc.cronSchedule || "",
+    version: typeof doc.version === "number" ? doc.version : undefined,
+    createdAt: iso(doc.createdAt),
+    updatedAt: iso(doc.updatedAt),
+  }));
 }
