@@ -44,7 +44,7 @@ export default function AdminUsersPage() {
 
   if (!hasLoaded) {
     return (
-      <main className={`${APP_CONTAINER} space-y-6 py-8`} aria-busy="true">
+      <main className={`${APP_CONTAINER} space-y-6 py-6`} aria-busy="true">
         <SkeletonPageHeader withAction />
         <SkeletonStatStrip />
         <SkeletonTable rows={3} />
@@ -54,7 +54,7 @@ export default function AdminUsersPage() {
 
   if (error) {
     return (
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div className={`${APP_CONTAINER} py-6`}>
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
@@ -64,12 +64,12 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen    ">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+      <div className={`${APP_CONTAINER} py-6`}>
         <div className="space-y-6">
           <WindowStatusBar>
             {language === "zh"
               ? `${totalUsers} 位用户 · ${roleCounts[UserRole.ADMIN]} 位管理员`
-              : `${totalUsers} users · ${roleCounts[UserRole.ADMIN]} admins`}
+              : `${totalUsers} ${totalUsers === 1 ? "member" : "members"} · ${roleCounts[UserRole.ADMIN]} ${roleCounts[UserRole.ADMIN] === 1 ? "admin" : "admins"}`}
           </WindowStatusBar>
           <PageHeader
             title={t('userManagementTitle')}
@@ -79,7 +79,7 @@ export default function AdminUsersPage() {
             }
           />
 
-          <RoleStats counts={roleCounts} t={t} />
+          <RoleStats counts={roleCounts} t={t} label={language === "zh" ? "按角色统计的成员" : "Members by role"} />
 
           <Card className="relative overflow-hidden gap-0 py-0">
             <CardHeader className="relative border-b px-6 py-4">

@@ -1,5 +1,6 @@
 "use client";
 
+import { APP_CONTAINER } from "@/components/layout/app-container";
 import { useState } from "react";
 import { WindowStatusBar } from "@/components/layout/WindowChrome";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -44,7 +45,7 @@ export default function GlobalEditHistoryPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+      <div className={`${APP_CONTAINER} py-6`}>
         <div className="space-y-6 animate-fadeIn">
           <PageHeader title={t("allScriptsHistory")} description={t("editHistoryDescGlobal")} />
           <WindowStatusBar>
