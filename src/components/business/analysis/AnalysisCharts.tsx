@@ -1,6 +1,6 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, type LegendPayload } from "recharts";
 import { OUTCOME_COLOR, OUTCOME_LABEL } from "@/components/checks/status";
 import type { RunOutcome } from "@/domain/run";
 import { formatDayKey } from "@/lib/utils/datetime";
@@ -25,10 +25,14 @@ const legendStyle = { paddingTop: "12px", fontSize: "12px", color: INK.muted };
 const OUTCOMES: RunOutcome[] = ["error", "issues", "clean"];
 // Series names in the legend stay neutral text; the marker carries the colour.
 const legendText = (value: string) => <span style={{ color: INK.muted }}>{value}</span>;
+// Both legends list the outcomes in the same order (broken, issues, clean);
+// Recharts would otherwise sort them by label.
+const legendOrder = (language: "en" | "zh") => (item: LegendPayload) =>
+  OUTCOMES.findIndex((outcome) => OUTCOME_LABEL[outcome][language] === item.value);
 
 export function StatusPieChart({ counts, language }: { counts: OutcomeCounts; language: "en" | "zh" }) {
   const total = counts.error + counts.issues + counts.clean || 1;
-  const data = OUTCOMES.map((outcome) => ({ name: OUTCOME_LABEL[outcome][language], value: counts[outcome], color: OUTCOME_COLOR[outcome] }));
+  const data = OUTCOMES.map((outcome) => ({ name: OUTCOME_LABEL[outcome][language], value: counts[outcome], fill: OUTCOME_COLOR[outcome] }));
 
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -45,13 +49,9 @@ export function StatusPieChart({ counts, language }: { counts: OutcomeCounts; la
           strokeWidth={2}
           // Sectors stay empty while requestAnimationFrame is paused (background tabs).
           isAnimationActive={false}
-        >
-          {data.map((entry) => (
-            <Cell key={entry.name} fill={entry.color} />
-          ))}
-        </Pie>
-        <Tooltip formatter={(value: number, name: string) => [`${value} (${((value / total) * 100).toFixed(1)}%)`, name]} {...tooltipStyle} />
-        <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} formatter={legendText} />
+        />
+        <Tooltip formatter={(value, name) => [`${value} (${((Number(value) / total) * 100).toFixed(1)}%)`, name]} {...tooltipStyle} />
+        <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} formatter={legendText} itemSorter={legendOrder(language)} />
       </PieChart>
     </ResponsiveContainer>
   );
@@ -74,16 +74,14 @@ export function DailyTrendChart({ data, language, allRunsLabel }: { data: DailyT
         <YAxis stroke={INK.muted} fontSize={12} tickMargin={8} allowDecimals={false} />
         <Tooltip
           cursor={{ fill: "var(--muted)" }}
-          labelFormatter={(key: string) => `${formatDayKey(key, language, { weekday: true })} · ${allRunsLabel} ${totals.get(key) ?? 0}`}
+          labelFormatter={(label) => {
+            const key = String(label);
+            return `${formatDayKey(key, language, { weekday: true })} · ${allRunsLabel} ${totals.get(key) ?? 0}`;
+          }}
           {...tooltipStyle}
         />
-        {/* Listed in the same order as the outcomes chart (broken, issues, clean), not the stacking order. */}
-        <Legend
-          wrapperStyle={legendStyle}
-          iconSize={8}
-          formatter={legendText}
-          payload={OUTCOMES.map((outcome) => ({ id: outcome, value: OUTCOME_LABEL[outcome][language], type: "circle" as const, color: OUTCOME_COLOR[outcome] }))}
-        />
+        {/* Listed in the same order as the outcomes chart, not the stacking order. */}
+        <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} formatter={legendText} itemSorter={legendOrder(language)} />
         {stack.map((outcome) => (
           <Bar
             key={outcome}
