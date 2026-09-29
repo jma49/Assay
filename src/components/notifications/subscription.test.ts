@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { COPY, hostOf, parseTags, subscriptionBody } from "./subscription";
+import type { DestinationDto } from "@/contracts/notifications";
+import { COPY, defaultDigest, hostOf, parseTags, subscriptionBody, subscriptionOf } from "./subscription";
+
+describe("subscriptionOf", () => {
+  const destination = { name: "Ops", alerts: ["broken"], tags: ["a", "b"], language: "zh" } as unknown as DestinationDto;
+
+  it("fills the form from a destination, with defaults for digest and reminders", () => {
+    expect(subscriptionOf(destination)).toEqual({ name: "Ops", alerts: ["broken"], tags: "a, b", language: "zh", digest: defaultDigest(), remindAfter: 0 });
+  });
+
+  it("keeps a saved digest and reminder", () => {
+    const digest = { enabled: true, hour: 8, timeZone: "UTC" };
+    expect(subscriptionOf({ ...destination, digest, remind: { afterHours: 4 } } as DestinationDto)).toMatchObject({ digest, remindAfter: 4 });
+  });
+});
 
 describe("subscription form", () => {
   it("splits tags on ASCII and full-width commas, without blanks or duplicates", () => {

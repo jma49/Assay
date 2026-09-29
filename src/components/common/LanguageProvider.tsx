@@ -1,13 +1,7 @@
 "use client";
 
-import React, {
-  useState,
-  useCallback,
-  useContext,
-  useEffect,
-  createContext,
-  useMemo,
-} from "react";
+import React, { useContext, useEffect, createContext, useMemo, useSyncExternalStore } from "react";
+import { createLanguageStore } from "./language-store";
 
 // Language context type
 interface LanguageContextType {
@@ -29,30 +23,20 @@ interface LanguageProviderProps {
   children: React.ReactNode;
 }
 
-const LANGUAGE_KEY = "assay-language";
+// The choice is remembered per browser. The server and the first client
+// render use English so they match; the saved choice applies right after.
+const languageStore = createLanguageStore("assay-language", () => (typeof window === "undefined" ? undefined : window.localStorage));
+
+/**
+ * The reader's language right now. Effects that run on the first render see
+ * English from `useLanguage()` (the hydration snapshot); anything they show
+ * immediately, such as a toast, should ask here instead.
+ */
+export const currentLanguage = () => languageStore.getSnapshot();
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
-  const [language, setLanguageState] = useState<"en" | "zh">("en");
-
-  // The choice is remembered per browser. It is read after mount so the
-  // server-rendered English page and the first client render still match.
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(LANGUAGE_KEY);
-      if (saved === "en" || saved === "zh") setLanguageState(saved);
-    } catch {
-      // Storage blocked: stay in English.
-    }
-  }, []);
-
-  const setLanguage = useCallback((next: "en" | "zh") => {
-    setLanguageState(next);
-    try {
-      localStorage.setItem(LANGUAGE_KEY, next);
-    } catch {
-      // Storage blocked: the choice still applies to this visit.
-    }
-  }, []);
+  const language = useSyncExternalStore(languageStore.subscribe, languageStore.getSnapshot, languageStore.getServerSnapshot);
+  const setLanguage = languageStore.set;
 
   useEffect(() => {
     document.documentElement.lang = language === "zh" ? "zh-CN" : "en";

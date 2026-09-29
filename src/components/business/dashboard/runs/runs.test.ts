@@ -12,6 +12,8 @@ import {
   parseScriptList,
   passRate,
   scriptDisplayNames,
+  searchLinkOf,
+  selectedCheckId,
   takeSearchParam,
   type HistoryQuery,
 } from "./runs";
@@ -117,6 +119,33 @@ describe("page numbers", () => {
   it("rounds the pass rate and is zero without runs", () => {
     expect(passRate({ totalCount: 3, successCount: 2, failureCount: 1, needsAttentionCount: 0 })).toBe(67);
     expect(passRate({ totalCount: 0, successCount: 0, failureCount: 0, needsAttentionCount: 0 })).toBe(0);
+  });
+});
+
+describe("selectedCheckId", () => {
+  const scripts = [{ scriptId: "a" }, { scriptId: "b" }] as ScriptInfo[];
+
+  it("defaults to the first check and keeps a choice", () => {
+    expect(selectedCheckId("", scripts)).toBe("a");
+    expect(selectedCheckId("b", scripts)).toBe("b");
+  });
+
+  it("is empty while there are no checks", () => {
+    expect(selectedCheckId("b", [])).toBe("");
+    expect(selectedCheckId("", [])).toBe("");
+  });
+});
+
+describe("searchLinkOf", () => {
+  it("takes the first value, trimmed", () => {
+    expect(searchLinkOf(" orders ")).toBe("orders");
+    expect(searchLinkOf(["a", "b"])).toBe("a");
+  });
+
+  it("is empty without a search", () => {
+    expect(searchLinkOf(undefined)).toBe("");
+    expect(searchLinkOf("  ")).toBe("");
+    expect(searchLinkOf([])).toBe("");
   });
 });
 

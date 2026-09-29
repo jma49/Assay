@@ -58,6 +58,20 @@ const COPY = {
   },
 };
 
+/** The approved apps, newest first, or the error Better Auth reported. */
+async function fetchApps(): Promise<{ rows: AppRow[] } | { error: string | undefined }> {
+  const { data, error } = await authClient.oauth2.getConsents();
+  if (error) return { error: error.message };
+  const consents = (data ?? []) as { id: string; clientId: string; scopes?: string[]; createdAt: string | Date }[];
+  const rows = await Promise.all(
+    consents.map(async (consent) => {
+      const { data: client } = await authClient.oauth2.publicClient({ query: { client_id: consent.clientId } });
+      return { id: consent.id, clientId: consent.clientId, name: client?.client_name ?? null, scopes: (consent.scopes ?? []).filter(isMcpScope), createdAt: consent.createdAt };
+    }),
+  );
+  return { rows: rows.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)) };
+}
+
 /** The OAuth apps (MCP clients) the signed-in person has approved, with a way to disconnect each. */
 export function ConnectedApps() {
   const { language } = useLanguage();
@@ -65,18 +79,15 @@ export function ConnectedApps() {
   const [apps, setApps] = useState<AppRow[] | null>(null);
   const [disconnecting, setDisconnecting] = useState<AppRow | null>(null);
 
-  const load = useCallback(async () => {
-    const { data, error } = await authClient.oauth2.getConsents();
-    if (error) return toast.error(error.message ?? t.failed);
-    const consents = (data ?? []) as { id: string; clientId: string; scopes?: string[]; createdAt: string | Date }[];
-    const rows = await Promise.all(
-      consents.map(async (consent) => {
-        const { data: client } = await authClient.oauth2.publicClient({ query: { client_id: consent.clientId } });
-        return { id: consent.id, clientId: consent.clientId, name: client?.client_name ?? null, scopes: (consent.scopes ?? []).filter(isMcpScope), createdAt: consent.createdAt };
+  // State is set in the promise callback: the first load runs from an effect.
+  const load = useCallback(
+    () =>
+      fetchApps().then((result) => {
+        if ("error" in result) toast.error(result.error ?? t.failed);
+        else setApps(result.rows);
       }),
-    );
-    setApps(rows.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)));
-  }, [t.failed]);
+    [t.failed],
+  );
 
   useEffect(() => void load(), [load]);
 

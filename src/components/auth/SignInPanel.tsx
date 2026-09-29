@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { BellRing, Bot, ChevronDown, ListChecks, Loader2 } from "lucide-react";
 import { BeetleMark } from "@/components/brand/BeetleMark";
 import { BrandMark } from "@/components/common/BrandMark";
@@ -139,6 +139,8 @@ function ProviderButton({ provider, label, icon, busy, disabled, lastUsed, lastU
   );
 }
 
+const noChanges = () => () => {};
+
 /** Sign in and sign up are the same OAuth flow; only the words differ. */
 export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signUp"; providers: Providers; demo: boolean }) {
   const { language, setLanguage } = useLanguage();
@@ -151,12 +153,10 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
   // A code from the OAuth redirect is translated at render time, so switching language translates it too.
   const [error, setError] = useState<{ code: string } | { message: string } | null>(errorCode ? { code: errorCode } : null);
   const errorText = error && ("code" in error ? (t.errors[error.code] ?? t.errors.default) : error.message);
-  const [lastUsed, setLastUsed] = useState<string | null>(null);
+  // The cookie is only visible in the browser: none on the server and while hydrating.
+  const lastUsed = useSyncExternalStore(noChanges, () => authClient.getLastUsedLoginMethod(), () => null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Read after mount: the cookie is only visible in the browser.
-  useEffect(() => setLastUsed(authClient.getLastUsedLoginMethod()), []);
 
   const social = async (provider: Provider) => {
     setBusy(provider);
