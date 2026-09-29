@@ -54,7 +54,7 @@ async function main() {
       console.log("Dry run. Re-run with --apply.");
       return;
     }
-    // Renames where only the old name exists, and drops empty old leftovers.
+    // Renames where only the old name exists, and moves empty old leftovers aside.
     for (const r of await migrateCollectionNames(db)) console.log(`  ${r.from} → ${r.to}: ${r.outcome}`);
   } finally {
     await mongo.closeConnection();

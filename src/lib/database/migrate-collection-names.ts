@@ -11,7 +11,7 @@ export type RenameOutcome =
   | "renamed" // old moved to new
   | "already-done" // only new exists
   | "nothing" // neither exists (a new deployment)
-  | "dropped-empty-old" // both existed and old was empty, so it was dropped
+  | "moved-empty-old-aside" // both existed and old was empty, so it was renamed to `aside`
   | "both-exist"; // both hold documents; left alone for the migration script
 
 export interface RenameResult {
@@ -19,6 +19,8 @@ export interface RenameResult {
   to: string;
   outcome: RenameOutcome;
   counts?: { old: number; new: number };
+  /** Where an empty old collection was moved. */
+  aside?: string;
 }
 
 const NAMESPACE_NOT_FOUND = 26;
@@ -35,10 +37,15 @@ async function exists(db: Db, name: string): Promise<boolean> {
  * the collection is fine. When both names hold documents nothing is merged
  * automatically (an old build may have written after a rollback): it warns
  * and leaves `scripts/migrations/rename-collections.ts --merge` to the owner.
- * An empty old collection next to the new one is dropped, since it holds
- * nothing and would otherwise warn forever.
+ *
+ * An empty old collection next to the new one is renamed aside
+ * (`<old>_orphaned_<time>`), never dropped: a build from before the rename
+ * that is still serving (during a deploy or after a rollback) may write to
+ * it between the count and the drop, and that write would be lost. A
+ * rename is atomic, so such a write lands either in the moved collection or
+ * in a fresh old-named one that the next start reports.
  */
-export async function migrateCollectionNames(db: Db, pairs = RENAMED_COLLECTIONS): Promise<RenameResult[]> {
+export async function migrateCollectionNames(db: Db, pairs = RENAMED_COLLECTIONS, now = () => new Date()): Promise<RenameResult[]> {
   const results: RenameResult[] = [];
   for (const [from, to] of pairs) {
     const [oldExists, newExists] = await Promise.all([exists(db, from), exists(db, to)]);
@@ -52,10 +59,12 @@ export async function migrateCollectionNames(db: Db, pairs = RENAMED_COLLECTIONS
     }
     const [oldCount, newCount] = await Promise.all([db.collection(from).countDocuments(), db.collection(to).countDocuments()]);
     if (oldCount === 0) {
-      await db.collection(from).drop().catch((error: { code?: number }) => {
-        if (error.code !== NAMESPACE_NOT_FOUND) throw error;
+      const aside = `${from}_orphaned_${now().toISOString().replace(/[-:.]/g, "")}`;
+      await db.renameCollection(from, aside).catch((error: { code?: number }) => {
+        if (error.code !== NAMESPACE_NOT_FOUND) throw error; // another instance moved it first
       });
-      results.push({ from, to, outcome: "dropped-empty-old", counts: { old: 0, new: newCount } });
+      console.warn(`[MongoDB] Moved the empty "${from}" next to "${to}" aside as "${aside}"; drop it once nothing writes to "${from}".`);
+      results.push({ from, to, outcome: "moved-empty-old-aside", counts: { old: 0, new: newCount }, aside });
       continue;
     }
     console.warn(
@@ -93,6 +102,9 @@ export interface MergeResult {
 const DUPLICATE_KEY = 11000;
 const BATCH = 500;
 
+/** A comparable key for any _id (ObjectId, string, number). */
+const idKey = (id: unknown) => `${typeof id}:${String(id)}`;
+
 /**
  * Copies documents that exist only under the old name into the new one
  * (by _id; documents already in the new collection win), checks that every
@@ -102,11 +114,22 @@ const BATCH = 500;
 export async function mergeCollection(db: Db, from: string, to: string, options: { apply: boolean; dropOld: boolean }): Promise<MergeResult> {
   const source = db.collection(from);
   const target = db.collection(to);
+  // One lookup per BATCH old ids, not one per document.
   const missingIds = async () => {
     const ids: unknown[] = [];
+    let batch: unknown[] = [];
+    const flush = async () => {
+      if (batch.length === 0) return;
+      const found = await target.find({ _id: { $in: batch } } as object, { projection: { _id: 1 } }).toArray();
+      const present = new Set(found.map((doc) => idKey(doc._id)));
+      ids.push(...batch.filter((id) => !present.has(idKey(id))));
+      batch = [];
+    };
     for await (const { _id } of source.find({}, { projection: { _id: 1 } })) {
-      if (!(await target.countDocuments({ _id }, { limit: 1 }))) ids.push(_id);
+      batch.push(_id);
+      if (batch.length >= BATCH) await flush();
     }
+    await flush();
     return ids;
   };
   const before = await missingIds();
