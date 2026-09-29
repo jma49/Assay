@@ -23,17 +23,21 @@ export function useApi<T>(url: string | null): ApiState<T> {
   const [data, setData] = useState<T | null>(null);
   const [dataUrl, setDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<{ message: string; code: string | null } | null>(null);
-  const [loading, setLoading] = useState(Boolean(url));
   const [version, setVersion] = useState(0);
+  // The request that last settled; loading until it is the current one.
+  const [settled, setSettled] = useState<string | null>(null);
+  const request = url ? `${version} ${url}` : null;
+  const loading = request !== null && settled !== request;
   const waiting = useRef<(() => void)[]>([]);
   const hasUrl = useRef(Boolean(url));
-  hasUrl.current = Boolean(url);
+  useEffect(() => {
+    hasUrl.current = Boolean(url);
+  }, [url]);
 
   useEffect(() => {
-    if (!url) return;
+    if (!url || !request) return;
     const controller = new AbortController();
     const current = () => !controller.signal.aborted;
-    setLoading(true);
     fetch(url, { signal: controller.signal })
       .then((response) => readJson<T>(response))
       .then((body) => {
@@ -48,14 +52,14 @@ export function useApi<T>(url: string | null): ApiState<T> {
       })
       .finally(() => {
         if (!current()) return;
-        setLoading(false);
-        const settled = waiting.current;
+        setSettled(request);
+        const done = waiting.current;
         waiting.current = [];
-        settled.forEach((resolve) => resolve());
+        done.forEach((resolve) => resolve());
       });
     // Cancelled on unmount or when a newer request replaces this one; the handlers above ignore it.
     return () => controller.abort();
-  }, [url, version]);
+  }, [url, request]);
 
   const reload = useCallback(
     () =>
