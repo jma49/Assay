@@ -10,6 +10,7 @@ import fs from "fs";
 import path from "path";
 import { Client } from "pg";
 import { getMongoDbClient } from "../../src/lib/database/mongodb";
+import { pgConnection } from "../../src/lib/database/pg-connection";
 import { redactConnectionString } from "../../src/lib/database/redact-connection-string";
 import { ApprovalStatus } from "@/lib/types/approval";
 import { DEMO_AUTHOR, demoApprovals, demoChecks } from "./checks";
@@ -18,7 +19,7 @@ import { COLLECTIONS } from "@/lib/database/collections";
 const APPROVED = ApprovalStatus.APPROVED;
 
 async function seedPostgres(databaseUrl: string): Promise<void> {
-  const client = new Client({ connectionString: databaseUrl });
+  const client = new Client(pgConnection(databaseUrl));
   await client.connect();
   try {
     const schemaSql = fs.readFileSync(path.join(__dirname, "schema.sql"), "utf8");
