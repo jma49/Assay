@@ -1,4 +1,3 @@
-import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
 import { LEGACY_PAGE_REDIRECTS } from "./src/lib/legacy-redirects.mjs";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -79,8 +78,4 @@ const nextConfig = {
   },
 };
 
-// The dev server writes to its own folder, so `npm run build`
-// while `npm run dev` is running cannot overwrite its files and break it.
-export default function config(phase) {
-  return phase === PHASE_DEVELOPMENT_SERVER ? { ...nextConfig, distDir: ".next-dev" } : nextConfig;
-}
+export default nextConfig;

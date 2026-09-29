@@ -12,7 +12,7 @@
     "start": "next start",
     "lint": "eslint .",
     "eval": "vitest run --config vitest.evals.config.mts",
-    "clean": "rm -rf .next .next-dev node_modules/.cache",
+    "clean": "rm -rf .next node_modules/.cache",
     "sql:run": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/run-sql.ts",
     "sql:run-all": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/run-all-scripts.ts all",
     "sql:run-scheduled": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/run-all-scripts.ts scheduled",
