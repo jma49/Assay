@@ -5,7 +5,7 @@ import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-v
 export type Language = "en" | "zh";
 
 /** The fields the new-check page can mark invalid, in the order they appear on the page. */
-export const INVALID_FIELDS = ["sql", "name", "scriptId", "cronSchedule"] as const;
+const INVALID_FIELDS = ["sql", "name", "scriptId", "cronSchedule"] as const;
 export type InvalidField = (typeof INVALID_FIELDS)[number];
 export type FieldErrors = Partial<Record<InvalidField, string>>;
 

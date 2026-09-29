@@ -14,7 +14,7 @@ import { COLLECTIONS } from "@/lib/database/collections";
 import { toDestination } from "@/server/repos/notify-store";
 import type { Destination } from "./notifications";
 
-export function toDestinationDto(destination: Destination): DestinationDto {
+function toDestinationDto(destination: Destination): DestinationDto {
   const last = destination.lastDelivery;
   return {
     id: destination.id,

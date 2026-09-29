@@ -175,24 +175,6 @@ export async function setUserRole(
   }
 }
 
-export async function hasPermission(
-  userId: string,
-  permission: Permission
-): Promise<boolean> {
-  try {
-    const userRole = await getUserRole(userId);
-    if (!userRole) {
-      return false;
-    }
-
-    const rolePermissions = ROLE_PERMISSIONS[userRole];
-    return rolePermissions.includes(permission);
-  } catch (error) {
-    console.error("[RBAC] Permission check failed:", error);
-    return false;
-  }
-}
-
 export async function getAllUserRoles(): Promise<UserRoleInfo[]> {
   try {
     const collection = await getUserRolesCollection();

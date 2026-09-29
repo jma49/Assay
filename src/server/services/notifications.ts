@@ -86,7 +86,7 @@ export interface ClaimedDelivery {
   claim: string;
 }
 
-export type DeliveryUpdate =
+type DeliveryUpdate =
   | { status: "sent"; at: Date }
   | { status: "failed"; at: Date; error: string; attempted: boolean }
   | { status: "pending"; at: Date; nextAttemptAt: Date; error?: string; attempted: boolean };
@@ -146,7 +146,7 @@ export interface DispatchDeps {
 }
 
 /** Events older than this are history, not news; a new destination never replays them. */
-export const EVENT_FRESHNESS_MS = 24 * 60 * 60 * 1000;
+const EVENT_FRESHNESS_MS = 24 * 60 * 60 * 1000;
 const LEASE_MS = 2 * 60 * 1000;
 export const MAX_ATTEMPTS = 6;
 const BACKOFF_MS = [60_000, 5 * 60_000, 30 * 60_000, 2 * 3_600_000, 6 * 3_600_000];
@@ -160,12 +160,12 @@ export function backoffMs(attempts: number, retryAfterMs?: number): number {
 }
 
 /** Whether a click on a button in this destination's messages would reach Assay. */
-export function canTakeClicks(destination: Pick<Destination, "kind" | "source">, env: Record<string, string | undefined>): boolean {
+function canTakeClicks(destination: Pick<Destination, "kind" | "source">, env: Record<string, string | undefined>): boolean {
   if (destination.kind === "telegram") return true;
   return destination.kind === "slack" && destination.source === "oauth" && Boolean(env.SLACK_SIGNING_SECRET);
 }
 
-export function checkUrl(appUrl: string, checkId: string): string {
+function checkUrl(appUrl: string, checkId: string): string {
   return `${appUrl.replace(/\/+$/, "")}/checks/${encodeURIComponent(checkId)}`;
 }
 

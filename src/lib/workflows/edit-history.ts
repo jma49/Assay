@@ -15,7 +15,7 @@ export interface RecordEditHistoryParams {
 }
 
 /** The tracked fields that differ between two versions of a check. */
-export function getObjectChanges(
+function getObjectChanges(
   oldObj: Record<string, unknown> | null | undefined,
   newObj: Record<string, unknown> | null | undefined,
 ): ChangeDetail[] {

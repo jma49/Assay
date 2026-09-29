@@ -7,7 +7,7 @@ import { toAlertingDto } from "./alert-controls";
 import { COLLECTIONS } from "@/lib/database/collections";
 import { findRun, latestRunsOf } from "@/server/repos/runs";
 
-export const HISTORY_LENGTH = 30;
+const HISTORY_LENGTH = 30;
 
 /** What the history strip and the runs table read of each run. */
 const POINT_FIELDS = { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, trigger: 1, diff: 1, durationMs: 1 } as const;

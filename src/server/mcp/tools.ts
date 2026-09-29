@@ -22,7 +22,7 @@ export interface ToolDeps {
   appUrl: string;
 }
 
-export interface ToolAnnotations {
+interface ToolAnnotations {
   readOnlyHint?: boolean;
   destructiveHint?: boolean;
   idempotentHint?: boolean;
@@ -77,7 +77,7 @@ function summary(check: CheckSummary, appUrl: string) {
  * as the pages; runs and alert actions go through runCheck and the alert
  * controls, so leases, fencing, notifications and the audit log all apply.
  */
-export function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
+function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
   const by = { id: caller.userId, name: caller.name };
 
   return [

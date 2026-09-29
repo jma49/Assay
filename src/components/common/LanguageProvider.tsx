@@ -16,7 +16,7 @@ interface LanguageContextType {
 }
 
 // Language context
-export const LanguageContext = createContext<LanguageContextType>({
+const LanguageContext = createContext<LanguageContextType>({
   language: "en",
   setLanguage: () => {},
 });

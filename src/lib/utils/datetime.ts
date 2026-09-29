@@ -2,7 +2,6 @@
  * Dates as the viewer reads them: in their own time zone, in the UI
  * language. Invalid or missing values render as an em dash.
  */
-export type UiLanguage = "en" | "zh";
 
 const localeOf = (language: string) => (language.startsWith("zh") ? "zh-CN" : "en-US");
 const EMPTY = "—";

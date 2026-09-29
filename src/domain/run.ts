@@ -9,7 +9,7 @@
 export type RunOutcome = "error" | "issues" | "clean";
 
 /** Rows kept on a run for display and export. */
-export const SAMPLE_ROWS = 500;
+const SAMPLE_ROWS = 500;
 /** Rows fingerprinted to tell new, still-open and fixed rows apart between runs. */
 export const FINGERPRINT_ROWS = 5_000;
 /**

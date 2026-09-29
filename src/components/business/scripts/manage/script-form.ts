@@ -84,7 +84,7 @@ export function toFormMetadata(form: ScriptFormState): ScriptFormData {
 }
 
 /** Fields the save button refuses to go without. */
-export function missingRequiredFields(form: ScriptFormState, sql: string, language: Language): string[] {
+function missingRequiredFields(form: ScriptFormState, sql: string, language: Language): string[] {
   const zh = isZh(language);
   const missing: string[] = [];
   if (!form.scriptId?.trim()) missing.push(zh ? "脚本ID" : "script ID");

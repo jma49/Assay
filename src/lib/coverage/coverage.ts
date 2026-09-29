@@ -8,7 +8,7 @@ export interface CoverageScript {
   sqlContent: string;
 }
 
-export interface TableCoverage {
+interface TableCoverage {
   table: string;
   columnCount: number;
   checks: { scriptId: string; name: string; cnName?: string }[];
