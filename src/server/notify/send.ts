@@ -1,6 +1,6 @@
 import type { Channel, DeliveryOutcome, OutgoingRequest } from "./types";
-import { pinnedFetch } from "./pinned-fetch";
-import { assertPublicHost, dnsResolver, type Resolver } from "./safe-url";
+import { pinnedFetch } from "@/server/net/pinned-fetch";
+import { assertPublicHost, dnsResolver, type Resolver } from "@/server/net/safe-url";
 
 const TIMEOUT_MS = 10_000;
 const MAX_ERROR = 300;

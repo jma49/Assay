@@ -4,8 +4,8 @@ import { beforeAll, describe, expect, it, vi } from "vitest";
 import { open } from "@/server/crypto/secret-box";
 import { createPastedDestination } from "./destinations";
 
-vi.mock("@/server/notify/safe-url", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@/server/notify/safe-url")>();
+vi.mock("@/server/net/safe-url", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/server/net/safe-url")>();
   return {
     ...original,
     assertPublicHost: async (host: string) => {
