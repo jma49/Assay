@@ -339,7 +339,8 @@ the lists carried over from the first version still page by number.
   `/checks/manage` (Manage, with `/checks/manage/history` for edit history),
   `/approvals`, `/activity`, `/runs` (accepts `?search=`), `/runs/[runId]`
   (a run's full report), `/coverage`, `/data-analysis`,
-  `/settings/notifications`, `/settings/api-keys`, `/admin/users`. Static
+  `/settings/notifications`, `/settings/data-sources`, `/settings/api-keys`,
+  `/admin/users`. Static
   segments win over `[scriptId]`, so `/checks/new` and `/checks/manage` are
   their own pages. The old URLs (`/dashboard`, `/view-execution-result/:id`,
   `/scripts/new`, `/manage-scripts`, `/manage-scripts/edit-history`,

@@ -6,7 +6,7 @@ No. Checks are validated, run in a read-only transaction and have a time limit. 
 
 ## Which databases can I check?
 
-PostgreSQL. Any database that speaks the PostgreSQL protocol, such as Neon or Supabase, works too.
+PostgreSQL. Any database that speaks the PostgreSQL protocol, such as Neon or Supabase, works too. `DATABASE_URL` is the built-in source, and admins can add more databases; each check runs against one of them ([Data sources](/docs/data-sources)).
 
 ## What counts as a broken check?
 
