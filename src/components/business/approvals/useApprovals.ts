@@ -76,7 +76,7 @@ export function useApprovals(language: Language) {
     }
   }, [loadPendingApprovals, loadApprovalHistory, historyPage]);
 
-  // No need to wait for the session: the middleware already guarantees a
+  // No need to wait for the session: the proxy already guarantees a
   // signed-in user and each API call checks permissions on the server.
   useEffect(() => {
     loadData();
