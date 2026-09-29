@@ -130,7 +130,8 @@ started by a person, the schedule, a batch, or an agent.
    PostgreSQL connection pool. When a slot frees up the lease is renewed,
    so time spent queueing does not eat into it; a run whose lease was taken
    meanwhile stops without querying. `CHECK_TIMEOUT_MS` (30 s by default,
-   clamped to 1 s – 5 min) is one deadline for the whole script: each
+   clamped to 1 s – 255 s so a run fits in one 300 s function with time to
+   save it and send its alert) is one deadline for the whole script: each
    statement gets `statement_timeout` set to the time left. Rows are read
    through a cursor; at most 5,000 are kept per run and the rest are only
    counted, so the row count stays exact.
@@ -139,7 +140,9 @@ started by a person, the schedule, a batch, or an agent.
 4. **Transition.** Compare with the check's previous state and update it
    with the lease's `runId` as a fencing token: a run whose lease expired
    cannot overwrite a newer result. When the status or the set of rows
-   changes, write an event.
+   changes, the event goes onto the check in the same update
+   (`pendingEvents`), is then written to `events` and removed; if the
+   process dies in between, the next run or dispatch writes it.
 5. **Release** the lease.
 
 **Read-only, in layers.** A check's SQL passes the static validator
@@ -170,7 +173,10 @@ and gives `assay_readonly` its grants back when that role exists.
 `runDueChecks` claims each due slot atomically (already in place) and runs
 the claimed checks with bounded concurrency. `runBatch` records a batch
 document and processes its checks the same way; progress is read from
-MongoDB, so any instance can report it.
+MongoDB, so any instance can report it. A batch runs inside one function
+(`maxDuration` 300 s, the Hobby limit, on every route that runs checks): a
+check starts only while a whole run still fits before the deadline, the
+rest are marked `skipped`, and alerts are sent in the 30 s kept back.
 
 ## Concurrency rules
 
