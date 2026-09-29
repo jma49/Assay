@@ -33,14 +33,14 @@ export function TelegramDialog({ open, onClose, onLinked }: { open: boolean; onC
           </div>
         </DialogHeader>
         {error ? (
-          <p className="rounded-md bg-failure-soft px-3 py-2 text-[12.5px] text-failure">{error}</p>
+          <p className="rounded-md bg-failure-soft px-3 py-2 text-body-sm text-failure">{error}</p>
         ) : status === "linked" ? (
-          <p className="flex items-center gap-2 rounded-md bg-success-soft px-3 py-2.5 text-[13px] font-medium text-success">
+          <p className="flex items-center gap-2 rounded-md bg-success-soft px-3 py-2.5 text-body-sm font-medium text-success">
             <Check className="size-4" />
             {t.tgLinked}
           </p>
         ) : status === "expired" ? (
-          <div className="flex items-center justify-between gap-3 rounded-md bg-muted px-3 py-2.5 text-[13px]">
+          <div className="flex items-center justify-between gap-3 rounded-md bg-muted px-3 py-2.5 text-body-sm">
             {t.tgExpired}
             <Button size="sm" variant="outline" onClick={retry}>
               {t.tgRetry}
@@ -65,7 +65,7 @@ export function TelegramDialog({ open, onClose, onLinked }: { open: boolean; onC
                 </Button>
               ))}
             </div>
-            <p className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
+            <p className="flex items-center gap-2 text-body-sm text-muted-foreground">
               <Loader2 className="size-3.5 animate-spin" />
               {t.tgWaiting}
               {link && <span className="text-muted-foreground">{t.tgExpires(minutes)}</span>}
