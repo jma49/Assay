@@ -47,9 +47,11 @@ export function TemplatePicker({ initialTable, onApply }: { initialTable?: strin
   const t = COPY[language];
   // Opened from the coverage view for a table: the templates are what that link is for.
   const [open, setOpen] = useState(Boolean(initialTable));
-  useEffect(() => {
+  const [openedFor, setOpenedFor] = useState(initialTable);
+  if (initialTable !== openedFor) {
+    setOpenedFor(initialTable);
     if (initialTable) setOpen(true);
-  }, [initialTable]);
+  }
   const { data, error, errorCode, loading } = useApi<{ tables: SchemaTable[] }>(open ? "/api/schema" : null);
   const tables = data?.tables ?? [];
 
