@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { runBatch, type Batch, type BatchItem, type BatchStore } from "./batches";
+import { currentItemStatus, runBatch, type Batch, type BatchItem, type BatchStore } from "./batches";
 import type { RunCheckResult } from "./run-check";
 
 function memoryStore(batch: Batch) {
@@ -53,10 +53,10 @@ describe("runBatch", () => {
     };
     await runBatch("b1", { store, run: async (id) => results[id], now: () => new Date() });
     expect(batch.scripts.map((s) => [s.scriptId, s.status])).toEqual([
-      ["a", "completed"],
-      ["b", "attention_needed"],
-      ["c", "failed"],
-      ["d", "failed"],
+      ["a", "clean"],
+      ["b", "issues"],
+      ["c", "error"],
+      ["d", "error"],
     ]);
     expect(batch.scripts[1].mongoResultId).toBe("run-issues");
     expect(batch.isActive).toBe(false);
@@ -73,7 +73,7 @@ describe("runBatch", () => {
       },
       now: () => new Date(),
     });
-    expect(batch.scripts.map((s) => s.status)).toEqual(["failed", "completed"]);
+    expect(batch.scripts.map((s) => s.status)).toEqual(["error", "clean"]);
     expect(batch.scripts[0].message).toBe("mongo down");
     expect(batch.isActive).toBe(false);
   });
@@ -82,6 +82,22 @@ describe("runBatch", () => {
     const batch = batchOf(["a"]);
     const { store, updates } = memoryStore(batch);
     await runBatch("b1", { store, run: async () => completed("clean"), now: () => new Date() });
-    expect(updates.map(([, f]) => f.status)).toEqual(["running", "completed"]);
+    expect(updates.map(([, f]) => f.status)).toEqual(["running", "clean"]);
+  });
+});
+
+describe("currentItemStatus", () => {
+  it("reads batches stored with the old status names", () => {
+    expect(["completed", "attention_needed", "failed"].map(currentItemStatus)).toEqual(["clean", "issues", "error"]);
+  });
+
+  it("keeps today's statuses as they are", () => {
+    expect(["pending", "running", "clean", "issues", "error"].map(currentItemStatus)).toEqual([
+      "pending",
+      "running",
+      "clean",
+      "issues",
+      "error",
+    ]);
   });
 });
