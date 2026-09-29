@@ -31,8 +31,3 @@ export type BulkMode = "all" | "scheduled";
 export function batchTargets(scripts: ScriptInfo[], mode: BulkMode): ScriptInfo[] {
   return mode === "scheduled" ? scripts.filter((script) => script.isScheduled) : scripts;
 }
-
-/** Replaces the tag being typed at the end of the search with the chosen one. */
-export function withHashtag(term: string, tag: string): string {
-  return `${term.replace(/#\w*$/, "")}#${tag}`.trim();
-}

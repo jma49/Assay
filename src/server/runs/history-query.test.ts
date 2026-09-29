@@ -1,16 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { checksWithAllTags, historyFilter, historySort, parseHistoryParams } from "./history-query";
+import { maxPage } from "@/server/http/paging";
+import { checkNameOrder, checksMatchingName, checksWithAllTags, historyFilter, historySort, nameSortPipeline, parseHistoryParams } from "./history-query";
 
 const params = (query: string) => parseHistoryParams(new URLSearchParams(query));
 
 describe("parseHistoryParams", () => {
   it("falls back to defaults for missing or bad values", () => {
-    expect(params("page=abc&limit=9999&hashtags=a, ,b&startDate=soon")).toMatchObject({ page: 1, limit: 500, hashtags: ["a", "b"], sortBy: "finishedAt", sortOrder: "desc", includeSample: false, checkId: null, startDate: null, endDate: null });
+    expect(params("page=abc&limit=9999&hashtags=a, ,b&startDate=soon")).toMatchObject({ page: 1, limit: 500, hashtags: ["a", "b"], sortBy: "finishedAt", sortOrder: "desc", checkId: null, startDate: null, endDate: null });
+    expect(params("")).toMatchObject({ limit: 50 });
   });
 
-  it("allows fewer runs per page when they carry their rows", () => {
-    expect(params("limit=9999&include_sample=true")).toMatchObject({ limit: 200, includeSample: true });
-    expect(params("")).toMatchObject({ limit: 50 });
+  it("keeps the page within the counted runs", () => {
+    expect(params("page=100000&limit=50")).toMatchObject({ page: 200 });
+    expect(params("page=100000&limit=500")).toMatchObject({ page: 20 });
+    expect(maxPage(3)).toBe(3334);
   });
 });
 
@@ -45,6 +48,51 @@ describe("historySort", () => {
     expect(historySort(params("sort_by=finishedAt&sort_order=asc"))).toEqual({ finishedAt: 1 });
     expect(historySort(params("sort_by=checkId"))).toEqual({ checkId: -1, finishedAt: -1 });
     expect(historySort(params("sort_by=$where"))).toEqual({ finishedAt: -1 });
+  });
+});
+
+describe("searching and sorting by name", () => {
+  const checks = [
+    { scriptId: "b-dupes", name: "Duplicate orders", cnName: "重复下单" },
+    { scriptId: "a-stale", name: "stale pending orders", cnName: "长期待处理订单" },
+    { scriptId: "c-emails", name: "Invalid emails" },
+  ];
+
+  it("reads sort_by=name with the language, and ignores unknown languages", () => {
+    expect(params("sort_by=name&lang=zh")).toMatchObject({ sortBy: "name", language: "zh" });
+    expect(params("sort_by=name&lang=fr")).toMatchObject({ sortBy: "name", language: "en" });
+  });
+
+  it("finds checks by either name, ignoring case", () => {
+    expect(checksMatchingName(checks, "ORDERS")).toEqual(["b-dupes", "a-stale"]);
+    expect(checksMatchingName(checks, "下单")).toEqual(["b-dupes"]);
+    expect(checksMatchingName(checks, "  ")).toEqual([]);
+  });
+
+  it("matches the id or a name when the search hits a name", () => {
+    expect(historyFilter(params("search=dup"), null, ["b-dupes"])).toEqual({
+      $or: [{ checkId: { $regex: "dup", $options: "i" } }, { checkId: { $in: ["b-dupes"] } }],
+    });
+  });
+
+  it("orders checks by their name in the reader's language, case-insensitively", () => {
+    expect(checkNameOrder(checks, "en")).toEqual(["b-dupes", "c-emails", "a-stale"]);
+    // Chinese names by pinyin (chang before chong); without one the English name stands in.
+    const zh = checkNameOrder(checks, "zh");
+    expect(zh.indexOf("a-stale")).toBeLessThan(zh.indexOf("b-dupes"));
+    expect(zh).toContain("c-emails");
+  });
+
+  it("pages runs by the check's rank, unknown checks last", () => {
+    const pipeline = nameSortPipeline({ outcome: "issues" }, ["b", "a"], { sortOrder: "asc", page: 2, limit: 10 }, { checkId: 1 });
+    expect(pipeline[0]).toEqual({ $match: { outcome: "issues" } });
+    expect(pipeline.slice(2)).toEqual([
+      { $sort: { _nameRank: 1, checkId: 1, finishedAt: -1 } },
+      { $skip: 10 },
+      { $limit: 10 },
+      { $project: { checkId: 1 } },
+    ]);
+    expect(JSON.stringify(pipeline[1])).toContain('"in":{"$cond":[{"$lt":["$$rank",0]},2,"$$rank"]}');
   });
 });
 

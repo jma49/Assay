@@ -8,11 +8,11 @@ A **check** is one PostgreSQL `SELECT` that looks for bad data: orders without i
 
 | Status | Meaning |
 |---|---|
-| **Passed** | The query ran and returned no rows. |
-| **Needs attention** | The query ran and returned rows. They are saved with the run. |
-| **Failed** | The query could not run, for example a syntax error or a timeout. |
+| **Clean** | The query ran and returned no rows. |
+| **Issues** | The query ran and returned rows. They are saved with the run. |
+| **Broken** | The query could not run, for example a syntax error or a timeout. |
 
-A broken query is never reported as clean data: it fails instead of passing.
+A broken query is never reported as clean data: it is marked Broken, not Clean.
 
 ## Read-only by design
 

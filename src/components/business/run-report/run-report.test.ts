@@ -20,6 +20,11 @@ describe("readRunResponse", () => {
     await expect(readRunResponse(Response.json(run))).resolves.toEqual(run);
   });
 
+  it("reads a missing or malformed id as no run", async () => {
+    await expect(readRunResponse(Response.json({ message: "not found" }, { status: 404 }))).resolves.toBeNull();
+    await expect(readRunResponse(Response.json({ message: "bad id" }, { status: 400 }))).resolves.toBeNull();
+  });
+
   it("uses the API's message on failure", async () => {
     await expect(readRunResponse(Response.json({ message: "Not allowed" }, { status: 403 }))).rejects.toThrow("Not allowed");
   });
@@ -32,9 +37,9 @@ describe("readRunResponse", () => {
 
 describe("not-found message", () => {
   it("reads as one sentence in each language, with no Chinese in English", () => {
-    expect(runReportMessages.en.noResultFound("abc")).toBe("Could not find execution result with ID abc.");
-    expect(runReportMessages.zh.noResultFound("abc")).toBe("无法找到ID为 abc 的执行结果。");
-    expect(runReportMessages.en.missingResultId).toMatch(/^[\x20-\x7e]+$/);
+    expect(runReportMessages.en.notFound).toBe("No run with this id.");
+    expect(runReportMessages.zh.notFound).toBe("找不到这次执行。");
+    for (const text of Object.values(runReportMessages.en)) expect(text).toMatch(/^[\x20-\x7e]+$/);
   });
 });
 

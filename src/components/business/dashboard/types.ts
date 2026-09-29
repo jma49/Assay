@@ -12,6 +12,9 @@ export interface HistoryRun {
   /** ISO time the run finished. */
   finishedAt: string;
   outcome: RunOutcome;
+  /** Null on runs saved before the field existed. */
+  rowCount?: number | null;
+  error?: string | null;
   message: string;
   findings: string;
   github_run_id?: string | number;

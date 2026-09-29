@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { describePage, formatPageInfo, isJumpInputKey, pageRange, parseJumpPage } from "./pagination";
+import { describePage, formatPageInfo, isJumpInputKey, pageRange, pagerLabel, parseJumpPage } from "./pagination";
 
 describe("parseJumpPage", () => {
   it("accepts pages that exist", () => {
@@ -49,6 +49,12 @@ describe("formatPageInfo", () => {
       "11-20 of 23 (2/3)",
     );
   });
+
+  it("marks a total the server stopped counting at", () => {
+    expect(formatPageInfo("%s-%s of %s (%s/%s)", { start: 1, end: 50, totalItems: 10000, page: 1, totalPages: 200, totalCapped: true })).toBe(
+      "1-50 of 10000+ (1/200)",
+    );
+  });
 });
 
 describe("describePage", () => {
@@ -64,5 +70,13 @@ describe("describePage", () => {
     expect(describePage(template, { page: 3, totalPages: 3, totalItems: 23, pageSize: 10 })).toBe(
       "Showing 21-23 of 23 results (Page 3 of 3)",
     );
+  });
+});
+
+describe("pagerLabel", () => {
+  it("names the rows on the page and the total", () => {
+    expect(pagerLabel(1, 10, 12, "en")).toBe("1–10 of 12");
+    expect(pagerLabel(2, 10, 12, "en")).toBe("11–12 of 12");
+    expect(pagerLabel(2, 10, 12, "zh")).toBe("11–12，共 12 条");
   });
 });

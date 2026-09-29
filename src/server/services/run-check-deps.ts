@@ -6,10 +6,26 @@ import { postgresDataSource } from "@/server/datasource/postgres";
 import { mongoRunCheckStore } from "@/server/repos/run-check-store";
 import { runCheck, type RunCheckDeps, type RunTrigger } from "./run-check";
 
-const DEFAULT_TIMEOUT_MS = 30_000;
-const MAX_TIMEOUT_MS = 300_000;
+/**
+ * How long a Vercel function that runs checks may live, in seconds. Fluid
+ * Compute allows up to 300 s on the Hobby plan (800 s on paid plans); Assay
+ * assumes Hobby. Every route that runs checks exports `maxDuration` with this
+ * value (a literal there, because Next.js reads it statically; a test keeps
+ * them equal).
+ */
+export const FUNCTION_MAX_DURATION_S = 300;
 
-/** CHECK_TIMEOUT_MS, clamped to 1 s – 5 min; 30 s when unset or invalid. */
+/** Time a run needs besides its query: taking the lease, saving the run and state, writing the event. */
+export const RUN_OVERHEAD_MS = 15_000;
+
+/** Left over at the end of a function for sending alerts. */
+export const DISPATCH_RESERVE_MS = 30_000;
+
+const DEFAULT_TIMEOUT_MS = 30_000;
+/** A single run must fit in one function with room to save it and send its alerts. */
+export const MAX_TIMEOUT_MS = FUNCTION_MAX_DURATION_S * 1000 - RUN_OVERHEAD_MS - DISPATCH_RESERVE_MS;
+
+/** CHECK_TIMEOUT_MS, clamped to 1 s – MAX_TIMEOUT_MS (255 s); 30 s when unset or invalid. */
 export function checkTimeoutMs(env: Record<string, string | undefined> = process.env): number {
   const value = Number(env.CHECK_TIMEOUT_MS);
   if (!Number.isFinite(value) || value <= 0) return DEFAULT_TIMEOUT_MS;

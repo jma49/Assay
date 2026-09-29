@@ -40,7 +40,7 @@ export function RunsHeader({ language, t, canExecute, demoRuns, totalRuns, passR
 
       <WindowStatusBar>
         <span>
-          {language === "zh" ? `${totalRuns} 次执行 · 通过率 ${passRate}%` : `${totalRuns} runs · ${passRate}% passed`}
+          {language === "zh" ? `${totalRuns} 次执行 · ${passRate}% 正常` : `${totalRuns} runs · ${passRate}% clean`}
         </span>
         {nextScheduled && (
           <span>

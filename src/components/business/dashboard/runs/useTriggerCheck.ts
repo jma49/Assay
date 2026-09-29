@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { runCheck } from "@/client/checks";
+import { runResultLabel } from "@/lib/utils/run-message";
 import type { ScriptInfo } from "../types";
 import { triggerErrorMessage } from "./runs";
 
 const MESSAGE_DURATION_MS = 8000;
 
 /** The check picked in the Run sheet and a single run of it; `onTriggered` refreshes the page afterwards. */
-export function useTriggerCheck(availableScripts: ScriptInfo[], onTriggered: () => Promise<void>) {
+export function useTriggerCheck(availableScripts: ScriptInfo[], onTriggered: () => Promise<void>, language: "en" | "zh") {
+  const zh = language === "zh";
   const [selectedScriptId, setSelectedScriptId] = useState("");
   const [isTriggering, setIsTriggering] = useState(false);
   const [triggerMessage, setTriggerMessage] = useState<string | null>(null);
@@ -36,17 +38,18 @@ export function useTriggerCheck(availableScripts: ScriptInfo[], onTriggered: () 
     try {
       const result = await runCheck(selectedScriptId);
 
-      const successMessage = result.localizedMessage || result.message || "Script triggered successfully";
-      setTriggerMessage(successMessage);
-      setTriggerMessageType("success");
-      toast.success("Trigger Success", { description: successMessage, duration: 5000 });
+      const summary = runResultLabel({ outcome: result.outcome, rowCount: result.rowCount, message: result.message }, language);
+      // Refresh first, so the history already lists the run the toast talks about.
       await onTriggered();
+      setTriggerMessage(summary);
+      setTriggerMessageType("success");
+      toast.success(zh ? "执行完成" : "Run finished", { description: summary, duration: 5000 });
     } catch (err) {
       if (process.env.NODE_ENV === "development") console.error("Failed to trigger check:", err);
       const message = triggerErrorMessage(err);
       setTriggerMessage(message);
       setTriggerMessageType("error");
-      toast.error("Trigger Failed", { description: message, duration: MESSAGE_DURATION_MS });
+      toast.error(zh ? "无法执行检查" : "Could not run the check", { description: message, duration: MESSAGE_DURATION_MS });
     } finally {
       setIsTriggering(false);
       setTimeout(() => {
@@ -54,7 +57,7 @@ export function useTriggerCheck(availableScripts: ScriptInfo[], onTriggered: () 
         setTriggerMessageType(null);
       }, MESSAGE_DURATION_MS);
     }
-  }, [selectedScriptId, isTriggering, onTriggered]);
+  }, [selectedScriptId, isTriggering, onTriggered, language, zh]);
 
   return {
     selectedScriptId,

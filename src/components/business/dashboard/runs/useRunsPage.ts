@@ -18,7 +18,7 @@ export function useRunsPage(language: string) {
   const [isFetchingScripts, setIsFetchingScripts] = useState(true);
   const [nextScheduled, setNextScheduled] = useState<Date | null>(null);
   const [overallStats, setOverallStats] = useState<CheckStats>(EMPTY_STATS);
-  const history = useRunHistory(setError);
+  const history = useRunHistory(setError, language === "zh" ? "zh" : "en");
 
   const loadScripts = useCallback(async () => {
     const response = await fetch("/api/scripts");
@@ -65,8 +65,8 @@ export function useRunsPage(language: string) {
 
   const openFilteredBySearch = (search: string) => {
     history.presetFilters({ outcome: null, search, hashtags: [] });
-    toast.info(language === "zh" ? "正在筛选执行历史" : "Filtering run history", {
-      description: language === "zh" ? `搜索脚本: ${search}` : `Script: ${search}`,
+    toast.info(language === "zh" ? "正在筛选执行历史" : "Filtering the run history", {
+      description: language === "zh" ? `检查：${search}` : `Check: ${search}`,
       duration: 3000,
     });
     // Leave time for the filtered history to load before scrolling to it.

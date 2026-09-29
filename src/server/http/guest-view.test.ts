@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { CheckDetail } from "@/contracts/checks";
-import { detailForGuest } from "./guest-view";
+import { authorForGuest, detailForGuest } from "./guest-view";
+
+describe("authorForGuest", () => {
+  it("replaces member handles and keeps the demo seed", () => {
+    expect(authorForGuest("ada@example.com")).toBe("Teammate");
+    expect(authorForGuest("demo-seed")).toBe("demo-seed");
+    expect(authorForGuest(undefined)).toBeUndefined();
+    expect(authorForGuest("")).toBe("");
+  });
+});
 
 describe("detailForGuest", () => {
   it("hides members' names but keeps what happened", () => {

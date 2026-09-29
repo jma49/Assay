@@ -8,6 +8,10 @@ import { buildMcpServer } from "@/server/mcp/server";
 import { dispatchAfterResponse } from "@/server/services/notify-deps";
 import { runCheckNow } from "@/server/services/run-check-deps";
 
+// Runs checks (or sends their alerts): the Hobby plan's limit, FUNCTION_MAX_DURATION_S in
+// run-check-deps.ts. CHECK_TIMEOUT_MS and batch deadlines are sized to finish inside it.
+export const maxDuration = 300;
+
 /**
  * The MCP server for agents (Claude, Cursor, …). Callers send either a
  * personal API key or an OAuth access token as a bearer token; each request

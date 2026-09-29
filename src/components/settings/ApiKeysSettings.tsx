@@ -105,30 +105,48 @@ const COPY = {
   },
 };
 
+/** Copies `text` and reports it for a moment. */
+function useCopy(text: string) {
+  const [copied, setCopied] = useState(false);
+  const copy = () =>
+    void navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  return { copied, copy };
+}
+
 function CopyBlock({ text, label }: { text: string; label?: string }) {
   const { language } = useLanguage();
   const t = COPY[language];
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy(text);
   return (
     <div className="grid min-w-0 gap-1.5">
       {label && <span className="text-[12px] font-medium text-muted-foreground">{label}</span>}
       <div className="flex min-w-0 items-start gap-2">
         <pre className="min-w-0 flex-1 overflow-x-auto rounded-md bg-code px-3 py-2 font-mono text-[12px] leading-5 whitespace-pre">{text}</pre>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            void navigator.clipboard.writeText(text).then(() => {
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1500);
-            })
-          }
-        >
+        <Button variant="outline" size="sm" onClick={copy}>
           {copied ? <Check /> : <Copy />}
           {copied ? t.copied : t.copy}
         </Button>
       </div>
     </div>
+  );
+}
+
+/** The MCP endpoint inline, with a button to copy it. */
+function Endpoint({ url }: { url: string }) {
+  const { language } = useLanguage();
+  const t = COPY[language];
+  const { copied, copy } = useCopy(url);
+  return (
+    <p className="flex flex-wrap items-center gap-1.5 text-[12px] text-muted-foreground">
+      {t.endpoint}:
+      <code className="rounded-sm bg-code px-1.5 py-0.5 font-mono text-[12px] text-foreground [font-variant-ligatures:none]">{url}</code>
+      <Button variant="ghost" size="icon" className="size-6" onClick={copy} aria-label={copied ? t.copied : t.copy} title={copied ? t.copied : t.copy}>
+        {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+      </Button>
+    </p>
   );
 }
 
@@ -206,9 +224,7 @@ export function ApiKeysSettings() {
         <div className="max-w-2xl space-y-1.5">
           <h1 className="text-[28px] leading-tight font-bold">{t.title}</h1>
           <p className="text-[13.5px] leading-6 text-muted-foreground">{t.intro}</p>
-          <p className="text-[12.5px] text-muted-foreground">
-            {t.endpoint}: <code className="rounded bg-code px-1.5 py-0.5 font-mono text-[12px] text-foreground">{endpoint}</code>
-          </p>
+          <Endpoint url={endpoint} />
         </div>
         <Button onClick={() => setCreating(true)}>
           <Plus />

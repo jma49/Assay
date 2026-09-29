@@ -25,11 +25,13 @@ export interface PageInfo {
   totalItems: number;
   page: number;
   totalPages: number;
+  /** The server stopped counting at totalItems; shown as "10000+". */
+  totalCapped?: boolean;
 }
 
 /** Fills the "Showing %s-%s of %s results (Page %s of %s)" template. */
-export function formatPageInfo(template: string, { start, end, totalItems, page, totalPages }: PageInfo): string {
-  return [start, end, totalItems, page, totalPages].reduce<string>(
+export function formatPageInfo(template: string, { start, end, totalItems, page, totalPages, totalCapped }: PageInfo): string {
+  return [start, end, totalCapped ? `${totalItems}+` : totalItems, page, totalPages].reduce<string>(
     (text, value) => text.replace("%s", String(value)),
     template,
   );
@@ -38,7 +40,13 @@ export function formatPageInfo(template: string, { start, end, totalItems, page,
 /** The page-info line for a page of `pageSize` items. */
 export function describePage(
   template: string,
-  { page, totalPages, totalItems, pageSize }: { page: number; totalPages: number; totalItems: number; pageSize: number },
+  { page, totalPages, totalItems, pageSize, totalCapped }: { page: number; totalPages: number; totalItems: number; pageSize: number; totalCapped?: boolean },
 ): string {
-  return formatPageInfo(template, { ...pageRange(page, pageSize, totalItems), totalItems, page, totalPages });
+  return formatPageInfo(template, { ...pageRange(page, pageSize, totalItems), totalItems, page, totalPages, totalCapped });
+}
+
+/** A compact pager label: "11–12 of 12", or "11–12，共 12 条" in Chinese. */
+export function pagerLabel(page: number, pageSize: number, totalItems: number, language: string): string {
+  const { start, end } = pageRange(page, pageSize, totalItems);
+  return language === "zh" ? `${start}–${end}，共 ${totalItems} 条` : `${start}–${end} of ${totalItems}`;
 }
