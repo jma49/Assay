@@ -4,7 +4,7 @@ import { columnLabel, findingColumns, numericColumns, type FindingDetail, type L
 import { useDragScrollbar } from "./useDragScrollbar";
 
 export function FindingsTable({ rows, language }: { rows: FindingDetail[]; language: Language }) {
-  const { scrollContainerRef, scrollBarRef, isDragging, showScrollBar, handleScrollBarMouseDown, handleContainerScroll } =
+  const { scrollContainerRef, scrollBarRef, isDragging, showScrollBar, thumbWidth, handleScrollBarMouseDown, handleContainerScroll } =
     useDragScrollbar(rows);
   const columns = findingColumns(rows);
   const numeric = numericColumns(rows, columns);
@@ -79,12 +79,7 @@ export function FindingsTable({ rows, language }: { rows: FindingDetail[]; langu
                 : "  "
             )}
             style={{
-              width: `${Math.max(
-                20,
-                ((scrollContainerRef.current?.clientWidth || 0) /
-                  (scrollContainerRef.current?.scrollWidth || 1)) *
-                  100
-              )}%`,
+              width: `${thumbWidth}%`,
               transform: "translateX(0px)",
               transition: isDragging
                 ? "none"
