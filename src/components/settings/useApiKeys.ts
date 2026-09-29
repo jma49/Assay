@@ -12,11 +12,15 @@ export function useApiKeys(enabled: boolean, messages: { failed: string; revoked
   const [keys, setKeys] = useState<KeyRow[] | null>(null);
   const { failed, revoked } = messages;
 
-  const load = useCallback(async () => {
-    const { data, error } = await authClient.apiKey.list();
-    if (error) return toast.error(error.message ?? failed);
-    setKeys(((data as { apiKeys?: KeyRow[] })?.apiKeys ?? []).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)));
-  }, [failed]);
+  // State is set in the promise callback: the first load runs from an effect.
+  const load = useCallback(
+    () =>
+      authClient.apiKey.list().then(({ data, error }) => {
+        if (error) return toast.error(error.message ?? failed);
+        setKeys(((data as { apiKeys?: KeyRow[] })?.apiKeys ?? []).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)));
+      }),
+    [failed],
+  );
 
   useEffect(() => {
     if (enabled) void load();

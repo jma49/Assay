@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { apiErrorText } from "@/client/api-errors";
 import { sendJson } from "@/client/send-json";
@@ -15,7 +15,12 @@ export function useDestinationActions(destination: DestinationDto, language: "en
   const [testing, setTesting] = useState(false);
   const url = `/api/notifications/destinations/${destination.id}`;
 
-  useEffect(() => setEnabled(destination.enabled), [destination.enabled]);
+  // A reloaded list wins over the optimistic value (adjusted while rendering).
+  const [savedEnabled, setSavedEnabled] = useState(destination.enabled);
+  if (destination.enabled !== savedEnabled) {
+    setSavedEnabled(destination.enabled);
+    setEnabled(destination.enabled);
+  }
 
   const toggle = async (next: boolean) => {
     setEnabled(next);

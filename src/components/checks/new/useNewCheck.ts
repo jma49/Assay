@@ -70,6 +70,7 @@ export function useNewCheck(language: Language) {
   useEffect(() => {
     const table = tableFromSearch(window.location.search);
     if (!table) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- browser-only input (prerendered page), read once after hydration
     setTableParam(table);
     setSqlContent(starterSqlFor(table));
     const schema = table.includes(".") ? table.split(".")[0] : "";
