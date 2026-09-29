@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   updateOne: vi.fn(),
   countDocuments: vi.fn(),
   deleteOne: vi.fn(async () => ({ deletedCount: 1 })),
-  createApprovalRequest: vi.fn(async (..._args: unknown[]) => "req_1" as string | null),
+  fileChangeRequest: vi.fn(async (..._args: unknown[]) => "req_1"),
 }));
 
 const session = { isValid: true, user: { id: "user_alice", fullName: "Alice" }, userEmail: "alice@example.com", isGuest: false };
@@ -44,9 +44,9 @@ vi.mock("@/lib/database/mongodb", () => ({
 vi.mock("@/lib/cache/redis", () => ({ default: {} }));
 vi.mock("@/lib/workflows/version-control", () => ({ createScriptVersion: async () => undefined }));
 vi.mock("@/lib/workflows/edit-history-store", () => ({ recordEditHistoryOnServer: async () => undefined }));
-vi.mock("@/lib/workflows/approval-workflow", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/workflows/approval-workflow")>()),
-  createApprovalRequest: (...args: unknown[]) => mocks.createApprovalRequest(...args),
+vi.mock("@/server/services/approvals", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/server/services/approvals")>()),
+  fileChangeRequest: (...args: unknown[]) => mocks.fileChangeRequest(...args),
 }));
 
 import { DELETE, PUT } from "./route";
@@ -72,7 +72,7 @@ describe("PUT /api/scripts/[scriptId]", () => {
     mocks.findOne.mockReset().mockImplementation(async () => mocks.existing);
     mocks.updateOne.mockReset().mockImplementation(async () => ({ matchedCount: mocks.matchedCount }));
     mocks.countDocuments.mockReset().mockImplementation(async () => mocks.stillExists);
-    mocks.createApprovalRequest.mockClear().mockResolvedValue("req_1");
+    mocks.fileChangeRequest.mockClear().mockResolvedValue("req_1");
   });
 
   it("returns the auth response when the caller is not signed in", async () => {
@@ -115,7 +115,7 @@ describe("PUT /api/scripts/[scriptId]", () => {
     const res = await update({ name: "Renamed", version: 2 });
     expect(res.status).toBe(409);
     expect(mocks.updateOne).not.toHaveBeenCalled();
-    expect(mocks.createApprovalRequest).not.toHaveBeenCalled();
+    expect(mocks.fileChangeRequest).not.toHaveBeenCalled();
   });
 
   it("answers 409 conflict when someone saved in between", async () => {
@@ -167,7 +167,7 @@ describe("PUT /api/scripts/[scriptId]", () => {
     expect(res.status).toBe(200);
     expect((await res.json()).requiresApproval).toBe(true);
     expect(mocks.updateOne).not.toHaveBeenCalled();
-    const originalData = mocks.createApprovalRequest.mock.calls[0][9] as Record<string, unknown>;
+    const { originalData } = mocks.fileChangeRequest.mock.calls[0][1] as { originalData: Record<string, unknown> };
     expect(originalData.baseVersion).toBe(3);
     expect(originalData.name).toBe("Renamed");
   });
@@ -177,7 +177,7 @@ describe("PUT /api/scripts/[scriptId]", () => {
     mocks.role = null;
     expect((await update({ name: "Renamed", version: 3 })).status).toBe(500);
     expect(mocks.updateOne).not.toHaveBeenCalled();
-    expect(mocks.createApprovalRequest).not.toHaveBeenCalled();
+    expect(mocks.fileChangeRequest).not.toHaveBeenCalled();
   });
 
   it("lets admins change someone else's check directly", async () => {
@@ -196,7 +196,7 @@ describe("DELETE /api/scripts/[scriptId]", () => {
     mocks.existing = ownCheck;
     mocks.findOne.mockReset().mockImplementation(async () => mocks.existing);
     mocks.deleteOne.mockClear();
-    mocks.createApprovalRequest.mockClear().mockResolvedValue("req_1");
+    mocks.fileChangeRequest.mockClear().mockResolvedValue("req_1");
   });
 
   const remove = () => DELETE(new NextRequest(url, { method: "DELETE" }), params());

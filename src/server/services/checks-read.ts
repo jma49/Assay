@@ -149,3 +149,34 @@ export async function getCheckDetail(db: Db, scriptId: string): Promise<CheckDet
     latest,
   };
 }
+
+const iso = (value: unknown) => (value instanceof Date ? value.toISOString() : String(value));
+
+/**
+ * Every check's definition with its SQL and `version`, newest first
+ * (GET /api/scripts: the editor, the Runs page, Analysis). Listed field by
+ * field: the document also holds who created it (with their email), the run
+ * lease and alerting state, which readers, demo guests included, must not
+ * receive.
+ */
+export async function listCheckDefinitions(db: Db) {
+  const checks = await db.collection(COLLECTIONS.checks).find({}).sort({ createdAt: -1 }).toArray();
+  return checks.map((doc) => ({
+    _id: doc._id.toString(),
+    scriptId: String(doc.scriptId),
+    name: doc.name,
+    cnName: doc.cnName || "",
+    description: doc.description || "",
+    cnDescription: doc.cnDescription || "",
+    scope: doc.scope || "",
+    cnScope: doc.cnScope || "",
+    author: doc.author as string | undefined,
+    hashtags: doc.hashtags || [],
+    sqlContent: doc.sqlContent,
+    isScheduled: doc.isScheduled || false,
+    cronSchedule: doc.cronSchedule || "",
+    version: typeof doc.version === "number" ? doc.version : undefined,
+    createdAt: iso(doc.createdAt),
+    updatedAt: iso(doc.updatedAt),
+  }));
+}
