@@ -427,7 +427,7 @@ const zh: TranslationRecord = {
     batchExecutionConfirmScheduledMessage: "将执行 {count} 个定时脚本。",
     cancelButton: "取消",
     running: "执行中",
-    pending: "等待",
+    pending: "待审批",
     success: "成功",
     attention: "关注",
     failed: "失败",

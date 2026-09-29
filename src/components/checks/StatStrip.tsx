@@ -5,7 +5,7 @@ export interface StatTile {
   key: string;
   label: string;
   value: ReactNode;
-  hint: ReactNode;
+  hint?: ReactNode;
   /** A `status-dot-*` class; outcome tiles carry one, summary tiles do not. */
   dot?: string;
   /** Present on tiles that filter the list below. */
@@ -35,7 +35,7 @@ export function StatStrip({ tiles, label }: { tiles: StatTile[]; label: string }
               {tile.label}
             </span>
             <span className="text-[24px] leading-tight font-semibold tabular-nums">{tile.value}</span>
-            <span className="truncate text-[12px] text-muted-foreground">{tile.hint}</span>
+            {tile.hint !== undefined && <span className="truncate text-[12px] text-muted-foreground">{tile.hint}</span>}
           </>
         );
         if (!tile.onClick) {

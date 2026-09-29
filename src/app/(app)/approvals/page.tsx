@@ -54,7 +54,7 @@ export default function ApprovalsPage() {
 
   if (!hasLoaded) {
     return (
-      <main className={`${APP_CONTAINER} space-y-6 py-8`} aria-busy="true">
+      <main className={`${APP_CONTAINER} space-y-6 py-6`} aria-busy="true">
         <SkeletonPageHeader />
         <SkeletonCardList />
       </main>
@@ -63,7 +63,7 @@ export default function ApprovalsPage() {
 
   if (approvals.error) {
     return (
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div className={`${APP_CONTAINER} py-6`}>
         <Alert variant="destructive">
           <AlertDescription>{approvals.error}</AlertDescription>
         </Alert>
@@ -75,7 +75,7 @@ export default function ApprovalsPage() {
 
   return (
     <div className="min-h-screen    ">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+      <div className={`${APP_CONTAINER} py-6`}>
         <div className="space-y-6">
           <WindowStatusBar>
             {language === "zh"

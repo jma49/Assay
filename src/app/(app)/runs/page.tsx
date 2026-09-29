@@ -29,7 +29,7 @@ export default async function RunsPage() {
 function RunsView() {
   return (
     <div className="min-h-screen">
-      <main className={`${APP_CONTAINER} py-8`}>
+      <main className={`${APP_CONTAINER} py-6`}>
         <Dashboard />
       </main>
     </div>
