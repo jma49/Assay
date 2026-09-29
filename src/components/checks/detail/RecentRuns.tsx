@@ -25,7 +25,7 @@ export function RecentRuns({
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
       <div className="rounded-xl bg-card p-4 shadow-border">
-        <div className="mb-2.5 flex justify-between text-[12px] text-muted-foreground">
+        <div className="mb-2.5 flex justify-between text-caption text-muted-foreground">
           <span>{t.lastRuns(history.length)}</span>
           <span>{t.now}</span>
         </div>
@@ -47,7 +47,7 @@ export function RecentRuns({
         </div>
       </div>
       <div className="rounded-xl bg-card p-4 shadow-border">
-        <p className="mb-2 text-[12px] text-muted-foreground">{t.rowsFlagged}</p>
+        <p className="mb-2 text-caption text-muted-foreground">{t.rowsFlagged}</p>
         <div className="flex items-end justify-between gap-4">
           <dl className="flex gap-5">
             {[
@@ -56,8 +56,8 @@ export function RecentRuns({
               [t.high, high],
             ].map(([label, value]) => (
               <div key={String(label)}>
-                <dd className="text-[20px] leading-tight font-semibold tabular-nums">{value}</dd>
-                <dt className="text-[12px] text-muted-foreground">{label}</dt>
+                <dd className="text-title leading-tight font-semibold tabular-nums">{value}</dd>
+                <dt className="text-caption text-muted-foreground">{label}</dt>
               </div>
             ))}
           </dl>

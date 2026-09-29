@@ -82,7 +82,7 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
               aria-selected={tab === key}
               onClick={() => setTab(key)}
               className={cn(
-                "-mb-px border-b-2 px-3 py-2.5 text-[13px] whitespace-nowrap transition-[color,border-color] duration-150",
+                "-mb-px border-b-2 px-3 py-2.5 text-body-sm whitespace-nowrap transition-[color,border-color] duration-150",
                 tab === key ? "border-primary font-medium text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
@@ -95,13 +95,13 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
             (check.latest ? (
               <LatestResult latest={check.latest} t={t} />
             ) : (
-              <p className="px-6 py-10 text-center text-[13px] text-muted-foreground">{t.notRun}</p>
+              <p className="px-6 py-10 text-center text-body-sm text-muted-foreground">{t.notRun}</p>
             ))}
           {tab === "history" &&
             (check.runs.length ? (
               <RunHistory runs={check.runs} t={t} language={language} />
             ) : (
-              <p className="px-6 py-10 text-center text-[13px] text-muted-foreground">{t.notRun}</p>
+              <p className="px-6 py-10 text-center text-body-sm text-muted-foreground">{t.notRun}</p>
             ))}
           {tab === "definition" && <Definition check={check} t={t} language={language} />}
           {tab === "triage" && <TriagePanel check={check} t={t} language={language} />}
