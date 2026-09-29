@@ -12,8 +12,8 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center gap-1 py-16 text-center">
-      <p className="text-sm font-medium">{title}</p>
-      {hint && <p className="text-[13px] text-muted-foreground">{hint}</p>}
+      <p className="text-body-md font-medium">{title}</p>
+      {hint && <p className="text-body-sm text-muted-foreground">{hint}</p>}
       {action && <div className="pt-3">{action}</div>}
     </div>
   );

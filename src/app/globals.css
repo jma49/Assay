@@ -260,7 +260,7 @@
 
   body {
     @apply bg-background text-foreground font-sans;
-    font-size: 14px;
+    font-size: var(--text-body-md);
   }
 
   /* iOS Safari zooms into a focused field under 16px, so fields start at 16px
@@ -369,8 +369,8 @@
 
 /* ---------- Docs article ---------- */
 .docs-prose {
-  font-size: 15px;
-  line-height: 1.75;
+  font-size: var(--text-body-lg);
+  line-height: var(--text-body-lg--line-height);
   color: var(--foreground);
 }
 
@@ -380,19 +380,19 @@
 
 .docs-prose h2 {
   margin-top: 2.5rem;
-  letter-spacing: -0.015em;
   scroll-margin-top: 4rem;
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
+  font-size: var(--text-title);
+  font-weight: var(--text-title--font-weight);
+  line-height: var(--text-title--line-height);
+  letter-spacing: var(--text-title--letter-spacing);
 }
 
 .docs-prose h3 {
   margin-top: 1.75rem;
   scroll-margin-top: 4rem;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--text-title-sm);
+  font-weight: var(--text-title-sm--font-weight);
+  line-height: var(--text-title-sm--line-height);
 }
 
 .docs-prose a {
@@ -447,7 +447,7 @@
   border: 1px solid var(--border);
   background: var(--code-bg);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--text-body-sm);
   line-height: 1.65;
 }
 
@@ -460,7 +460,7 @@
 .docs-prose table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--text-body-md);
 }
 
 .docs-prose th {
@@ -468,7 +468,7 @@
   border-bottom: 1px solid var(--border);
   padding: 0.5rem 0.75rem;
   text-align: left;
-  font-size: 13px;
+  font-size: var(--text-body-sm);
   font-weight: 500;
   color: var(--muted-foreground);
 }
