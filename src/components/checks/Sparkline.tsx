@@ -26,7 +26,7 @@ export function Sparkline({
 }) {
   const pad = 3;
   // One run is a dot, not a trend.
-  if (points.length < 2) return <span className="text-[12px] text-muted-foreground">—</span>;
+  if (points.length < 2) return <span className="text-caption text-muted-foreground">—</span>;
   const values = points.map((p) => (p.outcome === "error" ? 0 : p.rowCount));
   const max = Math.max(1, ...values);
   const x = (i: number) => (points.length === 1 ? width / 2 : pad + (i * (width - pad * 2)) / (points.length - 1));

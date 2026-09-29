@@ -64,7 +64,7 @@ export default function NewCheckPage() {
 
       <header>
         <h1 className="sr-only">{c.title}</h1>
-        <p className="text-[13px] text-muted-foreground">{c.lead}</p>
+        <p className="text-body-sm text-muted-foreground">{c.lead}</p>
       </header>
 
       <TemplatePicker initialTable={form.tableParam} onApply={form.applyTemplate} />
@@ -80,7 +80,7 @@ export default function NewCheckPage() {
             <CodeMirrorEditor value={form.sqlContent} onChange={form.changeSql} minHeight="480px" fill t={t} />
           </div>
           {form.errors.sql && (
-            <p id="new-check-sql-error" className="mt-1.5 text-[12px] text-failure">
+            <p id="new-check-sql-error" className="mt-1.5 text-caption text-failure">
               {form.errors.sql}
             </p>
           )}
