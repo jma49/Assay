@@ -26,7 +26,9 @@ export const slack: Channel = {
         ],
       },
     ];
-    return { url: secret.url!, headers: JSON_HEADERS, body: JSON.stringify({ text: message.text, blocks }) };
+    // Slack reads the fallback as mrkdwn too; unescaped, a check name could
+    // carry <!channel> or a disguised <https://…|link> into the notification.
+    return { url: secret.url!, headers: JSON_HEADERS, body: JSON.stringify({ text: mrkdwn(message.text), blocks }) };
   },
   // Incoming webhooks answer a plain "ok" and use HTTP status codes for errors.
   interpretOk: () => ({ kind: "sent" }),

@@ -27,6 +27,8 @@ export interface CheckToRun {
   scriptId: string;
   sqlContent: string;
   state?: CheckState | null;
+  /** Events committed with an earlier run's state but not yet written to `events` (see commitState). */
+  pendingEvents?: CheckEvent[];
 }
 
 export interface RunDocument {
@@ -73,12 +75,17 @@ export interface RunCheckStore {
   /** State rebuilt from past runs, for a check that ran before state was stored. */
   historicalState(scriptId: string): Promise<CheckState | null>;
   saveRun(run: RunDocument): Promise<void>;
-  /** Writes the state only while this run still holds the lease, and releases it. */
-  commitState(scriptId: string, runId: string, state: CheckState): Promise<boolean>;
+  /**
+   * Writes the state only while this run still holds the lease, and releases
+   * it. `event`, when given, is kept on the check in the same atomic update
+   * (`pendingEvents`) until recordEvent has written it, so a process that
+   * dies in between cannot leave a new state without its alert.
+   */
+  commitState(scriptId: string, runId: string, state: CheckState, event: CheckEvent | null): Promise<boolean>;
   releaseLease(scriptId: string, runId: string): Promise<void>;
   /** Moves this run's lease to `until`; false when another run holds the check now. */
   renewLease(scriptId: string, runId: string, until: Date): Promise<boolean>;
-  /** Idempotent: one event per run at most. */
+  /** Idempotent (one event per run at most); then removes it from the check's `pendingEvents`. */
   recordEvent(event: CheckEvent): Promise<void>;
 }
 
@@ -122,6 +129,13 @@ async function withRetries<T>(fn: () => Promise<T>, attempts = 3, delayMs = 200)
   }
 }
 
+/** Writes an event; on failure it stays on the check for the next run or dispatch to write. */
+async function recordEventSafely(deps: RunCheckDeps, event: CheckEvent): Promise<void> {
+  await withRetries(() => deps.store.recordEvent(event)).catch((cause) =>
+    console.error(`[runCheck] Could not record the event for run ${event.runId}; it stays pending on the check:`, cause),
+  );
+}
+
 /** The run waited so long for a free slot that its lease lapsed and another run took the check. */
 class LeaseLostError extends Error {}
 
@@ -161,6 +175,8 @@ export async function runCheck(scriptId: string, trigger: RunTrigger, deps: RunC
   const lease = await deps.store.acquireLease(scriptId, runId, until, startedAt);
   if (lease.kind !== "acquired") return lease;
   const { check } = lease;
+  // Alerts an earlier run committed but did not get to write (its process died).
+  for (const pending of check.pendingEvents ?? []) await recordEventSafely(deps, pending);
   // Without stored state the check may still have a history; start from it so
   // "since" and the previous row count stay true.
   if (!check.state) check.state = await deps.store.historicalState(scriptId);
@@ -210,12 +226,8 @@ export async function runCheck(scriptId: string, trigger: RunTrigger, deps: RunC
 
     const previous = check.state ?? null;
     const state = nextCheckState(previous, { runId, outcome, rowCount, finishedAt });
-    committed = await deps.store.commitState(scriptId, runId, state);
-    if (committed && isNotable(previous, outcome, diff)) {
-      // The run and state are already saved; a lost event must not fail the run.
-      // A lost event is never re-derived (the next run sees the same outcome),
-      // so retry a few times; recordEvent is idempotent per run.
-      await withRetries(() => deps.store.recordEvent({
+    const event: CheckEvent | null = isNotable(previous, outcome, diff)
+      ? {
           type: previous && previous.outcome === outcome ? "check.new_rows" : "check.outcome_changed",
           checkId: scriptId,
           runId,
@@ -225,9 +237,13 @@ export async function runCheck(scriptId: string, trigger: RunTrigger, deps: RunC
           diff,
           error: error ? error.slice(0, MAX_EVENT_ERROR) : null,
           at: finishedAt,
-        }),
-      ).catch((cause) => console.error(`[runCheck] Could not record the event for run ${runId}:`, cause));
-    }
+        }
+      : null;
+    // The event rides on the state update, so it can no longer be lost: if
+    // writing it below fails or the process dies first, the next run of this
+    // check or the next dispatch writes it from the check's pendingEvents.
+    committed = await deps.store.commitState(scriptId, runId, state, event);
+    if (committed && event) await recordEventSafely(deps, event);
 
     return { kind: "completed", runId, outcome, rowCount, diff, message, findings, stateUpdated: committed };
   } finally {

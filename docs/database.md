@@ -38,6 +38,7 @@ Indexes live in `src/lib/database/indexes.ts` and are created on start-up
 | `version` | Incremented by every edit; saves apply only onto the version they started from |
 | `state` | `{ outcome, rowCount, previousRowCount, since, lastRunId, lastRunAt }`, written by `runCheck` |
 | `lease` | `{ runId, until }` while a run holds the check |
+| `pendingEvents` | Events committed with `state` but not yet written to `events`; normally empty (see [Concurrency](#concurrency)) |
 | `alerting` | `{ owner, mutedUntil, mutedBy, ack: { since, by, at } }` |
 | `demoSeed` | `true` on the seeded demo checks only; lets demo viewers run them |
 | `approvalStatus`, `approvalRequestId`, `createdAt`, `updatedAt` | |
@@ -113,12 +114,24 @@ Kept without expiry, as the audit trail: `edit_history`, `approval_requests`,
 | --- | --- |
 | Two runs of one check | `lease` taken with `findOneAndUpdate`; state written only while this run holds it (fencing by `runId`) |
 | A run finishing while another started | `commitState` filters on `lease.runId` |
+| A process dying between saving a check's state and writing its event | The event is pushed to the check's `pendingEvents` in the same update as `state`; then written to `events` and pulled. The next run of the check and every dispatch (`repairPendingEvents`) write whatever is left, so an alert is late at worst, never lost |
+| A batch outliving its function (`maxDuration`, 300 s) | Checks start only while a whole run (`CHECK_TIMEOUT_MS` + 15 s) fits before the deadline; the rest are marked `skipped`. Alerts go out in the last 30 s even if a run is still going |
 | Two dispatchers sending one alert | `notification_deliveries` unique per event and destination; each delivery claimed with a conditional update |
 | Two digests / reminders | `claimDigest` and `claimReminder` compare-and-set |
 | Two people editing a check | `version` |
 | Approve racing reject | `status: "pending"` in the update filter |
 | Acknowledging a problem that just changed | `state.since` in the update filter |
 | A Telegram code used twice | claimed with `findOneAndUpdate` on `destinationId: null` |
+
+Why not a transaction: the state and its event are one single-document
+update, which MongoDB applies atomically without a replica-set session,
+and `events` keeps its plain unique index on `runId`, so writing the event
+twice (a run and a dispatcher repairing it at once) stays harmless.
+
+Tests against a real MongoDB (`*.integration.test.ts`) run only when
+`MONGODB_TEST_URI` points at a throwaway server, e.g.
+`mongodb-memory-server`; each uses its own `assay_it_*` database and drops
+it. Never point it at the database in `.env.local`.
 
 ## Legacy fields
 

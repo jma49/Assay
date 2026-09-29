@@ -7,8 +7,9 @@ resolves the `@/` alias.
 
 | Script | What it does |
 |---|---|
-| `run-all-scripts.ts [all\|scheduled] [--dry-run]` | Runs checks. `scheduled` runs each scheduled check once per cron slot; the GitHub Actions schedule calls it. |
-| `run-sql.ts <scriptId>` | Runs one check; the manual GitHub workflow calls it. |
+| `run-all-scripts.ts [all\|scheduled] [--dry-run]` | Runs checks. `scheduled` runs each scheduled check once per cron slot; the GitHub Actions schedule calls it. In CI it prints only check ids, outcomes and row counts. |
+| `run-all-scripts.ts --check=<scriptId>` | Runs one check now; the scheduled workflow's `check_id` input calls it. |
+| `run-sql.ts <scriptId>` | Runs one check (`npm run sql:run`). |
 | `demo/seed-demo.ts` | Recreates the demo schema and its checks. |
 | `set-user-role.ts` | Assigns a role to someone who has signed in, by email. |
 | `backfill-check-state.ts [--dry-run] [--recompute]` | Rebuilds each check's state from its run history. |

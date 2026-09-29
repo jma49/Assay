@@ -19,14 +19,22 @@ export function BatchExecutionProgress({ items, language }: { items: BatchItemVi
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-[13px]">
           <span className="font-medium">{copy.progress(counts.done, items.length)}</span>
-          <span className="text-muted-foreground tabular-nums">{copy.finishedSummary(counts.clean, counts.issues, counts.error)}</span>
+          <span className="text-muted-foreground tabular-nums">{copy.finishedSummary(counts.clean, counts.issues, counts.error)}
+            {counts.skipped > 0 && copy.skippedSummary(counts.skipped)}
+          </span>
         </div>
         <Progress value={percent} className="h-1" aria-label={copy.progress(counts.done, items.length)} />
       </div>
       <ul className="max-h-72 divide-y overflow-y-auto rounded-lg shadow-border">
         {items.map((item) => {
           const outcome = itemOutcome(item.status);
-          const label = outcome ? OUTCOME_LABEL[outcome][lang] : item.status === "running" ? copy.runningItem : copy.pending;
+          const label = outcome
+            ? OUTCOME_LABEL[outcome][lang]
+            : item.status === "running"
+              ? copy.runningItem
+              : item.status === "skipped"
+                ? copy.skipped
+                : copy.pending;
           return (
             <li key={item.scriptId} className="flex items-center gap-3 px-3 py-2 text-[13px]">
               {item.status === "running" ? (
@@ -36,7 +44,7 @@ export function BatchExecutionProgress({ items, language }: { items: BatchItemVi
               )}
               <span className="min-w-0 flex-1">
                 <span className="block truncate">{item.scriptName || item.scriptId}</span>
-                {outcome === "error" && item.message && (
+                {(outcome === "error" || item.status === "skipped") && item.message && (
                   <span className="block truncate font-mono text-[12px] text-muted-foreground" title={item.message}>
                     {item.message}
                   </span>
