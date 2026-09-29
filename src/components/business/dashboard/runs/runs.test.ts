@@ -80,10 +80,12 @@ describe("response parsing", () => {
   it("keeps only the pagination fields the page uses", () => {
     expect(parsePagination({ pagination: { total: 120, totalPages: 3, hasNext: true, hasPrev: false, page: 1 } })).toEqual({
       total: 120,
+      totalCapped: false,
       totalPages: 3,
       hasNext: true,
       hasPrev: false,
     });
+    expect(parsePagination({ pagination: { total: 10000, totalCapped: true, totalPages: 200, hasNext: true, hasPrev: false } })).toMatchObject({ totalCapped: true });
     expect(parsePagination({})).toBeNull();
   });
 

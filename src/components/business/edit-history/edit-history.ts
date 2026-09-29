@@ -55,10 +55,10 @@ export function buildHistoryQuery(filters: HistoryFilters, page: number, pageSiz
 
 export function formatPageInfo(
   t: Translate,
-  { currentPage, totalPages, totalRecords, pageSize }: { currentPage: number; totalPages: number; totalRecords: number; pageSize: number },
+  { currentPage, totalPages, totalRecords, pageSize, totalCapped }: { currentPage: number; totalPages: number; totalRecords: number; pageSize: number; totalCapped?: boolean },
 ): string {
   if (totalRecords === 0) return t("noResults");
-  return describePage(t("pageInfo"), { page: currentPage, totalPages, totalItems: totalRecords, pageSize });
+  return describePage(t("pageInfo"), { page: currentPage, totalPages, totalItems: totalRecords, pageSize, totalCapped });
 }
 
 const OPERATION_BADGE_CLASSES: Record<string, string> = {

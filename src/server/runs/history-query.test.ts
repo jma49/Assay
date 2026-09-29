@@ -1,16 +1,19 @@
 import { describe, expect, it } from "vitest";
+import { maxPage } from "@/server/http/paging";
 import { checksWithAllTags, historyFilter, historySort, parseHistoryParams } from "./history-query";
 
 const params = (query: string) => parseHistoryParams(new URLSearchParams(query));
 
 describe("parseHistoryParams", () => {
   it("falls back to defaults for missing or bad values", () => {
-    expect(params("page=abc&limit=9999&hashtags=a, ,b&startDate=soon")).toMatchObject({ page: 1, limit: 500, hashtags: ["a", "b"], sortBy: "finishedAt", sortOrder: "desc", includeSample: false, checkId: null, startDate: null, endDate: null });
+    expect(params("page=abc&limit=9999&hashtags=a, ,b&startDate=soon")).toMatchObject({ page: 1, limit: 500, hashtags: ["a", "b"], sortBy: "finishedAt", sortOrder: "desc", checkId: null, startDate: null, endDate: null });
+    expect(params("")).toMatchObject({ limit: 50 });
   });
 
-  it("allows fewer runs per page when they carry their rows", () => {
-    expect(params("limit=9999&include_sample=true")).toMatchObject({ limit: 200, includeSample: true });
-    expect(params("")).toMatchObject({ limit: 50 });
+  it("keeps the page within the counted runs", () => {
+    expect(params("page=100000&limit=50")).toMatchObject({ page: 200 });
+    expect(params("page=100000&limit=500")).toMatchObject({ page: 20 });
+    expect(maxPage(3)).toBe(3334);
   });
 });
 

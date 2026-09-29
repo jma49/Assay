@@ -52,7 +52,7 @@ Indexes: `scriptId` unique; `createdAt`.
 | `checkId`, `trigger`, `startedAt`, `finishedAt`, `durationMs` | |
 | `outcome` | `clean` / `issues` / `error` |
 | `rowCount`, `columns` | |
-| `sample` | Sample rows: at most 500 and 2 MB (`raw_results` on runs saved before 2026-09-28) |
+| `sample` | Sample rows: at most 500 and 1 MB of UTF-8 JSON (`raw_results` on runs saved before 2026-09-28, which were capped at 2 MB counted in characters and are trimmed to 1 MB when read) |
 | `rowKeys` | Fingerprints of up to 5,000 rows, for new / still / fixed |
 | `diff` | `{ added, still, fixed }` against the previous run |
 | `error`, `message`, `findings` | |

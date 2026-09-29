@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   guest: false,
   run: null as Record<string, unknown> | null,
   check: null as Record<string, unknown> | null,
+  runOptions: null as { projection?: Record<string, unknown> } | null,
 }));
 
 vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
@@ -22,7 +23,10 @@ vi.mock("@/lib/auth/rbac", async (importOriginal) => ({
 vi.mock("@/lib/database/mongodb", () => ({
   getMongoDbClient: () => ({
     getDb: async () => ({
-      collection: (name: string) => ({ findOne: async () => (name === "runs" ? mocks.run : mocks.check) }),
+      collection: (name: string) => ({
+        findOne: async (_filter: unknown, options: { projection?: Record<string, unknown> }) =>
+          name === "runs" ? ((mocks.runOptions = options), mocks.run) : mocks.check,
+      }),
     }),
   }),
 }));
@@ -43,6 +47,15 @@ describe("GET /api/execution-details/[resultId]", () => {
 
   it("shows the check's author to members", async () => {
     expect((await read(String(id))).author).toBe("ada@example.com");
+  });
+
+  it("reads only what the report shows, and trims an old run's sample to 1 MB", async () => {
+    mocks.run = { ...mocks.run, raw_results: Array.from({ length: 500 }, (_, i) => ({ i, text: "中".repeat(1_300) })) };
+    const body = await read(String(id));
+    expect(mocks.runOptions?.projection).not.toHaveProperty("rowKeys");
+    expect(mocks.runOptions?.projection).toMatchObject({ sample: 1, raw_results: 1 });
+    expect(Buffer.byteLength(JSON.stringify(body.sample))).toBeLessThanOrEqual(1024 * 1024);
+    expect(body.sample.length).toBeGreaterThan(0);
   });
 
   it("hides member handles from guests", async () => {
