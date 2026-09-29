@@ -23,7 +23,7 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
         // `lease: null` also matches documents without a lease.
         { scriptId, $or: [{ lease: null }, { "lease.until": { $lte: now } }] },
         { $set: { lease: { runId, until } } },
-        { returnDocument: "after", projection: { scriptId: 1, sqlContent: 1, state: 1, pendingEvents: 1 } },
+        { returnDocument: "after", projection: { scriptId: 1, sqlContent: 1, state: 1, createdAt: 1, pendingEvents: 1 } },
       );
       if (check) {
         return {
@@ -32,6 +32,7 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
             scriptId,
             sqlContent: String(check.sqlContent ?? ""),
             state: check.state ?? null,
+            createdAt: check.createdAt instanceof Date ? check.createdAt : null,
             pendingEvents: Array.isArray(check.pendingEvents) ? (check.pendingEvents as CheckEvent[]) : [],
           },
         };
@@ -47,9 +48,12 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
       return Array.isArray(run?.rowKeys) ? (run.rowKeys as string[]) : null;
     },
 
-    async historicalState(scriptId) {
+    async historicalState(scriptId, notBefore) {
       const history = await runs
-        .find({ checkId: scriptId }, { projection: { outcome: 1, rowCount: 1, finishedAt: 1 } })
+        .find(
+          { checkId: scriptId, ...(notBefore && { finishedAt: { $gte: notBefore } }) },
+          { projection: { outcome: 1, rowCount: 1, finishedAt: 1 } },
+        )
         .sort({ finishedAt: -1 })
         .limit(HISTORY_LIMIT)
         .toArray();
