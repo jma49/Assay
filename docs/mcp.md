@@ -100,7 +100,10 @@ plugin) is the authorization server, under `/api/auth`:
 ## Security
 
 - **A key or OAuth token can do what its person's role can do, no more.** The role is read
-  on every request: demoting someone limits their keys at once, and tools
+  on every request (each instance keeps a role, and who a user id belongs
+  to, for up to 30 s; the instance that changes a role forgets it at once),
+  so demoting someone limits their keys within 30 s. An OAuth token's
+  consent is never cached. Tools
   the role cannot use are not even listed (a viewer sees four read tools).
 - Keys are stored hashed (Better Auth API key plugin), start with
   `assay_`, expire after 30, 90 or 365 days, and are rate limited to 120
