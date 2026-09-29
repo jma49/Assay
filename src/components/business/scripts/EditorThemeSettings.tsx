@@ -76,31 +76,37 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
     return systemTheme === "dark" ? DARK_THEMES : LIGHT_THEMES;
   }, [systemTheme]);
 
-  useEffect(() => {
+  // The dialog edits a copy of the saved settings, read each time it opens.
+  const loadSaved = () => {
     const savedEditorTheme = localStorage.getItem("editor-theme");
     const savedFontFamily = localStorage.getItem("editor-font-family") || "fira-code";
     const savedFontSize = localStorage.getItem("editor-font-size") || "14";
 
     const availableThemes = getAvailableThemes();
     const themeExists = savedEditorTheme && availableThemes.some(theme => theme.value === savedEditorTheme);
-    
+
     setEditorTheme(themeExists ? savedEditorTheme : getDefaultTheme());
     setFontFamily(savedFontFamily);
     setFontSize([parseInt(savedFontSize)]);
-  }, [systemTheme, getAvailableThemes, getDefaultTheme]);
+  };
 
+  const openChange = (open: boolean) => {
+    if (open) loadSaved();
+    setIsOpen(open);
+  };
+
+  // A saved theme that does not suit the app's light or dark mode is replaced, and the editor told.
   useEffect(() => {
     const currentTheme = localStorage.getItem("editor-theme");
     const availableThemes = getAvailableThemes();
     const themeExists = currentTheme && availableThemes.some(theme => theme.value === currentTheme);
-    
+
     if (!themeExists) {
       const defaultTheme = getDefaultTheme();
-      setEditorTheme(defaultTheme);
       localStorage.setItem("editor-theme", defaultTheme);
-      
-      window.dispatchEvent(new CustomEvent('editorThemeChange', { 
-        detail: { theme: defaultTheme } 
+
+      window.dispatchEvent(new CustomEvent('editorThemeChange', {
+        detail: { theme: defaultTheme }
       }));
     }
   }, [systemTheme, getAvailableThemes, getDefaultTheme]);
@@ -143,7 +149,7 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
   const currentThemeLabel = availableThemes.find(theme => theme.value === editorTheme)?.label || editorTheme;
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={openChange}>
       <DialogTrigger asChild>
         <Button
           type="button"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Activity, Edit, History, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { SqlScript } from "@/components/business/dashboard/types";
@@ -117,13 +117,11 @@ export function ScriptsFinder({
     });
   }, [scripts, source, searchTerm]);
 
-  // Keep a check selected: the first one whenever the selection leaves the list.
-  useEffect(() => {
-    // An empty list (still loading, or filtered out) keeps the choice, e.g. one from a link.
-    if (visible.length > 0 && !visible.some((script) => script.scriptId === selectedId)) {
-      setSelectedId(visible[0].scriptId);
-    }
-  }, [visible, selectedId]);
+  // Keep a check selected: the first one whenever the selection leaves the list (adjusted while rendering).
+  // An empty list (still loading, or filtered out) keeps the choice, e.g. one from a link.
+  if (visible.length > 0 && !visible.some((script) => script.scriptId === selectedId)) {
+    setSelectedId(visible[0].scriptId);
+  }
 
   const selected = visible.find((script) => script.scriptId === selectedId) ?? null;
   const name = (script: SqlScript) => (zh ? script.cnName || script.name : script.name);
