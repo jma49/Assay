@@ -81,27 +81,27 @@ typography:
     fontFamily: Manrope
     fontSize: 15px
     fontWeight: 400
-    lineHeight: 1.75
+    lineHeight: 26px
   body-md:
     fontFamily: Manrope
     fontSize: 14px
     fontWeight: 400
-    lineHeight: 1.5
+    lineHeight: 20px
   body-sm:
     fontFamily: Manrope
     fontSize: 13px
     fontWeight: 400
-    lineHeight: 1.45
+    lineHeight: 20px
   caption:
     fontFamily: Manrope
     fontSize: 12px
     fontWeight: 400
-    lineHeight: 1.4
+    lineHeight: 16px
   label-caps:
     fontFamily: Manrope
     fontSize: 11px
     fontWeight: 600
-    lineHeight: 1.3
+    lineHeight: 14px
     letterSpacing: 0.06em
   stat:
     fontFamily: Manrope
@@ -275,6 +275,7 @@ The scale in the front matter is the **target**: every text size maps to one of 
 - `label-caps` (11px, uppercase): the small section label above a group (sidebar groups, "On this page", form sections). One style; do not invent variants.
 - `stat`: the big numbers in stat tiles, with tabular figures.
 - Weights: 400 body, 500 for emphasis inside UI, 600 for headings and labels, 700 for display only.
+- Line heights of the body levels, `caption` and `label-caps` are whole even pixels (26, 20, 20, 16, 14px). Text of mixed levels centred in one row, like a table row or a toolbar, then shares a baseline; with fractional or odd line boxes, 12px and 14px text in the same row land up to 2px apart.
 
 ## Layout
 
