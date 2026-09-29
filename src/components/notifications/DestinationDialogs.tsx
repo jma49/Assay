@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { sendJson } from "@/client/send-json";
+import { apiErrorCode, sendJson } from "@/client/send-json";
 import type { DestinationDto, TelegramLinkDto, TelegramLinkStatus } from "@/contracts/notifications";
 import type { DigestSettings } from "@/domain/digest";
 import { REMIND_AFTER_HOURS } from "@/domain/reminders";
@@ -35,6 +35,7 @@ const COPY = {
     save: "Save",
     saving: "Saving…",
     needOneAlert: "Pick at least one kind of alert, or turn on the daily summary",
+    hostNotFound: (host: string) => `Couldn't resolve host ${host}. Check the URL.`,
     digest: "Daily summary",
     digestHint: "What is broken or has issues, and what changed in the last 24 hours.",
     digestAt: "at",
@@ -73,6 +74,7 @@ const COPY = {
     save: "保存",
     saving: "保存中…",
     needOneAlert: "至少选择一种告警，或开启每日汇总",
+    hostNotFound: (host: string) => `无法解析主机 ${host}，请检查地址。`,
     digest: "每日汇总",
     digestHint: "出错和有问题的检查，以及过去 24 小时的变化。",
     digestAt: "时间",
@@ -108,6 +110,15 @@ interface Subscription {
 }
 
 /** New summaries go out at 09:00 in the browser's own time zone. */
+/** The host of a typed URL, for messages about it; the text itself when it does not parse. */
+function hostOf(value: string): string {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return value;
+  }
+}
+
 function defaultDigest(): DigestSettings {
   return { enabled: false, hour: 9, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" };
 }
@@ -262,6 +273,8 @@ export function PasteDestinationDialog({
   const [signingSecret, setSigningSecret] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A refused URL is shown on the URL field itself.
+  const [urlError, setUrlError] = useState<string | null>(null);
   const [createdSecret, setCreatedSecret] = useState<string | null>(null);
 
   useEffect(() => {
@@ -271,6 +284,7 @@ export function PasteDestinationDialog({
     setUrl("");
     setSigningSecret("");
     setError(null);
+    setUrlError(null);
     setCreatedSecret(null);
   }, [kind, language]);
 
@@ -280,6 +294,7 @@ export function PasteDestinationDialog({
     if (subscription.alerts.length === 0 && !subscription.digest.enabled) return setError(t.needOneAlert);
     setSaving(true);
     setError(null);
+    setUrlError(null);
     try {
       const result = await sendJson<{ destination: DestinationDto; signingSecret?: string }>("/api/notifications/destinations", "POST", {
         kind,
@@ -296,7 +311,12 @@ export function PasteDestinationDialog({
       if (result.signingSecret) setCreatedSecret(result.signingSecret);
       else onClose();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause));
+      const message = cause instanceof Error ? cause.message : String(cause);
+      const code = apiErrorCode(cause);
+      if (code === "host_not_found") setUrlError(t.hostNotFound(hostOf(url)));
+      else if (code === "invalid_url") setUrlError(message);
+      else setError(message);
+      document.getElementById("destination-url")?.focus();
     } finally {
       setSaving(false);
     }
@@ -336,11 +356,21 @@ export function PasteDestinationDialog({
                 autoFocus
                 spellCheck={false}
                 autoComplete="off"
-                className="font-mono text-[12.5px]"
+                className="font-mono text-[12px] [font-variant-ligatures:none]"
                 placeholder={meta.urlPlaceholder}
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                aria-invalid={urlError ? true : undefined}
+                aria-describedby={urlError ? "destination-url-error" : undefined}
+                onChange={(e) => {
+                  setUrl(e.target.value);
+                  setUrlError(null);
+                }}
               />
+              {urlError && (
+                <p id="destination-url-error" className="text-[12px] text-failure">
+                  {urlError}
+                </p>
+              )}
             </div>
             {kind === "feishu" && (
               <div className="grid gap-1.5">

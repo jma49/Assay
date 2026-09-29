@@ -7,7 +7,7 @@ import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
 import { open, seal } from "@/server/crypto/secret-box";
 import { ApiError } from "@/server/http/route";
 import { CHANNELS } from "@/server/notify/channels";
-import { assertPublicHost } from "@/server/notify/safe-url";
+import { HostNotFoundError, assertPublicHost } from "@/server/notify/safe-url";
 import { sendRequest } from "@/server/notify/send";
 import type { DeliveryOutcome, DestinationSecret } from "@/server/notify/types";
 import { COLLECTIONS } from "@/lib/database/collections";
@@ -105,7 +105,8 @@ export async function createPastedDestination(
   if (input.kind === "webhook") {
     try {
       await assertPublicHost(url.hostname);
-    } catch {
+    } catch (cause) {
+      if (cause instanceof HostNotFoundError) throw new ApiError(400, "host_not_found", `${cause.message}. Check the URL.`);
       throw new ApiError(400, "invalid_url", "The webhook host must be a public address");
     }
   }

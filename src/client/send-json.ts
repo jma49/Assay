@@ -24,6 +24,14 @@ export async function sendJson<T>(
   });
   if (response.status === 204) return undefined as T;
   const json = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(apiErrorMessage(json) ?? fallbackError ?? response.statusText);
+  // The body rides along as the cause, so a caller can read its error code.
+  if (!response.ok) throw new Error(apiErrorMessage(json) ?? fallbackError ?? response.statusText, { cause: json });
   return json as T;
+}
+
+/** The `error.code` of the API body a sendJson error carries, e.g. "invalid_url". */
+export function apiErrorCode(error: unknown): string | undefined {
+  const body = (error as { cause?: { error?: unknown } } | null)?.cause;
+  const code = (body?.error as { code?: unknown } | undefined)?.code;
+  return typeof code === "string" ? code : undefined;
 }

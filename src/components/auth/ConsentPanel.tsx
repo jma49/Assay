@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { AuthShell } from "@/components/layout/AuthShell";
 import { Button } from "@/components/ui/button";
@@ -152,8 +152,19 @@ export function ConsentPanel({ clientName, clientHost, redirectHost, scopes, ema
               </li>
             );
           })}
-          {scopes.some((s) => IDENTITY_SCOPES.has(s)) && <li className="pl-7 text-muted-foreground">{t.identity}</li>}
-          {scopes.includes("offline_access") && <li className="pl-7 text-muted-foreground">{t.offline}</li>}
+          {/* Always granted, so a tick instead of a checkbox, on the same 16px column the checkboxes use. */}
+          {scopes.some((s) => IDENTITY_SCOPES.has(s)) && (
+            <li className="flex gap-3 text-muted-foreground">
+              <Check className="mt-0.5 size-4 shrink-0" aria-hidden />
+              {t.identity}
+            </li>
+          )}
+          {scopes.includes("offline_access") && (
+            <li className="flex gap-3 text-muted-foreground">
+              <Check className="mt-0.5 size-4 shrink-0" aria-hidden />
+              {t.offline}
+            </li>
+          )}
         </ul>
 
         <p className="text-[12px] text-muted-foreground">{t.roleNote(role)}</p>
