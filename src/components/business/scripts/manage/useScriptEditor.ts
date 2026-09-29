@@ -1,12 +1,13 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { apiErrorText } from "@/client/api-errors";
+import { apiErrorCode, sendJson } from "@/client/send-json";
 import type { DashboardTranslationKeys, SqlScript } from "@/components/business/dashboard/types";
 import type { ScriptFormData } from "../ScriptMetadataForm";
 import { newCheckTemplate } from "../sql-template";
 import {
   applyFieldChange,
   approvalNotice,
-  classifySave,
   conflictNotice,
   createPayload,
   emptyForm,
@@ -21,6 +22,11 @@ import {
 } from "./script-form";
 
 type Translate = (key: DashboardTranslationKeys | string) => string;
+
+/** A save that went through, or was filed for approval. */
+interface SaveResponse {
+  requiresApproval?: boolean;
+}
 
 const showError = ({ title, ...options }: Notice) => toast.error(title, options);
 const showSuccess = ({ title, ...options }: Notice) => toast.success(title, options);
@@ -68,45 +74,27 @@ export function useScriptEditor(language: Language, t: Translate, reload: () => 
     setIsSubmitting(true);
     const errorKey = mode === "add" ? "scriptSaveError" : "scriptUpdateError";
     try {
-      const response =
+      const body =
         mode === "add"
-          ? await fetch("/api/scripts", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(createPayload(form, sql)),
-            })
-          : await fetch(`/api/scripts/${form.scriptId}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(updatePayload(form, sql, initialSql)),
-            });
+          ? await sendJson<SaveResponse>("/api/scripts", "POST", createPayload(form, sql))
+          : await sendJson<SaveResponse>(`/api/scripts/${form.scriptId}`, "PUT", updatePayload(form, sql, initialSql));
 
-      const body = response.ok
-        ? await response.json()
-        : await response.json().catch(() => ({ message: t(errorKey) }));
-      const outcome = classifySave(response, body, mode);
-
-      switch (outcome.kind) {
-        case "conflict":
-          showError(conflictNotice(language));
-          reload();
-          return;
-        case "approval":
-          showSuccess(approvalNotice(language, outcome.message, "save"));
-          setIsOpen(false);
-          return;
-        case "failed":
-          throw new Error(outcome.message);
-        case "saved":
-          toast.success(t(mode === "add" ? "scriptSavedSuccess" : "scriptUpdatedSuccess"));
-          setIsOpen(false);
-          reload();
+      setIsOpen(false);
+      if (body.requiresApproval) {
+        showSuccess(approvalNotice(language, "save"));
+        return;
       }
+      toast.success(t(mode === "add" ? "scriptSavedSuccess" : "scriptUpdatedSuccess"));
+      reload();
     } catch (err) {
+      // Another save won the optimistic-concurrency race.
+      if (apiErrorCode(err) === "conflict") {
+        showError(conflictNotice(language));
+        reload();
+        return;
+      }
       console.error(`Failed to ${mode} script:`, err);
-      toast.error(t(errorKey) || `Failed to ${mode} script`, {
-        description: err instanceof Error ? err.message : String(err),
-      });
+      toast.error(t(errorKey) || `Failed to ${mode} script`, { description: apiErrorText(err, language) });
     } finally {
       setIsSubmitting(false);
     }

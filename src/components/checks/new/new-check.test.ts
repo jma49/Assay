@@ -50,8 +50,9 @@ describe("new check helpers", () => {
   });
 
   it("moves a taken id onto the id field", () => {
-    expect(saveErrorField("A check with this ID already exists", "en")).toEqual({ scriptId: "A check with this ID already exists." });
-    expect(saveErrorField("Forbidden", "en")).toBeNull();
+    expect(saveErrorField("id_taken", "en")).toEqual({ scriptId: "A check with this ID already exists." });
+    expect(saveErrorField("forbidden", "en")).toBeNull();
+    expect(saveErrorField(undefined, "en")).toBeNull();
   });
 
   it("opens the new check, or the list while it waits for approval", () => {

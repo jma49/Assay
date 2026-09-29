@@ -120,16 +120,6 @@ export function takeSearchParam(href: string): { search: string; cleanedHref: st
   return { search: search.trim(), cleanedHref: url.toString() };
 }
 
-/** The message to show when triggering a run failed, preferring the API's localized one. */
-export function triggerErrorMessage(err: unknown): string {
-  if (!(err instanceof Error)) return "Trigger failed";
-  const cause = err.cause;
-  if (cause && typeof cause === "object" && typeof (cause as { localizedMessage?: unknown }).localizedMessage === "string") {
-    return (cause as { localizedMessage: string }).localizedMessage;
-  }
-  return err.message || "Trigger failed";
-}
-
 /** Each check's name in the UI language, keyed by the id the history rows carry. */
 export function scriptDisplayNames(scripts: ScriptInfo[], language: string): Map<string, string> {
   return new Map(

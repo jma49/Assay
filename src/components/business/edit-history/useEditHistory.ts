@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { readJson } from "@/client/send-json";
 import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
 import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
 import { EMPTY_FILTERS, buildHistoryQuery, type HistoryFilters } from "./edit-history";
 import { createLatestRequest } from "./latest-request";
+
+/** What GET /api/edit-history answers. */
+interface EditHistoryPage {
+  histories?: EditHistoryRecord[];
+  pagination?: { page?: number; totalPages?: number; total?: number; totalCapped?: boolean };
+}
 
 /** Loads one page of the global edit history for the given filters. */
 export function useEditHistory() {
@@ -24,12 +31,7 @@ export function useEditHistory() {
 
     try {
       const response = await fetch(`/api/edit-history?${buildHistoryQuery(filters, page, ITEMS_PER_PAGE)}`);
-      if (!response.ok) {
-        if (response.status === 401) throw new Error("Unauthorized access");
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch edit history");
-      }
-      const data = await response.json();
+      const data = await readJson<EditHistoryPage>(response, "Failed to fetch edit history");
       if (isStale()) return;
       setHistories(data.histories || []);
       setTotalPages(data.pagination?.totalPages || 0);

@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { runCheck } from "@/client/checks";
 import { runResultLabel } from "@/lib/utils/run-message";
 import type { ScriptInfo } from "../types";
-import { triggerErrorMessage } from "./runs";
+import { apiErrorText } from "@/client/api-errors";
 
 const MESSAGE_DURATION_MS = 8000;
 
@@ -46,7 +46,7 @@ export function useTriggerCheck(availableScripts: ScriptInfo[], onTriggered: () 
       toast.success(zh ? "执行完成" : "Run finished", { description: summary, duration: 5000 });
     } catch (err) {
       if (process.env.NODE_ENV === "development") console.error("Failed to trigger check:", err);
-      const message = triggerErrorMessage(err);
+      const message = apiErrorText(err, language, zh ? "执行失败" : "Trigger failed");
       setTriggerMessage(message);
       setTriggerMessageType("error");
       toast.error(zh ? "无法执行检查" : "Could not run the check", { description: message, duration: MESSAGE_DURATION_MS });
