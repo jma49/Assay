@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ComponentType } from "react";
+import type { ComponentType } from "react";
 import { useTheme } from "next-themes";
 import {
   Activity,
@@ -24,6 +24,7 @@ import { useLanguage } from "@/components/common/LanguageProvider";
 import { useCurrentUser } from "@/lib/auth/client";
 import { useMe } from "@/lib/auth/use-me";
 import { cn } from "@/lib/utils/utils";
+import { useHydrated } from "@/components/common/use-hydrated";
 
 type Label = { en: string; zh: string };
 
@@ -86,8 +87,7 @@ export function Sidebar() {
   const { resolvedTheme, setTheme } = useTheme();
   const { user, isLoaded } = useCurrentUser();
   const me = useMe();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useHydrated();
   const t = COPY[language] ?? COPY.en;
 
   // Items that need a permission stay hidden until it is known, so they never flash for people without it.

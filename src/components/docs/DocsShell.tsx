@@ -11,6 +11,7 @@ import { DOCS_NAV } from "@/lib/docs/nav";
 import type { DocsSearchEntry } from "@/lib/docs/content";
 import { GITHUB_URL } from "@/lib/brand";
 import { cn } from "@/lib/utils/utils";
+import { useHydrated } from "@/components/common/use-hydrated";
 
 const COPY = {
   en: { help: "Assay Help", search: "Search docs", noResults: "No matches", openApp: "Open Assay", contents: "Contents", close: "Close window" },
@@ -161,9 +162,8 @@ function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
 export function DocsShell({ index, children }: { index: DocsSearchEntry[]; children: ReactNode }) {
   const { language, setLanguage } = useLanguage();
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useHydrated();
   const [contentsOpen, setContentsOpen] = useState(false);
-  useEffect(() => setMounted(true), []);
   const t = COPY[language];
 
   return (
