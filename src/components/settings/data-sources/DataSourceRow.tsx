@@ -73,14 +73,15 @@ export function DataSourceRow({
           <span className="font-mono text-caption text-muted-foreground">{source.sourceId}</span>
           {source.builtIn && <span className="rounded-md bg-muted px-1.5 py-0.5 text-caption text-muted-foreground">{t.builtIn}</span>}
         </div>
+        {/* Engine, connection, check count; on a phone the connection gets a line of its own below. */}
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 text-caption text-muted-foreground">
           <span>PostgreSQL</span>
-          <span aria-hidden>·</span>
-          <span>{t.checks(source.checkCount)}</span>
           <span aria-hidden className="max-sm:hidden">
             ·
           </span>
-          <span className="min-w-0 truncate font-mono max-sm:basis-full">{source.display ?? t.hidden}</span>
+          <span className="min-w-0 truncate font-mono max-sm:order-last max-sm:basis-full">{source.display ?? t.hidden}</span>
+          <span aria-hidden>·</span>
+          <span className="shrink-0">{t.checks(source.checkCount)}</span>
         </div>
         <div className="min-w-0 text-caption">
           <LastTest source={source} t={t} language={language} />
