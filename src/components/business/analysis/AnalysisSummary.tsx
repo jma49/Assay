@@ -1,64 +1,34 @@
-import { Progress } from "@/components/ui/progress";
+import { OUTCOME_DOT, OUTCOME_LABEL } from "@/components/checks/status";
+import type { RunOutcome } from "@/domain/run";
 import { cn } from "@/lib/utils/utils";
 import type { AnalyticsData } from "./analytics";
+import { analysisCopy } from "./copy";
 
-export function AnalysisSummary({ data, t }: { data: AnalyticsData; t: (key: string) => string }) {
+const OUTCOMES: RunOutcome[] = ["error", "issues", "clean"];
+
+/** Runs in the range, then Broken / Issues / Clean in the Checks page's order, each with its share. */
+export function AnalysisSummary({ data, language }: { data: AnalyticsData; language: string }) {
+  const copy = analysisCopy(language);
+  const lang = language === "zh" ? "zh" : "en";
+  const share = (count: number) => (data.totalExecutions > 0 ? ((count / data.totalExecutions) * 100).toFixed(1) : "0");
+
   return (
-    <dl className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-4">
-      <div className="space-y-1 bg-card px-5 py-4">
-        <dt className="text-[13px] text-muted-foreground">{t("totalExecutions")}</dt>
-        <dd className="text-[24px] leading-tight font-semibold tabular-nums">
-          {data.totalExecutions.toLocaleString()}
-        </dd>
-        <dd className="text-[13px] text-muted-foreground">
-          {data.totalScripts} {t("scriptsCount")}
-        </dd>
+    <dl className="grid grid-cols-2 overflow-hidden rounded-xl bg-card shadow-border lg:grid-cols-4">
+      <div className="flex flex-col gap-0.5 px-5 py-4">
+        <dt className="text-[12px] text-muted-foreground">{copy.runs}</dt>
+        <dd className="text-[24px] leading-tight font-semibold tabular-nums">{data.totalExecutions.toLocaleString()}</dd>
+        <dd className="text-[12px] text-muted-foreground">{copy.acrossChecks(data.totalScripts)}</dd>
       </div>
-      <div className="space-y-1 bg-card px-5 py-4">
-        <dt className="text-[13px] text-muted-foreground">{t("overallSuccessRate")}</dt>
-        <dd
-          className={cn(
-            "text-[24px] leading-tight font-semibold tabular-nums",
-            data.overallSuccessRate >= 80 ? "text-success" : "text-attention",
-          )}
-        >
-          {data.overallSuccessRate.toFixed(1)}
-          <span className="ml-0.5 text-base font-normal text-muted-foreground">%</span>
-        </dd>
-        <dd className="pt-1">
-          <Progress value={data.overallSuccessRate} className="h-1" />
-        </dd>
-      </div>
-      <div className="space-y-1 bg-card px-5 py-4">
-        <dt className="text-[13px] text-muted-foreground">{t("successfulExecutions")}</dt>
-        <dd className="text-[24px] leading-tight font-semibold text-success tabular-nums">
-          {data.statusDistribution.success.toLocaleString()}
-        </dd>
-        <dd className="text-[13px] text-muted-foreground">
-          {(
-            (data.statusDistribution.success / data.totalExecutions) *
-            100
-          ).toFixed(1)}
-          % {t("of")} {t("totalExecutions")}
-        </dd>
-      </div>
-      <div className="space-y-1 bg-card px-5 py-4">
-        <dt className="text-[13px] text-muted-foreground">{t("failedAttentionExecutions")}</dt>
-        <dd className="text-[24px] leading-tight font-semibold text-attention tabular-nums">
-          {(
-            data.statusDistribution.failed +
-            data.statusDistribution.attention_needed
-          ).toLocaleString()}
-        </dd>
-        <dd className="flex gap-3 text-[13px]">
-          <span className="text-failure">
-            {data.statusDistribution.failed} {t("failedLabel")}
-          </span>
-          <span className="text-attention">
-            {data.statusDistribution.attention_needed} {t("attentionLabel")}
-          </span>
-        </dd>
-      </div>
+      {OUTCOMES.map((outcome, i) => (
+        <div key={outcome} className={cn("flex flex-col gap-0.5 border-l px-5 py-4", i === 1 && "max-lg:border-t max-lg:border-l-0", i === 2 && "max-lg:border-t")}>
+          <dt className="flex items-center gap-2 text-[12px] text-muted-foreground">
+            <span className={cn("status-dot", OUTCOME_DOT[outcome])} aria-hidden />
+            {OUTCOME_LABEL[outcome][lang]}
+          </dt>
+          <dd className="text-[24px] leading-tight font-semibold tabular-nums">{data.statusDistribution[outcome].toLocaleString()}</dd>
+          <dd className="text-[12px] text-muted-foreground">{copy.shareOfRuns(share(data.statusDistribution[outcome]))}</dd>
+        </div>
+      ))}
     </dl>
   );
 }
