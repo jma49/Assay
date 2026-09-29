@@ -1,6 +1,6 @@
 "use client";
 
-import { CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { OUTCOME_COLOR, OUTCOME_LABEL } from "@/components/checks/status";
 import type { RunOutcome } from "@/domain/run";
 import { formatDayKey } from "@/lib/utils/datetime";
@@ -57,36 +57,41 @@ export function StatusPieChart({ counts, language }: { counts: OutcomeCounts; la
   );
 }
 
-export function TrendLineChart({ data, language, allRunsLabel }: { data: DailyTrendPoint[]; language: "en" | "zh"; allRunsLabel: string }) {
-  const series = [
-    { key: "runs", name: allRunsLabel, color: INK.muted },
-    ...OUTCOMES.map((outcome) => ({ key: outcome, name: OUTCOME_LABEL[outcome][language], color: OUTCOME_COLOR[outcome] })),
-  ];
-  const format = (key: string) => formatDayKey(key, language);
+/**
+ * Runs per day as stacked bars, clean at the base and errors on top. Days are
+ * discrete counts, so bars rather than a line, which would suggest values
+ * between days; the stack's height is the day's total.
+ */
+export function DailyTrendChart({ data, language, allRunsLabel }: { data: DailyTrendPoint[]; language: "en" | "zh"; allRunsLabel: string }) {
+  const totals = new Map(data.map((point) => [point.date, point.runs]));
+  const stack: RunOutcome[] = ["clean", "issues", "error"];
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+      <BarChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }} barCategoryGap="20%">
         <CartesianGrid strokeDasharray="2 2" stroke={INK.grid} vertical={false} />
-        <XAxis dataKey="date" tickFormatter={format} stroke={INK.muted} fontSize={12} tickMargin={8} minTickGap={16} />
+        <XAxis dataKey="date" tickFormatter={(key: string) => formatDayKey(key, language)} stroke={INK.muted} fontSize={12} tickMargin={8} minTickGap={16} />
         <YAxis stroke={INK.muted} fontSize={12} tickMargin={8} allowDecimals={false} />
-        <Tooltip labelFormatter={(key: string) => formatDayKey(key, language, { weekday: true })} {...tooltipStyle} />
+        <Tooltip
+          cursor={{ fill: "var(--muted)" }}
+          labelFormatter={(key: string) => `${formatDayKey(key, language, { weekday: true })} · ${allRunsLabel} ${totals.get(key) ?? 0}`}
+          {...tooltipStyle}
+        />
         <Legend wrapperStyle={legendStyle} iconType="circle" iconSize={8} formatter={legendText} />
-        {series.map((s) => (
-          <Line
-            key={s.key}
-            type="monotone"
-            dataKey={s.key}
-            name={s.name}
-            stroke={s.color}
-            strokeWidth={s.key === "runs" ? 1.5 : 2}
-            strokeDasharray={s.key === "runs" ? "4 3" : undefined}
-            dot={data.length <= 31 ? { r: 2.5, fill: s.color, strokeWidth: 0 } : false}
-            activeDot={{ r: 4 }}
+        {stack.map((outcome) => (
+          <Bar
+            key={outcome}
+            dataKey={outcome}
+            name={OUTCOME_LABEL[outcome][language]}
+            stackId="runs"
+            fill={OUTCOME_COLOR[outcome]}
+            // A surface-coloured edge keeps the stacked segments apart.
+            stroke="var(--card)"
+            strokeWidth={1}
             isAnimationActive={false}
           />
         ))}
-      </LineChart>
+      </BarChart>
     </ResponsiveContainer>
   );
 }
