@@ -49,6 +49,12 @@ describe("formatPageInfo", () => {
       "11-20 of 23 (2/3)",
     );
   });
+
+  it("marks a total the server stopped counting at", () => {
+    expect(formatPageInfo("%s-%s of %s (%s/%s)", { start: 1, end: 50, totalItems: 10000, page: 1, totalPages: 200, totalCapped: true })).toBe(
+      "1-50 of 10000+ (1/200)",
+    );
+  });
 });
 
 describe("describePage", () => {

@@ -1,10 +1,10 @@
 import type { RunOutcome } from "@/domain/run";
 import { containsText, intParam } from "@/lib/utils/query-params";
+import { maxPage } from "@/server/http/paging";
 
 const HISTORY_DEFAULT_LIMIT = 50;
-// Up to 500 runs for the Analysis page's charts; fewer when each carries its rows.
+// Up to 500 runs for the Analysis page's charts.
 const HISTORY_MAX_LIMIT = 500;
-const HISTORY_MAX_LIMIT_WITH_RESULTS = 200;
 
 export interface HistoryParams {
   page: number;
@@ -20,7 +20,6 @@ export interface HistoryParams {
   hashtags: string[];
   sortBy: "finishedAt" | "checkId";
   sortOrder: "asc" | "desc";
-  includeSample: boolean;
 }
 
 const OUTCOMES: readonly RunOutcome[] = ["clean", "issues", "error"];
@@ -32,12 +31,16 @@ function dateParam(value: string | null): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+/**
+ * The run list's query. It never carries sample rows: a page of runs with
+ * their samples could pass Vercel's 4.5 MB response limit many times over,
+ * so a run's rows come from /api/execution-details one run at a time.
+ */
 export function parseHistoryParams(searchParams: URLSearchParams): HistoryParams {
-  const includeSample = searchParams.get("include_sample") === "true";
-  const maxLimit = includeSample ? HISTORY_MAX_LIMIT_WITH_RESULTS : HISTORY_MAX_LIMIT;
+  const limit = intParam(searchParams.get("limit"), HISTORY_DEFAULT_LIMIT, 1, HISTORY_MAX_LIMIT);
   return {
-    page: intParam(searchParams.get("page"), 1, 1, 100_000),
-    limit: intParam(searchParams.get("limit"), HISTORY_DEFAULT_LIMIT, 1, maxLimit),
+    page: intParam(searchParams.get("page"), 1, 1, maxPage(limit)),
+    limit,
     search: searchParams.get("search") || null,
     checkId: searchParams.get("checkId") || null,
     startDate: dateParam(searchParams.get("startDate")),
@@ -46,7 +49,6 @@ export function parseHistoryParams(searchParams: URLSearchParams): HistoryParams
     hashtags: (searchParams.get("hashtags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean),
     sortBy: searchParams.get("sort_by") === "checkId" ? "checkId" : "finishedAt",
     sortOrder: searchParams.get("sort_order") === "asc" ? "asc" : "desc",
-    includeSample,
   };
 }
 

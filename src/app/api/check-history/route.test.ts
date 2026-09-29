@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   skip: vi.fn(),
   limit: vi.fn(),
   countDocuments: vi.fn(),
+  estimatedDocumentCount: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
@@ -44,6 +45,7 @@ vi.mock("@/lib/database/mongodb", () => {
             : {
                 find: (...args: unknown[]) => (mocks.runsFind(...args), cursor),
                 countDocuments: async (...args: unknown[]) => (mocks.countDocuments(...args), mocks.total),
+                estimatedDocumentCount: async () => (mocks.estimatedDocumentCount(), mocks.total),
               },
       }),
     }),
@@ -73,7 +75,7 @@ describe("GET /api/check-history", () => {
     mocks.taggedChecks = [];
     mocks.runs = [run];
     mocks.total = 1;
-    for (const fn of [mocks.checksFind, mocks.runsFind, mocks.sort, mocks.skip, mocks.limit, mocks.countDocuments]) fn.mockClear();
+    for (const fn of [mocks.checksFind, mocks.runsFind, mocks.sort, mocks.skip, mocks.limit, mocks.countDocuments, mocks.estimatedDocumentCount]) fn.mockClear();
   });
 
   it("returns the auth response when the caller is not signed in", async () => {
@@ -105,8 +107,8 @@ describe("GET /api/check-history", () => {
         github_run_id: 42,
       },
     ]);
-    expect(body.pagination).toEqual({ page: 1, limit: 50, total: 1, totalPages: 1, hasNext: false, hasPrev: false });
-    expect(body.query_info).toEqual({ sort_by: "finishedAt", sort_order: "desc", include_sample: false });
+    expect(body.pagination).toEqual({ page: 1, limit: 50, total: 1, totalCapped: false, totalPages: 1, hasNext: false, hasPrev: false });
+    expect(body.query_info).toEqual({ sort_by: "finishedAt", sort_order: "desc" });
   });
 
   it("passes filter, sort and paging to the runs query", async () => {
@@ -114,19 +116,30 @@ describe("GET /api/check-history", () => {
     const res = await history("?page=2&limit=25&search=orders&outcome=error&sort_by=checkId&sort_order=asc");
     const filter = { checkId: { $regex: "orders", $options: "i" }, outcome: "error" };
     expect(mocks.runsFind).toHaveBeenCalledWith(filter, expect.anything());
-    expect(mocks.countDocuments).toHaveBeenCalledWith(filter);
+    expect(mocks.countDocuments).toHaveBeenCalledWith(filter, { limit: 10_001 });
     expect(mocks.sort).toHaveBeenCalledWith({ checkId: 1, finishedAt: -1 });
     expect(mocks.skip).toHaveBeenCalledWith(25);
     expect(mocks.limit).toHaveBeenCalledWith(25);
     const { pagination } = await res.json();
-    expect(pagination).toEqual({ page: 2, limit: 25, total: 120, totalPages: 5, hasNext: true, hasPrev: true });
+    expect(pagination).toEqual({ page: 2, limit: 25, total: 120, totalCapped: false, totalPages: 5, hasNext: true, hasPrev: true });
   });
 
   it("clamps the page size", async () => {
     await history("?limit=100000");
     expect(mocks.limit).toHaveBeenLastCalledWith(500);
-    await history("?limit=100000&include_sample=true");
-    expect(mocks.limit).toHaveBeenLastCalledWith(200);
+  });
+
+  it("counts an unfiltered history from the collection's metadata instead of scanning it", async () => {
+    mocks.total = 2_000_000;
+    const { pagination } = await (await history()).json();
+    expect(mocks.estimatedDocumentCount).toHaveBeenCalled();
+    expect(mocks.countDocuments).not.toHaveBeenCalled();
+    expect(pagination).toMatchObject({ total: 10_000, totalCapped: true, totalPages: 200 });
+  });
+
+  it("never skips past the counted runs", async () => {
+    await history("?page=100000&limit=50");
+    expect(mocks.skip).toHaveBeenLastCalledWith(199 * 50);
   });
 
   it("filters one check's runs within a date range, as the Analysis page asks", async () => {
@@ -138,17 +151,11 @@ describe("GET /api/check-history", () => {
     expect(mocks.limit).toHaveBeenLastCalledWith(500);
   });
 
-  it("only reads and returns the sample when include_sample=true, from either stored name", async () => {
-    await history();
-    expect(mocks.runsFind.mock.calls[0][1].projection).not.toHaveProperty("sample");
-    expect(mocks.runsFind.mock.calls[0][1].projection).not.toHaveProperty("raw_results");
-
-    mocks.runs = [run, { ...run, _id: "run_2", raw_results: undefined, sample: [{ id: 2 }] }];
+  it("never reads or returns samples, even when asked for them", async () => {
     const res = await history("?include_sample=true");
-    expect(mocks.runsFind.mock.calls[1][1].projection).toMatchObject({ sample: 1, raw_results: 1 });
-    const body = await res.json();
-    expect(body.data.map((r: { sample: unknown }) => r.sample)).toEqual([[{ id: 1 }], [{ id: 2 }]]);
-    expect(body.query_info.include_sample).toBe(true);
+    const { projection } = mocks.runsFind.mock.calls[0][1];
+    for (const field of ["sample", "raw_results", "rowKeys"]) expect(projection).not.toHaveProperty(field);
+    expect((await res.json()).data[0]).not.toHaveProperty("sample");
   });
 
   it("limits runs to checks carrying every selected hashtag", async () => {
@@ -173,7 +180,7 @@ describe("GET /api/check-history", () => {
   });
 
   it("answers 500 when the database fails", async () => {
-    mocks.countDocuments.mockImplementationOnce(() => {
+    mocks.estimatedDocumentCount.mockImplementationOnce(() => {
       throw new Error("db down");
     });
     vi.spyOn(console, "error").mockImplementationOnce(() => undefined);
