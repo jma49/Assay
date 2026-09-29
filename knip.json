@@ -4,10 +4,10 @@
     "scripts/**/*.ts",
     "tests/visual/stable.css"
   ],
-  "ignoreDependencies": [
-    "eslint-config-next"
-  ],
   "ignoreIssues": {
-    "src/components/ui/**": ["exports", "types"]
+    "src/components/ui/**": [
+      "exports",
+      "types"
+    ]
   }
 }
