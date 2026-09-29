@@ -9,7 +9,9 @@ export function useDragScrollbar(contentKey: unknown) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollBarRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [showScrollBar, setShowScrollBar] = useState(false);
+  // The thumb's width in percent of the track, measured with the table; null when the table fits.
+  const [thumbWidth, setThumbWidth] = useState<number | null>(null);
+  const showScrollBar = thumbWidth !== null;
   const animationFrameRef = useRef<number | undefined>(undefined);
   const dragStartRef = useRef({ startX: 0, startScrollLeft: 0, startScrollBarLeft: 0 });
 
@@ -32,7 +34,7 @@ export function useDragScrollbar(contentKey: unknown) {
       const { scrollWidth, clientWidth } = scrollContainerRef.current;
       // 1px tolerance for sub-pixel rounding.
       const needsScrollBar = scrollWidth > clientWidth + 1;
-      setShowScrollBar(needsScrollBar);
+      setThumbWidth(needsScrollBar ? Math.max(20, (clientWidth / (scrollWidth || 1)) * 100) : null);
       if (needsScrollBar) requestAnimationFrame(updateScrollBarPosition);
     };
 
@@ -124,6 +126,7 @@ export function useDragScrollbar(contentKey: unknown) {
     scrollBarRef,
     isDragging,
     showScrollBar,
+    thumbWidth,
     handleScrollBarMouseDown,
     handleContainerScroll,
   };
