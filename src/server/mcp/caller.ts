@@ -2,6 +2,7 @@ import { OAuthError, OAuthErrorCode, type AuthInfo } from "@modelcontextprotocol
 import { emailAllowed } from "@/lib/auth/legacy-accounts";
 import type { McpScope } from "@/lib/auth/mcp-scopes";
 import { getUserRole, Permission, ROLE_PERMISSIONS, UserRole } from "@/lib/auth/rbac";
+import { TtlCache } from "@/lib/cache/ttl-cache";
 import { COLLECTIONS } from "@/lib/database/collections";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { userRef } from "@/server/services/revoke-access";
@@ -80,18 +81,23 @@ export interface AccessTokenClaims {
  */
 export async function callerFromAccessToken(token: string, claims: AccessTokenClaims, deps: Omit<CallerDeps, "verifyKey">): Promise<AuthInfo | null> {
   const clientId = typeof claims.azp === "string" ? claims.azp : typeof claims.client_id === "string" ? claims.client_id : null;
-  if (!claims.sub || !clientId || !(await deps.hasConsent(claims.sub, clientId))) return null;
+  if (!claims.sub || !clientId) return null;
   const granted = new Set(typeof claims.scope === "string" ? claims.scope.split(" ") : []);
   const allowedByScope = new Set(Object.entries(SCOPE_PERMISSION).filter(([scope]) => granted.has(scope)).map(([, permission]) => permission));
-  const caller = await resolveCaller(claims.sub, `oauth:${clientId}`, deps, (role) => ROLE_PERMISSIONS[role].filter((p) => allowedByScope.has(p)));
-  return caller && authInfo(token, caller, claims.exp ?? 0);
+  // Independent reads, so in parallel; the consent is still read fresh on every request.
+  const [consented, caller] = await Promise.all([
+    deps.hasConsent(claims.sub, clientId),
+    resolveCaller(claims.sub, `oauth:${clientId}`, deps, (role) => ROLE_PERMISSIONS[role].filter((p) => allowedByScope.has(p))),
+  ]);
+  return consented && caller ? authInfo(token, caller, claims.exp ?? 0) : null;
 }
 
 async function resolveCaller(userId: string, credential: string, deps: Pick<CallerDeps, "findUser" | "roleOf">, permissionsOf: (role: UserRole) => readonly Permission[]): Promise<McpCaller | null> {
-  const user = await deps.findUser(userId);
-  if (!user || !emailAllowed(user.email)) return null;
+  // findUser looks the user up by this id, so the role can be read at the same time.
+  const [user, storedRole] = await Promise.all([deps.findUser(userId), deps.roleOf(userId)]);
+  if (!user || user.id !== userId || !emailAllowed(user.email)) return null;
   // Signed-in users without a stored role are viewers, as on the web.
-  const role = (await deps.roleOf(user.id)) ?? UserRole.VIEWER;
+  const role = storedRole ?? UserRole.VIEWER;
   return { userId: user.id, name: user.name || user.email.split("@")[0], email: user.email, permissions: permissionsOf(role), credential };
 }
 
@@ -108,6 +114,17 @@ export function callerOf(authInfo: AuthInfo | undefined): McpCaller | null {
   return caller ?? null;
 }
 
+// Who a user id belongs to changes rarely; like roles (rbac.ts), each instance
+// keeps it for 30 s. Only found users are kept, and removing someone's role
+// forgets them (forgetCachedUser). What they may do is never cached here:
+// the role has its own cache and the OAuth consent is read on every request.
+const USER_CACHE_TTL_MS = 30_000;
+const userCache = new TtlCache<{ id: string; email: string; name: string }>(USER_CACHE_TTL_MS);
+
+export function forgetCachedUser(userId: string): void {
+  userCache.delete(userId);
+}
+
 export const defaultCallerDeps = (): CallerDeps => ({
   async verifyKey(token) {
     const { auth } = await import("@/lib/auth/server");
@@ -116,8 +133,12 @@ export const defaultCallerDeps = (): CallerDeps => ({
     return { keyId: result.key.id, userId: result.key.referenceId, expiresAt: result.key.expiresAt ? new Date(result.key.expiresAt) : null };
   },
   async findUser(id) {
+    const cached = userCache.get(id);
+    if (cached) return cached;
     const { findUser } = await import("@/lib/auth/server");
-    return findUser({ id });
+    const user = await findUser({ id });
+    if (user) userCache.set(id, user);
+    return user;
   },
   async hasConsent(userId, clientId) {
     const db = await getMongoDbClient().getDb();

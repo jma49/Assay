@@ -21,8 +21,9 @@ type VersionBump = "major" | "minor" | "patch";
 const checks = (db: Db) => db.collection(COLLECTIONS.checks);
 const historyActor = (actor: CheckActor) => ({ id: actor.id, email: actor.email, name: actor.email.split("@")[0] });
 
-async function recordVersion(check: Document, actor: CheckActor, change: "create" | "update", note: string, bump: VersionBump) {
+async function recordVersion(db: Db, check: Document, actor: CheckActor, change: "create" | "update", note: string, bump: VersionBump) {
   await createScriptVersion(
+    db,
     check.scriptId,
     {
       name: check.name,
@@ -46,7 +47,7 @@ async function recordVersion(check: Document, actor: CheckActor, change: "create
 /** Inserts a fully formed check document (the unique scriptId index rejects duplicates). */
 export async function createCheck(db: Db, doc: Document, actor: CheckActor, note: string, bump: VersionBump): Promise<string> {
   const { insertedId } = await checks(db).insertOne(doc);
-  await recordVersion(doc, actor, "create", note, bump);
+  await recordVersion(db, doc, actor, "create", note, bump);
   await recordEditHistoryOnServer({ scriptId: doc.scriptId, operation: "create", newData: doc }, historyActor(actor));
   return String(insertedId);
 }
@@ -67,18 +68,20 @@ export async function updateCheck(
   note: string,
 ): Promise<UpdateResult> {
   const collection = checks(db);
-  const before = await collection.findOne({ scriptId });
-  if (!before) return { kind: "missing" };
-  const result = await collection.updateOne(
+  const set = { ...fields, updatedBy: { id: actor.id, email: actor.email }, updatedAt: new Date() };
+  // The document exactly as this update found it, so the history's before
+  // and after cannot pick up another save that landed in between.
+  const before = await collection.findOneAndUpdate(
     { scriptId, ...versionFilter(expectedVersion) },
-    { $set: { ...fields, updatedBy: { id: actor.id, email: actor.email }, updatedAt: new Date() }, $inc: { version: 1 } },
+    { $set: set, $inc: { version: 1 } },
+    { returnDocument: "before" },
   );
-  if (result.matchedCount === 0) {
+  if (!before) {
     return (await collection.countDocuments({ scriptId }, { limit: 1 })) ? { kind: "conflict" } : { kind: "missing" };
   }
-  const after = (await collection.findOne({ scriptId }))!;
+  const after: Document = { ...before, ...set, version: (typeof before.version === "number" ? before.version : 0) + 1 };
   await recordEditHistoryOnServer({ scriptId, operation: "update", oldData: before, newData: after }, historyActor(actor));
-  await recordVersion(after, actor, "update", note, "patch");
+  await recordVersion(db, after, actor, "update", note, "patch");
   return { kind: "updated", check: after };
 }
 

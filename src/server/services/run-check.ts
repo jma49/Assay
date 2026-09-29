@@ -27,6 +27,8 @@ export interface CheckToRun {
   scriptId: string;
   sqlContent: string;
   state?: CheckState | null;
+  /** When the check was created; runs before it belong to an earlier check with the same id. */
+  createdAt?: Date | null;
   /** Events committed with an earlier run's state but not yet written to `events` (see commitState). */
   pendingEvents?: CheckEvent[];
 }
@@ -72,8 +74,12 @@ export interface RunCheckStore {
   /** Takes the check's lease unless a live one exists. */
   acquireLease(scriptId: string, runId: string, until: Date, now: Date): Promise<LeaseResult>;
   previousRowKeys(runId: string): Promise<string[] | null>;
-  /** State rebuilt from past runs, for a check that ran before state was stored. */
-  historicalState(scriptId: string): Promise<CheckState | null>;
+  /**
+   * State rebuilt from past runs, for a check that ran before state was
+   * stored. Only runs from `notBefore` on count: a check deleted and created
+   * again under the same id must not inherit the old one's streak.
+   */
+  historicalState(scriptId: string, notBefore: Date | null): Promise<CheckState | null>;
   saveRun(run: RunDocument): Promise<void>;
   /**
    * Writes the state only while this run still holds the lease, and releases
@@ -179,7 +185,7 @@ export async function runCheck(scriptId: string, trigger: RunTrigger, deps: RunC
   for (const pending of check.pendingEvents ?? []) await recordEventSafely(deps, pending);
   // Without stored state the check may still have a history; start from it so
   // "since" and the previous row count stay true.
-  if (!check.state) check.state = await deps.store.historicalState(scriptId);
+  if (!check.state) check.state = await deps.store.historicalState(scriptId, check.createdAt ?? null);
 
   let committed = false;
   try {

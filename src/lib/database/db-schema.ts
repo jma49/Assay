@@ -1,5 +1,5 @@
 import redis from "../cache/redis";
-import { query } from "./db";
+import { withReadOnlyTransaction } from "./db";
 
 export interface SchemaColumn {
   name: string;
@@ -24,6 +24,8 @@ interface ColumnRow {
 const CACHE_KEY = "db_schema:v2";
 const CACHE_TTL_SECONDS = 60 * 60;
 const MAX_COLUMNS_PER_TABLE = 40;
+/** A catalogue read that takes longer is a sick database; fail instead of holding a connection. */
+const SCHEMA_TIMEOUT_MS = 10_000;
 
 /**
  * Every user schema, not only `public`: the demo data lives in `demo`.
@@ -74,17 +76,29 @@ async function readCache(): Promise<SchemaTable[] | null> {
   }
 }
 
-/** The database's tables and columns, cached in Redis for an hour. */
-export async function getSchemaTables(): Promise<SchemaTable[]> {
-  const cached = await readCache();
-  if (cached) return cached;
-
-  const result = await query(SCHEMA_QUERY);
-  const tables = groupColumns(result.rows as ColumnRow[]);
+async function loadSchema(): Promise<SchemaTable[]> {
+  const rows = await withReadOnlyTransaction(async (client) => {
+    await client.query(`SET LOCAL statement_timeout = ${SCHEMA_TIMEOUT_MS}`);
+    return (await client.query(SCHEMA_QUERY)).rows as ColumnRow[];
+  });
+  const tables = groupColumns(rows);
   await redis.setex(CACHE_KEY, CACHE_TTL_SECONDS, tables).catch((error) => {
     console.error("[DB Schema] cache write failed:", error);
   });
   return tables;
+}
+
+// One catalogue read per instance at a time: requests that miss the cache together share it.
+let loading: Promise<SchemaTable[]> | null = null;
+
+/** The database's tables and columns, cached in Redis for an hour. */
+export async function getSchemaTables(): Promise<SchemaTable[]> {
+  const cached = await readCache();
+  if (cached) return cached;
+  loading ??= loadSchema().finally(() => {
+    loading = null;
+  });
+  return loading;
 }
 
 /** The schema as prompt text for the AI helpers. */

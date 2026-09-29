@@ -72,12 +72,20 @@ describe("migrateCollectionNames", () => {
     await expect(migrateCollectionNames(denied.db, [["sql_scripts", "checks"]])).rejects.toThrow("code 13");
   });
 
-  it("drops an empty old collection next to the new one", async () => {
+  it("moves an empty old collection next to the new one aside instead of dropping it", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     const { db, collections, drops } = fakeDb({ sql_scripts: 0, checks: 5 });
+    const [result] = await migrateCollectionNames(db, [["sql_scripts", "checks"]], () => new Date("2026-09-28T17:00:00.000Z"));
+    expect(result).toMatchObject({ outcome: "moved-empty-old-aside", counts: { old: 0, new: 5 }, aside: "sql_scripts_orphaned_20260928T170000000Z" });
+    expect(drops).toEqual([]);
+    expect(collections).toEqual({ checks: 5, sql_scripts_orphaned_20260928T170000000Z: 0 });
+  });
+
+  it("is fine when another instance moved the empty old collection first", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { db } = fakeDb({ sql_scripts: 0, checks: 5 }, { renameFails: () => withCode(26) });
     const [result] = await migrateCollectionNames(db, [["sql_scripts", "checks"]]);
-    expect(result).toMatchObject({ outcome: "dropped-empty-old", counts: { old: 0, new: 5 } });
-    expect(drops).toEqual(["sql_scripts"]);
-    expect(collections).toEqual({ checks: 5 });
+    expect(result.outcome).toBe("moved-empty-old-aside");
   });
 
   it("leaves both alone and warns when both hold documents", async () => {
