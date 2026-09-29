@@ -1,11 +1,8 @@
-import { NextResponse } from "next/server";
-import redis from "@/lib/cache/redis";
-import { aiEnabled } from "@/lib/ai/model";
-
 /**
  * Sign-up is public, so every AI endpoint is reachable by anyone who makes an
  * account. These limits keep the AI key from being used as a free, unbounded
- * LLM: a per-user hourly quota and a cap on each input's length.
+ * LLM: a per-user hourly quota and a cap on each input's length. Routes apply
+ * them through guardAiRequest (src/server/http/ai-guard.ts).
  */
 export const AI_REQUESTS_PER_HOUR = 30;
 const WINDOW_SECONDS = 60 * 60;
@@ -49,39 +46,4 @@ export async function consumeQuota(
   if (count === 1) await store.expire(key, windowSeconds);
   const retryAfterSeconds = windowStart + windowSeconds - Math.floor(now / 1000);
   return { allowed: count <= limit, retryAfterSeconds };
-}
-
-/**
- * Returns an error response when the request must be refused, or null to go
- * on. A Redis outage lets requests through (logged) rather than taking AI
- * features down; the input caps still apply.
- */
-export async function guardAiRequest(
-  userId: string,
-  fields: Partial<Record<LimitedField, unknown>>,
-): Promise<NextResponse | null> {
-  if (!aiEnabled()) {
-    return NextResponse.json({ error: "AI 功能尚未开启（AI_ENABLED）" }, { status: 503 });
-  }
-
-  const oversized = findOversizedField(fields);
-  if (oversized) {
-    return NextResponse.json(
-      { error: `输入过长：${oversized} 最多 ${AI_INPUT_LIMITS[oversized]} 个字符` },
-      { status: 413 },
-    );
-  }
-
-  try {
-    const { allowed, retryAfterSeconds } = await consumeQuota(redis, userId, Date.now());
-    if (!allowed) {
-      return NextResponse.json(
-        { error: `AI 请求过于频繁，每小时最多 ${AI_REQUESTS_PER_HOUR} 次，请稍后再试` },
-        { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } },
-      );
-    }
-  } catch (error) {
-    console.error("[AI guard] Rate limit check failed, allowing request:", error);
-  }
-  return null;
 }
