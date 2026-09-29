@@ -7,7 +7,7 @@ export function EditorStatusBar({ sql, language }: { sql: string; language: "en"
   const validation = useMemo(() => (sql.trim() ? validateReadOnlySql(sql) : null), [sql]);
 
   return (
-    <div className="flex h-9 items-center justify-between gap-4 border-t px-4 text-[12px]">
+    <div className="flex h-9 items-center justify-between gap-4 border-t px-4 text-caption">
       {validation === null ? (
         <span className="text-muted-foreground">
           {zh ? "写一条查询，查出结果即表示需要关注" : "Write a query; any rows it returns need attention"}

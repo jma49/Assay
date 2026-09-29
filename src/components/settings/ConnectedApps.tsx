@@ -101,14 +101,14 @@ export function ConnectedApps() {
   return (
     <section className="space-y-3">
       <div className="max-w-2xl space-y-1">
-        <h2 className="text-[17px] font-semibold">{t.title}</h2>
-        <p className="text-[13px] leading-6 text-muted-foreground">{t.intro}</p>
+        <h2 className="text-title-sm font-semibold">{t.title}</h2>
+        <p className="text-body-sm leading-6 text-muted-foreground">{t.intro}</p>
       </div>
       <div className="overflow-hidden rounded-xl bg-card shadow-border">
         {apps === null ? (
           <div className="skeleton-shimmer h-16" />
         ) : apps.length === 0 ? (
-          <p className="px-4 py-8 text-center text-[13px] text-muted-foreground">{t.none}</p>
+          <p className="px-4 py-8 text-center text-body-sm text-muted-foreground">{t.none}</p>
         ) : (
           <ul className="divide-y">
             {apps.map((app) => (
@@ -118,13 +118,13 @@ export function ConnectedApps() {
                 </span>
                 <div className="grid min-w-0 flex-1 gap-0.5">
                   <div className="flex min-w-0 items-baseline gap-2">
-                    <span className="truncate text-[13.5px] font-medium">{app.name || t.unnamed}</span>
+                    <span className="truncate text-body-md font-medium">{app.name || t.unnamed}</span>
                     {/* A client named by a metadata URL: show where it is published, which its name cannot fake. */}
                     {app.clientId.startsWith("https://") && (
-                      <span className="truncate font-mono text-[12px] text-subtle-foreground">{new URL(app.clientId).host}</span>
+                      <span className="truncate font-mono text-caption text-subtle-foreground">{new URL(app.clientId).host}</span>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-x-3 text-[12px] text-muted-foreground">
+                  <div className="flex flex-wrap gap-x-3 text-caption text-muted-foreground">
                     <span title={formatDateTime(app.createdAt, language)}>{t.since(formatRelative(app.createdAt, language))}</span>
                     {app.scopes.length > 0 && <span>{app.scopes.map((scope) => t.scopes[scope]).join(" · ")}</span>}
                   </div>

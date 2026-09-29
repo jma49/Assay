@@ -33,7 +33,7 @@ export function ConnectCard({
         {t.telegramConnect}
       </Button>
     ) : (
-      <span className="flex h-7 items-center text-[12px] text-muted-foreground">{t.notSetUp}</span>
+      <span className="flex h-7 items-center text-caption text-muted-foreground">{t.notSetUp}</span>
     );
   } else if (oneClick) {
     action = (
@@ -52,7 +52,7 @@ export function ConnectCard({
           type="button"
           disabled={!enabled}
           onClick={() => onPaste(kind as PasteKind)}
-          className="text-[12px] text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:pointer-events-none disabled:opacity-50"
+          className="text-caption text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:pointer-events-none disabled:opacity-50"
         >
           {t.orPaste}
         </button>
@@ -70,9 +70,9 @@ export function ConnectCard({
     <div className="flex flex-col gap-3 rounded-xl bg-card p-4 shadow-border">
       <div className="flex items-center gap-3">
         <ChannelIcon kind={kind} />
-        <span className="text-[14px] font-semibold">{meta.name[language]}</span>
+        <span className="text-body-md font-semibold">{meta.name[language]}</span>
       </div>
-      <p className="min-h-[2.5em] text-[12.5px] leading-5 text-muted-foreground">{meta.blurb[language]}</p>
+      <p className="min-h-[2.5em] text-body-sm leading-5 text-muted-foreground">{meta.blurb[language]}</p>
       <div className="mt-auto">{action}</div>
     </div>
   );

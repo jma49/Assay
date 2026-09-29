@@ -21,7 +21,7 @@ function CopyField({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="flex items-center gap-2">
-      <code className="min-w-0 flex-1 truncate rounded-md bg-code px-3 py-2 font-mono text-[12.5px]">{value}</code>
+      <code className="min-w-0 flex-1 truncate rounded-md bg-code px-3 py-2 font-mono text-body-sm">{value}</code>
       <Button
         variant="outline"
         size="sm"
@@ -140,7 +140,7 @@ export function PasteDestinationDialog({
                 autoFocus
                 spellCheck={false}
                 autoComplete="off"
-                className="font-mono text-[12px] [font-variant-ligatures:none]"
+                className="font-mono text-caption [font-variant-ligatures:none]"
                 placeholder={meta.urlPlaceholder}
                 value={url}
                 aria-invalid={urlError ? true : undefined}
@@ -151,7 +151,7 @@ export function PasteDestinationDialog({
                 }}
               />
               {urlError && (
-                <p id="destination-url-error" className="text-[12px] text-failure">
+                <p id="destination-url-error" className="text-caption text-failure">
                   {urlError}
                 </p>
               )}
@@ -160,11 +160,11 @@ export function PasteDestinationDialog({
               <div className="grid gap-1.5">
                 <Label htmlFor="destination-sign">{t.signingSecret}</Label>
                 <Input id="destination-sign" type="password" autoComplete="off" value={signingSecret} onChange={(e) => setSigningSecret(e.target.value)} />
-                <p className="text-[12px] text-muted-foreground">{t.signingOptional}</p>
+                <p className="text-caption text-muted-foreground">{t.signingOptional}</p>
               </div>
             )}
             <SubscriptionFields value={subscription} onChange={setSubscription} />
-            {error && <p className="rounded-md bg-failure-soft px-3 py-2 text-[12.5px] text-failure">{error}</p>}
+            {error && <p className="rounded-md bg-failure-soft px-3 py-2 text-body-sm text-failure">{error}</p>}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
                 {t.cancel}
