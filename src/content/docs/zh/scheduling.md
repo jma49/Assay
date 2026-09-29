@@ -21,7 +21,7 @@ Assay 本身不常驻一个时钟，需要有东西去启动定时执行器。�
 
 ### GitHub Actions（推荐）
 
-`.github/workflows/sql-check-cron.yml` 每 30 分钟启动一次执行器。把 `DATABASE_URL` 和 `MONGODB_URI` 加到仓库的 Secrets 后，它就会在默认分支上开始运行；没有配置时会静默跳过。也可以在 Actions 页面手动运行，选择 `scheduled`（到点的检查）或 `all`（立即执行全部）。
+`.github/workflows/sql-check-cron.yml` 每 30 分钟启动一次执行器。把 `DATABASE_URL` 和 `MONGODB_URI` 加到仓库的 Secrets 后，它就会在默认分支上开始运行；没有配置时会静默跳过。也可以在 Actions 页面手动运行，选择 `scheduled`（到点的检查）或 `all`（立即执行全部），或者填写 **check_id** 只执行这一个检查。手动运行后同样会发送告警。
 
 执行器读取的配置和应用相同，所以在托管平台上设置过的，也要在 GitHub 上设置；没有设置的使用默认值：
 
