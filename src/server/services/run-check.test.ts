@@ -25,7 +25,7 @@ function memoryStore(checks: CheckToRun[]) {
       if (!doc) return { kind: "missing" };
       if (doc.lease && doc.lease.until > now) return { kind: "busy", runId: doc.lease.runId };
       doc.lease = { runId, until };
-      return { kind: "acquired", check: { scriptId, sqlContent: doc.sqlContent, state: doc.state, pendingEvents: [...doc.pendingEvents] } };
+      return { kind: "acquired", check: { scriptId, sqlContent: doc.sqlContent, state: doc.state, createdAt: doc.createdAt, pendingEvents: [...doc.pendingEvents] } };
     },
     async historicalState() {
       return null;
@@ -181,9 +181,12 @@ describe("runCheck", () => {
   it("continues a check's history when it has no stored state yet", async () => {
     const { store, docs } = memoryStore([CHECK]);
     const since = new Date(Date.UTC(2026, 8, 24));
-    store.historicalState = async () => ({ outcome: "issues", rowCount: 2, previousRowCount: 2, since, lastRunId: "old", lastRunAt: since });
+    store.historicalState = vi.fn(async () => ({ outcome: "issues" as const, rowCount: 2, previousRowCount: 2, since, lastRunId: "old", lastRunAt: since }));
+    docs.get(CHECK.scriptId)!.createdAt = new Date(Date.UTC(2026, 8, 20));
     await runCheck(CHECK.scriptId, { kind: "manual" }, deps(store, rowsSource([[{ id: 1 }, { id: 2 }]])));
     expect(docs.get(CHECK.scriptId)!.state).toMatchObject({ outcome: "issues", since, previousRowCount: 2 });
+    // Only runs of this check, not of an earlier one deleted under the same id.
+    expect(store.historicalState).toHaveBeenCalledWith(CHECK.scriptId, new Date(Date.UTC(2026, 8, 20)));
   });
 
   it("reports an unknown check", async () => {
