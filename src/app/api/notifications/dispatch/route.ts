@@ -2,6 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { safeEqual } from "@/server/crypto/secret-box";
 import { dispatchNow } from "@/server/services/notify-deps";
 
+// Runs checks (or sends their alerts): the Hobby plan's limit, FUNCTION_MAX_DURATION_S in
+// run-check-deps.ts. CHECK_TIMEOUT_MS and batch deadlines are sized to finish inside it.
+export const maxDuration = 300;
+
 /**
  * Runs the notification outbox: retries that came due and alerts from
  * scheduled runs. Called by the scheduled workflow with CRON_SECRET.

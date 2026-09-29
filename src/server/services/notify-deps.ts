@@ -4,13 +4,16 @@ import { hasSecretKey, open } from "@/server/crypto/secret-box";
 import { appUrl } from "@/server/integrations/config";
 import { sendRequest } from "@/server/notify/send";
 import { mongoNotifyStore } from "@/server/repos/notify-store";
+import { repairPendingEvents } from "@/server/repos/run-check-store";
 import { dispatchNotifications, type DispatchReport } from "./notifications";
 
 /** Runs the outbox with the production dependencies. */
 export async function dispatchNow(): Promise<DispatchReport | null> {
+  const db = await getMongoDbClient().getDb();
+  // Events a run committed but never wrote; they feed the activity page too, so this runs without the key.
+  await repairPendingEvents(db).catch((error) => console.error("[Notify] Repairing pending events failed:", error));
   // Without the key no destination can exist, and none could be opened.
   if (!hasSecretKey()) return null;
-  const db = await getMongoDbClient().getDb();
   return dispatchNotifications({
     store: mongoNotifyStore(db),
     now: () => new Date(),
