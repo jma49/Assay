@@ -1,4 +1,3 @@
-import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
 import { LEGACY_PAGE_REDIRECTS } from "./src/lib/legacy-redirects.mjs";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -22,9 +21,6 @@ const CONTENT_SECURITY_POLICY = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    optimizePackageImports: ["lucide-react"],
-  },
   compiler: {
     removeConsole:
       process.env.NODE_ENV === "production"
@@ -60,18 +56,6 @@ const nextConfig = {
           },
         ],
       },
-      {
-        source: "/_next/static/css/:path*",
-        headers: [
-          {
-            key: "Cache-Control",
-            value:
-              process.env.NODE_ENV === "development"
-                ? "no-cache, no-store, must-revalidate"
-                : "public, max-age=31536000, immutable",
-          },
-        ],
-      },
     ];
   },
   async redirects() {
@@ -79,8 +63,4 @@ const nextConfig = {
   },
 };
 
-// The dev server writes to its own folder, so `npm run build`
-// while `npm run dev` is running cannot overwrite its files and break it.
-export default function config(phase) {
-  return phase === PHASE_DEVELOPMENT_SERVER ? { ...nextConfig, distDir: ".next-dev" } : nextConfig;
-}
+export default nextConfig;

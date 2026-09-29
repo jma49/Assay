@@ -63,7 +63,7 @@ export const auth = betterAuth({
   appName: "Assay",
   baseURL: process.env.BETTER_AUTH_URL || process.env.APP_URL,
   // `next build` imports this module without secrets; at runtime Better Auth
-  // refuses to start without BETTER_AUTH_SECRET, and the middleware answers 503.
+  // refuses to start without BETTER_AUTH_SECRET, and the proxy answers 503.
   secret: process.env.BETTER_AUTH_SECRET || (building ? "build-time-placeholder-never-used-for-sessions" : undefined),
   database: mongodbAdapter(db, { client }),
   socialProviders: {

@@ -15,6 +15,18 @@ updates:
       # this bound together with the Vercel Node version and CI's setup-node.
       - dependency-name: "@types/node"
         versions: [">=25"]
+      # eslint-config-next 16 bundles eslint-plugin-react, -import and
+      # -jsx-a11y, which accept ESLint <= 9; eslint-plugin-react crashes on
+      # ESLint 10. Drop this once an eslint-config-next release supports 10.
+      - dependency-name: "eslint"
+        versions: [">=10"]
+      # TypeScript 7 (the native compiler) has no JavaScript API yet, and
+      # typescript-eslint, which eslint-config-next uses, refuses to load
+      # with it. `tsc` and `next build` already work with 7 once tsconfig drops
+      # `baseUrl` and `downlevelIteration`. Revisit when a typescript-eslint
+      # release accepts TypeScript 7.
+      - dependency-name: "typescript"
+        versions: [">=7"]
 
   - package-ecosystem: github-actions
     directory: /

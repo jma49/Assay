@@ -53,7 +53,7 @@ export function useMemberRoles(language: string, t: (key: DashboardTranslationKe
     }
   }, [zh]);
 
-  // No need to wait for the session: the middleware already guarantees a
+  // No need to wait for the session: the proxy already guarantees a
   // signed-in user and the API checks the admin permission on the server.
   useEffect(() => {
     loadMembers();

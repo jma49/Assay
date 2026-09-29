@@ -1,26 +1,38 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// eslint-config-next 15 ships eslintrc configs; FlatCompat loads them into the flat config the ESLint CLI reads.
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-const eslintConfig = [
-  {
-    ignores: ["node_modules/**", ".next/**", ".next-dev/**", ".visual/**", "out/**", "build/**", "coverage/**", "next-env.d.ts"],
-  },
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
-  {
-    rules: {
-      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-      "@typescript-eslint/no-explicit-any": "warn",
-    }
-  }
+// Rules eslint-config-next 16 added over 15: the React Compiler rules of
+// eslint-plugin-react-hooks 7 and a location-assign check. The app does not
+// use the React Compiler, and sign-out and the error boundary reload the page
+// on purpose; adopting these rules is its own change.
+const RULES_NEW_IN_NEXT_16 = [
+  "react-hooks/config",
+  "react-hooks/error-boundaries",
+  "react-hooks/gating",
+  "react-hooks/globals",
+  "react-hooks/immutability",
+  "react-hooks/incompatible-library",
+  "react-hooks/preserve-manual-memoization",
+  "react-hooks/purity",
+  "react-hooks/refs",
+  "react-hooks/set-state-in-effect",
+  "react-hooks/set-state-in-render",
+  "react-hooks/static-components",
+  "react-hooks/unsupported-syntax",
+  "react-hooks/use-memo",
+  "@next/next/no-location-assign-relative-destination",
 ];
 
-export default eslintConfig;
+export default defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-explicit-any": "warn",
+      ...Object.fromEntries(RULES_NEW_IN_NEXT_16.map((rule) => [rule, "off"])),
+    },
+  },
+  globalIgnores(["node_modules/**", ".next/**", ".visual/**", "out/**", "build/**", "coverage/**", "next-env.d.ts"]),
+]);
