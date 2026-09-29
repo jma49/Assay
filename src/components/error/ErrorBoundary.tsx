@@ -79,8 +79,6 @@ export class ErrorBoundary extends Component<Props, State> {
     // errorBoundary: true,
     //   },
     // });
-
-    console.warn('[ErrorBoundary] Error reported to the monitoring service');
   }
 
   private handleReset = () => {
