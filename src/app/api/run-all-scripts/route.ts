@@ -4,10 +4,20 @@ import { randomUUID } from "node:crypto";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { parseJson, withAuth } from "@/server/http/route";
-import { mongoBatchStore, runBatch } from "@/server/services/batches";
+import { mongoBatchStore, runBatch, runBatchAndDispatch } from "@/server/services/batches";
 import { dispatchNow } from "@/server/services/notify-deps";
-import { runCheckNow } from "@/server/services/run-check-deps";
+import {
+  checkTimeoutMs,
+  DISPATCH_RESERVE_MS,
+  FUNCTION_MAX_DURATION_S,
+  RUN_OVERHEAD_MS,
+  runCheckNow,
+} from "@/server/services/run-check-deps";
 import { COLLECTIONS } from "@/lib/database/collections";
+
+// Runs checks (or sends their alerts): the Hobby plan's limit, FUNCTION_MAX_DURATION_S in
+// run-check-deps.ts. CHECK_TIMEOUT_MS and batch deadlines are sized to finish inside it.
+export const maxDuration = 300;
 
 const Body = z.object({
   mode: z.enum(["all", "scheduled"]).default("all"),
@@ -19,8 +29,14 @@ const Body = z.object({
  * Starts a batch and answers at once; the checks run after the response
  * (after() keeps the function alive until they finish) and progress is
  * read from MongoDB by /api/batch-execution-status.
+ *
+ * All of it must fit in this one function (maxDuration): checks start only
+ * while a whole run still fits before the deadline, the rest are marked
+ * skipped, and alerts are sent in the time kept back at the end.
  */
 export const POST = withAuth(Permission.SCRIPT_EXECUTE, async (request, { principal }) => {
+  const startedAt = Date.now();
+  const deadline = new Date(startedAt + FUNCTION_MAX_DURATION_S * 1000 - DISPATCH_RESERVE_MS);
   const { mode, scriptIds, filteredExecution } = await parseJson(request, Body);
   const db = await getMongoDbClient().getDb();
 
@@ -52,12 +68,15 @@ export const POST = withAuth(Permission.SCRIPT_EXECUTE, async (request, { princi
     isActive: true,
   });
 
-  after(async () => {
-    await runBatch(executionId, { store, run: runCheckNow, now: () => new Date() }).catch((error) =>
-      console.error(`[Batch ${executionId}] failed:`, error),
-    );
-    await dispatchNow().catch((error) => console.error("[Notify] Dispatch failed:", error));
-  });
+  const now = () => new Date();
+  after(() =>
+    runBatchAndDispatch({
+      batch: () => runBatch(executionId, { store, run: runCheckNow, now, deadline, runBudgetMs: checkTimeoutMs() + RUN_OVERHEAD_MS }),
+      dispatch: dispatchNow,
+      dispatchBy: deadline,
+      now,
+    }),
+  );
 
   const message = `Running ${checks.length} checks`;
   return NextResponse.json({
