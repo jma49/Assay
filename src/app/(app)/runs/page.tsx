@@ -14,7 +14,7 @@ export default async function RunsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
-    // Demo guests have no account; the middleware already let them through.
+    // Demo guests have no account; the proxy already let them through.
     if (await currentGuestId()) return <RunsView />;
     redirect("/sign-in?redirect_url=/runs");
   }
