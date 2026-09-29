@@ -65,9 +65,11 @@ function Field({ id, label, children, className }: { id: string; label: string; 
 
 const describeTable = (t: SchemaTable) => (t.schema === "public" ? t.name : `${t.schema}.${t.name}`);
 
+// Selects stay controlled from the first render: Radix shows the placeholder
+// for "", while undefined would make them uncontrolled until a value is chosen.
 function TableSelect({ id, value, tables, onChange, t }: { id: string; value: string; tables: SchemaTable[]; onChange: (key: string) => void; t: Copy }) {
   return (
-    <Select value={value || undefined} onValueChange={onChange}>
+    <Select value={value} onValueChange={onChange}>
       <SelectTrigger id={id} className="w-full">
         <SelectValue placeholder={t.choose} />
       </SelectTrigger>
@@ -84,7 +86,7 @@ function TableSelect({ id, value, tables, onChange, t }: { id: string; value: st
 
 function ColumnSelect({ id, value, columns, onChange, t, disabled }: { id: string; value: string; columns: SchemaColumn[]; onChange: (name: string) => void; t: Copy; disabled?: boolean }) {
   return (
-    <Select value={value || undefined} onValueChange={onChange} disabled={disabled || columns.length === 0}>
+    <Select value={value} onValueChange={onChange} disabled={disabled || columns.length === 0}>
       <SelectTrigger id={id} className="w-full">
         <SelectValue placeholder={columns.length === 0 && !disabled ? t.noColumns : t.choose} />
       </SelectTrigger>
