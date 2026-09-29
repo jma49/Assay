@@ -27,7 +27,8 @@ export interface ScriptExecutionStatus {
   scriptId: string;
   scriptName: string;
   isScheduled: boolean;
-  status: "pending" | "running" | "completed" | "failed" | "attention_needed";
+  /** "skipped": not run because the batch reached its time limit. */
+  status: "pending" | "running" | "completed" | "failed" | "attention_needed" | "skipped";
   startTime?: Date;
   endTime?: Date;
   message?: string;
@@ -59,10 +60,11 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
     completed: scripts.filter((s) => s.status === "completed").length,
     failed: scripts.filter((s) => s.status === "failed").length,
     attention: scripts.filter((s) => s.status === "attention_needed").length,
+    skipped: scripts.filter((s) => s.status === "skipped").length,
   };
+  const finished = stats.completed + stats.failed + stats.attention + stats.skipped;
 
-  const progress =
-    ((stats.completed + stats.failed + stats.attention) / stats.total) * 100;
+  const progress = (finished / stats.total) * 100;
   const isExecuting = stats.running > 0 || stats.pending > 0;
   const isCompleted = stats.pending === 0 && stats.running === 0;
 
@@ -78,6 +80,8 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
         return <X className="h-4 w-4 text-failure" />;
       case "attention_needed":
         return <AlertTriangle className="h-4 w-4 text-attention" />;
+      case "skipped":
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
       default:
         return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
@@ -95,6 +99,8 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
         return language === "zh" ? "失败" : "Failed";
       case "attention_needed":
         return language === "zh" ? "关注" : "Attention";
+      case "skipped":
+        return language === "zh" ? "未运行" : "Not run";
       default:
         return status;
     }
@@ -157,8 +163,8 @@ export const BatchExecutionProgress: React.FC<BatchExecutionProgressProps> = ({
                 </CardTitle>
                 <CardDescription>
                   {language === "zh"
-                    ? `执行进度: ${stats.completed + stats.failed + stats.attention}/${stats.total} 个脚本`
-                    : `Progress: ${stats.completed + stats.failed + stats.attention}/${stats.total} scripts`}
+                    ? `执行进度: ${finished}/${stats.total} 个脚本`
+                    : `Progress: ${finished}/${stats.total} scripts`}
                 </CardDescription>
               </div>
             </div>

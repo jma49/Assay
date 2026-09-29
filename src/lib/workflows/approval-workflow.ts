@@ -350,6 +350,17 @@ export async function rejectScript(
   }
 }
 
+/** The live SQL of the given checks, by scriptId; checks that no longer exist are left out. */
+export async function getCurrentSql(scriptIds: string[]): Promise<Map<string, string>> {
+  if (scriptIds.length === 0) return new Map();
+  const db = await getDb();
+  const checks = await db
+    .collection(COLLECTIONS.checks)
+    .find({ scriptId: { $in: scriptIds } }, { projection: { scriptId: 1, sqlContent: 1 } })
+    .toArray();
+  return new Map(checks.map((check) => [String(check.scriptId), String(check.sqlContent ?? "")]));
+}
+
 export async function getPendingApprovals(
   approverId?: string,
   page: number = 1,

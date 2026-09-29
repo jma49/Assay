@@ -52,12 +52,12 @@ export function useBatchRun(language: string, t: (key: DashboardTranslationKeys)
         if (execution.isActive) return;
         stop();
         const count = (status: ScriptExecutionStatus["status"]) => updated.filter((s) => s.status === status).length;
-        const [completed, attention, failed] = [count("completed"), count("attention_needed"), count("failed")];
+        const [completed, attention, failed, skipped] = [count("completed"), count("attention_needed"), count("failed"), count("skipped")];
         toast.success(language === "zh" ? "批量执行完成" : "Batch execution completed", {
           description:
             language === "zh"
-              ? `成功: ${completed}, 需要关注: ${attention}, 失败: ${failed}`
-              : `Success: ${completed}, Attention: ${attention}, Failed: ${failed}`,
+              ? `成功: ${completed}, 需要关注: ${attention}, 失败: ${failed}${skipped ? `, 超时未运行: ${skipped}` : ""}`
+              : `Success: ${completed}, Attention: ${attention}, Failed: ${failed}${skipped ? `, Not run (time limit): ${skipped}` : ""}`,
           duration: 5000,
         });
       } catch (error) {

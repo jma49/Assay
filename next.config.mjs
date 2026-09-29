@@ -36,7 +36,9 @@ const nextConfig = {
     removeConsole:
       process.env.NODE_ENV === "production"
         ? {
-            exclude: ["error"],
+            // Warnings are operational (e.g. both old and new collection
+            // names exist) and must reach the Vercel logs too.
+            exclude: ["error", "warn"],
           }
         : false,
   },
