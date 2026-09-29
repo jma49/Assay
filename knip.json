@@ -1,13 +1,14 @@
 {
-  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
-    "scripts/**/*.ts"
+    "scripts/**/*.ts",
+    "tests/visual/stable.css"
   ],
   "ignoreDependencies": [
     "eslint",
     "eslint-config-next"
   ],
-  "ignore": [
-    ".claude/**"
-  ]
+  "ignoreIssues": {
+    "src/components/ui/**": ["exports", "types"]
+  }
 }
