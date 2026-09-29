@@ -5,8 +5,9 @@ import { getMongoDbClient } from "@/lib/database/mongodb";
 import { ObjectId } from "mongodb";
 import { COLLECTIONS } from "@/lib/database/collections";
 import { storedSample } from "@/server/runs/sample";
+import { authorForGuest } from "@/server/http/guest-view";
 
-export const GET = withAuth<{ resultId: string }>(Permission.HISTORY_READ, async (_request, { params }) => {
+export const GET = withAuth<{ resultId: string }>(Permission.HISTORY_READ, async (_request, { principal, params }) => {
   const { resultId } = params;
 
   if (!resultId || !ObjectId.isValid(resultId)) {
@@ -46,7 +47,7 @@ export const GET = withAuth<{ resultId: string }>(Permission.HISTORY_READ, async
         cnDescription: script.cnDescription,
         scope: script.scope,
         cnScope: script.cnScope,
-        author: script.author,
+        author: principal.isGuest ? authorForGuest(script.author) : script.author,
       }),
     });
   } catch (error) {
