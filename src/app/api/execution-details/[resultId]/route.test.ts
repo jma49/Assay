@@ -53,7 +53,7 @@ describe("GET /api/execution-details/[resultId]", () => {
     mocks.run = { ...mocks.run, raw_results: Array.from({ length: 500 }, (_, i) => ({ i, text: "中".repeat(1_300) })) };
     const body = await read(String(id));
     expect(mocks.runOptions?.projection).not.toHaveProperty("rowKeys");
-    expect(mocks.runOptions?.projection).toMatchObject({ sample: 1, raw_results: 1 });
+    expect(mocks.runOptions?.projection).toMatchObject({ sample: 1, raw_results: 1, rowCount: 1, error: 1 });
     expect(Buffer.byteLength(JSON.stringify(body.sample))).toBeLessThanOrEqual(1024 * 1024);
     expect(body.sample.length).toBeGreaterThan(0);
   });

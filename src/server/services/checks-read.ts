@@ -1,12 +1,16 @@
-import { ObjectId, type Db, type Document } from "mongodb";
+import type { Db, Document } from "mongodb";
 import type { CheckDetail, CheckStateDto, CheckSummary, LatestRun, RunListItem, RunPoint } from "@/contracts/checks";
 import { stateFromHistory, type CheckState, type RunOutcome } from "@/domain/run";
 import { markRows } from "@/server/runs/row-marks";
 import { responseSample, SAMPLE_FIELDS } from "@/server/runs/sample";
 import { toAlertingDto } from "./alert-controls";
 import { COLLECTIONS } from "@/lib/database/collections";
+import { findRun, latestRunsOf } from "@/server/repos/runs";
 
 export const HISTORY_LENGTH = 30;
+
+/** What the history strip and the runs table read of each run. */
+const POINT_FIELDS = { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, trigger: 1, diff: 1, durationMs: 1 } as const;
 
 const CHECK_FIELDS = {
   _id: 0,
@@ -73,16 +77,7 @@ export function toSummary(check: Document, historyNewestFirst: (RunPoint & { run
  * aggregation over all checks would rank every retained run on each load.
  */
 async function recentRuns(db: Db, scriptIds: string[], limit: number) {
-  const runs = db.collection(COLLECTIONS.runs);
-  const lists = await Promise.all(
-    scriptIds.map((checkId) =>
-      runs
-        .find({ checkId }, { projection: { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, trigger: 1, diff: 1, durationMs: 1 } })
-        .sort({ finishedAt: -1 })
-        .limit(limit)
-        .toArray(),
-    ),
-  );
+  const lists = await Promise.all(scriptIds.map((checkId) => latestRunsOf(db, checkId, limit, POINT_FIELDS)));
   return new Map<string, Document[]>(scriptIds.map((checkId, index) => [checkId, lists[index]]));
 }
 
@@ -108,10 +103,7 @@ function toRunItem(run: Document): RunListItem {
 }
 
 async function loadRows(db: Db, runId: string) {
-  return db.collection(COLLECTIONS.runs).findOne(
-    { _id: new ObjectId(runId) },
-    { projection: { ...SAMPLE_FIELDS, rowKeys: 1, columns: 1, message: 1, error: 1 } },
-  );
+  return findRun(db, runId, { ...SAMPLE_FIELDS, rowKeys: 1, columns: 1, message: 1, error: 1 });
 }
 
 export async function getCheckDetail(db: Db, scriptId: string): Promise<CheckDetail | null> {
