@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils/utils";
-import { cleanRunMessage } from "@/lib/utils/run-message";
+import { runResultLabel } from "@/lib/utils/run-message";
 import type { RunReportMessages } from "./messages";
 import { OUTCOME_DOT, OUTCOME_LABEL, OUTCOME_TEXT } from "@/components/checks/status";
 import type { RunOutcome } from "@/domain/run";
@@ -36,7 +36,7 @@ export function RunInfoPanel({
       ),
     },
     { label: t.executionTime, value: <span className="tabular-nums">{executedAt}</span> },
-    { label: t.message, value: cleanRunMessage(result.message) },
+    { label: t.result, value: runResultLabel(result, language) },
     {
       label: t.scriptId,
       mono: true,
@@ -55,7 +55,8 @@ export function RunInfoPanel({
 
   return (
     <aside className="lg:col-span-4">
-      <div className="rounded-xl bg-card shadow-border overflow-hidden  lg:sticky lg:top-16">
+      {/* Sticks at the page's top padding, so it starts level with the headline. */}
+      <div className="overflow-hidden rounded-xl bg-card shadow-border lg:sticky lg:top-6">
         <p className="border-b bg-muted px-4 py-2 text-[12px] font-medium text-muted-foreground">{zh ? "简介" : "Info"}</p>
         <dl className="divide-y text-[13px]">
           {info.map((item) => (
