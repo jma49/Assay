@@ -71,7 +71,7 @@ export function PriorityBadge({
     <Badge
       variant="outline"
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200",
+        "inline-flex items-center gap-1.5 px-2.5 py-1.5 text-caption font-medium transition-[color,background-color,border-color,box-shadow,opacity,width] duration-200",
         colors.bg,
         colors.text,
         colors.border,

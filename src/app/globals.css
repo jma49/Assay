@@ -261,6 +261,13 @@
     font-size: 14px;
   }
 
+  /* iOS Safari zooms into a focused field under 16px, so fields start at 16px
+     on phones; Input and Textarea take their scale level from `sm:` up. */
+  [data-slot="input"],
+  [data-slot="textarea"] {
+    font-size: 16px;
+  }
+
   ::selection {
     background: color-mix(in srgb, var(--primary) 22%, transparent);
   }
