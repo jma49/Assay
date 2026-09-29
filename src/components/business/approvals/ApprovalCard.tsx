@@ -36,12 +36,12 @@ export function ApprovalCard({ approval, language, t, busy, onDecide }: Approval
             <h3 className="font-medium">{approval.scriptName}</h3>
             {approval.operationType && <Badge variant="secondary">{copy.operation[approval.operationType]}</Badge>}
             <Badge variant="secondary">{t(SCRIPT_TYPE_LABEL_KEYS[approval.scriptType])}</Badge>
-            <span className={`inline-flex items-center gap-1.5 text-[13px] ${tone.text}`}>
+            <span className={`inline-flex items-center gap-1.5 text-body-sm ${tone.text}`}>
               <span className={`status-dot ${tone.dot}`} aria-hidden />
               {t(STATUS_LABEL_KEYS[approval.status])}
             </span>
           </div>
-          <p className="text-[13px] text-muted-foreground">
+          <p className="text-body-sm text-muted-foreground">
             {approval.requesterEmail} · {new Date(approval.createdAt).toLocaleString(locale)} ·{" "}
             <span className="font-mono">{approval.scriptId}</span>
           </p>
@@ -64,7 +64,7 @@ export function ApprovalCard({ approval, language, t, busy, onDecide }: Approval
       </div>
 
       {approval.currentApprovers.length > 0 && (
-        <ul className="mt-4 space-y-1 border-t pt-3 text-[13px]">
+        <ul className="mt-4 space-y-1 border-t pt-3 text-body-sm">
           {approval.currentApprovers.map((approver, index) => (
             <li key={index} className="flex flex-wrap gap-x-2">
               <span className={approver.decision === "approved" ? "text-success" : "text-failure"}>

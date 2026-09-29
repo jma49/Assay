@@ -25,7 +25,7 @@ function SortableHead({
   return (
     <TableHead
       className={cn(
-        "cursor-pointer hover:text-foreground transition-colors px-4 text-[13px] font-normal text-muted-foreground group/sort",
+        "cursor-pointer hover:text-foreground transition-colors px-4 text-body-sm font-normal text-muted-foreground group/sort",
         className,
       )}
       onClick={() => onSort(sortKey)}
@@ -83,8 +83,8 @@ function EmptyRow({ t }: { t: Translate }) {
             <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary/20 rounded-full animate-pulse"></div>
           </div>
           <div className="space-y-3 text-center">
-            <p className="text-xl font-semibold text-muted-foreground">{t("noDataFound")}</p>
-            <p className="text-sm text-muted-foreground/80 max-w-md mx-auto leading-relaxed">
+            <p className="text-title font-semibold text-muted-foreground">{t("noDataFound")}</p>
+            <p className="text-body-md text-muted-foreground/80 max-w-md mx-auto leading-relaxed">
               {t("noMatchingExecutionRecords")}
             </p>
           </div>
@@ -112,7 +112,7 @@ export function HistoryTable({ checks, displayNames, sortConfig, requestSort, is
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="h-11 px-6 text-[13px] font-normal text-muted-foreground w-36">
+              <TableHead className="h-11 px-6 text-body-sm font-normal text-muted-foreground w-36">
                 <div className="flex items-center gap-2">{t("tableStatus")}</div>
               </TableHead>
               <SortableHead
@@ -129,10 +129,10 @@ export function HistoryTable({ checks, displayNames, sortConfig, requestSort, is
                 onSort={requestSort}
                 className="hidden lg:table-cell w-52"
               />
-              <TableHead className="hidden md:table-cell px-4 text-[13px] font-normal text-muted-foreground">
+              <TableHead className="hidden md:table-cell px-4 text-body-sm font-normal text-muted-foreground">
                 <div className="flex items-center gap-2">{t("tableFindings")}</div>
               </TableHead>
-              <TableHead className="px-6 text-right text-[13px] font-normal text-muted-foreground w-44">
+              <TableHead className="px-6 text-right text-body-sm font-normal text-muted-foreground w-44">
                 <div className="flex items-center justify-end gap-2">{t("tableActions")}</div>
               </TableHead>
             </TableRow>

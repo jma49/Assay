@@ -17,7 +17,7 @@ export function BatchExecutionProgress({ items, language }: { items: BatchItemVi
   return (
     <section aria-live="polite" className="space-y-3">
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-[13px]">
+        <div className="flex items-center justify-between text-body-sm">
           <span className="font-medium">{copy.progress(counts.done, items.length)}</span>
           <span className="text-muted-foreground tabular-nums">{copy.finishedSummary(counts.clean, counts.issues, counts.error)}
             {counts.skipped > 0 && copy.skippedSummary(counts.skipped)}
@@ -36,7 +36,7 @@ export function BatchExecutionProgress({ items, language }: { items: BatchItemVi
                 ? copy.skipped
                 : copy.pending;
           return (
-            <li key={item.scriptId} className="flex items-center gap-3 px-3 py-2 text-[13px]">
+            <li key={item.scriptId} className="flex items-center gap-3 px-3 py-2 text-body-sm">
               {item.status === "running" ? (
                 <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" aria-hidden />
               ) : (
@@ -45,7 +45,7 @@ export function BatchExecutionProgress({ items, language }: { items: BatchItemVi
               <span className="min-w-0 flex-1">
                 <span className="block truncate">{item.scriptName || item.scriptId}</span>
                 {(outcome === "error" || item.status === "skipped") && item.message && (
-                  <span className="block truncate font-mono text-[12px] text-muted-foreground" title={item.message}>
+                  <span className="block truncate font-mono text-caption text-muted-foreground" title={item.message}>
                     {item.message}
                   </span>
                 )}

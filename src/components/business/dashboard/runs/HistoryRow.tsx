@@ -14,7 +14,7 @@ type Translate = (key: DashboardTranslationKeys) => string;
 function StatusLabel({ check, language }: { check: HistoryRun; language: "en" | "zh" }) {
   const { outcome } = check;
   return (
-    <span className={cn("inline-flex items-center gap-2 text-[13px]", OUTCOME_TEXT[outcome])}>
+    <span className={cn("inline-flex items-center gap-2 text-body-sm", OUTCOME_TEXT[outcome])}>
       <span className={cn("status-dot", OUTCOME_DOT[outcome])} aria-hidden />
       {OUTCOME_LABEL[outcome][language]}
     </span>
@@ -54,7 +54,7 @@ export function HistoryRow({ check, displayName, language, t }: HistoryRowProps)
           {displayName}
         </Link>
       </TableCell>
-      <TableCell className="hidden max-w-52 px-4 py-3 text-[13px] text-muted-foreground tabular-nums lg:table-cell">
+      <TableCell className="hidden max-w-52 px-4 py-3 text-body-sm text-muted-foreground tabular-nums lg:table-cell">
         <time
           className="block truncate"
           dateTime={check.finishedAt}
@@ -63,7 +63,7 @@ export function HistoryRow({ check, displayName, language, t }: HistoryRowProps)
           {formatRelative(check.finishedAt, language)}
         </time>
       </TableCell>
-      <TableCell className="hidden px-4 py-3 text-[13px] md:table-cell" title={result}>
+      <TableCell className="hidden px-4 py-3 text-body-sm md:table-cell" title={result}>
         <div className={cn("max-w-md truncate tabular-nums", check.outcome !== "issues" && "text-muted-foreground")}>{result}</div>
       </TableCell>
       <TableCell className="px-6 py-3 text-right">
@@ -71,7 +71,7 @@ export function HistoryRow({ check, displayName, language, t }: HistoryRowProps)
           asChild
           variant="ghost"
           size="sm"
-          className="-mr-2 h-8 gap-1.5 px-2 text-[13px] text-muted-foreground hover:text-foreground"
+          className="-mr-2 h-8 gap-1.5 px-2 text-body-sm text-muted-foreground hover:text-foreground"
           title={t("viewFullReportButton") || "View report"}
         >
           <Link href={reportHref}>
