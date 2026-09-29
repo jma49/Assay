@@ -38,7 +38,7 @@ export function ManageScriptsHeader({ scripts, searchTerm, onSearchChange, langu
             placeholder={t("searchPlaceholder")}
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="h-8 pl-8 text-[13px]"
+            className="h-8 pl-8 text-body-sm"
           />
         </div>
         <Button asChild size="sm" variant="outline">

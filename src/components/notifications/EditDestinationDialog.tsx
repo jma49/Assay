@@ -64,12 +64,12 @@ export function EditDestinationDialog({
                 <ChannelIcon kind={destination.kind} />
                 <div className="grid gap-0.5">
                   <DialogTitle>{t.editTitle}</DialogTitle>
-                  <DialogDescription className="font-mono text-[12px]">{destination.label}</DialogDescription>
+                  <DialogDescription className="font-mono text-caption">{destination.label}</DialogDescription>
                 </div>
               </div>
             </DialogHeader>
             <SubscriptionFields value={subscription} onChange={setSubscription} />
-            {error && <p className="rounded-md bg-failure-soft px-3 py-2 text-[12.5px] text-failure">{error}</p>}
+            {error && <p className="rounded-md bg-failure-soft px-3 py-2 text-body-sm text-failure">{error}</p>}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
                 {t.cancel}

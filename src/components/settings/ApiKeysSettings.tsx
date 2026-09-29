@@ -40,7 +40,7 @@ export function ApiKeysSettings() {
   if (me?.guest) {
     return (
       <div className={`${APP_CONTAINER} py-6`}>
-        <p className="rounded-xl bg-muted p-4 text-[13px] text-muted-foreground">{t.guest}</p>
+        <p className="rounded-xl bg-muted p-4 text-body-sm text-muted-foreground">{t.guest}</p>
       </div>
     );
   }
@@ -50,8 +50,8 @@ export function ApiKeysSettings() {
       {keys && <WindowStatusBar>{t.count(keys.length)}</WindowStatusBar>}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="max-w-2xl space-y-1.5">
-          <h1 className="text-[28px] leading-tight font-bold">{t.title}</h1>
-          <p className="text-[13.5px] leading-6 text-muted-foreground">{t.intro}</p>
+          <h1 className="text-display-sm leading-tight font-bold">{t.title}</h1>
+          <p className="text-body-md leading-6 text-muted-foreground">{t.intro}</p>
           <Endpoint url={endpoint} />
         </div>
         <Button onClick={() => setCreating(true)}>
@@ -64,7 +64,7 @@ export function ApiKeysSettings() {
         {keys === null ? (
           <div className="skeleton-shimmer h-24" />
         ) : keys.length === 0 ? (
-          <p className="px-4 py-10 text-center text-[13px] text-muted-foreground">{t.none}</p>
+          <p className="px-4 py-10 text-center text-body-sm text-muted-foreground">{t.none}</p>
         ) : (
           <ul className="divide-y">
             {keys.map((key) => (
