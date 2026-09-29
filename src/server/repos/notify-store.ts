@@ -236,6 +236,12 @@ export function mongoNotifyStore(db: Db): NotifyStore {
       return result.modifiedCount === 1;
     },
 
+    async releaseReminder(destinationId, checkId, since, sent) {
+      // Only while the count is still ours, so a later claim by another dispatcher is never undone.
+      if (sent <= 1) await reminders.deleteOne({ destinationId, checkId, since, sent: 1 });
+      else await reminders.updateOne({ destinationId, checkId, since, sent }, { $inc: { sent: -1 } });
+    },
+
     async problemToken(checkId, since) {
       const event = await events.findOne(
         { checkId, at: { $gte: since }, actionKey: { $exists: true } },

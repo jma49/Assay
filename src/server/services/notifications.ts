@@ -130,6 +130,8 @@ export interface NotifyStore {
   remindersSent(destinationId: string, checkId: string, since: Date): Promise<number>;
   /** Atomically counts one more reminder; false when another dispatcher sent it first. */
   claimReminder(destinationId: string, checkId: string, since: Date, sent: number, now: Date): Promise<boolean>;
+  /** Gives back a reminder claimed as the `sent`th that could not be sent, while the count is still that. */
+  releaseReminder(destinationId: string, checkId: string, since: Date, sent: number): Promise<void>;
   /** Button token of the latest event of this problem, if it has one. */
   problemToken(checkId: string, since: Date): Promise<string | null>;
 }
@@ -252,6 +254,24 @@ export interface DispatchReport {
 const MAX_REMINDERS_PER_DISPATCH = 20;
 
 /**
+ * One store read per workspace and tag set within a dispatch: destinations
+ * that share them (the usual case, no tags) share the result instead of each
+ * scanning the checks again.
+ */
+function perTagSet<T>(read: (workspaceId: string, tags: readonly string[]) => Promise<T>) {
+  const results = new Map<string, Promise<T>>();
+  return (workspaceId: string, tags: readonly string[]) => {
+    const key = `${workspaceId}\u0000${[...tags].sort().join("\u0000")}`;
+    let result = results.get(key);
+    if (!result) {
+      result = read(workspaceId, tags);
+      results.set(key, result);
+    }
+    return result;
+  };
+}
+
+/**
  * Reminds destinations of problems that stay open with nobody on them.
  * Acknowledging or muting stops the reminders; each destination gets at
  * most MAX_REMINDERS per problem, counted in a store row per problem so
@@ -260,9 +280,10 @@ const MAX_REMINDERS_PER_DISPATCH = 20;
 async function sendReminders(deps: DispatchDeps): Promise<number> {
   const now = deps.now();
   let sent = 0;
+  const openProblems = perTagSet((workspaceId, tags) => deps.store.openProblems(workspaceId, tags));
   for (const destination of await deps.store.reminderDestinations()) {
     const afterHours = destination.remind!.afterHours;
-    for (const problem of await deps.store.openProblems(destination.workspaceId, destination.tags)) {
+    for (const problem of await openProblems(destination.workspaceId, destination.tags)) {
       if (sent >= MAX_REMINDERS_PER_DISPATCH) return sent;
       const kind = problem.outcome === "error" ? "broken" : "issues";
       if (!destination.alerts.includes(kind)) continue;
@@ -297,6 +318,8 @@ async function sendReminders(deps: DispatchDeps): Promise<number> {
       }
       await deps.store.recordLastDelivery(destination.id, { at: deps.now(), ok: outcome.kind === "sent", error: outcome.kind === "sent" ? undefined : outcome.error });
       if (outcome.kind === "sent") sent++;
+      // A reminder that never arrived does not count against the destination's three.
+      else await deps.store.releaseReminder(destination.id, problem.checkId, problem.since, already + 1);
     }
   }
   return sent;
@@ -311,6 +334,8 @@ async function sendReminders(deps: DispatchDeps): Promise<number> {
 async function sendDigests(deps: DispatchDeps): Promise<number> {
   const now = deps.now();
   let sent = 0;
+  const since = new Date(now.getTime() - EVENT_FRESHNESS_MS);
+  const summaryFor = perTagSet((workspaceId, tags) => deps.store.digestSummary(workspaceId, tags, since));
   for (const destination of await deps.store.digestDestinations()) {
     const digest = destination.digest!;
     const slot = digestSlot(now, digest.hour, digest.timeZone);
@@ -319,7 +344,7 @@ async function sendDigests(deps: DispatchDeps): Promise<number> {
     if (last >= slot) continue;
     if (!(await deps.store.claimDigest(destination.id, slot, now))) continue;
 
-    const summary = await deps.store.digestSummary(destination.workspaceId, destination.tags, new Date(now.getTime() - EVENT_FRESHNESS_MS));
+    const summary = await summaryFor(destination.workspaceId, destination.tags);
     const message = buildDigestMessage(summary, { language: destination.language, url: `${deps.appUrl.replace(/\/+$/, "")}/checks`, at: now });
     const channel = CHANNELS[destination.kind];
     let outcome: DeliveryOutcome;
