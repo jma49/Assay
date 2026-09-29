@@ -42,3 +42,9 @@ export function describePage(
 ): string {
   return formatPageInfo(template, { ...pageRange(page, pageSize, totalItems), totalItems, page, totalPages });
 }
+
+/** A compact pager label: "11–12 of 12", or "11–12，共 12 条" in Chinese. */
+export function pagerLabel(page: number, pageSize: number, totalItems: number, language: string): string {
+  const { start, end } = pageRange(page, pageSize, totalItems);
+  return language === "zh" ? `${start}–${end}，共 ${totalItems} 条` : `${start}–${end} of ${totalItems}`;
+}

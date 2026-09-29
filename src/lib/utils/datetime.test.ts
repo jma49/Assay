@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayKeyParts, formatDate, formatDateTime, formatRelative, formatShortDateTime, formatTime, localDayKey } from "./datetime";
+import { dayKeysBetween, formatDate, formatDayKey, formatDateTime, formatRelative, formatShortDateTime, formatTime, localDayKey } from "./datetime";
 
 const now = new Date("2026-09-26T12:00:00Z");
 
@@ -38,15 +38,23 @@ describe("formatDateTime", () => {
   });
 });
 
-describe("localDayKey and dayKeyParts", () => {
+describe("day keys", () => {
   it("groups by the viewer's calendar day", () => {
     expect(localDayKey("2026-09-24T02:00:00Z", "America/Los_Angeles")).toBe("2026-09-23");
     expect(localDayKey("2026-09-24T02:00:00Z", "Asia/Shanghai")).toBe("2026-09-24");
   });
 
-  it("reads a day key without shifting it", () => {
-    expect(dayKeyParts("2026-09-24", "en")).toEqual({ day: "24", month: "Sep" });
-    expect(dayKeyParts("2026-09-24", "zh")).toEqual({ day: "24", month: "9月" });
+  it("formats a day key without shifting it", () => {
+    expect(formatDayKey("2026-09-24", "en")).toBe("Sep 24");
+    expect(formatDayKey("2026-09-24", "zh")).toBe("9月24日");
+    expect(formatDayKey("2026-09-24", "en", { weekday: true })).toBe("Thu, Sep 24");
+    expect(formatDayKey("nope", "en")).toBe("—");
+  });
+
+  it("lists the days between two keys, both included", () => {
+    expect(dayKeysBetween("2026-09-29", "2026-10-02")).toEqual(["2026-09-29", "2026-09-30", "2026-10-01", "2026-10-02"]);
+    expect(dayKeysBetween("2026-09-24", "2026-09-24")).toEqual(["2026-09-24"]);
+    expect(dayKeysBetween("2026-09-25", "2026-09-24")).toEqual([]);
   });
 });
 
