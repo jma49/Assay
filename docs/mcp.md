@@ -64,7 +64,8 @@ plugin) is the authorization server, under `/api/auth`:
   and `/.well-known/oauth-authorization-server/api/auth` (RFC 8414; the bare
   path answers too).
 - **Registration:** open dynamic client registration (RFC 7591) at
-  `/api/auth/oauth2/register`, rate limited to 5 a minute per IP. A client
+  `/api/auth/oauth2/register`, rate limited to 3 per 10 minutes per IP
+  (in production, where Better Auth's rate limits are on). A client
   that registers only loopback or custom-scheme callbacks and names no
   `application_type` is registered as a native app (RFC 8252); otherwise
   OIDC would treat it as a web client and refuse `http://localhost`.
@@ -81,6 +82,10 @@ plugin) is the authorization server, under `/api/auth`:
   redirects; HTTPS only, 5 KB, 5 seconds, per-origin fetch budgets. The
   consent page and Connected apps show the URL's host next to the
   self-declared name.
+- **Consent page:** a client without a metadata URL chose its own name at
+  registration, so the page labels it **Unverified app** (in the title
+  too) and says so. The host the authorization is sent to (the
+  `redirect_uri`'s host) is shown on its own, in bold, above the scopes.
 - **Grants:** authorization code with PKCE, and refresh tokens when the
   client asks for `offline_access` (the 401 challenge asks for it). No
   client credentials: every token acts for a person.
