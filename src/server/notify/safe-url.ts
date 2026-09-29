@@ -61,12 +61,27 @@ export type Resolver = (hostname: string) => Promise<string[]>;
 
 export const dnsResolver: Resolver = async (hostname) => (await lookup(hostname, { all: true })).map((entry) => entry.address);
 
-/** Throws unless every address the host resolves to is public. */
+/** The host has no DNS record: most often a typo in the URL, not an attack. */
+export class HostNotFoundError extends Error {
+  constructor(readonly host: string) {
+    super(`Couldn't resolve host ${host}`);
+  }
+}
+
+const NOT_FOUND_CODES = new Set(["ENOTFOUND", "ENODATA", "EAI_NONAME", "EAI_NODATA"]);
+
+/** Throws unless every address the host resolves to is public; a host with no DNS record throws HostNotFoundError. */
 export async function assertPublicHost(hostname: string, resolve: Resolver = dnsResolver): Promise<void> {
   const host = hostname.replace(/^\[|\]$/g, "");
   if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal") || host.endsWith(".local")) {
     throw new Error("Webhook host is not public");
   }
-  const addresses = isIP(host) ? [host] : await resolve(host);
+  let addresses: string[];
+  try {
+    addresses = isIP(host) ? [host] : await resolve(host);
+  } catch (cause) {
+    if (NOT_FOUND_CODES.has((cause as { code?: string }).code ?? "")) throw new HostNotFoundError(host);
+    throw cause;
+  }
   if (addresses.length === 0 || addresses.some(isPrivateAddress)) throw new Error("Webhook host is not public");
 }

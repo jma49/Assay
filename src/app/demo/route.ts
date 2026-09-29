@@ -1,14 +1,13 @@
 import { getSessionCookie } from "better-auth/cookies";
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { GUEST_COOKIE, GUEST_COOKIE_MAX_AGE, guestIdFromToken, newGuestToken } from "@/lib/auth/guest";
 import { isDemoMode } from "@/lib/security/demo-sandbox";
+import { redirectToPath } from "@/server/http/redirect";
 
 /** "Try the demo": a guest session without an account, only in demo mode. */
 export async function GET(request: NextRequest) {
-  if (!isDemoMode()) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
-  }
-  const response = NextResponse.redirect(new URL("/checks", request.url));
+  if (!isDemoMode()) return redirectToPath("/sign-in");
+  const response = redirectToPath("/checks");
   // Someone signed in needs no guest session. The cookie is only a hint here; it is not trusted for access.
   if (getSessionCookie(request) || guestIdFromToken(request.cookies.get(GUEST_COOKIE)?.value)) {
     return response;

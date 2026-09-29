@@ -22,6 +22,9 @@ function retryAfterMs(header: string | null): number | undefined {
 
 /** Error text for logs and the UI; the URL may carry a token, so it never appears. */
 function describeError(error: unknown, request: OutgoingRequest): string {
+  // fetch reports a DNS miss as "fetch failed" with the code on its cause.
+  const cause = (error as { cause?: { code?: string } } | null)?.cause;
+  if (cause?.code === "ENOTFOUND") return `Couldn't resolve host ${new URL(request.url).hostname}`;
   const text = error instanceof Error ? (error.name === "TimeoutError" ? "Timed out" : error.message) : String(error);
   return text.split(request.url).join("<url>").slice(0, MAX_ERROR);
 }
