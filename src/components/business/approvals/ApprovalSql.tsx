@@ -30,7 +30,7 @@ export function ApprovalSql({
   const [open, setOpen] = useState(defaultOpen);
   const panelId = useId();
   const view = sqlView(approval);
-  if (view.kind === "none") return <p className="text-[13px] text-muted-foreground">{copy.noSql}</p>;
+  if (view.kind === "none") return <p className="text-body-sm text-muted-foreground">{copy.noSql}</p>;
 
   const diff = view.kind === "diff" ? lineDiff(view.before, view.after) : null;
   const stats = diff ? diffStats(diff) : null;
@@ -44,7 +44,7 @@ export function ApprovalSql({
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((value) => !value)}
-        className="-ml-1 inline-flex h-7 items-center gap-1 rounded-md px-1 text-[13px] font-medium text-primary outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className="-ml-1 inline-flex h-7 items-center gap-1 rounded-md px-1 text-body-sm font-medium text-primary outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
         <ChevronRight className={cn("size-4 transition-transform duration-150", open && "rotate-90")} aria-hidden />
         {label}
@@ -57,11 +57,11 @@ export function ApprovalSql({
       {open && (
         <div id={panelId} className="space-y-2">
           {(unchanged || (view.kind === "sql" && view.removed)) && (
-            <p className="text-[13px] text-muted-foreground">{view.kind === "sql" ? copy.removedSql : copy.unchangedSql}</p>
+            <p className="text-body-sm text-muted-foreground">{view.kind === "sql" ? copy.removedSql : copy.unchangedSql}</p>
           )}
           <pre
             aria-label={copy.sqlLabel}
-            className="max-h-80 overflow-auto rounded-lg bg-code py-3 font-mono text-[12.5px] leading-6"
+            className="max-h-80 overflow-auto rounded-lg bg-code py-3 font-mono text-body-sm leading-6"
           >
             {/* w-max keeps a changed line's tint across the full scroll width */}
             <div className="w-max min-w-full">

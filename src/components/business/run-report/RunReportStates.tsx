@@ -20,8 +20,8 @@ export function RunReportSkeleton() {
 export function RunLoadError({ error, t, onRetry }: { error: string; t: RunReportMessages; onRetry: () => void }) {
   return (
     <div className={`${APP_CONTAINER} py-16 text-center`}>
-      <p className="text-[14px] font-medium">{t.loadingFailed}</p>
-      <p className="mt-1 text-[13px] text-muted-foreground">{error}</p>
+      <p className="text-body-md font-medium">{t.loadingFailed}</p>
+      <p className="mt-1 text-body-sm text-muted-foreground">{error}</p>
       <Button size="sm" variant="outline" className="mt-4" onClick={onRetry}>
         {t.retry}
       </Button>

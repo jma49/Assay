@@ -128,12 +128,12 @@ function ProviderButton({ provider, label, icon, busy, disabled, lastUsed, lastU
       size="lg"
       disabled={disabled}
       onClick={() => onClick(provider)}
-      className={cn("relative h-11 w-full justify-center text-[14px]", lastUsed && "shadow-[0_0_0_1.5px_var(--primary)]")}
+      className={cn("relative h-11 w-full justify-center text-body-md", lastUsed && "shadow-[0_0_0_1.5px_var(--primary)]")}
     >
       {busy ? <Loader2 className="animate-spin" /> : icon}
       {label}
       {lastUsed && (
-        <span className="absolute -top-2 right-3 rounded-full bg-primary px-1.5 py-px text-[10.5px] font-medium text-primary-foreground">{lastUsedLabel}</span>
+        <span className="absolute -top-2 right-3 rounded-full bg-primary px-1.5 py-px text-caption font-medium text-primary-foreground">{lastUsedLabel}</span>
       )}
     </Button>
   );
@@ -193,14 +193,14 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
     <div className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       {/* The pitch, for people who arrive here first. Hidden on small screens, where the form matters most. */}
       <aside className="hidden bg-primary text-primary-foreground lg:flex lg:flex-col lg:justify-between lg:p-14 xl:px-20">
-        <Link href="/" className="flex w-fit items-center gap-2 text-[17px] font-semibold">
+        <Link href="/" className="flex w-fit items-center gap-2 text-title-sm font-semibold">
           <span className="grid size-8 place-items-center rounded-lg bg-white/95 shadow-sm">
             <BeetleMark className="size-6" />
           </span>
           Assay
         </Link>
         <div className="max-w-md space-y-9">
-          <p className="text-[36px] leading-[1.15] font-bold text-balance">{t.tagline}</p>
+          <p className="text-display-md leading-[1.15] font-bold text-balance">{t.tagline}</p>
           <ul className="space-y-5">
             {t.points.map(({ icon: Icon, title, body }) => (
               <li key={title} className="flex gap-3">
@@ -208,14 +208,14 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
                   <Icon className="size-4" />
                 </span>
                 <span className="grid gap-0.5">
-                  <span className="text-[14px] font-semibold">{title}</span>
-                  <span className="text-[13px] leading-5 text-primary-foreground/75">{body}</span>
+                  <span className="text-body-md font-semibold">{title}</span>
+                  <span className="text-body-sm leading-5 text-primary-foreground/75">{body}</span>
                 </span>
               </li>
             ))}
           </ul>
         </div>
-        <p className="text-[12px] text-primary-foreground/60">Open source · self-hostable</p>
+        <p className="text-caption text-primary-foreground/60">Open source · self-hostable</p>
       </aside>
 
       <main className="flex flex-col">
@@ -226,7 +226,7 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
           <button
             type="button"
             onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
-            className="h-8 rounded-md px-2 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="h-8 rounded-md px-2 text-body-sm text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             {language === "zh" ? "EN" : "中文"}
           </button>
@@ -235,8 +235,8 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
         <div className="flex flex-1 items-start justify-center px-5 pt-10 pb-16 sm:items-center sm:pt-0">
           <div className="w-full max-w-[380px] space-y-7">
             <div className="space-y-2">
-              <h1 className="text-[28px] leading-tight font-bold">{page.title}</h1>
-              <p className="text-[14px] text-muted-foreground">{page.description}</p>
+              <h1 className="text-display-sm leading-tight font-bold">{page.title}</h1>
+              <p className="text-body-md text-muted-foreground">{page.description}</p>
             </div>
 
             <div className="grid gap-3">
@@ -246,18 +246,18 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
               {providers.github && (
                 <ProviderButton provider="github" label={t.github} icon={<GithubMark />} busy={busy === "github"} disabled={busy !== null} lastUsed={lastUsed === "github"} lastUsedLabel={t.lastUsed} onClick={social} />
               )}
-              {noProvider && <p className="rounded-lg bg-attention-soft px-3 py-2.5 text-[13px] text-attention">{t.none}</p>}
+              {noProvider && <p className="rounded-lg bg-attention-soft px-3 py-2.5 text-body-sm text-attention">{t.none}</p>}
               {errorText && (
-                <p role="alert" className="rounded-lg bg-failure-soft px-3 py-2.5 text-[13px] text-failure">
+                <p role="alert" className="rounded-lg bg-failure-soft px-3 py-2.5 text-body-sm text-failure">
                   {errorText}
                 </p>
               )}
-              {(providers.google || providers.github) && <p className="text-[12px] text-muted-foreground">{t.privacy}</p>}
+              {(providers.google || providers.github) && <p className="text-caption text-muted-foreground">{t.privacy}</p>}
             </div>
 
             {providers.password && (
               <details className="group rounded-lg shadow-border" open={!providers.google && !providers.github}>
-                <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-[12.5px] font-medium text-muted-foreground">
+                <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-body-sm font-medium text-muted-foreground">
                   {t.devToggle}
                   <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
                 </summary>
@@ -290,7 +290,7 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
               </details>
             )}
 
-            <div className="space-y-1.5 border-t pt-5 text-[13px] text-muted-foreground">
+            <div className="space-y-1.5 border-t pt-5 text-body-sm text-muted-foreground">
               <p>
                 {page.switch}{" "}
                 <Link href={switchHref} className="font-medium text-primary hover:underline">

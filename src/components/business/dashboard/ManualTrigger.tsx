@@ -75,19 +75,19 @@ export function ManualTrigger({
   return (
     <div className="space-y-5 p-6 max-sm:p-4">
       <header className="space-y-1">
-        <h2 className="text-[17px] font-semibold">{mode === "single" ? copy.singleTitle : copy.bulkTitle}</h2>
-        <p className="text-[13px] text-muted-foreground">{mode === "single" ? copy.singleHint : copy.bulkHint}</p>
+        <h2 className="text-title-sm font-semibold">{mode === "single" ? copy.singleTitle : copy.bulkTitle}</h2>
+        <p className="text-body-sm text-muted-foreground">{mode === "single" ? copy.singleHint : copy.bulkHint}</p>
       </header>
 
-      {demoNote && <aside className="docs-note text-[13px]">{demoNote}</aside>}
+      {demoNote && <aside className="docs-note text-body-sm">{demoNote}</aside>}
 
       {isFetchingScripts ? (
-        <p className="flex items-center gap-2 text-[13px] text-muted-foreground">
+        <p className="flex items-center gap-2 text-body-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />
           {copy.loading}
         </p>
       ) : availableScripts.length === 0 ? (
-        <p className="text-[13px] text-muted-foreground">{copy.noChecks}</p>
+        <p className="text-body-sm text-muted-foreground">{copy.noChecks}</p>
       ) : mode === "single" ? (
         <>
           <SingleRunPanel
@@ -101,7 +101,7 @@ export function ManualTrigger({
             onRun={handleTriggerCheck}
           />
           {triggerMessage && (
-            <p role="status" className={cn("text-[13px]", triggerMessageType === "error" ? "text-failure" : "text-foreground")}>
+            <p role="status" className={cn("text-body-sm", triggerMessageType === "error" ? "text-failure" : "text-foreground")}>
               {triggerMessage}
             </p>
           )}

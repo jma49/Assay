@@ -107,7 +107,7 @@ function Row({ item }: { item: ActivityItem }) {
     <li className="flex items-start gap-3 px-4 py-3">
       <span className={cn("status-dot mt-[7px]", OUTCOME_DOT[item.to])} aria-label={OUTCOME_LABEL[item.to][language]} />
       <div className="grid min-w-0 flex-1 gap-1">
-        <p className="text-[13.5px] leading-5">
+        <p className="text-body-md leading-5">
           <Link href={`/checks/${encodeURIComponent(item.checkId)}`} className="font-medium hover:underline">
             {name}
           </Link>{" "}
@@ -116,11 +116,11 @@ function Row({ item }: { item: ActivityItem }) {
           </span>
         </p>
         {item.kind === "broken" && item.error && (
-          <p className="truncate font-mono text-[12px] text-muted-foreground" title={item.error}>
+          <p className="truncate font-mono text-caption text-muted-foreground" title={item.error}>
             {item.error}
           </p>
         )}
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-muted-foreground">
           <time dateTime={item.at} title={formatDateTime(item.at, language)} className="tabular-nums">
             {formatTime(item.at, language)}
           </time>
@@ -135,7 +135,7 @@ function Row({ item }: { item: ActivityItem }) {
         </div>
       </div>
       {item.suppressed && (
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11.5px] text-muted-foreground max-sm:hidden">
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-caption text-muted-foreground max-sm:hidden">
           {item.suppressed === "muted" ? <BellOff className="size-3" /> : <Hand className="size-3" />}
           {t.suppressed[item.suppressed]}
         </span>
@@ -148,7 +148,7 @@ function Row({ item }: { item: ActivityItem }) {
               <li
                 key={i}
                 title={`${delivery.destination}: ${t.delivery[delivery.status]}`}
-                className="inline-flex items-center gap-1 rounded-md py-0.5 pr-1.5 pl-0.5 text-[11.5px] shadow-border"
+                className="inline-flex items-center gap-1 rounded-md py-0.5 pr-1.5 pl-0.5 text-caption shadow-border"
               >
                 <ChannelIcon kind={delivery.kind} className="size-5 rounded-[5px] [&_svg]:size-3" />
                 <Icon className={cn("size-3.5", DELIVERY_COLOR[delivery.status])} />
@@ -211,7 +211,7 @@ export function ActivityFeed() {
               aria-selected={filter === key}
               onClick={() => changeFilter(key)}
               className={cn(
-                "h-7 rounded-[5px] px-3 text-[12.5px] font-medium transition-[background-color,color] duration-150",
+                "h-7 rounded-[5px] px-3 text-caption font-medium transition-[background-color,color] duration-150",
                 filter === key ? "bg-card text-foreground shadow-border" : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -222,7 +222,7 @@ export function ActivityFeed() {
       </WindowToolbar>
 
       {error && !data ? (
-        <p className="rounded-xl bg-failure-soft p-4 text-[13px] text-failure">
+        <p className="rounded-xl bg-failure-soft p-4 text-body-sm text-failure">
           {t.loadFailed}: {apiErrorCodeText(errorCode, language) ?? error}
         </p>
       ) : loading && items.length === 0 ? (
@@ -235,8 +235,8 @@ export function ActivityFeed() {
           <span className="grid size-10 place-items-center rounded-full bg-muted text-muted-foreground">
             <BellRing className="size-5" />
           </span>
-          <p className="max-w-md text-[13.5px] text-muted-foreground">{filter === "all" ? t.empty : t.emptyFiltered}</p>
-          <Link href="/settings/notifications" className="text-[13px] font-medium text-primary hover:underline">
+          <p className="max-w-md text-body-md text-muted-foreground">{filter === "all" ? t.empty : t.emptyFiltered}</p>
+          <Link href="/settings/notifications" className="text-body-sm font-medium text-primary hover:underline">
             {t.setUp}
           </Link>
         </div>
@@ -244,7 +244,7 @@ export function ActivityFeed() {
         <>
           {groups.map(([day, dayItems]) => (
             <section key={day} className="space-y-2">
-              <h2 className="px-1 text-[12px] font-medium tracking-wide text-muted-foreground uppercase">{day}</h2>
+              <h2 className="px-1 text-label-caps uppercase text-muted-foreground">{day}</h2>
               <ul className="divide-y overflow-hidden rounded-xl bg-card shadow-border">
                 {dayItems.map((item) => (
                   <Row key={item.id} item={item} />
@@ -258,7 +258,7 @@ export function ActivityFeed() {
                 type="button"
                 disabled={loading}
                 onClick={() => setCursor(data.nextCursor)}
-                className="h-8 rounded-md px-3 text-[13px] font-medium text-primary hover:bg-muted disabled:opacity-50"
+                className="h-8 rounded-md px-3 text-body-sm font-medium text-primary hover:bg-muted disabled:opacity-50"
               >
                 {loading ? t.loading : t.more}
               </button>
