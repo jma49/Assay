@@ -14,6 +14,22 @@ import {
   type Language,
 } from "./approvals";
 
+/** Pending requests, or "forbidden" when the caller may not see them. */
+async function fetchPending(): Promise<ApprovalRequest[] | "forbidden"> {
+  const response = await fetch("/api/approvals?action=pending");
+  if (response.status === 403) return "forbidden";
+  if (!response.ok) throw new Error("Failed to fetch pending approvals");
+  const data = await response.json();
+  return data.data || [];
+}
+
+async function fetchHistory(page: number): Promise<{ items: ApprovalRequest[]; pagination?: { totalPages?: number; total?: number } }> {
+  const response = await fetch(`/api/approvals?action=history&page=${page}&limit=${ITEMS_PER_PAGE}`);
+  if (!response.ok) throw new Error("Failed to fetch approval history");
+  const data = await response.json();
+  return { items: data.data || [], pagination: data.pagination };
+}
+
 /**
  * Loads pending requests (paged here) and decided ones (paged by the server),
  * and submits approve/reject decisions. Permissions are enforced by the API.
@@ -31,50 +47,46 @@ export function useApprovals(language: Language) {
   const [totalHistoryCount, setTotalHistoryCount] = useState(0);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const loadPendingApprovals = useCallback(async () => {
-    try {
-      const response = await fetch("/api/approvals?action=pending");
-      if (!response.ok) {
-        if (response.status === 403) {
-          setError(approvalMessages(language).forbidden);
-          return;
-        }
-        throw new Error("Failed to fetch pending approvals");
-      }
-      const data = await response.json();
-      setPendingApprovals(data.data || []);
-    } catch (err) {
-      console.error("[approvals] Loading pending approvals failed:", err);
-      toast.error(language === "zh" ? "加载待审批列表失败" : "Could not load pending approvals");
-    }
-  }, [language]);
+  // State is set in the promise callbacks: these also run from effects.
+  const loadPendingApprovals = useCallback(
+    () =>
+      fetchPending()
+        .then((result) => {
+          if (result === "forbidden") setError(approvalMessages(language).forbidden);
+          else setPendingApprovals(result);
+        })
+        .catch((err) => {
+          console.error("[approvals] Loading pending approvals failed:", err);
+          toast.error(language === "zh" ? "加载待审批列表失败" : "Could not load pending approvals");
+        }),
+    [language],
+  );
 
-  const loadApprovalHistory = useCallback(async (page: number = 1) => {
-    try {
-      const response = await fetch(`/api/approvals?action=history&page=${page}&limit=${ITEMS_PER_PAGE}`);
-      if (!response.ok) throw new Error("Failed to fetch approval history");
-      const data = await response.json();
-      setApprovalHistory(data.data || []);
-      if (data.pagination) {
-        setTotalHistoryPages(data.pagination.totalPages || 1);
-        setTotalHistoryCount(data.pagination.total || 0);
-      }
-    } catch (err) {
-      console.error("[approvals] Loading approval history failed:", err);
-      toast.error(language === "zh" ? "加载审批历史失败" : "Could not load approval history");
-    }
-  }, [language]);
+  const loadApprovalHistory = useCallback(
+    (page: number = 1) =>
+      fetchHistory(page)
+        .then(({ items, pagination }) => {
+          setApprovalHistory(items);
+          if (pagination) {
+            setTotalHistoryPages(pagination.totalPages || 1);
+            setTotalHistoryCount(pagination.total || 0);
+          }
+        })
+        .catch((err) => {
+          console.error("[approvals] Loading approval history failed:", err);
+          toast.error(language === "zh" ? "加载审批历史失败" : "Could not load approval history");
+        }),
+    [language],
+  );
 
-  const loadData = useCallback(async () => {
-    try {
-      await Promise.all([loadPendingApprovals(), loadApprovalHistory(historyPage)]);
-      setError(null);
-    } catch (err) {
-      console.error("[approvals] Loading approvals failed:", err);
-    } finally {
-      setHasLoaded(true);
-    }
-  }, [loadPendingApprovals, loadApprovalHistory, historyPage]);
+  const loadData = useCallback(
+    () =>
+      Promise.all([loadPendingApprovals(), loadApprovalHistory(historyPage)])
+        .then(() => setError(null))
+        .catch((err) => console.error("[approvals] Loading approvals failed:", err))
+        .finally(() => setHasLoaded(true)),
+    [loadPendingApprovals, loadApprovalHistory, historyPage],
+  );
 
   // No need to wait for the session: the proxy already guarantees a
   // signed-in user and each API call checks permissions on the server.

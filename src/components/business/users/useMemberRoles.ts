@@ -17,6 +17,15 @@ async function postRole({ userId, email, role }: RoleAssignment, fallbackError: 
   await sendJson("/api/users/roles", "POST", { targetUserId: userId, targetEmail: email, role }, fallbackError);
 }
 
+/** The members with a role, or "forbidden" when the caller is not an admin. */
+async function fetchMembers(zh: boolean): Promise<MemberRole[] | "forbidden"> {
+  const response = await fetch("/api/users/roles");
+  if (response.status === 403) return "forbidden";
+  if (!response.ok) throw new Error(zh ? "获取用户角色列表失败" : "Could not load user roles");
+  const data = await response.json();
+  return data.data || [];
+}
+
 /**
  * Loads the member list and assigns, changes and removes roles.
  * `actionLoading` is "assign" while the add dialog saves, or the id of the member being changed.
@@ -29,29 +38,26 @@ export function useMemberRoles(language: string, t: (key: DashboardTranslationKe
   const [hasLoaded, setHasLoaded] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const loadMembers = useCallback(async () => {
-    try {
-      const response = await fetch("/api/users/roles");
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          setError(zh ? "权限不足：只有管理员可以访问此页面" : "Only admins can open this page.");
-          return;
-        }
-        throw new Error(zh ? "获取用户角色列表失败" : "Could not load user roles");
-      }
-
-      const data = await response.json();
-      setMembers(data.data || []);
-      setError(null);
-    } catch (err) {
-      console.error("[members] Loading user roles failed:", err);
-      setError(err instanceof Error ? err.message : zh ? "加载失败" : "Loading failed");
-      toast.error(zh ? "加载用户角色列表失败" : "Could not load user roles");
-    } finally {
-      setHasLoaded(true);
-    }
-  }, [zh]);
+  // State is only set once the response is in: this also runs from an effect.
+  const loadMembers = useCallback(
+    () =>
+      fetchMembers(zh)
+        .then((result) => {
+          if (result === "forbidden") {
+            setError(zh ? "权限不足：只有管理员可以访问此页面" : "Only admins can open this page.");
+            return;
+          }
+          setMembers(result);
+          setError(null);
+        })
+        .catch((err) => {
+          console.error("[members] Loading user roles failed:", err);
+          setError(err instanceof Error ? err.message : zh ? "加载失败" : "Loading failed");
+          toast.error(zh ? "加载用户角色列表失败" : "Could not load user roles");
+        })
+        .finally(() => setHasLoaded(true)),
+    [zh],
+  );
 
   // No need to wait for the session: the proxy already guarantees a
   // signed-in user and the API checks the admin permission on the server.
