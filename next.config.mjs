@@ -21,9 +21,6 @@ const CONTENT_SECURITY_POLICY = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    optimizePackageImports: ["lucide-react"],
-  },
   compiler: {
     removeConsole:
       process.env.NODE_ENV === "production"
@@ -56,18 +53,6 @@ const nextConfig = {
           {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains",
-          },
-        ],
-      },
-      {
-        source: "/_next/static/css/:path*",
-        headers: [
-          {
-            key: "Cache-Control",
-            value:
-              process.env.NODE_ENV === "development"
-                ? "no-cache, no-store, must-revalidate"
-                : "public, max-age=31536000, immutable",
           },
         ],
       },
