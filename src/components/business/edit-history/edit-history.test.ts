@@ -53,6 +53,10 @@ describe("buildHistoryQuery", () => {
     expect(buildHistoryQuery(EMPTY_FILTERS, 1, 10)).toBe("page=1&limit=10&sortBy=operationTime&sortOrder=desc");
   });
 
+  it("narrows to one check by its exact id", () => {
+    expect(new URLSearchParams(buildHistoryQuery({ ...EMPTY_FILTERS, scriptId: "orders" }, 1, 20)).get("scriptId")).toBe("orders");
+  });
+
   it("trims text filters and skips the 'all' operation", () => {
     const query = new URLSearchParams(
       buildHistoryQuery({ ...EMPTY_FILTERS, scriptName: "  orders ", author: " ann ", operation: "all" }, 3, 10),
@@ -138,6 +142,7 @@ describe("formatChangeValue", () => {
   it("shortens long strings to 50 characters", () => {
     expect(formatChangeValue("x".repeat(60), t)).toBe("x".repeat(50) + "...");
     expect(formatChangeValue("x".repeat(50), t)).toBe("x".repeat(50));
+    expect(formatChangeValue("x".repeat(60), t, 100)).toBe("x".repeat(60));
   });
 
   it("stringifies other values", () => {
