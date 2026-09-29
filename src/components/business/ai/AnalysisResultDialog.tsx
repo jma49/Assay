@@ -127,7 +127,7 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
         finishCurrentList();
         const level = trimmedLine.match(/^#{1,6}/)?.[0].length || 1;
         const content = trimmedLine.replace(/^#{1,6}\s*/, '');
-        const sizes = ['text-2xl', 'text-xl', 'text-lg', 'text-base', 'text-sm', 'text-xs'];
+        const sizes = ['text-headline', 'text-title', 'text-title-sm', 'text-body-lg', 'text-body-md', 'text-caption'];
         const sizeClass = sizes[Math.min(level - 1, sizes.length - 1)];
         
         result.push(
@@ -212,7 +212,7 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
       }
       
       parts.push(
-        <code key={`code-${++codeCounter}`} className="px-1.5 py-0.5 bg-muted/60 text-foreground rounded text-sm font-mono border">
+        <code key={`code-${++codeCounter}`} className="px-1.5 py-0.5 bg-muted/60 text-foreground rounded text-body-md font-mono border">
           {match[1]}
         </code>
       );
@@ -265,7 +265,7 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
                 <Rocket className="h-5 w-5 text-attention " />
               </div>
             )}
-            <span className="text-lg">
+            <span className="text-title-sm">
               {title || (type === 'explain' ? 'SQL 语句解释' : 'SQL 优化建议')}
             </span>
           </DialogTitle>
@@ -281,7 +281,7 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
               ) : (
                 <div className="relative group">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    <span className="text-label-caps uppercase text-muted-foreground">
                       {section.language?.toUpperCase() || 'SQL'}
                     </span>
                     <Button

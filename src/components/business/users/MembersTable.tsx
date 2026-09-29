@@ -21,9 +21,9 @@ interface MembersTableProps {
 export function MembersTable({ members, language, t, actionLoading, onChangeRole, onRemoveRole }: MembersTableProps) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[720px] text-sm">
+      <table className="w-full min-w-[720px] text-body-md">
         <thead>
-          <tr className="border-b text-[13px] text-muted-foreground">
+          <tr className="border-b text-body-sm text-muted-foreground">
             <th className="h-10 px-6 text-left font-normal">{language === "zh" ? "用户" : "User"}</th>
             <th className="h-10 w-56 px-4 text-left font-normal">{language === "zh" ? "角色" : "Role"}</th>
             <th className="h-10 w-56 px-4 text-left font-normal">{t('assignedBy')}</th>
@@ -35,7 +35,7 @@ export function MembersTable({ members, language, t, actionLoading, onChangeRole
             <tr key={userRole.userId} className="hover:bg-muted/40">
               <td className="max-w-0 px-6 py-3">
                 <p className="truncate font-medium">{userRole.email}</p>
-                <p className="truncate font-mono text-[12px] text-muted-foreground">{userRole.userId}</p>
+                <p className="truncate font-mono text-caption text-muted-foreground">{userRole.userId}</p>
               </td>
               <td className="px-4 py-3">
                 <Select
@@ -57,7 +57,7 @@ export function MembersTable({ members, language, t, actionLoading, onChangeRole
                   </SelectContent>
                 </Select>
               </td>
-              <td className="px-4 py-3 text-[13px] text-muted-foreground">
+              <td className="px-4 py-3 text-body-sm text-muted-foreground">
                 {userRole.assignedBy} · {formatDate(userRole.assignedAt, language)}
               </td>
               <td className="px-6 py-3 text-right">

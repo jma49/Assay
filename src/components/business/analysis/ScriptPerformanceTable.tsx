@@ -26,9 +26,9 @@ export function ScriptPerformanceTable({ scripts, hint, language }: { scripts: S
   return (
     <AnalysisSection title={copy.byCheck} hint={hint}>
       <div className="overflow-x-auto">
-        <table className="w-full sm:min-w-[720px] text-[13px]">
+        <table className="w-full sm:min-w-[720px] text-body-sm">
           <thead>
-            <tr className="border-b text-[12px] text-muted-foreground">
+            <tr className="border-b text-caption text-muted-foreground">
               <th className="px-4 py-2 text-left font-medium">{copy.check}</th>
               <th className="w-20 px-3 py-2 text-right font-medium max-sm:w-12">{copy.runs}</th>
               {OUTCOMES.map((outcome) => (
@@ -47,7 +47,7 @@ export function ScriptPerformanceTable({ scripts, hint, language }: { scripts: S
                   <Link href={`/checks/${encodeURIComponent(script.scriptId)}`} className="block truncate font-medium hover:underline" title={name(script)}>
                     {name(script)}
                   </Link>
-                  <span className="block truncate font-mono text-[12px] text-muted-foreground">{script.scriptId}</span>
+                  <span className="block truncate font-mono text-caption text-muted-foreground">{script.scriptId}</span>
                 </td>
                 <td className="px-3 py-2.5 text-right tabular-nums">{script.runs}</td>
                 {OUTCOMES.map((outcome) => (
@@ -80,7 +80,7 @@ export function ScriptPerformanceTable({ scripts, hint, language }: { scripts: S
       </div>
 
       {scripts.length > PAGE_SIZE && (
-        <nav aria-label={copy.byCheck} className="flex items-center justify-end gap-2 border-t px-4 py-2 text-[12px] text-muted-foreground">
+        <nav aria-label={copy.byCheck} className="flex items-center justify-end gap-2 border-t px-4 py-2 text-caption text-muted-foreground">
           <span className="tabular-nums" aria-live="polite">
             {pagerLabel(page, PAGE_SIZE, scripts.length, language)}
           </span>
