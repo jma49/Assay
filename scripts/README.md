@@ -14,7 +14,7 @@ resolves the `@/` alias.
 | `set-user-role.ts` | Assigns a role to someone who has signed in, by email. |
 | `backfill-check-state.ts [--dry-run] [--recompute]` | Rebuilds each check's state from its run history. |
 | `telegram-webhook.ts [--delete]` | Points the Telegram bot at this deployment. |
-| `migrations/*.ts [--apply]` | One-off data migrations; dry run unless `--apply`. The first three have been applied to production; the rename also runs by itself on start: |
+| `migrations/*.ts [--apply]` | One-off data migrations; dry run unless `--apply`. All four have been applied to production (the rename ran on start on 2026-09-28, after a backup); the rename also runs by itself on start: |
 | `migrations/mark-demo-seed.ts` | Marks the sample checks `demoSeed: true`, which demo access relies on. |
 | `migrations/set-run-expiry.ts` | Gives older runs `expiresAt`, so the retention TTL covers them. |
 | `migrations/backfill-run-fields.ts` | Gives pre-pipeline runs `checkId`, `finishedAt`, `outcome`, `rowCount`. |
