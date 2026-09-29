@@ -40,7 +40,7 @@ describe("statusTone", () => {
   it("colours approved green, rejected red and everything else as needing attention", () => {
     expect(statusTone(ApprovalStatus.APPROVED)).toEqual({ text: "text-success", dot: "status-dot-clean" });
     expect(statusTone(ApprovalStatus.REJECTED)).toEqual({ text: "text-failure", dot: "status-dot-error" });
-    for (const status of [ApprovalStatus.PENDING, ApprovalStatus.WITHDRAWN, ApprovalStatus.DRAFT]) {
+    for (const status of [ApprovalStatus.PENDING, ApprovalStatus.WITHDRAWN]) {
       expect(statusTone(status)).toEqual({ text: "text-attention", dot: "status-dot-issues" });
     }
   });

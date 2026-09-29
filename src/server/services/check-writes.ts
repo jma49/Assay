@@ -10,6 +10,9 @@ export interface CheckActor {
   email: string;
 }
 
+/** The actor as it is recorded: only the caller's id and email, never the rest of the session. */
+export const actorOf = ({ id, email }: { id: string; email: string }): CheckActor => ({ id, email });
+
 type VersionBump = "major" | "minor" | "patch";
 
 /**
