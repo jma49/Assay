@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { revokeAccess } from "@/server/services/revoke-access";
+import { forgetCachedUser } from "@/server/mcp/caller";
 import { findUser } from "@/lib/auth/server";
 import { withAuth } from "@/server/http/route";
 import {
@@ -189,6 +190,7 @@ export const DELETE = withAuth(Permission.USER_MANAGE, async (request, { princip
     if (success) {
       // Removing a role also takes away the access already held: sessions, API keys and OAuth apps.
       const revoked = await revokeAccess(await getMongoDbClient().getDb(), targetUserId);
+      forgetCachedUser(targetUserId);
       return NextResponse.json({
         success: true,
         message: "用户角色已删除",

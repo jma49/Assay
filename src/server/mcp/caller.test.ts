@@ -73,6 +73,32 @@ describe("callerFromAccessToken", () => {
   });
 });
 
+describe("lookups", () => {
+  it("reads the person, their role and the consent at the same time", async () => {
+    const started: string[] = [];
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const slow = <T>(name: string, value: T) => async () => (started.push(name), await gate, value);
+    const pending = callerFromAccessToken("jwt", { sub: "u1", azp: "claude", scope: "checks:read" }, {
+      hasConsent: slow("consent", true),
+      findUser: slow("user", { id: "u1", email: "ada@example.com", name: "Ada" }),
+      roleOf: slow("role", UserRole.VIEWER),
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(started.sort()).toEqual(["consent", "role", "user"]);
+    release();
+    expect(await pending).not.toBeNull();
+  });
+
+  it("still refuses a withdrawn consent when the other lookups succeed", async () => {
+    expect(await callerFromAccessToken("jwt", { sub: "u1", azp: "claude", scope: "checks:read" }, deps({ hasConsent: async () => false }))).toBeNull();
+  });
+
+  it("refuses a user record that does not belong to the token's id", async () => {
+    await expect(verifyMcpToken("assay_good", deps({ findUser: async () => ({ id: "someone-else", email: "x@example.com", name: "X" }) }), now)).rejects.toBeInstanceOf(OAuthError);
+  });
+});
+
 describe("mcpScopesFor", () => {
   it("offers only the scopes a role can use", () => {
     expect(mcpScopesFor(UserRole.VIEWER)).toEqual(["checks:read", "history:read"]);
