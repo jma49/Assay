@@ -46,6 +46,13 @@ Indexes live in `src/lib/database/indexes.ts` and are created on start-up
 
 Indexes: `scriptId` unique; `createdAt`.
 
+A check deleted and created again under the same `scriptId` finds the old
+one's runs, events and versions under that id: they are not deleted with
+the check. Its state is rebuilt only from runs since its own `createdAt`,
+so it does not inherit the old streak; the run history and activity still
+list the old runs and events until their retention ends, and its versions
+continue the old numbering.
+
 ### `runs`
 
 | Field | |
