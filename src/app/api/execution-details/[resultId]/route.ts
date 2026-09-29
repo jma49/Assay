@@ -4,8 +4,11 @@ import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { ObjectId } from "mongodb";
 import { COLLECTIONS } from "@/lib/database/collections";
-import { storedSample } from "@/server/runs/sample";
+import { responseSample, SAMPLE_FIELDS } from "@/server/runs/sample";
 import { authorForGuest } from "@/server/http/guest-view";
+
+/** What the report shows; never `rowKeys` (up to 5,000 fingerprints) or other stored fields. */
+const RUN_FIELDS = { checkId: 1, finishedAt: 1, outcome: 1, message: 1, findings: 1, ...SAMPLE_FIELDS } as const;
 
 export const GET = withAuth<{ resultId: string }>(Permission.HISTORY_READ, async (_request, { principal, params }) => {
   const { resultId } = params;
@@ -20,7 +23,7 @@ export const GET = withAuth<{ resultId: string }>(Permission.HISTORY_READ, async
     const historyCollection = db.collection(COLLECTIONS.runs);
     const scriptsCollection = db.collection(COLLECTIONS.checks);
 
-    const run = await historyCollection.findOne({ _id: new ObjectId(resultId) });
+    const run = await historyCollection.findOne({ _id: new ObjectId(resultId) }, { projection: RUN_FIELDS });
     if (!run) {
       return NextResponse.json({ message: "未找到执行结果" }, { status: 404 });
     }
@@ -39,7 +42,7 @@ export const GET = withAuth<{ resultId: string }>(Permission.HISTORY_READ, async
       outcome: run.outcome,
       message: run.message ?? "",
       findings: run.findings ?? "",
-      sample: storedSample(run),
+      sample: responseSample(run),
       ...(script && {
         name: script.name,
         cnName: script.cnName,

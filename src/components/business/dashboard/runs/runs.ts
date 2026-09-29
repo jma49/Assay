@@ -15,12 +15,14 @@ export const DEFAULT_SORT: SortConfig = { key: "finishedAt", direction: "descend
 
 export interface HistoryPagination {
   total: number;
+  /** More runs match than the server counts (10,000); `total` is that cap. */
+  totalCapped: boolean;
   totalPages: number;
   hasNext: boolean;
   hasPrev: boolean;
 }
 
-export const EMPTY_PAGINATION: HistoryPagination = { total: 0, totalPages: 0, hasNext: false, hasPrev: false };
+export const EMPTY_PAGINATION: HistoryPagination = { total: 0, totalCapped: false, totalPages: 0, hasNext: false, hasPrev: false };
 
 export const EMPTY_STATS: CheckStats = { totalCount: 0, successCount: 0, failureCount: 0, needsAttentionCount: 0 };
 
@@ -70,8 +72,8 @@ export function parseRuns(body: unknown): HistoryRun[] | null {
 export function parsePagination(body: unknown): HistoryPagination | null {
   const pagination = (body as { pagination?: HistoryPagination } | null)?.pagination;
   if (!pagination) return null;
-  const { total, totalPages, hasNext, hasPrev } = pagination;
-  return { total, totalPages, hasNext, hasPrev };
+  const { total, totalCapped, totalPages, hasNext, hasPrev } = pagination;
+  return { total, totalCapped: totalCapped === true, totalPages, hasNext, hasPrev };
 }
 
 /** The checks in a GET /api/scripts body, by name (the order the Run sheet lists and preselects them in). */
