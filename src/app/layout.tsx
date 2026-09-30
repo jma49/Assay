@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Manrope } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { BRAND, BRAND_TAGLINE } from "@/lib/brand";
 import { ThemeProvider } from "next-themes";
@@ -9,11 +9,10 @@ import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { GlobalErrorHandlerProvider } from "@/components/error/GlobalErrorHandlerProvider";
 import { DialogPortalProvider } from "@/components/common/DialogPortalProvider";
 
-// Self-hosted by next/font. Manrope for the interface and headings (its round
-// forms suit the mascot and stay clear in dense tables), JetBrains Mono for
-// code and ids.
-const manrope = Manrope({ subsets: ["latin"], display: "swap", variable: "--font-manrope" });
-const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], display: "swap", variable: "--font-jetbrains-mono" });
+// Self-hosted by next/font. Geist for the interface and headings, Geist Mono
+// for code, ids and numbers that line up in columns.
+const geist = Geist({ subsets: ["latin"], display: "swap", variable: "--font-geist" });
+const geistMono = Geist_Mono({ subsets: ["latin"], display: "swap", variable: "--font-geist-mono" });
 
 // Keep metadata export here (Server Component)
 export const metadata: Metadata = {
@@ -42,7 +41,7 @@ export default function RootLayout({
   );
 
   return (
-    <html lang="en" className={`${manrope.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${geist.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <body>
         {content}
       </body>

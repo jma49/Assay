@@ -5,17 +5,17 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-caption font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden",
+  "inline-flex items-center justify-center rounded-full border px-2.5 py-0.5 text-caption font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden",
   {
     variants: {
       variant: {
         default: "border-transparent bg-muted text-foreground [a&]:hover:bg-accent",
         secondary: "border-transparent bg-muted text-muted-foreground [a&]:hover:bg-accent",
-        destructive: "border-transparent bg-failure/10 text-failure",
+        destructive: "border-transparent bg-failure-soft text-failure",
         outline: "text-muted-foreground [a&]:hover:bg-accent [a&]:hover:text-foreground",
-        success: "border-transparent bg-success/10 text-success",
-        attention: "border-transparent bg-attention/10 text-attention",
-        failure: "border-transparent bg-failure/10 text-failure",
+        success: "border-transparent bg-success-soft text-success",
+        attention: "border-transparent bg-attention-soft text-attention",
+        failure: "border-transparent bg-failure-soft text-failure",
       },
     },
     defaultVariants: {
