@@ -19,12 +19,12 @@ export function RunHeadline({
     <header className="rounded-xl bg-card shadow-border flex items-start gap-3  px-5 py-4">
       <span className={cn("status-dot mt-2", OUTCOME_DOT[outcome])} aria-hidden />
       <div className="min-w-0">
-        <p className={cn("font-display text-[26px] leading-tight font-semibold", OUTCOME_TEXT[outcome])}>{headline}</p>
-        <p className="mt-1 text-[13px] text-muted-foreground">
+        <p className={cn("font-display text-headline leading-tight font-semibold", OUTCOME_TEXT[outcome])}>{headline}</p>
+        <p className="mt-1 text-body-sm text-muted-foreground">
           {subtitle}
         </p>
         {errorText && (
-          <p className="mt-2 font-mono text-[13px] break-words">{errorText}</p>
+          <p className="mt-2 font-mono text-body-sm break-words">{errorText}</p>
         )}
       </div>
     </header>

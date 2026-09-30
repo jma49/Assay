@@ -10,9 +10,9 @@ export function RunHistory({ runs, t, language }: { runs: RunListItem[]; t: Copy
   const router = useRouter();
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-[13px]">
+      <table className="w-full text-body-sm">
         <thead>
-          <tr className="border-b text-[12px] text-muted-foreground">
+          <tr className="border-b text-caption text-muted-foreground">
             <th className="w-8 px-4 py-2" />
             <th className="px-3 py-2 text-left font-medium">{t.run}</th>
             <th className="px-3 py-2 text-left font-medium">{t.trigger}</th>
@@ -40,7 +40,7 @@ export function RunHistory({ runs, t, language }: { runs: RunListItem[]; t: Copy
               <td className="px-3 py-2.5 whitespace-nowrap tabular-nums">
                 {run.outcome === "error" ? <span className="text-failure">{t.queryError}</span> : t.rows(run.rowCount)}
               </td>
-              <td className="px-3 py-2.5 text-[12px] whitespace-nowrap max-sm:hidden">
+              <td className="px-3 py-2.5 text-caption whitespace-nowrap max-sm:hidden">
                 {run.diff ? (
                   <span className="space-x-2">
                     {run.diff.added > 0 && <span className="text-failure">+{run.diff.added}</span>}

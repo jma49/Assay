@@ -29,7 +29,7 @@ export function AuthShell({
           <button
             type="button"
             onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
-            className="h-8 rounded-md px-2 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="h-8 rounded-md px-2 text-body-sm text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             {language === "zh" ? "EN" : "中文"}
           </button>
@@ -39,11 +39,11 @@ export function AuthShell({
       <main className="flex flex-1 items-start justify-center px-4 pt-12 pb-16 sm:pt-20">
         <div className="flex w-full max-w-[420px] flex-col items-center gap-6 rounded-xl bg-card px-6 pt-8 pb-6 shadow-border">
           <div className="space-y-2 text-center">
-            <h1 className="text-[28px] leading-tight font-semibold">{title}</h1>
-            {description && <p className="text-[13.5px] text-muted-foreground">{description}</p>}
+            <h1 className="text-display-sm leading-tight font-semibold">{title}</h1>
+            {description && <p className="text-body-md text-muted-foreground">{description}</p>}
           </div>
           {children}
-          {footer && <div className="text-center text-[13px] text-muted-foreground">{footer}</div>}
+          {footer && <div className="text-center text-body-sm text-muted-foreground">{footer}</div>}
         </div>
       </main>
     </div>

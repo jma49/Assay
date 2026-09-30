@@ -11,7 +11,7 @@
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth 客户端，回调地址 `/api/auth/callback/google`。 |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth 应用，回调地址 `/api/auth/callback/github`。 |
 | `MONGODB_URI` | MongoDB 连接串。数据库名取连接串路径中的名字，其次是 `MONGODB_DB_NAME`，默认为 `sql_script_monitoring`；用户、角色、检查和执行记录都在这个库里。 |
-| `DATABASE_URL` | 检查要读取的 PostgreSQL 数据库。 |
+| `DATABASE_URL` | 内置数据源：检查默认读取的 PostgreSQL 数据库；检查也可以改用管理员添加的其他 [数据源](/docs/data-sources)。 |
 | `UPSTASH_REDIS_REST_URL` | Upstash Redis REST 地址。 |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST 令牌。 |
 
@@ -24,6 +24,8 @@
 | `CHECK_TIMEOUT_MS` | 一个检查的整个脚本（所有语句加在一起）最多运行多久，超时由 PostgreSQL 终止。默认 30000（30 秒），取值会限制在 1000 到 300000 之间。 |
 | `CHECK_CONCURRENCY` | 每个服务器实例同时执行的检查数量，多出来的排队等待。默认 4。 |
 | `PG_POOL_MAX` | 每个服务器实例连接 `DATABASE_URL` 的最大连接数。默认 10。 |
+| `PG_SOURCE_POOL_MAX` | 每个服务器实例连接每个新增数据源的最大连接数。默认 3。 |
+| `ALLOW_PRIVATE_DATA_SOURCES` | 设为 `true` 时，新增的数据源可以使用内网主机（10.x、192.168.x、localhost、`*.internal`），并允许这些主机不使用 TLS。默认关闭，避免连接串被用来访问内部服务或云元数据接口。数据库在内网的自托管部署可以开启。 |
 | `SEED_DATABASE_URL` | 可选。只给 `npm run seed:demo` 用的、能建表的账号。有了它，`DATABASE_URL` 就可以换成只读账号。 |
 | `RUN_RETENTION_DAYS` | 执行记录保留多少天后由 MongoDB 删除。默认 90；`0` 表示永久保留。 |
 
@@ -35,7 +37,7 @@ GitHub 定时工作流在托管平台之外执行检查，所以也需要这些�
 
 | 变量 | 用途 |
 |---|---|
-| `ASSAY_SECRET_KEY` | 告警必需：32 字节随机值，base64 编码（`openssl rand -base64 32`）。用来加密渠道密钥、签名 OAuth state。没有它就无法保存通知渠道；更换后，已保存的渠道将无法读取。 |
+| `ASSAY_SECRET_KEY` | 告警和数据源必需：32 字节随机值，base64 编码（`openssl rand -base64 32`）。用来加密渠道密钥和数据源连接串、签名 OAuth state。没有它就无法保存通知渠道和数据源；更换后，已保存的渠道和数据源将无法读取。 |
 | `APP_URL` | 告警链接和一键连接回调使用的公开地址。在 Vercel 上未设置时使用生产域名。 |
 | `CRON_SECRET` | 定时工作流调用 `POST /api/notifications/dispatch` 时携带的 Bearer 令牌。未设置时该接口拒绝所有请求。同时要把它和 `APP_URL` 加到 GitHub Actions 的 Secrets。 |
 | `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET` | 开启 **添加到 Slack**。回调地址 `<APP_URL>/api/integrations/slack/callback`。 |

@@ -137,7 +137,7 @@ export function AlertMenu({
             <Hand className="mt-0.5" />
             <span className="grid">
               {t.acknowledge}
-              <span className="text-[11.5px] text-muted-foreground">{t.acknowledgeHint}</span>
+              <span className="text-caption text-muted-foreground">{t.acknowledgeHint}</span>
             </span>
           </DropdownMenuItem>
         )}
@@ -162,7 +162,7 @@ export function AlertMenu({
           </DropdownMenuSub>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-[12px] font-medium text-muted-foreground">{t.owner}</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-caption font-medium text-muted-foreground">{t.owner}</DropdownMenuLabel>
         <DropdownMenuItem onSelect={() => act({ action: "assign", owner: null })}>
           {!alerting.owner ? <Check /> : <span className="size-4" />}
           {t.noOwner}

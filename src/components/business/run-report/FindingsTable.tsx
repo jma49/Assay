@@ -24,7 +24,7 @@ export function FindingsTable({ rows, language }: { rows: FindingDetail[]; langu
                   key={header}
                   scope="col"
                   className={cn(
-                    "h-10 px-4 text-[13px] font-normal whitespace-nowrap text-muted-foreground",
+                    "h-10 px-4 text-body-sm font-normal whitespace-nowrap text-muted-foreground",
                     numeric.has(header) ? "text-right" : "text-left",
                   )}
                 >
@@ -42,7 +42,7 @@ export function FindingsTable({ rows, language }: { rows: FindingDetail[]; langu
                     <td
                       key={`${rowIndex}-${header}`}
                       className={cn(
-                        "px-4 py-2.5 font-mono text-[13px] whitespace-nowrap",
+                        "px-4 py-2.5 font-mono text-body-sm whitespace-nowrap",
                         numeric.has(header) && "text-right",
                       )}
                     >

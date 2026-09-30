@@ -24,14 +24,14 @@ export function UserMenu({ user }: { user: CurrentUser }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.image} alt="" referrerPolicy="no-referrer" className="size-6 shrink-0 rounded-full" />
         ) : (
-          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary-soft text-[10.5px] font-semibold text-primary">{initials(user.name)}</span>
+          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary-soft text-caption font-semibold text-primary">{initials(user.name)}</span>
         )}
-        <span className="truncate text-[13px] text-muted-foreground max-md:hidden">{user.name}</span>
+        <span className="truncate text-body-sm text-muted-foreground max-md:hidden">{user.name}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top" className="w-56">
         <DropdownMenuLabel className="grid gap-0.5 font-normal">
-          <span className="truncate text-[13px] font-medium">{user.name}</span>
-          <span className="truncate text-[12px] text-muted-foreground">{user.email}</span>
+          <span className="truncate text-body-sm font-medium">{user.name}</span>
+          <span className="truncate text-caption text-muted-foreground">{user.email}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {/* A full load on purpose: nothing of the signed-in session may stay in client state. */}

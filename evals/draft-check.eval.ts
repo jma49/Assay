@@ -18,6 +18,7 @@ import { getCachedSchema } from "@/lib/database/db-schema";
 import { closePool } from "@/lib/database/db";
 import { dryRunCheck } from "@/lib/sql/dry-run";
 import { tableReferences } from "@/lib/sql/table-references";
+import { defaultPostgresSource } from "@/server/datasource/postgres";
 
 interface CaseResult {
   scriptId: string;
@@ -60,7 +61,7 @@ describe.runIf(aiEnabled())(`draft-check eval (${String(aiModel())})`, () => {
 
       const { draft, dryRun, attempts } = await draftCheck({
         request: check.description,
-        schema: await getCachedSchema(),
+        schema: await getCachedSchema({ sourceId: "default", version: 0, source: defaultPostgresSource }),
       });
       const expectedTables = tableReferences(check.sqlContent);
       const draftedTables = tableReferences(draft.sql);

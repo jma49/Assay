@@ -31,8 +31,8 @@ function TopBar() {
       {/* The same column as the page below, so the title and the actions share its edges. */}
       <div className={`${APP_CONTAINER} flex min-h-[52px] flex-wrap items-center gap-x-3 gap-y-2 py-2.5`}>
         <div className="flex min-w-0 flex-1 items-baseline gap-3 md:flex-none">
-          <span className="truncate text-[14px] font-medium">{title}</span>
-          <span ref={setStatusSlot} className="truncate text-[12px] text-muted-foreground empty:hidden max-xl:hidden" />
+          <span className="truncate text-body-md font-medium">{title}</span>
+          <span ref={setStatusSlot} className="truncate text-caption text-muted-foreground empty:hidden max-xl:hidden" />
         </div>
         {/* Filled by WindowToolbar with the page's own filters and actions; on phones they take a row below the title. */}
         <div
@@ -43,7 +43,7 @@ function TopBar() {
           <Link
             href="/checks/new"
             aria-label={newCheck}
-            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground shadow-xs transition-[filter,box-shadow,background-color,scale] duration-150 ease-out hover:brightness-110 active:scale-[0.96] max-sm:px-2 md:[:empty+&]:ml-auto"
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 text-body-sm font-medium text-primary-foreground shadow-xs transition-[filter,box-shadow,background-color,scale] duration-150 ease-out hover:brightness-110 active:scale-[0.96] max-sm:px-2 md:[:empty+&]:ml-auto"
           >
             <Plus className="size-4" />
             <span className="max-sm:sr-only">{newCheck}</span>
@@ -61,9 +61,9 @@ function GuestBanner() {
   if (!me?.guest) return null;
   const zh = language === "zh";
   return (
-    <div role="note" className="border-b bg-primary-soft px-7 py-2 text-[13px] max-md:px-4">
+    <div role="note" className="border-b bg-primary-soft px-7 py-2 text-body-sm max-md:px-4">
       <div className={`${APP_CONTAINER} flex flex-wrap items-center gap-x-2.5 gap-y-1.5`}>
-        <span className="rounded-full bg-card px-2 py-0.5 text-[12px] font-medium text-primary">Demo</span>
+        <span className="rounded-full bg-card px-2 py-0.5 text-caption font-medium text-primary">Demo</span>
         <span className="min-w-0 flex-1">
           {zh ? "这个工作区监控着一个预先埋入问题的示例商店数据库。" : "This workspace watches a sample shop database with problems planted in it."}
         </span>
@@ -87,7 +87,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <AppShellStateProvider>
       <a
         href="#content"
-        className="fixed top-2 left-2 z-50 -translate-y-16 rounded-md bg-primary px-3 py-2 text-[13px] font-medium text-primary-foreground focus-visible:translate-y-0"
+        className="fixed top-2 left-2 z-50 -translate-y-16 rounded-md bg-primary px-3 py-2 text-body-sm font-medium text-primary-foreground focus-visible:translate-y-0"
       >
         Skip to content
       </a>

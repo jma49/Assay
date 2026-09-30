@@ -38,6 +38,8 @@ export interface ApprovalRequestDto {
   sqlContent?: string;
   /** The check's live SQL, sent with pending edits so reviewers can see the diff. */
   currentSqlContent?: string;
+  /** The data source the change makes the check run against, when it names one. */
+  dataSourceId?: string;
 }
 export enum UserRole {
   ADMIN = "admin",

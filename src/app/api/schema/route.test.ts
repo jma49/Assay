@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   permissions: [] as string[],
   authorized: true,
   schemaReads: 0,
+  sources: [] as string[],
 }));
 
 vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
@@ -24,15 +25,25 @@ vi.mock("@/lib/auth/rbac", async (importOriginal) => ({
   },
 }));
 vi.mock("@/lib/database/db-schema", () => ({
-  getSchemaTables: async () => {
+  getSchemaTables: async (source: { sourceId: string }) => {
     mocks.schemaReads++;
+    mocks.sources.push(source.sourceId);
     return [{ schema: "demo", name: "orders", columns: [{ name: "id", type: "integer", nullable: false }] }];
   },
 }));
+vi.mock("@/server/services/data-sources", async () => {
+  const { ApiError } = await import("@/server/http/route");
+  return {
+    requireSource: async (id: string | null) => {
+      if (id === "gone") throw new ApiError(400, "unknown_data_source", "No data source with the id 'gone'");
+      return { sourceId: id || "default", version: 0, source: {} };
+    },
+  };
+});
 
 import { GET } from "./route";
 
-const get = () => GET(new NextRequest("http://localhost/api/schema"), { params: Promise.resolve({}) });
+const get = (query = "") => GET(new NextRequest(`http://localhost/api/schema${query}`), { params: Promise.resolve({}) });
 
 describe("GET /api/schema", () => {
   beforeEach(() => {
@@ -40,6 +51,7 @@ describe("GET /api/schema", () => {
     mocks.permissions = [];
     mocks.authorized = true;
     mocks.schemaReads = 0;
+    mocks.sources = [];
   });
 
   it("lists tables and columns for someone who can create checks", async () => {
@@ -47,6 +59,15 @@ describe("GET /api/schema", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ tables: [{ schema: "demo", name: "orders", columns: [{ name: "id", type: "integer", nullable: false }] }] });
     expect(mocks.permissions).toEqual(["script:create"]);
+    expect(mocks.sources).toEqual(["default"]);
+  });
+
+  it("reads the schema of the source asked for, and refuses an unknown one", async () => {
+    expect((await get("?source=billing")).status).toBe(200);
+    expect(mocks.sources).toEqual(["billing"]);
+    const res = await get("?source=gone");
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("unknown_data_source");
   });
 
   it("refuses people who cannot create checks, and demo guests, without reading the schema", async () => {

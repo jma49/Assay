@@ -85,7 +85,7 @@ export function CompactHashtagFilter({
               disabled={disabled}
               className={cn(
                 // A control like the selects next to it: same height, text and radius.
-                "h-8 px-2.5 justify-between gap-2 text-[13px] font-normal flex-1 rounded-md",
+                "h-8 px-2.5 justify-between gap-2 text-body-sm font-normal flex-1 rounded-md",
                 "group relative"
               )}
             >
@@ -122,12 +122,12 @@ export function CompactHashtagFilter({
                     <div className="p-1.5 rounded-lg bg-primary/10 ring-1 ring-primary/20">
                       <Hash className="h-4 w-4 text-primary" />
                     </div>
-                    <span className="font-semibold text-sm">
+                    <span className="font-semibold text-body-md">
                       {language === "zh" ? "标签筛选" : "Tags"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-caption">
                       {filteredHashtags.length}
                     </Badge>
                     {selectedHashtags.length > 0 && (
@@ -152,7 +152,7 @@ export function CompactHashtagFilter({
                     placeholder={language === "zh" ? "搜索标签..." : "Search tags..."}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
-                    className="pl-9 pr-9 h-9 text-sm border-border/50 focus:border-primary/50"
+                    className="pl-9 pr-9 h-9 text-body-md border-border/50 focus:border-primary/50"
                   />
                   {searchValue && (
                     <Button
@@ -170,7 +170,7 @@ export function CompactHashtagFilter({
 
               <div className="p-2 max-h-64 overflow-y-auto">
                 {filteredHashtags.length === 0 ? (
-                  <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                  <div className="px-3 py-6 text-center text-body-md text-muted-foreground">
                     {searchValue 
                       ? (language === "zh" ? "未找到匹配的标签" : "No matching tags found")
                       : (language === "zh" ? "暂无可用标签" : "No available tags")
@@ -200,7 +200,7 @@ export function CompactHashtagFilter({
                           </div>
                           
                           <div className="flex-1 min-w-0">
-                            <PriorityBadge hashtag={tag} className="text-xs" />
+                            <PriorityBadge hashtag={tag} className="text-caption" />
                           </div>
                         </div>
                       );
@@ -217,13 +217,13 @@ export function CompactHashtagFilter({
                         <PriorityBadge 
                           key={tag} 
                           hashtag={tag} 
-                          className="text-xs"
+                          className="text-caption"
                           showRemove
                           onRemove={() => toggleHashtag(tag)}
                         />
                       ))}
                       {selectedHashtags.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-caption">
                           +{selectedHashtags.length - 3}
                         </Badge>
                       )}
@@ -231,7 +231,7 @@ export function CompactHashtagFilter({
                     <Button
                       size="sm"
                       onClick={applySelection}
-                      className="h-8 px-3 text-xs font-medium bg-primary hover:bg-primary/90 shrink-0"
+                      className="h-8 px-3 text-caption font-medium bg-primary hover:bg-primary/90 shrink-0"
                     >
                       {t("confirmAction")}
                     </Button>

@@ -18,7 +18,7 @@ export function FindingsPanel({
   if (rows) {
     content = <FindingsTable rows={rows} language={language} />;
   } else if (typeof findings === "string") {
-    content = <p className="p-5 font-mono text-[13px] leading-relaxed whitespace-pre-wrap">{findings}</p>;
+    content = <p className="p-5 font-mono text-body-sm leading-relaxed whitespace-pre-wrap">{findings}</p>;
   } else {
     content = <EmptyState title={t.noData} hint={t.noDataDesc} />;
   }

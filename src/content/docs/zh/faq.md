@@ -6,7 +6,7 @@
 
 ## 能检查哪些数据库？
 
-PostgreSQL。兼容 PostgreSQL 协议的数据库（比如 Neon、Supabase）也可以。
+PostgreSQL。兼容 PostgreSQL 协议的数据库（比如 Neon、Supabase）也可以。`DATABASE_URL` 是内置数据源，管理员还可以添加更多数据库，每个检查读取其中一个（见 [数据源](/docs/data-sources)）。
 
 ## 什么算检查出错？
 

@@ -203,6 +203,53 @@
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Type scale (DESIGN.md). Body levels leave the weight to the element, so font-medium etc. still apply.
+     Body, caption and label line heights are whole even pixels, so text of mixed levels centred in one
+     row (a table row, a toolbar) lands on the same baseline instead of a pixel apart. */
+  --text-display-xl: 52px;
+  --text-display-xl--line-height: 1.08;
+  --text-display-xl--letter-spacing: -0.025em;
+  --text-display-xl--font-weight: 700;
+  --text-display-lg: 38px;
+  --text-display-lg--line-height: 1.08;
+  --text-display-lg--letter-spacing: -0.025em;
+  --text-display-lg--font-weight: 700;
+  --text-display-md: 34px;
+  --text-display-md--line-height: 1.1;
+  --text-display-md--letter-spacing: -0.025em;
+  --text-display-md--font-weight: 700;
+  --text-display-sm: 28px;
+  --text-display-sm--line-height: 1.15;
+  --text-display-sm--letter-spacing: -0.02em;
+  --text-display-sm--font-weight: 700;
+  --text-headline: 24px;
+  --text-headline--line-height: 1.25;
+  --text-headline--letter-spacing: -0.02em;
+  --text-headline--font-weight: 600;
+  --text-title: 20px;
+  --text-title--line-height: 1.35;
+  --text-title--letter-spacing: -0.01em;
+  --text-title--font-weight: 600;
+  --text-title-sm: 18px;
+  --text-title-sm--line-height: 1.4;
+  --text-title-sm--font-weight: 600;
+  --text-body-lg: 15px;
+  --text-body-lg--line-height: calc(26 / 15);
+  --text-body-md: 14px;
+  --text-body-md--line-height: calc(20 / 14);
+  --text-body-sm: 13px;
+  --text-body-sm--line-height: calc(20 / 13);
+  --text-caption: 12px;
+  --text-caption--line-height: calc(16 / 12);
+  --text-label-caps: 11px;
+  --text-label-caps--line-height: calc(14 / 11);
+  --text-label-caps--letter-spacing: 0.06em;
+  --text-label-caps--font-weight: 600;
+  --text-stat: 24px;
+  --text-stat--line-height: 1.1;
+  --text-stat--letter-spacing: -0.02em;
+  --text-stat--font-weight: 600;
 }
 
 @layer base {
@@ -217,7 +264,14 @@
 
   body {
     @apply bg-background text-foreground font-sans;
-    font-size: 14px;
+    font-size: var(--text-body-md);
+  }
+
+  /* iOS Safari zooms into a focused field under 16px, so fields start at 16px
+     on phones; Input and Textarea take their scale level from `sm:` up. */
+  [data-slot="input"],
+  [data-slot="textarea"] {
+    font-size: 16px;
   }
 
   ::selection {
@@ -248,12 +302,6 @@
 }
 
 /* Legacy class names still used by pages that are not rebuilt yet. */
-.unified-card {
-  background-color: var(--card);
-  border-radius: calc(var(--radius) + 4px);
-  box-shadow: var(--shadow-border);
-}
-
 .icon-container {
   display: flex;
   width: 2.25rem;
@@ -262,10 +310,6 @@
   justify-content: center;
   border-radius: var(--radius);
   background-color: var(--muted);
-}
-
-.text-gradient {
-  color: var(--foreground);
 }
 
 .slide-in-right,
@@ -319,8 +363,8 @@
 
 /* ---------- Docs article ---------- */
 .docs-prose {
-  font-size: 15px;
-  line-height: 1.75;
+  font-size: var(--text-body-lg);
+  line-height: var(--text-body-lg--line-height);
   color: var(--foreground);
 }
 
@@ -330,19 +374,19 @@
 
 .docs-prose h2 {
   margin-top: 2.5rem;
-  letter-spacing: -0.015em;
   scroll-margin-top: 4rem;
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
+  font-size: var(--text-title);
+  font-weight: var(--text-title--font-weight);
+  line-height: var(--text-title--line-height);
+  letter-spacing: var(--text-title--letter-spacing);
 }
 
 .docs-prose h3 {
   margin-top: 1.75rem;
   scroll-margin-top: 4rem;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--text-title-sm);
+  font-weight: var(--text-title-sm--font-weight);
+  line-height: var(--text-title-sm--line-height);
 }
 
 .docs-prose a {
@@ -397,7 +441,7 @@
   border: 1px solid var(--border);
   background: var(--code-bg);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--text-body-sm);
   line-height: 1.65;
 }
 
@@ -410,7 +454,7 @@
 .docs-prose table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--text-body-md);
 }
 
 .docs-prose th {
@@ -418,7 +462,7 @@
   border-bottom: 1px solid var(--border);
   padding: 0.5rem 0.75rem;
   text-align: left;
-  font-size: 13px;
+  font-size: var(--text-body-sm);
   font-weight: 500;
   color: var(--muted-foreground);
 }

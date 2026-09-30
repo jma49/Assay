@@ -68,7 +68,7 @@ describe.skipIf(!uri)("run-check store (MongoDB)", () => {
       { kind: "manual" },
       {
         store: mongoRunCheckStore(db),
-        source: { runReadOnly: async () => [{ rows: [{ id: 1 }], rowCount: 1 }] },
+        sources: async () => ({ runReadOnly: async () => [{ rows: [{ id: 1 }], rowCount: 1 }] }),
         executions: createSemaphore(1),
         newRunId: () => new ObjectId().toHexString(),
         now: () => new Date(),

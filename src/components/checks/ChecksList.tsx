@@ -208,7 +208,7 @@ export function ChecksList() {
                 aria-pressed={filter === key}
                 onClick={() => setFilter(key)}
                 className={cn(
-                  "rounded-sm px-2.5 py-1 text-[12px] transition-[color,background-color] duration-150",
+                  "rounded-sm px-2.5 py-1 text-caption transition-[color,background-color] duration-150",
                   filter === key ? "bg-card font-medium text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -219,7 +219,7 @@ export function ChecksList() {
         </div>
 
         {error ? (
-          <p className="px-6 py-10 text-center text-[13px] text-muted-foreground">
+          <p className="px-6 py-10 text-center text-body-sm text-muted-foreground">
             {t.loadFailed}: {apiErrorCodeText(errorCode, language) ?? error}
           </p>
         ) : pending ? (
@@ -229,25 +229,25 @@ export function ChecksList() {
             ))}
           </div>
         ) : checks.length === 0 ? (
-          <div className="px-6 py-12 text-center text-[13px] text-muted-foreground">
+          <div className="px-6 py-12 text-center text-body-sm text-muted-foreground">
             <p>{t.noChecks}</p>
             <Link href="/checks/new" className="mt-2 inline-block font-medium text-primary hover:underline">
               {t.newCheck}
             </Link>
           </div>
         ) : visible.length === 0 ? (
-          <p className="px-6 py-10 text-center text-[13px] text-muted-foreground">{t.empty}</p>
+          <p className="px-6 py-10 text-center text-body-sm text-muted-foreground">{t.empty}</p>
         ) : (
           <>
             {/* Phone: one two-line item per check, so the name keeps the full width. */}
             <div className="md:hidden">
               {groups.map(({ group, rows }) => (
                 <section key={group?.outcome ?? "never"} aria-label={group ? group.title[language] : t.neverRan}>
-                  <h2 className="border-b bg-background px-4 py-1.5 text-[12px] font-medium text-muted-foreground">{groupTitle(group, rows.length)}</h2>
+                  <h2 className="border-b bg-background px-4 py-1.5 text-caption font-medium text-muted-foreground">{groupTitle(group, rows.length)}</h2>
                   <ul>
                     {rows.map((c) => (
                       <li key={c.scriptId} className="border-b last:border-0">
-                        <Link href={href(c)} className="flex items-start gap-3 px-4 py-2.5 text-[13px] transition-[background-color] duration-150 hover:bg-muted/60">
+                        <Link href={href(c)} className="flex items-start gap-3 px-4 py-2.5 text-body-sm transition-[background-color] duration-150 hover:bg-muted/60">
                           <span className="flex h-5 w-2 shrink-0 items-center">{dot(c)}</span>
                           <span className="min-w-0 flex-1">
                             <span className="flex items-baseline gap-3">
@@ -259,7 +259,7 @@ export function ChecksList() {
                                 <Now check={c} t={t} />
                               </span>
                             </span>
-                            <span className="flex items-baseline gap-3 text-[12px] text-muted-foreground">
+                            <span className="flex items-baseline gap-3 text-caption text-muted-foreground">
                               <span className="min-w-0 flex-1 truncate font-mono">{c.scriptId}</span>
                               <span className="shrink-0 whitespace-nowrap">{lastRun(c)}</span>
                             </span>
@@ -274,9 +274,9 @@ export function ChecksList() {
 
             {/* Fixed column widths, so filtering or searching never shifts the columns. */}
             <div className="overflow-x-auto max-md:hidden">
-              <table className="w-full table-fixed text-[13px]">
+              <table className="w-full table-fixed text-body-sm">
                 <thead>
-                  <tr className="border-b text-[12px] text-muted-foreground">
+                  <tr className="border-b text-caption text-muted-foreground">
                     <th className="w-10 px-4 py-2" />
                     <th className="px-3 py-2 text-left font-medium">{t.check}</th>
                     <th className="w-28 px-3 py-2 text-left font-medium">{t.now}</th>
@@ -289,7 +289,7 @@ export function ChecksList() {
                 <tbody>
                   {groups.map(({ group, rows }) => [
                     <tr key={`group-${group?.outcome ?? "never"}`} className="border-b bg-background">
-                      <td colSpan={7} className="px-4 py-1.5 text-[12px] font-medium text-muted-foreground">
+                      <td colSpan={7} className="px-4 py-1.5 text-caption font-medium text-muted-foreground">
                         {groupTitle(group, rows.length)}
                       </td>
                     </tr>,
@@ -310,7 +310,7 @@ export function ChecksList() {
                             </Link>
                             <Markers check={c} t={t} />
                           </div>
-                          <span className="block truncate font-mono text-[12px] text-muted-foreground">
+                          <span className="block truncate font-mono text-caption text-muted-foreground">
                             {c.scriptId}
                             {c.alerting.owner && <span className="font-sans"> · {c.alerting.owner.name}</span>}
                           </span>

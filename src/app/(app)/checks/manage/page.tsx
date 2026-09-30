@@ -78,7 +78,7 @@ const ManageScriptsContent = () => {
             <div className="rounded-xl bg-card shadow-border p-8 text-center">
               <AlertTriangle className="mx-auto mb-3 size-10 text-failure" />
               <p className="font-medium">{t("errorTitle")}</p>
-              <p className="mt-1 text-[13px] text-muted-foreground">{error}</p>
+              <p className="mt-1 text-body-sm text-muted-foreground">{error}</p>
             </div>
           ) : (
             <ScriptsFinder

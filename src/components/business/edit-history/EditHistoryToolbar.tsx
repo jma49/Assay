@@ -44,11 +44,11 @@ export function EditHistoryToolbar({
           value={filters.scriptName}
           onChange={(e) => onFiltersChange({ scriptName: e.target.value })}
           onKeyDown={(e) => e.key === "Enter" && onApply()}
-          className="h-7 rounded-full pl-8 text-[13px]"
+          className="h-7 rounded-full pl-8 text-body-sm"
         />
       </div>
       <Select value={filters.operation} onValueChange={(value) => onOperationChange(value as OperationFilter)}>
-        <SelectTrigger size="sm" className="h-7 w-36 text-[13px]" aria-label={t("operationType")}>
+        <SelectTrigger size="sm" className="h-7 w-36 text-body-sm" aria-label={t("operationType")}>
           <SelectValue placeholder={t("selectOperationPlaceholder")} />
         </SelectTrigger>
         <SelectContent>
@@ -67,16 +67,16 @@ export function EditHistoryToolbar({
           </PopoverTrigger>
           <PopoverContent align="end" className="w-72 space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="author-filter" className="text-[13px]">{t("author")}</Label>
+              <Label htmlFor="author-filter" className="text-body-sm">{t("author")}</Label>
               <Input id="author-filter" value={filters.author} onChange={(e) => onFiltersChange({ author: e.target.value })} className="h-8" />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
-                <Label htmlFor="date-from-filter" className="text-[13px]">{t("dateFrom")}</Label>
+                <Label htmlFor="date-from-filter" className="text-body-sm">{t("dateFrom")}</Label>
                 <Input id="date-from-filter" type="date" value={filters.dateFrom} onChange={(e) => onFiltersChange({ dateFrom: e.target.value })} className="h-8" />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="date-to-filter" className="text-[13px]">{t("dateTo")}</Label>
+                <Label htmlFor="date-to-filter" className="text-body-sm">{t("dateTo")}</Label>
                 <Input id="date-to-filter" type="date" value={filters.dateTo} onChange={(e) => onFiltersChange({ dateTo: e.target.value })} className="h-8" />
               </div>
             </div>

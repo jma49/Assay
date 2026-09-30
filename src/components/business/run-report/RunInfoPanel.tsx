@@ -57,12 +57,12 @@ export function RunInfoPanel({
     <aside className="lg:col-span-4">
       {/* Sticks at the page's top padding, so it starts level with the headline. */}
       <div className="overflow-hidden rounded-xl bg-card shadow-border lg:sticky lg:top-6">
-        <p className="border-b bg-muted px-4 py-2 text-[12px] font-medium text-muted-foreground">{zh ? "简介" : "Info"}</p>
-        <dl className="divide-y text-[13px]">
+        <p className="border-b bg-muted px-4 py-2 text-caption font-medium text-muted-foreground">{zh ? "简介" : "Info"}</p>
+        <dl className="divide-y text-body-sm">
           {info.map((item) => (
             <div key={item.label} className="grid grid-cols-[7.5rem_1fr] gap-3 px-4 py-2">
               <dt className="text-muted-foreground">{item.label}</dt>
-              <dd className={cn("min-w-0 break-words", item.mono && "font-mono text-[12px]")}>{item.value}</dd>
+              <dd className={cn("min-w-0 break-words", item.mono && "font-mono text-caption")}>{item.value}</dd>
             </div>
           ))}
         </dl>

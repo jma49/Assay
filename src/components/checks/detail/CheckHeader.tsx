@@ -1,4 +1,6 @@
+import { Database } from "lucide-react";
 import type { CheckDetail } from "@/contracts/checks";
+import { sourceName } from "@/components/settings/data-sources/data-sources";
 import { formatDateTime, formatRelative } from "@/lib/utils/datetime";
 import { cn } from "@/lib/utils/utils";
 import { AlertBadges } from "../AlertControls";
@@ -22,7 +24,7 @@ export function CheckHeader({
   const state = check.state;
   return (
     <header className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
+      <div className="flex flex-wrap items-center gap-2 text-caption">
         {state ? (
           <>
             <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-medium", OUTCOME_PILL[state.outcome])}>
@@ -38,10 +40,16 @@ export function CheckHeader({
         )}
         <AlertBadges alerting={check.alerting} />
       </div>
-      <h1 className="text-[28px] leading-tight font-bold">{name}</h1>
-      {description && <p className="max-w-[70ch] text-pretty text-[14px] text-muted-foreground">{description}</p>}
-      <p className="flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-muted-foreground">
+      <h1 className="text-display-sm leading-tight font-bold">{name}</h1>
+      {description && <p className="max-w-[70ch] text-pretty text-body-md text-muted-foreground">{description}</p>}
+      <p className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-muted-foreground">
         <span className="font-mono">{check.scriptId}</span>
+        {check.dataSource && (
+          <span className="inline-flex items-center gap-1" title={check.dataSource.id}>
+            <Database className="size-3.5" aria-hidden />
+            {check.dataSource.name === null ? check.dataSource.id : sourceName({ sourceId: check.dataSource.id, name: check.dataSource.name }, language)}
+          </span>
+        )}
         <span>{scheduleLabel(check.schedule, language)}</span>
         {state && <span title={formatDateTime(state.lastRunAt, language)}>{formatRelative(state.lastRunAt, language)}</span>}
       </p>

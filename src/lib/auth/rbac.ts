@@ -38,6 +38,8 @@ export enum Permission {
   SYSTEM_MANAGE = "system:manage",
   NOTIFICATION_MANAGE = "notification:manage",
   CACHE_MANAGE = "cache:manage",
+  /** Add, edit and delete data sources (their connection strings reach any database). */
+  DATASOURCE_MANAGE = "datasource:manage",
 }
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -56,6 +58,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.SYSTEM_MANAGE,
     Permission.NOTIFICATION_MANAGE,
     Permission.CACHE_MANAGE,
+    Permission.DATASOURCE_MANAGE,
   ],
   [UserRole.MANAGER]: [
     Permission.SCRIPT_CREATE,

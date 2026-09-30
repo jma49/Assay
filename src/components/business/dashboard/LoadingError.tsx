@@ -33,7 +33,7 @@ export const LoadingError: React.FC<LoadingErrorProps> = ({ error, t }) => {
         <CardContent>
           <Alert variant="destructive">
             <AlertTitle>{t("errorInfo")}</AlertTitle>
-            <AlertDescription className="font-mono text-sm break-all">
+            <AlertDescription className="font-mono text-body-md break-all">
               {error}
             </AlertDescription>
           </Alert>

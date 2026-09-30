@@ -6,6 +6,9 @@ import { responseSample, SAMPLE_FIELDS } from "@/server/runs/sample";
 import { toAlertingDto } from "./alert-controls";
 import { COLLECTIONS } from "@/lib/database/collections";
 import { findRun, latestRunsOf } from "@/server/repos/runs";
+import { sourceIdOf } from "@/domain/data-source";
+import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
+import { listSourceOptions } from "./data-sources";
 
 const HISTORY_LENGTH = 30;
 
@@ -23,6 +26,7 @@ const CHECK_FIELDS = {
   scope: 1,
   isScheduled: 1,
   cronSchedule: 1,
+  dataSourceId: 1,
   state: 1,
   alerting: 1,
 } as const;
@@ -62,6 +66,7 @@ export function toSummary(check: Document, historyNewestFirst: (RunPoint & { run
     tags: Array.isArray(check.hashtags) ? check.hashtags : [],
     scope: check.scope || undefined,
     schedule: check.isScheduled && check.cronSchedule ? String(check.cronSchedule) : null,
+    dataSourceId: sourceIdOf(check),
     state,
     alerting: toAlertingDto(check.alerting, state ? { since: new Date(state.since), outcome: state.outcome } : null),
     history: historyNewestFirst
@@ -112,8 +117,10 @@ export async function getCheckDetail(db: Db, scriptId: string): Promise<CheckDet
     .findOne({ scriptId }, { projection: { ...CHECK_FIELDS, sqlContent: 1, author: 1, createdAt: 1 } });
   if (!check) return null;
 
-  const history = (await recentRuns(db, [scriptId], HISTORY_LENGTH)).get(scriptId) ?? [];
+  const [runsById, sources] = await Promise.all([recentRuns(db, [scriptId], HISTORY_LENGTH), listSourceOptions(db, DEFAULT_WORKSPACE_ID)]);
+  const history = runsById.get(scriptId) ?? [];
   const summary = toSummary(check, history.map(runPoint));
+  const source = sources.find((option) => option.sourceId === summary.dataSourceId);
 
   let latest: LatestRun | null = null;
   if (history[0]) {
@@ -145,6 +152,8 @@ export async function getCheckDetail(db: Db, scriptId: string): Promise<CheckDet
     sql: String(check.sqlContent ?? ""),
     author: check.author || undefined,
     createdAt: check.createdAt ? new Date(check.createdAt).toISOString() : undefined,
+    // Worth showing only when there is a choice; a source deleted since keeps its id.
+    dataSource: sources.length > 1 || !source ? { id: summary.dataSourceId, name: source?.name ?? null } : null,
     runs: history.map(toRunItem),
     latest,
   };
@@ -175,6 +184,7 @@ export async function listCheckDefinitions(db: Db) {
     sqlContent: doc.sqlContent,
     isScheduled: doc.isScheduled || false,
     cronSchedule: doc.cronSchedule || "",
+    dataSourceId: sourceIdOf(doc),
     version: typeof doc.version === "number" ? doc.version : undefined,
     createdAt: iso(doc.createdAt),
     updatedAt: iso(doc.updatedAt),
