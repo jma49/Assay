@@ -192,7 +192,7 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
   return (
     <div className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       {/* The pitch, for people who arrive here first. Hidden on small screens, where the form matters most. */}
-      <aside className="hidden bg-primary text-primary-foreground lg:flex lg:flex-col lg:justify-between lg:p-14 xl:px-20">
+      <aside className="hidden bg-night text-night-foreground lg:flex lg:flex-col lg:justify-between lg:p-14 xl:px-20">
         <Link href="/" className="flex w-fit items-center gap-2 text-title-sm font-semibold">
           <span className="grid size-8 place-items-center rounded-lg bg-white/95 shadow-sm">
             <BeetleMark className="size-6" />
@@ -200,22 +200,22 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
           Assay
         </Link>
         <div className="max-w-md space-y-9">
-          <p className="text-display-md leading-[1.15] font-bold text-balance">{t.tagline}</p>
+          <p className="text-display-md text-balance">{t.tagline}</p>
           <ul className="space-y-5">
             {t.points.map(({ icon: Icon, title, body }) => (
               <li key={title} className="flex gap-3">
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/12">
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-night-foreground/10 text-primary">
                   <Icon className="size-4" />
                 </span>
                 <span className="grid gap-0.5">
                   <span className="text-body-md font-semibold">{title}</span>
-                  <span className="text-body-sm leading-5 text-primary-foreground/75">{body}</span>
+                  <span className="text-body-sm text-night-muted">{body}</span>
                 </span>
               </li>
             ))}
           </ul>
         </div>
-        <p className="text-caption text-primary-foreground/60">Open source · self-hostable</p>
+        <p className="text-caption text-night-muted">Open source · self-hostable</p>
       </aside>
 
       <main className="flex flex-col">

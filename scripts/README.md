@@ -20,6 +20,7 @@ resolves the `@/` alias.
 | `migrations/backfill-run-fields.ts` | Gives pre-pipeline runs `checkId`, `finishedAt`, `outcome`, `rowCount`. |
 | `migrations/rename-collections.ts` (`npm run migrate:collections`) | Renames `sql_scripts` → `checks` and `result` → `runs`. The app does this on start; the script shows the state first and, with `--merge`, copies an old collection into the new one when both hold documents (`--drop-old` then drops the old one once every document arrived). |
 | `brand/render-icons.ts` | Regenerates the favicon from the beetle grid. |
+| `demo-video/record.mjs [baseUrl] [en\|zh]` (`npm run demo:video`) | Records the landing page's product tour from a running app in demo mode (Chrome screencast, a drawn cursor and captions) and encodes `public/video/assay-demo[-zh].{mp4,webm,jpg}` with ffmpeg. Read-only: it never runs a check. Re-record after a visible UI change. |
 
 The database connections come from `DATABASE_URL` and `MONGODB_URI`; load
 them with `-r dotenv/config` and `DOTENV_CONFIG_PATH=.env.local` locally.

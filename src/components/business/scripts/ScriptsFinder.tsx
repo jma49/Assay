@@ -136,7 +136,7 @@ export function ScriptsFinder({
           aria-pressed={active}
           className={cn(
             "flex w-full items-center justify-between gap-2 rounded-[4px] px-3 py-1 text-left text-body-sm whitespace-nowrap",
-            active ? "bg-primary-soft font-medium text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            active ? "bg-primary-soft font-medium text-primary-ink" : "text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
         >
           <span className="truncate">{label}</span>

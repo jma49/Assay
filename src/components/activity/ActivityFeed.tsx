@@ -202,7 +202,7 @@ export function ActivityFeed() {
   return (
     <div className={`${APP_CONTAINER} space-y-5 py-6`}>
       <WindowToolbar>
-        <div className="inline-flex rounded-md bg-muted p-0.5" role="tablist" aria-label="Filter">
+        <div className="inline-flex rounded-full bg-muted p-1" role="tablist" aria-label="Filter">
           {(Object.keys(FILTER_KINDS) as Filter[]).map((key) => (
             <button
               key={key}
@@ -211,8 +211,8 @@ export function ActivityFeed() {
               aria-selected={filter === key}
               onClick={() => changeFilter(key)}
               className={cn(
-                "h-7 rounded-[5px] px-3 text-caption font-medium transition-[background-color,color] duration-150",
-                filter === key ? "bg-card text-foreground shadow-border" : "text-muted-foreground hover:text-foreground",
+                "h-8 rounded-full px-3.5 text-body-sm font-medium transition-[background-color,color] duration-150",
+                filter === key ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
               )}
             >
               {t.filters[key]}

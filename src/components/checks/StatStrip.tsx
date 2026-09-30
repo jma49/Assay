@@ -23,14 +23,14 @@ export function StatStrip({ tiles, label }: { tiles: StatTile[]; label: string }
     <div role="group" aria-label={label} className="grid grid-cols-2 overflow-hidden rounded-xl bg-card shadow-border lg:grid-cols-4">
       {tiles.map((tile, i) => {
         const className = cn(
-          "flex flex-col gap-0.5 px-5 py-4 text-left",
+          "flex flex-col gap-1.5 px-6 py-5 text-left",
           i % 2 === 1 && "border-l",
           i >= 2 && "max-lg:border-t",
           i === 2 && "lg:border-l",
         );
         const body = (
           <>
-            <span className="flex items-center gap-2 text-caption text-muted-foreground">
+            <span className="flex items-center gap-2 text-body-sm text-muted-foreground">
               {tile.dot && <span className={cn("status-dot", tile.dot)} aria-hidden />}
               {tile.label}
             </span>

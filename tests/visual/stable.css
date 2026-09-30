@@ -4,3 +4,8 @@
 [aria-label^="Assay's mascot"] > * {
   visibility: hidden !important;
 }
+
+/* The landing video plays on its own clock; keep its box, hide the moving frames. */
+video {
+  visibility: hidden !important;
+}

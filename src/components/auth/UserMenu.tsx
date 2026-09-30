@@ -24,7 +24,7 @@ export function UserMenu({ user }: { user: CurrentUser }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.image} alt="" referrerPolicy="no-referrer" className="size-6 shrink-0 rounded-full" />
         ) : (
-          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary-soft text-caption font-semibold text-primary">{initials(user.name)}</span>
+          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary-soft text-caption font-semibold text-primary-ink">{initials(user.name)}</span>
         )}
         <span className="truncate text-body-sm text-muted-foreground max-md:hidden">{user.name}</span>
       </DropdownMenuTrigger>
