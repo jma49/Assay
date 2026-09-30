@@ -45,7 +45,7 @@ export function TriagePanel({ check, t, language }: { check: CheckDetail; t: Cop
       ) : (
         <div className="space-y-4 text-body-md">
           <p>
-            <span className="mr-2 rounded-md bg-primary-soft px-1.5 py-0.5 text-caption font-medium text-primary">{t.kind[triage.kind]}</span>
+            <span className="mr-2 rounded-md bg-primary-soft px-1.5 py-0.5 text-caption font-medium text-primary-ink">{t.kind[triage.kind]}</span>
             {triage.summary}
           </p>
           {triage.causes.length > 0 && (
