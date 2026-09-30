@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils/utils";
 export function BrandMark({ className, compact = false }: { className?: string; compact?: boolean }) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
-      <span aria-hidden className="grid size-7 place-items-center rounded-md bg-primary-soft">
-        <BeetleMark className="size-6" />
+      <span aria-hidden className="grid size-8 place-items-center rounded-lg bg-primary-soft">
+        <BeetleMark className="size-7" />
       </span>
       {!compact && <span className="font-display text-title-sm leading-none font-semibold">{BRAND}</span>}
     </span>
