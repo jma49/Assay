@@ -63,7 +63,7 @@ export function AlertBadges({ alerting }: { alerting: AlertingDto }) {
   return (
     <>
       {alerting.acknowledged && (
-        <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 font-medium text-primary" title={formatDateTime(alerting.acknowledged.at, language)}>
+        <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 font-medium text-primary-ink" title={formatDateTime(alerting.acknowledged.at, language)}>
           <Hand className="size-3" />
           {t.acknowledgedBy(alerting.acknowledged.by, formatRelative(alerting.acknowledged.at, language))}
         </span>
