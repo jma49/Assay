@@ -68,7 +68,7 @@ export function BulkRunPanel({
         <span id="bulk-mode-label" className="block text-body-sm font-medium">
           {copy.which}
         </span>
-        <div role="radiogroup" aria-labelledby="bulk-mode-label" className="inline-flex gap-0.5 rounded-md border bg-background p-0.5 max-sm:flex max-sm:w-full">
+        <div role="radiogroup" aria-labelledby="bulk-mode-label" className="inline-flex gap-0.5 rounded-full bg-muted p-1 max-sm:flex max-sm:w-full">
           {modes.map(({ mode, label }) => (
             <button
               key={mode}
@@ -77,8 +77,8 @@ export function BulkRunPanel({
               aria-checked={bulkMode === mode}
               onClick={() => onBulkModeChange(mode)}
               className={cn(
-                "rounded-sm px-2.5 py-1 text-body-sm transition-[color,background-color] duration-150 max-sm:flex-1",
-                bulkMode === mode ? "bg-card font-medium text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground",
+                "h-8 rounded-full px-3.5 text-body-sm transition-[color,background-color] duration-150 max-sm:flex-1",
+                bulkMode === mode ? "bg-foreground font-medium text-background" : "text-muted-foreground hover:text-foreground",
               )}
             >
               {label}
