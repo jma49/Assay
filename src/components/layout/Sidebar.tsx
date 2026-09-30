@@ -67,8 +67,8 @@ const SECTIONS: { title: Label; items: NavItem[] }[] = [
 ];
 
 const COPY = {
-  en: { workspace: "Workspace", guestTitle: "You're a guest", guestBody: "Look around and run the sample checks. Sign up to write your own.", signUp: "Sign up", leave: "Leave demo", theme: "Toggle dark mode" },
-  zh: { workspace: "工作区", guestTitle: "你正在以访客身份浏览", guestBody: "可以随意查看并执行示例检查。注册后可以编写自己的检查。", signUp: "注册", leave: "退出演示", theme: "切换深色模式" },
+  en: { theme: "Toggle dark mode" },
+  zh: { theme: "切换深色模式" },
 };
 
 /** How specifically an item matches the path: the length of its href when it owns the path, or 0. */
@@ -95,10 +95,9 @@ export function Sidebar() {
   // Items that need a permission stay hidden until it is known, so they never flash for people without it.
   const allowed = (item: NavItem) => !item.requires || (me?.permissions.includes(item.requires) ?? false);
   const allItems = SECTIONS.flatMap((section) => section.items);
-  const guest = me?.guest === true && isLoaded && !user;
 
   return (
-    <aside className="flex min-h-0 flex-col gap-5 border-r border-sidebar-border bg-sidebar px-2.5 py-3.5 max-md:flex-row max-md:items-center max-md:gap-3 max-md:overflow-x-auto max-md:border-r-0 max-md:border-b max-md:px-4 max-md:py-2">
+    <aside className="flex min-h-0 flex-col gap-6 border-r border-sidebar-border bg-sidebar px-4 py-5 max-md:flex-row max-md:items-center max-md:gap-3 max-md:overflow-x-auto max-md:border-r-0 max-md:border-b max-md:px-4 max-md:py-2">
       <Link href="/checks" className="flex items-center px-2 py-1 max-md:px-0">
         <BrandMark className="max-md:[&>span:last-child]:hidden" />
       </Link>
@@ -109,7 +108,7 @@ export function Sidebar() {
           if (items.length === 0) return null;
           return (
             <div key={section.title.en} className="flex flex-col gap-0.5 max-md:flex-row">
-              <p className="px-2 pb-1 text-label-caps uppercase text-muted-foreground max-md:hidden">
+              <p className="px-3 pb-1.5 text-label-caps uppercase text-muted-foreground max-md:hidden">
                 {section.title[language]}
               </p>
               {items.map((item) => {
@@ -121,7 +120,7 @@ export function Sidebar() {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-body-sm whitespace-nowrap transition-colors",
+                      "flex h-10 items-center gap-3 rounded-lg px-3 text-body-md whitespace-nowrap transition-colors max-md:h-9",
                       active
                         ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
                         : "text-sidebar-foreground hover:bg-muted hover:text-foreground",
@@ -138,22 +137,7 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto flex flex-col gap-3 max-md:mt-0 max-md:ml-auto max-md:flex-row max-md:items-center">
-        {guest && (
-          <div className="rounded-lg border bg-card p-2.5 text-caption text-muted-foreground max-md:hidden">
-            <p className="font-medium text-foreground">{t.guestTitle}</p>
-            <p className="mt-0.5">{t.guestBody}</p>
-            <Link
-              href="/sign-up?redirect_url=/checks"
-              className="mt-2 flex h-7 items-center justify-center rounded-md bg-primary text-caption font-medium text-primary-foreground transition-[filter,scale] duration-150 ease-out hover:brightness-110 active:scale-[0.96]"
-            >
-              {t.signUp}
-            </Link>
-            <a href="/demo/exit" className="mt-1.5 block text-center text-caption hover:text-foreground">
-              {t.leave}
-            </a>
-          </div>
-        )}
-        <div className="flex items-center gap-1 px-1">
+        <div className="flex items-center gap-1 border-t border-sidebar-border px-1 pt-3 max-md:border-t-0 max-md:pt-0">
           {isLoaded && user && (
             <div className="mr-auto flex min-w-0 items-center gap-2 max-md:mr-0">
               <UserMenu user={user} />
@@ -161,7 +145,7 @@ export function Sidebar() {
           )}
           <button
             type="button"
-            className="h-7 rounded-md px-1.5 text-caption text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="h-8 rounded-full px-2.5 text-caption text-muted-foreground hover:bg-muted hover:text-foreground"
             onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
           >
             {language === "zh" ? "EN" : "中文"}
@@ -169,7 +153,7 @@ export function Sidebar() {
           <button
             type="button"
             aria-label={t.theme}
-            className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="grid size-8 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
           >
             {mounted && resolvedTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
