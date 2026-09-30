@@ -85,7 +85,7 @@ export function CompactHashtagFilter({
               disabled={disabled}
               className={cn(
                 // A control like the selects next to it: same height, text and radius.
-                "h-8 px-2.5 justify-between gap-2 text-body-sm font-normal flex-1 rounded-md",
+                "h-9 px-3 justify-between gap-2 text-body-sm font-normal flex-1 rounded-md",
                 "group relative"
               )}
             >
