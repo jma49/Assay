@@ -31,7 +31,7 @@ export function RunsHeader({ language, t, canExecute, demoRuns, totalRuns, passR
             </Button>
           )}
           {demoRuns !== null && (
-            <span className="text-[12px] text-foreground/70">
+            <span className="text-caption text-foreground/70">
               {language === "zh" ? "演示：可以执行示例检查" : "Demo: you can run the sample checks"}
             </span>
           )}

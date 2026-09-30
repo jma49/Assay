@@ -80,12 +80,12 @@ export function HashtagInput({
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      {label && <Label className="text-[13px] font-medium">{label}</Label>}
+      {label && <Label className="text-body-sm font-medium">{label}</Label>}
       
       <div
         className={cn(
           // As tall as an Input (32px) while empty; the same focus ring as one.
-          "min-h-8 rounded-md border border-input bg-card px-2.5 py-[3px] text-[13px] shadow-xs transition-[color,box-shadow]",
+          "min-h-8 rounded-md border border-input bg-card px-2.5 py-[3px] text-body-sm shadow-xs transition-[color,box-shadow]",
           "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50",
           disabled && "cursor-not-allowed opacity-50",
           className
@@ -96,7 +96,7 @@ export function HashtagInput({
             <Badge
               key={index}
               variant="secondary"
-              className="group flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+              className="group flex items-center gap-1 px-2 py-1 text-caption bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
             >
               <Hash className="h-3 w-3" />
               {tag}
@@ -132,7 +132,7 @@ export function HashtagInput({
                 variant="ghost"
                 size="sm"
                 onClick={handleAddClick}
-                className="h-6 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10"
+                className="h-6 px-2 text-caption text-primary hover:text-primary hover:bg-primary/10"
               >
                 <Plus className="h-3 w-3 mr-1" />
                 添加
@@ -142,7 +142,7 @@ export function HashtagInput({
         )}
       </div>
 
-      <div className="flex justify-between items-center text-xs text-muted-foreground">
+      <div className="flex justify-between items-center text-caption text-muted-foreground">
         <span>
           {helperText || "按 Enter 或逗号添加标签，支持中英文、数字和连字符"}
         </span>

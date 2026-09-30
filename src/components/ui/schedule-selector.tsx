@@ -51,7 +51,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ value, onCha
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <label className="text-[13px] font-medium">{t.repeat}</label>
+        <label className="text-body-sm font-medium">{t.repeat}</label>
         <Select
           value={selected}
           disabled={disabled}
@@ -76,7 +76,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ value, onCha
 
       {customMode && (
         <div className="space-y-1.5">
-          <label htmlFor="cronSchedule" className="text-[13px] font-medium">
+          <label htmlFor="cronSchedule" className="text-body-sm font-medium">
             {t.cron}
           </label>
           <Input
@@ -92,15 +92,15 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({ value, onCha
       )}
 
       {error ? (
-        <p className="text-[12px] text-failure">{error}</p>
+        <p className="text-caption text-failure">{error}</p>
       ) : (
         next && (
-          <p className="text-[12px] text-muted-foreground" title={formatDateTime(next, language, "UTC")}>
+          <p className="text-caption text-muted-foreground" title={formatDateTime(next, language, "UTC")}>
             {t.next}: {formatShortDateTime(next, language)} ({t.local}) · {formatRelative(next, language)}
           </p>
         )
       )}
-      <p className="text-[12px] text-muted-foreground">{t.runnerNote}</p>
+      <p className="text-caption text-muted-foreground">{t.runnerNote}</p>
     </div>
   );
 };

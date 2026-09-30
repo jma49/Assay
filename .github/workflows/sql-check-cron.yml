@@ -55,6 +55,10 @@ jobs:
           CA_CERT_BLOB_URL: ${{ secrets.CA_CERT_BLOB_URL }}
           CLIENT_CERT_BLOB_URL: ${{ secrets.CLIENT_CERT_BLOB_URL }}
           CLIENT_KEY_BLOB_URL: ${{ secrets.CLIENT_KEY_BLOB_URL }}
+          # Opens the sealed connection strings of data sources added in Settings.
+          ASSAY_SECRET_KEY: ${{ secrets.ASSAY_SECRET_KEY }}
+          ALLOW_PRIVATE_DATA_SOURCES: ${{ vars.ALLOW_PRIVATE_DATA_SOURCES }}
+          PG_SOURCE_POOL_MAX: ${{ vars.PG_SOURCE_POOL_MAX }}
           MONGODB_DB_NAME: ${{ vars.MONGODB_DB_NAME }}
           CHECK_TIMEOUT_MS: ${{ vars.CHECK_TIMEOUT_MS }}
           CHECK_CONCURRENCY: ${{ vars.CHECK_CONCURRENCY }}

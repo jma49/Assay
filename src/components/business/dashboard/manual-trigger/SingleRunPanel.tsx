@@ -25,7 +25,7 @@ export function SingleRunPanel({ checks, selectedScriptId, selectedScript, isTri
 
   return (
     <div className="space-y-2">
-      <label htmlFor="run-check-select" className="text-[13px] font-medium">
+      <label htmlFor="run-check-select" className="text-body-sm font-medium">
         {copy.check}
       </label>
       <div className="flex gap-2 max-sm:flex-col">
@@ -45,7 +45,7 @@ export function SingleRunPanel({ checks, selectedScriptId, selectedScript, isTri
         </Button>
       </div>
       {selectedScript && (
-        <p className="text-[12px] text-muted-foreground">
+        <p className="text-caption text-muted-foreground">
           {[description, scheduleLabel(selectedScript.isScheduled ? selectedScript.cronSchedule || null : null, zh ? "zh" : "en")]
             .filter(Boolean)
             .join(" · ")}

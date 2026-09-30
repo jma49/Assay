@@ -38,6 +38,7 @@ async function recordVersion(db: Db, check: Document, actor: CheckActor, change:
       author: check.author,
       hashtags: check.hashtags,
       sqlContent: check.sqlContent,
+      dataSourceId: check.dataSourceId,
     },
     actor.id,
     actor.email,

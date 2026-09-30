@@ -13,6 +13,7 @@ import { responseSample, sampleSlice } from "@/server/runs/sample";
 import type { RunCheckResult } from "@/server/services/run-check";
 import type { McpCaller } from "./caller";
 import { findRun } from "@/server/repos/runs";
+import { listSourceOptions } from "@/server/services/data-sources";
 
 export interface ToolDeps {
   db(): Promise<Db>;
@@ -64,6 +65,7 @@ function summary(check: CheckSummary, appUrl: string) {
     since: state?.since ?? null,
     last_run_at: state?.lastRunAt ?? null,
     schedule: check.schedule ?? "manual",
+    data_source: check.dataSourceId,
     tags: check.tags,
     owner: check.alerting.owner?.name ?? null,
     acknowledged_by: check.alerting.acknowledged?.by ?? null,
@@ -145,6 +147,20 @@ function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
             rows: latest.rows.slice(0, max_rows).map((row) => ({ mark: row.mark, ...shapeRows([row.values], 1)[0] })),
           },
         };
+      },
+    }),
+
+    tool({
+      name: "list_data_sources",
+      title: "List data sources",
+      description:
+        "Lists the databases checks run against: id, name and engine. A check's data_source is one of these ids; 'default' is the database the deployment was set up with.",
+      permission: Permission.SCRIPT_READ,
+      annotations: { readOnlyHint: true, openWorldHint: false },
+      inputSchema: z.object({}),
+      async handler() {
+        const sources = await listSourceOptions(await deps.db(), DEFAULT_WORKSPACE_ID);
+        return { data_sources: sources.map(({ sourceId, name, engine }) => ({ id: sourceId, name, engine })) };
       },
     }),
 

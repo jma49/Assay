@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { UserRole, canManageRole } from "./rbac";
+import { Permission, ROLE_PERMISSIONS, UserRole, canManageRole } from "./rbac";
+
+describe("data source management", () => {
+  it("is for admins only: a connection string can reach any database", () => {
+    const holders = Object.values(UserRole).filter((role) => ROLE_PERMISSIONS[role].includes(Permission.DATASOURCE_MANAGE));
+    expect(holders).toEqual([UserRole.ADMIN]);
+  });
+});
 
 describe("canManageRole", () => {
   it("lets admins manage every role", () => {

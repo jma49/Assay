@@ -25,7 +25,7 @@ function memoryStore(checks: CheckToRun[]) {
       if (!doc) return { kind: "missing" };
       if (doc.lease && doc.lease.until > now) return { kind: "busy", runId: doc.lease.runId };
       doc.lease = { runId, until };
-      return { kind: "acquired", check: { scriptId, sqlContent: doc.sqlContent, state: doc.state, createdAt: doc.createdAt, pendingEvents: [...doc.pendingEvents] } };
+      return { kind: "acquired", check: { scriptId, sqlContent: doc.sqlContent, dataSourceId: doc.dataSourceId, state: doc.state, createdAt: doc.createdAt, pendingEvents: [...doc.pendingEvents] } };
     },
     async historicalState() {
       return null;
@@ -78,7 +78,7 @@ function deps(store: RunCheckStore, source: DataSource, clock = { t: Date.UTC(20
   let id = 0;
   return {
     store,
-    source,
+    sources: async () => source,
     executions: createSemaphore(4),
     newRunId: () => `run${++id}`,
     now: () => new Date((clock.t += 1000)),
@@ -237,6 +237,33 @@ describe("large results", () => {
     expect(result).toMatchObject({ kind: "completed", outcome: "issues", rowCount: 2_000_000 });
     expect(runs[0]).toMatchObject({ rowCount: 2_000_000, message: expect.stringContaining("Found 2000000 records") });
     expect(runs[0].rowKeys).toHaveLength(5_000);
+  });
+});
+
+describe("data sources", () => {
+  it("runs each check against its own source, and the built-in one when it names none", async () => {
+    const billing = { ...CHECK, scriptId: "unpaid-invoices", dataSourceId: "billing" };
+    const { store } = memoryStore([CHECK, billing]);
+    const asked: string[] = [];
+    const d = deps(store, rowsSource([[]]));
+    d.sources = async (sourceId) => {
+      asked.push(sourceId);
+      return rowsSource([sourceId === "billing" ? [{ invoice: 7 }] : []]);
+    };
+    expect(await runCheck(billing.scriptId, { kind: "manual" }, d)).toMatchObject({ outcome: "issues", rowCount: 1 });
+    expect(await runCheck(CHECK.scriptId, { kind: "manual" }, d)).toMatchObject({ outcome: "clean" });
+    expect(asked).toEqual(["billing", "default"]);
+  });
+
+  it("records a broken run when the check's source no longer exists", async () => {
+    const { store, runs } = memoryStore([{ ...CHECK, dataSourceId: "gone" }]);
+    const d = deps(store, rowsSource([[]]));
+    d.sources = async (sourceId) => {
+      throw new Error(`No data source with the id '${sourceId}'`);
+    };
+    const result = await runCheck(CHECK.scriptId, { kind: "manual" }, d);
+    expect(result).toMatchObject({ kind: "completed", outcome: "error", message: "No data source with the id 'gone'" });
+    expect(runs).toHaveLength(1);
   });
 });
 

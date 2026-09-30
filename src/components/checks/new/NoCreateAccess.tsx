@@ -23,9 +23,9 @@ export function NoCreateAccess() {
   const t = COPY[language];
   return (
     <div className={`${APP_CONTAINER} py-16 text-center`}>
-      <p className="text-[14px] font-medium">{t.title}</p>
-      <p className="mx-auto mt-1 max-w-md text-[13px] text-muted-foreground">{t.hint}</p>
-      <Link href="/checks" className="mt-3 inline-block text-[13px] font-medium text-primary hover:underline">
+      <p className="text-body-md font-medium">{t.title}</p>
+      <p className="mx-auto mt-1 max-w-md text-body-sm text-muted-foreground">{t.hint}</p>
+      <Link href="/checks" className="mt-3 inline-block text-body-sm font-medium text-primary hover:underline">
         {t.back}
       </Link>
     </div>

@@ -9,6 +9,7 @@ import {
   type RowDiff,
   type RunOutcome,
 } from "@/domain/run";
+import { sourceIdOf } from "@/domain/data-source";
 import { validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import { splitStatements } from "@/lib/sql/statements";
 import type { Semaphore } from "@/server/concurrency/semaphore";
@@ -26,6 +27,8 @@ export interface RunTrigger {
 export interface CheckToRun {
   scriptId: string;
   sqlContent: string;
+  /** The source it runs against; none means the built-in `default`. */
+  dataSourceId?: string | null;
   state?: CheckState | null;
   /** When the check was created; runs before it belong to an earlier check with the same id. */
   createdAt?: Date | null;
@@ -97,7 +100,8 @@ export interface RunCheckStore {
 
 export interface RunCheckDeps {
   store: RunCheckStore;
-  source: DataSource;
+  /** The data source with this id; throws for an unknown one, which fails the run. */
+  sources: (sourceId: string) => Promise<DataSource>;
   executions: Semaphore;
   newRunId: () => string;
   now: () => Date;
@@ -153,11 +157,12 @@ async function execute(check: CheckToRun, runId: string, deps: RunCheckDeps): Pr
   }
   const statements = splitStatements(check.sqlContent);
   if (statements.length === 0) throw new Error("The check has no query to run.");
+  const source = await deps.sources(sourceIdOf(check));
   const results = await deps.executions.run(async () => {
     // Waiting for a slot counts against the lease; restart its clock now that the query starts.
     const until = new Date(deps.now().getTime() + deps.timeoutMs + LEASE_MARGIN_MS);
     if (!(await deps.store.renewLease(check.scriptId, runId, until))) throw new LeaseLostError();
-    return deps.source.runReadOnly(statements, { timeoutMs: deps.timeoutMs, maxRows: FINGERPRINT_ROWS });
+    return source.runReadOnly(statements, { timeoutMs: deps.timeoutMs, maxRows: FINGERPRINT_ROWS });
   });
   return {
     rows: results.flatMap((result) => result.rows).slice(0, FINGERPRINT_ROWS).map(normalizeRow),

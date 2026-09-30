@@ -55,7 +55,7 @@ function Field({ id, label, children, className }: { id: string; label: string; 
   return (
     // content-start: a taller neighbour (the values box) must not push this label down.
     <div className={`grid min-w-0 content-start gap-1.5 ${className ?? ""}`}>
-      <Label htmlFor={id} className="text-[12.5px] font-medium text-muted-foreground">
+      <Label htmlFor={id} className="text-body-sm font-medium text-muted-foreground">
         {label}
       </Label>
       {children}
@@ -149,7 +149,7 @@ export function TemplateFields({ builder, tables, t }: { builder: Builder; table
               <button
                 type="button"
                 onClick={() => update({ columns: [...form.columns, ""] })}
-                className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-[12.5px] font-medium text-primary hover:bg-primary-soft"
+                className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-body-sm font-medium text-primary hover:bg-primary-soft"
               >
                 <Plus className="size-3.5" />
                 {t.addColumn}
@@ -196,8 +196,8 @@ export function TemplateFields({ builder, tables, t }: { builder: Builder; table
 
       {fields.includes("values") && (
         <Field id="tpl-values" label={t.values} className="sm:col-span-2">
-          <Textarea id="tpl-values" rows={3} value={form.values} onChange={(e) => update({ values: e.target.value })} className="min-h-0 font-mono text-[12.5px]" placeholder={"paid\nshipped"} />
-          <label className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
+          <Textarea id="tpl-values" rows={3} value={form.values} onChange={(e) => update({ values: e.target.value })} className="min-h-0 font-mono text-body-sm" placeholder={"paid\nshipped"} />
+          <label className="flex items-center gap-2 text-body-sm text-muted-foreground">
             <Switch checked={form.nullAllowed} onCheckedChange={(on) => update({ nullAllowed: on })} />
             {t.nullAllowed}
           </label>

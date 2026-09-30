@@ -6,6 +6,7 @@
  * lists what would run; --check runs one check now, as a manual run.
  */
 import db from "@/lib/database/db";
+import { closeSourcePools } from "@/server/datasource/sources";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { runCheckNow } from "@/server/services/run-check-deps";
 import { mongoRunChecksStore, runChecks } from "@/server/services/run-checks";
@@ -45,7 +46,7 @@ async function main() {
     console.log(`${args.dryRun ? "Dry run" : "Done"}: ${ran} ran, ${failed} failed, ${reports.length - ran - failed} skipped.`);
     if (failed > 0) process.exitCode = 1;
   } finally {
-    await db.closePool();
+    await Promise.all([db.closePool(), closeSourcePools()]);
     await getMongoDbClient().closeConnection();
   }
 }

@@ -30,12 +30,12 @@ export function StatStrip({ tiles, label }: { tiles: StatTile[]; label: string }
         );
         const body = (
           <>
-            <span className="flex items-center gap-2 text-[12px] text-muted-foreground">
+            <span className="flex items-center gap-2 text-caption text-muted-foreground">
               {tile.dot && <span className={cn("status-dot", tile.dot)} aria-hidden />}
               {tile.label}
             </span>
-            <span className="text-[24px] leading-tight font-semibold tabular-nums">{tile.value}</span>
-            {tile.hint !== undefined && <span className="truncate text-[12px] text-muted-foreground">{tile.hint}</span>}
+            <span className="text-stat leading-tight tabular-nums">{tile.value}</span>
+            {tile.hint !== undefined && <span className="truncate text-caption text-muted-foreground">{tile.hint}</span>}
           </>
         );
         if (!tile.onClick) {

@@ -170,10 +170,10 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
               <Settings className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-semibold">
+              <DialogTitle className="text-title font-semibold">
                 {t("editorThemeSettings") || "编辑器主题设置"}
               </DialogTitle>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-body-md text-muted-foreground">
                 {t("settingsApplyImmediately") || "设置立即应用"} • {systemTheme === "dark" ? t("darkMode") : t("lightMode")}
               </p>
             </div>
@@ -184,7 +184,7 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Palette className="h-4 w-4 text-primary" />
-              <Label className="text-sm font-medium">
+              <Label className="text-body-md font-medium">
                 {t("editorTheme") || "编辑器主题"} ({systemTheme === "dark" ? t("darkTheme") : t("lightTheme")})
               </Label>
             </div>
@@ -203,7 +203,7 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-caption text-muted-foreground">
               {systemTheme === "dark" 
                 ? t("themeHelpDark") 
                 : t("themeHelpLight")
@@ -214,7 +214,7 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Type className="h-4 w-4 text-primary" />
-              <Label className="text-sm font-medium">{t("fontFamily") || "字体家族"}</Label>
+              <Label className="text-body-md font-medium">{t("fontFamily") || "字体家族"}</Label>
             </div>
             <Select value={fontFamily} onValueChange={setFontFamily}>
               <SelectTrigger className="w-full">
@@ -233,7 +233,7 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-primary" />
-              <Label className="text-sm font-medium">{t("fontSize") || "字体大小"}: {fontSize[0]}px</Label>
+              <Label className="text-body-md font-medium">{t("fontSize") || "字体大小"}: {fontSize[0]}px</Label>
             </div>
             <div className="px-2">
               <Slider
@@ -244,7 +244,7 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
                 step={1}
                 className="w-full"
               />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <div className="flex justify-between text-caption text-muted-foreground mt-1">
                 <span>10px</span>
                 <span>15px</span>
                 <span>20px</span>
@@ -254,7 +254,7 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
           </div>
 
           <div className="space-y-3 p-4 bg-muted/40 rounded-lg border">
-            <h4 className="font-medium text-sm">{t("currentSettings") || "当前设置"}</h4>
+            <h4 className="font-medium text-body-md">{t("currentSettings") || "当前设置"}</h4>
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className="bg-muted text-foreground border-border   ">
                 {systemTheme === "dark" ? t("darkTheme") : t("lightTheme")}: {currentThemeLabel}

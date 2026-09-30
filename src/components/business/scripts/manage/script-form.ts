@@ -1,3 +1,4 @@
+import { DEFAULT_SOURCE_ID } from "@/domain/data-source";
 import type { SqlScript } from "@/components/business/dashboard/types";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
@@ -31,6 +32,7 @@ export function emptyForm(scriptId: string): ScriptFormState {
     hashtags: [],
     isScheduled: false,
     cronSchedule: "",
+    dataSourceId: DEFAULT_SOURCE_ID,
   };
 }
 
@@ -80,6 +82,7 @@ export function toFormMetadata(form: ScriptFormState): ScriptFormData {
     hashtags: form.hashtags || [],
     isScheduled: typeof form.isScheduled === "boolean" ? form.isScheduled : false,
     cronSchedule: form.cronSchedule || "",
+    dataSourceId: form.dataSourceId || DEFAULT_SOURCE_ID,
   };
 }
 
@@ -150,6 +153,7 @@ export function updatePayload(form: ScriptFormState, sql: string, initialSql: st
     hashtags: form.hashtags,
     isScheduled: form.isScheduled,
     cronSchedule: form.cronSchedule,
+    dataSourceId: form.dataSourceId,
     // The server refuses the save with 409 if someone saved since this version.
     version: form.version ?? 0,
   };

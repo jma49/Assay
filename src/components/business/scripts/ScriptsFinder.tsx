@@ -135,7 +135,7 @@ export function ScriptsFinder({
           onClick={() => setSource(item)}
           aria-pressed={active}
           className={cn(
-            "flex w-full items-center justify-between gap-2 rounded-[4px] px-3 py-1 text-left text-[13px] whitespace-nowrap",
+            "flex w-full items-center justify-between gap-2 rounded-[4px] px-3 py-1 text-left text-body-sm whitespace-nowrap",
             active ? "bg-primary-soft font-medium text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
         >
@@ -147,7 +147,7 @@ export function ScriptsFinder({
   };
 
   const sectionTitle = (label: string) => (
-    <p className="px-3 pt-3 pb-1 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase max-xl:hidden">{label}</p>
+    <p className="px-3 pt-3 pb-1 text-label-caps uppercase text-muted-foreground max-xl:hidden">{label}</p>
   );
 
   return (
@@ -183,7 +183,7 @@ export function ScriptsFinder({
         )}
         className="w-80 shrink-0 overflow-y-auto border-r max-xl:max-h-72 max-xl:w-full max-xl:border-r-0 max-xl:border-b">
         {visible.length === 0 ? (
-          <li className="p-6 text-center text-[13px] text-muted-foreground">{t.empty}</li>
+          <li className="p-6 text-center text-body-sm text-muted-foreground">{t.empty}</li>
         ) : (
           visible.map((script, index) => {
             const active = script.scriptId === selectedId;
@@ -201,12 +201,12 @@ export function ScriptsFinder({
                   )}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="truncate text-[13px] font-medium">{name(script)}</span>
+                    <span className="truncate text-body-sm font-medium">{name(script)}</span>
                     {script.isScheduled && (
-                      <span className={cn("shrink-0 text-[11px]", "text-muted-foreground")}>⏱</span>
+                      <span className={cn("shrink-0 text-caption", "text-muted-foreground")}>⏱</span>
                     )}
                   </span>
-                  <span className={cn("block truncate font-mono text-[11px]", "text-muted-foreground")}>
+                  <span className={cn("block truncate font-mono text-caption", "text-muted-foreground")}>
                     {script.scriptId}
                   </span>
                 </button>
@@ -219,14 +219,14 @@ export function ScriptsFinder({
       {/* Preview */}
       <section className="min-w-0 flex-1 overflow-y-auto bg-card">
         {!selected ? (
-          <p className="p-8 text-center text-[13px] text-muted-foreground">{t.choose}</p>
+          <p className="p-8 text-center text-body-sm text-muted-foreground">{t.choose}</p>
         ) : (
           <div className="space-y-5 p-6">
             <header className="space-y-1">
-              <h2 className="font-display text-[24px] leading-tight font-semibold">{name(selected)}</h2>
-              <p className="font-mono text-[12px] text-muted-foreground">{selected.scriptId}</p>
+              <h2 className="font-display text-headline leading-tight font-semibold">{name(selected)}</h2>
+              <p className="font-mono text-caption text-muted-foreground">{selected.scriptId}</p>
               {(zh ? selected.cnDescription || selected.description : selected.description) && (
-                <p className="pt-1 text-[13px] leading-relaxed">
+                <p className="pt-1 text-body-sm leading-relaxed">
                   {zh ? selected.cnDescription || selected.description : selected.description}
                 </p>
               )}
@@ -252,13 +252,13 @@ export function ScriptsFinder({
             </div>
 
             <div>
-              <p className="pb-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">{t.sql}</p>
-              <pre className="max-h-80 overflow-auto rounded-lg border bg-code p-4 font-mono text-[12.5px] leading-relaxed">
+              <p className="pb-1.5 text-label-caps uppercase text-muted-foreground">{t.sql}</p>
+              <pre className="max-h-80 overflow-auto rounded-lg border bg-code p-4 font-mono text-body-sm leading-relaxed">
                 {selected.sqlContent}
               </pre>
             </div>
 
-            <dl className="grid grid-cols-[7rem_1fr] gap-x-3 gap-y-2 text-[13px]">
+            <dl className="grid grid-cols-[7rem_1fr] gap-x-3 gap-y-2 text-body-sm">
               <dt className="text-muted-foreground">{t.author}</dt>
               <dd>{selected.author || "–"}</dd>
               <dt className="text-muted-foreground">{t.scope}</dt>
@@ -266,7 +266,7 @@ export function ScriptsFinder({
               <dt className="text-muted-foreground">{t.tags_}</dt>
               <dd>{selected.hashtags?.length ? selected.hashtags.map((tag) => `#${tag}`).join("  ") : "–"}</dd>
               <dt className="text-muted-foreground">{t.schedule}</dt>
-              <dd className="font-mono text-[12px]">{selected.isScheduled && selected.cronSchedule ? scheduleLabel(selected.cronSchedule, zh ? "zh" : "en") : t.manual}</dd>
+              <dd className="font-mono text-caption">{selected.isScheduled && selected.cronSchedule ? scheduleLabel(selected.cronSchedule, zh ? "zh" : "en") : t.manual}</dd>
               <dt className="text-muted-foreground">{t.created}</dt>
               <dd className="tabular-nums">
                 {selected.createdAt ? new Date(selected.createdAt).toLocaleString(zh ? "zh-CN" : "en-US") : "–"}

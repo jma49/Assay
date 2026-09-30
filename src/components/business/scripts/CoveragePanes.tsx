@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,22 +8,19 @@ import type { SqlScript } from "@/components/business/dashboard/types";
 import type { CoverageReport } from "@/lib/coverage/coverage";
 import { cn } from "@/lib/utils/utils";
 import { listKeyHandler } from "./list-keys";
+import { useApi } from "@/client/use-api";
+import { DEFAULT_SOURCE_ID } from "@/domain/data-source";
 
 export type CoverageState = CoverageReport | "loading" | "error" | null;
 
-/** Loads the coverage report the first time `enabled` is true; it reads the database schema. */
-export function useCoverage(enabled: boolean): CoverageState {
-  const [result, setResult] = useState<CoverageReport | "error" | null>(null);
-  const requested = useRef(false);
-  useEffect(() => {
-    if (!enabled || requested.current) return;
-    requested.current = true;
-    fetch("/api/coverage")
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-      .then((report: CoverageReport) => setResult(report))
-      .catch(() => setResult("error"));
-  }, [enabled]);
-  return result ?? (enabled ? "loading" : null);
+/** Loads the coverage report of a data source while `enabled`; it reads that database's schema. */
+export function useCoverage(enabled: boolean, sourceId: string = DEFAULT_SOURCE_ID): CoverageState {
+  const url = `/api/coverage?source=${encodeURIComponent(sourceId)}`;
+  const { data, dataUrl, error } = useApi<CoverageReport>(enabled ? url : null);
+  if (!enabled) return null;
+  if (error) return "error";
+  // A report for another source is not shown while this one loads.
+  return data && dataUrl === url ? data : "loading";
 }
 
 /** A row of the list: a database table, or a table checks read that no longer exists. */
@@ -84,6 +81,7 @@ export function CoveragePanes({
   searchTerm,
   language,
   checkHref,
+  sourceId = DEFAULT_SOURCE_ID,
 }: {
   coverage: CoverageState;
   scripts: SqlScript[];
@@ -91,6 +89,8 @@ export function CoveragePanes({
   language: string;
   /** Where a check listed under a table links to. */
   checkHref: (scriptId: string) => string;
+  /** The data source the report is for; a new check for a table starts on it. */
+  sourceId?: string;
 }) {
   const zh = language === "zh";
   const t = zh ? COPY.zh : COPY.en;
@@ -123,7 +123,7 @@ export function CoveragePanes({
         )}
         className="w-80 shrink-0 overflow-y-auto border-r max-xl:max-h-72 max-xl:w-full max-xl:border-r-0 max-xl:border-b">
         {notice ? (
-          <li className="p-6 text-center text-[13px] text-muted-foreground">{notice}</li>
+          <li className="p-6 text-center text-body-sm text-muted-foreground">{notice}</li>
         ) : (
           rows.map((row) => {
             const active = row.table === selectedTable;
@@ -142,8 +142,8 @@ export function CoveragePanes({
                   )}
                 >
                   <span className={cn("status-dot shrink-0", `status-dot-${tone}`)} aria-hidden />
-                  <span className="min-w-0 flex-1 truncate font-mono text-[12.5px]">{row.table}</span>
-                  <span className={cn("shrink-0 text-[11px] tabular-nums", "text-muted-foreground")}>
+                  <span className="min-w-0 flex-1 truncate font-mono text-body-sm">{row.table}</span>
+                  <span className={cn("shrink-0 text-caption tabular-nums", "text-muted-foreground")}>
                     {row.missing ? t.missing : row.checks.length}
                   </span>
                 </button>
@@ -155,13 +155,13 @@ export function CoveragePanes({
 
       <section className="min-w-0 flex-1 overflow-y-auto bg-card">
         {typeof coverage === "object" && coverage && (
-          <p className="border-b px-6 py-2 text-[12px] text-muted-foreground">{t.tablesCovered(coverage.covered, coverage.tables.length)}</p>
+          <p className="border-b px-6 py-2 text-caption text-muted-foreground">{t.tablesCovered(coverage.covered, coverage.tables.length)}</p>
         )}
         {selected && (
           <div className="space-y-5 p-6">
             <header className="space-y-1">
-              <h2 className="font-mono text-[20px] leading-tight font-semibold break-all">{selected.table}</h2>
-              <p className="text-[13px] text-muted-foreground">
+              <h2 className="font-mono text-title leading-tight font-semibold break-all">{selected.table}</h2>
+              <p className="text-body-sm text-muted-foreground">
                 {selected.missing ? t.missingTable : selected.checks.length > 0 ? t.watchedBy(selected.checks.length) : t.unwatched}
                 {selected.columnCount !== undefined && ` · ${t.columns(selected.columnCount)}`}
               </p>
@@ -172,8 +172,8 @@ export function CoveragePanes({
                 {selected.checks.map((check) => (
                   <li key={check.scriptId}>
                     <Link href={checkHref(check.scriptId)} className="block w-full px-4 py-2 text-left hover:bg-foreground/[0.04]">
-                      <span className="block text-[13px] font-medium">{zh ? check.cnName || check.name : check.name}</span>
-                      <span className="block font-mono text-[11px] text-muted-foreground">{check.scriptId}</span>
+                      <span className="block text-body-sm font-medium">{zh ? check.cnName || check.name : check.name}</span>
+                      <span className="block font-mono text-caption text-muted-foreground">{check.scriptId}</span>
                     </Link>
                   </li>
                 ))}
@@ -182,7 +182,9 @@ export function CoveragePanes({
 
             {!selected.missing && (
               <Button asChild size="sm" variant={selected.checks.length > 0 ? "outline" : "default"}>
-                <Link href={`/checks/new?table=${encodeURIComponent(selected.table)}`}>
+                <Link
+                  href={`/checks/new?table=${encodeURIComponent(selected.table)}${sourceId === DEFAULT_SOURCE_ID ? "" : `&source=${encodeURIComponent(sourceId)}`}`}
+                >
                   <Plus />
                   {t.newCheck}
                 </Link>

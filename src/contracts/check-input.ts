@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DataSourceId } from "./data-sources";
 
 /** Optional text a check carries; null or missing is stored as nothing. */
 const text = z.string().nullish();
@@ -16,6 +17,8 @@ const editable = {
   sqlContent: z.string().min(1, "sqlContent is required"),
   isScheduled: z.boolean().optional(),
   cronSchedule: text,
+  /** The data source it runs against; missing means the built-in `default`. */
+  dataSourceId: DataSourceId.optional(),
 };
 
 /** POST /api/scripts: a new check. Unknown fields (createdBy, demoSeed, …) are dropped. */

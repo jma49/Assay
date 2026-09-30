@@ -25,6 +25,8 @@ interface CodeMirrorEditorProps extends Omit<ReactCodeMirrorProps, "value" | "on
   minHeight?: string;
   /** Grow to the parent's height (minHeight stays the floor). */
   fill?: boolean;
+  /** The source the check runs against: the AI assistant drafts and dry-runs on it. */
+  dataSourceId?: string;
   t?: (key: DashboardTranslationKeys | string) => string;
 }
 
@@ -53,6 +55,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   minHeight = "300px",
   fill = false,
   t = (key) => key.toString(),
+  dataSourceId,
   ...rest
 }) => {
   const { language } = useLanguage();
@@ -60,7 +63,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   const aiAvailable = useMe()?.ai === true;
   const theme = useEditorTheme();
   const extensions = useMemo(() => postgresExtensions(), []);
-  const assistant = useSqlAssistant(value, language, onChange);
+  const assistant = useSqlAssistant(value, language, onChange, dataSourceId);
   const [showPreview, setShowPreview] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [isFormatting, setIsFormatting] = useState(false);
@@ -92,7 +95,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   return (
     <div className={cn("overflow-hidden rounded-lg border bg-card", fill && "flex h-full flex-col")}>
       <div className="flex h-11 items-center justify-between gap-2 border-b bg-muted/40 px-4">
-        <div className="flex min-w-0 items-center gap-3 text-[13px]">
+        <div className="flex min-w-0 items-center gap-3 text-body-sm">
           <span className="font-medium">SQL</span>
           <span className="text-muted-foreground tabular-nums">
             {lineCount} {t(lineCount === 1 ? "codeStatisticsLine" : "codeStatisticsLines")}
@@ -107,17 +110,17 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
               size="sm"
               onClick={() => setShowAI(!showAI)}
               aria-pressed={showAI}
-              className={cn("h-8 px-2.5 text-[13px]", showAI && "bg-accent")}
+              className={cn("h-8 px-2.5 text-body-sm", showAI && "bg-accent")}
             >
               <Sparkles className="size-3.5" />
               AI
             </Button>
           )}
-          <Button type="button" variant="ghost" size="sm" onClick={handleFormat} disabled={isFormatting || !value.trim()} className="h-8 px-2.5 text-[13px]">
+          <Button type="button" variant="ghost" size="sm" onClick={handleFormat} disabled={isFormatting || !value.trim()} className="h-8 px-2.5 text-body-sm">
             <AlignLeft className="size-3.5" />
             {isFormatting ? t("formatting") : t("formatCode")}
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={() => setShowPreview(!showPreview)} className="h-8 px-2.5 text-[13px]">
+          <Button type="button" variant="ghost" size="sm" onClick={() => setShowPreview(!showPreview)} className="h-8 px-2.5 text-body-sm">
             {showPreview ? <Code className="size-3.5" /> : <Eye className="size-3.5" />}
             {showPreview ? t("editMode") : t("previewMode")}
           </Button>
@@ -136,7 +139,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
       )}
 
       {showPreview ? (
-        <pre className={cn("overflow-auto whitespace-pre-wrap bg-muted/30 p-4 font-mono text-sm", fill && "flex-1")} style={{ minHeight }}>
+        <pre className={cn("overflow-auto whitespace-pre-wrap bg-muted/30 p-4 font-mono text-body-md", fill && "flex-1")} style={{ minHeight }}>
           {value || <span className="text-muted-foreground">{t("noCodeContent")}</span>}
         </pre>
       ) : (
@@ -149,7 +152,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
             height={fill ? "100%" : "auto"}
             minHeight={fill ? undefined : minHeight}
             basicSetup={BASIC_SETUP}
-            className={cn("text-sm", fill && "absolute inset-0")}
+            className={cn("text-body-md", fill && "absolute inset-0")}
             style={{
               fontFamily: "var(--editor-font-family, var(--font-mono))",
               fontSize: "var(--editor-font-size, 14px)",

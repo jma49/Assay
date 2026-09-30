@@ -18,7 +18,7 @@ interface EditHistoryTableProps {
   onViewDetails: (history: EditHistoryRecord) => void;
 }
 
-const HEAD_CLASS = "h-11 px-4 text-[13px] font-normal text-muted-foreground";
+const HEAD_CLASS = "h-11 px-4 text-body-sm font-normal text-muted-foreground";
 
 /** The history list, or its loading, error or empty state. */
 export function EditHistoryTable({ histories, loading, error, language, t, onRetry, onViewDetails }: EditHistoryTableProps) {
@@ -29,8 +29,8 @@ export function EditHistoryTable({ histories, loading, error, language, t, onRet
       <div className="flex flex-col items-center justify-center py-16">
         <div className="p-6 rounded-lg border border-failure/30 max-w-md mx-auto text-center">
           <AlertCircle className="h-12 w-12 text-failure mx-auto mb-4" />
-          <p className="text-lg font-medium text-failure mb-2">{t("errorTitle")}</p>
-          <p className="text-sm text-failure mb-4">{error}</p>
+          <p className="text-title-sm font-medium text-failure mb-2">{t("errorTitle")}</p>
+          <p className="text-body-md text-failure mb-4">{error}</p>
           <Button
             onClick={onRetry}
             variant="outline"
@@ -50,8 +50,8 @@ export function EditHistoryTable({ histories, loading, error, language, t, onRet
       <div className="flex flex-col items-center justify-center py-16">
         <div className="p-6 rounded-lg border border-dashed border-muted-foreground/20 max-w-md mx-auto text-center">
           <History className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-          <p className="text-lg font-medium text-muted-foreground mb-2">{t("noEditHistory")}</p>
-          <p className="text-sm text-muted-foreground/70">{t("noEditHistoryDetail")}</p>
+          <p className="text-title-sm font-medium text-muted-foreground mb-2">{t("noEditHistory")}</p>
+          <p className="text-body-md text-muted-foreground/70">{t("noEditHistoryDetail")}</p>
         </div>
       </div>
     );
@@ -63,7 +63,7 @@ export function EditHistoryTable({ histories, loading, error, language, t, onRet
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="h-11 px-6 text-[13px] font-normal text-muted-foreground">
+              <TableHead className="h-11 px-6 text-body-sm font-normal text-muted-foreground">
                 <div className="flex items-center gap-2">{t("operationType")}</div>
               </TableHead>
               <TableHead className={HEAD_CLASS}>
@@ -78,7 +78,7 @@ export function EditHistoryTable({ histories, loading, error, language, t, onRet
               <TableHead className={HEAD_CLASS}>
                 <div className="flex items-center gap-2">{t("fieldChanges")}</div>
               </TableHead>
-              <TableHead className="h-11 px-6 text-right text-[13px] font-normal text-muted-foreground">
+              <TableHead className="h-11 px-6 text-right text-body-sm font-normal text-muted-foreground">
                 <div className="flex items-center justify-end gap-2">{t("tableActions")}</div>
               </TableHead>
             </TableRow>
@@ -95,7 +95,7 @@ export function EditHistoryTable({ histories, loading, error, language, t, onRet
                 <TableCell className="px-6 py-3">
                   <div className="flex items-center gap-3">
                     <OperationIcon operation={history.operation} />
-                    <OperationBadge operation={history.operation} t={t} className="font-medium px-2 py-1 text-xs" />
+                    <OperationBadge operation={history.operation} t={t} className="font-medium px-2 py-1 text-caption" />
                   </div>
                 </TableCell>
                 <TableCell
@@ -107,7 +107,7 @@ export function EditHistoryTable({ histories, loading, error, language, t, onRet
                       {history.scriptSnapshot?.name || history.scriptSnapshot?.scriptId || t("unknownScript")}
                     </div>
                     {history.scriptSnapshot?.cnName && (
-                      <div className="text-xs text-muted-foreground truncate">{history.scriptSnapshot.cnName}</div>
+                      <div className="text-caption text-muted-foreground truncate">{history.scriptSnapshot.cnName}</div>
                     )}
                   </div>
                 </TableCell>
@@ -117,19 +117,19 @@ export function EditHistoryTable({ histories, loading, error, language, t, onRet
                 >
                   <div className="flex items-center gap-2">
                     <User className="w-3 h-3" />
-                    <span className="truncate text-sm">
+                    <span className="truncate text-body-md">
                       {history.userName || history.userEmail || history.scriptSnapshot?.author || t("unknownUser")}
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="max-w-40 px-4 py-3 text-[13px] text-muted-foreground tabular-nums">
+                <TableCell className="max-w-40 px-4 py-3 text-body-sm text-muted-foreground tabular-nums">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-3 h-3" />
                     <span className="truncate">{formatDateTime(operationTimeIso(history), language)}</span>
                   </div>
                 </TableCell>
                 <TableCell className="px-4 py-3 text-muted-foreground max-w-48 leading-relaxed">
-                  <div className="truncate text-sm">{changesPreview(history.changes, t, language)}</div>
+                  <div className="truncate text-body-md">{changesPreview(history.changes, t, language)}</div>
                 </TableCell>
                 <TableCell className="px-6 py-3 text-right">
                   <Button

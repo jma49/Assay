@@ -54,22 +54,22 @@ export function DocsArticle({
   return (
     <div className="flex">
       <article className="min-w-0 flex-1 px-5 py-8 sm:px-10 lg:px-12" lang={language === "zh" ? "zh-CN" : "en"}>
-        <h1 className="font-display text-[34px] leading-tight font-semibold tracking-tight">{page.title[language]}</h1>
+        <h1 className="font-display text-display-md leading-tight font-semibold tracking-tight">{page.title[language]}</h1>
         <div className="docs-prose mt-6">{content[language]}</div>
 
         <nav className="mt-14 grid gap-3 border-t pt-6 sm:grid-cols-2" aria-label="Previous and next">
           {previous ? (
             <Link href={`/docs/${previous.slug}`} className="flex flex-col items-start rounded-lg bg-card px-4 py-2.5 shadow-border transition-[box-shadow] duration-150 hover:shadow-border-hover">
-              <span className="text-[12px] text-muted-foreground">← {t.previous}</span>
-              <span className="text-[14px] font-medium">{previous.title[language]}</span>
+              <span className="text-caption text-muted-foreground">← {t.previous}</span>
+              <span className="text-body-md font-medium">{previous.title[language]}</span>
             </Link>
           ) : (
             <span />
           )}
           {next && (
             <Link href={`/docs/${next.slug}`} className="flex flex-col items-end rounded-lg bg-card px-4 py-2.5 text-right shadow-border transition-[box-shadow] duration-150 hover:shadow-border-hover">
-              <span className="text-[12px] text-muted-foreground">{t.next} →</span>
-              <span className="text-[14px] font-medium">{next.title[language]}</span>
+              <span className="text-caption text-muted-foreground">{t.next} →</span>
+              <span className="text-body-md font-medium">{next.title[language]}</span>
             </Link>
           )}
         </nav>
@@ -78,14 +78,14 @@ export function DocsArticle({
       {toc.length > 0 && (
         <aside className="hidden w-56 shrink-0 xl:block">
           <div className="sticky top-14 px-5 py-8">
-            <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">{t.onThisPage}</p>
+            <p className="text-label-caps uppercase text-muted-foreground">{t.onThisPage}</p>
             <ul className="mt-2 space-y-1 border-l">
               {toc.map((heading) => (
                 <li key={heading.id}>
                   <a
                     href={`#${heading.id}`}
                     className={cn(
-                      "-ml-px block border-l-2 py-0.5 text-[13px] leading-snug",
+                      "-ml-px block border-l-2 py-0.5 text-body-sm leading-snug",
                       heading.depth === 3 ? "pl-6" : "pl-3",
                       active === heading.id
                         ? "border-primary font-medium text-primary"

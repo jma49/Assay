@@ -111,7 +111,7 @@ export function ConsentPanel({ clientName, clientHost, redirectHost, scopes, ema
 
   return (
     <AuthShell title={title} description={t.description}>
-      <div className="grid w-full gap-4 text-[13px]">
+      <div className="grid w-full gap-4 text-body-sm">
         {unverified && (
           <div role="note" className="grid gap-1 rounded-lg bg-attention-soft px-3 py-2.5 text-attention">
             <p className="font-semibold">{t.unverified}</p>
@@ -132,7 +132,7 @@ export function ConsentPanel({ clientName, clientHost, redirectHost, scopes, ema
           {clientHost && (
             <>
               <dt className="text-muted-foreground">{t.publishedBy}</dt>
-              <dd className="truncate font-mono text-[12px]">{clientHost}</dd>
+              <dd className="truncate font-mono text-caption">{clientHost}</dd>
             </>
           )}
         </dl>
@@ -167,7 +167,7 @@ export function ConsentPanel({ clientName, clientHost, redirectHost, scopes, ema
           )}
         </ul>
 
-        <p className="text-[12px] text-muted-foreground">{t.roleNote(role)}</p>
+        <p className="text-caption text-muted-foreground">{t.roleNote(role)}</p>
 
         {(failed || nothingChosen) && (
           <p role="alert" className="rounded-lg bg-failure-soft px-3 py-2.5 text-failure">
