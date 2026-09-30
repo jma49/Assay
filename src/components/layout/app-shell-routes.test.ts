@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { namesItsOwnTab, offersNewCheck, pageTitle } from "./app-shell-routes";
+import { namesItsOwnTab, offersNewCheck, pageIntro, pageTitle, parentPage } from "./app-shell-routes";
 
 describe("pageTitle", () => {
   it.each([
@@ -38,5 +38,33 @@ describe("namesItsOwnTab", () => {
     for (const path of ["/checks", "/checks/new", "/checks/manage", "/checks/manage/history", "/runs/abc"]) {
       expect(namesItsOwnTab(path), path).toBe(false);
     }
+  });
+});
+
+describe("parentPage", () => {
+  it("leads back from a check or a run to its list", () => {
+    expect(parentPage("/checks/orders")?.href).toBe("/checks");
+    expect(parentPage("/runs/abc")?.href).toBe("/runs");
+  });
+
+  it("is absent on list and form pages", () => {
+    for (const path of ["/checks", "/checks/new", "/checks/manage", "/runs", "/approvals"]) {
+      expect(parentPage(path), path).toBeUndefined();
+    }
+  });
+});
+
+describe("pageIntro", () => {
+  it("introduces list pages in both languages", () => {
+    for (const path of ["/checks", "/checks/new", "/checks/manage", "/runs", "/activity", "/coverage"]) {
+      const intro = pageIntro(path);
+      expect(intro?.en, path).toBeTruthy();
+      expect(intro?.zh, path).toBeTruthy();
+    }
+  });
+
+  it("leaves pages with their own heading alone", () => {
+    expect(pageIntro("/checks/orders")).toBeUndefined();
+    expect(pageIntro("/runs/abc")).toBeUndefined();
   });
 });

@@ -15,7 +15,7 @@ const STATUS_LABEL: Record<Language, Record<Status, string>> = {
   zh: { passed: "通过", attention: "需要关注", failed: "失败" },
 };
 
-export function StatusDot({ status }: { status: Status }) {
+function StatusDot({ status }: { status: Status }) {
   return (
     <span
       aria-hidden

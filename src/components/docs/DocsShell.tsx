@@ -144,7 +144,7 @@ function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
                     aria-current={current ? "page" : undefined}
                     className={cn(
                       "block rounded-[4px] px-3 py-1 text-body-sm",
-                      current ? "bg-primary-soft font-medium text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      current ? "bg-primary-soft font-medium text-primary-ink" : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
                     {page.title[language]}
