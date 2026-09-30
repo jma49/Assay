@@ -40,7 +40,7 @@ export function CheckHeader({
         )}
         <AlertBadges alerting={check.alerting} />
       </div>
-      <h1 className="text-display-sm leading-tight font-bold">{name}</h1>
+      <h1 className="text-display-md">{name}</h1>
       {description && <p className="max-w-[70ch] text-pretty text-body-md text-muted-foreground">{description}</p>}
       <p className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-muted-foreground">
         <span className="font-mono">{check.scriptId}</span>

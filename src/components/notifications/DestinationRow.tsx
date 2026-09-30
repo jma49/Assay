@@ -76,7 +76,7 @@ export function DestinationRow({
             </span>
           ))}
           {destination.digest?.enabled && (
-            <span className="rounded-md bg-primary-soft px-1.5 py-0.5 text-primary" title={destination.digest.timeZone}>
+            <span className="rounded-md bg-primary-soft px-1.5 py-0.5 text-primary-ink" title={destination.digest.timeZone}>
               {t.digestAt(`${String(destination.digest.hour).padStart(2, "0")}:00`)}
             </span>
           )}

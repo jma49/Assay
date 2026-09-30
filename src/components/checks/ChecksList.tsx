@@ -16,7 +16,7 @@ import { formatDateTime, formatRelative } from "@/lib/utils/datetime";
 import { cn } from "@/lib/utils/utils";
 import { Sparkline } from "./Sparkline";
 import { StatStrip, type StatTile } from "./StatStrip";
-import { OUTCOME_DOT, OUTCOME_GROUPS, OUTCOME_LABEL, scheduleLabel } from "./status";
+import { OUTCOME_DOT, OUTCOME_GROUPS, OUTCOME_LABEL, OUTCOME_PILL, scheduleLabel } from "./status";
 
 type Filter = "all" | RunOutcome;
 
@@ -102,12 +102,17 @@ function Delta({ check }: { check: CheckSummary }) {
   );
 }
 
-/** What the check found on its last run, in words. */
+/** What the check found on its last run, as a pill in its outcome's colour. */
 function Now({ check, t }: { check: CheckSummary; t: Copy }) {
-  if (!check.state) return <span className="text-muted-foreground">—</span>;
-  if (check.state.outcome === "error") return <span className="text-failure">{t.queryError}</span>;
-  if (check.state.rowCount === 0) return <span className="text-muted-foreground">{t.rows(0)}</span>;
-  return <>{t.rows(check.state.rowCount)}</>;
+  const state = check.state;
+  if (!state) return <span className="text-muted-foreground">—</span>;
+  const text = state.outcome === "error" ? t.queryError : t.rows(state.rowCount);
+  return (
+    <span className={cn("inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-caption font-medium tabular-nums", OUTCOME_PILL[state.outcome])}>
+      <span className="size-1.5 rounded-full bg-current" aria-hidden />
+      {text}
+    </span>
+  );
 }
 
 function Markers({ check, t }: { check: CheckSummary; t: Copy }) {
@@ -188,9 +193,9 @@ export function ChecksList() {
   return (
     <div className={`${APP_CONTAINER} space-y-5 py-6`}>
       <WindowToolbar>
-        <div className="relative w-64 max-sm:w-full">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input type="search" aria-label={t.search} placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} className="pl-8" />
+        <div className="relative w-72 max-sm:w-full">
+          <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input type="search" aria-label={t.search} placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} className="h-10 rounded-full pl-10" />
         </div>
       </WindowToolbar>
       {data && <WindowStatusBar>{t.count(checks.length)}</WindowStatusBar>}
@@ -199,8 +204,8 @@ export function ChecksList() {
       <StatStrip tiles={tiles} label={t.summary} />
 
       <div className="overflow-hidden rounded-xl bg-card shadow-border">
-        <div className="flex flex-wrap items-center gap-3 border-b px-4 py-2.5">
-          <div role="group" aria-label={t.all} className="inline-flex gap-0.5 rounded-md border bg-background p-0.5">
+        <div className="flex flex-wrap items-center gap-3 border-b px-5 py-3.5 max-md:px-4">
+          <div role="group" aria-label={t.all} className="inline-flex max-w-full gap-0.5 overflow-x-auto rounded-full bg-muted p-1 [scrollbar-width:none]">
             {(["all", "error", "issues", "clean"] as Filter[]).map((key) => (
               <button
                 key={key}
@@ -208,11 +213,21 @@ export function ChecksList() {
                 aria-pressed={filter === key}
                 onClick={() => setFilter(key)}
                 className={cn(
-                  "rounded-sm px-2.5 py-1 text-caption transition-[color,background-color] duration-150",
-                  filter === key ? "bg-card font-medium text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground",
+                  "inline-flex h-8 shrink-0 items-center gap-2 rounded-full px-3.5 text-body-sm transition-[color,background-color] duration-150 max-sm:px-3",
+                  filter === key ? "bg-foreground font-medium text-background" : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {key === "all" ? t.all : OUTCOME_LABEL[key][language]}
+                {!pending && (
+                  <span
+                    className={cn(
+                      "min-w-5 rounded-full px-1.5 text-center text-caption tabular-nums",
+                      filter === key ? "bg-background/20 text-background" : "bg-card text-muted-foreground",
+                    )}
+                  >
+                    {key === "all" ? checks.length : counts[key]}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -243,11 +258,11 @@ export function ChecksList() {
             <div className="md:hidden">
               {groups.map(({ group, rows }) => (
                 <section key={group?.outcome ?? "never"} aria-label={group ? group.title[language] : t.neverRan}>
-                  <h2 className="border-b bg-background px-4 py-1.5 text-caption font-medium text-muted-foreground">{groupTitle(group, rows.length)}</h2>
+                  <h2 className="border-b bg-muted/50 px-4 py-2 text-caption font-medium text-muted-foreground">{groupTitle(group, rows.length)}</h2>
                   <ul>
                     {rows.map((c) => (
                       <li key={c.scriptId} className="border-b last:border-0">
-                        <Link href={href(c)} className="flex items-start gap-3 px-4 py-2.5 text-body-sm transition-[background-color] duration-150 hover:bg-muted/60">
+                        <Link href={href(c)} className="flex items-start gap-3 px-4 py-3.5 text-body-sm transition-[background-color] duration-150 hover:bg-muted/60">
                           <span className="flex h-5 w-2 shrink-0 items-center">{dot(c)}</span>
                           <span className="min-w-0 flex-1">
                             <span className="flex items-baseline gap-3">
@@ -277,19 +292,18 @@ export function ChecksList() {
               <table className="w-full table-fixed text-body-sm">
                 <thead>
                   <tr className="border-b text-caption text-muted-foreground">
-                    <th className="w-10 px-4 py-2" />
-                    <th className="px-3 py-2 text-left font-medium">{t.check}</th>
-                    <th className="w-28 px-3 py-2 text-left font-medium">{t.now}</th>
-                    <th className="w-24 px-3 py-2 text-left font-medium">{t.delta}</th>
-                    <th className="w-32 px-3 py-2 text-left font-medium">{t.trend}</th>
-                    <th className="w-48 px-3 py-2 text-left font-medium max-lg:hidden">{t.schedule}</th>
-                    <th className="w-32 px-4 py-2 text-right font-medium">{t.lastRun}</th>
+                    <th className="py-3 pr-3 pl-5 text-left font-medium">{t.check}</th>
+                    <th className="w-36 px-3 py-3 text-left font-medium">{t.now}</th>
+                    <th className="w-24 px-3 py-3 text-left font-medium">{t.delta}</th>
+                    <th className="w-32 px-3 py-3 text-left font-medium">{t.trend}</th>
+                    <th className="w-48 px-3 py-3 text-left font-medium max-lg:hidden">{t.schedule}</th>
+                    <th className="w-32 py-3 pr-5 pl-3 text-right font-medium">{t.lastRun}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {groups.map(({ group, rows }) => [
-                    <tr key={`group-${group?.outcome ?? "never"}`} className="border-b bg-background">
-                      <td colSpan={7} className="px-4 py-1.5 text-caption font-medium text-muted-foreground">
+                    <tr key={`group-${group?.outcome ?? "never"}`} className="border-b bg-muted/50">
+                      <td colSpan={6} className="px-5 py-2 text-caption font-medium text-muted-foreground">
                         {groupTitle(group, rows.length)}
                       </td>
                     </tr>,
@@ -302,10 +316,9 @@ export function ChecksList() {
                           router.push(href(c));
                         }}
                       >
-                        <td className="px-4 py-2.5">{dot(c)}</td>
-                        <td className="px-3 py-2.5">
+                        <td className="py-3.5 pr-3 pl-5">
                           <div className="flex min-w-0 items-center gap-1.5">
-                            <Link href={href(c)} className="truncate font-medium hover:underline">
+                            <Link href={href(c)} className="truncate text-body-md font-medium hover:underline">
                               {name(c)}
                             </Link>
                             <Markers check={c} t={t} />
@@ -315,19 +328,19 @@ export function ChecksList() {
                             {c.alerting.owner && <span className="font-sans"> · {c.alerting.owner.name}</span>}
                           </span>
                         </td>
-                        <td className="px-3 py-2.5 whitespace-nowrap tabular-nums">
+                        <td className="px-3 py-3.5 whitespace-nowrap">
                           <Now check={c} t={t} />
                         </td>
-                        <td className="px-3 py-2.5">
+                        <td className="px-3 py-3.5">
                           <Delta check={c} />
                         </td>
-                        <td className="px-3 py-2.5">
+                        <td className="px-3 py-3.5">
                           <Sparkline points={c.history} outcome={c.state?.outcome ?? "clean"} />
                         </td>
-                        <td className="truncate px-3 py-2.5 whitespace-nowrap text-muted-foreground max-lg:hidden" title={c.schedule ?? undefined}>
+                        <td className="truncate px-3 py-3.5 whitespace-nowrap text-muted-foreground max-lg:hidden" title={c.schedule ?? undefined}>
                           {scheduleLabel(c.schedule, language)}
                         </td>
-                        <td className="px-4 py-2.5 text-right whitespace-nowrap text-muted-foreground" title={c.state ? formatDateTime(c.state.lastRunAt, language) : undefined}>
+                        <td className="py-3.5 pr-5 pl-3 text-right whitespace-nowrap text-muted-foreground" title={c.state ? formatDateTime(c.state.lastRunAt, language) : undefined}>
                           {lastRun(c)}
                         </td>
                       </tr>
