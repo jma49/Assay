@@ -14,13 +14,21 @@ export interface HeartbeatDoc {
 }
 
 /** A heartbeat older than this means the schedule stopped firing. */
-export const HEARTBEAT_STALE_MS = 60 * 60 * 1000;
+export const HEARTBEAT_STALE_MS = 90 * 60 * 1000;
 
 export type HeartbeatStatus = "ok" | "stale" | "never";
 
 /** Whether the scheduler is alive, from its last heartbeat. */
-export function heartbeatStatus(last: { updatedAt: Date } | null, now: Date = new Date()): HeartbeatStatus {
+export function heartbeatStatus(
+  last: { updatedAt: Date; mode?: string } | null,
+  now: Date = new Date(),
+): HeartbeatStatus {
   if (!last) return "never";
+  // Only the schedule's own heartbeat proves it is alive: a manual
+  // workflow_dispatch run (mode "all") must not mask a dead schedule.
+  // Heartbeats recorded without a mode predate mode tracking and keep the
+  // old age-based evaluation.
+  if (last.mode !== undefined && last.mode !== "scheduled") return "stale";
   return now.getTime() - last.updatedAt.getTime() > HEARTBEAT_STALE_MS ? "stale" : "ok";
 }
 
