@@ -4,6 +4,7 @@
  * unless --recompute rebuilds every check's state from its history (for
  * state written before runs continued from history).
  *   tsx -r dotenv/config scripts/backfill-check-state.ts [--dry-run] [--recompute]
+ * Safe to delete once every deployment has run it and no check lacks state; new checks carry state from their first run.
  */
 import db from "@/lib/database/db";
 import { getMongoDbClient } from "@/lib/database/mongodb";
