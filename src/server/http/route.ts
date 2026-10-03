@@ -112,7 +112,7 @@ export function withAuth<P extends Record<string, string | string[]> = Record<st
     try {
       const principal = await authorize(access);
       if (principal instanceof Response) return principal;
-      return await runWithRequestId(requestIdOf(request), () =>
+      return await runWithRequestId(requestIdOf(request), async () =>
         handler(request, { principal, params: await context.params }),
       );
     } catch (error) {
