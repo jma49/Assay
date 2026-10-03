@@ -86,6 +86,18 @@ export interface ClaimedDelivery {
   claim: string;
 }
 
+/** A delivery that exhausted its retries: the dead letter operators see. */
+export interface FailedDelivery {
+  id: string;
+  eventId: string;
+  checkId: string;
+  destinationId: string;
+  destinationName: string;
+  attempts: number;
+  lastError: string | null;
+  failedAt: Date;
+}
+
 type DeliveryUpdate =
   | { status: "sent"; at: Date }
   | { status: "failed"; at: Date; error: string; attempted: boolean }
@@ -111,6 +123,13 @@ export interface NotifyStore {
   claimDelivery(now: Date, leaseMs: number): Promise<ClaimedDelivery | null>;
   /** Applies the update only while the claim is still this dispatcher's. */
   finishDelivery(delivery: ClaimedDelivery, update: DeliveryUpdate): Promise<void>;
+  /** Deliveries that exhausted their retries, newest first: the dead-letter list. */
+  failedDeliveries(workspaceId: string, limit: number): Promise<FailedDelivery[]>;
+  /**
+   * Puts a failed delivery back in the outbox with a fresh attempt budget.
+   * False when the delivery is not failed, not found, or outside the workspace.
+   */
+  requeueDelivery(workspaceId: string, id: string): Promise<boolean>;
   /**
    * Atomically takes one of the destination's `limit` sends in the hour up
    * to `now`; false when they are all taken, so concurrent dispatchers can
