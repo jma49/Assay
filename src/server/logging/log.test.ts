@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { currentRequestId, logError, logInfo, logWarn, runWithRequestId } from "./log";
+import { currentRequestId, logError, logInfo, logWarn, runWithRequestId, scrub } from "./log";
 
 describe("structured logs", () => {
   const lines: string[] = [];
@@ -55,5 +55,56 @@ describe("structured logs", () => {
     expect(currentRequestId()).toBeUndefined();
     logInfo("after");
     expect(lastEntry()["requestId"]).toBeUndefined();
+  });
+
+  it("redacts sensitive keys in emitted log fields", () => {
+    logWarn("login", {
+      user: "u1",
+      password: "hunter2",
+      DB_PASSWORD: "hunter3",
+      apiKey: "key-1",
+      api_key: "key-2",
+      accessToken: "tok",
+      clientSecret: "s3cr3t",
+      connectionString: "postgresql://u:p@host/db",
+      userEmail: "someone@example.com",
+      authorization: "Bearer abc",
+    });
+    const entry = lastEntry();
+    expect(entry["user"]).toBe("u1");
+    for (const key of [
+      "password",
+      "DB_PASSWORD",
+      "apiKey",
+      "api_key",
+      "accessToken",
+      "clientSecret",
+      "connectionString",
+      "userEmail",
+      "authorization",
+    ]) {
+      expect(entry[key], key).toBe("[redacted]");
+    }
+  });
+});
+
+describe("scrub", () => {
+  it("redacts nested objects and arrays", () => {
+    const out = scrub({
+      config: { nested: { token: "tok", keep: 1 } },
+      list: [{ secret: "s" }, "plain"],
+    }) as Record<string, unknown>;
+    expect(out["config"]).toEqual({ nested: { token: "[redacted]", keep: 1 } });
+    expect(out["list"]).toEqual([{ secret: "[redacted]" }, "plain"]);
+  });
+
+  it("leaves non-plain values and ordinary keys alone", () => {
+    const date = new Date("2026-10-02T00:00:00Z");
+    const out = scrub({ at: date, count: 3, name: "check" }) as Record<string, unknown>;
+    expect(out["at"]).toBe(date);
+    expect(out["count"]).toBe(3);
+    expect(out["name"]).toBe("check");
+    expect(scrub("token")).toBe("token");
+    expect(scrub(null)).toBeNull();
   });
 });

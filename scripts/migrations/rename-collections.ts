@@ -9,6 +9,7 @@
  *   npm run migrate:collections -- --merge --apply       # copy old-only documents into the new collection
  *   npm run migrate:collections -- --merge --apply --drop-old   # …then drop the old collection if every document arrived
  * It opens the database without getDb(), which would rename before showing anything.
+ * Safe to delete once no database holds the old names and rollbacks below the renaming build are out of scope; the app renames on start by itself.
  */
 import type { Db } from "mongodb";
 import { mongoDatabaseName } from "@/lib/database/mongo-connection";
