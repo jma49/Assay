@@ -1,4 +1,4 @@
-import { withSentryConfig } from "@sentry/nextjs";
+import { withSentryConfig } from "@sentry/nextjs/config";
 import { LEGACY_PAGE_REDIRECTS } from "./src/lib/legacy-redirects.mjs";
 
 const isDev = process.env.NODE_ENV === "development";
