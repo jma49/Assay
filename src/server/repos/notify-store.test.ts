@@ -132,3 +132,87 @@ describe("document mapping", () => {
     expect(event).toMatchObject({ workspaceId: "default", from: null, rowCount: 0, diff: null, error: null, suppressed: null, actionKey: null });
   });
 });
+
+describe("failedDeliveries", () => {
+  const destId = new ObjectId();
+  const eventId = new ObjectId();
+  const doc = (overrides: object = {}) => ({
+    _id: new ObjectId(),
+    workspaceId: "default",
+    status: "failed",
+    eventId: eventId.toHexString(),
+    destinationId: destId.toHexString(),
+    attempts: 6,
+    lastError: "HTTP 500",
+    createdAt: new Date("2026-09-28T12:00:00Z"),
+    updatedAt: new Date("2026-09-28T13:00:00Z"),
+    ...overrides,
+  });
+
+  it("lists failed deliveries newest first, enriched with names", async () => {
+    const find = vi.fn(async () => ({
+      sort: () => ({ limit: () => ({ toArray: async () => [doc(), doc()] }) }),
+    }));
+    const destFind = vi.fn(async () => ({
+      toArray: async () => [{ _id: destId, name: "Ops channel", kind: "slack", workspaceId: "default" }],
+    }));
+    const eventFind = vi.fn(async () => ({
+      toArray: async () => [{ _id: eventId, type: "issues", checkId: "orders", to: "issues", at: new Date() }],
+    }));
+    const store = mongoNotifyStore(
+      fakeDb({ notification_deliveries: { find }, notification_destinations: { find: destFind }, events: { find: eventFind } }),
+    );
+
+    const listed = await store.failedDeliveries("default", 50);
+
+    expect(find).toHaveBeenCalledOnce();
+    expect(find.mock.calls[0][0]).toEqual({ workspaceId: "default", status: "failed" });
+    expect(listed).toHaveLength(2);
+    expect(listed[0]).toMatchObject({
+      destinationName: "Ops channel",
+      checkId: "orders",
+      attempts: 6,
+      lastError: "HTTP 500",
+    });
+    expect(listed[0].failedAt).toEqual(new Date("2026-09-28T13:00:00Z"));
+  });
+
+  it("falls back to empty names when the destination or event is gone", async () => {
+    const find = vi.fn(async () => ({
+      sort: () => ({ limit: () => ({ toArray: async () => [doc()] }) }),
+    }));
+    const empty = vi.fn(async () => ({ toArray: async () => [] }));
+    const store = mongoNotifyStore(
+      fakeDb({ notification_deliveries: { find }, notification_destinations: { find: empty }, events: { find: empty } }),
+    );
+
+    const [listed] = await store.failedDeliveries("default", 50);
+
+    expect(listed.destinationName).toBe("");
+    expect(listed.checkId).toBe("");
+  });
+});
+
+describe("requeueDelivery", () => {
+  it("resets a failed delivery to pending with a fresh budget", async () => {
+    const id = new ObjectId();
+    const updateOne = vi.fn(async () => ({ modifiedCount: 1 }));
+    const store = mongoNotifyStore(fakeDb({ notification_deliveries: { updateOne } }));
+
+    expect(await store.requeueDelivery("default", id.toHexString())).toBe(true);
+
+    const [filter, update] = updateOne.mock.calls[0] as unknown as [object, { $set: Record<string, unknown> }];
+    expect(filter).toEqual({ _id: id, workspaceId: "default", status: "failed" });
+    expect(update.$set).toMatchObject({ status: "pending", attempts: 0, claim: null, lastError: null });
+    expect(update.$set.nextAttemptAt).toBeInstanceOf(Date);
+  });
+
+  it("refuses an invalid id and a delivery that is not failed", async () => {
+    const updateOne = vi.fn(async () => ({ modifiedCount: 0 }));
+    const store = mongoNotifyStore(fakeDb({ notification_deliveries: { updateOne } }));
+
+    expect(await store.requeueDelivery("default", "not-an-id")).toBe(false);
+    expect(updateOne).not.toHaveBeenCalled();
+    expect(await store.requeueDelivery("default", new ObjectId().toHexString())).toBe(false);
+  });
+});
