@@ -52,6 +52,23 @@ const isGuestRoute = matcher([
 ]);
 
 /**
+ * Every request gets an id at the edge: the incoming x-request-id is kept,
+ * otherwise one is made. Server code attaches it to each log line
+ * (src/server/logging/log.ts).
+ */
+function nextWithRequestId(req: NextRequest): NextResponse {
+  const headers = new Headers(req.headers);
+  let requestId = headers.get("x-request-id");
+  if (!requestId) {
+    requestId = crypto.randomUUID();
+    headers.set("x-request-id", requestId);
+  }
+  const response = NextResponse.next({ request: { headers } });
+  response.headers.set("x-request-id", requestId);
+  return response;
+}
+
+/**
  * An optimistic gate: it only checks that a session cookie is present, so
  * signed-out visitors are sent to sign in without a database call. Every
  * page and API route verifies the session itself before showing data.
@@ -63,7 +80,7 @@ export function proxy(req: NextRequest) {
   }
 
   const { pathname } = req.nextUrl;
-  if (isPublicRoute(pathname) || getSessionCookie(req)) return NextResponse.next();
+  if (isPublicRoute(pathname) || getSessionCookie(req)) return nextWithRequestId(req);
 
   if (guestIdFromToken(req.cookies.get(GUEST_COOKIE)?.value)) {
     if (isGuestRoute(pathname)) return NextResponse.next();
