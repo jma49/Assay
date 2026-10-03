@@ -5,6 +5,7 @@
  * update; runs that already have the fields are left alone. Dry run unless
  * --apply.
  *   tsx -r dotenv/config scripts/migrations/backfill-run-fields.ts [--apply]
+ * Safe to delete once every deployment has run it; a dry run then reports zero runs missing fields.
  */
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { COLLECTIONS } from "@/lib/database/collections";
