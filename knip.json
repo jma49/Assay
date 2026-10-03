@@ -10,6 +10,9 @@
     "src/components/ui/**": [
       "exports",
       "types"
+    ],
+    "src/sentry.client.config.ts": [
+      "files"
     ]
   }
 }

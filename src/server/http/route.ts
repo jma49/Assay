@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { ZodError, type ZodType } from "zod";
 import { GUEST_PERMISSIONS, validateApiAuth } from "@/lib/auth/auth-utils";
 import { requirePermission, type Permission, type UserRole } from "@/lib/auth/rbac";
+import { errorKind } from "@/lib/utils/public-log";
+import { REQUEST_ID_HEADER, logError, runWithRequestId } from "@/server/logging/log";
 
 /** Who is calling a route: a signed-in user, or a demo guest where the route allows one. */
 export interface Principal {
@@ -39,7 +42,10 @@ export function errorResponse(error: unknown): NextResponse {
     return NextResponse.json({ error: { code: "invalid_input", message: "Invalid input", issues } }, { status: 400 });
   }
   // The detail stays in the server log; the caller learns nothing about internals.
-  console.error("[API] Unhandled error:", error);
+  // Report to Sentry too: withAuth catches the error, so the SDK's automatic
+  // capture never sees it. A no-op when SENTRY_DSN is unset.
+  logError("Unhandled API error", { kind: errorKind(error) });
+  Sentry.captureException(error);
   return NextResponse.json({ error: { code: "internal", message: "Something went wrong" } }, { status: 500 });
 }
 
@@ -91,6 +97,14 @@ async function authorize(access: Access): Promise<Principal | Response> {
 }
 
 /**
+ * The edge proxy sets x-request-id; make one when it did not run
+ * (tests, direct calls), so logs always carry an id.
+ */
+function requestIdOf(request: NextRequest): string {
+  return request.headers.get(REQUEST_ID_HEADER) ?? crypto.randomUUID();
+}
+
+/**
  * A route handler behind an access rule. Refusals and thrown errors answer
  * `{ error: { code, message } }` (errorResponse).
  */
@@ -102,7 +116,9 @@ export function withAuth<P extends Record<string, string | string[]> = Record<st
     try {
       const principal = await authorize(access);
       if (principal instanceof Response) return principal;
-      return await handler(request, { principal, params: await context.params });
+      return await runWithRequestId(requestIdOf(request), async () =>
+        handler(request, { principal, params: await context.params }),
+      );
     } catch (error) {
       return errorResponse(error);
     }

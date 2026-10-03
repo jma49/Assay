@@ -12,6 +12,7 @@ import { runCheckNow } from "@/server/services/run-check-deps";
 import { mongoRunChecksStore, runChecks } from "@/server/services/run-checks";
 import { errorKind, inPublicCi } from "@/lib/utils/public-log";
 import { parseRunArgs, USAGE } from "./lib/run-args";
+import { recordHeartbeat, SCHEDULER_NAME } from "@/server/repos/heartbeat-store";
 import { reportLine, resultDetail } from "./lib/run-report";
 
 async function main() {
@@ -28,6 +29,12 @@ async function main() {
 
   const publicLog = inPublicCi();
   const mongo = await getMongoDbClient().getDb();
+  if (args.kind !== "one" && !args.dryRun) {
+    // The scheduler's heartbeat: /api/health reports the scheduler as stale
+    // when no run started in the last hour, so a dead schedule is visible.
+    // One-off manual runs do not count: they must not mask a dead schedule.
+    await recordHeartbeat(mongo, SCHEDULER_NAME, { runId: process.env.GITHUB_RUN_ID, mode: args.mode });
+  }
   try {
     if (args.kind === "one") {
       const result = await runCheckNow(args.checkId, { kind: "manual", by: { id: "cli", name: "Command line" } });

@@ -147,6 +147,49 @@ export function mongoNotifyStore(db: Db): NotifyStore {
       await deliveries.updateOne({ _id: new ObjectId(delivery.id), claim: delivery.claim }, { $set: set, $inc: inc });
     },
 
+    async failedDeliveries(workspaceId, limit) {
+      const docs = await deliveries.find({ workspaceId, status: "failed" }).sort({ updatedAt: -1 }).limit(limit).toArray();
+      const objectIds = (values: string[]) => {
+        const ids: ObjectId[] = [];
+        for (const value of new Set(values)) {
+          const id = toId(value);
+          if (id) ids.push(id);
+        }
+        return ids;
+      };
+      const [destinationDocs, eventDocs] = await Promise.all([
+        destinations.find({ _id: { $in: objectIds(docs.map((d) => String(d.destinationId))) } }).toArray(),
+        events.find({ _id: { $in: objectIds(docs.map((d) => String(d.eventId))) } }).toArray(),
+      ]);
+      const byDestination = new Map(destinationDocs.map((d) => [String(d._id), toDestination(d)]));
+      const byEvent = new Map(eventDocs.map((d) => [String(d._id), toStoredEvent(d)]));
+      return docs.map((doc) => {
+        const destination = byDestination.get(String(doc.destinationId));
+        const event = byEvent.get(String(doc.eventId));
+        return {
+          id: String(doc._id),
+          eventId: String(doc.eventId),
+          checkId: event?.checkId ?? "",
+          destinationId: String(doc.destinationId),
+          destinationName: destination?.name ?? "",
+          attempts: typeof doc.attempts === "number" ? doc.attempts : 0,
+          lastError: typeof doc.lastError === "string" ? doc.lastError : null,
+          failedAt: doc.updatedAt ? new Date(doc.updatedAt) : new Date(doc.createdAt),
+        };
+      });
+    },
+
+    async requeueDelivery(workspaceId, id) {
+      const _id = toId(id);
+      if (!_id) return false;
+      const now = new Date();
+      const result = await deliveries.updateOne(
+        { _id, workspaceId, status: "failed" },
+        { $set: { status: "pending", attempts: 0, nextAttemptAt: now, updatedAt: now, claim: null, lastError: null } },
+      );
+      return result.modifiedCount === 1;
+    },
+
     async takeSendSlot(destinationId, now, limit) {
       const _id = toId(destinationId);
       if (!_id) return false;
