@@ -89,3 +89,23 @@ export interface TelegramLinkDto extends TelegramLinkStatus {
   /** Opens a direct chat with the bot, which links that chat. */
   chatUrl: string;
 }
+
+/** A delivery that exhausted its retries, as the operator sees it. */
+export interface FailedDeliveryDto {
+  id: string;
+  eventId: string;
+  checkId: string;
+  destinationId: string;
+  destinationName: string;
+  attempts: number;
+  lastError: string | null;
+  failedAt: string;
+}
+
+export interface FailedDeliveriesResponse {
+  deliveries: FailedDeliveryDto[];
+}
+
+/** Puts a failed delivery back in the outbox. */
+export const RequeueDelivery = z.object({ id: z.string().trim().min(1).max(64) });
+export type RequeueDeliveryInput = z.infer<typeof RequeueDelivery>;
