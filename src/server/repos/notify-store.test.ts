@@ -150,13 +150,13 @@ describe("failedDeliveries", () => {
   });
 
   it("lists failed deliveries newest first, enriched with names", async () => {
-    const find = vi.fn(async () => ({
+    const find = vi.fn((_filter: unknown) => ({
       sort: () => ({ limit: () => ({ toArray: async () => [doc(), doc()] }) }),
     }));
-    const destFind = vi.fn(async () => ({
+    const destFind = vi.fn(() => ({
       toArray: async () => [{ _id: destId, name: "Ops channel", kind: "slack", workspaceId: "default" }],
     }));
-    const eventFind = vi.fn(async () => ({
+    const eventFind = vi.fn(() => ({
       toArray: async () => [{ _id: eventId, type: "issues", checkId: "orders", to: "issues", at: new Date() }],
     }));
     const store = mongoNotifyStore(
@@ -178,10 +178,10 @@ describe("failedDeliveries", () => {
   });
 
   it("falls back to empty names when the destination or event is gone", async () => {
-    const find = vi.fn(async () => ({
+    const find = vi.fn(() => ({
       sort: () => ({ limit: () => ({ toArray: async () => [doc()] }) }),
     }));
-    const empty = vi.fn(async () => ({ toArray: async () => [] }));
+    const empty = vi.fn(() => ({ toArray: async () => [] }));
     const store = mongoNotifyStore(
       fakeDb({ notification_deliveries: { find }, notification_destinations: { find: empty }, events: { find: empty } }),
     );

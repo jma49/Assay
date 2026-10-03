@@ -32,6 +32,7 @@ describe("COLLECTIONS", () => {
       oauthClientResources: "oauthClientResource",
       oauthResources: "oauthResource",
       jwks: "jwks",
+      cronHeartbeats: "cron_heartbeats",
     });
   });
 

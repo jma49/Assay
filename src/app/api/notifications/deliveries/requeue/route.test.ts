@@ -15,15 +15,21 @@ vi.mock("@/server/http/route", async (importOriginal) => {
   const mod = await importOriginal<typeof import("@/server/http/route")>();
   return {
     ...mod,
+    // Bypasses auth but keeps the real error mapping, like withAuth does.
     withAuth: (
       _access: unknown,
       handler: (req: NextRequest, ctx: { principal: object; params: Record<string, string> }) => Promise<Response>,
     ) =>
-      (req: NextRequest) =>
-        handler(req, {
-          principal: { id: "u1", name: "Op", email: "op@example.com", isGuest: false },
-          params: {},
-        }),
+      async (req: NextRequest) => {
+        try {
+          return await handler(req, {
+            principal: { id: "u1", name: "Op", email: "op@example.com", isGuest: false },
+            params: {},
+          });
+        } catch (error) {
+          return mod.errorResponse(error);
+        }
+      },
   };
 });
 
@@ -35,6 +41,7 @@ const post = (body: unknown) =>
       method: "POST",
       body: JSON.stringify(body),
     }),
+    { params: Promise.resolve({}) },
   );
 
 describe("POST /api/notifications/deliveries/requeue", () => {

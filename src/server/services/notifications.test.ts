@@ -54,6 +54,7 @@ interface MemoryDelivery {
   id: string;
   eventId: string;
   destinationId: string;
+  workspaceId: string;
   status: "pending" | "sent" | "failed";
   attempts: number;
   nextAttemptAt: Date;
@@ -121,6 +122,31 @@ function memoryStore(events: StoredEvent[], destinations: Destination[], checkEx
       const recent = (sendSlots.get(destinationId) ?? []).filter((at) => at.getTime() >= since);
       if (recent.length >= limit) return false;
       sendSlots.set(destinationId, [...recent, now]);
+      return true;
+    },
+    async failedDeliveries(workspaceId, limit) {
+      return deliveries
+        .filter((d) => d.workspaceId === workspaceId && d.status === "failed")
+        .slice(0, limit)
+        .map((d) => ({
+          id: d.id,
+          eventId: d.eventId,
+          checkId: events.find((e) => e.id === d.eventId)?.checkId ?? "",
+          destinationId: d.destinationId,
+          destinationName: destinations.find((x) => x.id === d.destinationId)?.name ?? "",
+          attempts: d.attempts,
+          lastError: d.error ?? null,
+          failedAt: d.sentAt ?? new Date(0),
+        }));
+    },
+    async requeueDelivery(workspaceId, id) {
+      const d = deliveries.find((x) => x.id === id && x.workspaceId === workspaceId && x.status === "failed");
+      if (!d) return false;
+      d.status = "pending";
+      d.attempts = 0;
+      d.claim = null;
+      d.error = undefined;
+      d.nextAttemptAt = new Date(0);
       return true;
     },
     async recordLastDelivery() {},
