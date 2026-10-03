@@ -33,6 +33,8 @@ const isPublicRoute = matcher([
   "/api/integrations/slack/interactions",
   // Agents authenticate with an API key or OAuth token, checked by the route.
   "/api/mcp",
+  // Health probes: load balancers and uptime monitors call it without credentials.
+  "/api/health",
   // OAuth discovery documents for MCP clients.
   "/.well-known/(.*)",
 ]);
