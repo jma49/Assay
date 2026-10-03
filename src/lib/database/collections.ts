@@ -7,6 +7,7 @@ export const COLLECTIONS = {
   runs: "runs",
   events: "events",
   batches: "batches",
+  cronHeartbeats: "cron_heartbeats",
   checkActions: "check_actions",
   scriptVersions: "script_versions",
   editHistory: "edit_history",

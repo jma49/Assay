@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { checkHealth, type Probe } from "./checks";
+import { checkHealth, schedulerProbe, type Probe } from "./checks";
 
 const okProbe = (name: Probe["name"]): Probe => ({ name, run: async () => {} });
 
@@ -52,5 +52,23 @@ describe("checkHealth", () => {
     );
     expect(report.status).toBe("degraded");
     expect(report.checks[0]?.status).toBe("down");
+  });
+});
+
+describe("schedulerProbe", () => {
+  it("is unconfigured when the scheduler never ran", async () => {
+    const probe = schedulerProbe(async () => null);
+    await expect(probe.run()).resolves.toBe("unconfigured");
+  });
+  it("passes when the heartbeat is fresh", async () => {
+    const probe = schedulerProbe(async () => ({ _id: "s", updatedAt: new Date() }));
+    await expect(probe.run()).resolves.toBeUndefined();
+  });
+  it("fails when the heartbeat is stale", async () => {
+    const probe = schedulerProbe(async () => ({
+      _id: "s",
+      updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    }));
+    await expect(probe.run()).rejects.toThrow();
   });
 });
