@@ -31,9 +31,16 @@ async function main() {
   const mongo = await getMongoDbClient().getDb();
   if (args.kind !== "one" && !args.dryRun) {
     // The scheduler's heartbeat: /api/health reports the scheduler as stale
-    // when no run started in the last hour, so a dead schedule is visible.
+    // when no run started in the last 90 minutes, so a dead schedule is visible.
     // One-off manual runs do not count: they must not mask a dead schedule.
-    await recordHeartbeat(mongo, SCHEDULER_NAME, { runId: process.env.GITHUB_RUN_ID, mode: args.mode });
+    try {
+      await recordHeartbeat(mongo, SCHEDULER_NAME, { runId: process.env.GITHUB_RUN_ID, mode: args.mode });
+    } catch (error) {
+      // A failed heartbeat must not cancel the scheduled checks: when Mongo
+      // is truly down the checks fail on their own below. Public CI logs get
+      // the error's type only; its text can hold hosts or credentials.
+      console.error("[Scheduler] Could not record the heartbeat:", inPublicCi() ? errorKind(error) : error);
+    }
   }
   try {
     if (args.kind === "one") {
