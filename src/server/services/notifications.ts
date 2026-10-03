@@ -87,7 +87,7 @@ export interface ClaimedDelivery {
 }
 
 /** A delivery that exhausted its retries: the dead letter operators see. */
-export interface FailedDelivery {
+interface FailedDelivery {
   id: string;
   eventId: string;
   checkId: string;

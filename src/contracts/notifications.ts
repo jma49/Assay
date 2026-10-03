@@ -108,4 +108,3 @@ export interface FailedDeliveriesResponse {
 
 /** Puts a failed delivery back in the outbox. */
 export const RequeueDelivery = z.object({ id: z.string().trim().min(1).max(64) });
-export type RequeueDeliveryInput = z.infer<typeof RequeueDelivery>;

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { type FailedDeliveriesResponse } from "@/contracts/notifications";
+import { type FailedDeliveriesResponse, type FailedDeliveryDto } from "@/contracts/notifications";
 import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { withAuth } from "@/server/http/route";
@@ -13,7 +13,7 @@ export const GET = withAuth(Permission.NOTIFICATION_MANAGE, async (request, { pr
   const db = await getMongoDbClient().getDb();
   const deliveries = await mongoNotifyStore(db).failedDeliveries(workspaceOf(principal), limit);
   const body: FailedDeliveriesResponse = {
-    deliveries: deliveries.map((d) => ({ ...d, failedAt: d.failedAt.toISOString() })),
+    deliveries: deliveries.map((d): FailedDeliveryDto => ({ ...d, failedAt: d.failedAt.toISOString() })),
   };
   return NextResponse.json(body);
 });

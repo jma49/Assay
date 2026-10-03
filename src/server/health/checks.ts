@@ -8,9 +8,9 @@ import { logError } from "@/server/logging/log";
 import { heartbeatStatus, readHeartbeat, SCHEDULER_NAME, type HeartbeatDoc } from "@/server/repos/heartbeat-store";
 
 /** How a component answered the probe. */
-export type ComponentStatus = "ok" | "down" | "unconfigured";
+type ComponentStatus = "ok" | "down" | "unconfigured";
 
-export interface ComponentCheck {
+interface ComponentCheck {
   name: "mongodb" | "redis" | "postgres" | "scheduler";
   status: ComponentStatus;
   /** How long the probe took; absent when the component is not configured. */
@@ -32,7 +32,7 @@ export interface Probe {
 }
 
 /** A probe must answer fast; a hanging dependency is a down dependency. */
-export const PROBE_TIMEOUT_MS = 5_000;
+const PROBE_TIMEOUT_MS = 5_000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -93,7 +93,7 @@ export function schedulerProbe(read: () => Promise<HeartbeatDoc | null>): Probe 
 }
 
 /** The probes every deployment answers: the app's own stores, plus the scheduler. */
-export function defaultProbes(): Probe[] {
+function defaultProbes(): Probe[] {
   return [
     { name: "mongodb", run: probeMongo },
     { name: "redis", run: probeRedis },
