@@ -1,18 +1,22 @@
+import { withSentryConfig } from "@sentry/nextjs/config";
 import { LEGACY_PAGE_REDIRECTS } from "./src/lib/legacy-redirects.mjs";
 
 const isDev = process.env.NODE_ENV === "development";
 
 // Everything the app loads is same-origin (sign-in is Better Auth on this
 // domain, fonts are self-hosted by next/font); only avatars come from the
-// OAuth providers' image hosts. Next.js needs inline scripts to hydrate, and
-// the dev server also needs eval and a websocket for hot reload.
+// OAuth providers' image hosts, and browser error telemetry goes to Sentry's
+// ingest hosts when NEXT_PUBLIC_SENTRY_DSN is set. Next.js needs inline
+// scripts to hydrate, and the dev server also needs eval and a websocket
+// for hot reload.
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self'${isDev ? " ws: wss:" : ""}`,
+  // Sentry ingest: without this the browser blocks the telemetry upload.
+  `connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io${isDev ? " ws: wss:" : ""}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -63,4 +67,12 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Source map upload and release management. Set SENTRY_ORG, SENTRY_PROJECT
+  // and SENTRY_AUTH_TOKEN to enable; without them error capture still works.
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  silent: !process.env.CI,
+  // Tree-shake Sentry's internal logger statements from the client bundle.
+  disableLogger: true,
+});
