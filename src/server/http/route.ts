@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { ZodError, type ZodType } from "zod";
 import { GUEST_PERMISSIONS, validateApiAuth } from "@/lib/auth/auth-utils";
 import { requirePermission, type Permission, type UserRole } from "@/lib/auth/rbac";
@@ -41,7 +42,10 @@ export function errorResponse(error: unknown): NextResponse {
     return NextResponse.json({ error: { code: "invalid_input", message: "Invalid input", issues } }, { status: 400 });
   }
   // The detail stays in the server log; the caller learns nothing about internals.
+  // Report to Sentry too: withAuth catches the error, so the SDK's automatic
+  // capture never sees it. A no-op when SENTRY_DSN is unset.
   logError("Unhandled API error", { kind: errorKind(error) });
+  Sentry.captureException(error);
   return NextResponse.json({ error: { code: "internal", message: "Something went wrong" } }, { status: 500 });
 }
 
