@@ -24,7 +24,8 @@ Goal: A missed or disabled schedule becomes visible within one hour.
 
 Goal: No change reaches `main` without the required checks.
 
-- Branch protection is on for `main` and `develop`. Required checks are typecheck, lint, tests, and build.
+- Branch protection covers `main` (confirmed) and `develop` (verify).
+- Required checks are typecheck, lint, tests, and build.
 - Direct pushes to `main` and `develop` are blocked.
 
 ### Alert delivery guarantees
