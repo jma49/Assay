@@ -5,12 +5,13 @@ import { errorKind } from "@/lib/utils/public-log";
 import { UnknownDataSourceError } from "@/server/datasource/registry";
 import { resolveSource } from "@/server/datasource/sources";
 import { logError } from "@/server/logging/log";
+import { heartbeatStatus, readHeartbeat, SCHEDULER_NAME, type HeartbeatDoc } from "@/server/repos/heartbeat-store";
 
 /** How a component answered the probe. */
 export type ComponentStatus = "ok" | "down" | "unconfigured";
 
 export interface ComponentCheck {
-  name: "mongodb" | "redis" | "postgres";
+  name: "mongodb" | "redis" | "postgres" | "scheduler";
   status: ComponentStatus;
   /** How long the probe took; absent when the component is not configured. */
   latencyMs?: number;
@@ -79,12 +80,25 @@ async function probePostgres(): Promise<"unconfigured" | void> {
   }
 }
 
-/** The probes every deployment answers: the app's own stores. */
+/** A probe for the scheduler heartbeat; `read` fetches the stored heartbeat. */
+export function schedulerProbe(read: () => Promise<HeartbeatDoc | null>): Probe {
+  return {
+    name: "scheduler",
+    run: async () => {
+      const status = heartbeatStatus(await read());
+      if (status === "never") return "unconfigured";
+      if (status === "stale") throw new Error("no scheduler run started in the last hour");
+    },
+  };
+}
+
+/** The probes every deployment answers: the app's own stores, plus the scheduler. */
 export function defaultProbes(): Probe[] {
   return [
     { name: "mongodb", run: probeMongo },
     { name: "redis", run: probeRedis },
     { name: "postgres", run: probePostgres },
+    schedulerProbe(async () => readHeartbeat(await getMongoDbClient().getDb(), SCHEDULER_NAME)),
   ];
 }
 

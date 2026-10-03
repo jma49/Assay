@@ -53,6 +53,11 @@ them, and `ASSAY_SECRET_KEY` once checks use an added data source); `MONGODB_DB_
 the same values as the app. Without the secrets the workflow skips quietly.
 A self-hosted setup can call `npm run sql:run-scheduled` from cron instead.
 
+Every run writes a heartbeat to MongoDB. `GET /api/health` reports the
+scheduler as stale when no run started in the last hour (HTTP 503). Point an
+external uptime monitor at `/api/health`: the alert path must not depend on
+the scheduler itself.
+
 ## First deploy
 
 1. Create the read-only PostgreSQL role ([architecture.md](architecture.md#running-a-check)).
