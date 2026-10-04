@@ -5,6 +5,9 @@ const EMOJI = { failure: "🔴", attention: "🟠", success: "🟢" };
 
 export const escapeHtml = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+/** For a value inside a double-quoted attribute, such as a link's href. */
+const escapeAttribute = (text: string) => escapeHtml(text).replace(/"/g, "&quot;");
+
 export function telegramApi(method: string, env: Record<string, string | undefined>): string {
   const token = env.TELEGRAM_BOT_TOKEN;
   if (!token) throw new Error("TELEGRAM_BOT_TOKEN is not set");
@@ -38,7 +41,7 @@ export const telegram: Channel = {
     const text = [
       `${EMOJI[message.tone]} <b>${escapeHtml(message.title)}</b>`,
       ...message.lines.map(escapeHtml),
-      `<a href="${escapeHtml(message.url)}">${escapeHtml(message.linkLabel)}</a>`,
+      `<a href="${escapeAttribute(message.url)}">${escapeHtml(message.linkLabel)}</a>`,
     ].join("\n");
     return {
       url: telegramApi("sendMessage", env),

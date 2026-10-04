@@ -7,7 +7,7 @@ describe("safeRedirect", () => {
   });
 
   it("never leaves the site", () => {
-    for (const value of [null, undefined, "", "https://evil.example", "//evil.example", "/\\evil.example", "javascript:alert(1)", "checks", "/\t/evil.example", "/\n/evil.example", "/ /evil.example", "/%09/evil.example".replace("%09", "\t")]) {
+    for (const value of [null, undefined, "", "https://evil.example", "//evil.example", "/\\evil.example", "javascript:alert(1)", "checks", "/\t/evil.example", "/\n/evil.example", "/ /evil.example"]) {
       expect(safeRedirect(value)).toBe("/checks");
     }
   });

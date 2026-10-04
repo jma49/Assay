@@ -71,6 +71,18 @@ describe("POST /api/integrations/slack/interactions", () => {
     expect(mocks.handleAlertButton).not.toHaveBeenCalled();
   });
 
+  it("updates the message only through hooks.slack.com", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
+    const click = (response_url: string) =>
+      post({ type: "block_actions", user: { id: "U1" }, actions: [{ action_id: "assay_ack", value: "run:1" }], response_url, message: { text: "t", blocks: [] } });
+    await click("https://hooks.slack.com/actions/T1/1/abc?x=1");
+    expect(String(fetchSpy.mock.calls[0][0])).toBe("https://hooks.slack.com/actions/T1/1/abc?x=1");
+    fetchSpy.mockClear();
+    for (const url of ["https://evil.example/actions/T1", "http://hooks.slack.com/actions/T1", "https://hooks.slack.com.evil.example/x"]) await click(url);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
   it("handles an acknowledge click as the Slack user and answers 200", async () => {
     const res = await post({
       type: "block_actions",

@@ -6,6 +6,8 @@ import { buttonReply, handleAlertButton, type ButtonAction } from "@/server/serv
 import { logError } from "@/lib/logging/log";
 import { serverEnv } from "@/lib/config/env";
 
+const SLACK_HOOKS_ORIGIN = "https://hooks.slack.com";
+
 interface SlackPayload {
   type?: string;
   user?: { id?: string; username?: string; name?: string };
@@ -49,8 +51,10 @@ export async function POST(request: NextRequest) {
     );
     const note = buttonReply(result, name, language);
     // response_url is how Slack lets an app update the message it came from.
-    const url = payload.response_url && new URL(payload.response_url);
-    if (url && url.protocol === "https:" && url.hostname === "hooks.slack.com") {
+    const given = payload.response_url ? new URL(payload.response_url) : null;
+    if (given && given.protocol === "https:" && given.hostname === "hooks.slack.com") {
+      // Rebuilt on a fixed origin, so the request can only ever go to Slack.
+      const url = new URL(`${given.pathname}${given.search}`, SLACK_HOOKS_ORIGIN);
       const update =
         result === "acknowledged" || result === "muted"
           ? { replace_original: true, text: payload.message?.text ?? note, blocks: blocksAfterAction(payload.message?.blocks, note) }
