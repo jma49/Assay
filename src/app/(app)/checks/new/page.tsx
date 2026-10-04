@@ -82,7 +82,6 @@ export default function NewCheckPage() {
               onChange={form.changeSql}
               minHeight="480px"
               fill
-              t={t}
               dataSourceId={form.formData.dataSourceId}
             />
           </div>

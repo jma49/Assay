@@ -8,7 +8,7 @@ import { useLanguage } from "@/components/common/LanguageProvider";
 import AIAssistantPanel from "@/components/business/ai/AIAssistantPanel";
 import { useMe } from "@/lib/auth/use-me";
 import { cn } from "@/lib/utils/utils";
-import { DashboardTranslationKeys } from "@/components/business/dashboard/types";
+import { editorCopy } from "./copy";
 import EditorThemeSettings from "./EditorThemeSettings";
 import { EditorStatusBar } from "./EditorStatusBar";
 import { postgresExtensions } from "./postgres";
@@ -27,7 +27,6 @@ interface CodeMirrorEditorProps extends Omit<ReactCodeMirrorProps, "value" | "on
   fill?: boolean;
   /** The source the check runs against: the AI assistant drafts and dry-runs on it. */
   dataSourceId?: string;
-  t?: (key: DashboardTranslationKeys | string) => string;
 }
 
 const BASIC_SETUP = {
@@ -54,12 +53,12 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   onChange,
   minHeight = "300px",
   fill = false,
-  t = (key) => key.toString(),
   dataSourceId,
   ...rest
 }) => {
   const { language } = useLanguage();
   const isZh = language === "zh";
+  const t = editorCopy(language);
   const aiAvailable = useMe()?.ai === true;
   const theme = useEditorTheme();
   const extensions = useMemo(() => postgresExtensions(), []);
@@ -71,7 +70,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
   const handleFormat = async () => {
     if (!value.trim()) {
-      toast.warning(t("noCodeToFormat") || "没有代码需要格式化");
+      toast.warning(t.noCodeToFormat);
       return;
     }
     setIsFormatting(true);
@@ -98,7 +97,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
         <div className="flex min-w-0 items-center gap-3 text-body-sm">
           <span className="font-medium">SQL</span>
           <span className="text-muted-foreground tabular-nums">
-            {lineCount} {t(lineCount === 1 ? "codeStatisticsLine" : "codeStatisticsLines")}
+            {lineCount} {lineCount === 1 ? t.line : t.lines}
           </span>
         </div>
 
@@ -118,13 +117,13 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
           )}
           <Button type="button" variant="ghost" size="sm" onClick={handleFormat} disabled={isFormatting || !value.trim()} className="h-8 px-2.5 text-body-sm">
             <AlignLeft className="size-3.5" />
-            {isFormatting ? t("formatting") : t("formatCode")}
+            {isFormatting ? t.formatting : t.format}
           </Button>
           <Button type="button" variant="ghost" size="sm" onClick={() => setShowPreview(!showPreview)} className="h-8 px-2.5 text-body-sm">
             {showPreview ? <Code className="size-3.5" /> : <Eye className="size-3.5" />}
-            {showPreview ? t("editMode") : t("previewMode")}
+            {showPreview ? t.edit : t.preview}
           </Button>
-          <EditorThemeSettings t={t} />
+          <EditorThemeSettings />
         </div>
       </div>
 
@@ -140,7 +139,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
 
       {showPreview ? (
         <pre className={cn("overflow-auto whitespace-pre-wrap bg-muted/30 p-4 font-mono text-body-md", fill && "flex-1")} style={{ minHeight }}>
-          {value || <span className="text-muted-foreground">{t("noCodeContent")}</span>}
+          {value || <span className="text-muted-foreground">{t.noCode}</span>}
         </pre>
       ) : (
         <div className={cn(fill && "relative flex-1")} style={fill ? { minHeight } : undefined}>
@@ -157,7 +156,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
               fontFamily: "var(--editor-font-family, var(--font-mono))",
               fontSize: "var(--editor-font-size, 14px)",
             }}
-            placeholder={t("sqlPlaceholder")}
+            placeholder={t.placeholder}
             {...rest}
           />
         </div>

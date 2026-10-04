@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useTheme } from "next-themes";
+import { useLanguage } from "@/components/common/LanguageProvider";
 import {
   Dialog,
   DialogContent,
@@ -29,10 +30,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-
-interface EditorThemeSettingsProps {
-  t?: (key: string) => string;
-}
+import { editorCopy } from "./copy";
 
 const LIGHT_THEMES = [
   { value: "eclipse", label: "Eclipse", icon: Sun },
@@ -59,9 +57,8 @@ const FONT_FAMILIES = [
   { value: "consolas", label: "Consolas", style: "Consolas, monospace" },
 ];
 
-const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
-  t = (key) => key,
-}) => {
+const EditorThemeSettings: React.FC = () => {
+  const t = editorCopy(useLanguage().language);
   const { theme: systemTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [editorTheme, setEditorTheme] = useState("");
@@ -156,8 +153,8 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
           variant="ghost"
           size="icon"
           className="size-8"
-          title={t("themeSettings") || "主题设置"}
-          aria-label={t("themeSettings") || "主题设置"}
+          title={t.themeSettings}
+          aria-label={t.themeSettings}
         >
           <Settings className="size-3.5" />
         </Button>
@@ -171,10 +168,10 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
             </div>
             <div>
               <DialogTitle className="text-title font-semibold">
-                {t("editorThemeSettings") || "编辑器主题设置"}
+                {t.editorThemeSettings}
               </DialogTitle>
               <p className="text-body-md text-muted-foreground">
-                {t("settingsApplyImmediately") || "设置立即应用"} • {systemTheme === "dark" ? t("darkMode") : t("lightMode")}
+                {t.appliesImmediately} • {systemTheme === "dark" ? t.darkMode : t.lightMode}
               </p>
             </div>
           </div>
@@ -185,7 +182,7 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
             <div className="flex items-center gap-2">
               <Palette className="h-4 w-4 text-primary" />
               <Label className="text-body-md font-medium">
-                {t("editorTheme") || "编辑器主题"} ({systemTheme === "dark" ? t("darkTheme") : t("lightTheme")})
+                {t.editorTheme} ({systemTheme === "dark" ? t.darkTheme : t.lightTheme})
               </Label>
             </div>
             <Select value={editorTheme} onValueChange={setEditorTheme}>
@@ -205,8 +202,8 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
             </Select>
             <p className="text-caption text-muted-foreground">
               {systemTheme === "dark" 
-                ? t("themeHelpDark") 
-                : t("themeHelpLight")
+                ? t.themeHelpDark 
+                : t.themeHelpLight
               }
             </p>
           </div>
@@ -214,7 +211,7 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Type className="h-4 w-4 text-primary" />
-              <Label className="text-body-md font-medium">{t("fontFamily") || "字体家族"}</Label>
+              <Label className="text-body-md font-medium">{t.fontFamily}</Label>
             </div>
             <Select value={fontFamily} onValueChange={setFontFamily}>
               <SelectTrigger className="w-full">
@@ -233,7 +230,7 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-primary" />
-              <Label className="text-body-md font-medium">{t("fontSize") || "字体大小"}: {fontSize[0]}px</Label>
+              <Label className="text-body-md font-medium">{t.fontSize}: {fontSize[0]}px</Label>
             </div>
             <div className="px-2">
               <Slider
@@ -254,16 +251,16 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
           </div>
 
           <div className="space-y-3 p-4 bg-muted/40 rounded-lg border">
-            <h4 className="font-medium text-body-md">{t("currentSettings") || "当前设置"}</h4>
+            <h4 className="font-medium text-body-md">{t.currentSettings}</h4>
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className="bg-muted text-foreground border-border   ">
-                {systemTheme === "dark" ? t("darkTheme") : t("lightTheme")}: {currentThemeLabel}
+                {systemTheme === "dark" ? t.darkTheme : t.lightTheme}: {currentThemeLabel}
               </Badge>
               <Badge variant="outline" className="bg-success/10 text-success border-success/30   ">
-                {t("fontLabel")}: {FONT_FAMILIES.find(f => f.value === fontFamily)?.label}
+                {t.font}: {FONT_FAMILIES.find(f => f.value === fontFamily)?.label}
               </Badge>
               <Badge variant="outline" className="bg-muted text-foreground border-border   ">
-                {t("fontSize")}: {fontSize[0]}px
+                {t.fontSize}: {fontSize[0]}px
               </Badge>
             </div>
           </div>
@@ -276,16 +273,16 @@ const EditorThemeSettings: React.FC<EditorThemeSettingsProps> = ({
             className="gap-2"
           >
             <RotateCcw className="h-4 w-4" />
-            {t("resetDefaults") || "重置默认"}
+            {t.resetDefaults}
           </Button>
           
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setIsOpen(false)}>
-              {t("cancelButton") || "取消"}
+              {t.cancel}
             </Button>
             <Button onClick={applySettings} className="gap-2">
               <Zap className="h-4 w-4" />
-              {t("applySettings") || "应用设置"}
+              {t.apply}
             </Button>
           </div>
         </div>

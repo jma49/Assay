@@ -80,7 +80,7 @@ export function CheckEditorDialog({
               {t("fieldSqlContent")}{" "}
               <span className="text-destructive">*</span>
             </label>
-            <CodeMirrorEditor value={sql} onChange={onSqlChange} minHeight="250px" t={t} dataSourceId={formMetadata.dataSourceId} />
+            <CodeMirrorEditor value={sql} onChange={onSqlChange} minHeight="250px" dataSourceId={formMetadata.dataSourceId} />
           </div>
         </div>
         <DialogFooter className="pt-4 border-t">
