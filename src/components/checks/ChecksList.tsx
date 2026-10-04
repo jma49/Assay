@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { BellOff, Hand, Search } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { APP_CONTAINER } from "@/components/layout/app-container";
@@ -15,8 +15,9 @@ import type { RunOutcome } from "@/domain/run";
 import { formatDateTime, formatRelative } from "@/lib/utils/datetime";
 import { cn } from "@/lib/utils/utils";
 import { Sparkline } from "./Sparkline";
+import { CheckPanel } from "./CheckDetailView";
 import { StatStrip, type StatTile } from "./StatStrip";
-import { OUTCOME_DOT, OUTCOME_GROUPS, OUTCOME_LABEL, OUTCOME_PILL, scheduleLabel } from "./status";
+import { OUTCOME_DOT, OUTCOME_GROUPS, OUTCOME_LABEL, OUTCOME_PILL } from "./status";
 
 type Filter = "all" | RunOutcome;
 
@@ -30,14 +31,12 @@ const COPY = {
     issuesHint: (rows: number) => `${rows} rows need attention`,
     clean: "Clean",
     cleanHint: "No rows returned",
-    changed: "Changed in 24 h",
-    changedHint: "Checks whose outcome changed",
-    all: "All",
+    allChecks: "All checks",
+    allHint: (n: number) => `${n} enabled`,
     check: "Check",
     now: "Now",
     delta: "Δ last run",
     trend: "Last 30 runs",
-    schedule: "Schedule",
     lastRun: "Last run",
     queryError: "Query error",
     rows: (n: number) => (n === 1 ? "1 row" : `${n} rows`),
@@ -59,14 +58,12 @@ const COPY = {
     issuesHint: (rows: number) => `共 ${rows} 行需要处理`,
     clean: "正常",
     cleanHint: "没有返回任何行",
-    changed: "24 小时内变化",
-    changedHint: "结果状态发生变化的检查",
-    all: "全部",
+    allChecks: "全部检查",
+    allHint: (n: number) => `${n} 个已启用`,
     check: "检查",
     now: "当前",
     delta: "较上次",
     trend: "最近 30 次",
-    schedule: "定时",
     lastRun: "上次执行",
     queryError: "查询出错",
     rows: (n: number) => `${n} 行`,
@@ -80,8 +77,6 @@ const COPY = {
     muted: "告警已静音",
   },
 };
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 type Copy = (typeof COPY)["en"];
 
@@ -126,18 +121,38 @@ function Markers({ check, t }: { check: CheckSummary; t: Copy }) {
   );
 }
 
-/** The checks home: current state first, grouped so broken and flagged checks come first. */
+/** Wide enough for the list and the side panel together; below it the panel opens as a drawer. */
+const SPLIT_QUERY = "(min-width: 1280px)";
+
+function useSplitView() {
+  const [split, setSplit] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia(SPLIT_QUERY);
+    const update = () => setSplit(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  return split;
+}
+
+/**
+ * The checks home: current state first, grouped so broken and flagged checks come first.
+ * Choosing a check opens it beside the list (`?check=` keeps it linkable); its page is one click away.
+ */
 export function ChecksList() {
   const router = useRouter();
+  const pathname = usePathname();
+  const search = useSearchParams();
   const { language } = useLanguage();
   const t = COPY[language];
   const zh = language === "zh";
+  const split = useSplitView();
   const { data, error, errorCode, loading } = useApi<{ checks: CheckSummary[] }>("/api/checks");
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const checks = useMemo(() => data?.checks ?? [], [data]);
-  // "Changed in 24 hours" counts from when the page opened; the list is not refetched while it stays open.
-  const [now] = useState(() => Date.now());
+  const selected = search.get("check");
 
   const counts = useMemo(() => {
     const of = (o: RunOutcome) => checks.filter((c) => c.state?.outcome === o);
@@ -146,9 +161,8 @@ export function ChecksList() {
       issues: of("issues").length,
       rows: of("issues").reduce((sum, c) => sum + (c.state?.rowCount ?? 0), 0),
       clean: of("clean").length,
-      changed: checks.filter((c) => c.state && now - new Date(c.state.since).getTime() < DAY_MS).length,
     };
-  }, [checks, now]);
+  }, [checks]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -159,39 +173,48 @@ export function ChecksList() {
     );
   }, [checks, filter, query]);
 
+  // On a wide screen the first problem opens beside the list, so the panel is never empty.
+  const shown = selected ?? (split ? (checks.find((c) => c.state?.outcome === "error") ?? checks.find((c) => c.state?.outcome === "issues") ?? checks[0])?.scriptId : null) ?? null;
+
   const name = (c: CheckSummary) => (zh ? c.cnName || c.name : c.name);
   const pending = loading && !data;
-  const outcomeTile = (key: RunOutcome, label: string, value: number, hint: string): StatTile => ({
+  const tile = (key: Filter, label: string, value: number, hint: string, dot?: string): StatTile => ({
     key,
     label,
-    dot: OUTCOME_DOT[key],
+    dot,
     value: pending ? "–" : value,
-    hint: pending ? " " : hint,
+    hint: pending ? " " : hint,
     pressed: filter === key,
-    onClick: () => setFilter(filter === key ? "all" : key),
+    onClick: () => setFilter(filter === key && key !== "all" ? "all" : key),
   });
   const tiles: StatTile[] = [
-    outcomeTile("error", t.broken, counts.error, t.brokenHint),
-    outcomeTile("issues", t.issues, counts.issues, t.issuesHint(counts.rows)),
-    outcomeTile("clean", t.clean, counts.clean, t.cleanHint),
-    { key: "changed", label: t.changed, value: pending ? "–" : counts.changed, hint: t.changedHint },
+    tile("all", t.allChecks, checks.length, t.allHint(checks.length)),
+    tile("error", t.broken, counts.error, t.brokenHint, OUTCOME_DOT.error),
+    tile("issues", t.issues, counts.issues, t.issuesHint(counts.rows), OUTCOME_DOT.issues),
+    tile("clean", t.clean, counts.clean, t.cleanHint, OUTCOME_DOT.clean),
   ];
   const groups = [...OUTCOME_GROUPS, null]
     .map((group) => ({ group, rows: visible.filter((c) => (group ? c.state?.outcome === group.outcome : !c.state)) }))
     .filter(({ rows }) => rows.length > 0);
-  const groupTitle = (group: (typeof OUTCOME_GROUPS)[number] | null, count: number) => (
-    <>
-      {group ? group.title[language] : t.neverRan} · {count}
-      {group && <span className="font-normal"> — {group.hint[language]}</span>}
-    </>
-  );
-  const href = (c: CheckSummary) => `/checks/${encodeURIComponent(c.scriptId)}`;
+  const select = (id: string | null) => {
+    const params = new URLSearchParams(search.toString());
+    if (id) params.set("check", id);
+    else params.delete("check");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+  // The drawer closes on Escape, like a dialog.
+  const drawerOpen = !!selected && !split;
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && select(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
   const lastRun = (c: CheckSummary) => (c.state ? formatRelative(c.state.lastRunAt, language) : t.neverRan);
-  const dot = (c: CheckSummary) =>
-    c.state && <span className={cn("status-dot", OUTCOME_DOT[c.state.outcome])} aria-label={OUTCOME_LABEL[c.state.outcome][language]} />;
 
   return (
-    <div className={`${APP_CONTAINER} space-y-5 py-6`}>
+    <div className={`${APP_CONTAINER} space-y-6 py-6`}>
       <WindowToolbar>
         <div className="relative w-72 max-sm:w-full">
           <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -200,157 +223,96 @@ export function ChecksList() {
       </WindowToolbar>
       {data && <WindowStatusBar>{t.count(checks.length)}</WindowStatusBar>}
 
-      {/* Each outcome tile filters the list below; the last one only reports. */}
+      {/* The tiles are the filter. */}
       <StatStrip tiles={tiles} label={t.summary} />
 
-      <div className="overflow-hidden rounded-xl bg-card shadow-border">
-        <div className="flex flex-wrap items-center gap-3 border-b px-5 py-3.5 max-md:px-4">
-          <div role="group" aria-label={t.all} className="inline-flex max-w-full gap-0.5 overflow-x-auto rounded-full bg-muted p-1 [scrollbar-width:none]">
-            {(["all", "error", "issues", "clean"] as Filter[]).map((key) => (
-              <button
-                key={key}
-                type="button"
-                aria-pressed={filter === key}
-                onClick={() => setFilter(key)}
-                className={cn(
-                  "inline-flex h-8 shrink-0 items-center gap-2 rounded-full px-3.5 text-body-sm transition-[color,background-color] duration-150 max-sm:px-3",
-                  filter === key ? "bg-foreground font-medium text-background" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {key === "all" ? t.all : OUTCOME_LABEL[key][language]}
-                {!pending && (
-                  <span
-                    className={cn(
-                      "min-w-5 rounded-full px-1.5 text-center text-caption tabular-nums",
-                      filter === key ? "bg-background/20 text-background" : "bg-card text-muted-foreground",
-                    )}
-                  >
-                    {key === "all" ? checks.length : counts[key]}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {error ? (
-          <p className="px-6 py-10 text-center text-body-sm text-muted-foreground">
-            {t.loadFailed}: {apiErrorCodeText(errorCode, language) ?? error}
-          </p>
-        ) : pending ? (
-          <div className="space-y-2 p-4" aria-busy>
-            {Array.from({ length: 6 }, (_, i) => (
-              <div key={i} className="skeleton-shimmer h-11 rounded-md" />
-            ))}
-          </div>
-        ) : checks.length === 0 ? (
-          <div className="px-6 py-12 text-center text-body-sm text-muted-foreground">
-            <p>{t.noChecks}</p>
-            <Link href="/checks/new" className="mt-2 inline-block font-medium text-primary hover:underline">
-              {t.newCheck}
-            </Link>
-          </div>
-        ) : visible.length === 0 ? (
-          <p className="px-6 py-10 text-center text-body-sm text-muted-foreground">{t.empty}</p>
-        ) : (
-          <>
-            {/* Phone: one two-line item per check, so the name keeps the full width. */}
-            <div className="md:hidden">
-              {groups.map(({ group, rows }) => (
-                <section key={group?.outcome ?? "never"} aria-label={group ? group.title[language] : t.neverRan}>
-                  <h2 className="border-b bg-muted/50 px-4 py-2 text-caption font-medium text-muted-foreground">{groupTitle(group, rows.length)}</h2>
-                  <ul>
-                    {rows.map((c) => (
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_480px]">
+        <div className="space-y-4">
+          {error ? (
+            <p className="rounded-xl bg-card px-6 py-10 text-center text-body-sm text-muted-foreground shadow-border">
+              {t.loadFailed}: {apiErrorCodeText(errorCode, language) ?? error}
+            </p>
+          ) : pending ? (
+            <div className="space-y-2 rounded-xl bg-card p-4 shadow-border" aria-busy>
+              {Array.from({ length: 6 }, (_, i) => (
+                <div key={i} className="skeleton-shimmer h-12 rounded-md" />
+              ))}
+            </div>
+          ) : checks.length === 0 ? (
+            <div className="rounded-xl bg-card px-6 py-12 text-center text-body-sm text-muted-foreground shadow-border">
+              <p>{t.noChecks}</p>
+              <Link href="/checks/new" className="mt-2 inline-block font-medium text-primary hover:underline">
+                {t.newCheck}
+              </Link>
+            </div>
+          ) : visible.length === 0 ? (
+            <p className="rounded-xl bg-card px-6 py-10 text-center text-body-sm text-muted-foreground shadow-border">{t.empty}</p>
+          ) : (
+            groups.map(({ group, rows }) => (
+              <section key={group?.outcome ?? "never"} aria-label={group ? group.title[language] : t.neverRan} className="overflow-hidden rounded-xl bg-card shadow-border">
+                <h2 className="border-b bg-muted/50 px-5 py-2.5 text-caption text-muted-foreground max-md:px-4">
+                  <span className="font-medium text-foreground">{group ? group.title[language] : t.neverRan}</span> · {rows.length}
+                  {group && <span> — {group.hint[language]}</span>}
+                </h2>
+                <ul>
+                  {rows.map((c) => {
+                    const active = shown === c.scriptId;
+                    return (
                       <li key={c.scriptId} className="border-b last:border-0">
-                        <Link href={href(c)} className="flex items-start gap-3 px-4 py-3.5 text-body-sm transition-[background-color] duration-150 hover:bg-muted/60">
-                          <span className="flex h-5 w-2 shrink-0 items-center">{dot(c)}</span>
-                          <span className="min-w-0 flex-1">
-                            <span className="flex items-baseline gap-3">
-                              <span className="flex min-w-0 flex-1 items-center gap-1.5">
-                                <span className="truncate font-medium">{name(c)}</span>
-                                <Markers check={c} t={t} />
-                              </span>
-                              <span className="shrink-0 whitespace-nowrap tabular-nums">
-                                <Now check={c} t={t} />
-                              </span>
+                        <Link
+                          href={`/checks?check=${encodeURIComponent(c.scriptId)}`}
+                          scroll={false}
+                          replace
+                          aria-current={active ? "true" : undefined}
+                          className={cn(
+                            "relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-5 py-3.5 text-body-sm transition-[background-color] duration-150 max-md:px-4 md:grid-cols-[minmax(0,1fr)_8.5rem_8rem_7rem] xl:grid-cols-[minmax(0,1fr)_auto_6.5rem]",
+                            active ? "bg-primary-soft" : "hover:bg-muted/60",
+                          )}
+                        >
+                          {active && <span className="absolute inset-y-0 left-0 w-[3px] bg-primary" aria-hidden />}
+                          <span className="min-w-0">
+                            <span className="flex min-w-0 items-center gap-2">
+                              {c.state && <span className={cn("status-dot shrink-0", OUTCOME_DOT[c.state.outcome])} aria-label={OUTCOME_LABEL[c.state.outcome][language]} />}
+                              <span className={cn("truncate text-body-md font-medium", active && "text-primary-ink")}>{name(c)}</span>
+                              <Markers check={c} t={t} />
                             </span>
-                            <span className="flex items-baseline gap-3 text-caption text-muted-foreground">
-                              <span className="min-w-0 flex-1 truncate font-mono">{c.scriptId}</span>
-                              <span className="shrink-0 whitespace-nowrap">{lastRun(c)}</span>
+                            <span className="mt-0.5 block truncate font-mono text-caption text-muted-foreground">
+                              {c.scriptId}
+                              {c.alerting.owner && <span className="font-sans"> · {c.alerting.owner.name}</span>}
                             </span>
+                          </span>
+                          <span className="flex items-center gap-1.5 whitespace-nowrap">
+                            <Now check={c} t={t} />
+                            <Delta check={c} />
+                          </span>
+                          <span className="max-md:hidden xl:hidden">
+                            <Sparkline points={c.history} outcome={c.state?.outcome ?? "clean"} />
+                          </span>
+                          <span className="text-right whitespace-nowrap text-muted-foreground max-md:hidden" title={c.state ? formatDateTime(c.state.lastRunAt, language) : undefined}>
+                            {lastRun(c)}
                           </span>
                         </Link>
                       </li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))
+          )}
+        </div>
 
-            {/* Fixed column widths, so filtering or searching never shifts the columns. */}
-            <div className="overflow-x-auto max-md:hidden">
-              <table className="w-full table-fixed text-body-sm">
-                <thead>
-                  <tr className="border-b text-caption text-muted-foreground">
-                    <th className="py-3 pr-3 pl-5 text-left font-medium">{t.check}</th>
-                    <th className="w-36 px-3 py-3 text-left font-medium">{t.now}</th>
-                    <th className="w-24 px-3 py-3 text-left font-medium">{t.delta}</th>
-                    <th className="w-32 px-3 py-3 text-left font-medium">{t.trend}</th>
-                    <th className="w-48 px-3 py-3 text-left font-medium max-lg:hidden">{t.schedule}</th>
-                    <th className="w-32 py-3 pr-5 pl-3 text-right font-medium">{t.lastRun}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {groups.map(({ group, rows }) => [
-                    <tr key={`group-${group?.outcome ?? "never"}`} className="border-b bg-muted/50">
-                      <td colSpan={6} className="px-5 py-2 text-caption font-medium text-muted-foreground">
-                        {groupTitle(group, rows.length)}
-                      </td>
-                    </tr>,
-                    ...rows.map((c) => (
-                      <tr
-                        key={c.scriptId}
-                        className="cursor-pointer border-b transition-[background-color] duration-150 last:border-0 hover:bg-muted/60"
-                        onClick={(event) => {
-                          if ((event.target as HTMLElement).closest("a")) return;
-                          router.push(href(c));
-                        }}
-                      >
-                        <td className="py-3.5 pr-3 pl-5">
-                          <div className="flex min-w-0 items-center gap-1.5">
-                            <Link href={href(c)} className="truncate text-body-md font-medium hover:underline">
-                              {name(c)}
-                            </Link>
-                            <Markers check={c} t={t} />
-                          </div>
-                          <span className="block truncate font-mono text-caption text-muted-foreground">
-                            {c.scriptId}
-                            {c.alerting.owner && <span className="font-sans"> · {c.alerting.owner.name}</span>}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3.5 whitespace-nowrap">
-                          <Now check={c} t={t} />
-                        </td>
-                        <td className="px-3 py-3.5">
-                          <Delta check={c} />
-                        </td>
-                        <td className="px-3 py-3.5">
-                          <Sparkline points={c.history} outcome={c.state?.outcome ?? "clean"} />
-                        </td>
-                        <td className="truncate px-3 py-3.5 whitespace-nowrap text-muted-foreground max-lg:hidden" title={c.schedule ?? undefined}>
-                          {scheduleLabel(c.schedule, language)}
-                        </td>
-                        <td className="py-3.5 pr-5 pl-3 text-right whitespace-nowrap text-muted-foreground" title={c.state ? formatDateTime(c.state.lastRunAt, language) : undefined}>
-                          {lastRun(c)}
-                        </td>
-                      </tr>
-                    )),
-                  ])}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+        {/* Beside the list on wide screens; a drawer over the page below that. */}
+        {shown && (split ? (
+          <aside className="sticky top-6 max-h-[calc(100dvh-7rem)] overflow-y-auto rounded-xl bg-card shadow-border">
+            <CheckPanel key={shown} scriptId={shown} onClose={() => select(null)} />
+          </aside>
+        ) : (
+          <div className="fixed inset-0 z-40 flex justify-end bg-foreground/30" onClick={(e) => e.target === e.currentTarget && select(null)}>
+            <aside role="dialog" aria-modal="true" className="h-full w-full max-w-[520px] overflow-y-auto bg-card shadow-md">
+              <CheckPanel key={shown} scriptId={shown} onClose={() => select(null)} />
+            </aside>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -7,8 +7,8 @@ import type { CheckDetail } from "@/contracts/checks";
 import { useMe } from "@/lib/auth/use-me";
 import { COPY } from "./copy";
 
-/** Loads one check, names the browser tab after it, and runs it on demand; `onRan` fires after a run finished. */
-export function useCheckDetail(scriptId: string, language: "en" | "zh", { onRan }: { onRan?: () => void } = {}) {
+/** Loads one check, names the browser tab after it (unless `nameTab` is false), and runs it on demand; `onRan` fires after a run finished. */
+export function useCheckDetail(scriptId: string, language: "en" | "zh", { onRan, nameTab = true }: { onRan?: () => void; nameTab?: boolean } = {}) {
   const t = COPY[language];
   const zh = language === "zh";
   const me = useMe();
@@ -19,9 +19,10 @@ export function useCheckDetail(scriptId: string, language: "en" | "zh", { onRan 
 
   // The tab title names the check once it has loaded.
   const title = check ? (zh ? check.cnName || check.name : check.name) : null;
+  // The Checks page's side panel leaves the tab named after the page it sits on.
   useEffect(() => {
-    if (title) document.title = `${title} · Assay`;
-  }, [title]);
+    if (title && nameTab) document.title = `${title} · Assay`;
+  }, [title, nameTab]);
 
   const canRun = !!me && (me.permissions.includes("check:execute") || !!me.demo);
   const canEdit = !!me?.permissions.includes("check:update");
