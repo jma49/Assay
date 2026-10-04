@@ -8,6 +8,13 @@
  */
 export type RunOutcome = "error" | "issues" | "clean";
 
+/**
+ * The outcome as people and agents read it. Storage and GET /api/checks keep
+ * `error` (a public value, not renamed); the UI, MCP tools and alerts say
+ * "broken" for it. Map here, nowhere else.
+ */
+export const CHECK_STATUS = { error: "broken", issues: "issues", clean: "clean" } as const satisfies Record<RunOutcome, string>;
+
 /** Rows kept on a run for display and export. */
 const SAMPLE_ROWS = 500;
 /** Rows fingerprinted to tell new, still-open and fixed rows apart between runs. */
