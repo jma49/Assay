@@ -1,5 +1,5 @@
 import { digestContent, type DigestSummary } from "./digest";
-import type { RowDiff, RunOutcome } from "./run";
+import { CHECK_STATUS, type RowDiff, type RunOutcome } from "./run";
 
 /** What happened to a check, as people subscribe to it. */
 export type AlertKind = "broken" | "issues" | "new_rows" | "recovered";
@@ -23,7 +23,7 @@ export interface AlertEvent {
 }
 
 export function alertKindOf(event: AlertEvent): AlertKind {
-  if (event.to === "error") return "broken";
+  if (CHECK_STATUS[event.to] === "broken") return "broken";
   if (event.to === "clean") return "recovered";
   return event.type === "check.new_rows" ? "new_rows" : "issues";
 }
@@ -78,7 +78,7 @@ const COPY = {
     total: (n: number) => `Now returns ${rows("en", n)}`,
     diff: (d: RowDiff) => `${d.added} new, ${d.still} still open, ${d.fixed} fixed`,
     error: (message: string) => `Error: ${message}`,
-    outcome: { error: "broken", issues: "issues", clean: "clean" } as Record<RunOutcome, string>,
+    outcome: CHECK_STATUS as Record<RunOutcome, string>,
     open: "Open check",
     test: "Test alert from Assay",
     testLine: "This destination is set up. Alerts for your checks will arrive here.",

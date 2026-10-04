@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { CheckSummary } from "@/contracts/checks";
 import { MAX_MUTE_HOURS } from "@/domain/alerting";
 import { ALERT_KINDS, type AlertKind } from "@/domain/notify";
+import { CHECK_STATUS } from "@/domain/run";
 import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
 import { Permission } from "@/lib/auth/rbac";
 import { cellText } from "@/lib/utils/cells";
@@ -41,7 +42,6 @@ export interface AssayTool<Schema extends z.ZodObject = z.ZodObject> {
   handler(input: z.infer<Schema>): Promise<unknown>;
 }
 
-const STATUS = { error: "broken", issues: "issues", clean: "clean" } as const;
 const MAX_ROWS = 50;
 
 const CheckId = z.string().min(1).max(200).describe("The check's id, as list_checks returns it (e.g. demo-duplicate-orders)");
@@ -60,7 +60,7 @@ function summary(check: CheckSummary, appUrl: string) {
   return {
     id: check.scriptId,
     name: check.name,
-    status: state ? STATUS[state.outcome] : "never_run",
+    status: state ? CHECK_STATUS[state.outcome] : "never_run",
     rows: state && state.outcome !== "error" ? state.rowCount : null,
     since: state?.since ?? null,
     last_run_at: state?.lastRunAt ?? null,
@@ -129,7 +129,7 @@ function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
           recent_runs: check.runs.slice(0, 10).map((run) => ({
             run_id: run.runId,
             at: run.at,
-            status: STATUS[run.outcome],
+            status: CHECK_STATUS[run.outcome],
             rows: run.outcome === "error" ? null : run.rowCount,
             trigger: run.trigger,
             new: run.diff?.added ?? null,
@@ -138,7 +138,7 @@ function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
           latest_run: latest && {
             run_id: latest.runId,
             at: latest.at,
-            status: STATUS[latest.outcome],
+            status: CHECK_STATUS[latest.outcome],
             error: latest.outcome === "error" ? latest.message : null,
             columns: latest.columns,
             row_count: latest.rowCount,
@@ -217,8 +217,8 @@ function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
             check_id: item.checkId,
             check: item.checkName,
             kind: item.kind,
-            from: item.from ? STATUS[item.from] : null,
-            to: STATUS[item.to],
+            from: item.from ? CHECK_STATUS[item.from] : null,
+            to: CHECK_STATUS[item.to],
             rows: item.rowCount,
             new_rows: item.diff?.added ?? null,
             error: item.error,
@@ -243,7 +243,7 @@ function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
         if (result.kind === "busy") return { status: "already_running", run_id: result.runId };
         deps.afterRun();
         return {
-          status: STATUS[result.outcome],
+          status: CHECK_STATUS[result.outcome],
           rows: result.outcome === "error" ? null : result.rowCount,
           new: result.diff?.added ?? null,
           fixed: result.diff?.fixed ?? null,

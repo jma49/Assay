@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  CHECK_STATUS,
   runExpiresAt,
   runRetentionDays,
   jsonBytes,
@@ -126,5 +127,11 @@ describe("run retention", () => {
     const at = new Date("2026-09-27T00:00:00Z");
     expect(runExpiresAt(at, 30)?.toISOString()).toBe("2026-10-27T00:00:00.000Z");
     expect(runExpiresAt(at, 0)).toBeNull();
+  });
+});
+
+describe("CHECK_STATUS", () => {
+  it("shows a failed query as broken; the stored outcome stays error", () => {
+    expect(CHECK_STATUS).toEqual({ error: "broken", issues: "issues", clean: "clean" });
   });
 });
