@@ -75,10 +75,10 @@ describe("POST /api/integrations/slack/interactions", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
     const click = (response_url: string) =>
       post({ type: "block_actions", user: { id: "U1" }, actions: [{ action_id: "assay_ack", value: "run:1" }], response_url, message: { text: "t", blocks: [] } });
-    await click("https://hooks.slack.com/actions/T1/1/abc?x=1");
-    expect(String(fetchSpy.mock.calls[0][0])).toBe("https://hooks.slack.com/actions/T1/1/abc?x=1");
+    await click("https://hooks.slack.com/actions/T1/1/abc");
+    expect(String(fetchSpy.mock.calls[0][0])).toBe("https://hooks.slack.com/actions/T1/1/abc");
     fetchSpy.mockClear();
-    for (const url of ["https://evil.example/actions/T1", "http://hooks.slack.com/actions/T1", "https://hooks.slack.com.evil.example/x"]) await click(url);
+    for (const url of ["https://evil.example/actions/T1/1/abc", "http://hooks.slack.com/actions/T1/1/abc", "https://hooks.slack.com.evil.example/actions/T1/1/abc", "https://hooks.slack.com/services/T1/B1/x", "not a url"]) await click(url);
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
   });
