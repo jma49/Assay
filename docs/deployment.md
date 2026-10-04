@@ -44,6 +44,22 @@ Then smoke-test the rollback:
 | Alerts and data sources | `ASSAY_SECRET_KEY` (required to add data sources or alert channels; changing it invalidates their sealed secrets — see [secret-rotation.md](secret-rotation.md) for the rotation and recovery procedure), `APP_URL`, `CRON_SECRET` |
 | Optional | `AI_ENABLED=true` with AI Gateway, `DEMO_MODE=true` (the public demo only), the Slack, Discord and Telegram app settings ([notifications.md](notifications.md)), `ALLOWED_EMAIL_DOMAINS`, run limits (`CHECK_TIMEOUT_MS`, `CHECK_CONCURRENCY`, `PG_POOL_MAX`, `PG_SOURCE_POOL_MAX`, `RUN_RETENTION_DAYS`), `ALLOW_PRIVATE_DATA_SOURCES` (below), `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` (error tracking) |
 
+**Missing configuration fails closed.** A production server (`next start`,
+or a Vercel function) exits on start when `BETTER_AUTH_SECRET`,
+`MONGODB_URI`, `DATABASE_URL` or `APP_URL` is unset or blank, and logs
+`Assay refuses to start: missing required environment variable(s) …` with
+the names only, never values. On Vercel, `VERCEL_PROJECT_PRODUCTION_URL`
+stands in for `APP_URL`, as it does for alert links. The check
+(`src/server/startup-config.ts`, called from `src/instrumentation.ts`) skips
+`next build`, so CI and Vercel still build without secrets, and skips
+development and tests. Optional features stay off and log one warning each
+at start: no Google or GitHub sign-in provider, no `ASSAY_SECRET_KEY`
+(alerts and data sources), no `CRON_SECRET` (the dispatch endpoint refuses
+calls), no `SENTRY_DSN` (error tracking). A missing Upstash URL is reported
+by the Upstash client itself, and `/api/health` reports Redis as
+`unconfigured`. The edge proxy separately refuses requests without
+`BETTER_AUTH_SECRET`.
+
 **Data sources.** Besides `DATABASE_URL`, admins can add PostgreSQL
 databases in Settings → Data sources; their connection strings are sealed
 with `ASSAY_SECRET_KEY`. Hosts on private networks (10.x, 192.168.x,
