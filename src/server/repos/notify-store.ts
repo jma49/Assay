@@ -107,7 +107,7 @@ export function mongoNotifyStore(db: Db): NotifyStore {
       if (list.length === 0) return;
       try {
         await deliveries.insertMany(
-          list.map((d) => ({ ...d, status: "pending", attempts: 0, nextAttemptAt: now, claim: null, createdAt: now })),
+          list.map((d) => ({ ...d, status: "pending", attempts: 0, nextAttemptAt: now, claim: null, createdAt: now, updatedAt: now })),
           { ordered: false },
         );
       } catch (error) {
@@ -131,7 +131,7 @@ export function mongoNotifyStore(db: Db): NotifyStore {
       const claim = randomUUID();
       const doc = await deliveries.findOneAndUpdate(
         { status: "pending", nextAttemptAt: { $lte: now } },
-        { $set: { claim, nextAttemptAt: new Date(now.getTime() + leaseMs) } },
+        { $set: { claim, nextAttemptAt: new Date(now.getTime() + leaseMs), updatedAt: now } },
         { sort: { nextAttemptAt: 1 }, returnDocument: "after" },
       );
       if (!doc) return null;
