@@ -53,9 +53,9 @@ export async function verifyMcpToken(token: string, deps: CallerDeps, now = new 
 }
 
 const SCOPE_PERMISSION: Record<McpScope, Permission> = {
-  "checks:read": Permission.SCRIPT_READ,
+  "checks:read": Permission.CHECK_READ,
   "history:read": Permission.HISTORY_READ,
-  "checks:run": Permission.SCRIPT_EXECUTE,
+  "checks:run": Permission.CHECK_EXECUTE,
 };
 
 /** The MCP scopes a role can use; granting any other scope would add nothing. */

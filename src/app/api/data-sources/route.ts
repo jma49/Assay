@@ -13,7 +13,7 @@ import { createDataSource, defaultDataSourceDeps, listDataSources } from "@/serv
  * may manage them. Anyone who reads checks may list them: the check editor
  * needs the names. Demo guests get no `display`.
  */
-export const GET = withAuth(Permission.SCRIPT_READ, async (_request, { principal }) => {
+export const GET = withAuth(Permission.CHECK_READ, async (_request, { principal }) => {
   const db = await getMongoDbClient().getDb();
   const canManage = !principal.isGuest && (await requirePermission(principal.id, Permission.DATASOURCE_MANAGE)).authorized;
   const body: DataSourcesResponse = {

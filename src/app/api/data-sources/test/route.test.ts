@@ -51,7 +51,7 @@ describe("POST /api/data-sources/test", () => {
   });
 
   it("needs datasource:manage", async () => {
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     expect((await test({ connectionString: "postgres://u:p@h/db" })).status).toBe(403);
     expect(mocks.testUnsavedConnection).not.toHaveBeenCalled();
   });

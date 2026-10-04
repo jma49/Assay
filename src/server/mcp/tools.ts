@@ -88,7 +88,7 @@ function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
       title: "List checks",
       description:
         "Lists the data checks in this workspace with their current status: broken (the query fails), issues (it returns rows that need attention), clean (no rows) or never_run. Filter by status, tag or text.",
-      permission: Permission.SCRIPT_READ,
+      permission: Permission.CHECK_READ,
       annotations: { readOnlyHint: true, openWorldHint: false },
       inputSchema: z.object({
         status: z.enum(["broken", "issues", "clean", "never_run"]).optional().describe("Only checks in this status"),
@@ -112,7 +112,7 @@ function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
       title: "Get a check",
       description:
         "Returns one check: its SQL, schedule, current status, the last runs, and the rows its latest run returned, each marked new (not in the previous run) or still (also in it), plus how many rows were fixed.",
-      permission: Permission.SCRIPT_READ,
+      permission: Permission.CHECK_READ,
       annotations: { readOnlyHint: true, openWorldHint: false },
       inputSchema: z.object({
         check_id: CheckId,
@@ -155,7 +155,7 @@ function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
       title: "List data sources",
       description:
         "Lists the databases checks run against: id, name and engine. A check's data_source is one of these ids; 'default' is the database the deployment was set up with.",
-      permission: Permission.SCRIPT_READ,
+      permission: Permission.CHECK_READ,
       annotations: { readOnlyHint: true, openWorldHint: false },
       inputSchema: z.object({}),
       async handler() {
@@ -234,7 +234,7 @@ function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
       title: "Run a check now",
       description:
         "Runs one check against the database now (read-only SQL) and returns its outcome. If the check is already running, says so instead of starting a second run. Alerts go out as for any run.",
-      permission: Permission.SCRIPT_EXECUTE,
+      permission: Permission.CHECK_EXECUTE,
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
       inputSchema: z.object({ check_id: CheckId }),
       async handler({ check_id }) {
@@ -259,7 +259,7 @@ function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
       title: "Acknowledge a problem",
       description:
         "Marks the check's current problem as being handled, so no more alerts go out for new rows of it. A new failure or the recovery still alert. Fails if the check is clean.",
-      permission: Permission.SCRIPT_EXECUTE,
+      permission: Permission.CHECK_EXECUTE,
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       inputSchema: z.object({ check_id: CheckId }),
       async handler({ check_id }) {
@@ -271,7 +271,7 @@ function assayTools(caller: McpCaller, deps: ToolDeps): AssayTool[] {
       name: "mute_check",
       title: "Mute a check's alerts",
       description: "Stops all alerts for the check for the given number of hours (at most 30 days). Use hours: 0 to unmute.",
-      permission: Permission.SCRIPT_EXECUTE,
+      permission: Permission.CHECK_EXECUTE,
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
       inputSchema: z.object({
         check_id: CheckId,

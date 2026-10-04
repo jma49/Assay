@@ -49,7 +49,7 @@ describe("GET /api/coverage", () => {
 
   beforeEach(() => {
     mocks.denied = null;
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     mocks.findFilter = null;
     mocks.scripts = [{ scriptId: "c1", name: "C", sqlContent: "SELECT 1" }];
     mocks.requireSource.mockReset().mockResolvedValue(source);
@@ -63,7 +63,7 @@ describe("GET /api/coverage", () => {
     expect(mocks.requireSource).not.toHaveBeenCalled();
   });
 
-  it("needs script:read", async () => {
+  it("needs check:read", async () => {
     mocks.granted = new Set();
     expect((await coverage()).status).toBe(403);
     expect(mocks.requireSource).not.toHaveBeenCalled();

@@ -11,7 +11,7 @@ describe("isDemoMode", () => {
 });
 
 describe("runAccess", () => {
-  it("lets anyone with script:execute run any check", () => {
+  it("lets anyone with check:execute run any check", () => {
     expect(runAccess({ canExecute: true, demoMode: false, demoSeed: undefined })).toBe("allowed");
   });
 

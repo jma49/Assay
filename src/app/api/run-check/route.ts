@@ -19,7 +19,7 @@ const DEMO_WINDOW_SECONDS = 60 * 60;
 const Body = z.object({ scriptId: z.string().min(1) });
 
 /**
- * A demo run by someone without script:execute: only a seeded demo check,
+ * A demo run by someone without check:execute: only a seeded demo check,
  * within the hourly budgets. Demo runs widen access, so a Redis failure
  * refuses them (fail closed).
  */
@@ -46,13 +46,13 @@ async function assertDemoRunAllowed(principal: Principal, scriptId: string, head
 }
 
 /**
- * Runs one check now. Needs script:execute, except in demo mode, where viewers and guests may
+ * Runs one check now. Needs check:execute, except in demo mode, where viewers and guests may
  * run the seeded demo checks within an hourly budget.
  */
 export const POST = withAuth({ signedIn: true, allowGuest: true }, async (request, { principal }) => {
   const { scriptId } = await parseJson(request, Body);
 
-  const canExecute = principal.isGuest ? false : (await requirePermission(principal.id, Permission.SCRIPT_EXECUTE)).authorized;
+  const canExecute = principal.isGuest ? false : (await requirePermission(principal.id, Permission.CHECK_EXECUTE)).authorized;
   if (!canExecute) {
     if (!isDemoMode()) throw new ApiError(403, "forbidden", "You do not have permission to do this");
     await assertDemoRunAllowed(principal, scriptId, request.headers);

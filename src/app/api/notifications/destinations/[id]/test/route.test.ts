@@ -53,7 +53,7 @@ describe("POST /api/notifications/destinations/[id]/test", () => {
   });
 
   it("needs notification:manage", async () => {
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     expect((await test()).status).toBe(403);
     expect(mocks.sendTestAlert).not.toHaveBeenCalled();
   });

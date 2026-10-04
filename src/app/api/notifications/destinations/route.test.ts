@@ -52,7 +52,7 @@ describe("GET /api/notifications/destinations", () => {
 
   beforeEach(() => {
     mocks.denied = null;
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     mocks.guest = false;
     mocks.list.mockReset().mockResolvedValue([destination]);
   });
@@ -63,7 +63,7 @@ describe("GET /api/notifications/destinations", () => {
     expect(mocks.list).not.toHaveBeenCalled();
   });
 
-  it("needs script:read", async () => {
+  it("needs check:read", async () => {
     mocks.granted = new Set();
     expect((await list()).status).toBe(403);
     expect(mocks.list).not.toHaveBeenCalled();
@@ -112,7 +112,7 @@ describe("POST /api/notifications/destinations", () => {
   });
 
   it("needs notification:manage", async () => {
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     expect((await add(body)).status).toBe(403);
     expect(mocks.create).not.toHaveBeenCalled();
   });

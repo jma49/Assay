@@ -56,7 +56,7 @@ const pendingCreate = {
 describe("POST /api/approvals", () => {
   beforeEach(() => {
     mocks.denied = null;
-    mocks.permissions = new Set(["script:approve", "script:reject"]);
+    mocks.permissions = new Set(["check:approve", "check:reject"]);
     mocks.request = { ...pendingCreate };
     mocks.modifiedCount = 1;
     mocks.requestsUpdate.mockReset().mockImplementation(async () => ({ modifiedCount: mocks.modifiedCount }));
@@ -68,14 +68,14 @@ describe("POST /api/approvals", () => {
     expect(await decide({ requestId: "req_1", action: "approve" })).toBe(mocks.denied);
   });
 
-  it("refuses approvers without script:approve", async () => {
-    mocks.permissions.delete("script:approve");
+  it("refuses approvers without check:approve", async () => {
+    mocks.permissions.delete("check:approve");
     expect((await decide({ requestId: "req_1", action: "approve" })).status).toBe(403);
     expect(mocks.requestsUpdate).not.toHaveBeenCalled();
   });
 
-  it("refuses reviewers without script:reject", async () => {
-    mocks.permissions.delete("script:reject");
+  it("refuses reviewers without check:reject", async () => {
+    mocks.permissions.delete("check:reject");
     expect((await decide({ requestId: "req_1", action: "reject", comment: "no" })).status).toBe(403);
     expect(mocks.requestsUpdate).not.toHaveBeenCalled();
   });

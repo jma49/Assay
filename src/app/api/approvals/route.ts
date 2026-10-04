@@ -7,7 +7,7 @@ import { ApiError, parseJson, withAuth } from "@/server/http/route";
 import { approveRequest, decidedApprovals, pendingApprovals, rejectRequest } from "@/server/services/approvals";
 import { actorOf } from "@/server/services/check-writes";
 
-const REVIEWERS = { anyOf: [Permission.SCRIPT_APPROVE, Permission.SCRIPT_REJECT] };
+const REVIEWERS = { anyOf: [Permission.CHECK_APPROVE, Permission.CHECK_REJECT] };
 
 const Decision = z.object({
   requestId: z.string().min(1),
@@ -31,8 +31,8 @@ export const GET = withAuth(REVIEWERS, async (request, { principal }) => {
 
   // What the reviewer may do with each request.
   const [canApprove, canReject] = await Promise.all([
-    requirePermission(principal.id, Permission.SCRIPT_APPROVE),
-    requirePermission(principal.id, Permission.SCRIPT_REJECT),
+    requirePermission(principal.id, Permission.CHECK_APPROVE),
+    requirePermission(principal.id, Permission.CHECK_REJECT),
   ]);
   const { data, pagination } = await pendingApprovals(db, page, limit);
   return NextResponse.json({
@@ -51,7 +51,7 @@ export const POST = withAuth(REVIEWERS, async (request, { principal }) => {
   const { requestId, action, comment } = await parseJson(request, Decision);
   if (action === "reject" && !comment) throw new ApiError(400, "comment_required", "Give a reason for rejecting");
 
-  const permission = action === "approve" ? Permission.SCRIPT_APPROVE : Permission.SCRIPT_REJECT;
+  const permission = action === "approve" ? Permission.CHECK_APPROVE : Permission.CHECK_REJECT;
   if (!(await requirePermission(principal.id, permission)).authorized) {
     throw new ApiError(403, "forbidden", `You may not ${action} requests`);
   }

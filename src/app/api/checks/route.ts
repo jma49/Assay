@@ -11,7 +11,7 @@ import { listChecks } from "@/server/services/checks-read";
  * `?view=definitions` gives the definitions instead (SQL, schedule, tags),
  * for the editor, the Runs page and Analysis.
  */
-export const GET = withAuth(Permission.SCRIPT_READ, async (request, { principal }) => {
+export const GET = withAuth(Permission.CHECK_READ, async (request, { principal }) => {
   if (request.nextUrl.searchParams.get("view") === "definitions") {
     return NextResponse.json({ checks: await checkDefinitionsFor(principal) });
   }
@@ -19,4 +19,4 @@ export const GET = withAuth(Permission.SCRIPT_READ, async (request, { principal 
   return NextResponse.json({ checks: principal.isGuest ? checks.map(summaryForGuest) : checks });
 });
 
-export const POST = withAuth(Permission.SCRIPT_CREATE, createCheck);
+export const POST = withAuth(Permission.CHECK_CREATE, createCheck);

@@ -35,7 +35,7 @@ const detail = (scriptId: string) =>
 describe("GET /api/checks/[scriptId]", () => {
   beforeEach(() => {
     mocks.denied = null;
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     mocks.guest = false;
     mocks.getCheckDetail.mockReset().mockResolvedValue({ scriptId: "orders", name: "Duplicate orders" });
   });
@@ -46,7 +46,7 @@ describe("GET /api/checks/[scriptId]", () => {
     expect(mocks.getCheckDetail).not.toHaveBeenCalled();
   });
 
-  it("needs script:read", async () => {
+  it("needs check:read", async () => {
     mocks.granted = new Set();
     expect((await detail("orders")).status).toBe(403);
     expect(mocks.getCheckDetail).not.toHaveBeenCalled();

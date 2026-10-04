@@ -52,7 +52,7 @@ describe("GET /api/integrations/[provider]/install", () => {
   });
 
   it("needs notification:manage", async () => {
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     expect((await install("slack")).status).toBe(403);
     expect(mocks.startInstall).not.toHaveBeenCalled();
   });

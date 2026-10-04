@@ -20,7 +20,7 @@ const Body = z.object({
  * read-only on the selected source before it is returned, so the editor
  * gets SQL that parses and a count of the rows it would flag today.
  */
-export const POST = withAuth(Permission.SCRIPT_CREATE, async (request, { principal }) => {
+export const POST = withAuth(Permission.CHECK_CREATE, async (request, { principal }) => {
   const { prompt, dataSourceId } = await parseJson(request, Body);
   await guardAiRequest(principal.id, { prompt });
   const source = await requireSource(dataSourceId);

@@ -43,7 +43,7 @@ describe("POST /api/ai/generate-sql", () => {
 
   beforeEach(() => {
     mocks.denied = null;
-    mocks.granted = new Set(["script:create"]);
+    mocks.granted = new Set(["check:create"]);
     mocks.requireSource.mockReset().mockResolvedValue(source);
     mocks.draftCheck.mockReset().mockResolvedValue({ draft: { sql: "SELECT 1" }, dryRun: { rowCount: 3 }, attempts: 1 });
   });
@@ -55,8 +55,8 @@ describe("POST /api/ai/generate-sql", () => {
     expect(mocks.draftCheck).not.toHaveBeenCalled();
   });
 
-  it("needs script:create", async () => {
-    mocks.granted = new Set(["script:read"]);
+  it("needs check:create", async () => {
+    mocks.granted = new Set(["check:read"]);
     expect((await generate({ prompt: "find duplicate orders" })).status).toBe(403);
     expect(mocks.draftCheck).not.toHaveBeenCalled();
   });

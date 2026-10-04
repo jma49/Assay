@@ -40,7 +40,7 @@ describe("GET /api/checks", () => {
 
   beforeEach(() => {
     mocks.denied = null;
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     mocks.guest = false;
     mocks.listChecks.mockReset().mockResolvedValue([summary]);
   });
@@ -52,7 +52,7 @@ describe("GET /api/checks", () => {
     expect(mocks.listChecks).not.toHaveBeenCalled();
   });
 
-  it("needs script:read", async () => {
+  it("needs check:read", async () => {
     mocks.granted = new Set();
     expect((await checks()).status).toBe(403);
     expect(mocks.listChecks).not.toHaveBeenCalled();

@@ -165,7 +165,7 @@ export function useNewCheck(language: Language) {
 
   return {
     /** Null until the user's permissions are known. */
-    canCreate: me ? me.permissions.includes("script:create") : null,
+    canCreate: me ? me.permissions.includes("check:create") : null,
     formData,
     dataSources,
     sqlContent,

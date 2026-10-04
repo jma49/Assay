@@ -21,7 +21,7 @@ function PageHeading() {
   const title = pageTitle(pathname)?.[language] ?? "";
   const intro = pageIntro(pathname)?.[language];
   const parent = parentPage(pathname);
-  const canCreate = me?.permissions.includes("script:create") && offersNewCheck(pathname);
+  const canCreate = me?.permissions.includes("check:create") && offersNewCheck(pathname);
   const newCheck = language === "zh" ? "新建检查" : "New check";
 
   // The tab reads the page in the reader's language; a check's page names it after the check.
