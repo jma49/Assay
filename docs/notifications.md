@@ -53,7 +53,13 @@ they are, so anyone in the channel can press them.
 3. Each delivery is claimed atomically before it is sent. Failures retry
    after 1 min, 5 min, 30 min, 2 h and 6 h; errors that retrying cannot fix
    (a deleted webhook, a refused signature) stop at once.
-4. A destination gets at most 30 alerts an hour; the rest wait.
+4. A destination gets at most 30 alerts an hour; the rest wait 10 minutes
+   and try again. A wait spends one of the six attempts, so during a long
+   alert storm a delivery can end failed instead of late.
+5. A delivery that used all its attempts is kept as failed with the reason.
+   Admins list failed deliveries with
+   `GET /api/notifications/deliveries/failed` and send them again with
+   `POST /api/notifications/deliveries/requeue`.
 
 The dispatcher runs after every run in the app, and the scheduled workflow
 calls `POST /api/notifications/dispatch` after scheduled runs. Delivery is at

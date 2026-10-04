@@ -58,4 +58,15 @@ describe("heartbeatStatus", () => {
   it("is stale past the threshold", () => {
     expect(heartbeatStatus({ updatedAt: new Date(now.getTime() - HEARTBEAT_STALE_MS - 1) }, now)).toBe("stale");
   });
+  it("is ok for a recent scheduled heartbeat", () => {
+    expect(heartbeatStatus({ updatedAt: new Date(now.getTime() - 30 * 60 * 1000), mode: "scheduled" }, now)).toBe("ok");
+  });
+  it("is stale for an old scheduled heartbeat", () => {
+    expect(
+      heartbeatStatus({ updatedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000), mode: "scheduled" }, now),
+    ).toBe("stale");
+  });
+  it("is stale for a recent manual heartbeat: it must not mask a dead schedule", () => {
+    expect(heartbeatStatus({ updatedAt: new Date(now.getTime() - 5 * 60 * 1000), mode: "all" }, now)).toBe("stale");
+  });
 });

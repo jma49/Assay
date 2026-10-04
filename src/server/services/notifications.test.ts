@@ -260,7 +260,24 @@ describe("dispatchNotifications", () => {
     const report = await dispatchNotifications(d, 100);
     expect(send).toHaveBeenCalledTimes(HOURLY_LIMIT);
     expect(report).toMatchObject({ sent: HOURLY_LIMIT, retrying: 2 });
-    expect(deliveries.filter((x) => x.status === "pending").every((x) => x.attempts === 0)).toBe(true);
+    // A throttled attempt still spends from the retry budget.
+    expect(deliveries.filter((x) => x.status === "pending").every((x) => x.attempts === 1)).toBe(true);
+  });
+
+  it("dead-letters a delivery the hourly cap never lets through", async () => {
+    const { store, deliveries } = memoryStore([event()], [destination()]);
+    const { deps: d, send, clock } = deps(store);
+    for (let i = 0; i < HOURLY_LIMIT; i++) await store.takeSendSlot("d1", t0, HOURLY_LIMIT);
+
+    for (let i = 1; i < MAX_ATTEMPTS; i++) {
+      expect(await dispatchNotifications(d)).toMatchObject({ sent: 0, retrying: 1, failed: 0 });
+      expect(deliveries[0]).toMatchObject({ status: "pending", attempts: i });
+      clock.now = new Date(deliveries[0].nextAttemptAt.getTime());
+    }
+    expect(await dispatchNotifications(d)).toMatchObject({ sent: 0, retrying: 0, failed: 1 });
+    expect(deliveries[0]).toMatchObject({ status: "failed", attempts: MAX_ATTEMPTS });
+    expect(deliveries[0].error).toContain("hourly send slot");
+    expect(send).not.toHaveBeenCalled();
   });
 
   it("keeps concurrent dispatchers within the hourly cap together", async () => {

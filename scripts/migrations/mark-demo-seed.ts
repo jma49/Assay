@@ -3,6 +3,7 @@
  * demo viewers run them (the author label no longer does). Only the check
  * ids the seed defines are touched. Dry run unless --apply.
  *   tsx -r dotenv/config scripts/migrations/mark-demo-seed.ts [--apply]
+ * Safe to delete once applied to every deployment that seeds the demo checks.
  */
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { DEMO_AUTHOR, demoChecks } from "../demo/checks";
