@@ -51,8 +51,10 @@ Goal: No check, bug or leaked credential can write to the monitored database.
   GitHub secret, `.env.local`) uses `assay_readonly` with only SELECT,
   `default_transaction_read_only = on` and a statement timeout
   ([architecture.md](architecture.md#running-a-check)).
-- The `postgres` health probe reports whether its role is read-only, as a
-  field, so the gap is visible without making the probe fail.
+- Settings → Data sources → Test on the default source reports it as
+  read-only (the probe already checks superuser, `pg_write_all_data`, table
+  write grants and CREATE). The public health endpoint does not report it:
+  it would tell anyone the role can write.
 
 ## P1 — Change safely
 
