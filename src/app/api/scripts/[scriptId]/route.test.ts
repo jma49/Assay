@@ -49,19 +49,24 @@ vi.mock("@/server/services/approvals", async (importOriginal) => ({
   fileChangeRequest: (...args: unknown[]) => mocks.fileChangeRequest(...args),
 }));
 
-import { DELETE, PUT } from "./route";
+import * as legacy from "./route";
+import * as canonical from "../../checks/[scriptId]/route";
 
 const params = (scriptId = "orders-check") => ({ params: Promise.resolve({ scriptId }) });
-const url = "http://localhost/api/scripts/orders-check";
-
-const update = (body: unknown) => PUT(new NextRequest(url, { method: "PUT", body: JSON.stringify(body) }), params());
 
 const ownCheck = { scriptId: "orders-check", name: "Orders", sqlContent: "SELECT 1", author: "alice", createdBy: { id: "user_alice" }, version: 3 };
 const othersCheck = { ...ownCheck, author: "bob", createdBy: { id: "user_bob" } };
 
 const lastUpdate = () => mocks.updateOne.mock.calls.at(-1) as unknown as [Record<string, unknown>, { $set: Record<string, unknown>; $inc: Record<string, number> }];
 
-describe("PUT /api/scripts/[scriptId]", () => {
+// /api/scripts/[scriptId] is the deprecated alias of /api/checks/[scriptId]: both must behave the same.
+describe.each([
+  ["/api/checks/orders-check", canonical.PUT],
+  ["/api/scripts/orders-check", legacy.PUT],
+] as const)("PUT %s", (path, PUT) => {
+  const url = `http://localhost${path}`;
+  const update = (body: unknown) => PUT(new NextRequest(url, { method: "PUT", body: JSON.stringify(body) }), params());
+
   beforeEach(() => {
     mocks.denied = null;
     mocks.authorized = true;
@@ -206,7 +211,11 @@ describe("PUT /api/scripts/[scriptId]", () => {
   });
 });
 
-describe("DELETE /api/scripts/[scriptId]", () => {
+describe.each([
+  ["/api/checks/orders-check", canonical.DELETE],
+  ["/api/scripts/orders-check", legacy.DELETE],
+] as const)("DELETE %s", (path, DELETE) => {
+  const url = `http://localhost${path}`;
   beforeEach(() => {
     mocks.denied = null;
     mocks.authorized = true;
@@ -242,4 +251,15 @@ describe("DELETE /api/scripts/[scriptId]", () => {
     expect((await remove()).status).toBe(200);
     expect(mocks.deleteOne).toHaveBeenCalledWith({ scriptId: "orders-check" });
   });
+});
+
+it("marks the deprecated DELETE and points to the check's own route", async () => {
+  mocks.denied = null;
+  mocks.authorized = true;
+  mocks.role = "admin";
+  mocks.existing = ownCheck;
+  mocks.findOne.mockReset().mockImplementation(async () => mocks.existing);
+  const res = await legacy.DELETE(new NextRequest("http://localhost/api/scripts/orders-check", { method: "DELETE" }), params());
+  expect(res.headers.get("Deprecation")).toMatch(/^@\d+$/);
+  expect(res.headers.get("Link")).toBe('</api/checks/orders-check>; rel="successor-version"');
 });

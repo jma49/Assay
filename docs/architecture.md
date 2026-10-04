@@ -302,10 +302,14 @@ the lists carried over from the first version still page by number.
 - **Checks and runs.** One endpoint per job:
   - `GET /api/checks`: every check with its state and last 30 runs (the
     Checks list); `GET /api/checks/[scriptId]`: one check's detail.
-  - `GET /api/scripts`: every check's definition with its SQL and `version`
-    (the Manage editor, the Runs page's check list and Run sheet, the
-    Analysis page's names and tags). `POST /api/scripts` and
-    `PUT`/`DELETE /api/scripts/[scriptId]` write checks.
+  - `GET /api/checks?view=definitions`: every check's definition with its
+    SQL and `version` (the Manage editor, the Runs page's check list and Run
+    sheet, the Analysis page's names and tags). `POST /api/checks` and
+    `PUT`/`DELETE /api/checks/[scriptId]` write checks.
+  - `/api/scripts` and `/api/scripts/[scriptId]` are deprecated aliases with
+    the old response shapes (`GET` a bare array). They answer with
+    `Deprecation` and a `Link` to their successor; nothing in the app calls
+    them.
   - `GET /api/check-history`: runs, filtered and paged (the Runs page's
     table; the Analysis page asks for up to 500 in a date range);
     `check-history/stats` counts them; `execution-details/[resultId]` is
