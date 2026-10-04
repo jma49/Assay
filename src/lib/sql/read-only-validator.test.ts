@@ -158,3 +158,12 @@ describe("functions called through quoted names", () => {
     expect(validateReadOnlySql(`SELECT "update", "delete" FROM t`).isValid).toBe(true);
   });
 });
+
+describe("forbidden function messages", () => {
+  it("name the function as written, not the pattern that matched it", () => {
+    const result = validateReadOnlySql("SELECT dblink_exec('host=x', 'DELETE FROM t')");
+    expect(result.isValid).toBe(false);
+    expect(result.reasonEn).toContain('"dblink_exec"');
+    expect(result.reason).toContain('"dblink_exec"');
+  });
+});
