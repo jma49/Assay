@@ -15,6 +15,14 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    # A throwaway MongoDB for the *.integration.test.ts suites (MONGODB_TEST_URI).
+    services:
+      mongo:
+        image: mongo:7@sha256:9854f7139445d766a9523571d6f047530c45547460ffcf8259eb2bf4264632ca
+        ports: ["27017:27017"]
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -39,6 +47,8 @@ jobs:
         run: npx knip
 
       - name: Test
+        env:
+          MONGODB_TEST_URI: mongodb://127.0.0.1:27017/assay_ci_test
         run: npm test
 
       # Replaces the build check Vercel previews used to give PRs; no secrets needed.
