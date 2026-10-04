@@ -22,6 +22,7 @@ import {
   type DataSourceDoc,
   type StoredTest,
 } from "@/server/repos/data-source-store";
+import { serverEnv } from "@/lib/config/env";
 
 /**
  * Data sources: the databases checks run against. DATABASE_URL is the
@@ -42,7 +43,7 @@ export interface DataSourceDeps {
 }
 
 export const defaultDataSourceDeps = (): DataSourceDeps => ({
-  env: process.env,
+  env: serverEnv(),
   probe: (config) => probeConnection(config),
   forget: forgetSource,
   now: () => new Date(),
@@ -90,12 +91,12 @@ function builtInDto(env: Env, checkCount: number, guest: boolean): DataSourceDto
 /** Every source, the built-in one first, with how many checks use each. Guests get no `display`. */
 export async function listDataSources(db: Db, workspaceId: string, options: { guest: boolean; env?: Env }): Promise<DataSourceDto[]> {
   const [docs, counts] = await Promise.all([listSourceDocs(db, workspaceId), checkCountsBySource(db)]);
-  const builtIn = builtInDto(options.env ?? process.env, counts.get(DEFAULT_SOURCE_ID) ?? 0, options.guest);
+  const builtIn = builtInDto(options.env ?? serverEnv(), counts.get(DEFAULT_SOURCE_ID) ?? 0, options.guest);
   return [...(builtIn ? [builtIn] : []), ...docs.map((doc) => toDto(doc, counts.get(doc.sourceId) ?? 0, options.guest))];
 }
 
 export async function getDataSource(db: Db, workspaceId: string, sourceId: string, options: { guest: boolean; env?: Env }): Promise<DataSourceDto> {
-  const env = options.env ?? process.env;
+  const env = options.env ?? serverEnv();
   if (sourceId === DEFAULT_SOURCE_ID) {
     const builtIn = builtInDto(env, await countChecksUsing(db, sourceId), options.guest);
     if (builtIn) return builtIn;
@@ -107,7 +108,7 @@ export async function getDataSource(db: Db, workspaceId: string, sourceId: strin
 }
 
 /** Names and ids only, for the check editor's picker and agents. */
-export async function listSourceOptions(db: Db, workspaceId: string, env: Env = process.env) {
+export async function listSourceOptions(db: Db, workspaceId: string, env: Env = serverEnv()) {
   const docs = await listSourceDocs(db, workspaceId);
   const builtIn = env.DATABASE_URL ? [{ sourceId: DEFAULT_SOURCE_ID, name: BUILT_IN_NAME, engine: "postgres" as const }] : [];
   return [...builtIn, ...docs.map(({ sourceId, name, engine }) => ({ sourceId, name, engine }))];

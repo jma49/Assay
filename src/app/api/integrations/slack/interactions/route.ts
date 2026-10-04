@@ -4,6 +4,7 @@ import { blocksAfterAction, verifySlackSignature } from "@/server/integrations/s
 import { ACTION_IDS } from "@/server/notify/types";
 import { buttonReply, handleAlertButton, type ButtonAction } from "@/server/services/alert-buttons";
 import { logError } from "@/server/logging/log";
+import { serverEnv } from "@/lib/config/env";
 
 interface SlackPayload {
   type?: string;
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     body,
     request.headers.get("x-slack-request-timestamp"),
     request.headers.get("x-slack-signature"),
-    process.env.SLACK_SIGNING_SECRET,
+    serverEnv().SLACK_SIGNING_SECRET,
   );
   if (!valid) return new NextResponse(null, { status: 401 });
 

@@ -7,6 +7,7 @@ import { ApiError, withAuth } from "@/server/http/route";
 import { workspaceOf } from "@/server/http/workspace";
 import { appUrl } from "@/server/integrations/config";
 import { sendTestAlert } from "@/server/services/destinations";
+import { serverEnv } from "@/lib/config/env";
 
 const TESTS_PER_MINUTE = 5;
 
@@ -18,6 +19,6 @@ export const POST = withAuth<{ id: string }>(Permission.NOTIFICATION_MANAGE, asy
   }));
   if (!quota.allowed) throw new ApiError(429, "rate_limited", "Too many test messages; try again in a minute");
   const db = await getMongoDbClient().getDb();
-  const outcome = await sendTestAlert(db, workspaceOf(principal), params.id, appUrl(process.env, request.nextUrl.origin));
+  const outcome = await sendTestAlert(db, workspaceOf(principal), params.id, appUrl(serverEnv(), request.nextUrl.origin));
   return NextResponse.json({ ok: outcome.kind === "sent", error: outcome.kind === "sent" ? null : outcome.error });
 });

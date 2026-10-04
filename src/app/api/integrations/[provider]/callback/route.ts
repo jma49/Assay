@@ -7,12 +7,13 @@ import { checkState, finishInstall, OAUTH_NONCE_COOKIE, type OAuthKind } from "@
 import { CHANNELS } from "@/server/notify/channels";
 import { saveDestination } from "@/server/services/destinations";
 import { logError } from "@/server/logging/log";
+import { serverEnv } from "@/lib/config/env";
 
 const SETTINGS = "/settings/notifications";
 
 /** Where Slack and Discord send the browser back; adds the chosen channel. */
 export const GET = withAuth<{ provider: string }>(Permission.NOTIFICATION_MANAGE, async (request, { principal, params }) => {
-  const base = appUrl(process.env, request.nextUrl.origin);
+  const base = appUrl(serverEnv(), request.nextUrl.origin);
   const back = (query: Record<string, string>) => {
     const response = NextResponse.redirect(`${base}${SETTINGS}?${new URLSearchParams(query)}`);
     response.cookies.delete({ name: OAUTH_NONCE_COOKIE, path: "/api/integrations" });

@@ -6,6 +6,7 @@ import { ACTION_IDS } from "@/server/notify/types";
 import { buttonReply, handleAlertButton, type ButtonAction } from "@/server/services/alert-buttons";
 import { saveDestination } from "@/server/services/destinations";
 import { COLLECTIONS } from "@/lib/database/collections";
+import { serverEnv } from "@/lib/config/env";
 
 type Env = Record<string, string | undefined>;
 
@@ -95,7 +96,7 @@ export async function createLink(
   workspaceId: string,
   by: { id: string; name: string },
   language: "en" | "zh",
-  env: Env = process.env,
+  env: Env = serverEnv(),
 ): Promise<TelegramLinkDto> {
   const code = randomBytes(18).toString("base64url");
   const doc = {
@@ -134,7 +135,7 @@ const CONFIRM = {
 };
 
 /** Handles one update from Telegram: a button click, or a /start that links a chat. Returns whether it changed anything. */
-export async function handleUpdate(db: Db, update: TelegramUpdate, env: Env = process.env, fetcher: typeof fetch = fetch): Promise<boolean> {
+export async function handleUpdate(db: Db, update: TelegramUpdate, env: Env = serverEnv(), fetcher: typeof fetch = fetch): Promise<boolean> {
   if (update.callback_query) return handleButton(db, update.callback_query, env, fetcher);
   const message = update.message;
   const code = startCode(message?.text);
@@ -172,7 +173,7 @@ export async function handleUpdate(db: Db, update: TelegramUpdate, env: Env = pr
  * Without a webhook (local development, or before `npm run telegram:webhook`)
  * the page asks for updates instead. The offset confirms what was read.
  */
-export async function pollUpdates(db: Db, env: Env = process.env, fetcher: typeof fetch = fetch): Promise<void> {
+export async function pollUpdates(db: Db, env: Env = serverEnv(), fetcher: typeof fetch = fetch): Promise<void> {
   const state = db.collection<{ _id: string; offset?: number }>(COLLECTIONS.integrationState);
   const offset = (await state.findOne({ _id: "telegram" }))?.offset ?? 0;
   const reply = await telegramCall("getUpdates", { offset, timeout: 0, allowed_updates: ["message", "callback_query"] }, env, fetcher);

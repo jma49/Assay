@@ -6,6 +6,7 @@ import { UnknownDataSourceError } from "@/server/datasource/registry";
 import { resolveSource } from "@/server/datasource/sources";
 import { logError } from "@/server/logging/log";
 import { heartbeatStatus, readHeartbeat, SCHEDULER_NAME, type HeartbeatDoc } from "@/server/repos/heartbeat-store";
+import { serverEnv } from "@/lib/config/env";
 
 /** How a component answered the probe. */
 type ComponentStatus = "ok" | "down" | "unconfigured";
@@ -63,12 +64,12 @@ async function probeMongo(): Promise<"unconfigured" | void> {
 }
 
 async function probeRedis(): Promise<"unconfigured" | void> {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return "unconfigured";
+  if (!serverEnv().UPSTASH_REDIS_REST_URL || !serverEnv().UPSTASH_REDIS_REST_TOKEN) return "unconfigured";
   await redis.ping();
 }
 
 async function probePostgres(): Promise<"unconfigured" | void> {
-  if (!process.env.DATABASE_URL) return "unconfigured";
+  if (!serverEnv().DATABASE_URL) return "unconfigured";
   try {
     const { source } = await resolveSource(DEFAULT_SOURCE_ID);
     await source.transaction(async (client) => {

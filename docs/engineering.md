@@ -154,7 +154,7 @@ Update docs in the **same change** when you alter:
 | Auth providers, roles | `docs/authentication.md` |
 | Channels, payload shape | `docs/notifications.md` |
 | Tools, OAuth, API keys | `docs/mcp.md` |
-| Env vars, deploy, smoke test | `docs/deployment.md` |
+| Env vars, deploy, smoke test | `docs/deployment.md`; a new variable is declared in `src/lib/config/env.ts` and mentioned in `.env.example` (a test enforces both) |
 | CLI entry points | `scripts/README.md` |
 | Invariants, contracts, hotspots | `docs/engineering.md` |
 

@@ -1,5 +1,6 @@
 import { Receiver } from "@upstash/qstash";
 import { safeEqual } from "@/server/crypto/secret-box";
+import { serverEnv } from "@/lib/config/env";
 
 type Env = Record<string, string | undefined>;
 
@@ -8,7 +9,7 @@ type Env = Record<string, string | undefined>;
  * scheduler: a valid QStash signature for exactly `url`, or the CRON_SECRET
  * bearer token (GitHub Actions, any other cron, a manual curl).
  */
-export async function isTrustedScheduler(request: Request, rawBody: string, url: string, env: Env = process.env): Promise<boolean> {
+export async function isTrustedScheduler(request: Request, rawBody: string, url: string, env: Env = serverEnv()): Promise<boolean> {
   const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
   if (bearer && env.CRON_SECRET && safeEqual(bearer, env.CRON_SECRET)) return true;
 

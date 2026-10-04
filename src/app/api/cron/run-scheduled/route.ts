@@ -4,6 +4,7 @@ import { isTrustedScheduler } from "@/server/http/scheduler-auth";
 import { logError } from "@/server/logging/log";
 import { errorKind } from "@/lib/utils/public-log";
 import { runScheduledTrigger, TriggerRunError } from "@/server/services/scheduled-trigger";
+import { serverEnv } from "@/lib/config/env";
 
 // Runs checks (or sends their alerts): the Hobby plan's limit, FUNCTION_MAX_DURATION_S in
 // run-check-deps.ts. Checks that could not finish in time are deferred to the next trigger.
@@ -20,7 +21,7 @@ const TRIGGER_PATH = "/api/cron/run-scheduled";
 export async function POST(request: NextRequest) {
   const startedAt = Date.now();
   const body = await request.text();
-  const url = `${appUrl(process.env, request.nextUrl.origin)}${TRIGGER_PATH}`;
+  const url = `${appUrl(serverEnv(), request.nextUrl.origin)}${TRIGGER_PATH}`;
   if (!(await isTrustedScheduler(request, body, url))) {
     return NextResponse.json({ error: { code: "unauthorized", message: "Unauthorized" } }, { status: 401 });
   }

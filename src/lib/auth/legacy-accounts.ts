@@ -1,5 +1,6 @@
 import type { Db } from "mongodb";
 import { COLLECTIONS } from "@/lib/database/collections";
+import { serverEnv } from "@/lib/config/env";
 
 /**
  * Members who signed up through Clerk keep their role: the first time
@@ -25,7 +26,7 @@ export async function claimLegacyRole(db: Db, user: { id: string; email: string;
 }
 
 /** Whether the email may sign in, per ALLOWED_EMAIL_DOMAINS (empty allows everyone). */
-export function emailAllowed(email: string, env: Record<string, string | undefined> = process.env): boolean {
+export function emailAllowed(email: string, env: Record<string, string | undefined> = serverEnv()): boolean {
   const domains = (env.ALLOWED_EMAIL_DOMAINS ?? "")
     .split(",")
     .map((d) => d.trim().toLowerCase())

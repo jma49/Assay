@@ -13,6 +13,7 @@ import { URL_PROBLEM_MESSAGES, type DeliveryOutcome, type DestinationSecret } fr
 import { COLLECTIONS } from "@/lib/database/collections";
 import { toDestination } from "@/server/repos/notify-store";
 import type { Destination } from "./notifications";
+import { serverEnv } from "@/lib/config/env";
 
 function toDestinationDto(destination: Destination): DestinationDto {
   const last = destination.lastDelivery;
@@ -153,7 +154,7 @@ export async function sendTestAlert(db: Db, workspaceId: string, id: string, app
   let outcome: DeliveryOutcome;
   try {
     const message = buildTestMessage({ language: destination.language, url: `${appUrl}/checks`, at: now });
-    outcome = await sendRequest(channel, channel.request(message, JSON.parse(open(destination.sealed)), { now, env: process.env }));
+    outcome = await sendRequest(channel, channel.request(message, JSON.parse(open(destination.sealed)), { now, env: serverEnv() }));
   } catch (error) {
     outcome = { kind: "failed", error: error instanceof Error ? error.message : String(error) };
   }
