@@ -2,13 +2,13 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { OUTCOME_DOT, OUTCOME_LABEL, OUTCOME_TEXT } from "@/components/checks/status";
-import type { BatchItemView } from "@/contracts/batches";
+import type { BatchCheckView } from "@/contracts/batches";
 import { cn } from "@/lib/utils/utils";
 import { batchCounts, itemOutcome } from "./manual-trigger/batch-progress";
 import { triggerCopy } from "./manual-trigger/copy";
 
 /** A bulk run's checks as they finish, each with its outcome and a link to its report. */
-export function BatchExecutionProgress({ items, language }: { items: BatchItemView[]; language: string }) {
+export function BatchExecutionProgress({ items, language }: { items: BatchCheckView[]; language: string }) {
   const copy = triggerCopy(language);
   const lang = language === "zh" ? "zh" : "en";
   const counts = batchCounts(items);
@@ -36,22 +36,22 @@ export function BatchExecutionProgress({ items, language }: { items: BatchItemVi
                 ? copy.skipped
                 : copy.pending;
           return (
-            <li key={item.scriptId} className="flex items-center gap-3 px-3 py-2 text-body-sm">
+            <li key={item.checkId} className="flex items-center gap-3 px-3 py-2 text-body-sm">
               {item.status === "running" ? (
                 <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" aria-hidden />
               ) : (
                 <span className={cn("status-dot shrink-0", outcome ? OUTCOME_DOT[outcome] : "status-dot-idle")} aria-hidden />
               )}
               <span className="min-w-0 flex-1">
-                <span className="block truncate">{item.scriptName || item.scriptId}</span>
+                <span className="block truncate">{item.name || item.checkId}</span>
                 {(outcome === "error" || item.status === "skipped") && item.message && (
                   <span className="block truncate font-mono text-caption text-muted-foreground" title={item.message}>
                     {item.message}
                   </span>
                 )}
               </span>
-              {outcome && item.mongoResultId ? (
-                <Link href={`/runs/${item.mongoResultId}`} className={cn("shrink-0 hover:underline", OUTCOME_TEXT[outcome])}>
+              {outcome && item.runId ? (
+                <Link href={`/runs/${item.runId}`} className={cn("shrink-0 hover:underline", OUTCOME_TEXT[outcome])}>
                   {label}
                 </Link>
               ) : (

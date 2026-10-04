@@ -306,6 +306,11 @@ the lists carried over from the first version still page by number.
     SQL and `version` (the Manage editor, the Runs page's check list and Run
     sheet, the Analysis page's names and tags). `POST /api/checks` and
     `PUT`/`DELETE /api/checks/[scriptId]` write checks.
+  - `POST /api/batches` starts a bulk run (`{ mode, checkIds,
+    filteredExecution }`, 202) and `GET /api/batches/[executionId]` reports
+    its progress under check names. `/api/run-all-scripts` and
+    `/api/batch-execution-status` are deprecated aliases with their old
+    shapes.
   - `/api/scripts` and `/api/scripts/[scriptId]` are deprecated aliases with
     the old response shapes (`GET` a bare array). They answer with
     `Deprecation` and a `Link` to their successor; nothing in the app calls

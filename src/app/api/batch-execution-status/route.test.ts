@@ -65,5 +65,6 @@ describe("GET /api/batch-execution-status", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ success: true, data: { executionId: "e1", totalScripts: 2 } });
     expect(mocks.getBatch).toHaveBeenCalledWith("e1");
+    expect(res.headers.get("Link")).toBe('</api/batches/e1>; rel="successor-version"');
   });
 });
