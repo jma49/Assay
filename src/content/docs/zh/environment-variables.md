@@ -17,6 +17,8 @@
 
 至少要配置一个登录方式（Google 或 GitHub）。
 
+生产环境缺少 `BETTER_AUTH_SECRET`、`MONGODB_URI`、`DATABASE_URL` 或 `APP_URL` 时，服务器拒绝启动（在 Vercel 上，未设置 `APP_URL` 时使用生产域名），日志会列出缺少的变量名。未配置的可选功能保持关闭，启动时各输出一条警告。
+
 ## 执行检查
 
 | 变量 | 用途 |
