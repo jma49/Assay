@@ -64,6 +64,13 @@ describe("GET /api/integrations/[provider]/install", () => {
     expect(mocks.startInstall).not.toHaveBeenCalled();
   });
 
+  it("answers 404 for inherited object keys", async () => {
+    for (const name of ["constructor", "toString", "__proto__"]) {
+      expect((await install(name)).status).toBe(404);
+    }
+    expect(mocks.startInstall).not.toHaveBeenCalled();
+  });
+
   it("answers 503 when the provider is not set up on this server", async () => {
     mocks.configured = false;
     const res = await install("slack");

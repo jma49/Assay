@@ -11,7 +11,8 @@ const CONFIGURED: Record<OAuthKind, () => boolean> = { slack: slackConfigured, d
 /** "Add to Slack" / "Add to Discord": sends the browser to the provider's channel picker. */
 export const GET = withAuth<{ provider: string }>(Permission.NOTIFICATION_MANAGE, async (request, { principal, params }) => {
   const kind = params.provider as OAuthKind;
-  if (!(kind in CONFIGURED)) throw new ApiError(404, "not_found", "Unknown integration");
+  // Own keys only: `in` also accepts inherited names such as "constructor".
+  if (!Object.hasOwn(CONFIGURED, kind)) throw new ApiError(404, "not_found", "Unknown integration");
   if (!CONFIGURED[kind]() || !hasSecretKey()) throw new ApiError(503, "not_configured", `${kind} is not set up on this server`);
 
   const { url, nonce } = startInstall(kind, { id: principal.id, workspaceId: workspaceOf(principal) }, appUrl(process.env, request.nextUrl.origin));
