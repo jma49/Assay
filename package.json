@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:services": "docker compose up -d",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

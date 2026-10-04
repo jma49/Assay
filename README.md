@@ -4,12 +4,11 @@ Open-source SQL data checks for PostgreSQL: write read-only checks, run them on 
 
 **Live demo:** https://assay.majincheng.com (try it as a guest, or sign in with Google or GitHub; new accounts are viewers)
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black.svg)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-6-green.svg)](https://www.mongodb.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-checked-336791.svg)](https://www.postgresql.org/)
-[![Better Auth](https://img.shields.io/badge/Better%20Auth-Google%20%7C%20GitHub-purple.svg)](https://www.better-auth.com/)
+[![CI](https://github.com/jma49/Assay/actions/workflows/ci.yml/badge.svg)](https://github.com/jma49/Assay/actions/workflows/ci.yml)
+[![Visual](https://github.com/jma49/Assay/actions/workflows/visual.yml/badge.svg)](https://github.com/jma49/Assay/actions/workflows/visual.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
+[![The Checks page of the Assay demo](public/video/assay-demo.jpg)](https://assay.majincheng.com)
 
 ## What it does
 
@@ -23,7 +22,7 @@ A **check** is a read-only SQL query whose returned rows are problems: duplicate
 
 ## Stack
 
-Next.js 15 (App Router) · TypeScript · Tailwind v4 · MongoDB (checks, runs, users) · PostgreSQL (the databases being checked) · Upstash Redis (cache, rate limits) · Better Auth (Google, GitHub) · Vitest.
+Next.js (App Router) · TypeScript · Tailwind CSS · MongoDB (checks, runs, users) · PostgreSQL (the databases being checked) · Upstash Redis (cache, rate limits) · Better Auth (Google, GitHub) · Vitest and Playwright. Exact versions are in `package.json`.
 
 ## Quick start
 
@@ -36,7 +35,33 @@ npm run dev
 
 Sign in once, then make yourself admin: `npm run user:set-role -- you@example.com admin`.
 
-Scheduled checks run from GitHub Actions (`.github/workflows/sql-check-cron.yml`) or from cron on your own server (`npm run sql:run-scheduled`).
+### Local services
+
+No cloud accounts needed for development: `npm run dev:services` starts
+MongoDB, PostgreSQL and Redis (with Upstash's REST protocol) from
+`compose.yaml`. Point `.env.local` at them:
+
+```bash
+MONGODB_URI=mongodb://127.0.0.1:27017/assay_dev
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/assay_demo
+UPSTASH_REDIS_REST_URL=http://127.0.0.1:8079
+UPSTASH_REDIS_REST_TOKEN=local
+BETTER_AUTH_SECRET=local-development-only-not-a-secret
+APP_URL=http://localhost:3000
+AUTH_DEV_PASSWORD_LOGIN=true   # email and password sign-in, next dev only
+```
+
+With `AUTH_DEV_PASSWORD_LOGIN=true` the sign-in page also offers email and
+password, so you need no Google or GitHub app locally; it is refused in
+production.
+
+### Scheduled runs
+
+A schedule calls `POST /api/cron/run-scheduled` every 30 minutes: an Upstash
+QStash schedule (signed) or any cron with the `CRON_SECRET` bearer token. The
+GitHub Actions workflow `.github/workflows/sql-check-cron.yml` is the
+fallback, and a server of your own can run `npm run sql:run-scheduled` from
+cron. See [docs/deployment.md](docs/deployment.md).
 
 ## Documentation
 
@@ -45,6 +70,8 @@ Scheduled checks run from GitHub Actions (`.github/workflows/sql-check-cron.yml`
 | [docs/architecture.md](docs/architecture.md) | Layers, run pipeline, concurrency rules, phases |
 | [docs/database.md](docs/database.md) | Collections, fields, indexes, retention, concurrency |
 | [docs/authentication.md](docs/authentication.md) | Sign-in, roles, moving from Clerk |
+| [docs/engineering.md](docs/engineering.md) | Invariants, public contracts, hotspots, verification |
+| [docs/roadmap.md](docs/roadmap.md) | Reliability and infrastructure goals |
 | [docs/notifications.md](docs/notifications.md) | Alert channels, delivery model, setup |
 | [docs/mcp.md](docs/mcp.md) | Connecting agents (OAuth or API key), tools, security |
 | [docs/brand.md](docs/brand.md) | The Row A mark, colours, type |
@@ -66,11 +93,16 @@ src/
 ├── components/     # UI
 ├── contracts/      # request and response types shared by server and client
 ├── domain/         # pure rules: runs, alerts, digests, reminders
-├── lib/            # auth, database clients, SQL validation, utilities
+├── lib/            # infrastructure: config, logging, auth, database clients, SQL validation
 └── server/         # services, repositories, notifications, MCP
 scripts/            # CLI entry points and migrations
 docs/               # engineering docs
 ```
+
+## Contributing
+
+Issues and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
+Report security problems privately, as [SECURITY.md](SECURITY.md) describes.
 
 ## License
 
