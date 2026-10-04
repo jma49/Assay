@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CheckDefinition } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/runs/types";
 
 async function fetchChecks(): Promise<CheckDefinition[]> {
   const response = await fetch("/api/checks?view=definitions");

@@ -1,5 +1,5 @@
 import { DEFAULT_SOURCE_ID } from "@/domain/data-source";
-import type { CheckDefinition } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/runs/types";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
 import type { CheckFormData } from "./CheckMetadataForm";

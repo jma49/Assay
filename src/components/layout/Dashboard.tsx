@@ -3,16 +3,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { DashboardSkeleton } from "@/components/common/PageSkeletons";
-import { CheckHistory } from "@/components/business/dashboard/CheckHistory";
-import { LoadingError } from "@/components/business/dashboard/LoadingError";
-import { StatusTiles } from "@/components/business/dashboard/StatusTiles";
-import { CHECK_HISTORY_ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
-import { runsCopy } from "@/components/business/dashboard/runs/copy";
-import { RunSheet } from "@/components/business/dashboard/runs/RunSheet";
-import { RunsHeader } from "@/components/business/dashboard/runs/RunsHeader";
-import { pageRange, passRate } from "@/components/business/dashboard/runs/runs";
-import { useRunsPage } from "@/components/business/dashboard/runs/useRunsPage";
-import { useTriggerCheck } from "@/components/business/dashboard/runs/useTriggerCheck";
+import { CheckHistory } from "@/components/runs/CheckHistory";
+import { LoadingError } from "@/components/runs/LoadingError";
+import { StatusTiles } from "@/components/runs/StatusTiles";
+import { CHECK_HISTORY_ITEMS_PER_PAGE } from "@/components/runs/types";
+import { runsCopy } from "@/components/runs/history/copy";
+import { RunSheet } from "@/components/runs/history/RunSheet";
+import { RunsHeader } from "@/components/runs/history/RunsHeader";
+import { pageRange, passRate } from "@/components/runs/history/runs";
+import { useRunsPage } from "@/components/runs/history/useRunsPage";
+import { useTriggerCheck } from "@/components/runs/history/useTriggerCheck";
 import { useMe } from "@/lib/auth/use-me";
 
 /** Keeps the page's slower fade-in while it is mounted. */

@@ -84,11 +84,11 @@ src/
   components/
     ui/          Primitives (button, dialog, table...).
     layout/      App shell, sidebar, page header, the Runs page.
-    checks/ activity/ notifications/ settings/ auth/   Feature views.
-    business/    Views carried over from the first version, each split into
-                 a pure module (tested), a data hook and section components:
-                 analysis, approvals, dashboard (run panel), edit-history,
-                 users, ai.
+    checks/ runs/ run-report/ activity/ analysis/ approvals/ edit-history/
+    notifications/ settings/ users/ auth/ ai/
+                 Feature views, one folder per feature. Each splits into a
+                 pure module (tested), a data hook, section components and a
+                 copy file with the English and Chinese strings.
 scripts/         CLIs (seed, run checks, migrations) calling the same code.
 ```
 

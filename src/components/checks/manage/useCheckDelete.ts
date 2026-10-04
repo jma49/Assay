@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import type { CheckDefinition } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/runs/types";
 import { apiErrorText } from "@/client/api-errors";
 import { sendJson } from "@/client/send-json";
 import { approvalNotice, type Language } from "./check-form";

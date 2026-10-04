@@ -4,12 +4,12 @@ import { paginationCopy } from "@/components/common/pagination-copy";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { formatPageInfo } from "@/lib/utils/pagination";
 import { collectHashtags } from "./manual-trigger/script-search";
-import { runsCopy } from "./runs/copy";
-import { HistoryFilters } from "./runs/HistoryFilters";
-import { HistoryTable } from "./runs/HistoryTable";
-import { scriptDisplayNames, type SortConfig } from "./runs/runs";
+import { runsCopy } from "./history/copy";
+import { HistoryFilters } from "./history/HistoryFilters";
+import { HistoryTable } from "./history/HistoryTable";
+import { scriptDisplayNames, type SortConfig } from "./history/runs";
 import type { HistoryRun, CheckListItem } from "./types";
-import type { SortKey } from "./runs/runs";
+import type { SortKey } from "./history/runs";
 
 /** The jump box only pays off once there are more pages than the shortcuts cover. */
 const JUMP_BOX_MIN_PAGES = 6;

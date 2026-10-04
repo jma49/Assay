@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { readJson } from "@/client/send-json";
-import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
+import { ITEMS_PER_PAGE } from "@/components/runs/types";
 import type { EditHistoryRecord } from "@/contracts/edit-history";
 import { EMPTY_FILTERS, buildHistoryQuery, type HistoryFilters } from "./edit-history";
 import { createLatestRequest } from "./latest-request";

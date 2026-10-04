@@ -5,14 +5,14 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import { AnalysisChartsRow } from "@/components/business/analysis/AnalysisChartsRow";
-import { AnalysisFilters } from "@/components/business/analysis/AnalysisFilters";
-import { AnalysisSummary } from "@/components/business/analysis/AnalysisSummary";
-import { DailyBreakdown } from "@/components/business/analysis/DailyBreakdown";
-import { CheckPerformanceTable } from "@/components/business/analysis/CheckPerformanceTable";
-import { collectTags, DAILY_BREAKDOWN_DAYS, DEFAULT_TIME_RANGE, type TimeRange } from "@/components/business/analysis/analytics";
-import { analysisCopy } from "@/components/business/analysis/copy";
-import { useAnalytics } from "@/components/business/analysis/useAnalytics";
+import { AnalysisChartsRow } from "@/components/analysis/AnalysisChartsRow";
+import { AnalysisFilters } from "@/components/analysis/AnalysisFilters";
+import { AnalysisSummary } from "@/components/analysis/AnalysisSummary";
+import { DailyBreakdown } from "@/components/analysis/DailyBreakdown";
+import { CheckPerformanceTable } from "@/components/analysis/CheckPerformanceTable";
+import { collectTags, DAILY_BREAKDOWN_DAYS, DEFAULT_TIME_RANGE, type TimeRange } from "@/components/analysis/analytics";
+import { analysisCopy } from "@/components/analysis/copy";
+import { useAnalytics } from "@/components/analysis/useAnalytics";
 
 export default function DataAnalysisPage() {
   const { language } = useLanguage();

@@ -10,10 +10,10 @@ import { useLanguage } from '@/components/common/LanguageProvider';
 import { PageHeader } from "@/components/layout/PageHeader";
 import { SkeletonCardList, SkeletonPageHeader } from "@/components/common/PageSkeletons";
 import { APP_CONTAINER } from "@/components/layout/app-container";
-import { ApprovalDecisionDialog } from "@/components/business/approvals/ApprovalDecisionDialog";
-import { ApprovalList } from "@/components/business/approvals/ApprovalList";
-import { approvalCopy, type ApprovalAction, type ApprovalRequest } from "@/components/business/approvals/approvals";
-import { useApprovals } from "@/components/business/approvals/useApprovals";
+import { ApprovalDecisionDialog } from "@/components/approvals/ApprovalDecisionDialog";
+import { ApprovalList } from "@/components/approvals/ApprovalList";
+import { approvalCopy, type ApprovalAction, type ApprovalRequest } from "@/components/approvals/approvals";
+import { useApprovals } from "@/components/approvals/useApprovals";
 
 export default function ApprovalsPage() {
   const { user, isLoaded } = useCurrentUser();

@@ -5,7 +5,7 @@ import { AlignLeft, Code, Eye, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import AIAssistantPanel from "@/components/business/ai/AIAssistantPanel";
+import AIAssistantPanel from "@/components/ai/AIAssistantPanel";
 import { useMe } from "@/lib/auth/use-me";
 import { cn } from "@/lib/utils/utils";
 import { editorCopy } from "./copy";
@@ -17,7 +17,7 @@ import { useEditorTheme } from "./useEditorTheme";
 import { useSqlAssistant } from "./useSqlAssistant";
 
 // Pulls in a syntax highlighter; only load it when an analysis is shown.
-const AnalysisResultDialog = dynamic(() => import("@/components/business/ai/AnalysisResultDialog"), { ssr: false });
+const AnalysisResultDialog = dynamic(() => import("@/components/ai/AnalysisResultDialog"), { ssr: false });
 
 interface CodeMirrorEditorProps extends Omit<ReactCodeMirrorProps, "value" | "onChange" | "extensions" | "theme"> {
   value: string;
