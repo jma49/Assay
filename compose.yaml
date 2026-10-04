@@ -1,0 +1,30 @@
+# Local services for development: `npm run dev:services`, then point
+# .env.local at them (README, "Local services"). Throwaway data only; the
+# images are the ones the visual CI job uses.
+services:
+  mongo:
+    image: mongo:7@sha256:9854f7139445d766a9523571d6f047530c45547460ffcf8259eb2bf4264632ca
+    ports: ["27017:27017"]
+    volumes: [mongo-data:/data/db]
+  postgres:
+    image: postgres:16@sha256:1a6ab3f5345eb6dbe04a1349529caabdb0ab09293a09590fad07b2246bfa4b54
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: assay_demo
+    ports: ["5432:5432"]
+    volumes: [postgres-data:/var/lib/postgresql/data]
+  redis:
+    image: redis:7@sha256:c6eabf748fc7a61dbb5a705c78bcf3d6377b1127a97d0ce965c11c44ba46896f
+  # Upstash's REST protocol in front of the Redis above.
+  redis-http:
+    image: hiett/serverless-redis-http:latest@sha256:5b0bb9239fce53abf87b2018a7a0deb9ec7bd900c5360738fe5fbeeb426f9150
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: local
+      SRH_CONNECTION_STRING: redis://redis:6379
+    ports: ["8079:80"]
+    depends_on: [redis]
+volumes:
+  mongo-data:
+  postgres-data:
