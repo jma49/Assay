@@ -124,7 +124,6 @@ const ManageScriptsContent = () => {
           open={isEditHistoryOpen}
           onOpenChange={setIsEditHistoryOpen}
           scriptId={historyScriptId}
-          t={t}
         />
       )}
     </div>

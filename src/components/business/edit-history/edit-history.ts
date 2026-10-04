@@ -1,7 +1,7 @@
+import { paginationCopy } from "@/components/common/pagination-copy";
 import { describePage } from "@/lib/utils/pagination";
 import type { EditHistoryFilter, EditHistoryRecord } from "@/contracts/edit-history";
-
-export type Translate = (key: string) => string;
+import { editHistoryCopy, type EditHistoryCopy } from "./copy";
 export type OperationFilter = NonNullable<EditHistoryFilter["operation"]>;
 export type FieldChange = NonNullable<EditHistoryRecord["changes"]>[number];
 
@@ -56,11 +56,11 @@ export function buildHistoryQuery(filters: HistoryFilters, page: number, pageSiz
 }
 
 export function formatPageInfo(
-  t: Translate,
+  language: string,
   { currentPage, totalPages, totalRecords, pageSize, totalCapped }: { currentPage: number; totalPages: number; totalRecords: number; pageSize: number; totalCapped?: boolean },
 ): string {
-  if (totalRecords === 0) return t("noResults");
-  return describePage(t("pageInfo"), { page: currentPage, totalPages, totalItems: totalRecords, pageSize, totalCapped });
+  if (totalRecords === 0) return editHistoryCopy(language).noResults;
+  return describePage(paginationCopy(language).pageInfo, { page: currentPage, totalPages, totalItems: totalRecords, pageSize, totalCapped });
 }
 
 const OPERATION_BADGE_CLASSES: Record<string, string> = {
@@ -73,23 +73,16 @@ export function operationBadgeClass(operation: string): string {
   return OPERATION_BADGE_CLASSES[operation] ?? OPERATION_BADGE_CLASSES.update;
 }
 
-const OPERATION_LABEL_KEYS: Record<string, string> = {
-  create: "operationCreate",
-  update: "operationUpdate",
-  delete: "operationDelete",
-};
-
-export function operationLabel(operation: string, t: Translate): string {
-  const key = OPERATION_LABEL_KEYS[operation];
-  return key ? t(key) : operation;
+export function operationLabel(operation: string, copy: EditHistoryCopy): string {
+  return copy.operations[operation] ?? operation;
 }
 
 const MAX_VALUE_LENGTH = 50;
 
 /** A changed field's old or new value, shortened for the diff view. */
-export function formatChangeValue(value: unknown, t: Translate, maxLength = MAX_VALUE_LENGTH): string {
-  if (value === null || value === undefined) return t("noData");
-  if (typeof value === "boolean") return value ? t("scheduled") : t("manual");
+export function formatChangeValue(value: unknown, copy: EditHistoryCopy, maxLength = MAX_VALUE_LENGTH): string {
+  if (value === null || value === undefined) return copy.noData;
+  if (typeof value === "boolean") return value ? copy.scheduled : copy.manual;
   if (typeof value === "string" && value.length > maxLength) return value.substring(0, maxLength) + "...";
   return String(value);
 }
@@ -103,10 +96,11 @@ export function fieldLabel(change: FieldChange, language: string): string {
   return localized(language, change.fieldDisplayName, change.fieldDisplayNameCn) ?? "";
 }
 
-export function changesPreview(changes: EditHistoryRecord["changes"], t: Translate, language: string): string {
-  if (!changes || changes.length === 0) return t("noChanges");
+export function changesPreview(changes: EditHistoryRecord["changes"], language: string): string {
+  const copy = editHistoryCopy(language);
+  if (!changes || changes.length === 0) return copy.noChanges;
   if (changes.length === 1) return fieldLabel(changes[0], language);
-  return t("fieldChangesCount").replace("{count}", String(changes.length));
+  return copy.changeCount(changes.length);
 }
 
 export function historyDescription(history: EditHistoryRecord, language: string): string | undefined {

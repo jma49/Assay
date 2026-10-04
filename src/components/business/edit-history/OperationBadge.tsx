@@ -1,7 +1,9 @@
 import { Edit, History, Plus, Trash2 } from "lucide-react";
+import { useLanguage } from "@/components/common/LanguageProvider";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/utils";
-import { operationBadgeClass, operationLabel, type Translate } from "./edit-history";
+import { editHistoryCopy } from "./copy";
+import { operationBadgeClass, operationLabel } from "./edit-history";
 
 export function OperationIcon({ operation }: { operation: string }) {
   switch (operation) {
@@ -16,10 +18,11 @@ export function OperationIcon({ operation }: { operation: string }) {
   }
 }
 
-export function OperationBadge({ operation, t, className }: { operation: string; t: Translate; className?: string }) {
+export function OperationBadge({ operation, className }: { operation: string; className?: string }) {
+  const copy = editHistoryCopy(useLanguage().language);
   return (
     <Badge variant="outline" className={cn(operationBadgeClass(operation), className)}>
-      {operationLabel(operation, t)}
+      {operationLabel(operation, copy)}
     </Badge>
   );
 }

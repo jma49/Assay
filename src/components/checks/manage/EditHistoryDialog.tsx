@@ -7,20 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import { DashboardTranslationKeys } from "@/components/business/dashboard/types";
+import { editHistoryCopy, type EditHistoryCopy } from "@/components/business/edit-history/copy";
 import { EMPTY_FILTERS, fieldLabel, formatChangeValue, historyDescription } from "@/components/business/edit-history/edit-history";
 import { OperationBadge, OperationIcon } from "@/components/business/edit-history/OperationBadge";
 import { useEditHistory } from "@/components/business/edit-history/useEditHistory";
 import type { EditHistoryRecord } from "@/contracts/edit-history";
 import { formatDateTime } from "@/lib/utils/datetime";
 
-type Translate = (key: DashboardTranslationKeys | string) => string;
-
 interface EditHistoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   scriptId?: string;
-  t: Translate;
 }
 
 const PAGE_SIZE = 20;
@@ -28,7 +25,7 @@ const PAGE_SIZE = 20;
 const VALUE_LENGTH = 100;
 
 /** One create, update or delete, with the fields it changed. */
-function HistoryEntry({ history, t, language, last }: { history: EditHistoryRecord; t: Translate; language: string; last: boolean }) {
+function HistoryEntry({ history, t, language, last }: { history: EditHistoryRecord; t: EditHistoryCopy; language: string; last: boolean }) {
   const description = historyDescription(history, language);
   return (
     <Card className="relative mx-1">
@@ -38,7 +35,7 @@ function HistoryEntry({ history, t, language, last }: { history: EditHistoryReco
             <OperationIcon operation={history.operation} />
             <div>
               <CardTitle className="text-body-md">
-                <OperationBadge operation={history.operation} t={t} />
+                <OperationBadge operation={history.operation} />
               </CardTitle>
               <div className="flex items-center gap-4 text-caption text-muted-foreground mt-1">
                 <div className="flex items-center gap-1">
@@ -58,7 +55,7 @@ function HistoryEntry({ history, t, language, last }: { history: EditHistoryReco
       {history.changes && history.changes.length > 0 && (
         <CardContent className="pt-0">
           <div className="space-y-2">
-            <h4 className="text-body-md font-medium text-foreground">{t("changesDetails")}：</h4>
+            <h4 className="text-body-md font-medium text-foreground">{t.changesDetails}：</h4>
             {history.changes.map((change, index) => (
               <div key={index} className="bg-muted rounded-lg p-2">
                 <div className="flex items-center gap-2 mb-2">
@@ -66,13 +63,13 @@ function HistoryEntry({ history, t, language, last }: { history: EditHistoryReco
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-caption">
                   <div>
-                    <span className="text-muted-foreground">{t("originalValue")}：</span>
+                    <span className="text-muted-foreground">{t.originalValue}：</span>
                     <div className="mt-1 p-2 bg-failure/10 border border-failure/30 rounded text-failure font-mono">
                       {formatChangeValue(change.oldValue, t, VALUE_LENGTH)}
                     </div>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">{t("newValue")}：</span>
+                    <span className="text-muted-foreground">{t.newValue}：</span>
                     <div className="mt-1 p-2 bg-success/10 border border-success/30 rounded text-success font-mono">
                       {formatChangeValue(change.newValue, t, VALUE_LENGTH)}
                     </div>
@@ -87,7 +84,7 @@ function HistoryEntry({ history, t, language, last }: { history: EditHistoryReco
       {description && (
         <CardContent className="pt-0">
           <div className="text-body-md text-muted-foreground">
-            <span className="font-medium">{t("description")}：</span>
+            <span className="font-medium">{t.description}：</span>
             {description}
           </div>
         </CardContent>
@@ -99,8 +96,9 @@ function HistoryEntry({ history, t, language, last }: { history: EditHistoryReco
 }
 
 /** One check's edit history, from the manage page. */
-export function EditHistoryDialog({ open, onOpenChange, scriptId, t }: EditHistoryDialogProps) {
+export function EditHistoryDialog({ open, onOpenChange, scriptId }: EditHistoryDialogProps) {
   const { language } = useLanguage();
+  const t = editHistoryCopy(language);
   const { histories, loading, error, currentPage, totalPages, fetchHistories } = useEditHistory({
     scriptId,
     pageSize: PAGE_SIZE,
@@ -114,10 +112,10 @@ export function EditHistoryDialog({ open, onOpenChange, scriptId, t }: EditHisto
         <DialogHeader className="px-1">
           <DialogTitle className="flex items-center gap-2">
             <History className="w-5 h-5" />
-            {t("editHistoryTitle")}
+            {t.dialogTitle}
           </DialogTitle>
           <DialogDescription>
-            {t("editHistoryDesc")} {scriptId || ""}
+            {t.dialogDescription} {scriptId || ""}
           </DialogDescription>
         </DialogHeader>
 
@@ -126,7 +124,7 @@ export function EditHistoryDialog({ open, onOpenChange, scriptId, t }: EditHisto
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                <span>{t("loadingEditHistory")}</span>
+                <span>{t.loading}</span>
               </div>
             ) : error ? (
               <div className="flex items-center justify-center py-8 text-failure">
@@ -136,7 +134,7 @@ export function EditHistoryDialog({ open, onOpenChange, scriptId, t }: EditHisto
             ) : histories.length === 0 ? (
               <div className="flex items-center justify-center py-8 text-muted-foreground">
                 <History className="w-6 h-6 mr-2" />
-                <span>{t("noEditHistory")}</span>
+                <span>{t.noHistory}</span>
               </div>
             ) : (
               <div className="space-y-3">
@@ -157,13 +155,13 @@ export function EditHistoryDialog({ open, onOpenChange, scriptId, t }: EditHisto
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4 px-1">
             <Button variant="outline" size="sm" onClick={() => goTo(currentPage - 1)} disabled={currentPage <= 1 || loading}>
-              {t("previous")}
+              {t.previous}
             </Button>
             <span className="text-body-md text-muted-foreground">
-              {t("pageInfoShort")} {currentPage}/{totalPages}
+              {t.pageInfoShort} {currentPage}/{totalPages}
             </span>
             <Button variant="outline" size="sm" onClick={() => goTo(currentPage + 1)} disabled={currentPage >= totalPages || loading}>
-              {t("next")}
+              {t.next}
             </Button>
           </div>
         )}
