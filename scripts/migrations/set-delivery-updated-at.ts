@@ -4,7 +4,7 @@
  * A document without the field is never expired by TTL. Deliveries already
  * past 30 days are deleted by MongoDB shortly after, as the old TTL on
  * createdAt would have done. Idempotent; dry run unless --apply.
- *   tsx -r dotenv/config scripts/migrations/set-delivery-updated-at.ts [--apply]
+ *   DOTENV_CONFIG_PATH=.env.local npx tsx -r dotenv/config scripts/migrations/set-delivery-updated-at.ts [--apply]
  * Safe to delete once every deployment has run it; a dry run then reports zero deliveries without updatedAt.
  */
 import { getMongoDbClient } from "@/lib/database/mongodb";

@@ -67,7 +67,7 @@ describe("schedulerProbe", () => {
   it("fails when the heartbeat is stale", async () => {
     const probe = schedulerProbe(async () => ({
       _id: "s",
-      updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 13 * 60 * 60 * 1000),
     }));
     await expect(probe.run()).rejects.toThrow();
   });

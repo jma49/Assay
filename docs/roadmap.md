@@ -60,11 +60,21 @@ Goal: No check, bug or leaked credential can write to the monitored database.
   write grants and CREATE). The public health endpoint does not report it:
   it would tell anyone the role can write.
 
+### Reliable schedule trigger
+
+Goal: A check scheduled every 30 minutes runs every 30 minutes.
+
+- GitHub runs the `*/30` cron about five times a day (2026-09-27 to
+  2026-10-04: median gap 4.9 h, maximum 8.4 h), so short schedules run
+  hours late. A trigger with a delivery guarantee calls the runner instead,
+  and GitHub's cron stays as the fallback.
+- The heartbeat and Sentry limits (now 12 hours) drop back to about an hour.
+
 ## P1 — Change safely
 
 ### Scheduler alert outside GitHub (built in #224; maintainer action)
 
-Goal: A dead schedule reaches the maintainer within an hour.
+Goal: A dead schedule reaches the maintainer within 12 hours.
 
 - The `SENTRY_DSN` repository secret is set and the monitor's alert is on.
 - The scheduled workflow sends Sentry Cron check-ins (`in_progress`, then

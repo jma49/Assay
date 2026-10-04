@@ -91,13 +91,15 @@ the same values as the app. Without the secrets the workflow skips quietly.
 A self-hosted setup can call `npm run sql:run-scheduled` from cron instead.
 
 Every scheduled run writes a heartbeat to MongoDB. `GET /api/health`
-reports the scheduler as stale when no scheduled run started in the last 90
-minutes (HTTP 503); manual runs do not count.
+reports the scheduler as stale when no scheduled run started in the last 12
+hours (HTTP 503); manual runs do not count. GitHub runs the 30-minute cron
+late (a median of about 5 hours between runs in practice), so a shorter
+limit would report a live schedule as dead.
 
 With the `SENTRY_DSN` repository secret set, each scheduled run also sends
 Sentry Cron check-ins (monitor `scheduled-sql-checks`, created on the first
-check-in). Sentry alerts when a slot is missed, a run fails or it runs past
-20 minutes, so the alert does not depend on GitHub Actions. Turn on the
+check-in). Sentry alerts when no check-in arrives for 12 hours, a run fails or
+it runs past 20 minutes, so the alert does not depend on GitHub Actions. Turn on the
 monitor's alert in Sentry (Crons → the monitor → Alerts) after the first
 check-in. An external uptime monitor on `/api/health` works too.
 

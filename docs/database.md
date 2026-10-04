@@ -152,8 +152,8 @@ The switch needs no first-request migration:
 **Release step**, once the build is live:
 
 ```bash
-tsx -r dotenv/config scripts/migrations/set-delivery-updated-at.ts          # counts, dry run
-tsx -r dotenv/config scripts/migrations/set-delivery-updated-at.ts --apply
+DOTENV_CONFIG_PATH=.env.local npx tsx -r dotenv/config scripts/migrations/set-delivery-updated-at.ts          # counts, dry run
+DOTENV_CONFIG_PATH=.env.local npx tsx -r dotenv/config scripts/migrations/set-delivery-updated-at.ts --apply
 ```
 
 Skipping it loses nothing; those deliveries are just kept until it runs.
