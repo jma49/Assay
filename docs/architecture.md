@@ -291,9 +291,9 @@ the lists carried over from the first version still page by number.
 - **Auth.** Every route declares who may call it through `withAuth`
   (`src/server/http/route.ts`): a permission, `{ anyOf: [...] }` (e.g.
   `approvals`, the GET of `users/roles`), or `{ signedIn: true }` for any
-  signed-in user (`me`, `run-check`, which checks `script:execute` itself
+  signed-in user (`me`, `run-check`, which checks `check:execute` itself
   because demo mode widens it). Guests are opt-in: a permission lets them in
-  only when it is in `GUEST_PERMISSIONS` (`script:read`, `history:read`),
+  only when it is in `GUEST_PERMISSIONS` (`check:read`, `history:read`),
   `signedIn` only with `allowGuest` (`me`, `run-check`). Refusals answer
   401 or 403 in the error shape below. Routes with their own
   check: `auth/[...all]` (Better Auth), `mcp` (API key),

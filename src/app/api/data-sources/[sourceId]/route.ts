@@ -8,7 +8,7 @@ import { defaultDataSourceDeps, deleteDataSource, getDataSource, updateDataSourc
 
 type Params = { sourceId: string };
 
-export const GET = withAuth<Params>(Permission.SCRIPT_READ, async (_request, { principal, params }) => {
+export const GET = withAuth<Params>(Permission.CHECK_READ, async (_request, { principal, params }) => {
   const db = await getMongoDbClient().getDb();
   return NextResponse.json({ source: await getDataSource(db, workspaceOf(principal), params.sourceId, { guest: principal.isGuest }) });
 });

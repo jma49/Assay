@@ -48,7 +48,7 @@ describe("POST /api/data-sources/[sourceId]/test", () => {
   });
 
   it("needs datasource:manage", async () => {
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     expect((await test()).status).toBe(403);
     expect(mocks.testSavedSource).not.toHaveBeenCalled();
   });

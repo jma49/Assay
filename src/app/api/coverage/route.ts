@@ -9,7 +9,7 @@ import { checksOfSource } from "@/server/repos/data-source-store";
 import { requireSource } from "@/server/services/data-sources";
 
 /** Which tables of a data source (`?source=`, the built-in one by default) are watched by at least one of its checks. No AI involved. */
-export const GET = withAuth(Permission.SCRIPT_READ, async (request) => {
+export const GET = withAuth(Permission.CHECK_READ, async (request) => {
   const source = await requireSource(request.nextUrl.searchParams.get("source"));
   const db = await getMongoDbClient().getDb();
   const [tables, scripts] = await Promise.all([

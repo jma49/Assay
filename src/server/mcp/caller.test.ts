@@ -24,7 +24,7 @@ describe("verifyMcpToken", () => {
 
   it("treats owners without a stored role as viewers", async () => {
     const info = await verifyMcpToken("assay_good", deps({ roleOf: async () => null }), now);
-    expect(callerOf(info)!.permissions).not.toContain(Permission.SCRIPT_EXECUTE);
+    expect(callerOf(info)!.permissions).not.toContain(Permission.CHECK_EXECUTE);
   });
 
   it("gives keys without an expiry a short one, since each request re-verifies", async () => {
@@ -52,17 +52,17 @@ describe("callerFromAccessToken", () => {
     expect(info.clientId).toBe("oauth:claude");
     expect(info.expiresAt).toBe(1_790_000_000);
     expect(callerOf(info)).toMatchObject({ userId: "u1", credential: "oauth:claude" });
-    expect(callerOf(info)!.permissions).toEqual([Permission.SCRIPT_READ, Permission.SCRIPT_EXECUTE, Permission.HISTORY_READ]);
+    expect(callerOf(info)!.permissions).toEqual([Permission.CHECK_READ, Permission.CHECK_EXECUTE, Permission.HISTORY_READ]);
   });
 
   it("drops what the person did not grant, even for an admin", async () => {
     const info = (await callerFromAccessToken("jwt", { ...claims, scope: "checks:read offline_access" }, deps({ roleOf: async () => UserRole.ADMIN })))!;
-    expect(callerOf(info)!.permissions).toEqual([Permission.SCRIPT_READ]);
+    expect(callerOf(info)!.permissions).toEqual([Permission.CHECK_READ]);
   });
 
   it("never grants more than the role, whatever the scopes say", async () => {
     const info = (await callerFromAccessToken("jwt", claims, deps({ roleOf: async () => UserRole.VIEWER })))!;
-    expect(callerOf(info)!.permissions).not.toContain(Permission.SCRIPT_EXECUTE);
+    expect(callerOf(info)!.permissions).not.toContain(Permission.CHECK_EXECUTE);
   });
 
   it("refuses tokens whose consent was withdrawn, or without a person or client", async () => {

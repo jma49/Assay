@@ -34,7 +34,7 @@ const Body = z.object({
  * while a whole run still fits before the deadline, the rest are marked
  * skipped, and alerts are sent in the time kept back at the end.
  */
-export const POST = withAuth(Permission.SCRIPT_EXECUTE, async (request, { principal }) => {
+export const POST = withAuth(Permission.CHECK_EXECUTE, async (request, { principal }) => {
   const startedAt = Date.now();
   const deadline = new Date(startedAt + FUNCTION_MAX_DURATION_S * 1000 - DISPATCH_RESERVE_MS);
   const { mode, scriptIds, filteredExecution } = await parseJson(request, Body);

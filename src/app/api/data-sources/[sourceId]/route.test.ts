@@ -41,7 +41,7 @@ const request = (method: string, body?: unknown) =>
 describe("GET /api/data-sources/[sourceId]", () => {
   beforeEach(() => {
     mocks.denied = null;
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     mocks.get.mockReset().mockResolvedValue({ sourceId: "billing", name: "Billing" });
   });
 
@@ -51,7 +51,7 @@ describe("GET /api/data-sources/[sourceId]", () => {
     expect(mocks.get).not.toHaveBeenCalled();
   });
 
-  it("needs script:read", async () => {
+  it("needs check:read", async () => {
     mocks.granted = new Set();
     expect((await GET(request("GET"), ctx)).status).toBe(403);
     expect(mocks.get).not.toHaveBeenCalled();
@@ -68,7 +68,7 @@ describe("GET /api/data-sources/[sourceId]", () => {
 describe("PATCH /api/data-sources/[sourceId]", () => {
   beforeEach(() => {
     mocks.denied = null;
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     mocks.updateCalls = [];
     mocks.update.mockReset().mockResolvedValue({ sourceId: "billing", name: "Billing 2" });
   });
@@ -111,7 +111,7 @@ describe("PATCH /api/data-sources/[sourceId]", () => {
 describe("DELETE /api/data-sources/[sourceId]", () => {
   beforeEach(() => {
     mocks.denied = null;
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     mocks.remove.mockReset().mockResolvedValue(undefined);
   });
 

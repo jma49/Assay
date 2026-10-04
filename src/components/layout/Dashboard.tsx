@@ -37,7 +37,7 @@ const Dashboard = ({ initialSearch = "" }: { initialSearch?: string }) => {
 
   // Offer only what this user may do; the run API enforces it regardless.
   const me = useMe();
-  const canExecute = me?.permissions.includes("script:execute") ?? false;
+  const canExecute = me?.permissions.includes("check:execute") ?? false;
   const demoRuns = !canExecute && me?.demo ? me.demo.runsPerHour : null;
 
   // The Run sheet, opened from the toolbar.

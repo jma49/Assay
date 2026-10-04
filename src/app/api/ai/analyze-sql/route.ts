@@ -41,7 +41,7 @@ function analysisPrompt(sql: string, type: keyof typeof ASK, schema: string, lan
   ].join("\n");
 }
 
-export const POST = withAuth(Permission.SCRIPT_CREATE, async (request, { principal }) => {
+export const POST = withAuth(Permission.CHECK_CREATE, async (request, { principal }) => {
   const { sql, analysisType, language, dataSourceId } = await parseJson(request, Body);
   await guardAiRequest(principal.id, { sql });
   const source = await requireSource(dataSourceId);

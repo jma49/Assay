@@ -50,7 +50,7 @@ const create = () =>
 describe("/api/data-sources", () => {
   beforeEach(() => {
     mocks.guest = false;
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     mocks.asked = [];
     mocks.listedFor = [];
     mocks.created.mockClear();
@@ -60,7 +60,7 @@ describe("/api/data-sources", () => {
     const res = await list();
     expect(res.status).toBe(200);
     expect((await res.json()).setup).toMatchObject({ canManage: false, allowPrivate: false });
-    expect(mocks.asked).toEqual(["script:read", "datasource:manage"]);
+    expect(mocks.asked).toEqual(["check:read", "datasource:manage"]);
   });
 
   it("lets demo guests look, without display and without asking to manage", async () => {

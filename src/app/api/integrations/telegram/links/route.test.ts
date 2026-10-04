@@ -56,7 +56,7 @@ describe("POST /api/integrations/telegram/links", () => {
   });
 
   it("needs notification:manage", async () => {
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     expect((await link({ language: "en" })).status).toBe(403);
     expect(mocks.createLink).not.toHaveBeenCalled();
   });

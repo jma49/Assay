@@ -86,7 +86,7 @@ describe.each([
     expect(mocks.findOne).not.toHaveBeenCalled();
   });
 
-  it("refuses callers without script:update", async () => {
+  it("refuses callers without check:update", async () => {
     mocks.authorized = false;
     expect((await update({ name: "x" })).status).toBe(403);
     expect(mocks.updateOne).not.toHaveBeenCalled();
@@ -228,7 +228,7 @@ describe.each([
 
   const remove = () => DELETE(new NextRequest(url, { method: "DELETE" }), params());
 
-  it("refuses callers without script:delete", async () => {
+  it("refuses callers without check:delete", async () => {
     mocks.authorized = false;
     expect((await remove()).status).toBe(403);
     expect(mocks.deleteOne).not.toHaveBeenCalled();

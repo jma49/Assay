@@ -47,14 +47,14 @@ describe("withAuth", () => {
   });
 
   it("passes the caller with the role that granted the permission", async () => {
-    mocks.granted = [Permission.SCRIPT_UPDATE];
-    const { status, principal } = await call(Permission.SCRIPT_UPDATE);
+    mocks.granted = [Permission.CHECK_UPDATE];
+    const { status, principal } = await call(Permission.CHECK_UPDATE);
     expect(status).toBe(200);
     expect(principal).toEqual({ id: "user_1", name: "Ada", email: "ada@example.com", isGuest: false, role: UserRole.MANAGER });
   });
 
   it("answers 403 without the permission, before the handler runs", async () => {
-    const { status, body, principal } = await call(Permission.SCRIPT_UPDATE);
+    const { status, body, principal } = await call(Permission.CHECK_UPDATE);
     expect(status).toBe(403);
     expect(body).toEqual({ error: { code: "forbidden", message: "You do not have permission to do this" } });
     expect(principal).toBeUndefined();
@@ -62,15 +62,15 @@ describe("withAuth", () => {
 
   it("passes the refusal of an unsigned caller through", async () => {
     mocks.caller = "anonymous";
-    expect((await call(Permission.SCRIPT_READ)).status).toBe(401);
+    expect((await call(Permission.CHECK_READ)).status).toBe(401);
   });
 
   it("accepts any one of anyOf", async () => {
-    mocks.granted = [Permission.SCRIPT_REJECT];
-    expect((await call({ anyOf: [Permission.SCRIPT_APPROVE, Permission.SCRIPT_REJECT] })).status).toBe(200);
-    expect(mocks.checked).toEqual([Permission.SCRIPT_APPROVE, Permission.SCRIPT_REJECT]);
+    mocks.granted = [Permission.CHECK_REJECT];
+    expect((await call({ anyOf: [Permission.CHECK_APPROVE, Permission.CHECK_REJECT] })).status).toBe(200);
+    expect(mocks.checked).toEqual([Permission.CHECK_APPROVE, Permission.CHECK_REJECT]);
     mocks.granted = [];
-    expect((await call({ anyOf: [Permission.SCRIPT_APPROVE, Permission.SCRIPT_REJECT] })).status).toBe(403);
+    expect((await call({ anyOf: [Permission.CHECK_APPROVE, Permission.CHECK_REJECT] })).status).toBe(403);
   });
 
   it("lets guests in only for the guest read permissions", async () => {
@@ -79,7 +79,7 @@ describe("withAuth", () => {
     expect(read.status).toBe(200);
     expect(read.principal?.isGuest).toBe(true);
     expect(mocks.checked).toEqual([]);
-    expect((await call(Permission.SCRIPT_EXECUTE)).status).toBe(401);
+    expect((await call(Permission.CHECK_EXECUTE)).status).toBe(401);
     expect(mocks.allowGuestAsked).toBe(false);
   });
 
@@ -92,8 +92,8 @@ describe("withAuth", () => {
   });
 
   it("maps a thrown error to a 500 without internals", async () => {
-    mocks.granted = [Permission.SCRIPT_READ];
-    const route = withAuth(Permission.SCRIPT_READ, async () => {
+    mocks.granted = [Permission.CHECK_READ];
+    const route = withAuth(Permission.CHECK_READ, async () => {
       throw new Error("secret detail");
     });
     const res = await route(new NextRequest("http://localhost/api/x"), { params: Promise.resolve({}) });

@@ -55,7 +55,7 @@ const SECTIONS: { title: Label; items: NavItem[] }[] = [
         href: "/approvals",
         label: { en: "Approvals", zh: "审批" },
         icon: CheckCircle2,
-        requires: "script:approve",
+        requires: "check:approve",
       },
       { href: "/settings/notifications", label: { en: "Notifications", zh: "通知" }, icon: BellRing },
       { href: "/settings/data-sources", label: { en: "Data sources", zh: "数据源" }, icon: Database },

@@ -57,7 +57,7 @@ const start = (body: unknown) =>
 describe("POST /api/run-all-scripts", () => {
   beforeEach(() => {
     mocks.denied = null;
-    mocks.granted = new Set(["script:execute"]);
+    mocks.granted = new Set(["check:execute"]);
     mocks.checks = [];
     mocks.findFilter = null;
     mocks.create.mockReset().mockResolvedValue(undefined);
@@ -69,8 +69,8 @@ describe("POST /api/run-all-scripts", () => {
     expect(mocks.create).not.toHaveBeenCalled();
   });
 
-  it("needs script:execute", async () => {
-    mocks.granted = new Set(["script:read"]);
+  it("needs check:execute", async () => {
+    mocks.granted = new Set(["check:read"]);
     expect((await start({})).status).toBe(403);
     expect(mocks.create).not.toHaveBeenCalled();
   });

@@ -79,7 +79,7 @@ describe.each([
     expect(mocks.findOne).not.toHaveBeenCalled();
   });
 
-  it("refuses callers without script:create before reading the body", async () => {
+  it("refuses callers without check:create before reading the body", async () => {
     mocks.authorized = false;
     expect((await create(validBody)).status).toBe(403);
     expect(mocks.findOne).not.toHaveBeenCalled();
@@ -187,7 +187,7 @@ describe.each([
     expect(member[0].author).toBe("ada@example.com");
   });
 
-  it("returns the auth response when script:read is refused", async () => {
+  it("returns the auth response when check:read is refused", async () => {
     mocks.denied = NextResponse.json({ message: "forbidden" }, { status: 403 });
     expect(await GET(new NextRequest(`http://localhost${path}`), { params: Promise.resolve({}) })).toBe(mocks.denied);
   });

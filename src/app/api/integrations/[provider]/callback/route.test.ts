@@ -58,7 +58,7 @@ describe("GET /api/integrations/[provider]/callback", () => {
   });
 
   it("needs notification:manage", async () => {
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     expect((await callback("slack", "?state=s&code=c")).status).toBe(403);
     expect(mocks.finishInstall).not.toHaveBeenCalled();
   });

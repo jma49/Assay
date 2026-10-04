@@ -22,7 +22,7 @@ vi.mock("@/lib/auth/auth-utils", async (importOriginal) => ({
   }),
 }));
 vi.mock("@/lib/auth/rbac", () => ({
-  Permission: { SCRIPT_EXECUTE: "script:execute" },
+  Permission: { CHECK_EXECUTE: "check:execute" },
   requirePermission: async () => {
     if (mocks.isGuest) throw new Error("guests must not reach the role lookup");
     return { authorized: mocks.canExecute };
@@ -82,7 +82,7 @@ describe("POST /api/run-check", () => {
     expect(mocks.execute).not.toHaveBeenCalled();
   });
 
-  it("runs any check for users with script:execute", async () => {
+  it("runs any check for users with check:execute", async () => {
     mocks.canExecute = true;
     mocks.scriptAuthor = "alice";
     expect((await run({ scriptId: "x" })).status).toBe(200);

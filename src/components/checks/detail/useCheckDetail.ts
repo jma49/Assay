@@ -23,9 +23,9 @@ export function useCheckDetail(scriptId: string, language: "en" | "zh", { onRan 
     if (title) document.title = `${title} · Assay`;
   }, [title]);
 
-  const canRun = !!me && (me.permissions.includes("script:execute") || !!me.demo);
-  const canEdit = !!me?.permissions.includes("script:update");
-  const canAlert = !!me?.permissions.includes("script:execute");
+  const canRun = !!me && (me.permissions.includes("check:execute") || !!me.demo);
+  const canEdit = !!me?.permissions.includes("check:update");
+  const canAlert = !!me?.permissions.includes("check:execute");
 
   const runNow = async () => {
     setRunning(true);
