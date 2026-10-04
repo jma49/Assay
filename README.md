@@ -47,7 +47,7 @@ Scheduled checks run from GitHub Actions (`.github/workflows/sql-check-cron.yml`
 | [docs/authentication.md](docs/authentication.md) | Sign-in, roles, moving from Clerk |
 | [docs/notifications.md](docs/notifications.md) | Alert channels, delivery model, setup |
 | [docs/mcp.md](docs/mcp.md) | Connecting agents (OAuth or API key), tools, security |
-| [docs/brand.md](docs/brand.md) | The beetle, colours, type |
+| [docs/brand.md](docs/brand.md) | The Row A mark, colours, type |
 | [docs/deployment.md](docs/deployment.md) | Configuration, scheduled runs, first deploy and a smoke test after each one |
 | [scripts/README.md](scripts/README.md) | Command-line tools and migrations |
 | `/docs` in the app | User guide (English and Chinese) |

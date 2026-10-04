@@ -11,7 +11,6 @@ import { BRAND, GITHUB_URL, QUICK_START, landingCopy, type Language } from "./co
 import { Demo, DemoFrame } from "./demo-panels";
 import { DemoVideo } from "./DemoVideo";
 import { BrandMark } from "@/components/common/BrandMark";
-import { VoxelBeetle } from "@/components/brand/VoxelBeetle";
 import { HighlightedLine } from "@/components/code/HighlightedLine";
 import { useHydrated } from "@/components/common/use-hydrated";
 
@@ -157,7 +156,6 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
           <div aria-hidden className="absolute inset-x-0 top-0 bottom-40 bg-[radial-gradient(ellipse_at_top,var(--primary-soft),transparent_70%)] sm:bottom-56" />
           <div className={`${CONTAINER} relative`}>
             <div className="mx-auto max-w-[980px] text-center">
-              <VoxelBeetle className="mx-auto -mt-8 mb-2 h-[190px] w-full max-w-[340px] sm:h-[220px]" />
               <h1 className="display text-balance text-display-lg  sm:text-display-xl lg:whitespace-nowrap">
                 {t.hero.title}
               </h1>

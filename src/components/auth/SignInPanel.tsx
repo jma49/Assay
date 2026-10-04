@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { BellRing, Bot, ChevronDown, ListChecks, Loader2 } from "lucide-react";
-import { BeetleMark } from "@/components/brand/BeetleMark";
+import { RowAMark } from "@/components/brand/RowAMark";
 import { BrandMark } from "@/components/common/BrandMark";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { Button } from "@/components/ui/button";
@@ -194,9 +194,7 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
       {/* The pitch, for people who arrive here first. Hidden on small screens, where the form matters most. */}
       <aside className="hidden bg-night text-night-foreground lg:flex lg:flex-col lg:justify-between lg:p-14 xl:px-20">
         <Link href="/" className="flex w-fit items-center gap-2 text-title-sm font-semibold">
-          <span className="grid size-8 place-items-center rounded-lg bg-white/95 shadow-sm">
-            <BeetleMark className="size-6" />
-          </span>
+          <RowAMark className="size-8" />
           Assay
         </Link>
         <div className="max-w-md space-y-9">

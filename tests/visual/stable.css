@@ -1,10 +1,3 @@
-/* The voxel beetle renders through WebGL, which differs between GPUs, and it
-   turns towards the pointer even with reduced motion. Its frame keeps its
-   size; only the contents are hidden. */
-[aria-label^="Assay's mascot"] > * {
-  visibility: hidden !important;
-}
-
 /* The landing video plays on its own clock; keep its box, hide the moving frames. */
 video {
   visibility: hidden !important;

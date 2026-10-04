@@ -75,8 +75,6 @@ for (const language of languages) {
       await expect(page.locator("html")).toHaveAttribute("lang", language === "zh" ? "zh-CN" : "en");
       await page.evaluate(() => document.fonts.ready);
 
-      // stable.css hides the beetle by this selector; fail loudly if it stops matching.
-      if (target.name === "landing") await expect(page.locator('[aria-label^="Assay\'s mascot"]')).toHaveCount(1);
 
       await expect(page).toHaveScreenshot(`${language}-${target.name}.png`, { fullPage: true, timeout: 30_000 });
 
