@@ -121,7 +121,7 @@ function stripSql(sql: string): StrippedSql {
   };
 
   while (i < sql.length) {
-    const ch = sql[i];
+    const ch = sql.charAt(i);
     const next = sql[i + 1];
 
     if (ch === "-" && next === "-") {
@@ -239,12 +239,11 @@ export function validateReadOnlySql(sqlContent: string): SqlValidationResult {
   }
 
   for (const fn of FORBIDDEN_FUNCTIONS) {
-    const match = new RegExp(`\\b(${fn})\\s*\\(`).exec(`${codeWithIdentifiers} ${dollarBodies}`);
-    if (match) {
+    if (new RegExp(`\\b(${fn})\\s*\\(`).test(`${codeWithIdentifiers} ${dollarBodies}`)) {
       return {
         isValid: false,
-        reason: `禁止调用函数 "${match[1].toLowerCase()}"，它会产生副作用。`,
-        reasonEn: `The function "${match[1].toLowerCase()}" has side effects and is not allowed.`,
+        reason: `禁止调用函数 "${fn.toLowerCase()}"，它会产生副作用。`,
+        reasonEn: `The function "${fn.toLowerCase()}" has side effects and is not allowed.`,
       };
     }
   }
