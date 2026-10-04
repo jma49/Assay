@@ -15,7 +15,7 @@ describe("checkTimeoutMs", () => {
 
 describe("maxDuration", () => {
   // Next.js reads `maxDuration` statically, so the routes hold a literal; keep it equal to the constant.
-  it.each(["run-check", "run-all-scripts", "mcp", "notifications/dispatch"])("is set on /api/%s", (route) => {
+  it.each(["run-check", "run-all-scripts", "batches", "cron/run-scheduled", "mcp", "notifications/dispatch"])("is set on /api/%s", (route) => {
     const source = readFileSync(`src/app/api/${route}/route.ts`, "utf8");
     expect(source).toMatch(new RegExp(`export const maxDuration = ${FUNCTION_MAX_DURATION_S};`));
   });

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { Permission } from "@/lib/auth/rbac";
-import { deprecated } from "@/server/http/deprecation";
+import { asDeprecated } from "@/server/http/deprecation";
 import { parseJson, withAuth } from "@/server/http/route";
 import { startBatch } from "@/server/services/batch-start";
 
@@ -14,11 +14,11 @@ const Body = z.object({
   filteredExecution: z.boolean().default(false),
 });
 
-export const POST = withAuth(Permission.CHECK_EXECUTE, async (request, { principal }) => {
-  const { mode, scriptIds, filteredExecution } = await parseJson(request, Body);
-  const { executionId, checkIds } = await startBatch(principal, { mode, checkIds: scriptIds, filteredExecution });
-  return deprecated(
-    NextResponse.json({
+export const POST = withAuth(Permission.CHECK_EXECUTE, async (request, { principal }) =>
+  asDeprecated("/api/batches", async () => {
+    const { mode, scriptIds, filteredExecution } = await parseJson(request, Body);
+    const { executionId, checkIds } = await startBatch(principal, { mode, checkIds: scriptIds, filteredExecution });
+    return NextResponse.json({
       success: true,
       message: `Running ${checkIds.length} checks`,
       executionId,
@@ -26,7 +26,6 @@ export const POST = withAuth(Permission.CHECK_EXECUTE, async (request, { princip
       mode,
       filteredExecution,
       actualScriptIds: checkIds,
-    }),
-    "/api/batches",
-  );
-});
+    });
+  }),
+);

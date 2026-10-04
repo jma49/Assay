@@ -171,7 +171,7 @@ export async function setUserRole(
     });
     roleCache.delete(userId);
 
-    logInfo("[RBAC] Role set", { role });
+    logInfo("[RBAC] Role set", { userId, role });
     return result.acknowledged;
   } catch (error) {
     logError("[RBAC] Setting a role failed", { error });

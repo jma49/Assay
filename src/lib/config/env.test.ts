@@ -11,9 +11,9 @@ function sourceFiles(dir: string): string[] {
     .map((entry) => path.join(entry.parentPath, entry.name));
 }
 
-/** Variable names the code reads: process.env.X, env.X, env?.X, env["X"]. */
+/** Variable names the code reads: process.env.X, serverEnv().X, env.X, env?.X, env["X"]. */
 function namesRead(): Set<string> {
-  const read = /(?:process\.env|\benv|\bEnv|environment)\??\.([A-Z][A-Z0-9_]{2,})|\benv\[\s*"([A-Z][A-Z0-9_]{2,})"\s*\]/g;
+  const read = /(?:process\.env|\benv|\bEnv|environment|serverEnv\(\))\??\.([A-Z][A-Z0-9_]*)\b|\benv\[\s*"([A-Z][A-Z0-9_]*)"\s*\]/g;
   const names = new Set<string>();
   for (const file of [...sourceFiles("src"), ...sourceFiles("scripts")]) {
     for (const match of readFileSync(file, "utf8").matchAll(read)) names.add(match[1] ?? match[2]);

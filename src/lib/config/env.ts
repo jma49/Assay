@@ -100,6 +100,7 @@ export const ENV_VARS = {
   VERCEL_ENV: { kind: "platform" },
   VERCEL_GIT_COMMIT_SHA: { kind: "platform" },
   VERCEL_PROJECT_PRODUCTION_URL: { kind: "platform" },
+  CI: { kind: "platform" },
   GITHUB_ACTIONS: { kind: "platform" },
   GITHUB_RUN_ID: { kind: "platform" },
 } as const satisfies Record<string, EnvVar>;
