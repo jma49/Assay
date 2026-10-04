@@ -33,7 +33,6 @@ interface ScriptMetadataFormProps {
     fieldName: keyof CheckFormData,
     value: string | boolean | string[],
   ) => void;
-  /** Unused since the form carries its own labels; kept for existing callers. */
   /** Script ID cannot change once the script exists. */
   isEditMode?: boolean;
   /** Messages for fields that stop the save; each marks its field invalid. */

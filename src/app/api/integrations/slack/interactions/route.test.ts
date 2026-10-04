@@ -76,9 +76,10 @@ describe("POST /api/integrations/slack/interactions", () => {
     const click = (response_url: string) =>
       post({ type: "block_actions", user: { id: "U1" }, actions: [{ action_id: "assay_ack", value: "run:1" }], response_url, message: { text: "t", blocks: [] } });
     await click("https://hooks.slack.com/actions/T1/1/abc");
-    expect(String(fetchSpy.mock.calls[0][0])).toBe("https://hooks.slack.com/actions/T1/1/abc");
+    await click("https://hooks.slack.com/services/T1/B1/xyz");
+    expect(fetchSpy.mock.calls.map((call) => String(call[0]))).toEqual(["https://hooks.slack.com/actions/T1/1/abc", "https://hooks.slack.com/services/T1/B1/xyz"]);
     fetchSpy.mockClear();
-    for (const url of ["https://evil.example/actions/T1/1/abc", "http://hooks.slack.com/actions/T1/1/abc", "https://hooks.slack.com.evil.example/actions/T1/1/abc", "https://hooks.slack.com/services/T1/B1/x", "not a url"]) await click(url);
+    for (const url of ["https://evil.example/actions/T1/1/abc", "http://hooks.slack.com/actions/T1/1/abc", "https://hooks.slack.com.evil.example/actions/T1/1/abc", "https://hooks.slack.com/actions/T1/1/abc/../../x", "not a url"]) await click(url);
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
   });

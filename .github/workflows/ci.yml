@@ -85,7 +85,8 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
-  # Commit messages follow Conventional Commits (AGENTS.md); merge commits are GitHub's own.
+  # Commit messages follow Conventional Commits (AGENTS.md); merge commits and GitHub's
+  # own `Revert "…"` commits (the fastest rollback) pass too.
   commits:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -99,7 +100,7 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
-          bad=$(git log --no-merges --format=%s "$BASE..$HEAD" | grep -vE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9/._-]+\))?!?: .+' || true)
+          bad=$(git log --no-merges --format=%s "$BASE..$HEAD" | grep -vE '^((feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9/._-]+\))?!?: .+|Revert ".+")$' || true)
           if [ -n "$bad" ]; then
             echo "::error::These commit subjects do not follow Conventional Commits (type(scope): summary):"
             echo "$bad"
