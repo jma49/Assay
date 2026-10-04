@@ -17,9 +17,11 @@ describe("claimDelivery", () => {
 
     const claimed = await store.claimDelivery(NOW, 60_000);
 
-    const [filter, update, options] = findOneAndUpdate.mock.calls[0] as unknown as [object, { $set: { claim: string; nextAttemptAt: Date } }, object];
+    const [filter, update, options] = findOneAndUpdate.mock.calls[0] as unknown as [object, { $set: { claim: string; nextAttemptAt: Date; updatedAt: Date } }, object];
     expect(filter).toEqual({ status: "pending", nextAttemptAt: { $lte: NOW } });
     expect(update.$set.nextAttemptAt).toEqual(new Date(NOW.getTime() + 60_000));
+    // The retention TTL counts from updatedAt, so a delivery being worked on never expires.
+    expect(update.$set.updatedAt).toEqual(NOW);
     expect(options).toEqual({ sort: { nextAttemptAt: 1 }, returnDocument: "after" });
     expect(claimed).toEqual({ id: String(id), eventId: "e1", destinationId: "d1", attempts: 2, claim: update.$set.claim });
   });
@@ -54,6 +56,13 @@ describe("finishDelivery", () => {
     });
     expect(updates[1].$inc).toEqual({});
   });
+
+  it("stamps updatedAt when a delivery dead-letters, so the failed list keeps it for the full retention", async () => {
+    const updateOne = vi.fn(async () => ({}));
+    await mongoNotifyStore(fakeDb({ notification_deliveries: { updateOne } })).finishDelivery(delivery, { status: "failed", at: NOW, error: "HTTP 404", attempted: true });
+    const [, update] = updateOne.mock.calls[0] as unknown as [object, { $set: object }];
+    expect(update.$set).toEqual({ status: "failed", claim: null, updatedAt: NOW, lastError: "HTTP 404" });
+  });
 });
 
 describe("createDeliveries", () => {
@@ -63,7 +72,7 @@ describe("createDeliveries", () => {
     const insertMany = vi.fn(async () => ({}));
     await mongoNotifyStore(fakeDb({ notification_deliveries: { insertMany } })).createDeliveries(list as never, NOW);
     expect(insertMany).toHaveBeenCalledWith(
-      [{ ...list[0], status: "pending", attempts: 0, nextAttemptAt: NOW, claim: null, createdAt: NOW }],
+      [{ ...list[0], status: "pending", attempts: 0, nextAttemptAt: NOW, claim: null, createdAt: NOW, updatedAt: NOW }],
       { ordered: false },
     );
   });
@@ -205,6 +214,7 @@ describe("requeueDelivery", () => {
     expect(filter).toEqual({ _id: id, workspaceId: "default", status: "failed" });
     expect(update.$set).toMatchObject({ status: "pending", attempts: 0, claim: null, lastError: null });
     expect(update.$set.nextAttemptAt).toBeInstanceOf(Date);
+    expect(update.$set.updatedAt).toBe(update.$set.nextAttemptAt);
   });
 
   it("refuses an invalid id and a delivery that is not failed", async () => {
