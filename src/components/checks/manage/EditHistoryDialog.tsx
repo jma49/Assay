@@ -158,7 +158,7 @@ export function EditHistoryDialog({ open, onOpenChange, scriptId }: EditHistoryD
               {t.previous}
             </Button>
             <span className="text-body-md text-muted-foreground">
-              {t.pageInfoShort} {currentPage}/{totalPages}
+              {t.pageOf(currentPage, totalPages)}
             </span>
             <Button variant="outline" size="sm" onClick={() => goTo(currentPage + 1)} disabled={currentPage >= totalPages || loading}>
               {t.next}

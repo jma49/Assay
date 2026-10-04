@@ -47,7 +47,7 @@ const en = {
   loading: "Loading edit history...",
   previous: "Previous",
   next: "Next",
-  pageInfoShort: "Showing %s-%s of %s results (Page %s of %s)",
+  pageOf: (page: number, total: number) => `Page ${page} of ${total}`,
 };
 
 export type EditHistoryCopy = typeof en;
@@ -97,7 +97,7 @@ const zh: EditHistoryCopy = {
   loading: "加载编辑历史...",
   previous: "上一页",
   next: "下一页",
-  pageInfoShort: "显示第 %s-%s 条，共 %s 条结果（第 %s 页/共 %s 页）",
+  pageOf: (page: number, total: number) => `第 ${page} 页/共 ${total} 页`,
 };
 
 export function editHistoryCopy(language: string): EditHistoryCopy {
