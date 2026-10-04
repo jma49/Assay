@@ -5,6 +5,7 @@
  * Run backfill-run-fields.ts first, which gives older runs finishedAt.
  * Dry run unless --apply.
  *   tsx -r dotenv/config scripts/migrations/set-run-expiry.ts [--apply]
+ * Safe to delete once every deployment has run it; a dry run then reports zero runs without expiresAt.
  */
 import { runRetentionDays } from "@/domain/run";
 import { getMongoDbClient } from "@/lib/database/mongodb";

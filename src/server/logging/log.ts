@@ -24,6 +24,37 @@ export function currentRequestId(): string | undefined {
 
 export type LogFields = Record<string, unknown>;
 
+/**
+ * Keys whose values must never reach the logs verbatim. Substring match,
+ * case-insensitive: dbPassword, accessToken, apiKey, connectionString,
+ * userEmail and an authorization header value are all redacted.
+ */
+const SENSITIVE_KEY_PATTERN = /password|secret|token|api[-_]?key|connection|email|authorization/i;
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== "object") return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+/**
+ * Returns a copy of `value` with sensitive fields replaced by "[redacted]",
+ * recursing into plain objects and arrays. Non-plain values (Date, Error,
+ * class instances) pass through untouched so their JSON shape is unchanged.
+ * Exported for unit testing.
+ */
+export function scrub(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(scrub);
+  if (isPlainObject(value)) {
+    const out: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(value)) {
+      out[key] = SENSITIVE_KEY_PATTERN.test(key) ? "[redacted]" : scrub(val);
+    }
+    return out;
+  }
+  return value;
+}
+
 function emit(level: "info" | "warn" | "error", message: string, fields: LogFields): void {
   const requestId = currentRequestId();
   // Production builds strip console.log/info (next.config.mjs), so info is a
@@ -33,7 +64,7 @@ function emit(level: "info" | "warn" | "error", message: string, fields: LogFiel
     level,
     msg: message,
     ...(requestId ? { requestId } : {}),
-    ...fields,
+    ...(scrub(fields) as LogFields),
   });
   if (level === "error") console.error(line);
   else if (level === "warn") console.warn(line);

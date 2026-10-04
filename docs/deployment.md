@@ -6,11 +6,32 @@ Redis; any Node.js host works the same way (`npm run build && npm start`).
 
 ## Branches and deploys
 
-- Work lands on `develop` through pull requests; CI (typecheck, lint, knip,
-  tests, build, and the visual comparison) runs on each one.
-- `main` is production: every push to it deploys. Promote `develop` with a
-  pull request once a batch is verified. Pull requests get no preview
+- Pull requests go straight to `main`: open the PR, wait for CI (typecheck,
+  lint, knip, tests, build, and the visual comparison), and merge on green.
+- `main` is production: every push to it deploys to Vercel. Merge to `main`
+  only when the batch is verified. Pull requests get no preview
   deployments; run `npx vercel deploy` by hand when one is needed.
+
+### Rollback
+
+When a deploy breaks production, redeploy the last good build:
+
+1. Open the Vercel dashboard → Deployments.
+2. Find the last good deployment and choose **Redeploy**. Uncheck "Use
+   existing Build Cache" when the build itself is suspect.
+3. Wait for the new deployment to go live.
+
+Data migrations roll forward only: do not roll back below a deploy that
+introduced a migration without reading [backup-restore.md](backup-restore.md)
+first.
+
+Then smoke-test the rollback:
+
+- `GET /api/health` returns 200 (and reports the scheduler state you expect).
+- Signed out, `/checks` redirects to `/sign-in`; Google and GitHub sign-in
+  work and land on `/checks`.
+- Trigger one check by hand from its page: the run appears in its history
+  and on the Runs page.
 
 ## Configuration
 
@@ -20,7 +41,7 @@ Redis; any Node.js host works the same way (`npm run build && npm start`).
 | --- | --- |
 | Sign-in | `BETTER_AUTH_SECRET` (`openssl rand -base64 32`), `BETTER_AUTH_URL`, and `GOOGLE_CLIENT_ID/SECRET` and/or `GITHUB_CLIENT_ID/SECRET` |
 | Data | `MONGODB_URI` (and `MONGODB_DB_NAME` unless the URI names the database), `DATABASE_URL` pointing at a SELECT-only role ([architecture.md](architecture.md#running-a-check)), `UPSTASH_REDIS_REST_URL/TOKEN` |
-| Alerts and data sources | `ASSAY_SECRET_KEY` (required to add data sources or alert channels; never change it once they are stored: it decrypts their secrets), `APP_URL`, `CRON_SECRET` |
+| Alerts and data sources | `ASSAY_SECRET_KEY` (required to add data sources or alert channels; changing it invalidates their sealed secrets — see [secret-rotation.md](secret-rotation.md) for the rotation and recovery procedure), `APP_URL`, `CRON_SECRET` |
 | Optional | `AI_ENABLED=true` with AI Gateway, `DEMO_MODE=true` (the public demo only), the Slack, Discord and Telegram app settings ([notifications.md](notifications.md)), `ALLOWED_EMAIL_DOMAINS`, run limits (`CHECK_TIMEOUT_MS`, `CHECK_CONCURRENCY`, `PG_POOL_MAX`, `PG_SOURCE_POOL_MAX`, `RUN_RETENTION_DAYS`), `ALLOW_PRIVATE_DATA_SOURCES` (below), `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` (error tracking) |
 
 **Data sources.** Besides `DATABASE_URL`, admins can add PostgreSQL
@@ -57,6 +78,9 @@ Every run writes a heartbeat to MongoDB. `GET /api/health` reports the
 scheduler as stale when no run started in the last hour (HTTP 503). Point an
 external uptime monitor at `/api/health`: the alert path must not depend on
 the scheduler itself.
+
+Keep MongoDB backups current: the [backup and restore runbook](backup-restore.md)
+covers what is backed up, the schedule, and the restore procedure.
 
 ## First deploy
 

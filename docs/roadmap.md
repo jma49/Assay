@@ -78,7 +78,7 @@ Goal: Secrets rotate without downtime and without manual database edits.
 
 Goal: Database loss is recoverable to a known point in time.
 
-- The MongoDB backup schedule is documented.
+- The MongoDB backup schedule is documented: [backup-restore.md](backup-restore.md).
 - A restore rehearsal succeeds, and the recovery time is recorded.
 
 ### Default-deny authorization

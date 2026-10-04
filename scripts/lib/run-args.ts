@@ -21,3 +21,12 @@ export function parseRunArgs(argv: string[]): RunArgs | null {
   const mode: RunMode = modeArg === "scheduled" || modeArg === "enabled" ? "scheduled" : "all";
   return { kind: "batch", mode, dryRun: argv.includes("--dry-run") };
 }
+
+/**
+ * Only a real scheduled run proves the schedule is alive. A manual "all"
+ * run, a single check or a dry run would overwrite the heartbeat and make
+ * /api/health report the scheduler as stale (or mask a dead schedule).
+ */
+export function recordsHeartbeat(args: RunArgs): boolean {
+  return args.kind === "batch" && args.mode === "scheduled" && !args.dryRun;
+}

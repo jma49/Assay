@@ -227,9 +227,15 @@ async function deliver(delivery: ClaimedDelivery, deps: DispatchDeps): Promise<D
   const [destination, event] = await Promise.all([deps.store.destination(delivery.destinationId), deps.store.event(delivery.eventId)]);
   if (!destination || !event) return { status: "failed", at: now, error: "The destination or event no longer exists", attempted: false };
   if (!destination.enabled) return { status: "failed", at: now, error: "The destination is paused", attempted: false };
-  // Every attempt counts, sent or not: the cap is there to keep a channel from being flooded.
+  // A throttled attempt still spends from the retry budget: a destination
+  // that never frees an hourly slot dead-letters after MAX_ATTEMPTS instead
+  // of retrying forever.
   if (!(await deps.store.takeSendSlot(destination.id, now, HOURLY_LIMIT))) {
-    return { status: "pending", at: now, nextAttemptAt: new Date(now.getTime() + THROTTLE_DELAY_MS), attempted: false };
+    const attempts = delivery.attempts + 1;
+    if (attempts >= MAX_ATTEMPTS) {
+      return { status: "failed", at: now, error: "The destination never freed an hourly send slot", attempted: true };
+    }
+    return { status: "pending", at: now, nextAttemptAt: new Date(now.getTime() + THROTTLE_DELAY_MS), attempted: true };
   }
 
   const check = (await deps.store.checkInfo([event.checkId])).get(event.checkId);
