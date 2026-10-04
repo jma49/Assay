@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
+import * as Sentry from '@sentry/nextjs';
 
 interface Props {
   children: ReactNode;
@@ -67,18 +68,11 @@ export class ErrorBoundary extends Component<Props, State> {
     }
   }
 
-  private reportError(_error: Error, _errorInfo: ErrorInfo) {
-    // Placeholder for an error monitoring service such as Sentry, e.g.:
-    // Sentry.captureException(error, {
-    // contexts: {
-    // react: {
-    // componentStack: errorInfo.componentStack,
-    //     },
-    //   },
-    // tags: {
-    // errorBoundary: true,
-    //   },
-    // });
+  private reportError(error: Error, errorInfo: ErrorInfo) {
+    Sentry.captureException(error, {
+      contexts: { react: { componentStack: errorInfo.componentStack } },
+      tags: { errorBoundary: true },
+    });
   }
 
   private handleReset = () => {

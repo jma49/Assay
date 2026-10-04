@@ -5,14 +5,13 @@
     "scripts/**/*.mjs",
     "tests/visual/stable.css"
   ],
-  "ignoreBinaries": ["ffmpeg"],
+  "ignoreBinaries": [
+    "ffmpeg"
+  ],
   "ignoreIssues": {
     "src/components/ui/**": [
       "exports",
       "types"
-    ],
-    "src/sentry.client.config.ts": [
-      "files"
     ]
   }
 }
