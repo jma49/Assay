@@ -1,12 +1,14 @@
 import React, { useMemo } from "react";
 import { Pagination } from "@/components/common/Pagination";
+import { paginationCopy } from "@/components/common/pagination-copy";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { formatPageInfo } from "@/lib/utils/pagination";
 import { collectHashtags } from "./manual-trigger/script-search";
+import { runsCopy } from "./runs/copy";
 import { HistoryFilters } from "./runs/HistoryFilters";
 import { HistoryTable } from "./runs/HistoryTable";
 import { scriptDisplayNames, type SortConfig } from "./runs/runs";
-import type { DashboardTranslationKeys, HistoryRun, CheckListItem } from "./types";
+import type { HistoryRun, CheckListItem } from "./types";
 import type { SortKey } from "./runs/runs";
 
 /** The jump box only pays off once there are more pages than the shortcuts cover. */
@@ -24,7 +26,6 @@ interface CheckHistoryProps {
   selectedHashtags?: string[];
   sortConfig: SortConfig;
   language: string;
-  t: (key: DashboardTranslationKeys) => string;
   setSearchTerm: (term: string) => void;
   setSelectedHashtags?: (hashtags: string[]) => void;
   setCurrentPage: (page: number) => void;
@@ -47,7 +48,6 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
   selectedHashtags = [],
   sortConfig,
   language,
-  t,
   setSearchTerm,
   setSelectedHashtags,
   setCurrentPage,
@@ -64,10 +64,9 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
     <Card className="relative gap-0 overflow-hidden py-0">
       <CardHeader className="relative border-b px-6 py-4">
         <CardDescription className="text-body-sm">
-          {t("historyDesc").replace("%s", String(totalUnfilteredCount))}
+          {runsCopy(language).historyDesc(totalUnfilteredCount)}
         </CardDescription>
         <HistoryFilters
-          t={t}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           availableHashtags={availableHashtags}
@@ -84,14 +83,13 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
           requestSort={requestSort}
           isLoading={isLoading}
           language={language}
-          t={t}
         />
       </CardContent>
       {totalPages > 1 && (
         <Pagination
           page={currentPage}
           totalPages={totalPages}
-          pageInfo={formatPageInfo(t("pageInfo"), {
+          pageInfo={formatPageInfo(paginationCopy(language).pageInfo, {
             start: startIndex + 1,
             end: Math.min(endIndex, allChecksCount),
             totalItems: allChecksCount,
@@ -99,7 +97,6 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
             totalPages,
             totalCapped,
           })}
-          t={t}
           onPageChange={setCurrentPage}
           jumpMinPages={JUMP_BOX_MIN_PAGES}
         />

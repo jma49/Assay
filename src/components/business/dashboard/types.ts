@@ -1,7 +1,5 @@
 import type { RunOutcome } from "@/domain/run";
 
-export type { DashboardTranslationKeys } from "./translations";
-
 export const ITEMS_PER_PAGE = 10;
 export const CHECK_HISTORY_ITEMS_PER_PAGE = 50;
 

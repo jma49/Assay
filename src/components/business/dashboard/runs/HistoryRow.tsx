@@ -7,9 +7,8 @@ import { OUTCOME_DOT, OUTCOME_LABEL, OUTCOME_TEXT } from "@/components/checks/st
 import { runResultLabel } from "@/lib/utils/run-message";
 import { formatDateTime, formatRelative } from "@/lib/utils/datetime";
 import { cn } from "@/lib/utils/utils";
-import type { DashboardTranslationKeys, HistoryRun } from "../types";
-
-type Translate = (key: DashboardTranslationKeys) => string;
+import type { HistoryRun } from "../types";
+import { runsCopy } from "./copy";
 
 function StatusLabel({ check, language }: { check: HistoryRun; language: "en" | "zh" }) {
   const { outcome } = check;
@@ -25,15 +24,15 @@ interface HistoryRowProps {
   check: HistoryRun;
   displayName: string;
   language: string;
-  t: Translate;
 }
 
 /** One run; clicking anywhere outside its links opens the run report. */
-export function HistoryRow({ check, displayName, language, t }: HistoryRowProps) {
+export function HistoryRow({ check, displayName, language }: HistoryRowProps) {
   const router = useRouter();
   const reportHref = `/runs/${check._id}`;
   const lang = language === "zh" ? "zh" : "en";
   const result = runResultLabel(check, lang);
+  const copy = runsCopy(language);
   return (
     <TableRow
       className="group/row cursor-pointer"
@@ -72,10 +71,10 @@ export function HistoryRow({ check, displayName, language, t }: HistoryRowProps)
           variant="ghost"
           size="sm"
           className="-mr-2 h-8 gap-1.5 px-2 text-body-sm text-muted-foreground hover:text-foreground"
-          title={t("viewFullReportButton") || "View report"}
+          title={copy.viewReport}
         >
           <Link href={reportHref}>
-            <span className="hidden sm:inline">{t("viewFullReportButton") || "View Report"}</span>
+            <span className="hidden sm:inline">{copy.viewReport}</span>
             <ChevronRight className="size-3.5" />
           </Link>
         </Button>

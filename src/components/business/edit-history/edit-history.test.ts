@@ -14,18 +14,9 @@ import {
   operationTimeIso,
   type FieldChange,
 } from "./edit-history";
+import { editHistoryCopy } from "./copy";
 
-const t = (key: string) =>
-  ({
-    noResults: "No results",
-    pageInfo: "Showing %s-%s of %s results (Page %s of %s)",
-    operationCreate: "Create",
-    noData: "No data",
-    scheduled: "Scheduled",
-    manual: "Manual",
-    noChanges: "No changes",
-    fieldChangesCount: "{count} changes",
-  })[key] ?? key;
+const copy = editHistoryCopy("en");
 
 const change = (overrides: Partial<FieldChange> = {}): FieldChange => ({
   field: "name",
@@ -103,63 +94,63 @@ describe("parseDateInput", () => {
 
 describe("formatPageInfo", () => {
   it("fills the range, total and page numbers in order", () => {
-    expect(formatPageInfo(t, { currentPage: 2, totalPages: 3, totalRecords: 25, pageSize: 10 })).toBe(
+    expect(formatPageInfo("en", { currentPage: 2, totalPages: 3, totalRecords: 25, pageSize: 10 })).toBe(
       "Showing 11-20 of 25 results (Page 2 of 3)",
     );
   });
 
   it("caps the range at the total on the last page", () => {
-    expect(formatPageInfo(t, { currentPage: 3, totalPages: 3, totalRecords: 25, pageSize: 10 })).toBe(
+    expect(formatPageInfo("en", { currentPage: 3, totalPages: 3, totalRecords: 25, pageSize: 10 })).toBe(
       "Showing 21-25 of 25 results (Page 3 of 3)",
     );
   });
 
   it("says there are no results when the total is zero", () => {
-    expect(formatPageInfo(t, { currentPage: 1, totalPages: 0, totalRecords: 0, pageSize: 10 })).toBe("No results");
+    expect(formatPageInfo("en", { currentPage: 1, totalPages: 0, totalRecords: 0, pageSize: 10 })).toBe("No results");
   });
 });
 
 describe("operation display", () => {
   it("maps known operations to their label and colors", () => {
-    expect(operationLabel("create", t)).toBe("Create");
+    expect(operationLabel("create", copy)).toBe("Create");
     expect(operationBadgeClass("delete")).toContain("text-failure");
   });
 
   it("falls back to the raw name and neutral colors for unknown operations", () => {
-    expect(operationLabel("archive", t)).toBe("archive");
+    expect(operationLabel("archive", copy)).toBe("archive");
     expect(operationBadgeClass("archive")).toBe(operationBadgeClass("update"));
   });
 });
 
 describe("formatChangeValue", () => {
   it("shows missing values as no data and booleans as the schedule mode", () => {
-    expect(formatChangeValue(null, t)).toBe("No data");
-    expect(formatChangeValue(undefined, t)).toBe("No data");
-    expect(formatChangeValue(true, t)).toBe("Scheduled");
-    expect(formatChangeValue(false, t)).toBe("Manual");
+    expect(formatChangeValue(null, copy)).toBe("No data");
+    expect(formatChangeValue(undefined, copy)).toBe("No data");
+    expect(formatChangeValue(true, copy)).toBe("Scheduled");
+    expect(formatChangeValue(false, copy)).toBe("Manual");
   });
 
   it("shortens long strings to 50 characters", () => {
-    expect(formatChangeValue("x".repeat(60), t)).toBe("x".repeat(50) + "...");
-    expect(formatChangeValue("x".repeat(50), t)).toBe("x".repeat(50));
-    expect(formatChangeValue("x".repeat(60), t, 100)).toBe("x".repeat(60));
+    expect(formatChangeValue("x".repeat(60), copy)).toBe("x".repeat(50) + "...");
+    expect(formatChangeValue("x".repeat(50), copy)).toBe("x".repeat(50));
+    expect(formatChangeValue("x".repeat(60), copy, 100)).toBe("x".repeat(60));
   });
 
   it("stringifies other values", () => {
-    expect(formatChangeValue(0, t)).toBe("0");
+    expect(formatChangeValue(0, copy)).toBe("0");
   });
 });
 
 describe("changesPreview", () => {
   it("says there are no changes for an empty or missing list", () => {
-    expect(changesPreview(undefined, t, "en")).toBe("No changes");
-    expect(changesPreview([], t, "en")).toBe("No changes");
+    expect(changesPreview(undefined, "en")).toBe("No changes");
+    expect(changesPreview([], "en")).toBe("No changes");
   });
 
   it("names a single changed field in the UI language and counts several", () => {
-    expect(changesPreview([change()], t, "en")).toBe("Name");
-    expect(changesPreview([change()], t, "zh")).toBe("名称");
-    expect(changesPreview([change(), change()], t, "en")).toBe("2 changes");
+    expect(changesPreview([change()], "en")).toBe("Name");
+    expect(changesPreview([change()], "zh")).toBe("名称");
+    expect(changesPreview([change(), change()], "en")).toBe("2 changes");
   });
 });
 

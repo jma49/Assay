@@ -7,13 +7,12 @@ import { useCurrentUser } from "@/lib/auth/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLanguage } from '@/components/common/LanguageProvider';
-import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { SkeletonCardList, SkeletonPageHeader } from "@/components/common/PageSkeletons";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import { ApprovalDecisionDialog } from "@/components/business/approvals/ApprovalDecisionDialog";
 import { ApprovalList } from "@/components/business/approvals/ApprovalList";
-import type { ApprovalAction, ApprovalRequest } from "@/components/business/approvals/approvals";
+import { approvalCopy, type ApprovalAction, type ApprovalRequest } from "@/components/business/approvals/approvals";
 import { useApprovals } from "@/components/business/approvals/useApprovals";
 
 export default function ApprovalsPage() {
@@ -28,7 +27,7 @@ export default function ApprovalsPage() {
   const [approvalAction, setApprovalAction] = useState<ApprovalAction>('approve');
   const [approvalComment, setApprovalComment] = useState('');
 
-  const t = useDashboardT();
+  const copy = approvalCopy(language);
 
   useEffect(() => {
     if (isLoaded && !user) {
@@ -71,7 +70,7 @@ export default function ApprovalsPage() {
     );
   }
 
-  const listProps = { hasLoaded, language, t, actionLoading, onDecide: openApprovalDialog };
+  const listProps = { hasLoaded, language, actionLoading, onDecide: openApprovalDialog };
 
   return (
     <div className="min-h-screen    ">
@@ -82,16 +81,16 @@ export default function ApprovalsPage() {
               ? `${pending.totalItems} 项待审批 · ${history.totalItems} 项已处理`
               : `${pending.totalItems} pending · ${history.totalItems} decided`}
           </WindowStatusBar>
-          <PageHeader title={t('approvalsTitle')} description={t('approvalsDescription')} />
+          <PageHeader title={copy.title} description={copy.description} />
 
           <Tabs value={approvals.activeTab} onValueChange={approvals.setActiveTab} className="gap-0">
             <TabsList>
               <TabsTrigger value="pending">
-                {t('pendingApprovals')}
+                {copy.pendingTab}
                 <span className="text-muted-foreground tabular-nums">{hasLoaded ? pending.totalItems : "–"}</span>
               </TabsTrigger>
               <TabsTrigger value="history">
-                {t('approvalHistory')}
+                {copy.historyTab}
                 <span className="text-muted-foreground tabular-nums">{hasLoaded ? history.totalItems : "–"}</span>
               </TabsTrigger>
             </TabsList>
@@ -99,7 +98,7 @@ export default function ApprovalsPage() {
             <TabsContent value="pending" className="mt-6 space-y-4">
               <ApprovalList
                 list={pending}
-                emptyTitle={t('noPendingApprovals')}
+                emptyTitle={copy.noPending}
                 emptyHint={language === "zh" ? "所有审批申请都已处理" : "Every request has been handled."}
                 {...listProps}
               />
@@ -108,7 +107,7 @@ export default function ApprovalsPage() {
             <TabsContent value="history" className="mt-6 space-y-4">
               <ApprovalList
                 list={history}
-                emptyTitle={t('noApprovalHistory')}
+                emptyTitle={copy.noHistory}
                 emptyHint={language === "zh" ? "审批过的申请会显示在这里" : "Approved and rejected requests show up here."}
                 {...listProps}
               />
@@ -127,7 +126,6 @@ export default function ApprovalsPage() {
         submitting={actionLoading === selectedApproval?.id}
         onSubmit={submitDecision}
         language={language}
-        t={t}
       />
     </div>
   );

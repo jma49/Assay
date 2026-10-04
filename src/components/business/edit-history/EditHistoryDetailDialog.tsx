@@ -9,20 +9,20 @@ import {
   operationLabel,
   operationTimeIso,
   type FieldChange,
-  type Translate,
 } from "./edit-history";
+import { editHistoryCopy, type EditHistoryCopy } from "./copy";
 import { OperationBadge, OperationIcon } from "./OperationBadge";
 
 interface EditHistoryDetailDialogProps {
   history: EditHistoryRecord | null;
   open: boolean;
   language: string;
-  t: Translate;
   onOpenChange: (open: boolean) => void;
 }
 
 /** Who changed which check when, and a before/after view of every changed field. */
-export function EditHistoryDetailDialog({ history, open, language, t, onOpenChange }: EditHistoryDetailDialogProps) {
+export function EditHistoryDetailDialog({ history, open, language, onOpenChange }: EditHistoryDetailDialogProps) {
+  const t = editHistoryCopy(language);
   const description = history ? historyDescription(history, language) : undefined;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -30,7 +30,7 @@ export function EditHistoryDetailDialog({ history, open, language, t, onOpenChan
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="w-5 h-5" />
-            {t("editHistoryDetails")}
+            {t.detailTitle}
           </DialogTitle>
           <DialogDescription>
             {history && (
@@ -52,7 +52,7 @@ export function EditHistoryDetailDialog({ history, open, language, t, onOpenChan
             )}
             {description && (
               <div className="p-4 bg-muted/30 rounded-lg">
-                <h4 className="font-medium mb-2">{t("description")}</h4>
+                <h4 className="font-medium mb-2">{t.description}</h4>
                 <p className="text-body-md text-muted-foreground">{description}</p>
               </div>
             )}
@@ -63,19 +63,19 @@ export function EditHistoryDetailDialog({ history, open, language, t, onOpenChan
   );
 }
 
-function BasicInfo({ history, t }: { history: EditHistoryRecord; t: Translate }) {
-  const user = history.userName || history.userEmail || t("unknownUser");
+function BasicInfo({ history, t }: { history: EditHistoryRecord; t: EditHistoryCopy }) {
+  const user = history.userName || history.userEmail || t.unknownUser;
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
       <div>
-        <label className="text-body-md font-medium text-muted-foreground">{t("operationType")}</label>
+        <label className="text-body-md font-medium text-muted-foreground">{t.operationType}</label>
         <div className="flex items-center gap-2 mt-1">
           <OperationIcon operation={history.operation} />
-          <OperationBadge operation={history.operation} t={t} />
+          <OperationBadge operation={history.operation} />
         </div>
       </div>
       <div>
-        <label className="text-body-md font-medium text-muted-foreground">{t("operationUser")}</label>
+        <label className="text-body-md font-medium text-muted-foreground">{t.operationUser}</label>
         <div className="flex items-center gap-2 mt-1">
           <User className="w-4 h-4" />
           <span className="text-body-md truncate" title={user}>
@@ -87,41 +87,41 @@ function BasicInfo({ history, t }: { history: EditHistoryRecord; t: Translate })
   );
 }
 
-function CheckListItem({ snapshot, t }: { snapshot: EditHistoryRecord["scriptSnapshot"] | undefined; t: Translate }) {
+function CheckListItem({ snapshot, t }: { snapshot: EditHistoryRecord["scriptSnapshot"] | undefined; t: EditHistoryCopy }) {
   return (
     <div className="p-4 bg-muted/30 rounded-lg">
       <h4 className="font-medium mb-3 flex items-center gap-2">
         <FileText className="w-4 h-4" />
-        {t("scriptDetails")}
+        {t.checkSection}
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-body-md">
         <div>
-          <label className="text-muted-foreground">{t("scriptName")}</label>
-          <p className="font-medium">{snapshot?.name || t("unknown")}</p>
+          <label className="text-muted-foreground">{t.scriptName}</label>
+          <p className="font-medium">{snapshot?.name || t.unknown}</p>
         </div>
         <div>
-          <label className="text-muted-foreground">{t("scriptNameCn")}</label>
-          <p className="font-medium">{snapshot?.cnName || t("unknown")}</p>
+          <label className="text-muted-foreground">{t.scriptNameCn}</label>
+          <p className="font-medium">{snapshot?.cnName || t.unknown}</p>
         </div>
         <div>
-          <label className="text-muted-foreground">{t("fieldScriptId")}</label>
-          <p className="font-mono text-caption">{snapshot?.scriptId || t("unknown")}</p>
+          <label className="text-muted-foreground">{t.scriptId}</label>
+          <p className="font-mono text-caption">{snapshot?.scriptId || t.unknown}</p>
         </div>
         <div>
-          <label className="text-muted-foreground">{t("author")}</label>
-          <p className="font-medium">{snapshot?.author || t("unknown")}</p>
+          <label className="text-muted-foreground">{t.author}</label>
+          <p className="font-medium">{snapshot?.author || t.unknown}</p>
         </div>
       </div>
     </div>
   );
 }
 
-function ChangeList({ changes, language, t }: { changes: FieldChange[]; language: string; t: Translate }) {
+function ChangeList({ changes, language, t }: { changes: FieldChange[]; language: string; t: EditHistoryCopy }) {
   return (
     <div>
       <h4 className="font-medium mb-3 flex items-center gap-2">
         <Edit className="w-4 h-4" />
-        {t("changesDetails")} ({changes.length})
+        {t.changesDetails} ({changes.length})
       </h4>
       <div className="space-y-4">
         {changes.map((change, index) => (
@@ -129,13 +129,13 @@ function ChangeList({ changes, language, t }: { changes: FieldChange[]; language
             <div className="font-medium mb-3 text-body-md">{fieldLabel(change, language)}</div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-caption text-muted-foreground font-medium">{t("originalValue")}</label>
+                <label className="text-caption text-muted-foreground font-medium">{t.originalValue}</label>
                 <div className="mt-1 p-3 bg-failure/10 border border-failure/30 rounded text-failure font-mono text-caption break-all whitespace-pre-wrap max-h-32 overflow-y-auto">
                   {formatChangeValue(change.oldValue, t)}
                 </div>
               </div>
               <div>
-                <label className="text-caption text-muted-foreground font-medium">{t("newValue")}</label>
+                <label className="text-caption text-muted-foreground font-medium">{t.newValue}</label>
                 <div className="mt-1 p-3 bg-success/10 border border-success/30 rounded text-success font-mono text-caption break-all whitespace-pre-wrap max-h-32 overflow-y-auto">
                   {formatChangeValue(change.newValue, t)}
                 </div>

@@ -10,11 +10,11 @@ import { EditHistoryDialog } from "@/components/checks/manage/EditHistoryDialog"
 import { DeleteCheckDialog } from "@/components/checks/manage/DeleteCheckDialog";
 import { ManageChecksHeader } from "@/components/checks/manage/ManageChecksHeader";
 import { CheckEditorDialog } from "@/components/checks/manage/CheckEditorDialog";
+import { manageCopy } from "@/components/checks/manage/copy";
 import { useCheckDelete } from "@/components/checks/manage/useCheckDelete";
 import { useCheckEditor } from "@/components/checks/manage/useCheckEditor";
 import { useCheckList } from "@/components/checks/manage/useCheckList";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { SkeletonTable } from "@/components/common/PageSkeletons";
 
 const ManageScriptsContent = () => {
@@ -25,11 +25,9 @@ const ManageScriptsContent = () => {
   const [historyScriptId, setHistoryScriptId] = useState("");
   const [isEditHistoryOpen, setIsEditHistoryOpen] = useState(false);
 
-  const t = useDashboardT<string>();
-
   const { scripts, isLoading, error, reload } = useCheckList();
-  const editor = useCheckEditor(language, t, () => void reload());
-  const deletion = useCheckDelete(language, t, () => void reload());
+  const editor = useCheckEditor(language, () => void reload());
+  const deletion = useCheckDelete(language, () => void reload());
 
   // Links from runs and coverage select a check (?scriptId=); editing stays one click away.
   const linkedScriptId = searchParams.get("scriptId");
@@ -69,7 +67,6 @@ const ManageScriptsContent = () => {
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             language={language}
-            t={t}
           />
 
           {isLoading && scripts.length === 0 ? (
@@ -77,7 +74,7 @@ const ManageScriptsContent = () => {
           ) : error ? (
             <div className="rounded-xl bg-card shadow-border p-8 text-center">
               <AlertTriangle className="mx-auto mb-3 size-10 text-failure" />
-              <p className="font-medium">{t("errorTitle")}</p>
+              <p className="font-medium">{manageCopy(language).loadFailed}</p>
               <p className="mt-1 text-body-sm text-muted-foreground">{error}</p>
             </div>
           ) : (
@@ -106,7 +103,6 @@ const ManageScriptsContent = () => {
         onSave={editor.save}
         isSubmitting={editor.isSubmitting}
         language={language}
-        t={t}
       />
 
       <DeleteCheckDialog
@@ -116,7 +112,6 @@ const ManageScriptsContent = () => {
         onCancel={deletion.cancel}
         onConfirm={deletion.confirm}
         isSubmitting={deletion.isSubmitting}
-        t={t}
       />
 
       {isEditHistoryOpen && historyScriptId && (
@@ -124,7 +119,6 @@ const ManageScriptsContent = () => {
           open={isEditHistoryOpen}
           onOpenChange={setIsEditHistoryOpen}
           scriptId={historyScriptId}
-          t={t}
         />
       )}
     </div>

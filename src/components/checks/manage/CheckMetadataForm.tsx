@@ -7,7 +7,6 @@ import { Switch } from "@/components/ui/switch";
 import { HashtagInput } from "@/components/ui/hashtag-input";
 import { ScheduleSelector } from "@/components/ui/schedule-selector";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import { DashboardTranslationKeys } from "@/components/business/dashboard/types";
 import { cn } from "@/lib/utils/utils";
 import { DataSourceSelect } from "@/components/checks/data-source/DataSourceSelect";
 import type { DataSourceOption } from "@/components/checks/data-source/useDataSourceOptions";
@@ -35,7 +34,6 @@ interface ScriptMetadataFormProps {
     value: string | boolean | string[],
   ) => void;
   /** Unused since the form carries its own labels; kept for existing callers. */
-  t?: (key: DashboardTranslationKeys | string) => string;
   /** Script ID cannot change once the script exists. */
   isEditMode?: boolean;
   /** Messages for fields that stop the save; each marks its field invalid. */

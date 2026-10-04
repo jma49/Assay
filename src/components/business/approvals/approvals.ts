@@ -1,24 +1,8 @@
 import { ApprovalStatus, ScriptType, type ApprovalRequestDto } from "@/lib/types/approval";
-import type { DashboardTranslationKeys } from "@/components/business/dashboard/types";
 
 export type ApprovalRequest = ApprovalRequestDto;
 export type ApprovalAction = "approve" | "reject";
 export type Language = "en" | "zh";
-export type Translate = (key: DashboardTranslationKeys) => string;
-
-export const STATUS_LABEL_KEYS: Record<ApprovalStatus, DashboardTranslationKeys> = {
-  [ApprovalStatus.PENDING]: "pending",
-  [ApprovalStatus.APPROVED]: "approved",
-  [ApprovalStatus.REJECTED]: "rejected",
-  [ApprovalStatus.WITHDRAWN]: "withdrawn",
-};
-
-export const SCRIPT_TYPE_LABEL_KEYS: Record<ScriptType, DashboardTranslationKeys> = {
-  [ScriptType.READ_ONLY]: "readOnlyQuery",
-  [ScriptType.DATA_MODIFICATION]: "dataModification",
-  [ScriptType.STRUCTURE_CHANGE]: "structureChange",
-  [ScriptType.SYSTEM_ADMIN]: "systemAdmin",
-};
 
 /** Text colour and status-dot class for a request's status. */
 export function statusTone(status: ApprovalStatus): { text: string; dot: string } {
@@ -60,6 +44,31 @@ type OperationType = NonNullable<ApprovalRequest["operationType"]>;
 
 const COPY = {
   en: {
+    title: "Approval management",
+    description: "Review new and edited checks before they go live",
+    pendingTab: "Pending approvals",
+    historyTab: "Approval history",
+    noPending: "No pending approvals",
+    noHistory: "No approval history",
+    status: {
+      [ApprovalStatus.PENDING]: "Pending",
+      [ApprovalStatus.APPROVED]: "Approved",
+      [ApprovalStatus.REJECTED]: "Rejected",
+      [ApprovalStatus.WITHDRAWN]: "Withdrawn",
+    } satisfies Record<ApprovalStatus, string>,
+    scriptType: {
+      [ScriptType.READ_ONLY]: "Read-only query",
+      [ScriptType.DATA_MODIFICATION]: "Data modification",
+      [ScriptType.STRUCTURE_CHANGE]: "Structure change",
+      [ScriptType.SYSTEM_ADMIN]: "System admin",
+    } satisfies Record<ScriptType, string>,
+    approve: "Approve",
+    reject: "Reject",
+    approved: "Approved",
+    rejected: "Rejected",
+    approveTitle: "Approve check",
+    rejectTitle: "Reject check",
+    cancel: "Cancel",
     operation: { create: "New check", update: "Edit", delete: "Delete" } satisfies Record<OperationType, string>,
     showSql: "Show SQL",
     hideSql: "Hide SQL",
@@ -77,6 +86,31 @@ const COPY = {
     dataSource: "Data source the check runs against",
   },
   zh: {
+    title: "审批管理",
+    description: "新建和修改的检查上线前在这里审核",
+    pendingTab: "待审批",
+    historyTab: "审批历史",
+    noPending: "暂无待审批的检查",
+    noHistory: "暂无审批历史",
+    status: {
+      [ApprovalStatus.PENDING]: "待审批",
+      [ApprovalStatus.APPROVED]: "已批准",
+      [ApprovalStatus.REJECTED]: "已拒绝",
+      [ApprovalStatus.WITHDRAWN]: "已撤回",
+    } satisfies Record<ApprovalStatus, string>,
+    scriptType: {
+      [ScriptType.READ_ONLY]: "只读查询",
+      [ScriptType.DATA_MODIFICATION]: "数据修改",
+      [ScriptType.STRUCTURE_CHANGE]: "结构变更",
+      [ScriptType.SYSTEM_ADMIN]: "系统管理",
+    } satisfies Record<ScriptType, string>,
+    approve: "批准",
+    reject: "拒绝",
+    approved: "已批准",
+    rejected: "已拒绝",
+    approveTitle: "批准检查",
+    rejectTitle: "拒绝检查",
+    cancel: "取消",
     operation: { create: "新建检查", update: "修改", delete: "删除" } satisfies Record<OperationType, string>,
     showSql: "查看 SQL",
     hideSql: "收起 SQL",

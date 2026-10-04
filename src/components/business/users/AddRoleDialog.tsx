@@ -8,19 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserRole } from "@/lib/types/approval";
-import type { DashboardTranslationKeys } from "@/components/business/dashboard/types";
+import { usersCopy } from "./copy";
 import { ALL_ROLES, getRoleInfo } from "./members";
 import type { RoleAssignment } from "./useMemberRoles";
 
 interface AddRoleDialogProps {
   language: string;
-  t: (key: DashboardTranslationKeys) => string;
   isSaving: boolean;
   /** Resolves true when the role was saved. */
   onAssign: (assignment: RoleAssignment) => Promise<boolean>;
 }
 
-export function AddRoleDialog({ language, t, isSaving, onAssign }: AddRoleDialogProps) {
+export function AddRoleDialog({ language, isSaving, onAssign }: AddRoleDialogProps) {
+  const copy = usersCopy(language);
   const [isOpen, setIsOpen] = useState(false);
   const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
@@ -39,19 +39,19 @@ export function AddRoleDialog({ language, t, isSaving, onAssign }: AddRoleDialog
       <DialogTrigger asChild>
         <Button>
           <UserPlus />
-          {t('addUserRole')}
+          {copy.addUserRole}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('addUserRole')}</DialogTitle>
+          <DialogTitle>{copy.addUserRole}</DialogTitle>
           <DialogDescription>
             {language === "zh" ? "为用户分配系统权限角色" : "Give a user a role in this workspace."}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="userId">{t('userIdField')}</Label>
+            <Label htmlFor="userId">{copy.userId}</Label>
             <Input
               id="userId"
               value={userId}
@@ -60,7 +60,7 @@ export function AddRoleDialog({ language, t, isSaving, onAssign }: AddRoleDialog
             />
           </div>
           <div>
-            <Label htmlFor="email">{t('userEmail')}</Label>
+            <Label htmlFor="email">{copy.userEmail}</Label>
             <Input
               id="email"
               value={email}
@@ -69,14 +69,14 @@ export function AddRoleDialog({ language, t, isSaving, onAssign }: AddRoleDialog
             />
           </div>
           <div>
-            <Label htmlFor="role">{t('selectRole')}</Label>
+            <Label htmlFor="role">{copy.selectRole}</Label>
             <Select value={role} onValueChange={(value: UserRole) => setRole(value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {ALL_ROLES.map((option) => {
-                  const roleInfo = getRoleInfo(option, t);
+                  const roleInfo = getRoleInfo(option, language);
                   return (
                     <SelectItem key={option} value={option}>
                       <div className="flex items-center space-x-2">
@@ -98,7 +98,7 @@ export function AddRoleDialog({ language, t, isSaving, onAssign }: AddRoleDialog
             {isSaving && (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             )}
-            {t('assignRole')}
+            {copy.assignRole}
           </Button>
         </DialogFooter>
       </DialogContent>

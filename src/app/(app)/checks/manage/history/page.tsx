@@ -6,19 +6,19 @@ import { WindowStatusBar } from "@/components/layout/WindowChrome";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { Pagination } from "@/components/common/Pagination";
 import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
 import { EditHistoryDetailDialog } from "@/components/business/edit-history/EditHistoryDetailDialog";
 import { EditHistoryTable } from "@/components/business/edit-history/EditHistoryTable";
 import { EditHistoryToolbar } from "@/components/business/edit-history/EditHistoryToolbar";
+import { editHistoryCopy } from "@/components/business/edit-history/copy";
 import { EMPTY_FILTERS, formatPageInfo, type HistoryFilters, type OperationFilter } from "@/components/business/edit-history/edit-history";
 import { useEditHistory } from "@/components/business/edit-history/useEditHistory";
 import type { EditHistoryRecord } from "@/contracts/edit-history";
 
 export default function GlobalEditHistoryPage() {
   const { language } = useLanguage();
-  const t = useDashboardT<string>();
+  const t = editHistoryCopy(language);
 
   const { histories, loading, error, currentPage, totalPages, totalRecords, totalCapped, fetchHistories, retry } = useEditHistory();
   const [filters, setFilters] = useState<HistoryFilters>(EMPTY_FILTERS);
@@ -47,7 +47,7 @@ export default function GlobalEditHistoryPage() {
     <div className="min-h-screen">
       <div className={`${APP_CONTAINER} py-6`}>
         <div className="space-y-6 animate-fadeIn">
-          <PageHeader title={t("allScriptsHistory")} description={t("editHistoryDescGlobal")} />
+          <PageHeader title={t.pageTitle} description={t.pageDescription} />
           <WindowStatusBar>
             {language === "zh" ? `共 ${totalRecords}${totalCapped ? "+" : ""} 次修改` : `${totalRecords}${totalCapped ? "+" : ""} changes`}
           </WindowStatusBar>
@@ -56,7 +56,6 @@ export default function GlobalEditHistoryPage() {
             filters={filters}
             loading={loading}
             language={language}
-            t={t}
             onFiltersChange={updateFilters}
             onOperationChange={changeOperation}
             onApply={() => fetchHistories(filters, 1)}
@@ -70,7 +69,6 @@ export default function GlobalEditHistoryPage() {
                 loading={loading}
                 error={error}
                 language={language}
-                t={t}
                 onRetry={retry}
                 onViewDetails={viewDetails}
               />
@@ -79,8 +77,7 @@ export default function GlobalEditHistoryPage() {
               <Pagination
                 page={currentPage}
                 totalPages={totalPages}
-                pageInfo={formatPageInfo(t, { currentPage, totalPages, totalRecords, totalCapped, pageSize: ITEMS_PER_PAGE })}
-                t={t}
+                pageInfo={formatPageInfo(language, { currentPage, totalPages, totalRecords, totalCapped, pageSize: ITEMS_PER_PAGE })}
                 onPageChange={(page) => fetchHistories(filters, page)}
                 disabled={loading}
               />
@@ -93,7 +90,6 @@ export default function GlobalEditHistoryPage() {
         history={selectedHistory}
         open={isDetailDialogOpen}
         language={language}
-        t={t}
         onOpenChange={setIsDetailDialogOpen}
       />
     </div>

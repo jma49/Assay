@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { HistoryFilters, OperationFilter, Translate } from "./edit-history";
+import { editHistoryCopy } from "./copy";
+import type { HistoryFilters, OperationFilter } from "./edit-history";
 
 interface EditHistoryToolbarProps {
   filters: HistoryFilters;
   loading: boolean;
   language: string;
-  t: Translate;
   onFiltersChange: (changes: Partial<HistoryFilters>) => void;
   onOperationChange: (operation: OperationFilter) => void;
   onApply: () => void;
@@ -24,12 +24,12 @@ export function EditHistoryToolbar({
   filters,
   loading,
   language,
-  t,
   onFiltersChange,
   onOperationChange,
   onApply,
   onReset,
 }: EditHistoryToolbarProps) {
+  const t = editHistoryCopy(language);
   return (
     <WindowToolbar>
       <Button asChild variant="outline" size="sm">
@@ -39,8 +39,8 @@ export function EditHistoryToolbar({
         <Search className="pointer-events-none absolute top-1/2 left-2.5 z-10 size-3.5 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
-          aria-label={t("scriptName")}
-          placeholder={t("searchScriptsPlaceholder")}
+          aria-label={t.scriptName}
+          placeholder={t.searchPlaceholder}
           value={filters.scriptName}
           onChange={(e) => onFiltersChange({ scriptName: e.target.value })}
           onKeyDown={(e) => e.key === "Enter" && onApply()}
@@ -48,14 +48,14 @@ export function EditHistoryToolbar({
         />
       </div>
       <Select value={filters.operation} onValueChange={(value) => onOperationChange(value as OperationFilter)}>
-        <SelectTrigger size="sm" className="h-7 w-36 text-body-sm" aria-label={t("operationType")}>
-          <SelectValue placeholder={t("selectOperationPlaceholder")} />
+        <SelectTrigger size="sm" className="h-7 w-36 text-body-sm" aria-label={t.operationType}>
+          <SelectValue placeholder={t.selectOperation} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">{t("operationAll")}</SelectItem>
-          <SelectItem value="create">{t("operationCreate")}</SelectItem>
-          <SelectItem value="update">{t("operationUpdate")}</SelectItem>
-          <SelectItem value="delete">{t("operationDelete")}</SelectItem>
+          <SelectItem value="all">{t.allOperations}</SelectItem>
+          <SelectItem value="create">{t.operations.create}</SelectItem>
+          <SelectItem value="update">{t.operations.update}</SelectItem>
+          <SelectItem value="delete">{t.operations.delete}</SelectItem>
         </SelectContent>
       </Select>
       <div className="ml-auto flex items-center gap-2">
@@ -67,25 +67,25 @@ export function EditHistoryToolbar({
           </PopoverTrigger>
           <PopoverContent align="end" className="w-72 space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="author-filter" className="text-body-sm">{t("author")}</Label>
+              <Label htmlFor="author-filter" className="text-body-sm">{t.author}</Label>
               <Input id="author-filter" value={filters.author} onChange={(e) => onFiltersChange({ author: e.target.value })} className="h-8" />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
-                <Label htmlFor="date-from-filter" className="text-body-sm">{t("dateFrom")}</Label>
+                <Label htmlFor="date-from-filter" className="text-body-sm">{t.dateFrom}</Label>
                 <Input id="date-from-filter" type="date" value={filters.dateFrom} onChange={(e) => onFiltersChange({ dateFrom: e.target.value })} className="h-8" />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="date-to-filter" className="text-body-sm">{t("dateTo")}</Label>
+                <Label htmlFor="date-to-filter" className="text-body-sm">{t.dateTo}</Label>
                 <Input id="date-to-filter" type="date" value={filters.dateTo} onChange={(e) => onFiltersChange({ dateTo: e.target.value })} className="h-8" />
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-1">
               <Button size="sm" variant="outline" onClick={onReset} disabled={loading}>
-                {t("resetFilters")}
+                {t.resetFilters}
               </Button>
               <Button size="sm" onClick={onApply} disabled={loading}>
-                {t("searchEditHistory")}
+                {t.search}
               </Button>
             </div>
           </PopoverContent>

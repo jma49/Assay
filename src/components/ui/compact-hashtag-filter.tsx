@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/utils";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { PriorityBadge } from "./priority-badge";
 
 interface CompactHashtagFilterProps {
@@ -31,8 +30,6 @@ export function CompactHashtagFilter({
   const [searchValue, setSearchValue] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const { language } = useLanguage();
-
-  const t = useDashboardT();
 
   const filteredHashtags = useMemo(() => {
     if (!searchValue.trim()) return availableHashtags;
@@ -233,7 +230,7 @@ export function CompactHashtagFilter({
                       onClick={applySelection}
                       className="h-8 px-3 text-caption font-medium bg-primary hover:bg-primary/90 shrink-0"
                     >
-                      {t("confirmAction")}
+                      {language === "zh" ? "确认操作" : "Confirm action"}
                     </Button>
                   </div>
                 </div>

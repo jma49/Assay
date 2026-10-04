@@ -1,6 +1,6 @@
 import { Code, Crown, Eye, Shield, type LucideIcon } from "lucide-react";
 import { UserRole } from "@/lib/types/approval";
-import type { DashboardTranslationKeys } from "@/components/business/dashboard/types";
+import { usersCopy } from "./copy";
 
 /** A member as `GET /api/users/roles` returns them. */
 export interface MemberRole {
@@ -20,37 +20,17 @@ export interface RoleInfo {
   color: string;
 }
 
-type Translate = (key: DashboardTranslationKeys) => string;
-
 export const ALL_ROLES = Object.values(UserRole);
 
-export function getRoleInfo(role: UserRole, t: Translate): RoleInfo {
-  return {
-    [UserRole.ADMIN]: {
-      label: t("adminRole"),
-      description: t("adminDesc"),
-      icon: Crown,
-      color: "bg-failure/10 text-failure border-failure/30",
-    },
-    [UserRole.MANAGER]: {
-      label: t("managerRole"),
-      description: t("managerDesc"),
-      icon: Shield,
-      color: "bg-muted text-foreground border-border",
-    },
-    [UserRole.DEVELOPER]: {
-      label: t("developerRole"),
-      description: t("developerDesc"),
-      icon: Code,
-      color: "bg-success/10 text-success border-success/30",
-    },
-    [UserRole.VIEWER]: {
-      label: t("viewerRole"),
-      description: t("viewerDesc"),
-      icon: Eye,
-      color: "bg-muted text-foreground border-border",
-    },
-  }[role];
+const ROLE_STYLE: Record<UserRole, Pick<RoleInfo, "icon" | "color">> = {
+  [UserRole.ADMIN]: { icon: Crown, color: "bg-failure/10 text-failure border-failure/30" },
+  [UserRole.MANAGER]: { icon: Shield, color: "bg-muted text-foreground border-border" },
+  [UserRole.DEVELOPER]: { icon: Code, color: "bg-success/10 text-success border-success/30" },
+  [UserRole.VIEWER]: { icon: Eye, color: "bg-muted text-foreground border-border" },
+};
+
+export function getRoleInfo(role: UserRole, language: string): RoleInfo {
+  return { ...usersCopy(language).roles[role], ...ROLE_STYLE[role] };
 }
 
 /** How many members hold each role, in `ALL_ROLES` order. */

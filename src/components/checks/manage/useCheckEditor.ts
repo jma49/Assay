@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { apiErrorText } from "@/client/api-errors";
 import { apiErrorCode, sendJson } from "@/client/send-json";
-import type { DashboardTranslationKeys, CheckDefinition } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/business/dashboard/types";
 import type { CheckFormData } from "./CheckMetadataForm";
 import { newCheckTemplate } from "./sql-template";
 import {
@@ -20,8 +20,7 @@ import {
   type Notice,
   type CheckFormState,
 } from "./check-form";
-
-type Translate = (key: DashboardTranslationKeys | string) => string;
+import { manageCopy } from "./copy";
 
 /** A save that went through, or was filed for approval. */
 interface SaveResponse {
@@ -32,7 +31,8 @@ const showError = ({ title, ...options }: Notice) => toast.error(title, options)
 const showSuccess = ({ title, ...options }: Notice) => toast.success(title, options);
 
 /** State and save flow of the add/edit dialog. `reload` refreshes the list after a save or a conflict. */
-export function useCheckEditor(language: Language, t: Translate, reload: () => void) {
+export function useCheckEditor(language: Language, reload: () => void) {
+  const t = manageCopy(language);
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<DialogMode>("add");
   const [form, setForm] = useState<CheckFormState>({});
@@ -72,7 +72,7 @@ export function useCheckEditor(language: Language, t: Translate, reload: () => v
     }
 
     setIsSubmitting(true);
-    const errorKey = mode === "add" ? "scriptSaveError" : "scriptUpdateError";
+    const failed = mode === "add" ? t.saveFailed : t.updateFailed;
     try {
       const body =
         mode === "add"
@@ -84,7 +84,7 @@ export function useCheckEditor(language: Language, t: Translate, reload: () => v
         showSuccess(approvalNotice(language, "save"));
         return;
       }
-      toast.success(t(mode === "add" ? "scriptSavedSuccess" : "scriptUpdatedSuccess"));
+      toast.success(mode === "add" ? t.saved : t.updated);
       reload();
     } catch (err) {
       // Another save won the optimistic-concurrency race.
@@ -94,7 +94,7 @@ export function useCheckEditor(language: Language, t: Translate, reload: () => v
         return;
       }
       console.error(`Failed to ${mode} script:`, err);
-      toast.error(t(errorKey) || `Failed to ${mode} script`, { description: apiErrorText(err, language) });
+      toast.error(failed, { description: apiErrorText(err, language) });
     } finally {
       setIsSubmitting(false);
     }

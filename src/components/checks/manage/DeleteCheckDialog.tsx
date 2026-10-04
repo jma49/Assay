@@ -11,7 +11,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { DashboardTranslationKeys, CheckDefinition } from "@/components/business/dashboard/types";
+import { useLanguage } from "@/components/common/LanguageProvider";
+import type { CheckDefinition } from "@/components/business/dashboard/types";
+import { manageCopy } from "./copy";
 
 interface DeleteScriptDialogProps {
   open: boolean;
@@ -20,31 +22,28 @@ interface DeleteScriptDialogProps {
   onCancel: () => void;
   onConfirm: () => void;
   isSubmitting: boolean;
-  t: (key: DashboardTranslationKeys | string) => string;
 }
 
-export function DeleteCheckDialog({ open, onOpenChange, script, onCancel, onConfirm, isSubmitting, t }: DeleteScriptDialogProps) {
+export function DeleteCheckDialog({ open, onOpenChange, script, onCancel, onConfirm, isSubmitting }: DeleteScriptDialogProps) {
+  const t = manageCopy(useLanguage().language);
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t("confirmDeleteScriptTitle")}</AlertDialogTitle>
+          <AlertDialogTitle>{t.deleteTitle}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t("confirmDeleteScriptMessage").replace(
-              "{scriptName}",
-              String(script?.name || script?.scriptId || ""),
-            )}
+            {t.deleteMessage(String(script?.name || script?.scriptId || ""))}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>{t("cancelButton")}</AlertDialogCancel>
+          <AlertDialogCancel onClick={onCancel}>{t.cancel}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isSubmitting}
             className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
           >
             {isSubmitting && <Loader2 className="mr-0 h-4 w-4 animate-spin" />}
-            {t("deleteButton")}
+            {t.delete}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

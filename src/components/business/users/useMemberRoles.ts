@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import { apiErrorText } from "@/client/api-errors";
 import { sendJson } from "@/client/send-json";
 import { UserRole } from "@/lib/types/approval";
-import type { DashboardTranslationKeys } from "@/components/business/dashboard/types";
 import { getRoleInfo, type MemberRole } from "./members";
 
 export interface RoleAssignment {
@@ -30,7 +29,7 @@ async function fetchMembers(zh: boolean): Promise<MemberRole[] | "forbidden"> {
  * Loads the member list and assigns, changes and removes roles.
  * `actionLoading` is "assign" while the add dialog saves, or the id of the member being changed.
  */
-export function useMemberRoles(language: string, t: (key: DashboardTranslationKeys) => string) {
+export function useMemberRoles(language: string) {
   const zh = language === "zh";
   const [members, setMembers] = useState<MemberRole[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +75,7 @@ export function useMemberRoles(language: string, t: (key: DashboardTranslationKe
     try {
       setActionLoading("assign");
       await postRole(assignment, failed);
-      const label = getRoleInfo(assignment.role, t).label;
+      const label = getRoleInfo(assignment.role, language).label;
       toast.success(
         zh ? `用户 ${assignment.email} 的角色已设置为 ${label}` : `${assignment.email} is now ${label}`,
       );
@@ -96,7 +95,7 @@ export function useMemberRoles(language: string, t: (key: DashboardTranslationKe
     try {
       setActionLoading(userId);
       await postRole({ userId, email, role }, failed);
-      const label = getRoleInfo(role, t).label;
+      const label = getRoleInfo(role, language).label;
       toast.success(zh ? `用户 ${email} 的角色已修改为 ${label}` : `${email} is now ${label}`);
       void loadMembers();
     } catch (err) {

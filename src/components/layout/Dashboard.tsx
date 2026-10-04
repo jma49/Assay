@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { DashboardSkeleton } from "@/components/common/PageSkeletons";
 import { CheckHistory } from "@/components/business/dashboard/CheckHistory";
 import { LoadingError } from "@/components/business/dashboard/LoadingError";
 import { StatusTiles } from "@/components/business/dashboard/StatusTiles";
 import { CHECK_HISTORY_ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
+import { runsCopy } from "@/components/business/dashboard/runs/copy";
 import { RunSheet } from "@/components/business/dashboard/runs/RunSheet";
 import { RunsHeader } from "@/components/business/dashboard/runs/RunsHeader";
 import { pageRange, passRate } from "@/components/business/dashboard/runs/runs";
@@ -33,7 +33,7 @@ function useFadeInStyle() {
 /** The Runs page: overall numbers, the run history and the Run sheet. */
 const Dashboard = ({ initialSearch = "" }: { initialSearch?: string }) => {
   const { language } = useLanguage();
-  const t = useDashboardT();
+  const copy = runsCopy(language);
 
   // Offer only what this user may do; the run API enforces it regardless.
   const me = useMe();
@@ -60,16 +60,15 @@ const Dashboard = ({ initialSearch = "" }: { initialSearch?: string }) => {
   }
 
   if (runs.error) {
-    return <LoadingError error={runs.error} t={t} />;
+    return <LoadingError error={runs.error} />;
   }
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      <h1 className="sr-only">{t("dashboardTitle")}</h1>
+      <h1 className="sr-only">{copy.pageTitle}</h1>
 
       <RunsHeader
         language={language}
-        t={t}
         canExecute={canExecute}
         demoRuns={demoRuns}
         totalRuns={overallStats.totalCount}
@@ -104,12 +103,11 @@ const Dashboard = ({ initialSearch = "" }: { initialSearch?: string }) => {
         triggerMessage={trigger.triggerMessage}
         triggerMessageType={trigger.triggerMessageType}
         language={language}
-        t={t}
         setSelectedScriptId={trigger.setSelectedScriptId}
         handleTriggerCheck={trigger.handleTriggerCheck}
       />
 
-      <section id="execution-history" className="scroll-mt-20" aria-label={t("checkHistoryTitle")}>
+      <section id="execution-history" className="scroll-mt-20" aria-label={copy.historyTitle}>
         <CheckHistory
           paginatedChecks={history.checks}
           allChecksCount={history.pagination.total}
@@ -121,7 +119,6 @@ const Dashboard = ({ initialSearch = "" }: { initialSearch?: string }) => {
           selectedHashtags={history.selectedHashtags}
           sortConfig={history.sortConfig}
           language={language}
-          t={t}
           setSearchTerm={history.changeSearch}
           setSelectedHashtags={history.changeHashtags}
           setCurrentPage={history.changePage}
