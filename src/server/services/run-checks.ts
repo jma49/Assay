@@ -82,7 +82,7 @@ export interface RunChecksDeps {
 
 export type CheckRunReport =
   | { scriptId: string; name: string; status: "ran"; result: RunCheckResult }
-  | { scriptId: string; name: string; status: "not_due" | "claimed_elsewhere" | "would_run" }
+  | { scriptId: string; name: string; status: "not_due" | "claimed_elsewhere" | "would_run" | "deferred" }
   | { scriptId: string; name: string; status: "failed"; error: string };
 
 /**
@@ -94,10 +94,20 @@ export type CheckRunReport =
  * drop its slot — while a completed slot is marked done and never runs
  * again. A run that found the check busy (another run holds its lease) or
  * threw gives the slot back, so the next trigger retries it within the
- * catch-up window.
+ * catch-up window. With `startBy`, a check whose turn comes after that time
+ * is deferred unclaimed, so a trigger with a hard time limit (a serverless
+ * function) leaves it to the next trigger instead of being killed mid-run.
  */
 export async function runChecks(
-  options: { mode: RunMode; now: Date; dryRun?: boolean; concurrency?: number; trigger: RunTrigger },
+  options: {
+    mode: RunMode;
+    now: Date;
+    dryRun?: boolean;
+    concurrency?: number;
+    trigger: RunTrigger;
+    startBy?: Date;
+    clock?: () => number;
+  },
   deps: RunChecksDeps,
 ): Promise<CheckRunReport[]> {
   const checks = await deps.listChecks(options.mode);
@@ -113,6 +123,9 @@ export async function runChecks(
     due.map(({ check, slot }) =>
       limit.run(async (): Promise<CheckRunReport> => {
         const base = { scriptId: check.scriptId, name: check.name };
+        if (options.startBy && (options.clock ?? Date.now)() > options.startBy.getTime()) {
+          return { ...base, status: "deferred" };
+        }
         let claim: string | null = null;
         try {
           if (slot) {

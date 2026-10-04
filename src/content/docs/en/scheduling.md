@@ -11,17 +11,21 @@ Turn on **Run on a schedule** when editing a check. It defaults to every day at 
 | Mondays at 09:00 UTC | `0 9 * * 1` |
 | The 1st of each month at 09:00 UTC | `0 9 1 * *` |
 
-An invalid expression cannot be saved. With the GitHub Actions runner below, a check runs at most every 30 minutes, whatever its expression.
+An invalid expression cannot be saved. Scheduled runs start at most every 30 minutes, so a check runs at most that often, whatever its expression.
 
 ## What starts scheduled runs
 
 Assay itself does not keep a clock running. Something starts the scheduled runner, which runs each check **once per slot**: the latest time its cron expression fired, if the check has not run for it yet. Late triggers still catch the slot, repeated triggers never run it twice, and slots more than two hours old are skipped rather than all run at once.
 
-A self-hosted workspace has two options:
+A self-hosted workspace has three options. Use QStash (or your own server) to start runs on time, and keep GitHub Actions as the fallback.
 
-### GitHub Actions (recommended)
+### QStash (recommended on Vercel)
 
-`.github/workflows/sql-check-cron.yml` starts the runner every 30 minutes. Add `DATABASE_URL` and `MONGODB_URI` as repository secrets and it begins on the default branch; without them it skips quietly. You can also start it by hand from the Actions tab, choosing `scheduled` (checks that are due) or `all` (every check now), or entering a **check_id** to run just that check. Alerts go out after a run started by hand too.
+[Upstash QStash](https://upstash.com/docs/qstash) calls `POST /api/cron/run-scheduled` on your deployment every 30 minutes, and retries when a call fails. Set `QSTASH_CURRENT_SIGNING_KEY` and `QSTASH_NEXT_SIGNING_KEY` on your host so the endpoint accepts only QStash's signed calls, then create a schedule with the cron `*/30 * * * *` and the URL `<APP_URL>/api/cron/run-scheduled`. Any other cron service works too if it sends `Authorization: Bearer <CRON_SECRET>`.
+
+### GitHub Actions (fallback)
+
+`.github/workflows/sql-check-cron.yml` asks to start the runner every 30 minutes. GitHub starts scheduled workflows late, often by hours, so a short schedule runs late and a slot can be missed if nothing else starts runs. Add `DATABASE_URL` and `MONGODB_URI` as repository secrets and it begins on the default branch; without them it skips quietly. You can also start it by hand from the Actions tab, choosing `scheduled` (checks that are due) or `all` (every check now), or entering a **check_id** to run just that check. Alerts go out after a run started by hand too.
 
 The runner reads the same settings as the app, so give GitHub the ones you set on your host; any you leave out take their defaults:
 
