@@ -54,6 +54,11 @@ describe("payloads", () => {
     expect(payload.text).toContain("Orders &lt;@everyone&gt; &amp; co");
   });
 
+  it("telegram escapes quotes in the link's href", () => {
+    const request = CHANNELS.telegram.request({ ...message, url: 'https://assay.example/x" onclick="y' }, { chatId: "-100" }, context);
+    expect(JSON.parse(request.body).text).toContain('<a href="https://assay.example/x&quot; onclick=&quot;y">');
+  });
+
   it("feishu signs when it has a secret", () => {
     const payload = body("feishu", { url: "https://open.feishu.cn/open-apis/bot/v2/hook/a", signingSecret: "s" });
     expect(payload.timestamp).toBe(String(now.getTime() / 1000));
