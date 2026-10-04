@@ -8,7 +8,10 @@ those in [`data_sources`](#data_sources); Assay only reads them, through a
 read-only transaction.
 
 Indexes live in `src/lib/database/indexes.ts` and are created on start-up
-(`ensureIndexes`, idempotent). Every collection below lists them.
+(`ensureIndexes`, idempotent). Every collection below lists them. An index
+that is replaced (MongoDB cannot change a TTL index's key in place) goes in
+`OBSOLETE_INDEXES` by name; `ensureIndexes` drops it before creating the
+new ones, and a missing index is fine.
 
 ## Conventions
 
@@ -119,10 +122,41 @@ check uses it.
 | Collection | Holds | Indexes |
 | --- | --- | --- |
 | `notification_destinations` | A channel: `kind`, `label`, `sealed` (AES-256-GCM secret), `alerts`, `tags`, `language`, `digest`, `remind`, `enabled`, `lastDelivery`, `lastDigestAt`, `source` | `(workspaceId, createdAt)` |
-| `notification_deliveries` | One per event and destination: `status`, `attempts`, `nextAttemptAt`, `claim`, `sentAt`, `lastError` | `(eventId, destinationId)` unique; `(status, nextAttemptAt)`; `(destinationId, sentAt)`; TTL 30 days on `createdAt` |
+| `notification_deliveries` | One per event and destination: `status`, `attempts`, `nextAttemptAt`, `claim`, `sentAt`, `lastError`, `createdAt`, `updatedAt` (stamped by every write: create, claim, sent / failed / retry, requeue) | `(eventId, destinationId)` unique; `(status, nextAttemptAt)`; `(destinationId, sentAt)`; TTL 30 days on `updatedAt` (see [Delivery retention](#delivery-retention)) |
 | `notification_reminders` | Reminders sent per problem and destination: `sent`, `lastAt` | `(destinationId, checkId, since)` unique; TTL 30 days on `lastAt` |
 | `telegram_links` | Pending chat links: `codeHash` (never the code) | `codeHash` unique; TTL on `expiresAt` |
 | `integration_state` | The Telegram polling offset | |
+
+### Delivery retention
+
+A delivery is deleted 30 days after it last changed, not after it was
+created: one still retrying (or requeued from the failed list) is never
+deleted while it is being worked on, and a dead letter stays in the failed
+list for 30 days after it failed. Until 2026-10 the TTL was on `createdAt`
+(index `createdAt_1`, issue #213).
+
+The switch needs no first-request migration:
+
+- Every process drops `createdAt_1` on start (`OBSOLETE_INDEXES`) and
+  creates `updatedAt_1`. While the old build still serves, its cold starts
+  may recreate `createdAt_1`; the next start of the new build, at the latest
+  the next scheduled run, drops it again. Two TTL indexes delete no later
+  than the old one alone, so the overlap loses nothing that was kept before.
+- A document without `updatedAt` is never expired by TTL. Deliveries that
+  were finished or requeued already have it; those still pending get it on
+  their next claim. Only older ones that never changed lack it, and
+  `scripts/migrations/set-delivery-updated-at.ts` copies their `createdAt`
+  into `updatedAt` (idempotent; deliveries older than 30 days then go, as
+  the old TTL would have done them).
+
+**Release step**, once the build is live:
+
+```bash
+tsx -r dotenv/config scripts/migrations/set-delivery-updated-at.ts          # counts, dry run
+tsx -r dotenv/config scripts/migrations/set-delivery-updated-at.ts --apply
+```
+
+Skipping it loses nothing; those deliveries are just kept until it runs.
 
 ## Review and history
 
