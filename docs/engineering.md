@@ -22,6 +22,11 @@ Non-negotiable. A change violating them is incomplete.
   link-local addresses unless `ALLOW_PRIVATE_DATA_SOURCES=true` is
   explicitly set for self-hosted private networks.
 - **TLS verification** for public PostgreSQL hosts is required.
+- **Fail closed on missing configuration.** A production server exits on
+  start without `BETTER_AUTH_SECRET`, `MONGODB_URI`, `DATABASE_URL` and
+  `APP_URL` (`src/lib/config/required-env.ts`), naming only the missing
+  variables. Never add a silent default for a required variable; a new one
+  goes on that list. Optional features stay off with one warning each.
 
 ### Concurrency and state
 

@@ -17,6 +17,8 @@ Copy `.env.example` to `.env.local` for local work, or add these to your host.
 
 At least one sign-in provider (Google or GitHub) must be set.
 
+In production the server refuses to start without `BETTER_AUTH_SECRET`, `MONGODB_URI`, `DATABASE_URL` and `APP_URL` (on Vercel the production domain stands in for `APP_URL`); the log names the missing variables. Optional features that are not configured stay off and log one warning each at start.
+
 ## Running checks
 
 | Variable | Purpose |
