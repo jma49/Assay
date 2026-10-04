@@ -91,6 +91,26 @@ describe("runChecks", () => {
     expect(d.run).toHaveBeenCalledTimes(1);
   });
 
+  it("defers checks whose turn comes after startBy, without claiming their slot", async () => {
+    const d = deps([check("first", "0 9 * * *"), check("second", "0 9 * * *")]);
+    const claimSlot = vi.spyOn(d, "claimSlot");
+    let time = 1_000;
+    // The first run takes the clock past startBy; the second must not start.
+    d.run.mockImplementation(async () => {
+      time = 5_000;
+      return completed;
+    });
+    const reports = await runChecks(
+      { mode: "scheduled", now, trigger: { kind: "schedule" }, concurrency: 1, startBy: new Date(2_000), clock: () => time },
+      d,
+    );
+    expect(reports.map((r) => [r.scriptId, r.status])).toEqual([
+      ["first", "ran"],
+      ["second", "deferred"],
+    ]);
+    expect(claimSlot).toHaveBeenCalledTimes(1);
+  });
+
   it("only lists what would run in a dry run", async () => {
     const d = deps([check("a", "0 9 * * *")]);
     const reports = await runChecks({ mode: "scheduled", now, dryRun: true, trigger: { kind: "schedule" } }, d);
