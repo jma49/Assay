@@ -2,10 +2,9 @@
 
 ## Reporting a vulnerability
 
-Please do not open a public issue for a security problem. Report it
-privately through GitHub: **Security → Report a vulnerability** on
-[github.com/jma49/Assay](https://github.com/jma49/Assay/security), or email
-the maintainer at the address on the GitHub profile.
+Please do not put details of a security problem in a public issue. Open an
+issue titled **"Security contact request"** with no details at all, and the
+maintainer replies with a private channel to send the report to.
 
 Include what you found, how to reproduce it, and the impact you expect. You
 will get an answer within seven days. Fixes are released as soon as they are

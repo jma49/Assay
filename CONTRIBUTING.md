@@ -40,6 +40,15 @@ are mocked. The integration suites run against a throwaway MongoDB when
    npm run typecheck && npm run lint && npm test && npx knip && npm run build
    ```
 
+   CI runs the tests as `npm run test:coverage`, which also enforces the
+   coverage floors in `vitest.config.mts`, and runs the MongoDB integration
+   suites against a throwaway database. To do the same locally, with the
+   local services up:
+
+   ```bash
+   MONGODB_TEST_URI=mongodb://127.0.0.1:27017/assay_test npm run test:coverage
+   ```
+
 5. For UI changes, compare screenshots (`npm run visual:baseline` before,
    `npm run visual` after; see DESIGN.md) and label a pull request that
    changes the look on purpose `visual-change`.

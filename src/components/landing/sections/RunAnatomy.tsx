@@ -108,7 +108,7 @@ export function RunAnatomy({ copy }: { copy: LandingCopy["run"] }) {
               className="group flex flex-col justify-start self-start text-left"
             >
               <span className="block h-[3px] overflow-hidden rounded-full bg-night-foreground/10">
-                <span data-run-fill className={cn("block h-full w-full origin-left rounded-full bg-night-accent", tabs ? (i <= step ? "scale-x-100" : "scale-x-0") : "scale-x-0")} />
+                <span data-run-fill className={cn("block h-full w-full origin-left rounded-full bg-night-accent", tabs ? (i <= step ? "scale-x-100" : "scale-x-0") : cn("scale-x-0", i === 0 && "motion-reduce:scale-x-100"))} />
               </span>
               <span className="mt-4 flex items-baseline gap-2.5">
                 <span className="text-caption font-medium tabular-nums text-night-muted">0{i + 1}</span>
@@ -143,17 +143,17 @@ export function RunAnatomy({ copy }: { copy: LandingCopy["run"] }) {
           </div>
         </div>
 
-        {tabs && (
-          <div className="mt-4 hidden justify-end gap-2 md:flex">
-            <button type="button" onClick={() => go(step - 1)} aria-label={copy.previous} className="inline-flex size-9 items-center justify-center rounded-full border border-night-foreground/15 bg-night-foreground/5 text-night-foreground hover:bg-night-foreground/10">
-              <ArrowLeft className="size-4" />
-            </button>
-            <button type="button" onClick={() => go(step + 1)} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-night-foreground px-4 text-caption font-medium text-night">
-              {copy.next}
-              <ArrowRight className="size-3.5" />
-            </button>
-          </div>
-        )}
+        {/* Shown by CSS, not by the `tabs` state: the media query applies on first paint, so the
+            section has its final height before GSAP's matchMedia callback runs. */}
+        <div className="mt-4 hidden justify-end gap-2 motion-reduce:md:flex">
+          <button type="button" onClick={() => go(step - 1)} aria-label={copy.previous} className="inline-flex size-9 items-center justify-center rounded-full border border-night-foreground/15 bg-night-foreground/5 text-night-foreground hover:bg-night-foreground/10">
+            <ArrowLeft className="size-4" />
+          </button>
+          <button type="button" onClick={() => go(step + 1)} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-night-foreground px-4 text-caption font-medium text-night">
+            {copy.next}
+            <ArrowRight className="size-3.5" />
+          </button>
+        </div>
 
         <div className="mt-10 space-y-10 md:hidden">
           {RUN_SCENES.map((Scene, i) => (

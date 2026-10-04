@@ -8,7 +8,7 @@ Open-source SQL data checks for PostgreSQL: write read-only checks, run them on 
 [![Visual](https://github.com/jma49/Assay/actions/workflows/visual.yml/badge.svg)](https://github.com/jma49/Assay/actions/workflows/visual.yml)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-[![The Checks page of the Assay demo](public/video/assay-demo.jpg)](https://assay.majincheng.com)
+[![The Checks page of the Assay demo](docs/images/checks.png)](https://assay.majincheng.com)
 
 ## What it does
 

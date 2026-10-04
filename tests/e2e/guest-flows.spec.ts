@@ -22,7 +22,8 @@ async function checks(request: APIRequestContext): Promise<Summary[]> {
 test("the Issues tile filters the list to checks that found rows", async ({ page, request }) => {
   const all = await checks(request);
   const issues = all.filter((check) => check.state?.outcome === "issues");
-  test.skip(issues.length === 0, "the demo data has no check with issues");
+  // The visual job seeds the demo data and runs every check, so these must exist.
+  expect(issues.length, "seeded checks with issues").toBeGreaterThan(0);
 
   await page.goto("/checks");
   await page.getByRole("button", { name: /^With issues/ }).click();
@@ -33,7 +34,7 @@ test("the Issues tile filters the list to checks that found rows", async ({ page
 
 test("a guest runs a demo check and the new run appears", async ({ page, request }) => {
   const check = (await checks(request)).find((c) => c.state);
-  test.skip(!check, "the demo data has no check that ran");
+  expect(check, "a seeded check that ran").toBeTruthy();
   const before = check!.state!.lastRunId;
 
   await page.goto(`/checks/${check!.scriptId}`);
@@ -47,7 +48,7 @@ test("a guest runs a demo check and the new run appears", async ({ page, request
 
 test("a run's report opens from its id", async ({ page, request }) => {
   const check = (await checks(request)).find((c) => c.state?.outcome === "issues") ?? (await checks(request)).find((c) => c.state);
-  test.skip(!check, "the demo data has no run");
+  expect(check, "a seeded run").toBeTruthy();
 
   const response = await page.goto(`/runs/${check!.state!.lastRunId}`);
   expect(response?.ok()).toBe(true);
@@ -63,5 +64,6 @@ test("a guest cannot create a check", async ({ page, request }) => {
     headers: { cookie: `assay_guest=${GUEST_TOKEN}` },
     data: { scriptId: "e2e-should-not-exist", name: "Nope", sqlContent: "SELECT 1" },
   });
-  expect(response.status()).toBeGreaterThanOrEqual(400);
+  // check:create is not a guest permission, so withAuth answers as for no session.
+  expect(response.status()).toBe(401);
 });
