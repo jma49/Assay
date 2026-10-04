@@ -1,5 +1,5 @@
 import { DEFAULT_SOURCE_ID, SOURCE_ID_PATTERN } from "@/domain/data-source";
-import type { ScriptFormData } from "@/components/business/scripts/ScriptMetadataForm";
+import type { CheckFormData } from "@/components/checks/manage/CheckMetadataForm";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
 
@@ -20,7 +20,7 @@ FROM your_table
 WHERE status IS NULL;
 `;
 
-export const EMPTY_FORM: ScriptFormData = {
+export const EMPTY_FORM: CheckFormData = {
   scriptId: "",
   name: "",
   cnName: "",
@@ -86,7 +86,7 @@ WHERE false;
 }
 
 /** Everything that stops the check from saving, one message per field. */
-export function validateNewCheck(form: ScriptFormData, sql: string, language: Language): FieldErrors {
+export function validateNewCheck(form: CheckFormData, sql: string, language: Language): FieldErrors {
   const t = MESSAGES[language];
   const errors: FieldErrors = {};
   if (!sql.trim()) errors.sql = t.sql;

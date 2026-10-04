@@ -30,7 +30,7 @@ export function runsFromHistory(body: { data?: HistoryRun[] } | null): Execution
   }));
 }
 
-export interface ScriptSummary {
+export interface AnalyticsCheck {
   scriptId: string;
   name?: string;
   cnName?: string;
@@ -39,7 +39,7 @@ export interface ScriptSummary {
 
 export type OutcomeCounts = Record<RunOutcome, number>;
 
-export interface ScriptAnalytics {
+export interface CheckAnalytics {
   scriptId: string;
   scriptName: string;
   cnName?: string;
@@ -67,7 +67,7 @@ export interface AnalyticsData {
   cleanRate: number;
   /** Every day of the range, oldest first, including days without runs. */
   dailyTrend: DailyTrendPoint[];
-  scriptAnalytics: ScriptAnalytics[];
+  scriptAnalytics: CheckAnalytics[];
   statusDistribution: OutcomeCounts;
 }
 
@@ -135,13 +135,13 @@ function dailyTrend(executions: ExecutionRecord[], days: string[], timeZone?: st
 }
 
 /** Highest clean rate first; near-equal rates fall back to the run count. */
-function byCleanRate(a: ScriptAnalytics, b: ScriptAnalytics): number {
+function byCleanRate(a: CheckAnalytics, b: CheckAnalytics): number {
   if (Math.abs(a.cleanRate - b.cleanRate) < 0.1) return b.runs - a.runs;
   return b.cleanRate - a.cleanRate;
 }
 
-function scriptAnalytics(executions: ExecutionRecord[], scripts: ScriptSummary[]): ScriptAnalytics[] {
-  const byId = new Map<string, ScriptAnalytics>(
+function scriptAnalytics(executions: ExecutionRecord[], scripts: AnalyticsCheck[]): CheckAnalytics[] {
+  const byId = new Map<string, CheckAnalytics>(
     scripts.map((script) => [
       script.scriptId,
       {
@@ -168,7 +168,7 @@ function scriptAnalytics(executions: ExecutionRecord[], scripts: ScriptSummary[]
 }
 
 /** Runs of checks carrying every selected tag (all runs when none is selected). */
-export function withTags(executions: ExecutionRecord[], scripts: ScriptSummary[], tags: string[]): ExecutionRecord[] {
+export function withTags(executions: ExecutionRecord[], scripts: AnalyticsCheck[], tags: string[]): ExecutionRecord[] {
   if (tags.length === 0) return executions;
   const tagged = new Set(
     scripts.filter((script) => tags.every((tag) => script.hashtags?.includes(tag))).map((script) => script.scriptId),
@@ -178,7 +178,7 @@ export function withTags(executions: ExecutionRecord[], scripts: ScriptSummary[]
 
 export function buildAnalytics(
   executions: ExecutionRecord[],
-  scripts: ScriptSummary[],
+  scripts: AnalyticsCheck[],
   range: TimeRange,
   { now = new Date(), timeZone }: { now?: Date; timeZone?: string } = {},
 ): AnalyticsData {
@@ -194,6 +194,6 @@ export function buildAnalytics(
   };
 }
 
-export function collectTags(scripts: ScriptSummary[]): string[] {
+export function collectTags(scripts: AnalyticsCheck[]): string[] {
   return [...new Set(scripts.flatMap((script) => script.hashtags ?? []))].sort();
 }

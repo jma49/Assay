@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { SqlScript } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/business/dashboard/types";
 import type { CoverageReport } from "@/lib/coverage/coverage";
 import { cn } from "@/lib/utils/utils";
 import { useApi } from "@/client/use-api";
@@ -30,7 +30,7 @@ interface CoverageRow {
   checks: { scriptId: string; name: string; cnName?: string }[];
 }
 
-function coverageRows(report: CoverageReport, scripts: SqlScript[]): CoverageRow[] {
+function coverageRows(report: CoverageReport, scripts: CheckDefinition[]): CoverageRow[] {
   const missing = new Map<string, CoverageRow>();
   for (const { scriptId, table } of report.unknown) {
     const script = scripts.find((s) => s.scriptId === scriptId);
@@ -82,7 +82,7 @@ export function CoverageGrid({
   sourceId = DEFAULT_SOURCE_ID,
 }: {
   coverage: CoverageState;
-  scripts: SqlScript[];
+  scripts: CheckDefinition[];
   language: string;
   /** Where a check listed under a table links to. */
   checkHref: (scriptId: string) => string;

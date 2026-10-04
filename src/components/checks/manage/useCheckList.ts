@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { SqlScript } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/business/dashboard/types";
 
-async function fetchScripts(): Promise<SqlScript[]> {
+async function fetchChecks(): Promise<CheckDefinition[]> {
   const response = await fetch("/api/checks?view=definitions");
   if (!response.ok) {
     throw new Error(`Could not load the checks: ${response.status}`);
   }
-  const { checks: scriptsData }: { checks: SqlScript[] } = await response.json();
+  const { checks: scriptsData }: { checks: CheckDefinition[] } = await response.json();
   return scriptsData.map((s) => ({
     ...s,
     createdAt: s.createdAt ? new Date(s.createdAt) : undefined,
@@ -15,8 +15,8 @@ async function fetchScripts(): Promise<SqlScript[]> {
 }
 
 /** Loads every check on mount; `reload` refreshes the list after a change. */
-export function useScriptList() {
-  const [scripts, setScripts] = useState<SqlScript[]>([]);
+export function useCheckList() {
+  const [scripts, setScripts] = useState<CheckDefinition[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const isFetching = useRef(false);
@@ -25,7 +25,7 @@ export function useScriptList() {
   const load = useCallback(() => {
     if (isFetching.current) return Promise.resolve();
     isFetching.current = true;
-    return fetchScripts()
+    return fetchChecks()
       .then((list) => {
         setScripts(list);
         setError(null);

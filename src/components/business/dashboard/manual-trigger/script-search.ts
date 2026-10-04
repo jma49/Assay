@@ -1,4 +1,4 @@
-import type { ScriptInfo } from "../types";
+import type { CheckListItem } from "../types";
 
 const HASHTAG = /#(\w+)/g;
 
@@ -6,7 +6,7 @@ const HASHTAG = /#(\w+)/g;
  * Checks matching a search: plain words match the id, names and
  * descriptions; each `#tag` must match (by substring) one of the check's tags.
  */
-export function filterScripts(scripts: ScriptInfo[], term: string): ScriptInfo[] {
+export function filterChecks(scripts: CheckListItem[], term: string): CheckListItem[] {
   const query = term.trim().toLowerCase();
   if (!query) return scripts;
   const tags = [...query.matchAll(HASHTAG)].map((match) => match[1]);
@@ -22,12 +22,12 @@ export function filterScripts(scripts: ScriptInfo[], term: string): ScriptInfo[]
   });
 }
 
-export function collectHashtags(scripts: ScriptInfo[]): string[] {
+export function collectHashtags(scripts: CheckListItem[]): string[] {
   return [...new Set(scripts.flatMap((script) => script.hashtags ?? []))].sort();
 }
 
 export type BulkMode = "all" | "scheduled";
 
-export function batchTargets(scripts: ScriptInfo[], mode: BulkMode): ScriptInfo[] {
+export function batchTargets(scripts: CheckListItem[], mode: BulkMode): CheckListItem[] {
   return mode === "scheduled" ? scripts.filter((script) => script.isScheduled) : scripts;
 }

@@ -1,11 +1,11 @@
 import { DEFAULT_SOURCE_ID } from "@/domain/data-source";
-import type { SqlScript } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/business/dashboard/types";
 import { scheduleProblem } from "@/lib/scheduling/schedule";
 import { sqlValidationMessage, validateReadOnlySql } from "@/lib/sql/read-only-validator";
-import type { ScriptFormData } from "../ScriptMetadataForm";
+import type { CheckFormData } from "./CheckMetadataForm";
 
 /** The editor's working copy: metadata plus whatever the loaded check carried (e.g. `version`). */
-export type ScriptFormState = Partial<SqlScript>;
+export type CheckFormState = Partial<CheckDefinition>;
 export type DialogMode = "add" | "edit";
 export type Language = "en" | "zh";
 
@@ -19,7 +19,7 @@ const isZh = (language: Language) => language === "zh";
 
 export const newScriptId = (now = Date.now()) => `new-script-${now.toString().slice(-6)}`;
 
-export function emptyForm(scriptId: string): ScriptFormState {
+export function emptyForm(scriptId: string): CheckFormState {
   return {
     scriptId,
     name: "",
@@ -36,7 +36,7 @@ export function emptyForm(scriptId: string): ScriptFormState {
   };
 }
 
-export function formFromScript(script: SqlScript): ScriptFormState {
+export function formFromScript(script: CheckDefinition): CheckFormState {
   return {
     ...script,
     isScheduled: typeof script.isScheduled === "boolean" ? script.isScheduled : false,
@@ -51,7 +51,7 @@ export const suggestScriptId = (name: string) =>
     .replace(/[^a-z0-9-]/g, "");
 
 interface FieldChangeState {
-  form: ScriptFormState;
+  form: CheckFormState;
   idManuallyEdited: boolean;
 }
 
@@ -59,17 +59,17 @@ interface FieldChangeState {
 export function applyFieldChange(
   { form, idManuallyEdited }: FieldChangeState,
   mode: DialogMode,
-  field: keyof ScriptFormData,
+  field: keyof CheckFormData,
   value: string | boolean | string[],
 ): FieldChangeState {
-  const next: ScriptFormState = { ...form, [field]: value };
+  const next: CheckFormState = { ...form, [field]: value };
   if (mode === "add" && field === "name" && !idManuallyEdited && typeof value === "string" && value) {
     next.scriptId = suggestScriptId(value);
   }
   return { form: next, idManuallyEdited: idManuallyEdited || field === "scriptId" };
 }
 
-export function toFormMetadata(form: ScriptFormState): ScriptFormData {
+export function toFormMetadata(form: CheckFormState): CheckFormData {
   return {
     scriptId: form.scriptId || "",
     name: form.name || "",
@@ -87,7 +87,7 @@ export function toFormMetadata(form: ScriptFormState): ScriptFormData {
 }
 
 /** Fields the save button refuses to go without. */
-function missingRequiredFields(form: ScriptFormState, sql: string, language: Language): string[] {
+function missingRequiredFields(form: CheckFormState, sql: string, language: Language): string[] {
   const zh = isZh(language);
   const missing: string[] = [];
   if (!form.scriptId?.trim()) missing.push(zh ? "脚本ID" : "script ID");
@@ -98,7 +98,7 @@ function missingRequiredFields(form: ScriptFormState, sql: string, language: Lan
 }
 
 /** The hint in the dialog footer; it lists what is still empty before the user tries to save. */
-export function stillNeededHint(form: ScriptFormState, sql: string, language: Language): string | null {
+export function stillNeededHint(form: CheckFormState, sql: string, language: Language): string | null {
   const zh = isZh(language);
   const missing = [
     !form.name?.trim() && (zh ? "名称" : "name"),
@@ -110,7 +110,7 @@ export function stillNeededHint(form: ScriptFormState, sql: string, language: La
 }
 
 /** Client-side checks before a save is sent; the server repeats them. */
-export function saveProblem(form: ScriptFormState, sql: string, language: Language): Notice | null {
+export function saveProblem(form: CheckFormState, sql: string, language: Language): Notice | null {
   const zh = isZh(language);
   const missing = missingRequiredFields(form, sql, language);
   if (missing.length > 0) {
@@ -135,14 +135,14 @@ export function saveProblem(form: ScriptFormState, sql: string, language: Langua
   return null;
 }
 
-export const createPayload = (form: ScriptFormState, sql: string): Partial<SqlScript> => ({
+export const createPayload = (form: CheckFormState, sql: string): Partial<CheckDefinition> => ({
   ...form,
   sqlContent: sql,
 });
 
 /** The PUT body: metadata, the SQL only when it changed, and the version the edit started from. */
-export function updatePayload(form: ScriptFormState, sql: string, initialSql: string): Partial<SqlScript> {
-  const payload: Partial<SqlScript> = {
+export function updatePayload(form: CheckFormState, sql: string, initialSql: string): Partial<CheckDefinition> {
+  const payload: Partial<CheckDefinition> = {
     name: form.name,
     cnName: form.cnName,
     description: form.description,

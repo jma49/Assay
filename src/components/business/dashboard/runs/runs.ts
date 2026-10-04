@@ -1,7 +1,7 @@
 import type { RunOutcome } from "@/domain/run";
 import type { CheckStats } from "@/contracts/runs";
 import { nextRunAt } from "@/lib/scheduling/due-slot";
-import type { HistoryRun, ScriptInfo } from "../types";
+import type { HistoryRun, CheckListItem } from "../types";
 
 /** Sort by when the run finished, or by the check's name in the reader's language. */
 export type SortKey = "finishedAt" | "name";
@@ -81,15 +81,15 @@ export function parsePagination(body: unknown): HistoryPagination | null {
 }
 
 /** The checks in a GET /api/checks?view=definitions body, by name (the order the Run sheet lists and preselects them in). */
-export function parseScriptList(body: unknown): ScriptInfo[] {
+export function parseCheckList(body: unknown): CheckListItem[] {
   const checks = (body as { checks?: unknown } | null)?.checks;
   if (!Array.isArray(checks)) return [];
   // Plain code-unit order, as MongoDB sorts names.
-  return [...(checks as ScriptInfo[])].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  return [...(checks as CheckListItem[])].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 }
 
 /** Earliest next run across scheduled checks. */
-export function nextScheduledRunOf(scripts: ScriptInfo[], now = new Date()): Date | null {
+export function nextScheduledRunOf(scripts: CheckListItem[], now = new Date()): Date | null {
   const next = scripts
     .filter((script) => script.isScheduled && script.cronSchedule)
     .map((script) => nextRunAt(script.cronSchedule!, now)?.getTime())
@@ -110,7 +110,7 @@ export function passRate(stats: CheckStats): number {
 }
 
 /** The check the Run sheet runs: the one picked, else the first; none while the list is empty. */
-export function selectedCheckId(chosen: string, scripts: ScriptInfo[]): string {
+export function selectedCheckId(chosen: string, scripts: CheckListItem[]): string {
   if (scripts.length === 0) return "";
   return chosen || scripts[0].scriptId;
 }
@@ -134,7 +134,7 @@ export function takeSearchParam(href: string): { search: string; cleanedHref: st
 }
 
 /** Each check's name in the UI language, keyed by the id the history rows carry. */
-export function scriptDisplayNames(scripts: ScriptInfo[], language: string): Map<string, string> {
+export function scriptDisplayNames(scripts: CheckListItem[], language: string): Map<string, string> {
   return new Map(
     scripts.map((script) => [
       script.scriptId,

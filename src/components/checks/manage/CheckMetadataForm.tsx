@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils/utils";
 import { DataSourceSelect } from "@/components/checks/data-source/DataSourceSelect";
 import type { DataSourceOption } from "@/components/checks/data-source/useDataSourceOptions";
 
-export interface ScriptFormData {
+export interface CheckFormData {
   scriptId: string;
   name: string;
   cnName: string;
@@ -29,9 +29,9 @@ export interface ScriptFormData {
 }
 
 interface ScriptMetadataFormProps {
-  formData: ScriptFormData;
+  formData: CheckFormData;
   onFormChange: (
-    fieldName: keyof ScriptFormData,
+    fieldName: keyof CheckFormData,
     value: string | boolean | string[],
   ) => void;
   /** Unused since the form carries its own labels; kept for existing callers. */
@@ -93,7 +93,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
+export const CheckMetadataForm: React.FC<ScriptMetadataFormProps> = ({
   formData,
   onFormChange,
   isEditMode = false,
@@ -110,7 +110,7 @@ export const ScriptMetadataForm: React.FC<ScriptMetadataFormProps> = ({
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
-    onFormChange(e.target.name as keyof ScriptFormData, e.target.value);
+    onFormChange(e.target.name as keyof CheckFormData, e.target.value);
   };
 
   return (

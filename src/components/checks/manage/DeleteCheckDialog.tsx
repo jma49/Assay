@@ -11,19 +11,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { DashboardTranslationKeys, SqlScript } from "@/components/business/dashboard/types";
+import type { DashboardTranslationKeys, CheckDefinition } from "@/components/business/dashboard/types";
 
 interface DeleteScriptDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  script: SqlScript | null;
+  script: CheckDefinition | null;
   onCancel: () => void;
   onConfirm: () => void;
   isSubmitting: boolean;
   t: (key: DashboardTranslationKeys | string) => string;
 }
 
-export function DeleteScriptDialog({ open, onOpenChange, script, onCancel, onConfirm, isSubmitting, t }: DeleteScriptDialogProps) {
+export function DeleteCheckDialog({ open, onOpenChange, script, onCancel, onConfirm, isSubmitting, t }: DeleteScriptDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>

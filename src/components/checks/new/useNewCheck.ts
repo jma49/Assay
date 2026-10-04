@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { apiErrorText } from "@/client/api-errors";
 import { apiErrorCode, sendJson } from "@/client/send-json";
-import type { ScriptFormData } from "@/components/business/scripts/ScriptMetadataForm";
+import type { CheckFormData } from "@/components/checks/manage/CheckMetadataForm";
 import { useCurrentUser } from "@/lib/auth/client";
 import { useMe } from "@/lib/auth/use-me";
 import { pickSource, useDataSourceOptions } from "@/components/checks/data-source/useDataSourceOptions";
@@ -60,7 +60,7 @@ export function useNewCheck(language: Language) {
   const me = useMe();
   const c = COPY[language];
 
-  const [formData, setFormData] = useState<ScriptFormData>(EMPTY_FORM);
+  const [formData, setFormData] = useState<CheckFormData>(EMPTY_FORM);
   const [sqlContent, setSqlContent] = useState(INITIAL_SQL);
   const [scriptIdEdited, setScriptIdEdited] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -98,7 +98,7 @@ export function useNewCheck(language: Language) {
   const clearError = (...fields: InvalidField[]) =>
     setErrors((prev) => (fields.some((field) => prev[field]) ? Object.fromEntries(Object.entries(prev).filter(([key]) => !fields.includes(key as InvalidField))) : prev));
 
-  const changeField = (field: keyof ScriptFormData, value: string | boolean | string[]) => {
+  const changeField = (field: keyof CheckFormData, value: string | boolean | string[]) => {
     const renamesId = field === "name" && typeof value === "string" && !scriptIdEdited;
     setFormData((prev) => ({ ...prev, [field]: value, ...(renamesId && { scriptId: toScriptId(value) }) }));
     if (field === "scriptId") setScriptIdEdited(true);

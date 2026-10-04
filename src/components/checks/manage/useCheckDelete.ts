@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import type { DashboardTranslationKeys, SqlScript } from "@/components/business/dashboard/types";
+import type { DashboardTranslationKeys, CheckDefinition } from "@/components/business/dashboard/types";
 import { apiErrorText } from "@/client/api-errors";
 import { sendJson } from "@/client/send-json";
-import { approvalNotice, type Language } from "./script-form";
+import { approvalNotice, type Language } from "./check-form";
 
 type Translate = (key: DashboardTranslationKeys | string) => string;
 
 /** The delete confirmation: which check is pending and the DELETE call. `reload` refreshes the list. */
-export function useScriptDelete(language: Language, t: Translate, reload: () => void) {
-  const [target, setTarget] = useState<SqlScript | null>(null);
+export function useCheckDelete(language: Language, t: Translate, reload: () => void) {
+  const [target, setTarget] = useState<CheckDefinition | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const ask = (script: SqlScript) => {
+  const ask = (script: CheckDefinition) => {
     setTarget(script);
     setIsOpen(true);
   };

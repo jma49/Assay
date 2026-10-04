@@ -2,14 +2,14 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CompactHashtagFilter } from "@/components/ui/compact-hashtag-filter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TIME_RANGES, type ScriptSummary, type TimeRange } from "./analytics";
+import { TIME_RANGES, type AnalyticsCheck, type TimeRange } from "./analytics";
 import { analysisCopy } from "./copy";
 
 interface AnalysisFiltersProps {
   timeRange: TimeRange;
   scriptId: string;
   hashtags: string[];
-  scripts: ScriptSummary[];
+  scripts: AnalyticsCheck[];
   availableTags: string[];
   filtered: boolean;
   language: string;
@@ -34,7 +34,7 @@ export function AnalysisFilters({
   onReset,
 }: AnalysisFiltersProps) {
   const copy = analysisCopy(language);
-  const name = (script: ScriptSummary) => (language === "zh" && script.cnName) || script.name || script.scriptId;
+  const name = (script: AnalyticsCheck) => (language === "zh" && script.cnName) || script.name || script.scriptId;
 
   return (
     <div className="flex flex-wrap items-center gap-2">

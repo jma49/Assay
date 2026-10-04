@@ -7,7 +7,7 @@ import {
   runsFromHistory,
   withTags,
   type ExecutionRecord,
-  type ScriptSummary,
+  type AnalyticsCheck,
 } from "./analytics";
 
 const run = (scriptId: string, outcome: ExecutionRecord["outcome"], createdAt: string): ExecutionRecord => ({
@@ -17,7 +17,7 @@ const run = (scriptId: string, outcome: ExecutionRecord["outcome"], createdAt: s
   createdAt,
 });
 
-const scripts: ScriptSummary[] = [
+const scripts: AnalyticsCheck[] = [
   { scriptId: "a", name: "A", hashtags: ["x", "y"] },
   { scriptId: "b", hashtags: ["x"] },
   { scriptId: "c", name: "C", cnName: "丙" },

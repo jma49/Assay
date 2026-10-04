@@ -46,7 +46,7 @@ export function EditHistoryDetailDialog({ history, open, language, t, onOpenChan
         {history && (
           <div className="space-y-6 py-4">
             <BasicInfo history={history} t={t} />
-            <ScriptInfo snapshot={history.scriptSnapshot} t={t} />
+            <CheckListItem snapshot={history.scriptSnapshot} t={t} />
             {history.changes && history.changes.length > 0 && (
               <ChangeList changes={history.changes} language={language} t={t} />
             )}
@@ -87,7 +87,7 @@ function BasicInfo({ history, t }: { history: EditHistoryRecord; t: Translate })
   );
 }
 
-function ScriptInfo({ snapshot, t }: { snapshot: EditHistoryRecord["scriptSnapshot"] | undefined; t: Translate }) {
+function CheckListItem({ snapshot, t }: { snapshot: EditHistoryRecord["scriptSnapshot"] | undefined; t: Translate }) {
   return (
     <div className="p-4 bg-muted/30 rounded-lg">
       <h4 className="font-medium mb-3 flex items-center gap-2">

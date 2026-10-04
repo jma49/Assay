@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
-import type { DashboardTranslationKeys, SqlScript } from "@/components/business/dashboard/types";
-import type { Language } from "./script-form";
+import type { DashboardTranslationKeys, CheckDefinition } from "@/components/business/dashboard/types";
+import type { Language } from "./check-form";
 
 interface ManageScriptsHeaderProps {
-  scripts: SqlScript[];
+  scripts: CheckDefinition[];
   searchTerm: string;
   onSearchChange: (value: string) => void;
   language: Language;
@@ -18,7 +18,7 @@ interface ManageScriptsHeaderProps {
 }
 
 /** Status bar with check counts, the page title and the search/history toolbar. */
-export function ManageScriptsHeader({ scripts, searchTerm, onSearchChange, language, t }: ManageScriptsHeaderProps) {
+export function ManageChecksHeader({ scripts, searchTerm, onSearchChange, language, t }: ManageScriptsHeaderProps) {
   const scheduled = scripts.filter((script) => script.isScheduled).length;
   return (
     <>

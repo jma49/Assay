@@ -1,19 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { CheckStats } from "@/contracts/runs";
-import type { ScriptInfo } from "../types";
-import { DEFAULT_SORT, EMPTY_STATS, nextScheduledRunOf, parseScriptList, takeSearchParam } from "./runs";
+import type { CheckListItem } from "../types";
+import { DEFAULT_SORT, EMPTY_STATS, nextScheduledRunOf, parseCheckList, takeSearchParam } from "./runs";
 import { useRunHistory } from "./useRunHistory";
 import { currentLanguage } from "@/components/common/LanguageProvider";
 
 const scrollToHistory = () => document.getElementById("execution-history")?.scrollIntoView({ behavior: "smooth" });
 
-async function fetchScripts(): Promise<ScriptInfo[]> {
+async function fetchChecks(): Promise<CheckListItem[]> {
   const response = await fetch("/api/checks?view=definitions");
   if (!response.ok) {
     throw new Error(`Could not load the checks: ${response.status} ${response.statusText}`);
   }
-  return parseScriptList(await response.json());
+  return parseCheckList(await response.json());
 }
 
 /** The overall numbers, or null when they could not be loaded (the page still works without them). */
@@ -37,7 +37,7 @@ async function fetchOverallStats(): Promise<CheckStats | null> {
 export function useRunsPage(language: string, initialSearch = "") {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [availableScripts, setAvailableScripts] = useState<ScriptInfo[]>([]);
+  const [availableChecks, setAvailableScripts] = useState<CheckListItem[]>([]);
   const [isFetchingScripts, setIsFetchingScripts] = useState(true);
   const [nextScheduled, setNextScheduled] = useState<Date | null>(null);
   const [overallStats, setOverallStats] = useState<CheckStats>(EMPTY_STATS);
@@ -48,7 +48,7 @@ export function useRunsPage(language: string, initialSearch = "") {
   const loadAll = useCallback(
     (loadHistory: () => Promise<void>) =>
       Promise.all([
-        fetchScripts().then((scripts) => {
+        fetchChecks().then((scripts) => {
           setNextScheduled(nextScheduledRunOf(scripts));
           setAvailableScripts(scripts);
         }),
@@ -90,7 +90,7 @@ export function useRunsPage(language: string, initialSearch = "") {
   return {
     loading,
     error,
-    availableScripts,
+    availableChecks,
     isFetchingScripts,
     nextScheduled,
     overallStats,

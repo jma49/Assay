@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
-import { buildAnalytics, historyQuery, runsFromHistory, withTags, type AnalyticsData, type ScriptSummary, type TimeRange } from "./analytics";
+import { buildAnalytics, historyQuery, runsFromHistory, withTags, type AnalyticsData, type AnalyticsCheck, type TimeRange } from "./analytics";
 
 async function fetchAnalyticsInputs(timeRange: TimeRange, scriptId: string) {
   const [runsResponse, scriptsResponse] = await Promise.all([fetch(`/api/check-history?${historyQuery(timeRange, scriptId)}`), fetch("/api/checks?view=definitions")]);
   if (!runsResponse.ok || !scriptsResponse.ok) throw new Error(`HTTP ${runsResponse.ok ? scriptsResponse.status : runsResponse.status}`);
   const runs = runsFromHistory(await runsResponse.json());
-  const { checks }: { checks: ScriptSummary[] } = await scriptsResponse.json();
+  const { checks }: { checks: AnalyticsCheck[] } = await scriptsResponse.json();
   return { runs, checks };
 }
 
 /** Loads runs for the filters and the check list, and derives the page's numbers. */
 export function useAnalytics(timeRange: TimeRange, scriptId: string, hashtags: string[]) {
   const [data, setData] = useState<AnalyticsData | null>(null);
-  const [scripts, setScripts] = useState<ScriptSummary[]>([]);
+  const [scripts, setScripts] = useState<AnalyticsCheck[]>([]);
   const [attempt, setAttempt] = useState(0);
   const tagKey = hashtags.join(",");
   // Loading until the request for the current filters (and retry) has settled; its error only counts for it.

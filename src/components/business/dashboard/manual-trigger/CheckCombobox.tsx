@@ -2,20 +2,20 @@ import { useId, useMemo, useState, type KeyboardEvent } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils/utils";
-import type { ScriptInfo } from "../types";
+import type { CheckListItem } from "../types";
 import { triggerCopy } from "./copy";
-import { filterScripts } from "./script-search";
+import { filterChecks } from "./script-search";
 
 interface CheckComboboxProps {
   id?: string;
-  checks: ScriptInfo[];
+  checks: CheckListItem[];
   value: string;
   onChange: (scriptId: string) => void;
   language: string;
   disabled?: boolean;
 }
 
-const displayName = (check: ScriptInfo, language: string) => (language === "zh" && check.cnName) || check.name || check.scriptId;
+const displayName = (check: CheckListItem, language: string) => (language === "zh" && check.cnName) || check.name || check.scriptId;
 
 /** Pick one check: a button that opens a searchable list (words match names and ids, `#tag` matches tags). */
 export function CheckCombobox({ id, checks, value, onChange, language, disabled }: CheckComboboxProps) {
@@ -24,7 +24,7 @@ export function CheckCombobox({ id, checks, value, onChange, language, disabled 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
-  const matches = useMemo(() => filterScripts(checks, query), [checks, query]);
+  const matches = useMemo(() => filterChecks(checks, query), [checks, query]);
   const selected = checks.find((check) => check.scriptId === value);
 
   const openChange = (next: boolean) => {
@@ -35,7 +35,7 @@ export function CheckCombobox({ id, checks, value, onChange, language, disabled 
     }
   };
 
-  const choose = (check: ScriptInfo | undefined) => {
+  const choose = (check: CheckListItem | undefined) => {
     if (!check) return;
     onChange(check.scriptId);
     setOpen(false);
