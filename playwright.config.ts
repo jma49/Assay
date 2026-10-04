@@ -17,8 +17,7 @@ export default defineConfig({
   snapshotPathTemplate: ".visual/snapshots/{projectName}/{arg}{ext}",
   outputDir: ".visual/results",
   fullyParallel: true,
-  // The landing page renders a WebGL model every frame, which makes its
-  // full-page screenshot slow in a browser without a GPU.
+  // Full-page screenshots of the long landing page take a while.
   timeout: 60_000,
   forbidOnly: !!process.env.CI,
   reporter: process.env.CI
