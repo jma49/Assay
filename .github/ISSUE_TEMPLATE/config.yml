@@ -1,5 +1,6 @@
-blank_issues_enabled: false
+# Blank issues stay on: SECURITY.md asks reporters to open a "Security contact request" with no details.
+blank_issues_enabled: true
 contact_links:
   - name: Report a security problem
-    url: https://github.com/jma49/Assay/security/advisories/new
-    about: Report vulnerabilities privately, not in a public issue.
+    url: https://github.com/jma49/Assay/blob/main/SECURITY.md
+    about: Read how to report a vulnerability privately before opening anything.

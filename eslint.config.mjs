@@ -59,6 +59,23 @@ export default defineConfig([
     },
   },
   {
+    files: ["src/server/**/*.ts"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [
+        { group: ["@/app/*", "@/components/*", "@/client/*"], message: "src/server holds use cases: it must not depend on routes or UI." },
+      ] }],
+    },
+  },
+  {
+    files: ["src/contracts/**/*.ts"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [
+        { group: ["@/server/*", "@/app/*", "@/components/*", "@/client/*", "@/lib/database/*", "@/lib/auth/server", "@/lib/workflows/*"], message: "src/contracts are wire types shared with the browser: no server code." },
+        { group: ["mongodb", "pg"], message: "src/contracts are wire types: no driver types." },
+      ] }],
+    },
+  },
+  {
     files: ["src/components/**/*.ts", "src/components/**/*.tsx", "src/client/**/*.ts", "src/client/**/*.tsx"],
     rules: {
       "no-restricted-imports": ["error", { patterns: [
@@ -71,7 +88,8 @@ export default defineConfig([
   },
   {
     // Routes are thin adapters: data access lives in src/server/services and src/server/repos.
-    files: ["src/app/**/route.ts"],
+    files: ["src/app/**/*.ts", "src/app/**/*.tsx"],
+    ignores: ["**/*.test.ts", "**/*.test.tsx"],
     rules: {
       "no-restricted-syntax": [
         "error",
