@@ -4,6 +4,7 @@ import type { RunCheckResult, RunTrigger } from "./run-check";
 import { COLLECTIONS } from "@/lib/database/collections";
 
 import type { BatchItemStatus, BatchView } from "@/contracts/batches";
+import { logError } from "@/server/logging/log";
 
 export interface BatchItem {
   scriptId: string;
@@ -112,10 +113,10 @@ export async function runBatchAndDispatch(deps: {
   sleep?: (ms: number) => Promise<void>;
 }): Promise<void> {
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms).unref?.()));
-  const dispatch = () => deps.dispatch().catch((error) => console.error("[Notify] Dispatch failed:", error));
+  const dispatch = () => deps.dispatch().catch((error) => logError("[Notify] Dispatch failed", { error: error }));
   const finished = deps.batch().then(
     () => "done" as const,
-    (error) => (console.error("[Batch] failed:", error), "done" as const),
+    (error) => (logError("[Batch] failed", { error: error }), "done" as const),
   );
   const timeUp = sleep(Math.max(0, deps.dispatchBy.getTime() - deps.now().getTime())).then(() => "time" as const);
   if ((await Promise.race([finished, timeUp])) === "time") {

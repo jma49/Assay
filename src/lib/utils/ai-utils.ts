@@ -1,5 +1,6 @@
 import { generateText, type LanguageModel } from "ai";
 import { aiModel, gatewayOptions } from "@/lib/ai/model";
+import { logInfo } from "@/server/logging/log";
 
 /**
  * Plain-text generation through AI Gateway. The SDK retries transient
@@ -29,5 +30,5 @@ function estimateTokens(text: string): number {
 export function logTokenUsage(prompt: string, response: string, operation: string) {
   const input = estimateTokens(prompt);
   const output = estimateTokens(response);
-  console.log(`[AI] ${operation} token estimate:`, { input, output, total: input + output });
+  logInfo(`[AI] ${operation} token estimate`, { input, output, total: input + output });
 }

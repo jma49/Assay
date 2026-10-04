@@ -20,6 +20,7 @@ import { createCheck, deleteCheck, updateCheck, type CheckActor } from "./check-
 import { findSourceDoc } from "@/server/repos/data-source-store";
 import { DEFAULT_SOURCE_ID } from "@/domain/data-source";
 import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
+import { logError } from "@/server/logging/log";
 
 /**
  * Review of check changes: who needs it, filing a request, and approving or
@@ -136,7 +137,7 @@ export async function approveRequest(db: Db, requestId: string, reviewer: CheckA
   try {
     await applyChange(db, request);
   } catch (error) {
-    console.error(`[Approval] Applying ${requestId} failed:`, error);
+    logError(`[Approval] Applying ${requestId} failed`, { error: error });
     await recordApplyError(db, requestId, error instanceof Error ? error.message : String(error));
     throw new ApiError(400, "apply_failed", "Approved, but applying the change failed; see the request");
   }

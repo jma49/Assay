@@ -7,6 +7,7 @@ import { findSourceRecord } from "@/server/repos/data-source-store";
 import { clientConfig, parseConnectionString } from "./connection";
 import { defaultPostgresSource } from "./postgres";
 import { createSourceRegistry, type ResolvedSource, type SourceRecord, type SourceRegistry } from "./registry";
+import { logInfo } from "@/server/logging/log";
 
 type Env = Record<string, string | undefined>;
 
@@ -25,7 +26,7 @@ function createPool(record: SourceRecord) {
     connectTimeoutMs: 10_000,
   });
   // Never the host or user; public CI logs do not even get the id.
-  console.log(inPublicCi() ? "[db] Pool created for a data source" : `[db] Pool for data source ${record.sourceId} (version ${record.version})`);
+  logInfo(inPublicCi() ? "[db] Pool created for a data source" : `[db] Pool for data source ${record.sourceId} (version ${record.version})`);
   return openPool({ ...config, max: sourcePoolMax() }, `source ${record.sourceId}`);
 }
 

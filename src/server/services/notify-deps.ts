@@ -6,12 +6,13 @@ import { sendRequest } from "@/server/notify/send";
 import { mongoNotifyStore } from "@/server/repos/notify-store";
 import { repairPendingEvents } from "@/server/repos/run-check-store";
 import { dispatchNotifications, type DispatchReport } from "./notifications";
+import { logError } from "@/server/logging/log";
 
 /** Runs the outbox with the production dependencies. */
 export async function dispatchNow(): Promise<DispatchReport | null> {
   const db = await getMongoDbClient().getDb();
   // Events a run committed but never wrote; they feed the activity page too, so this runs without the key.
-  await repairPendingEvents(db).catch((error) => console.error("[Notify] Repairing pending events failed:", error));
+  await repairPendingEvents(db).catch((error) => logError("[Notify] Repairing pending events failed", { error: error }));
   // Without the key no destination can exist, and none could be opened.
   if (!hasSecretKey()) return null;
   return dispatchNotifications({
@@ -27,6 +28,6 @@ export async function dispatchNow(): Promise<DispatchReport | null> {
 /** Sends alerts for the run that just finished, after the response is out. */
 export function dispatchAfterResponse(): void {
   after(() =>
-    dispatchNow().catch((error) => console.error("[Notify] Dispatch failed:", error)),
+    dispatchNow().catch((error) => logError("[Notify] Dispatch failed", { error: error })),
   );
 }

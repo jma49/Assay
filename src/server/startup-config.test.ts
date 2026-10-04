@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const logWarn = vi.fn();
-vi.mock("@/server/logging/log", () => ({ logWarn }));
+const logError = vi.fn();
+vi.mock("@/server/logging/log", () => ({ logWarn, logError }));
 
 const { checkStartupConfig } = await import("./startup-config");
 
@@ -20,15 +21,15 @@ function spyExit() {
 afterEach(() => {
   vi.restoreAllMocks();
   logWarn.mockReset();
+  logError.mockReset();
 });
 
 describe("checkStartupConfig", () => {
   it("exits and names the missing variables, never their values", () => {
     const exit = spyExit();
-    const error = vi.spyOn(console, "error").mockImplementation(() => {});
     checkStartupConfig({ ...server, BETTER_AUTH_SECRET: "fake-secret" });
     expect(exit).toHaveBeenCalledWith(1);
-    const message = String(error.mock.calls[0][0]);
+    const message = String(logError.mock.calls[0][0]);
     expect(message).toContain("MONGODB_URI, DATABASE_URL, APP_URL");
     expect(message).not.toContain("fake-secret");
   });

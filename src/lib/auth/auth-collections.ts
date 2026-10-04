@@ -3,6 +3,7 @@ import type { DBFieldAttribute, DBTableIndex } from "@better-auth/core/db";
 import type { Db } from "mongodb";
 import { COLLECTIONS } from "@/lib/database/collections";
 import { ensureIndexes } from "@/lib/database/indexes";
+import { logError } from "@/server/logging/log";
 
 /** Collections Better Auth's OAuth provider writes inside transactions. */
 const OAUTH_COLLECTIONS = [
@@ -65,7 +66,7 @@ async function createAdapterIndexes(db: Db, tables: AuthTable[]): Promise<void> 
       db
         .collection(collection)
         .createIndex(key, { name, unique })
-        .catch((error) => console.error(`[Auth] Could not create index ${name}:`, error)),
+        .catch((error) => logError(`[Auth] Could not create index ${name}`, { error: error })),
     ),
   );
 }

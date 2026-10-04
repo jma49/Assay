@@ -2,6 +2,7 @@ import { getMongoDbClient } from "../database/mongodb";
 import { Collection, Document } from "mongodb";
 import { TtlCache } from "../cache/ttl-cache";
 import { COLLECTIONS } from "@/lib/database/collections";
+import { logError, logInfo } from "@/server/logging/log";
 
 // Every API request checks the caller's role, and a MongoDB round trip costs
 // ~70ms. Changes made on this instance invalidate immediately; other
@@ -116,7 +117,7 @@ export async function getUserRole(userId: string): Promise<UserRole | null> {
     roleCache.set(userId, role);
     return role;
   } catch (error) {
-    console.error("[RBAC] Reading a role failed:", error);
+    logError("[RBAC] Reading a role failed", { error: error });
     return null;
   }
 }
@@ -170,10 +171,10 @@ export async function setUserRole(
     });
     roleCache.delete(userId);
 
-    console.log(`[RBAC] ${email} is now ${role}`);
+    logInfo("[RBAC] Role set", { role });
     return result.acknowledged;
   } catch (error) {
-    console.error("[RBAC] Setting a role failed:", error);
+    logError("[RBAC] Setting a role failed", { error: error });
     return false;
   }
 }
@@ -196,7 +197,7 @@ export async function getAllUserRoles(): Promise<UserRoleInfo[]> {
       isActive: doc.isActive,
     }));
   } catch (error) {
-    console.error("[RBAC] Listing roles failed:", error);
+    logError("[RBAC] Listing roles failed", { error: error });
     return [];
   }
 }
@@ -218,7 +219,7 @@ export async function removeUserRole(userId: string): Promise<boolean> {
 
     return result.modifiedCount > 0;
   } catch (error) {
-    console.error("[RBAC] Removing a role failed:", error);
+    logError("[RBAC] Removing a role failed", { error: error });
     return false;
   }
 }

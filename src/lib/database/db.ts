@@ -5,6 +5,7 @@ import pg, { Pool, type PoolClient, type PoolConfig, type QueryResult } from "pg
 import { pgConnection } from "./pg-connection";
 import { redactConnectionString } from "./redact-connection-string";
 import { inPublicCi } from "@/lib/utils/public-log";
+import { logError, logInfo } from "@/server/logging/log";
 
 // BIGINT (OID 20) as strings: JavaScript numbers lose precision past 2^53 and JSON cannot hold BigInt.
 pg.types.setTypeParser(20, (value: string) => value);
@@ -68,7 +69,7 @@ export function openPool(config: PoolConfig, label: string): Pool {
   // Never wait forever for a free connection (checks are bounded by a semaphore, dry runs are not).
   const pool = new Pool({ connectionTimeoutMillis: 10_000, idleTimeoutMillis: 30_000, ...config });
   // An idle client dropped by the server emits 'error' on the pool; unhandled, it would crash the process.
-  pool.on("error", (error) => console.error(`[db] Idle PostgreSQL client error (${label}):`, error.message));
+  pool.on("error", (error) => logError(`[db] Idle PostgreSQL client error (${label})`, { error }));
   return pool;
 }
 
@@ -82,7 +83,7 @@ export async function defaultConnectionConfig(): Promise<{ connectionString: str
 
 async function createDefaultPool(): Promise<Pool> {
   const { connectionString, ssl } = await defaultConnectionConfig();
-  console.log(poolLogLine(connectionString, ssl));
+  logInfo(poolLogLine(connectionString, ssl));
   return openPool({ connectionString, ssl, max: Number(process.env.PG_POOL_MAX) || 10 }, "default");
 }
 
@@ -114,7 +115,7 @@ export async function readOnlyTransaction<T>(pool: Pool, fn: (client: PoolClient
     await client.query("ROLLBACK").catch((rollbackError) => {
       // A connection that cannot roll back is discarded instead of going back to the pool.
       broken = rollbackError instanceof Error ? rollbackError : new Error(String(rollbackError));
-      console.error("[db] Rollback failed:", rollbackError);
+      logError("[db] Rollback failed", { error: rollbackError });
     });
     throw error;
   } finally {

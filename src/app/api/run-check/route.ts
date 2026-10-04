@@ -9,6 +9,7 @@ import { clientIp, demoRunBudgets, isDemoMode, runAccess } from "@/lib/security/
 import { dispatchAfterResponse } from "@/server/services/notify-deps";
 import { runCheckNow, toExecutionResult } from "@/server/services/run-check-deps";
 import { COLLECTIONS } from "@/lib/database/collections";
+import { logError } from "@/server/logging/log";
 
 // Runs checks (or sends their alerts): the Hobby plan's limit, FUNCTION_MAX_DURATION_S in
 // run-check-deps.ts. CHECK_TIMEOUT_MS and batch deadlines are sized to finish inside it.
@@ -34,7 +35,7 @@ async function assertDemoRunAllowed(principal: Principal, scriptId: string, head
     try {
       quota = await consumeQuota(redis, budget.subject, Date.now(), budget.limit, DEMO_WINDOW_SECONDS, "demo-run");
     } catch (error) {
-      console.error("[API] Demo run quota check failed:", error);
+      logError("[API] Demo run quota check failed", { error: error });
       throw new ApiError(503, "demo_busy", "The demo is busy; try again shortly");
     }
     if (!quota.allowed) {
