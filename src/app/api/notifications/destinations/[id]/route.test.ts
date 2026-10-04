@@ -48,7 +48,7 @@ describe("PATCH /api/notifications/destinations/[id]", () => {
   });
 
   it("needs notification:manage", async () => {
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     expect((await edit({ name: "Ops 2" })).status).toBe(403);
     expect(mocks.update).not.toHaveBeenCalled();
   });
@@ -81,7 +81,7 @@ describe("DELETE /api/notifications/destinations/[id]", () => {
   });
 
   it("needs notification:manage", async () => {
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     expect((await remove()).status).toBe(403);
     expect(mocks.remove).not.toHaveBeenCalled();
   });

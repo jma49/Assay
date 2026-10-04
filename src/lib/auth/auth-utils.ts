@@ -14,7 +14,7 @@ interface AuthUser {
 }
 
 /** Only these read permissions are open to demo guests. */
-export const GUEST_PERMISSIONS: readonly Permission[] = [Permission.SCRIPT_READ, Permission.HISTORY_READ];
+export const GUEST_PERMISSIONS: readonly Permission[] = [Permission.CHECK_READ, Permission.HISTORY_READ];
 
 /** The demo guest behind this request, if any; null outside demo mode. */
 export async function currentGuestId(): Promise<string | null> {

@@ -34,7 +34,7 @@ const members = () => GET(new NextRequest("http://localhost/api/members"), { par
 describe("GET /api/members", () => {
   beforeEach(() => {
     mocks.denied = null;
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     mocks.guest = false;
     mocks.listMembers.mockReset().mockResolvedValue([{ id: "u1", name: "Ada" }]);
   });
@@ -46,7 +46,7 @@ describe("GET /api/members", () => {
     expect(mocks.listMembers).not.toHaveBeenCalled();
   });
 
-  it("needs script:read", async () => {
+  it("needs check:read", async () => {
     mocks.granted = new Set();
     expect((await members()).status).toBe(403);
     expect(mocks.listMembers).not.toHaveBeenCalled();

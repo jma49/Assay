@@ -55,7 +55,7 @@ const SECTIONS: { title: Label; items: NavItem[] }[] = [
         href: "/approvals",
         label: { en: "Approvals", zh: "审批" },
         icon: CheckCircle2,
-        requires: "script:approve",
+        requires: "check:approve",
       },
       { href: "/settings/notifications", label: { en: "Notifications", zh: "通知" }, icon: BellRing },
       { href: "/settings/data-sources", label: { en: "Data sources", zh: "数据源" }, icon: Database },
@@ -97,12 +97,12 @@ export function Sidebar() {
   const allItems = SECTIONS.flatMap((section) => section.items);
 
   return (
-    <aside className="flex min-h-0 flex-col gap-6 border-r border-sidebar-border bg-sidebar px-4 py-5 max-md:flex-row max-md:items-center max-md:gap-3 max-md:overflow-x-auto max-md:border-r-0 max-md:border-b max-md:px-4 max-md:py-2">
-      <Link href="/checks" className="flex items-center px-2 py-1 max-md:px-0">
+    <aside className="flex min-h-0 flex-col gap-7 border-r border-sidebar-border bg-sidebar px-3 py-5 max-md:flex-row max-md:items-center max-md:gap-3 max-md:overflow-x-auto max-md:border-r-0 max-md:border-b max-md:px-4 max-md:py-2">
+      <Link href="/checks" className="flex items-center px-3 py-1 max-md:px-0">
         <BrandMark className="max-md:[&>span:last-child]:hidden" />
       </Link>
 
-      <nav aria-label={language === "zh" ? "主导航" : "Main"} className="flex flex-col gap-4 max-md:flex-row max-md:gap-1">
+      <nav aria-label={language === "zh" ? "主导航" : "Main"} className="flex flex-col gap-5 max-md:flex-row max-md:gap-1">
         {SECTIONS.map((section) => {
           const items = section.items.filter(allowed);
           if (items.length === 0) return null;
@@ -120,13 +120,15 @@ export function Sidebar() {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex h-10 items-center gap-3 rounded-lg px-3 text-body-md whitespace-nowrap transition-colors max-md:h-9",
+                      "relative flex h-9 items-center gap-3 rounded-lg px-3 text-body-md whitespace-nowrap transition-colors",
                       active
                         ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
                         : "text-sidebar-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
-                    <Icon className="size-4 shrink-0" />
+                    {/* A bar on the active item, so the current page reads at a glance. */}
+                    {active && <span className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-primary max-md:hidden" aria-hidden />}
+                    <Icon className={cn("size-4 shrink-0", active ? "text-primary" : "text-muted-foreground")} />
                     {item.label[language]}
                   </Link>
                 );

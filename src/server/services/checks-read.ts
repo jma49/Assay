@@ -163,7 +163,7 @@ const iso = (value: unknown) => (value instanceof Date ? value.toISOString() : S
 
 /**
  * Every check's definition with its SQL and `version`, newest first
- * (GET /api/scripts: the editor, the Runs page, Analysis). Listed field by
+ * (GET /api/checks?view=definitions: the editor, the Runs page, Analysis). Listed field by
  * field: the document also holds who created it (with their email), the run
  * lease and alerting state, which readers, demo guests included, must not
  * receive.

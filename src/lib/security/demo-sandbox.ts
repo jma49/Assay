@@ -22,7 +22,7 @@ export function isDemoMode(env: Record<string, string | undefined> = process.env
 export type RunAccess = "allowed" | "demo" | "forbidden";
 
 /**
- * Who may run a check: anyone with script:execute; otherwise, in demo mode,
+ * Who may run a check: anyone with check:execute; otherwise, in demo mode,
  * only a seeded demo check ("demo" access, which is rate limited).
  */
 export function runAccess({

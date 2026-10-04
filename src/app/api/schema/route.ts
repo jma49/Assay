@@ -10,7 +10,7 @@ import { requireSource } from "@/server/services/data-sources";
  * Only people who can create checks need it; the list is the one the
  * coverage view already shows readers, and is cached for an hour.
  */
-export const GET = withAuth(Permission.SCRIPT_CREATE, async (request) => {
+export const GET = withAuth(Permission.CHECK_CREATE, async (request) => {
   const source = await requireSource(request.nextUrl.searchParams.get("source"));
   return NextResponse.json({ tables: await getSchemaTables(source) });
 });

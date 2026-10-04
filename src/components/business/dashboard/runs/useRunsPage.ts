@@ -9,7 +9,7 @@ import { currentLanguage } from "@/components/common/LanguageProvider";
 const scrollToHistory = () => document.getElementById("execution-history")?.scrollIntoView({ behavior: "smooth" });
 
 async function fetchScripts(): Promise<ScriptInfo[]> {
-  const response = await fetch("/api/scripts");
+  const response = await fetch("/api/checks?view=definitions");
   if (!response.ok) {
     throw new Error(`Could not load the checks: ${response.status} ${response.statusText}`);
   }

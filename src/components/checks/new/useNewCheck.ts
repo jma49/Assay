@@ -150,7 +150,7 @@ export function useNewCheck(language: Language) {
 
     setIsSaving(true);
     try {
-      const result = await sendJson<{ requiresApproval?: boolean }>("/api/scripts", "POST", { ...formData, sqlContent });
+      const result = await sendJson<{ requiresApproval?: boolean }>("/api/checks", "POST", { ...formData, sqlContent });
       if (result.requiresApproval) toast.success(c.submitted, { description: c.submittedDesc });
       else toast.success(c.saved);
       router.push(afterSaveHref(formData.scriptId, Boolean(result.requiresApproval)));
@@ -165,7 +165,7 @@ export function useNewCheck(language: Language) {
 
   return {
     /** Null until the user's permissions are known. */
-    canCreate: me ? me.permissions.includes("script:create") : null,
+    canCreate: me ? me.permissions.includes("check:create") : null,
     formData,
     dataSources,
     sqlContent,

@@ -10,7 +10,7 @@ import { discordConfigured, slackConfigured, telegramConfigured } from "@/server
 import { createPastedDestination, listDestinations } from "@/server/services/destinations";
 
 /** The workspace's alert destinations (never their secrets) and which one-click connections are available. */
-export const GET = withAuth(Permission.SCRIPT_READ, async (_request, { principal }) => {
+export const GET = withAuth(Permission.CHECK_READ, async (_request, { principal }) => {
   const db = await getMongoDbClient().getDb();
   const canManage = !principal.isGuest && (await requirePermission(principal.id, Permission.NOTIFICATION_MANAGE)).authorized;
   const body: DestinationsResponse = {

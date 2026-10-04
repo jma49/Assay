@@ -91,8 +91,9 @@ describe("response parsing", () => {
 
   it("lists the checks by name, as MongoDB sorts them", () => {
     const list = [{ scriptId: "b", name: "b" }, { scriptId: "c", name: "B" }, { scriptId: "a", name: "A" }] as ScriptInfo[];
-    expect(parseScriptList(list).map((s) => s.scriptId)).toEqual(["a", "c", "b"]);
+    expect(parseScriptList({ checks: list }).map((s) => s.scriptId)).toEqual(["a", "c", "b"]);
     expect(parseScriptList({ message: "nope" })).toEqual([]);
+    expect(parseScriptList(list)).toEqual([]);
     expect(parseScriptList(null)).toEqual([]);
   });
 

@@ -22,7 +22,7 @@ export function useScriptDelete(language: Language, t: Translate, reload: () => 
     if (!target) return;
     setIsSubmitting(true);
     try {
-      const body = await sendJson<{ requiresApproval?: boolean }>(`/api/scripts/${target.scriptId}`, "DELETE");
+      const body = await sendJson<{ requiresApproval?: boolean }>(`/api/checks/${encodeURIComponent(target.scriptId)}`, "DELETE");
       if (body.requiresApproval) {
         const { title, ...options } = approvalNotice(language, "delete");
         toast.success(title, options);

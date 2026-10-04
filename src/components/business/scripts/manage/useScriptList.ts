@@ -2,11 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { SqlScript } from "@/components/business/dashboard/types";
 
 async function fetchScripts(): Promise<SqlScript[]> {
-  const response = await fetch("/api/scripts");
+  const response = await fetch("/api/checks?view=definitions");
   if (!response.ok) {
-    throw new Error(`Failed to fetch scripts: ${response.status}`);
+    throw new Error(`Could not load the checks: ${response.status}`);
   }
-  const scriptsData: SqlScript[] = await response.json();
+  const { checks: scriptsData }: { checks: SqlScript[] } = await response.json();
   return scriptsData.map((s) => ({
     ...s,
     createdAt: s.createdAt ? new Date(s.createdAt) : undefined,

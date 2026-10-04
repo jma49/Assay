@@ -33,7 +33,7 @@ export default function RunReportPage() {
   const me = useMe();
   const aiAvailable = me?.ai === true;
   // Demo viewers may run the sample checks too; the API has the final say.
-  const canRunAgain = !!me && (me.permissions.includes("script:execute") || !!me.demo);
+  const canRunAgain = !!me && (me.permissions.includes("check:execute") || !!me.demo);
 
   const { result, loading, error, retry } = useRunResult(runId, t.missingResultId, language);
   const actions = useRunActions(result, language);

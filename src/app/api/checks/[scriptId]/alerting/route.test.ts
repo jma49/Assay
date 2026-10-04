@@ -35,7 +35,7 @@ const act = (body: unknown) =>
 describe("POST /api/checks/[scriptId]/alerting", () => {
   beforeEach(() => {
     mocks.denied = null;
-    mocks.granted = new Set(["script:execute"]);
+    mocks.granted = new Set(["check:execute"]);
     mocks.calls = [];
     mocks.applyAlertingAction.mockReset().mockResolvedValue({ owner: null, acknowledged: { at: "now" } });
   });
@@ -47,8 +47,8 @@ describe("POST /api/checks/[scriptId]/alerting", () => {
     expect(mocks.applyAlertingAction).not.toHaveBeenCalled();
   });
 
-  it("needs script:execute, so a plain viewer is refused", async () => {
-    mocks.granted = new Set(["script:read"]);
+  it("needs check:execute, so a plain viewer is refused", async () => {
+    mocks.granted = new Set(["check:read"]);
     const res = await act({ action: "acknowledge" });
     expect(res.status).toBe(403);
     expect(mocks.applyAlertingAction).not.toHaveBeenCalled();

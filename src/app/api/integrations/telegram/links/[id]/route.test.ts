@@ -52,7 +52,7 @@ describe("GET /api/integrations/telegram/links/[id]", () => {
   });
 
   it("needs notification:manage", async () => {
-    mocks.granted = new Set(["script:read"]);
+    mocks.granted = new Set(["check:read"]);
     expect((await status()).status).toBe(403);
     expect(mocks.getLinkStatus).not.toHaveBeenCalled();
   });

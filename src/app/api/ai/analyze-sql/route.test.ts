@@ -45,7 +45,7 @@ const analyze = (body: unknown) =>
 describe("POST /api/ai/analyze-sql", () => {
   beforeEach(() => {
     mocks.denied = null;
-    mocks.granted = new Set(["script:create"]);
+    mocks.granted = new Set(["check:create"]);
     mocks.seenPrompts = [];
     mocks.requireSource.mockReset().mockResolvedValue({ sourceId: "billing" });
     mocks.generate.mockReset().mockResolvedValue("The query selects every row.");
@@ -57,8 +57,8 @@ describe("POST /api/ai/analyze-sql", () => {
     expect(mocks.generate).not.toHaveBeenCalled();
   });
 
-  it("needs script:create", async () => {
-    mocks.granted = new Set(["script:read"]);
+  it("needs check:create", async () => {
+    mocks.granted = new Set(["check:read"]);
     expect((await analyze({ sql: "SELECT 1", analysisType: "explain" })).status).toBe(403);
     expect(mocks.generate).not.toHaveBeenCalled();
   });

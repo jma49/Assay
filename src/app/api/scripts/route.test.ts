@@ -47,16 +47,21 @@ vi.mock("@/server/services/approvals", async (importOriginal) => ({
   fileChangeRequest: (...args: unknown[]) => mocks.fileChangeRequest(...args),
 }));
 
-import { GET, POST } from "./route";
+import * as legacy from "./route";
+import * as canonical from "../checks/route";
 
 const validBody = { scriptId: "orders-without-invoice", name: "Orders without invoice", sqlContent: "SELECT 1" };
 
-const create = (body: unknown) =>
-  POST(new NextRequest("http://localhost/api/scripts", { method: "POST", body: JSON.stringify(body) }), { params: Promise.resolve({}) });
-
 const inserted = () => mocks.insertOne.mock.calls[0][0];
 
-describe("POST /api/scripts", () => {
+// /api/scripts is the deprecated alias of /api/checks: both must behave the same.
+describe.each([
+  ["/api/checks", canonical.POST],
+  ["/api/scripts", legacy.POST],
+] as const)("POST %s", (path, POST) => {
+  const create = (body: unknown) =>
+    POST(new NextRequest(`http://localhost${path}`, { method: "POST", body: JSON.stringify(body) }), { params: Promise.resolve({}) });
+
   beforeEach(() => {
     mocks.denied = null;
     mocks.authorized = true;
@@ -74,7 +79,7 @@ describe("POST /api/scripts", () => {
     expect(mocks.findOne).not.toHaveBeenCalled();
   });
 
-  it("refuses callers without script:create before reading the body", async () => {
+  it("refuses callers without check:create before reading the body", async () => {
     mocks.authorized = false;
     expect((await create(validBody)).status).toBe(403);
     expect(mocks.findOne).not.toHaveBeenCalled();
@@ -160,7 +165,10 @@ describe("POST /api/scripts", () => {
   });
 });
 
-describe("GET /api/scripts", () => {
+describe.each([
+  ["/api/checks?view=definitions", canonical.GET, (body: unknown) => (body as { checks: { author: string }[] }).checks],
+  ["/api/scripts", legacy.GET, (body: unknown) => body as { author: string }[]],
+] as const)("GET %s", (path, GET, unwrap) => {
   beforeEach(() => {
     mocks.denied = null;
     mocks.guest = false;
@@ -172,21 +180,40 @@ describe("GET /api/scripts", () => {
   it("hides member handles from guests", async () => {
     mocks.listed = [listed("ada@example.com"), listed("demo-seed")];
     mocks.guest = true;
-    const guest = await (await GET(new NextRequest("http://localhost/api/scripts"), { params: Promise.resolve({}) })).json();
+    const guest = unwrap(await (await GET(new NextRequest(`http://localhost${path}`), { params: Promise.resolve({}) })).json());
     expect(guest.map((s: { author: string }) => s.author)).toEqual(["Teammate", "demo-seed"]);
     mocks.guest = false;
-    const member = await (await GET(new NextRequest("http://localhost/api/scripts"), { params: Promise.resolve({}) })).json();
+    const member = unwrap(await (await GET(new NextRequest(`http://localhost${path}`), { params: Promise.resolve({}) })).json());
     expect(member[0].author).toBe("ada@example.com");
   });
 
-  it("returns the auth response when script:read is refused", async () => {
+  it("returns the auth response when check:read is refused", async () => {
     mocks.denied = NextResponse.json({ message: "forbidden" }, { status: 403 });
-    expect(await GET(new NextRequest("http://localhost/api/scripts"), { params: Promise.resolve({}) })).toBe(mocks.denied);
+    expect(await GET(new NextRequest(`http://localhost${path}`), { params: Promise.resolve({}) })).toBe(mocks.denied);
   });
 
-  it("lists the scripts for readers", async () => {
-    const res = await GET(new NextRequest("http://localhost/api/scripts"), { params: Promise.resolve({}) });
+  it("lists the checks for readers", async () => {
+    const res = await GET(new NextRequest(`http://localhost${path}`), { params: Promise.resolve({}) });
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual([]);
+    expect(unwrap(await res.json())).toEqual([]);
+  });
+});
+
+describe("the deprecated /api/scripts", () => {
+  beforeEach(() => {
+    mocks.denied = null;
+    mocks.guest = false;
+    mocks.listed = [];
+  });
+
+  it("points to its successor", async () => {
+    const res = await legacy.GET(new NextRequest("http://localhost/api/scripts"), { params: Promise.resolve({}) });
+    expect(res.headers.get("Deprecation")).toMatch(/^@\d+$/);
+    expect(res.headers.get("Link")).toBe('</api/checks?view=definitions>; rel="successor-version"');
+  });
+
+  it("is not marked on the successor", async () => {
+    const res = await canonical.GET(new NextRequest("http://localhost/api/checks?view=definitions"), { params: Promise.resolve({}) });
+    expect(res.headers.get("Deprecation")).toBeNull();
   });
 });

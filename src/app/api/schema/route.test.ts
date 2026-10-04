@@ -58,7 +58,7 @@ describe("GET /api/schema", () => {
     const res = await get();
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ tables: [{ schema: "demo", name: "orders", columns: [{ name: "id", type: "integer", nullable: false }] }] });
-    expect(mocks.permissions).toEqual(["script:create"]);
+    expect(mocks.permissions).toEqual(["check:create"]);
     expect(mocks.sources).toEqual(["default"]);
   });
 

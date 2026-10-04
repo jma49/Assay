@@ -21,7 +21,7 @@ function PageHeading() {
   const title = pageTitle(pathname)?.[language] ?? "";
   const intro = pageIntro(pathname)?.[language];
   const parent = parentPage(pathname);
-  const canCreate = me?.permissions.includes("script:create") && offersNewCheck(pathname);
+  const canCreate = me?.permissions.includes("check:create") && offersNewCheck(pathname);
   const newCheck = language === "zh" ? "新建检查" : "New check";
 
   // The tab reads the page in the reader's language; a check's page names it after the check.
@@ -68,30 +68,24 @@ function PageHeading() {
   );
 }
 
+/** The demo notice, a slim band across the top of the content column. */
 function GuestBanner() {
   const me = useMe();
   const { language } = useLanguage();
   if (!me?.guest) return null;
   const zh = language === "zh";
   return (
-    <div role="note" className="bg-night px-7 py-2.5 text-body-sm text-night-muted max-md:px-4">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-        <span className="size-1.5 shrink-0 rounded-full bg-success shadow-[0_0_0_3px_color-mix(in_srgb,var(--success)_30%,transparent)]" aria-hidden />
-        <span className="min-w-0 flex-1">
-          <b className="font-medium text-night-foreground">{zh ? "演示工作区" : "Demo workspace"}</b>
-          <span className="max-sm:hidden">
-            {" · "}
-            {zh ? "监控着一个预先埋入问题的示例商店数据库。" : "It watches a sample shop database with problems planted in it."}
-          </span>
+    <div role="note" className="border-b bg-card px-8 py-2 text-body-sm text-muted-foreground max-md:px-4">
+      <div className="flex items-center gap-3">
+        <span className="min-w-0 flex-1 truncate">
+          <b className="font-medium text-foreground">{zh ? "演示工作区。" : "Demo workspace."}</b>
+          <span className="max-sm:hidden"> {zh ? "监控着一个预先埋入问题的示例商店数据库。" : "It watches a sample shop database with problems planted in it."}</span>
         </span>
-        <span className="flex items-center gap-2">
-          <a href="/demo/exit" className="px-2 text-night-muted transition-colors hover:text-night-foreground">
+        <span className="flex shrink-0 items-center gap-1">
+          <a href="/demo/exit" className="px-2 transition-colors hover:text-foreground max-sm:hidden">
             {zh ? "退出演示" : "Leave demo"}
           </a>
-          <Link
-            href="/sign-up?redirect_url=/checks"
-            className="inline-flex h-7 items-center rounded-full px-3 font-medium text-night-foreground shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--night-foreground)_28%,transparent)] transition-colors hover:bg-night-foreground/10"
-          >
+          <Link href="/sign-up?redirect_url=/checks" className="inline-flex h-7 items-center rounded-full bg-foreground px-3 font-medium text-background transition-opacity hover:opacity-90">
             {zh ? "注册" : "Sign up"}
           </Link>
         </span>
@@ -110,11 +104,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         Skip to content
       </a>
-      <div className="flex h-dvh flex-col">
-        <GuestBanner />
-        <div className="grid min-h-0 flex-1 grid-cols-[248px_minmax(0,1fr)] max-md:grid-cols-1 max-md:grid-rows-[auto_minmax(0,1fr)]">
-          <Sidebar />
-          <main id="content" tabIndex={-1} className="min-h-0 min-w-0 overflow-y-auto px-8 pb-16 outline-none max-md:px-4">
+      <div className="grid h-dvh grid-cols-[248px_minmax(0,1fr)] max-md:grid-cols-1 max-md:grid-rows-[auto_minmax(0,1fr)]">
+        <Sidebar />
+        <div className="flex min-h-0 min-w-0 flex-col">
+          <GuestBanner />
+          <main id="content" tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-y-auto px-8 pb-16 outline-none max-md:px-4">
             <div className="sticky top-0 z-20 h-0">
               <NavigationProgress />
             </div>

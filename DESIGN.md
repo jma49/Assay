@@ -151,7 +151,7 @@ spacing:
   control-height: 36px
   control-height-sm: 32px
   control-height-lg: 44px
-  content-max: 1120px
+  content-max: 1280px
   card-padding: 24px
   status-dot: 8px
 components:
@@ -260,12 +260,19 @@ components:
     typography: "{typography.code}"
     rounded: "{rounded.lg}"
   demo-banner:
-    backgroundColor: "{colors.night}"
-    textColor: "{colors.night-muted}"
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.muted-foreground}"
     typography: "{typography.body-sm}"
   demo-banner-title:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.foreground}"
+  auth-brand-panel:
     backgroundColor: "{colors.night}"
     textColor: "{colors.night-foreground}"
+    typography: "{typography.body-sm}"
+  auth-brand-panel-muted:
+    backgroundColor: "{colors.night}"
+    textColor: "{colors.night-muted}"
   landing-night-surface:
     backgroundColor: "{colors.night-surface}"
     textColor: "{colors.night-foreground}"
@@ -317,7 +324,7 @@ The September 2026 refresh took its direction from an Open Design mock of the de
 - **Indigo ink (`primary-ink`, #2B3AAE)** is the accent as text on `primary-soft` (the active nav item, selected rows): the plain indigo is 4.3:1 there, below AA.
 - **Neutrals** are cool greys that lean slightly toward the indigo. `foreground` for text, `muted-foreground` for secondary text, `subtle-foreground` never for text, only for marks (the idle status dot, list markers), `border` for dividers, `border-strong` for inputs.
 - **Status colours are semantic and fixed:** `failure` = the check itself broke (error), `attention` = it found rows (issues), `success` = it found none (clean). Each has a `-soft` tint for its background. They never decorate, and they are never swapped for the accent.
-- **Night (`night`, #070A1A)** is the dark band behind the demo notice and the background of the landing page's dark sections, in both themes, with `night-foreground` and `night-muted` for its text. It is not a surface for app content.
+- **Night (`night`, #070A1A)** is the background of the landing page's dark sections and the sign-in brand panel, in both themes, with `night-foreground` and `night-muted` for its text. It is not a surface for app content.
 - **The rest of the night palette** (`night-surface`, `night-raised`, `night-line`, `night-accent`, `night-accent-pale`, and `night-success | attention | failure`) exists for the landing page's dark sections: surfaces, hairlines, the accent and the three statuses as they read on night. App pages do not use it.
 - Dark theme values carry a `-dark` suffix here; in code the same CSS variable switches under `.dark`, so components never branch on the theme.
 - Colours reach components only through Tailwind utilities mapped in `@theme inline` (`bg-card`, `text-muted-foreground`, `text-attention`, …). No hex values, no raw palette classes (`text-blue-600`), no `dark:` overrides for colour.
@@ -340,8 +347,8 @@ The scale in the front matter is the whole set of sizes: every text size is one 
 ## Layout
 
 - Spacing follows Tailwind's 4px scale. Prefer 2, 3, 4, 6 and 8 (8–32px); reach for odd steps only to align with a neighbour.
-- App pages sit in `APP_CONTAINER` (`max-w-[1120px]`, centred) so edges line up under the top bar.
-- A page is a shell over a data hook and section components (`AGENTS.md`). The app shell draws the page heading from `app-shell-routes.ts`: a `display-md` title, an optional count beside it (`WindowStatusBar`), a one-line intro, and the page's actions on the right (`WindowToolbar`). Pages about one thing (a check, a run) get a "‹ back to the list" link instead and draw their own heading. Then a stat strip or filters, then the main list.
+- App pages sit in `APP_CONTAINER` (`max-w-[1280px]`, centred) so edges line up under the top bar. The shell is a light sidebar (248px; a bar and the primary tint mark the current page) beside the content column; the demo notice is a slim card-coloured band across the top of the content column.
+- A page is a shell over a data hook and section components (`AGENTS.md`). The app shell draws the page heading from `app-shell-routes.ts`: a `display-md` title, an optional count beside it (`WindowStatusBar`), a one-line intro, and the page's actions on the right (`WindowToolbar`). Pages about one thing (a check, a run) get a "‹ back to the list" link instead and draw their own heading. Then a stat strip or filters, then the main list. On the Checks page the stat tiles are the filter, and a chosen check opens beside the list (`?check=`, from 1280px; a drawer below) with the same tabs as its own page.
 - Controls are 36px tall (`h-9`), 32px when compact, 44px for landing CTAs. Search fields in a page heading are 40px pills.
 - Must work at 375px wide without horizontal page scroll; wide tables scroll inside their own container.
 
@@ -396,7 +403,7 @@ The type-scale migration is done (September 2026, one pull request per step): to
 - **Levels in `cn()`.** `cn()` registers the level names with tailwind-merge (`src/lib/utils/utils.ts`). A new level goes there too, or `cn("text-body-sm", "text-muted-foreground")` drops the size.
 - **Weights.** Only headings, `label-caps` and `stat` carry a weight; body levels and `caption` inherit theirs, so `font-medium` and a parent's weight still apply.
 - **Fields on phones.** `Input` and `Textarea` take their level from `sm:` up. Below that a base rule in `globals.css` keeps `[data-slot=input|textarea]` at 16px, because iOS Safari zooms into a focused field set any smaller. A raw `<input>` styled like a field opts in with `data-slot="input"`.
-- **Before deleting a class**, search for template-built names too: `status-dot-success | attention_needed | failure` look unused, but `CoveragePanes.tsx` builds them as `` `status-dot-${tone}` ``.
+- **Before deleting a class**, search for template-built names too: `status-dot-success | attention_needed | failure` look unused, but `CoverageGrid.tsx` builds them as `` `status-dot-${tone}` ``.
 
 Choosing a level for a size that is not on the scale:
 
