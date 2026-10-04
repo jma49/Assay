@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import type { DashboardTranslationKeys, CheckDefinition } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/business/dashboard/types";
 import { apiErrorText } from "@/client/api-errors";
 import { sendJson } from "@/client/send-json";
 import { approvalNotice, type Language } from "./check-form";
-
-type Translate = (key: DashboardTranslationKeys | string) => string;
+import { manageCopy } from "./copy";
 
 /** The delete confirmation: which check is pending and the DELETE call. `reload` refreshes the list. */
-export function useCheckDelete(language: Language, t: Translate, reload: () => void) {
+export function useCheckDelete(language: Language, reload: () => void) {
+  const t = manageCopy(language);
   const [target, setTarget] = useState<CheckDefinition | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,11 +28,11 @@ export function useCheckDelete(language: Language, t: Translate, reload: () => v
         toast.success(title, options);
         return;
       }
-      toast.success(t("scriptDeletedSuccess"));
+      toast.success(t.deleted);
       reload();
     } catch (err) {
       console.error("Failed to delete script:", err);
-      toast.error(t("scriptDeleteError"), { description: apiErrorText(err, language) });
+      toast.error(t.deleteFailed, { description: apiErrorText(err, language) });
     } finally {
       setIsSubmitting(false);
       setIsOpen(false);

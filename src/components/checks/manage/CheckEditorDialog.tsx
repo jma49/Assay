@@ -12,9 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { DashboardTranslationKeys } from "@/components/business/dashboard/types";
 import { CheckMetadataForm, type CheckFormData } from "./CheckMetadataForm";
 import { useDataSourceOptions } from "@/components/checks/data-source/useDataSourceOptions";
+import { manageCopy } from "./copy";
 import { stillNeededHint, toFormMetadata, type DialogMode, type Language, type CheckFormState } from "./check-form";
 
 // CodeMirror and its themes are large; load them only where the editor renders.
@@ -34,7 +34,6 @@ interface ScriptEditorDialogProps {
   onSave: () => void;
   isSubmitting: boolean;
   language: Language;
-  t: (key: DashboardTranslationKeys | string) => string;
 }
 
 export function CheckEditorDialog({
@@ -48,8 +47,8 @@ export function CheckEditorDialog({
   onSave,
   isSubmitting,
   language,
-  t,
 }: ScriptEditorDialogProps) {
+  const t = manageCopy(language);
   const formMetadata = toFormMetadata(form);
   const hint = stillNeededHint(form, sql, language);
   const dataSources = useDataSourceOptions(language, open);
@@ -58,10 +57,10 @@ export function CheckEditorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[70vw] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{mode === "add" ? t("addScriptDialogTitle") : t("editScriptDialogTitle")}</DialogTitle>
+          <DialogTitle>{mode === "add" ? t.addTitle : t.editTitle}</DialogTitle>
           <DialogDescription>
             {mode === "add" ? (
-              t("scriptMetadataDesc")
+              t.addHint
             ) : (
               <span className="font-mono">{formMetadata.scriptId}</span>
             )}
@@ -71,13 +70,12 @@ export function CheckEditorDialog({
           <CheckMetadataForm
             formData={formMetadata}
             onFormChange={onFieldChange}
-            t={t}
             isEditMode={mode === "edit"}
             dataSources={dataSources}
           />
           <div>
             <label className="text-body-md font-medium mb-1 block">
-              {t("fieldSqlContent")}{" "}
+              {t.sqlLabel}{" "}
               <span className="text-destructive">*</span>
             </label>
             <CodeMirrorEditor value={sql} onChange={onSqlChange} minHeight="250px" dataSourceId={formMetadata.dataSourceId} />
@@ -92,7 +90,7 @@ export function CheckEditorDialog({
           <div className="flex gap-2">
             <DialogClose asChild>
               <Button type="button" variant="outline" disabled={isSubmitting}>
-                {t("cancelButton")}
+                {t.cancel}
               </Button>
             </DialogClose>
             <Button type="button" onClick={onSave} disabled={isSubmitting}>
@@ -101,7 +99,7 @@ export function CheckEditorDialog({
               ) : (
                 <Save className="mr-0 h-4 w-4" />
               )}
-              {t("saveScriptButton")}
+              {t.save}
             </Button>
           </div>
         </DialogFooter>

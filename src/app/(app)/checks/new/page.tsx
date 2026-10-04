@@ -3,7 +3,6 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { CheckMetadataForm } from "@/components/checks/manage/CheckMetadataForm";
 import { NoCreateAccess } from "@/components/checks/new/NoCreateAccess";
 import { useNewCheck } from "@/components/checks/new/useNewCheck";
@@ -41,7 +40,6 @@ const COPY = {
 export default function NewCheckPage() {
   const { language } = useLanguage();
   const c = COPY[language];
-  const t = useDashboardT<string>();
   const form = useNewCheck(language);
 
   if (form.canCreate === false) return <NoCreateAccess />;
@@ -97,7 +95,6 @@ export default function NewCheckPage() {
             onFormChange={form.changeField}
             errors={form.errors}
             dataSources={form.dataSources}
-            t={t}
           />
         </aside>
       </div>
