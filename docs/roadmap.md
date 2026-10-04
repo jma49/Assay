@@ -21,20 +21,24 @@ paid service is out of scope until one exists.
   tests, build).
 - **Scheduler slot safety** (#222): a run killed mid-slot no longer drops the
   slot; a heartbeat failure no longer aborts the run.
+- **Frontend error tracking** (this batch): the browser SDK loads under
+  Turbopack (`src/instrumentation-client.ts`), `onRequestError` reports
+  server errors, the error boundary and `global-error.tsx` report render
+  errors.
+- **Default-deny API routes** (#224): a test fails when a route handler is
+  not wrapped in `withAuth` and not on the reviewed allowlist.
+- **Integration tests and SBOM in CI** (#224): a MongoDB service runs the
+  integration suites; each push to `main` uploads a CycloneDX SBOM.
+- **Delivery retention** (#225): the TTL keys on `updatedAt`, stamped on
+  every write.
+- **Fail closed on missing configuration** (#226): a production server
+  exits on start without `BETTER_AUTH_SECRET`, `MONGODB_URI`,
+  `DATABASE_URL` or `APP_URL`; optional features warn once each.
 - **Runbooks** (#222): rollback (`docs/deployment.md`), backup and restore
   (`docs/backup-restore.md`), `ASSAY_SECRET_KEY` rotation and recovery
   (`docs/secret-rotation.md`).
 
 ## P0 — Close live gaps
-
-### Default-deny API routes
-
-Goal: A new API route stays closed until it is opened on purpose.
-
-- A test lists every `src/app/api/**/route.ts` and fails unless it uses
-  `withAuth` or is in an explicit allowlist with the reason it has its own
-  auth or is public (sign-in, health, MCP, the dispatch cron, the Slack and
-  Telegram webhooks).
 
 ### Scheduled runs can use added data sources (maintainer action)
 
@@ -58,37 +62,16 @@ Goal: No check, bug or leaked credential can write to the monitored database.
 
 ## P1 — Change safely
 
-### Scheduler alert outside GitHub
+### Scheduler alert outside GitHub (built in #224; maintainer action)
 
 Goal: A dead schedule reaches the maintainer within an hour.
 
+- The `SENTRY_DSN` repository secret is set and the monitor's alert is on.
 - The scheduled workflow sends Sentry Cron check-ins (`in_progress`, then
   `ok` or `error`); Sentry alerts on a missed or failed check-in. Sentry
   does not depend on GitHub Actions, which runs the schedule.
 - GitHub disables scheduled workflows after 60 days without repository
   activity; `docs/deployment.md` says how to see that and re-enable it.
-
-### Delivery retention
-
-Goal: Old deliveries expire by their last activity, and none leak.
-
-- `updatedAt` is set on create, claim and every state change; the TTL index
-  keys on it, and the old index is replaced safely (#213).
-
-### Integration tests in CI
-
-Goal: The MongoDB integration suites run on every pull request.
-
-- CI starts a MongoDB service and sets `MONGODB_TEST_URI`; no integration
-  test is skipped (#219).
-
-### Fail closed on missing configuration
-
-Goal: A deploy with missing critical configuration fails loudly, not halfway.
-
-- In production the server refuses to start without `BETTER_AUTH_SECRET`,
-  `MONGODB_URI`, `DATABASE_URL` and `APP_URL` (checked at server start, not
-  during `next build`); optional features stay off with one warning each.
 
 ### Rollback rehearsal
 
@@ -105,12 +88,6 @@ Goal: Database loss is recoverable to a known point.
 
 - One restore from backup into a scratch database succeeds; the recovery
   time is recorded in `docs/backup-restore.md`.
-
-### Dependency inventory
-
-Goal: Production dependencies are auditable.
-
-- CI attaches an SBOM (`npm sbom`) to each run on `main` (#220).
 
 ### Legacy run fields
 
