@@ -6,7 +6,7 @@ import { APP_CONTAINER } from "@/components/layout/app-container";
 import { formatDateTime } from "@/lib/utils/datetime";
 import { runErrorText } from "@/lib/utils/run-message";
 import { useMe } from "@/lib/auth/use-me";
-import { runReportMessages } from "@/components/business/run-report/messages";
+import { runReportMessages } from "@/components/run-report/messages";
 import {
   buildFindingsCsv,
   csvFileName,
@@ -14,16 +14,16 @@ import {
   rowCount,
   runHeadline,
   tableRows,
-} from "@/components/business/run-report/run-report";
-import { downloadTextFile } from "@/components/business/run-report/download";
-import { useRunResult } from "@/components/business/run-report/useRunResult";
-import { useRunActions } from "@/components/business/run-report/useRunActions";
-import { RunLoadError, RunNotFound, RunReportSkeleton } from "@/components/business/run-report/RunReportStates";
-import { RunReportToolbar } from "@/components/business/run-report/RunReportToolbar";
-import { RunHeadline } from "@/components/business/run-report/RunHeadline";
-import { FindingsPanel } from "@/components/business/run-report/FindingsPanel";
-import { RunInfoPanel } from "@/components/business/run-report/RunInfoPanel";
-import { RunTriageDialog } from "@/components/business/run-report/RunTriageDialog";
+} from "@/components/run-report/run-report";
+import { downloadTextFile } from "@/components/run-report/download";
+import { useRunResult } from "@/components/run-report/useRunResult";
+import { useRunActions } from "@/components/run-report/useRunActions";
+import { RunLoadError, RunNotFound, RunReportSkeleton } from "@/components/run-report/RunReportStates";
+import { RunReportToolbar } from "@/components/run-report/RunReportToolbar";
+import { RunHeadline } from "@/components/run-report/RunHeadline";
+import { FindingsPanel } from "@/components/run-report/FindingsPanel";
+import { RunInfoPanel } from "@/components/run-report/RunInfoPanel";
+import { RunTriageDialog } from "@/components/run-report/RunTriageDialog";
 
 export default function RunReportPage() {
   const params = useParams() || {};

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { CheckDefinition } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/runs/types";
 import {
   applyFieldChange,
   approvalNotice,

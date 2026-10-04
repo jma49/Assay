@@ -1,4 +1,4 @@
-import { createLatestRequest } from "@/components/business/edit-history/latest-request";
+import { createLatestRequest } from "@/components/edit-history/latest-request";
 import { CHECK_HISTORY_ITEMS_PER_PAGE, type HistoryRun } from "../types";
 import { buildCheckHistoryQuery, parseRuns, parsePagination, type HistoryPagination, type HistoryQuery } from "./runs";
 

@@ -2,7 +2,7 @@ import dynamic from "next/dynamic";
 import type { Language } from "./run-report";
 
 // Pulls in a syntax highlighter; only load it when an analysis is shown.
-const AnalysisResultDialog = dynamic(() => import("@/components/business/ai/AnalysisResultDialog"), { ssr: false });
+const AnalysisResultDialog = dynamic(() => import("@/components/ai/AnalysisResultDialog"), { ssr: false });
 
 /** Shows the AI triage for a run once it has been requested. */
 export function RunTriageDialog({

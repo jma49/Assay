@@ -7,13 +7,13 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { Pagination } from "@/components/common/Pagination";
-import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
-import { EditHistoryDetailDialog } from "@/components/business/edit-history/EditHistoryDetailDialog";
-import { EditHistoryTable } from "@/components/business/edit-history/EditHistoryTable";
-import { EditHistoryToolbar } from "@/components/business/edit-history/EditHistoryToolbar";
-import { editHistoryCopy } from "@/components/business/edit-history/copy";
-import { EMPTY_FILTERS, formatPageInfo, type HistoryFilters, type OperationFilter } from "@/components/business/edit-history/edit-history";
-import { useEditHistory } from "@/components/business/edit-history/useEditHistory";
+import { ITEMS_PER_PAGE } from "@/components/runs/types";
+import { EditHistoryDetailDialog } from "@/components/edit-history/EditHistoryDetailDialog";
+import { EditHistoryTable } from "@/components/edit-history/EditHistoryTable";
+import { EditHistoryToolbar } from "@/components/edit-history/EditHistoryToolbar";
+import { editHistoryCopy } from "@/components/edit-history/copy";
+import { EMPTY_FILTERS, formatPageInfo, type HistoryFilters, type OperationFilter } from "@/components/edit-history/edit-history";
+import { useEditHistory } from "@/components/edit-history/useEditHistory";
 import type { EditHistoryRecord } from "@/contracts/edit-history";
 
 export default function GlobalEditHistoryPage() {

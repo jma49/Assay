@@ -7,10 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useLanguage } from "@/components/common/LanguageProvider";
-import { editHistoryCopy, type EditHistoryCopy } from "@/components/business/edit-history/copy";
-import { EMPTY_FILTERS, fieldLabel, formatChangeValue, historyDescription } from "@/components/business/edit-history/edit-history";
-import { OperationBadge, OperationIcon } from "@/components/business/edit-history/OperationBadge";
-import { useEditHistory } from "@/components/business/edit-history/useEditHistory";
+import { editHistoryCopy, type EditHistoryCopy } from "@/components/edit-history/copy";
+import { EMPTY_FILTERS, fieldLabel, formatChangeValue, historyDescription } from "@/components/edit-history/edit-history";
+import { OperationBadge, OperationIcon } from "@/components/edit-history/OperationBadge";
+import { useEditHistory } from "@/components/edit-history/useEditHistory";
 import type { EditHistoryRecord } from "@/contracts/edit-history";
 import { formatDateTime } from "@/lib/utils/datetime";
 

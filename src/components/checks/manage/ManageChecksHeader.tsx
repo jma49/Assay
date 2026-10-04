@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
-import type { CheckDefinition } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/runs/types";
 import type { Language } from "./check-form";
 import { manageCopy } from "./copy";
 

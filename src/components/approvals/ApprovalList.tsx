@@ -3,7 +3,7 @@
 import { EmptyState } from "@/components/common/EmptyState";
 import { Pagination } from "@/components/common/Pagination";
 import { SkeletonCardList } from "@/components/common/PageSkeletons";
-import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
+import { ITEMS_PER_PAGE } from "@/components/runs/types";
 import { paginationCopy } from "@/components/common/pagination-copy";
 import { describePage } from "@/lib/utils/pagination";
 import { ApprovalCard } from "./ApprovalCard";

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { apiErrorText } from "@/client/api-errors";
 import { sendJson } from "@/client/send-json";
-import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
+import { ITEMS_PER_PAGE } from "@/components/runs/types";
 import {
   approvalMessages,
   clampPage,

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { currentGuestId, isValidEmailDomain } from "@/lib/auth/auth-utils";
 import { auth } from "@/lib/auth/server";
 import Dashboard from "@/components/layout/Dashboard";
-import { searchLinkOf } from "@/components/business/dashboard/runs/runs";
+import { searchLinkOf } from "@/components/runs/history/runs";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 
 export const dynamic = "force-dynamic";

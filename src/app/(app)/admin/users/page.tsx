@@ -8,19 +8,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UserRole } from "@/lib/types/approval";
 import { useLanguage } from '@/components/common/LanguageProvider';
-import { ITEMS_PER_PAGE } from '@/components/business/dashboard/types';
+import { ITEMS_PER_PAGE } from '@/components/runs/types';
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Pagination } from "@/components/common/Pagination";
 import { paginationCopy } from "@/components/common/pagination-copy";
 import { SkeletonPageHeader, SkeletonStatStrip, SkeletonTable } from "@/components/common/PageSkeletons";
 import { APP_CONTAINER } from "@/components/layout/app-container";
-import { AddRoleDialog } from "@/components/business/users/AddRoleDialog";
-import { MembersTable } from "@/components/business/users/MembersTable";
-import { RoleStats } from "@/components/business/users/RoleStats";
-import { usersCopy } from "@/components/business/users/copy";
-import { countByRole, pageSlice } from "@/components/business/users/members";
-import { useMemberRoles } from "@/components/business/users/useMemberRoles";
+import { AddRoleDialog } from "@/components/users/AddRoleDialog";
+import { MembersTable } from "@/components/users/MembersTable";
+import { RoleStats } from "@/components/users/RoleStats";
+import { usersCopy } from "@/components/users/copy";
+import { countByRole, pageSlice } from "@/components/users/members";
+import { useMemberRoles } from "@/components/users/useMemberRoles";
 import { formatPageInfo } from "@/lib/utils/pagination";
 
 export default function AdminUsersPage() {

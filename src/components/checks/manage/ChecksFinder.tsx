@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Activity, Edit, History, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { CheckDefinition } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/runs/types";
 import { cn } from "@/lib/utils/utils";
 import { scheduleLabel } from "@/components/checks/status";
 import { listKeyHandler } from "./list-keys";

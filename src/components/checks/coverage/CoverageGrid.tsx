@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { CheckDefinition } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/runs/types";
 import type { CoverageReport } from "@/lib/coverage/coverage";
 import { cn } from "@/lib/utils/utils";
 import { useApi } from "@/client/use-api";

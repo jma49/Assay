@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { apiErrorText } from "@/client/api-errors";
 import { apiErrorCode, sendJson } from "@/client/send-json";
-import type { CheckDefinition } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/runs/types";
 import type { CheckFormData } from "./CheckMetadataForm";
 import { newCheckTemplate } from "./sql-template";
 import {
