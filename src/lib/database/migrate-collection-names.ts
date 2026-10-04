@@ -1,6 +1,6 @@
 import type { Db } from "mongodb";
 import { COLLECTIONS } from "./collections";
-import { logWarn } from "@/server/logging/log";
+import { logWarn } from "@/lib/logging/log";
 
 /** Collections that were renamed, as [old name, new name]. */
 export const RENAMED_COLLECTIONS: readonly (readonly [string, string])[] = [

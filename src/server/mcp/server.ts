@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/server";
 import { ApiError } from "@/server/http/route";
 import type { McpCaller } from "./caller";
 import { toolsFor, type ToolDeps } from "./tools";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 
 const MCP_SERVER_INFO = { name: "assay", version: "1.0.0" };
 
@@ -10,7 +10,7 @@ const MCP_SERVER_INFO = { name: "assay", version: "1.0.0" };
 function errorText(error: unknown): string {
   if (error instanceof ApiError) return error.message;
   if (error instanceof Error && /^No (check|run) with id/.test(error.message)) return error.message;
-  logError("[MCP] Tool failed", { error: error });
+  logError("[MCP] Tool failed", { error });
   return "Something went wrong running this tool.";
 }
 

@@ -6,7 +6,7 @@ import { appUrl } from "@/server/integrations/config";
 import { checkState, finishInstall, OAUTH_NONCE_COOKIE, type OAuthKind } from "@/server/integrations/oauth";
 import { CHANNELS } from "@/server/notify/channels";
 import { saveDestination } from "@/server/services/destinations";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 import { serverEnv } from "@/lib/config/env";
 
 const SETTINGS = "/settings/notifications";
@@ -43,7 +43,7 @@ export const GET = withAuth<{ provider: string }>(Permission.NOTIFICATION_MANAGE
     });
     return back({ connected: destination.id });
   } catch (error) {
-    logError(`[Integrations] ${kind} install failed`, { error: error });
+    logError(`[Integrations] ${kind} install failed`, { error });
     return back({ error: "exchange", provider: kind });
   }
 });

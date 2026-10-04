@@ -1,6 +1,6 @@
 import { generateText, type LanguageModel } from "ai";
 import { aiModel, gatewayOptions } from "@/lib/ai/model";
-import { logInfo } from "@/server/logging/log";
+import { logInfo } from "@/lib/logging/log";
 
 /**
  * Plain-text generation through AI Gateway. The SDK retries transient

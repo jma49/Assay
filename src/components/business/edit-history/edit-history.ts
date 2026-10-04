@@ -1,5 +1,5 @@
 import { describePage } from "@/lib/utils/pagination";
-import type { EditHistoryFilter, EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
+import type { EditHistoryFilter, EditHistoryRecord } from "@/contracts/edit-history";
 
 export type Translate = (key: string) => string;
 export type OperationFilter = NonNullable<EditHistoryFilter["operation"]>;

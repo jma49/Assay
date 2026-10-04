@@ -11,12 +11,12 @@ import { getCachedSchema } from "@/lib/database/db-schema";
 import { profileRows } from "@/lib/ai/row-profile";
 import { triageRun, type Triage } from "@/lib/ai/triage";
 import { aiModel } from "@/lib/ai/model";
-import { COLLECTIONS } from "@/lib/database/collections";
 import { findRun, saveTriage } from "@/server/repos/runs";
 import { sourceIdOf } from "@/domain/data-source";
 import { UnknownDataSourceError } from "@/server/datasource/registry";
 import { resolveSource } from "@/server/datasource/sources";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
+import { findCheckFields } from "@/server/repos/checks";
 
 const Body = z.object({
   resultId: z.string().refine((id) => ObjectId.isValid(id), "Invalid run id"),
@@ -49,9 +49,7 @@ export const POST = withAuth(Permission.HISTORY_READ, async (request, { principa
   await guardAiRequest(principal.id, { errorMessage: message });
 
   const scriptId = String(run.checkId ?? "");
-  const script = await db
-    .collection(COLLECTIONS.checks)
-    .findOne({ scriptId }, { projection: { name: 1, description: 1, sqlContent: 1, dataSourceId: 1 } });
+  const script = await findCheckFields(db, scriptId, ["name", "description", "sqlContent", "dataSourceId"]);
   const rows = storedSample(run);
   // The schema of the source the check runs against; a source deleted since leaves triage without one.
   const schema = await resolveSource(sourceIdOf(script)).then(getCachedSchema, (error: unknown) => {
@@ -71,7 +69,7 @@ export const POST = withAuth(Permission.HISTORY_READ, async (request, { principa
       { userId: principal.id },
     );
   } catch (error) {
-    logError("[AI triage] The model call failed", { error: error });
+    logError("[AI triage] The model call failed", { error });
     throw aiError(error);
   }
 

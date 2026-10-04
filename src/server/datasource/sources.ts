@@ -7,7 +7,7 @@ import { findSourceRecord } from "@/server/repos/data-source-store";
 import { clientConfig, parseConnectionString } from "./connection";
 import { defaultPostgresSource } from "./postgres";
 import { createSourceRegistry, type ResolvedSource, type SourceRecord, type SourceRegistry } from "./registry";
-import { logInfo } from "@/server/logging/log";
+import { logInfo } from "@/lib/logging/log";
 import { serverEnv } from "@/lib/config/env";
 
 type Env = Record<string, string | undefined>;

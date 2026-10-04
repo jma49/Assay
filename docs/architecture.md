@@ -34,6 +34,17 @@ today's code. Each phase ships on its own and keeps the app working.
 
 ## Module layout
 
+Dependencies point one way, and ESLint (`no-restricted-imports` in
+`eslint.config.mjs`) refuses the others:
+
+- `domain` imports nothing from the app: no `server`, `lib`, `app`,
+  `components`, `next` or database drivers.
+- `lib` does not import `server`, `app` or `components`.
+- `components` and `client` do not import `server` or the server-only parts
+  of `lib` (database, auth server, workflows).
+- API routes do not call `db.collection(...)`: data access lives in
+  `server/services` and `server/repos`.
+
 ```
 src/
   domain/        Pure types and rules: run outcome, check state, diffs,
@@ -52,18 +63,18 @@ src/
                  (private hosts, TLS, DNS rebinding).
     notify/      Channels (Slack, Discord, Telegram, Feishu, WeCom, webhook)
                  and sending.
-    net/         SSRF guard: public-address checks and a pinned fetch, for
-                 webhooks and CIMD client metadata (data sources reuse the
-                 address check).
     integrations/ OAuth installs and chat-app callbacks.
     mcp/         MCP server: caller, tools, permissions.
     http/        withAuth, ApiError, the AI guard and route helpers.
     crypto/      Sealed secrets (AES-256-GCM): channel secrets and data
                  source connection strings.
     concurrency/ Semaphore for bounded parallel runs.
-  lib/           Older shared code: auth (Better Auth, RBAC), database
-                 (Mongo client, indexes, Postgres pool), SQL validation,
-                 edit history and version records, cache, utilities.
+  lib/           Infrastructure: config (the env registry, serverEnv), logging
+                 (structured JSON logs), net (SSRF guard: public-address
+                 checks and a pinned fetch), auth (Better Auth, RBAC),
+                 database (Mongo client, indexes, Postgres pool), SQL
+                 validation, edit history and version records, cache,
+                 utilities.
   contracts/     API input and output types shared with the client; check
                  input, alerting and notifications are zod schemas, the
                  others (activity, checks, runs, schema) plain types.
@@ -77,7 +88,7 @@ src/
     business/    Views carried over from the first version, each split into
                  a pure module (tested), a data hook and section components:
                  analysis, approvals, dashboard (run panel), edit-history,
-                 scripts, users, ai.
+                 users, ai.
 scripts/         CLIs (seed, run checks, migrations) calling the same code.
 ```
 

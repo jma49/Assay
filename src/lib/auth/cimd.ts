@@ -1,6 +1,6 @@
 import type { CimdOptions } from "@better-auth/cimd";
 import { fetchClientMetadataResource } from "@better-auth/cimd/node";
-import { assertPublicHost, type Resolver } from "@/server/net/safe-url";
+import { assertPublicHost, type Resolver } from "@/lib/net/safe-url";
 
 /**
  * Client ID Metadata Documents (MCP 2026-07-28): a client names itself with

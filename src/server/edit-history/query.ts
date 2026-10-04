@@ -4,7 +4,7 @@ import { maxPage } from "@/server/http/paging";
 const SORT_FIELDS = { operationTime: "operationTime", scriptName: "searchableScriptName", author: "searchableAuthor" } as const;
 const OPERATIONS = ["create", "update", "delete"] as const;
 
-interface EditHistoryQuery {
+export interface EditHistoryQuery {
   filter: Record<string, unknown>;
   sort: Record<string, 1 | -1>;
   page: number;

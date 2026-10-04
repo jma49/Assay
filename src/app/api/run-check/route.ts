@@ -8,8 +8,8 @@ import { consumeQuota } from "@/lib/security/ai-guard";
 import { clientIp, demoRunBudgets, isDemoMode, runAccess } from "@/lib/security/demo-sandbox";
 import { dispatchAfterResponse } from "@/server/services/notify-deps";
 import { runCheckNow, toExecutionResult } from "@/server/services/run-check-deps";
-import { COLLECTIONS } from "@/lib/database/collections";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
+import { findCheckFields } from "@/server/repos/checks";
 
 // Runs checks (or sends their alerts): the Hobby plan's limit, FUNCTION_MAX_DURATION_S in
 // run-check-deps.ts. CHECK_TIMEOUT_MS and batch deadlines are sized to finish inside it.
@@ -26,7 +26,7 @@ const Body = z.object({ scriptId: z.string().min(1) });
  */
 async function assertDemoRunAllowed(principal: Principal, scriptId: string, headers: Headers): Promise<void> {
   const db = await getMongoDbClient().getDb();
-  const script = await db.collection(COLLECTIONS.checks).findOne({ scriptId }, { projection: { demoSeed: 1 } });
+  const script = await findCheckFields(db, scriptId, ["demoSeed"]);
   if (runAccess({ canExecute: false, demoMode: true, demoSeed: script?.demoSeed }) === "forbidden") {
     throw new ApiError(403, "demo_samples_only", "In the demo, viewers can run the sample checks only");
   }
@@ -35,7 +35,7 @@ async function assertDemoRunAllowed(principal: Principal, scriptId: string, head
     try {
       quota = await consumeQuota(redis, budget.subject, Date.now(), budget.limit, DEMO_WINDOW_SECONDS, "demo-run");
     } catch (error) {
-      logError("[API] Demo run quota check failed", { error: error });
+      logError("[API] Demo run quota check failed", { error });
       throw new ApiError(503, "demo_busy", "The demo is busy; try again shortly");
     }
     if (!quota.allowed) {

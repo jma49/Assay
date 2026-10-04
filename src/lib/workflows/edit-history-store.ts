@@ -4,9 +4,9 @@ import {
   RecordEditHistoryParams,
   buildEditHistoryEntry,
 } from "./edit-history";
-import { EditHistoryRecord, ScriptSnapshot } from "./edit-history-schema";
+import { EditHistoryRecord, ScriptSnapshot } from "@/contracts/edit-history";
 import { COLLECTIONS } from "@/lib/database/collections";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 
 export interface EditHistoryActor {
   id: string;
@@ -96,7 +96,7 @@ export async function recordEditHistoryOnServer(
     await insertEditHistory({ ...entry, scriptId: params.scriptId, operation: params.operation, description: params.description, actor });
     return true;
   } catch (error) {
-    logError("Error recording edit history", { error: error });
+    logError("Error recording edit history", { error });
     return false;
   }
 }

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
+import type { EditHistoryRecord } from "@/contracts/edit-history";
 import {
   EMPTY_FILTERS,
   buildHistoryQuery,

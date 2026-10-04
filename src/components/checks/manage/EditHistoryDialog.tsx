@@ -11,7 +11,7 @@ import { DashboardTranslationKeys } from "@/components/business/dashboard/types"
 import { EMPTY_FILTERS, fieldLabel, formatChangeValue, historyDescription } from "@/components/business/edit-history/edit-history";
 import { OperationBadge, OperationIcon } from "@/components/business/edit-history/OperationBadge";
 import { useEditHistory } from "@/components/business/edit-history/useEditHistory";
-import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
+import type { EditHistoryRecord } from "@/contracts/edit-history";
 import { formatDateTime } from "@/lib/utils/datetime";
 
 type Translate = (key: DashboardTranslationKeys | string) => string;

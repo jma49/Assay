@@ -14,7 +14,7 @@ import { EditHistoryTable } from "@/components/business/edit-history/EditHistory
 import { EditHistoryToolbar } from "@/components/business/edit-history/EditHistoryToolbar";
 import { EMPTY_FILTERS, formatPageInfo, type HistoryFilters, type OperationFilter } from "@/components/business/edit-history/edit-history";
 import { useEditHistory } from "@/components/business/edit-history/useEditHistory";
-import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
+import type { EditHistoryRecord } from "@/contracts/edit-history";
 
 export default function GlobalEditHistoryPage() {
   const { language } = useLanguage();

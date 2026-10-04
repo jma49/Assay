@@ -3,7 +3,7 @@ import redis from "@/lib/cache/redis";
 import { aiEnabled } from "@/lib/ai/model";
 import { AI_INPUT_LIMITS, AI_REQUESTS_PER_HOUR, consumeQuota, findOversizedField, type CounterStore } from "@/lib/security/ai-guard";
 import { ApiError } from "./route";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 
 /**
  * Refuses an AI request by throwing an ApiError, or returns to go on: AI
@@ -27,7 +27,7 @@ export async function guardAiRequest(
   try {
     quota = await consumeQuota(store, userId, Date.now());
   } catch (error) {
-    logError("[AI guard] Rate limit check failed, allowing request", { error: error });
+    logError("[AI guard] Rate limit check failed, allowing request", { error });
     return;
   }
   if (!quota.allowed) {

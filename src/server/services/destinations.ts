@@ -7,7 +7,7 @@ import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
 import { open, seal } from "@/server/crypto/secret-box";
 import { ApiError } from "@/server/http/route";
 import { CHANNELS } from "@/server/notify/channels";
-import { HostNotFoundError, assertPublicHost } from "@/server/net/safe-url";
+import { HostNotFoundError, assertPublicHost } from "@/lib/net/safe-url";
 import { sendRequest } from "@/server/notify/send";
 import { URL_PROBLEM_MESSAGES, type DeliveryOutcome, type DestinationSecret } from "@/server/notify/types";
 import { COLLECTIONS } from "@/lib/database/collections";

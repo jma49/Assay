@@ -5,7 +5,7 @@ import pg, { Pool, type PoolClient, type PoolConfig, type QueryResult } from "pg
 import { pgConnection } from "./pg-connection";
 import { redactConnectionString } from "./redact-connection-string";
 import { inPublicCi } from "@/lib/utils/public-log";
-import { logError, logInfo } from "@/server/logging/log";
+import { logError, logInfo } from "@/lib/logging/log";
 import { serverEnv } from "@/lib/config/env";
 
 // BIGINT (OID 20) as strings: JavaScript numbers lose precision past 2^53 and JSON cannot hold BigInt.

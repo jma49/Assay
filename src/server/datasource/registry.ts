@@ -3,7 +3,7 @@ import { DEFAULT_SOURCE_ID } from "@/domain/data-source";
 import { readOnlyTransaction } from "@/lib/database/db";
 import { TtlCache } from "@/lib/cache/ttl-cache";
 import { postgresSource, type PostgresSource } from "./postgres";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 
 /** No source with this id: never added, deleted, or DATABASE_URL unset for `default`. */
 export class UnknownDataSourceError extends Error {
@@ -51,7 +51,7 @@ export function createSourceRegistry(deps: RegistryDeps) {
     const current = pools.get(sourceId);
     if (!current) return;
     pools.delete(sourceId);
-    current.pool.end().catch((error: unknown) => logError(`[db] Closing the pool of source ${sourceId} failed`, { error: error }));
+    current.pool.end().catch((error: unknown) => logError(`[db] Closing the pool of source ${sourceId} failed`, { error }));
   };
 
   async function recordOf(sourceId: string): Promise<SourceRecord | null> {

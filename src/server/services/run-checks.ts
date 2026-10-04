@@ -4,7 +4,7 @@ import { dueSlot } from "@/lib/scheduling/due-slot";
 import { createSemaphore } from "@/server/concurrency/semaphore";
 import type { RunCheckResult, RunTrigger } from "./run-check";
 import { COLLECTIONS } from "@/lib/database/collections";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 
 export type RunMode = "all" | "scheduled";
 
@@ -154,7 +154,7 @@ async function release(deps: RunChecksDeps, check: CheckCandidate, claim: string
     await deps.releaseSlot(check.scriptId, claim);
   } catch (error) {
     // The slot stays taken: the same outcome as before releasing existed.
-    logError(`[Scheduler] Could not release the slot of ${check.scriptId}`, { error: error });
+    logError(`[Scheduler] Could not release the slot of ${check.scriptId}`, { error });
   }
 }
 
@@ -164,7 +164,7 @@ async function complete(deps: RunChecksDeps, check: CheckCandidate, slot: Date, 
   } catch (error) {
     // The run already finished and was recorded; the claim goes stale and a
     // later trigger re-runs the slot, which alert dedup keeps quiet.
-    logError(`[Scheduler] Could not mark the slot of ${check.scriptId} completed`, { error: error });
+    logError(`[Scheduler] Could not mark the slot of ${check.scriptId} completed`, { error });
   }
 }
 

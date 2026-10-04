@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const logWarn = vi.fn();
 const logError = vi.fn();
-vi.mock("@/server/logging/log", () => ({ logWarn, logError }));
+vi.mock("@/lib/logging/log", () => ({ logWarn, logError }));
 
 const { checkStartupConfig } = await import("./startup-config");
 

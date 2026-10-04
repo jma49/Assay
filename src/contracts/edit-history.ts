@@ -1,5 +1,4 @@
-import { ObjectId } from "mongodb";
-
+/** One edit-history entry as GET /api/edit-history returns it. */
 export interface ScriptSnapshot {
   scriptId: string;
   name: string;
@@ -14,7 +13,7 @@ export interface ScriptSnapshot {
 }
 
 export interface EditHistoryRecord {
-  _id?: ObjectId;
+  _id?: string;
   operation: "create" | "update" | "delete";
   operationTime: Date;
   userId: string;

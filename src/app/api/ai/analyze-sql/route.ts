@@ -7,7 +7,7 @@ import { getCachedSchema } from "@/lib/database/db-schema";
 import { DataSourceId } from "@/contracts/data-sources";
 import { requireSource } from "@/server/services/data-sources";
 import { generateContentWithRetry, logTokenUsage } from "@/lib/utils/ai-utils";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 
 const Body = z.object({
   sql: z.string().min(1),
@@ -53,7 +53,7 @@ export const POST = withAuth(Permission.CHECK_CREATE, async (request, { principa
     logTokenUsage(prompt, analysis, `analyze-sql ${analysisType}`);
     return NextResponse.json({ analysis, analysisType, success: true });
   } catch (error) {
-    logError("[AI analyze SQL] The model call failed", { error: error });
+    logError("[AI analyze SQL] The model call failed", { error });
     throw aiError(error);
   }
 });
