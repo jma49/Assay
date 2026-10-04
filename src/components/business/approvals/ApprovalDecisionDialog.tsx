@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ApprovalSql } from "./ApprovalSql";
-import { approvalCopy, type ApprovalAction, type ApprovalRequest, type Language, type Translate } from "./approvals";
+import { approvalCopy, type ApprovalAction, type ApprovalRequest, type Language } from "./approvals";
 
 interface ApprovalDecisionDialogProps {
   open: boolean;
@@ -19,7 +19,6 @@ interface ApprovalDecisionDialogProps {
   submitting: boolean;
   onSubmit: () => void;
   language: Language;
-  t: Translate;
 }
 
 /**
@@ -36,7 +35,6 @@ export function ApprovalDecisionDialog({
   submitting,
   onSubmit,
   language,
-  t,
 }: ApprovalDecisionDialogProps) {
   const approving = action === "approve";
   const copy = approvalCopy(language);
@@ -47,7 +45,7 @@ export function ApprovalDecisionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{approving ? t("approveScript") : t("rejectScript")}</DialogTitle>
+          <DialogTitle>{approving ? copy.approveTitle : copy.rejectTitle}</DialogTitle>
           {approval && (
             <DialogDescription>
               {approval.scriptName} · <span className="font-mono">{approval.scriptId}</span>
@@ -69,7 +67,7 @@ export function ApprovalDecisionDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t("cancel")}
+            {copy.cancel}
           </Button>
           <Button
             variant={approving ? "default" : "destructive"}
@@ -77,7 +75,7 @@ export function ApprovalDecisionDialog({
             disabled={submitting || missingReason}
           >
             {submitting && <Loader2 className="size-4 animate-spin" />}
-            {approving ? t("approve") : t("reject")}
+            {approving ? copy.approve : copy.reject}
           </Button>
         </DialogFooter>
       </DialogContent>

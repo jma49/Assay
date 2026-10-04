@@ -4,9 +4,10 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { Pagination } from "@/components/common/Pagination";
 import { SkeletonCardList } from "@/components/common/PageSkeletons";
 import { ITEMS_PER_PAGE } from "@/components/business/dashboard/types";
+import { paginationCopy } from "@/components/common/pagination-copy";
 import { describePage } from "@/lib/utils/pagination";
 import { ApprovalCard } from "./ApprovalCard";
-import type { ApprovalAction, ApprovalRequest, Language, Translate } from "./approvals";
+import type { ApprovalAction, ApprovalRequest, Language } from "./approvals";
 import type { ApprovalPage } from "./useApprovals";
 
 interface ApprovalListProps {
@@ -15,13 +16,12 @@ interface ApprovalListProps {
   emptyTitle: string;
   emptyHint: string;
   language: Language;
-  t: Translate;
   actionLoading: string | null;
   onDecide: (approval: ApprovalRequest, action: ApprovalAction) => void;
 }
 
 /** One tab's cards plus its pagination footer. */
-export function ApprovalList({ list, hasLoaded, emptyTitle, emptyHint, language, t, actionLoading, onDecide }: ApprovalListProps) {
+export function ApprovalList({ list, hasLoaded, emptyTitle, emptyHint, language, actionLoading, onDecide }: ApprovalListProps) {
   return (
     <>
       {!hasLoaded ? (
@@ -34,7 +34,6 @@ export function ApprovalList({ list, hasLoaded, emptyTitle, emptyHint, language,
             key={approval.id}
             approval={approval}
             language={language}
-            t={t}
             busy={actionLoading === approval.id}
             onDecide={onDecide}
           />
@@ -44,7 +43,7 @@ export function ApprovalList({ list, hasLoaded, emptyTitle, emptyHint, language,
         <Pagination
           page={list.page}
           totalPages={list.totalPages}
-          pageInfo={describePage(t("pageInfo"), {
+          pageInfo={describePage(paginationCopy(language).pageInfo, {
             page: list.page,
             totalPages: list.totalPages,
             totalItems: list.totalItems,
