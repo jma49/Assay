@@ -69,8 +69,10 @@ export function RunAnatomy({ copy }: { copy: LandingCopy["run"] }) {
       });
 
       mm.add(`(min-width: 768px) and ${MOTION.reduced}`, () => {
+        // With reduced motion nothing waits for the scroll: the first step shows at once,
+        // so the section has the same height however and whenever the page is read.
         setTabs(true);
-        ScrollTrigger.create({ trigger: pinRef.current, start: "top 70%", once: true, onEnter: () => activate(0) });
+        activate(0);
         return () => setTabs(false);
       });
 
