@@ -58,6 +58,8 @@ describe("GET /api/batch-execution-status", () => {
     const res = await status("?executionId=nope");
     expect(res.status).toBe(404);
     expect((await res.json()).error.code).toBe("not_found");
+    // A deprecated route marks its errors too.
+    expect(res.headers.get("Deprecation")).toMatch(/^@\d+$/);
   });
 
   it("returns the batch's progress", async () => {
