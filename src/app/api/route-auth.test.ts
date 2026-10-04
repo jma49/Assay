@@ -13,6 +13,7 @@ const PUBLIC_ROUTES = new Map([
   ["health/route.ts", "public probe for uptime monitors; reports component states only"],
   ["mcp/route.ts", "MCP clients authenticate with an OAuth token or API key in the handler"],
   ["notifications/dispatch/route.ts", "the scheduled workflow calls it with the CRON_SECRET bearer"],
+  ["cron/run-scheduled/route.ts", "QStash signature or the CRON_SECRET bearer (isTrustedScheduler)"],
   ["integrations/slack/interactions/route.ts", "verifies Slack's request signature"],
   ["integrations/telegram/webhook/route.ts", "verifies Telegram's webhook secret token"],
 ]);

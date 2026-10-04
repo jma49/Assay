@@ -29,6 +29,7 @@ const isPublicRoute = matcher([
   "/api/auth/(.*)",
   // Machine callers that authenticate with their own shared secrets.
   "/api/notifications/dispatch",
+  "/api/cron/run-scheduled",
   "/api/integrations/telegram/webhook",
   "/api/integrations/slack/interactions",
   // Agents authenticate with an API key or OAuth token, checked by the route.

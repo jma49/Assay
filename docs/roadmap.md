@@ -64,6 +64,9 @@ Goal: No check, bug or leaked credential can write to the monitored database.
 
 Goal: A check scheduled every 30 minutes runs every 30 minutes.
 
+- Built: `POST /api/cron/run-scheduled`, called by a QStash schedule
+  (maintainer action: signing keys on Vercel and the schedule in QStash,
+  steps in `docs/deployment.md`).
 - GitHub runs the `*/30` cron about five times a day (2026-09-27 to
   2026-10-04: median gap 4.9 h, maximum 8.4 h), so short schedules run
   hours late. A trigger with a delivery guarantee calls the runner instead,

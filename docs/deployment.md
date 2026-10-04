@@ -83,8 +83,17 @@ certificate files (`sslrootcert`, `sslcert`, `sslkey`) are left to pg.
 OAuth callbacks are `<BETTER_AUTH_URL>/api/auth/callback/google` and
 `…/github`; set `BETTER_AUTH_URL` and `APP_URL` to the public URL.
 
-**Scheduled runs** come from `.github/workflows/sql-check-cron.yml` every 30
-minutes. It needs the repository secrets `DATABASE_URL`, `MONGODB_URI`,
+**Scheduled runs** are started on time by a QStash schedule that calls
+`POST /api/cron/run-scheduled` every 30 minutes (below). The endpoint accepts
+a QStash signature (`QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY`)
+or the `CRON_SECRET` bearer token, runs every check whose slot is due,
+defers checks that could not finish inside the function's 300 s, and sends
+alerts. It reports to its own Sentry Cron monitor, `scheduled-checks-trigger`
+(margin 15 minutes), created on its first call.
+
+The fallback is `.github/workflows/sql-check-cron.yml`, which asks for a run
+every 30 minutes; GitHub starts it hours late, so it only catches what the
+trigger missed. Slot claims keep the two from running a slot twice. It needs the repository secrets `DATABASE_URL`, `MONGODB_URI`,
 `APP_URL` and `CRON_SECRET` (plus the certificate URLs if PostgreSQL uses
 them, `ASSAY_SECRET_KEY` once checks use an added data source, and `SENTRY_DSN` for the check-ins below); `MONGODB_DB_NAME` and the run limits go in repository variables with
 the same values as the app. Without the secrets the workflow skips quietly.
@@ -107,6 +116,19 @@ GitHub disables scheduled workflows in a repository with no activity for 60
 days, and says so on the Actions tab. The stale heartbeat and the missed
 check-ins both show it; re-enable with
 `gh workflow enable sql-check-cron.yml`.
+
+**Setting up the QStash schedule** (once per deployment):
+
+1. In the [Upstash console](https://console.upstash.com/qstash), open QStash
+   and copy the current and next signing keys.
+2. Add them to the host as `QSTASH_CURRENT_SIGNING_KEY` and
+   `QSTASH_NEXT_SIGNING_KEY` (on Vercel: Production, then redeploy).
+3. In QStash → Schedules, create a schedule: destination
+   `<APP_URL>/api/cron/run-scheduled` (exactly the `APP_URL` origin; the
+   signature covers the URL), cron `*/30 * * * *`, method POST.
+4. Check the first call under QStash → Logs: status 200 with counts such
+   as `{"ran":1,"failed":0,"deferred":0,"skipped":4}`. A 401 means the keys
+   or the URL do not match.
 
 Keep MongoDB backups current: the [backup and restore runbook](backup-restore.md)
 covers what is backed up, the schedule, and the restore procedure.
