@@ -21,7 +21,7 @@ const editable = {
   dataSourceId: DataSourceId.optional(),
 };
 
-/** POST /api/scripts: a new check. Unknown fields (createdBy, demoSeed, …) are dropped. */
+/** POST /api/checks: a new check. Unknown fields (createdBy, demoSeed, …) are dropped. */
 export const NewCheckInput = z.object({
   scriptId: z
     .string()
@@ -31,7 +31,7 @@ export const NewCheckInput = z.object({
 export type NewCheckInput = z.infer<typeof NewCheckInput>;
 
 /**
- * PUT /api/scripts/[scriptId]: the fields to change, and the `version` the
+ * PUT /api/checks/[scriptId]: the fields to change, and the `version` the
  * edit started from (checked separately, so a missing one answers 428).
  */
 export const CheckEditInput = z.object({

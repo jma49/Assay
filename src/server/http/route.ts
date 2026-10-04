@@ -60,7 +60,7 @@ export async function parseJson<T>(request: Request, schema: ZodType<T>): Promis
   return schema.parse(body);
 }
 
-type Handler<P> = (request: NextRequest, context: { principal: Principal; params: P }) => Promise<Response>;
+export type RouteHandler<P> = (request: NextRequest, context: { principal: Principal; params: P }) => Promise<Response>;
 
 /**
  * Who may call a route:
@@ -110,7 +110,7 @@ function requestIdOf(request: NextRequest): string {
  */
 export function withAuth<P extends Record<string, string | string[]> = Record<string, string>>(
   access: Access,
-  handler: Handler<P>,
+  handler: RouteHandler<P>,
 ) {
   return async (request: NextRequest, context: { params: Promise<P> }) => {
     try {

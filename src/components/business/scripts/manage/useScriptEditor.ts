@@ -76,8 +76,8 @@ export function useScriptEditor(language: Language, t: Translate, reload: () => 
     try {
       const body =
         mode === "add"
-          ? await sendJson<SaveResponse>("/api/scripts", "POST", createPayload(form, sql))
-          : await sendJson<SaveResponse>(`/api/scripts/${form.scriptId}`, "PUT", updatePayload(form, sql, initialSql));
+          ? await sendJson<SaveResponse>("/api/checks", "POST", createPayload(form, sql))
+          : await sendJson<SaveResponse>(`/api/checks/${form.scriptId}`, "PUT", updatePayload(form, sql, initialSql));
 
       setIsOpen(false);
       if (body.requiresApproval) {

@@ -80,11 +80,12 @@ export function parsePagination(body: unknown): HistoryPagination | null {
   return { total, totalCapped: totalCapped === true, totalPages, hasNext, hasPrev };
 }
 
-/** The checks in a GET /api/scripts body, by name (the order the Run sheet lists and preselects them in). */
+/** The checks in a GET /api/checks?view=definitions body, by name (the order the Run sheet lists and preselects them in). */
 export function parseScriptList(body: unknown): ScriptInfo[] {
-  if (!Array.isArray(body)) return [];
+  const checks = (body as { checks?: unknown } | null)?.checks;
+  if (!Array.isArray(checks)) return [];
   // Plain code-unit order, as MongoDB sorts names.
-  return [...(body as ScriptInfo[])].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  return [...(checks as ScriptInfo[])].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
 }
 
 /** Earliest next run across scheduled checks. */
