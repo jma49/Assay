@@ -11,7 +11,7 @@ import { getMongoDbClient } from "@/lib/database/mongodb";
 import { runCheckNow } from "@/server/services/run-check-deps";
 import { mongoRunChecksStore, runChecks } from "@/server/services/run-checks";
 import { errorKind, inPublicCi } from "@/lib/utils/public-log";
-import { parseRunArgs, USAGE } from "./lib/run-args";
+import { parseRunArgs, recordsHeartbeat, USAGE } from "./lib/run-args";
 import { recordHeartbeat, SCHEDULER_NAME } from "@/server/repos/heartbeat-store";
 import { reportLine, resultDetail } from "./lib/run-report";
 
@@ -29,17 +29,16 @@ async function main() {
 
   const publicLog = inPublicCi();
   const mongo = await getMongoDbClient().getDb();
-  if (args.kind !== "one" && !args.dryRun) {
+  if (recordsHeartbeat(args)) {
     // The scheduler's heartbeat: /api/health reports the scheduler as stale
-    // when no run started in the last 90 minutes, so a dead schedule is visible.
-    // One-off manual runs do not count: they must not mask a dead schedule.
+    // when no scheduled run started in the last 90 minutes.
     try {
-      await recordHeartbeat(mongo, SCHEDULER_NAME, { runId: process.env.GITHUB_RUN_ID, mode: args.mode });
+      await recordHeartbeat(mongo, SCHEDULER_NAME, { runId: process.env.GITHUB_RUN_ID, mode: "scheduled" });
     } catch (error) {
       // A failed heartbeat must not cancel the scheduled checks: when Mongo
       // is truly down the checks fail on their own below. Public CI logs get
       // the error's type only; its text can hold hosts or credentials.
-      console.error("[Scheduler] Could not record the heartbeat:", inPublicCi() ? errorKind(error) : error);
+      console.error("[Scheduler] Could not record the heartbeat:", publicLog ? errorKind(error) : error);
     }
   }
   try {
