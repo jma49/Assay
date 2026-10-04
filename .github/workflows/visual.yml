@@ -129,6 +129,14 @@ jobs:
           VISUAL_BASE_URL: http://localhost:3102
         run: npx playwright test
 
+      # After the comparison, so the runs these tests start cannot change its screenshots.
+      - name: Behaviour tests
+        if: ${{ !cancelled() }}
+        working-directory: head
+        env:
+          E2E_BASE_URL: http://localhost:3102
+        run: npm run e2e
+
       - name: Report server errors
         if: failure()
         run: |
