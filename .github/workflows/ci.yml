@@ -68,3 +68,40 @@ jobs:
           name: sbom-${{ github.sha }}
           path: ${{ runner.temp }}/sbom.cdx.json
           retention-days: 90
+
+  # package.json allows Node >=22.19; verify runs on 24 (Vercel's runtime). Keep the
+  # lower bound honest without doubling the required job.
+  node-22:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.19"
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  # Commit messages follow Conventional Commits (AGENTS.md); merge commits are GitHub's own.
+  commits:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Conventional commit messages
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          bad=$(git log --no-merges --format=%s "$BASE..$HEAD" | grep -vE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9/._-]+\))?!?: .+' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::These commit subjects do not follow Conventional Commits (type(scope): summary):"
+            echo "$bad"
+            exit 1
+          fi

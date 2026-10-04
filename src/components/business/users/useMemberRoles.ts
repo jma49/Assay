@@ -62,7 +62,7 @@ export function useMemberRoles(language: string, t: (key: DashboardTranslationKe
   // No need to wait for the session: the proxy already guarantees a
   // signed-in user and the API checks the admin permission on the server.
   useEffect(() => {
-    loadMembers();
+    void loadMembers();
   }, [loadMembers]);
 
   /** Resolves true when the role was saved, so the dialog can close and reset. */
@@ -80,7 +80,7 @@ export function useMemberRoles(language: string, t: (key: DashboardTranslationKe
       toast.success(
         zh ? `用户 ${assignment.email} 的角色已设置为 ${label}` : `${assignment.email} is now ${label}`,
       );
-      loadMembers();
+      void loadMembers();
       return true;
     } catch (err) {
       console.error("[members] Assigning a role failed:", err);
@@ -98,7 +98,7 @@ export function useMemberRoles(language: string, t: (key: DashboardTranslationKe
       await postRole({ userId, email, role }, failed);
       const label = getRoleInfo(role, t).label;
       toast.success(zh ? `用户 ${email} 的角色已修改为 ${label}` : `${email} is now ${label}`);
-      loadMembers();
+      void loadMembers();
     } catch (err) {
       console.error("[members] Changing a role failed:", err);
       toast.error(apiErrorText(err, zh ? "zh" : "en", failed));
@@ -118,7 +118,7 @@ export function useMemberRoles(language: string, t: (key: DashboardTranslationKe
       await sendJson(`/api/users/roles?userId=${userId}`, "DELETE", undefined, failed);
 
       toast.success(zh ? `用户 ${email} 的角色已删除` : `Removed the role from ${email}`);
-      loadMembers();
+      void loadMembers();
     } catch (err) {
       console.error("[members] Removing a role failed:", err);
       toast.error(apiErrorText(err, zh ? "zh" : "en", failed));

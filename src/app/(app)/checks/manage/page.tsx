@@ -28,8 +28,8 @@ const ManageScriptsContent = () => {
   const t = useDashboardT<string>();
 
   const { scripts, isLoading, error, reload } = useCheckList();
-  const editor = useCheckEditor(language, t, reload);
-  const deletion = useCheckDelete(language, t, reload);
+  const editor = useCheckEditor(language, t, () => void reload());
+  const deletion = useCheckDelete(language, t, () => void reload());
 
   // Links from runs and coverage select a check (?scriptId=); editing stays one click away.
   const linkedScriptId = searchParams.get("scriptId");

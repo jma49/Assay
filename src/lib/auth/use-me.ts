@@ -32,7 +32,7 @@ export function useMe(): Me | null {
   const [me, setMe] = useState<Me | null>(null);
   useEffect(() => {
     let active = true;
-    loadMe().then((value) => active && setMe(value));
+    void loadMe().then((value) => active && setMe(value));
     return () => {
       active = false;
     };

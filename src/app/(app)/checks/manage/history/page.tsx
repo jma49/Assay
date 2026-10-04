@@ -30,12 +30,12 @@ export default function GlobalEditHistoryPage() {
   const changeOperation = (operation: OperationFilter) => {
     const next = { ...filters, operation };
     setFilters(next);
-    fetchHistories(next, 1);
+    void fetchHistories(next, 1);
   };
 
   const resetFilters = () => {
     setFilters(EMPTY_FILTERS);
-    fetchHistories(EMPTY_FILTERS, 1);
+    void fetchHistories(EMPTY_FILTERS, 1);
   };
 
   const viewDetails = (history: EditHistoryRecord) => {
