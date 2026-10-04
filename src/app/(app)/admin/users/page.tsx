@@ -8,16 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { UserRole } from "@/lib/types/approval";
 import { useLanguage } from '@/components/common/LanguageProvider';
-import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { ITEMS_PER_PAGE } from '@/components/business/dashboard/types';
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Pagination } from "@/components/common/Pagination";
+import { paginationCopy } from "@/components/common/pagination-copy";
 import { SkeletonPageHeader, SkeletonStatStrip, SkeletonTable } from "@/components/common/PageSkeletons";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import { AddRoleDialog } from "@/components/business/users/AddRoleDialog";
 import { MembersTable } from "@/components/business/users/MembersTable";
 import { RoleStats } from "@/components/business/users/RoleStats";
+import { usersCopy } from "@/components/business/users/copy";
 import { countByRole, pageSlice } from "@/components/business/users/members";
 import { useMemberRoles } from "@/components/business/users/useMemberRoles";
 import { formatPageInfo } from "@/lib/utils/pagination";
@@ -28,9 +29,9 @@ export default function AdminUsersPage() {
   const { language } = useLanguage();
   const [currentPage, setCurrentPage] = useState(1);
 
-  const t = useDashboardT();
+  const copy = usersCopy(language);
 
-  const { members, error, hasLoaded, actionLoading, assignRole, changeRole, removeRole } = useMemberRoles(language, t);
+  const { members, error, hasLoaded, actionLoading, assignRole, changeRole, removeRole } = useMemberRoles(language);
 
   useEffect(() => {
     if (isLoaded && !user) {
@@ -72,19 +73,19 @@ export default function AdminUsersPage() {
               : `${totalUsers} ${totalUsers === 1 ? "member" : "members"} · ${roleCounts[UserRole.ADMIN]} ${roleCounts[UserRole.ADMIN] === 1 ? "admin" : "admins"}`}
           </WindowStatusBar>
           <PageHeader
-            title={t('userManagementTitle')}
-            description={t('userManagementDesc')}
+            title={copy.title}
+            description={copy.description}
             actions={
-              <AddRoleDialog language={language} t={t} isSaving={actionLoading === 'assign'} onAssign={assignRole} />
+              <AddRoleDialog language={language} isSaving={actionLoading === 'assign'} onAssign={assignRole} />
             }
           />
 
-          <RoleStats counts={roleCounts} t={t} label={language === "zh" ? "按角色统计的成员" : "Members by role"} />
+          <RoleStats counts={roleCounts} language={language} label={language === "zh" ? "按角色统计的成员" : "Members by role"} />
 
           <Card className="relative overflow-hidden gap-0 py-0">
             <CardHeader className="relative border-b px-6 py-4">
               <CardTitle>
-                {t('userList')} <span className="text-muted-foreground tabular-nums">{totalUsers}</span>
+                {copy.userList} <span className="text-muted-foreground tabular-nums">{totalUsers}</span>
               </CardTitle>
             </CardHeader>
 
@@ -98,7 +99,6 @@ export default function AdminUsersPage() {
                 <MembersTable
                   members={page.items}
                   language={language}
-                  t={t}
                   actionLoading={actionLoading}
                   onChangeRole={changeRole}
                   onRemoveRole={removeRole}
@@ -110,7 +110,7 @@ export default function AdminUsersPage() {
               <Pagination
                 page={page.page}
                 totalPages={page.totalPages}
-                pageInfo={formatPageInfo(t("pageInfo"), {
+                pageInfo={formatPageInfo(paginationCopy(language).pageInfo, {
                   start: page.start,
                   end: page.end,
                   totalItems: totalUsers,

@@ -13,12 +13,11 @@ const member = (userId: string, role: UserRole): MemberRole => ({
 });
 
 describe("getRoleInfo", () => {
-  it("labels each role through the translator", () => {
-    const t = (key: string) => `<${key}>`;
-    expect(getRoleInfo(UserRole.ADMIN, t).label).toBe("<adminRole>");
-    expect(getRoleInfo(UserRole.MANAGER, t).description).toBe("<managerDesc>");
-    expect(getRoleInfo(UserRole.DEVELOPER, t).label).toBe("<developerRole>");
-    expect(getRoleInfo(UserRole.VIEWER, t).label).toBe("<viewerRole>");
+  it("labels each role in the given language", () => {
+    expect(getRoleInfo(UserRole.ADMIN, "en").label).toBe("System administrator");
+    expect(getRoleInfo(UserRole.MANAGER, "en").description).toBe("Manage checks, approve changes, assign roles");
+    expect(getRoleInfo(UserRole.DEVELOPER, "zh").label).toBe("开发者");
+    expect(getRoleInfo(UserRole.VIEWER, "zh").label).toBe("查看者");
   });
 });
 
