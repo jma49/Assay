@@ -9,7 +9,7 @@ import { UnknownDataSourceError, type ResolvedSource } from "@/server/datasource
 import { allowPrivateSources, forgetSource, resolveSource } from "@/server/datasource/sources";
 import { probeConnection, TEST_TIMEOUT_MS, type ConnectionProbe } from "@/server/datasource/test-connection";
 import { ApiError } from "@/server/http/route";
-import type { Resolver } from "@/server/net/safe-url";
+import type { Resolver } from "@/lib/net/safe-url";
 import {
   checkCountsBySource,
   countChecksUsing,

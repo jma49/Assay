@@ -12,10 +12,10 @@ export default defineConfig([
     },
   },
   {
-    // Server code logs through src/server/logging/log.ts: JSON lines with the
+    // Server code logs through src/lib/logging/log.ts: JSON lines with the
     // request id, sensitive keys and URL credentials redacted.
     files: ["src/server/**/*.ts", "src/app/api/**/*.ts", "src/lib/database/**/*.ts", "src/lib/auth/**/*.ts", "src/lib/workflows/**/*.ts"],
-    ignores: ["**/*.test.ts", "src/server/logging/log.ts"],
+    ignores: ["**/*.test.ts", "src/lib/logging/log.ts"],
     rules: { "no-console": "error" },
   },
   {
@@ -36,6 +36,45 @@ export default defineConfig([
       "no-restricted-properties": [
         "error",
         { object: "process", property: "env", message: "Read the environment through serverEnv() from @/lib/config/env, and declare new variables there." },
+      ],
+    },
+  },
+  // Layering (docs/architecture.md, Module layout): dependencies point one way.
+  {
+    files: ["src/domain/**/*.ts"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [
+        { group: ["@/server/*", "@/lib/*", "@/app/*", "@/components/*", "@/client/*"], message: "src/domain is pure: no app modules." },
+        { group: ["next", "next/*", "mongodb", "pg", "react"], message: "src/domain is pure: no frameworks or drivers." },
+      ] }],
+    },
+  },
+  {
+    files: ["src/lib/**/*.ts", "src/lib/**/*.tsx"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [
+        { group: ["@/server/*", "@/app/*", "@/components/*"], message: "src/lib is infrastructure: it must not depend on server, app or components." },
+      ] }],
+    },
+  },
+  {
+    files: ["src/components/**/*.ts", "src/components/**/*.tsx", "src/client/**/*.ts", "src/client/**/*.tsx"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [
+        {
+          group: ["@/server/*", "@/lib/database/*", "@/lib/auth/server", "@/lib/workflows/*", "@/lib/logging/*", "@/lib/config/env"],
+          message: "Browser code cannot import server-only modules; go through an API route and @/contracts.",
+        },
+      ] }],
+    },
+  },
+  {
+    // Routes are thin adapters: data access lives in src/server/services and src/server/repos.
+    files: ["src/app/**/route.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        { selector: "CallExpression[callee.property.name='collection']", message: "Routes do not query MongoDB; call a service or repo in src/server." },
       ],
     },
   },

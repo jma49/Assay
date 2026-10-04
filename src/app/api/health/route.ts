@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkHealth } from "@/server/health/checks";
-import { REQUEST_ID_HEADER, runWithRequestId } from "@/server/logging/log";
+import { REQUEST_ID_HEADER, runWithRequestId } from "@/lib/logging/log";
 
 /** Never cached: a probe must reflect the current state. */
 export const dynamic = "force-dynamic";

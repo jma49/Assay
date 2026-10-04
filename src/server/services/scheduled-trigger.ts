@@ -2,7 +2,7 @@ import * as Sentry from "@sentry/nextjs";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { recordHeartbeat, SCHEDULER_NAME } from "@/server/repos/heartbeat-store";
 import { errorKind } from "@/lib/utils/public-log";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 import { dispatchNow } from "@/server/services/notify-deps";
 import { checkTimeoutMs, DISPATCH_RESERVE_MS, FUNCTION_MAX_DURATION_S, RUN_OVERHEAD_MS, runCheckNow } from "@/server/services/run-check-deps";
 import { mongoRunChecksStore, runChecks, type CheckRunReport } from "@/server/services/run-checks";

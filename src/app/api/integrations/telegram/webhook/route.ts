@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { safeEqual } from "@/server/crypto/secret-box";
 import { handleUpdate, type TelegramUpdate } from "@/server/integrations/telegram";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 import { serverEnv } from "@/lib/config/env";
 
 /**
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     await handleUpdate(await getMongoDbClient().getDb(), update);
   } catch (error) {
     // Answer 200 anyway: Telegram would otherwise resend the same update forever.
-    logError("[Telegram] Could not handle an update", { error: error });
+    logError("[Telegram] Could not handle an update", { error });
   }
   return NextResponse.json({ ok: true });
 }

@@ -2,7 +2,7 @@ import type { Db, MongoClient } from "mongodb";
 import { ensureIndexes } from "./indexes";
 import { migrateCollectionNames } from "./migrate-collection-names";
 import { closeSharedMongoClient, mongoDatabaseName, sharedMongoClient } from "./mongo-connection";
-import { logInfo } from "@/server/logging/log";
+import { logInfo } from "@/lib/logging/log";
 
 const state = globalThis as unknown as {
   assayMongoReady?: Promise<MongoClient> | null;

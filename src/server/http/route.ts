@@ -4,7 +4,7 @@ import { ZodError, type ZodType } from "zod";
 import { GUEST_PERMISSIONS, validateApiAuth } from "@/lib/auth/auth-utils";
 import { requirePermission, type Permission, type UserRole } from "@/lib/auth/rbac";
 import { errorKind } from "@/lib/utils/public-log";
-import { REQUEST_ID_HEADER, logError, runWithRequestId } from "@/server/logging/log";
+import { REQUEST_ID_HEADER, logError, runWithRequestId } from "@/lib/logging/log";
 
 /** Who is calling a route: a signed-in user, or a demo guest where the route allows one. */
 export interface Principal {

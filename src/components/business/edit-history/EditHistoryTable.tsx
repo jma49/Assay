@@ -3,7 +3,7 @@ import { SkeletonTable } from "@/components/common/PageSkeletons";
 import { formatDateTime } from "@/lib/utils/datetime";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
+import type { EditHistoryRecord } from "@/contracts/edit-history";
 import { cn } from "@/lib/utils/utils";
 import { changesPreview, operationTimeIso, type Translate } from "./edit-history";
 import { OperationBadge, OperationIcon } from "./OperationBadge";

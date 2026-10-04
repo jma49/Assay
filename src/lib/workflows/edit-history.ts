@@ -1,5 +1,5 @@
 import { sourceIdOf } from "@/domain/data-source";
-import { ScriptSnapshot } from "./edit-history-schema";
+import { ScriptSnapshot } from "@/contracts/edit-history";
 
 export interface ChangeDetail {
   field: string;

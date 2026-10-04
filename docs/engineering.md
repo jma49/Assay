@@ -124,7 +124,7 @@ Historical risk areas. Touching these requires extra care and matching tests.
 | Lease / fencing | `runCheck` service, check `lease` fields | Double runs; stale run overwrites state |
 | Result sampling | run persistence | 16MB document failures; wrong counts |
 | Data source secrets | crypto + data_sources repo | Secret leakage in API/logs |
-| SSRF / DNS rebinding | datasource connection guard, `server/net` | Access to metadata/internal hosts |
+| SSRF / DNS rebinding | datasource connection guard, `lib/net` | Access to metadata/internal hosts |
 | Approval flow | check change + approval services | Privilege bypass; unreviewed SQL live |
 | Alert dispatch | notify + outbox | Duplicate storms; silent drop |
 | MCP authz | `server/mcp/*` | Agent performs admin actions |

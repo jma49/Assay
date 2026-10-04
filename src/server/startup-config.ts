@@ -5,7 +5,7 @@ import {
   missingRequiredEnv,
   shouldEnforceRequiredEnv,
 } from "@/lib/config/required-env";
-import { logError, logWarn } from "@/server/logging/log";
+import { logError, logWarn } from "@/lib/logging/log";
 
 /**
  * A production server without its required configuration exits instead of

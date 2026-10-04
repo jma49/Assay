@@ -3,7 +3,7 @@ import { Permission } from "@/lib/auth/rbac";
 import { getMongoDbClient } from "@/lib/database/mongodb";
 import { ApiError, withAuth } from "@/server/http/route";
 import { getLinkStatus, pollUpdates } from "@/server/integrations/telegram";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 import { serverEnv } from "@/lib/config/env";
 
 /** Whether the link has been used; the settings page polls this. */
@@ -13,7 +13,7 @@ export const GET = withAuth<{ id: string }>(Permission.NOTIFICATION_MANAGE, asyn
   if (!status) throw new ApiError(404, "not_found", "No such link");
   // Without a webhook, updates are only read when asked for.
   if (status.status === "pending" && !serverEnv().TELEGRAM_WEBHOOK_SECRET) {
-    await pollUpdates(db).catch((error) => logError("[Telegram] Polling failed", { error: error }));
+    await pollUpdates(db).catch((error) => logError("[Telegram] Polling failed", { error }));
     status = (await getLinkStatus(db, params.id, principal.id)) ?? status;
   }
   return NextResponse.json(status);

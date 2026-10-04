@@ -1,4 +1,4 @@
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 /**
  * Better Auth's rate limiter keeps counts in memory by default, which on
  * serverless is one count per instance: barely a limit. This stores them
@@ -18,7 +18,7 @@ export function redisRateLimitStorage(store: CounterStore) {
         return { allowed: false, retryAfter: ttl > 0 ? ttl : rule.window };
       } catch (error) {
         // Failing open: a Redis outage must not lock everyone out of signing in.
-        logError("[Auth] Rate limit storage failed", { error: error });
+        logError("[Auth] Rate limit storage failed", { error });
         return { allowed: true, retryAfter: null };
       }
     },

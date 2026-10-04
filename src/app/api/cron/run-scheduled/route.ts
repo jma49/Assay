@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { appUrl } from "@/server/integrations/config";
 import { isTrustedScheduler } from "@/server/http/scheduler-auth";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 import { errorKind } from "@/lib/utils/public-log";
 import { runScheduledTrigger, TriggerRunError } from "@/server/services/scheduled-trigger";
 import { serverEnv } from "@/lib/config/env";

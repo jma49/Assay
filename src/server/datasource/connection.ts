@@ -3,7 +3,7 @@ import { isIP, Socket } from "node:net";
 import type { ConnectionOptions } from "node:tls";
 import type { ClientConfig } from "pg";
 import { pgConnection } from "@/lib/database/pg-connection";
-import { dnsResolver, HostNotFoundError, isPrivateAddress, type Resolver } from "@/server/net/safe-url";
+import { dnsResolver, HostNotFoundError, isPrivateAddress, type Resolver } from "@/lib/net/safe-url";
 
 /**
  * Connection strings for added data sources. An admin types the host, so

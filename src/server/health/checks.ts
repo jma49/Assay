@@ -4,7 +4,7 @@ import redis from "@/lib/cache/redis";
 import { errorKind } from "@/lib/utils/public-log";
 import { UnknownDataSourceError } from "@/server/datasource/registry";
 import { resolveSource } from "@/server/datasource/sources";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 import { heartbeatStatus, readHeartbeat, SCHEDULER_NAME, type HeartbeatDoc } from "@/server/repos/heartbeat-store";
 import { serverEnv } from "@/lib/config/env";
 

@@ -3,7 +3,7 @@ import { GUEST_COOKIE, guestIdFromToken } from "@/lib/auth/guest";
 import { emailAllowed } from "@/lib/auth/legacy-accounts";
 import { NextResponse } from "next/server";
 import { getUserRole, Permission, ensureDefaultRole } from "@/lib/auth/rbac";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 
 /** Whether the email may use this workspace, per ALLOWED_EMAIL_DOMAINS. */
 export const isValidEmailDomain = (email: string) => emailAllowed(email);
@@ -60,12 +60,12 @@ export async function validateApiAuth(options: { allowGuest?: boolean } = {}) {
       if (!(await getUserRole(user.id))) await ensureDefaultRole(user.id, userEmail);
     } catch (error) {
       // A failed role write must not block the request.
-      logError("[Auth] Assigning the default role failed", { error: error });
+      logError("[Auth] Assigning the default role failed", { error });
     }
 
     return { isValid: true, user, userEmail, isGuest: false } as const;
   } catch (error) {
-    logError("[Auth] Validating the session failed", { error: error });
+    logError("[Auth] Validating the session failed", { error });
     return refusal(500, "internal", "Something went wrong");
   }
 }

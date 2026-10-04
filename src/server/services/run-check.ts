@@ -15,7 +15,7 @@ import { splitStatements } from "@/lib/sql/statements";
 import type { Semaphore } from "@/server/concurrency/semaphore";
 import type { DataSource } from "@/server/datasource/types";
 import { fingerprintRow } from "@/server/runs/fingerprint";
-import { logError } from "@/server/logging/log";
+import { logError } from "@/lib/logging/log";
 
 type TriggerKind = "manual" | "schedule" | "batch" | "api";
 

@@ -1,7 +1,7 @@
 import { Edit, FileText, History, User } from "lucide-react";
 import { formatDateTime } from "@/lib/utils/datetime";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { EditHistoryRecord } from "@/lib/workflows/edit-history-schema";
+import type { EditHistoryRecord } from "@/contracts/edit-history";
 import {
   fieldLabel,
   formatChangeValue,

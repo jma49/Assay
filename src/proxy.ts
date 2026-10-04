@@ -58,7 +58,7 @@ const isGuestRoute = matcher([
 /**
  * Every request gets an id at the edge: the incoming x-request-id is kept,
  * otherwise one is made. Server code attaches it to each log line
- * (src/server/logging/log.ts).
+ * (src/lib/logging/log.ts).
  */
 function nextWithRequestId(req: NextRequest): NextResponse {
   const headers = new Headers(req.headers);

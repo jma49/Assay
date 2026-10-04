@@ -1,6 +1,6 @@
 import type { Db, IndexDescription } from "mongodb";
 import { COLLECTIONS } from "./collections";
-import { logError, logInfo } from "@/server/logging/log";
+import { logError, logInfo } from "@/lib/logging/log";
 
 const ACTIVITY_RETENTION_SECONDS = 180 * 24 * 60 * 60;
 const DELIVERY_RETENTION_SECONDS = 30 * 24 * 60 * 60;
@@ -84,7 +84,7 @@ async function dropObsoleteIndexes(db: Db, collection: string): Promise<void> {
     } catch (error) {
       const code = (error as { code?: number }).code;
       // Still create the replacement: two TTL indexes delete no later than the old one alone did.
-      if (code !== INDEX_NOT_FOUND && code !== NAMESPACE_NOT_FOUND) logError(`[MongoDB] Could not drop index ${collection}.${name}`, { error: error });
+      if (code !== INDEX_NOT_FOUND && code !== NAMESPACE_NOT_FOUND) logError(`[MongoDB] Could not drop index ${collection}.${name}`, { error });
     }
   }
 }
@@ -100,7 +100,7 @@ export async function ensureIndexes(db: Db, only?: readonly string[]): Promise<v
           await db.collection(collection).createIndexes(indexes);
         } catch (error) {
           // A failed index (e.g. duplicates blocking a unique one) must not take the app down.
-          logError(`[MongoDB] Could not create indexes on ${collection}`, { error: error });
+          logError(`[MongoDB] Could not create indexes on ${collection}`, { error });
         }
       }),
   );
