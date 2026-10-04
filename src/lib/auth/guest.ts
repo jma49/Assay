@@ -1,4 +1,5 @@
 import { isDemoMode } from "@/lib/security/demo-sandbox";
+import { serverEnv } from "@/lib/config/env";
 
 /**
  * Guests try the public demo without an account. A guest can do less than
@@ -14,7 +15,7 @@ const GUEST_TOKEN = /^[a-f0-9]{32}$/;
 
 export function guestIdFromToken(
   token: string | undefined,
-  env: Record<string, string | undefined> = process.env,
+  env: Record<string, string | undefined> = serverEnv(),
 ): string | null {
   if (!isDemoMode(env) || !token || !GUEST_TOKEN.test(token)) return null;
   return `guest_${token}`;

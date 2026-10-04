@@ -20,6 +20,7 @@ import { MCP_SCOPES, mcpResourceUrl } from "./mcp-scopes";
 import { getUserRole, UserRole } from "./rbac";
 import { COLLECTIONS } from "@/lib/database/collections";
 import { logError } from "@/server/logging/log";
+import { serverEnv } from "@/lib/config/env";
 
 /**
  * Sign-in for Assay: Google and GitHub through Better Auth, with users,
@@ -27,7 +28,7 @@ import { logError } from "@/server/logging/log";
  * involved, so a self-hosted Assay needs only MongoDB and the OAuth apps.
  */
 
-const building = process.env.NEXT_PHASE === "phase-production-build";
+const building = serverEnv().NEXT_PHASE === "phase-production-build";
 
 // The same client and database as the rest of the app: users, sessions and
 // roles must live together, or roles never find their users.
@@ -62,14 +63,14 @@ const providers = enabledProviders();
 
 export const auth = betterAuth({
   appName: "Assay",
-  baseURL: process.env.BETTER_AUTH_URL || process.env.APP_URL,
+  baseURL: serverEnv().BETTER_AUTH_URL || serverEnv().APP_URL,
   // `next build` imports this module without secrets; at runtime Better Auth
   // refuses to start without BETTER_AUTH_SECRET, and the proxy answers 503.
-  secret: process.env.BETTER_AUTH_SECRET || (building ? "build-time-placeholder-never-used-for-sessions" : undefined),
+  secret: serverEnv().BETTER_AUTH_SECRET || (building ? "build-time-placeholder-never-used-for-sessions" : undefined),
   database: mongodbAdapter(db, { client }),
   socialProviders: {
-    ...(providers.google && { google: { clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET!, prompt: "select_account" } }),
-    ...(providers.github && { github: { clientId: process.env.GITHUB_CLIENT_ID!, clientSecret: process.env.GITHUB_CLIENT_SECRET! } }),
+    ...(providers.google && { google: { clientId: serverEnv().GOOGLE_CLIENT_ID!, clientSecret: serverEnv().GOOGLE_CLIENT_SECRET!, prompt: "select_account" } }),
+    ...(providers.github && { github: { clientId: serverEnv().GITHUB_CLIENT_ID!, clientSecret: serverEnv().GITHUB_CLIENT_SECRET! } }),
   },
   emailAndPassword: { enabled: providers.password },
   account: {
@@ -87,8 +88,8 @@ export const auth = betterAuth({
   telemetry: { enabled: false },
   // Counts shared by every instance through Redis when it is configured;
   // otherwise Better Auth's per-instance memory counts.
-  rateLimit: process.env.UPSTASH_REDIS_REST_URL
-    ? { enabled: process.env.NODE_ENV === "production", customStorage: redisRateLimitStorage(upstashCounterStore(redis)) }
+  rateLimit: serverEnv().UPSTASH_REDIS_REST_URL
+    ? { enabled: serverEnv().NODE_ENV === "production", customStorage: redisRateLimitStorage(upstashCounterStore(redis)) }
     : undefined,
   hooks: {
     before: createAuthMiddleware(async (ctx) => {

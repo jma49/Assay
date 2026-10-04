@@ -3,6 +3,7 @@ import { DEFAULT_WORKSPACE_ID } from "@/domain/workspace";
 import { runExpiresAt, runRetentionDays, stateFromHistory } from "@/domain/run";
 import { type CheckEvent, type RunCheckStore, type RunDocument } from "@/server/services/run-check";
 import { COLLECTIONS } from "@/lib/database/collections";
+import { serverEnv } from "@/lib/config/env";
 
 // Enough runs to find when the current streak began for any realistic schedule.
 const HISTORY_LIMIT = 500;
@@ -85,10 +86,10 @@ export function mongoRunCheckStore(db: Db): RunCheckStore {
         message: run.message,
         findings: run.findings,
         sample: run.sample,
-        github_run_id: process.env.GITHUB_RUN_ID,
+        github_run_id: serverEnv().GITHUB_RUN_ID,
       };
       // Deleted by the TTL index on expiresAt; runs without it are kept.
-      const expiresAt = runExpiresAt(run.finishedAt, runRetentionDays());
+      const expiresAt = runExpiresAt(run.finishedAt, runRetentionDays(serverEnv()));
       if (expiresAt) doc.expiresAt = expiresAt;
       await runs.insertOne(doc);
     },

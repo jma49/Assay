@@ -1,6 +1,7 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 import { GUEST_COOKIE, guestIdFromToken } from "@/lib/auth/guest";
+import { serverEnv } from "@/lib/config/env";
 
 /** Exact paths, or a prefix ending in "(.*)" for everything under it. */
 function matcher(patterns: string[]) {
@@ -78,7 +79,7 @@ function nextWithRequestId(req: NextRequest): NextResponse {
  */
 export function proxy(req: NextRequest) {
   // Fail closed: without a secret no session can be trusted anywhere.
-  if (!process.env.BETTER_AUTH_SECRET) {
+  if (!serverEnv().BETTER_AUTH_SECRET) {
     return new NextResponse("Authentication is not configured", { status: 503 });
   }
 

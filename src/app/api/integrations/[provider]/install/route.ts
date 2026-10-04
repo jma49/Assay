@@ -5,6 +5,7 @@ import { ApiError, withAuth } from "@/server/http/route";
 import { workspaceOf } from "@/server/http/workspace";
 import { appUrl, discordConfigured, slackConfigured } from "@/server/integrations/config";
 import { OAUTH_NONCE_COOKIE, startInstall, type OAuthKind } from "@/server/integrations/oauth";
+import { serverEnv } from "@/lib/config/env";
 
 const CONFIGURED: Record<OAuthKind, () => boolean> = { slack: slackConfigured, discord: discordConfigured };
 
@@ -15,11 +16,11 @@ export const GET = withAuth<{ provider: string }>(Permission.NOTIFICATION_MANAGE
   if (!Object.hasOwn(CONFIGURED, kind)) throw new ApiError(404, "not_found", "Unknown integration");
   if (!CONFIGURED[kind]() || !hasSecretKey()) throw new ApiError(503, "not_configured", `${kind} is not set up on this server`);
 
-  const { url, nonce } = startInstall(kind, { id: principal.id, workspaceId: workspaceOf(principal) }, appUrl(process.env, request.nextUrl.origin));
+  const { url, nonce } = startInstall(kind, { id: principal.id, workspaceId: workspaceOf(principal) }, appUrl(serverEnv(), request.nextUrl.origin));
   const response = NextResponse.redirect(url);
   response.cookies.set(OAUTH_NONCE_COOKIE, nonce, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: serverEnv().NODE_ENV === "production",
     sameSite: "lax",
     path: "/api/integrations",
     maxAge: 10 * 60,

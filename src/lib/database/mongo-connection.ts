@@ -1,4 +1,5 @@
 import { MongoClient } from "mongodb";
+import { serverEnv } from "@/lib/config/env";
 
 type Env = Record<string, string | undefined>;
 
@@ -9,7 +10,7 @@ export const DEFAULT_DATABASE = "sql_script_monitoring";
  * names one, else MONGODB_DB_NAME, else the default. Sign-in, roles, checks
  * and runs must agree on it, so this is the only place it is decided.
  */
-export function mongoDatabaseName(env: Env = process.env): string {
+export function mongoDatabaseName(env: Env = serverEnv()): string {
   return databaseInUri(env.MONGODB_URI ?? "") || env.MONGODB_DB_NAME || DEFAULT_DATABASE;
 }
 
@@ -38,7 +39,7 @@ const shared = globalThis as unknown as { assayMongo?: MongoClient };
  * reloads. The driver connects lazily, so creating it costs nothing until a
  * query runs.
  */
-export function sharedMongoClient(env: Env = process.env): MongoClient {
+export function sharedMongoClient(env: Env = serverEnv()): MongoClient {
   if (shared.assayMongo) return shared.assayMongo;
   const uri = env.MONGODB_URI;
   if (!uri) {

@@ -1,3 +1,4 @@
+import { serverEnv } from "@/lib/config/env";
 type Env = Record<string, string | undefined>;
 
 /**
@@ -6,7 +7,7 @@ type Env = Record<string, string | undefined>;
  * counts; error text (which PostgreSQL may fill with data values) and
  * connection details stay in the stored runs and the app's own logs.
  */
-export const inPublicCi = (env: Env = process.env): boolean => env.CI === "true" || env.GITHUB_ACTIONS === "true";
+export const inPublicCi = (env: Env = serverEnv()): boolean => env.CI === "true" || env.GITHUB_ACTIONS === "true";
 
 /** An error's type and code (e.g. `DatabaseError (42P01)`), never its message. */
 export function errorKind(error: unknown): string {

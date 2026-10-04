@@ -1,4 +1,5 @@
 import type { LanguageModel } from "ai";
+import { serverEnv } from "@/lib/config/env";
 
 /**
  * All AI calls go through Vercel AI Gateway with plain "provider/model"
@@ -11,7 +12,7 @@ const DEFAULT_MODEL = "anthropic/claude-haiku-4.5";
 const FALLBACK_MODELS = ["google/gemini-3-flash"];
 
 export function aiModel(): LanguageModel {
-  return process.env.AI_GATEWAY_MODEL || DEFAULT_MODEL;
+  return serverEnv().AI_GATEWAY_MODEL || DEFAULT_MODEL;
 }
 
 /** Gateway routing plus reporting: which feature and which user spent it. */
@@ -30,5 +31,5 @@ export function gatewayOptions(feature: string, userId?: string) {
  * Locally a pulled VERCEL_OIDC_TOKEN would otherwise authenticate silently.
  */
 export function aiEnabled(): boolean {
-  return process.env.AI_ENABLED === "true";
+  return serverEnv().AI_ENABLED === "true";
 }

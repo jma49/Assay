@@ -5,6 +5,7 @@ import { createSemaphore } from "@/server/concurrency/semaphore";
 import { resolveSource } from "@/server/datasource/sources";
 import { mongoRunCheckStore } from "@/server/repos/run-check-store";
 import { runCheck, type RunCheckDeps, type RunTrigger } from "./run-check";
+import { serverEnv } from "@/lib/config/env";
 
 /**
  * How long a Vercel function that runs checks may live, in seconds. Fluid
@@ -27,7 +28,7 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 export const MAX_TIMEOUT_MS = FUNCTION_MAX_DURATION_S * 1000 - RUN_OVERHEAD_MS - DISPATCH_RESERVE_MS;
 
 /** CHECK_TIMEOUT_MS, clamped to 1 s – MAX_TIMEOUT_MS (255 s); 30 s when unset or invalid. */
-export function checkTimeoutMs(env: Record<string, string | undefined> = process.env): number {
+export function checkTimeoutMs(env: Record<string, string | undefined> = serverEnv()): number {
   const value = Number(env.CHECK_TIMEOUT_MS);
   if (!Number.isFinite(value) || value <= 0) return DEFAULT_TIMEOUT_MS;
   return Math.min(Math.max(value, 1_000), MAX_TIMEOUT_MS);
@@ -35,7 +36,7 @@ export function checkTimeoutMs(env: Record<string, string | undefined> = process
 
 // One limit per process, shared by every request it serves, so a burst of
 // runs queues here instead of exhausting the PostgreSQL pool.
-const executions = createSemaphore(Math.max(1, Number(process.env.CHECK_CONCURRENCY) || 4));
+const executions = createSemaphore(Math.max(1, Number(serverEnv().CHECK_CONCURRENCY) || 4));
 
 async function defaultRunCheckDeps(): Promise<RunCheckDeps> {
   const db = await getMongoDbClient().getDb();

@@ -1,8 +1,9 @@
+import { serverEnv } from "@/lib/config/env";
 /**
  * Which sign-in methods this server offers, from its environment. Kept apart
  * from the auth server module so pages can read it without a database.
  */
-export function enabledProviders(env: Record<string, string | undefined> = process.env) {
+export function enabledProviders(env: Record<string, string | undefined> = serverEnv()) {
   return {
     google: Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
     github: Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET),

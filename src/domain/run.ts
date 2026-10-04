@@ -51,7 +51,7 @@ export function sampleRows(rows: readonly Record<string, unknown>[], maxRows = S
 }
 
 /** Days a run is kept (RUN_RETENTION_DAYS, 90 by default, also when empty); 0 keeps runs forever. */
-export function runRetentionDays(env: Record<string, string | undefined> = process.env): number {
+export function runRetentionDays(env: Record<string, string | undefined>): number {
   const raw = env.RUN_RETENTION_DAYS?.trim();
   if (!raw) return 90;
   const days = Number(raw);

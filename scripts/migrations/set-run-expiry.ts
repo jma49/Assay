@@ -13,7 +13,7 @@ import { COLLECTIONS } from "@/lib/database/collections";
 
 async function main() {
   const apply = process.argv.includes("--apply");
-  const days = runRetentionDays();
+  const days = runRetentionDays(process.env);
   const mongo = getMongoDbClient();
   try {
     const runs = (await mongo.getDb()).collection(COLLECTIONS.runs);

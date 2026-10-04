@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { safeEqual, signToken, verifyToken } from "@/server/crypto/secret-box";
+import { serverEnv } from "@/lib/config/env";
 
 type Env = Record<string, string | undefined>;
 
@@ -75,7 +76,7 @@ interface State {
  * names the user; the nonce also goes into a cookie, so a callback only
  * completes in the browser that started it (no login CSRF).
  */
-export function startInstall(kind: OAuthKind, user: { id: string; workspaceId: string }, baseUrl: string, env: Env = process.env) {
+export function startInstall(kind: OAuthKind, user: { id: string; workspaceId: string }, baseUrl: string, env: Env = serverEnv()) {
   const clientId = PROVIDERS[kind].clientId(env);
   if (!clientId) throw new Error(`${kind} is not configured`);
   const nonce = randomBytes(16).toString("base64url");
@@ -84,7 +85,7 @@ export function startInstall(kind: OAuthKind, user: { id: string; workspaceId: s
 }
 
 /** The workspace to add the channel to, if the state is genuine and belongs to this user and browser. */
-export function checkState(kind: OAuthKind, state: string, userId: string, nonceCookie: string | undefined, env: Env = process.env): string | null {
+export function checkState(kind: OAuthKind, state: string, userId: string, nonceCookie: string | undefined, env: Env = serverEnv()): string | null {
   const payload = verifyToken<State>(state, Date.now(), env);
   if (!payload || payload.kind !== kind || payload.uid !== userId) return null;
   if (!nonceCookie || !safeEqual(payload.nonce, nonceCookie)) return null;
@@ -92,7 +93,7 @@ export function checkState(kind: OAuthKind, state: string, userId: string, nonce
 }
 
 /** Trades the authorization code for the channel's webhook. */
-export async function finishInstall(kind: OAuthKind, code: string, baseUrl: string, env: Env = process.env, fetcher: typeof fetch = fetch): Promise<InstalledWebhook> {
+export async function finishInstall(kind: OAuthKind, code: string, baseUrl: string, env: Env = serverEnv(), fetcher: typeof fetch = fetch): Promise<InstalledWebhook> {
   const provider = PROVIDERS[kind];
   const basic = Buffer.from(`${provider.clientId(env)}:${provider.clientSecret(env)}`).toString("base64");
   const response = await fetcher(provider.tokenUrl, {

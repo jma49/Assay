@@ -7,6 +7,7 @@ import { mongoNotifyStore } from "@/server/repos/notify-store";
 import { repairPendingEvents } from "@/server/repos/run-check-store";
 import { dispatchNotifications, type DispatchReport } from "./notifications";
 import { logError } from "@/server/logging/log";
+import { serverEnv } from "@/lib/config/env";
 
 /** Runs the outbox with the production dependencies. */
 export async function dispatchNow(): Promise<DispatchReport | null> {
@@ -20,7 +21,7 @@ export async function dispatchNow(): Promise<DispatchReport | null> {
     now: () => new Date(),
     send: sendRequest,
     openSecret: (sealed) => JSON.parse(open(sealed)),
-    env: process.env,
+    env: serverEnv(),
     appUrl: appUrl(),
   });
 }

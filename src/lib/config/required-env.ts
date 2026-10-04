@@ -1,12 +1,9 @@
+import { REQUIRED_ENV_NAMES } from "./env";
+
 type Env = Record<string, string | undefined>;
 
-/** Without these a production server cannot sign anyone in or reach its data. */
-export const REQUIRED_PRODUCTION_ENV = [
-  "BETTER_AUTH_SECRET",
-  "MONGODB_URI",
-  "DATABASE_URL",
-  "APP_URL",
-] as const;
+/** Without these a production server cannot sign anyone in or reach its data (kind "required" in env.ts). */
+export const REQUIRED_PRODUCTION_ENV = REQUIRED_ENV_NAMES;
 
 function isSet(env: Env, name: string): boolean {
   return (env[name] ?? "").trim() !== "";

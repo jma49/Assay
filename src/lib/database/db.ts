@@ -6,6 +6,7 @@ import { pgConnection } from "./pg-connection";
 import { redactConnectionString } from "./redact-connection-string";
 import { inPublicCi } from "@/lib/utils/public-log";
 import { logError, logInfo } from "@/server/logging/log";
+import { serverEnv } from "@/lib/config/env";
 
 // BIGINT (OID 20) as strings: JavaScript numbers lose precision past 2^53 and JSON cannot hold BigInt.
 pg.types.setTypeParser(20, (value: string) => value);
@@ -44,7 +45,7 @@ function readCertificate(url: string): Promise<Buffer> {
  * an sslmode that asks for TLS gets full verification against the system
  * CAs (see pgConnection).
  */
-export async function tlsOptions(env: Env = process.env, read = readCertificate): Promise<ConnectionOptions | undefined> {
+export async function tlsOptions(env: Env = serverEnv(), read = readCertificate): Promise<ConnectionOptions | undefined> {
   if (!env.CA_CERT_BLOB_URL) return undefined;
   const ssl: ConnectionOptions = { ca: await read(env.CA_CERT_BLOB_URL), rejectUnauthorized: true };
   if (env.CLIENT_CERT_BLOB_URL && env.CLIENT_KEY_BLOB_URL) {
@@ -58,7 +59,7 @@ export async function tlsOptions(env: Env = process.env, read = readCertificate)
  * What pool creation logs. Public CI logs (the scheduled workflow) get no
  * host, database or user; elsewhere the connection string is redacted.
  */
-export function poolLogLine(connectionString: string, ssl: ConnectionOptions | undefined, env: Env = process.env): string {
+export function poolLogLine(connectionString: string, ssl: ConnectionOptions | undefined, env: Env = serverEnv()): string {
   const verifiedAgainst = ssl?.ca ? "the configured CA" : "the system CAs";
   const tls = ssl ? ` with TLS verified against ${verifiedAgainst}${ssl.cert ? " and a client certificate" : ""}` : "";
   return inPublicCi(env) ? `[db] Pool created${tls}` : `[db] Pool for ${redactConnectionString(connectionString)}${tls}`;
@@ -75,7 +76,7 @@ export function openPool(config: PoolConfig, label: string): Pool {
 
 /** How pg connects to DATABASE_URL, the built-in source, with its TLS settings from the environment. */
 export async function defaultConnectionConfig(): Promise<{ connectionString: string; ssl?: ConnectionOptions }> {
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = serverEnv().DATABASE_URL;
   if (!databaseUrl) throw new Error("DATABASE_URL is not set");
   const { connectionString, ssl } = pgConnection(databaseUrl, await tlsOptions());
   return ssl ? { connectionString, ssl } : { connectionString };
@@ -84,7 +85,7 @@ export async function defaultConnectionConfig(): Promise<{ connectionString: str
 async function createDefaultPool(): Promise<Pool> {
   const { connectionString, ssl } = await defaultConnectionConfig();
   logInfo(poolLogLine(connectionString, ssl));
-  return openPool({ connectionString, ssl, max: Number(process.env.PG_POOL_MAX) || 10 }, "default");
+  return openPool({ connectionString, ssl, max: Number(serverEnv().PG_POOL_MAX) || 10 }, "default");
 }
 
 const shared = globalThis as unknown as { assayPgPool?: Promise<Pool> | null };

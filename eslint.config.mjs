@@ -18,5 +18,26 @@ export default defineConfig([
     ignores: ["**/*.test.ts", "src/server/logging/log.ts"],
     rules: { "no-console": "error" },
   },
+  {
+    // Server code reads the environment through serverEnv() in src/lib/config/env.ts,
+    // which declares every variable. Browser code keeps process.env.NEXT_PUBLIC_* and
+    // NODE_ENV, which Next.js inlines at build time.
+    files: ["src/**/*.ts", "src/**/*.tsx"],
+    ignores: [
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "src/lib/config/env.ts",
+      "src/instrumentation.ts",
+      "src/instrumentation-client.ts",
+      "src/sentry.*.config.ts",
+      "src/components/**",
+    ],
+    rules: {
+      "no-restricted-properties": [
+        "error",
+        { object: "process", property: "env", message: "Read the environment through serverEnv() from @/lib/config/env, and declare new variables there." },
+      ],
+    },
+  },
   globalIgnores(["node_modules/**", ".next/**", ".visual/**", "out/**", "build/**", "coverage/**", "next-env.d.ts"]),
 ]);

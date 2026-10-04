@@ -1,3 +1,4 @@
+import { serverEnv } from "@/lib/config/env";
 /**
  * The public demo lets viewers run the sample checks, so visitors can see a
  * check find problems without being given the developer role. It is off
@@ -15,7 +16,7 @@ export function isReservedAuthor(author: unknown): boolean {
 }
 export const DEMO_RUNS_PER_HOUR = 20;
 
-export function isDemoMode(env: Record<string, string | undefined> = process.env): boolean {
+export function isDemoMode(env: Record<string, string | undefined> = serverEnv()): boolean {
   return env.DEMO_MODE === "true";
 }
 
@@ -76,7 +77,7 @@ function trustedProxyCount(env: Record<string, string | undefined>): number {
  * client is the Nth entry from the right, and anything to its left may be
  * made up by the client. With TRUSTED_PROXY_COUNT=0 no header is trusted.
  */
-export function clientIp(headers: Headers, env: Record<string, string | undefined> = process.env): string {
+export function clientIp(headers: Headers, env: Record<string, string | undefined> = serverEnv()): string {
   const first = (value: string | null) => value?.split(",")[0]?.trim() || null;
   if (env.VERCEL) {
     return first(headers.get("x-vercel-forwarded-for")) || first(headers.get("x-real-ip")) || first(headers.get("x-forwarded-for")) || "unknown";

@@ -8,14 +8,15 @@ import { clientConfig, parseConnectionString } from "./connection";
 import { defaultPostgresSource } from "./postgres";
 import { createSourceRegistry, type ResolvedSource, type SourceRecord, type SourceRegistry } from "./registry";
 import { logInfo } from "@/server/logging/log";
+import { serverEnv } from "@/lib/config/env";
 
 type Env = Record<string, string | undefined>;
 
 /** ALLOW_PRIVATE_DATA_SOURCES=true lets added sources reach hosts on private networks (self-hosted setups). */
-export const allowPrivateSources = (env: Env = process.env) => env.ALLOW_PRIVATE_DATA_SOURCES === "true";
+export const allowPrivateSources = (env: Env = serverEnv()) => env.ALLOW_PRIVATE_DATA_SOURCES === "true";
 
 /** Connections per added source and instance: PG_SOURCE_POOL_MAX, 3 by default. */
-function sourcePoolMax(env: Env = process.env): number {
+function sourcePoolMax(env: Env = serverEnv()): number {
   const value = Number(env.PG_SOURCE_POOL_MAX);
   return Number.isInteger(value) && value > 0 ? value : 3;
 }
@@ -36,7 +37,7 @@ function registry(): SourceRegistry {
   shared.assaySourceRegistry ??= createSourceRegistry({
     loadRecord: async (sourceId) => findSourceRecord(await getMongoDbClient().getDb(), DEFAULT_WORKSPACE_ID, sourceId),
     createPool,
-    defaultSource: () => (process.env.DATABASE_URL ? defaultPostgresSource : null),
+    defaultSource: () => (serverEnv().DATABASE_URL ? defaultPostgresSource : null),
   });
   return shared.assaySourceRegistry;
 }
