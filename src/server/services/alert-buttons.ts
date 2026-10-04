@@ -18,7 +18,8 @@ export type ButtonResult = "acknowledged" | "muted" | "expired" | "resolved" | "
 /** "<eventId>.<key>" from a button, or null when it is not one of ours. */
 export function parseToken(token: string): { eventId: string; key: string } | null {
   const match = token.match(/^([0-9a-f]{24})\.([A-Za-z0-9_-]{16})$/);
-  return match ? { eventId: match[1], key: match[2] } : null;
+  const [, eventId, key] = match ?? [];
+  return eventId && key ? { eventId, key } : null;
 }
 
 /**

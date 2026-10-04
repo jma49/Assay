@@ -23,8 +23,9 @@ export function extractHeadings(markdown: string): DocsHeading[] {
     if (inFence) continue;
     const match = /^(##|###)\s+(.+?)\s*#*\s*$/.exec(line);
     if (!match) continue;
-    const text = match[2].replace(/[`*_]/g, "");
-    headings.push({ id: headingId(text), text, depth: match[1].length as 2 | 3 });
+    const [, hashes = "", title = ""] = match;
+    const text = title.replace(/[`*_]/g, "");
+    headings.push({ id: headingId(text), text, depth: hashes.length as 2 | 3 });
   }
   return headings;
 }

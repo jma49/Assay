@@ -5,6 +5,7 @@ import { isAcknowledged, isMuted, type Actor, type Alerting } from "@/domain/ale
 import type { CheckState } from "@/domain/run";
 import { ApiError } from "@/server/http/route";
 import { COLLECTIONS } from "@/lib/database/collections";
+import { emailLocalPart } from "@/lib/utils/email";
 
 export type ActionSource = "web" | "slack" | "telegram" | "mcp";
 
@@ -78,5 +79,5 @@ export async function listMembers(db: Db): Promise<{ id: string; name: string }[
     .sort({ email: 1 })
     .limit(500)
     .toArray();
-  return docs.map((doc) => ({ id: String(doc.userId), name: String(doc.email ?? doc.userId).split("@")[0] }));
+  return docs.map((doc) => ({ id: String(doc.userId), name: emailLocalPart(String(doc.email ?? doc.userId)) }));
 }

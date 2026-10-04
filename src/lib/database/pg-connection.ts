@@ -14,7 +14,7 @@ export interface PgConnection {
 }
 
 function paramName(pair: string): string {
-  const name = pair.split("=", 1)[0];
+  const [name = ""] = pair.split("=", 1);
   try {
     return decodeURIComponent(name.replace(/\+/g, " ")).toLowerCase();
   } catch {

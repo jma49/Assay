@@ -4,6 +4,7 @@ import { apiKeyClient } from "@better-auth/api-key/client";
 import { oauthProviderClient } from "@better-auth/oauth-provider/client";
 import { lastLoginMethodClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
+import { emailLocalPart } from "@/lib/utils/email";
 
 /**
  * Same-origin client: the routes live at /api/auth on this app. The OAuth
@@ -27,7 +28,7 @@ export function useCurrentUser(): { user: CurrentUser | null; isLoaded: boolean 
   const { data, isPending } = useSession();
   const user = data?.user;
   return {
-    user: user ? { id: user.id, name: user.name || user.email.split("@")[0], email: user.email, image: user.image } : null,
+    user: user ? { id: user.id, name: user.name || emailLocalPart(user.email), email: user.email, image: user.image } : null,
     isLoaded: !isPending,
   };
 }

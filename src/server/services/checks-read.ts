@@ -82,8 +82,10 @@ export function toSummary(check: Document, historyNewestFirst: (RunPoint & { run
  * aggregation over all checks would rank every retained run on each load.
  */
 async function recentRuns(db: Db, scriptIds: string[], limit: number) {
-  const lists = await Promise.all(scriptIds.map((checkId) => latestRunsOf(db, checkId, limit, POINT_FIELDS)));
-  return new Map<string, Document[]>(scriptIds.map((checkId, index) => [checkId, lists[index]]));
+  const entries = await Promise.all(
+    scriptIds.map(async (checkId) => [checkId, await latestRunsOf(db, checkId, limit, POINT_FIELDS)] as const),
+  );
+  return new Map<string, Document[]>(entries);
 }
 
 export async function listChecks(db: Db): Promise<CheckSummary[]> {

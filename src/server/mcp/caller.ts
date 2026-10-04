@@ -5,6 +5,7 @@ import { getUserRole, Permission, ROLE_PERMISSIONS, UserRole } from "@/lib/auth/
 import { TtlCache } from "@/lib/cache/ttl-cache";
 import { COLLECTIONS } from "@/lib/database/collections";
 import { getMongoDbClient } from "@/lib/database/mongodb";
+import { emailLocalPart } from "@/lib/utils/email";
 import { userRef } from "@/server/services/revoke-access";
 
 /** Who is calling the MCP server: the person behind the API key or OAuth token, with what they may do. */
@@ -98,7 +99,7 @@ async function resolveCaller(userId: string, credential: string, deps: Pick<Call
   if (!user || user.id !== userId || !emailAllowed(user.email)) return null;
   // Signed-in users without a stored role are viewers, as on the web.
   const role = storedRole ?? UserRole.VIEWER;
-  return { userId: user.id, name: user.name || user.email.split("@")[0], email: user.email, permissions: permissionsOf(role), credential };
+  return { userId: user.id, name: user.name || emailLocalPart(user.email), email: user.email, permissions: permissionsOf(role), credential };
 }
 
 const authInfo = (token: string, caller: McpCaller, expiresAtSeconds: number): AuthInfo => ({

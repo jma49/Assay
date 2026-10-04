@@ -40,8 +40,9 @@ function scan(
     }
     if (!matched) {
       const last = tokens[tokens.length - 1];
-      if (last && last.kind === "plain") last.text += rest[0];
-      else tokens.push({ text: rest[0], kind: "plain" });
+      const char = rest.charAt(0);
+      if (last && last.kind === "plain") last.text += char;
+      else tokens.push({ text: char, kind: "plain" });
       rest = rest.slice(1);
     }
   }

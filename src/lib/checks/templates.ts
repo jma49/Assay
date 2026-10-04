@@ -163,7 +163,8 @@ export function buildTemplate(id: TemplateId, input: TemplateInput, tables: Sche
   if (!table) return fail("Choose a table the database has.", "请选择数据库中存在的表。");
 
   const wanted = template.fields.includes("columns") ? input.columns : input.columns.slice(0, 1);
-  if (wanted.length === 0) return fail("Choose a column.", "请选择一列。");
+  const [firstColumn] = wanted;
+  if (!firstColumn) return fail("Choose a column.", "请选择一列。");
   if (new Set(wanted).size !== wanted.length) return fail("Choose each column once.", "每一列只能选一次。");
   if (wanted.length > MAX_DUPLICATE_KEY_COLUMNS) {
     return fail(`Choose at most ${MAX_DUPLICATE_KEY_COLUMNS} columns.`, `最多选择 ${MAX_DUPLICATE_KEY_COLUMNS} 列。`);
@@ -180,17 +181,17 @@ export function buildTemplate(id: TemplateId, input: TemplateInput, tables: Sche
   const where = displayTable(table);
   switch (id) {
     case "not-null":
-      return notNull(from, where, table, wanted[0]);
+      return notNull(from, where, table, firstColumn);
     case "duplicates":
       return duplicates(from, where, table, wanted);
     case "orphans":
-      return orphans(from, where, table, wanted[0], input, tables);
+      return orphans(from, where, table, firstColumn, input, tables);
     case "freshness":
-      return freshness(from, where, table, wanted[0], input.maxAgeHours);
+      return freshness(from, where, table, firstColumn, input.maxAgeHours);
     case "out-of-range":
-      return outOfRange(from, where, table, wanted[0], input.min, input.max);
+      return outOfRange(from, where, table, firstColumn, input.min, input.max);
     case "accepted-values":
-      return acceptedValues(from, where, table, wanted[0], input.values ?? [], input.nullAllowed ?? true);
+      return acceptedValues(from, where, table, firstColumn, input.values ?? [], input.nullAllowed ?? true);
   }
 }
 

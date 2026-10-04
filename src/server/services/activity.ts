@@ -22,7 +22,7 @@ export function encodeCursor(at: Date, id: string): string {
 
 export function decodeCursor(cursor: string | null): { at: Date; id: ObjectId } | null {
   if (!cursor) return null;
-  const [at, id] = Buffer.from(cursor, "base64url").toString("utf8").split("|");
+  const [at = "", id] = Buffer.from(cursor, "base64url").toString("utf8").split("|");
   const date = new Date(at);
   if (!id || Number.isNaN(date.getTime()) || !ObjectId.isValid(id)) return null;
   return { at: date, id: new ObjectId(id) };

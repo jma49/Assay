@@ -16,7 +16,7 @@ const hash = (code: string) => createHash("sha256").update(code).digest("hex");
 /** The code in "/start <code>" or "/start@AssayBot <code>", which Telegram sends when a deep link is opened. */
 export function startCode(text: string | undefined): string | null {
   const match = text?.trim().match(/^\/start(?:@\w+)?\s+([A-Za-z0-9_-]{16,64})$/);
-  return match ? match[1] : null;
+  return match?.[1] ?? null;
 }
 
 interface TelegramChat {
@@ -43,7 +43,7 @@ export interface TelegramUpdate {
 
 /** The action and token in a button's callback_data, if it is one of ours. */
 export function parseCallbackData(data: string | undefined): { action: ButtonAction; token: string } | null {
-  const [action, token] = (data ?? "").split(":");
+  const [action = "", token] = (data ?? "").split(":");
   if (!token || !(Object.values(ACTION_IDS) as string[]).includes(action)) return null;
   return { action: action as ButtonAction, token };
 }
@@ -181,7 +181,8 @@ export async function pollUpdates(db: Db, env: Env = serverEnv(), fetcher: typeo
   if (!reply.ok || !Array.isArray(reply.result)) return;
   const updates = reply.result as TelegramUpdate[];
   for (const update of updates) await handleUpdate(db, update, env, fetcher);
-  if (updates.length > 0) {
-    await state.updateOne({ _id: "telegram" }, { $set: { offset: updates[updates.length - 1].update_id + 1 } }, { upsert: true });
+  const last = updates.at(-1);
+  if (last) {
+    await state.updateOne({ _id: "telegram" }, { $set: { offset: last.update_id + 1 } }, { upsert: true });
   }
 }
