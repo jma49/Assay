@@ -44,7 +44,16 @@ jobs:
 
       - run: npm ci
 
+      - name: Sentry check-in (start)
+        # Only the schedule checks in: Sentry alerts when a slot is missed,
+        # fails or runs past max_runtime, which GitHub itself never reports.
+        if: github.event_name == 'schedule'
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        run: .github/scripts/sentry-checkin.sh in_progress
+
       - name: Run checks
+        id: run-checks
         # Secrets go straight into the environment; nothing writes or prints them.
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -80,6 +89,13 @@ jobs:
           else
             npx tsx scripts/run-all-scripts.ts "$EXECUTION_MODE"
           fi
+
+      - name: Sentry check-in (finish)
+        if: always() && github.event_name == 'schedule'
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          OUTCOME: ${{ steps.run-checks.outcome }}
+        run: .github/scripts/sentry-checkin.sh "$([ "$OUTCOME" = success ] && echo ok || echo error)"
 
       - name: Send alerts
         # Alerts are sent by the app, which holds the channel secrets; this
