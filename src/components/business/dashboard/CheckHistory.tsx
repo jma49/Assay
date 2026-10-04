@@ -6,7 +6,7 @@ import { collectHashtags } from "./manual-trigger/script-search";
 import { HistoryFilters } from "./runs/HistoryFilters";
 import { HistoryTable } from "./runs/HistoryTable";
 import { scriptDisplayNames, type SortConfig } from "./runs/runs";
-import type { DashboardTranslationKeys, HistoryRun, ScriptInfo } from "./types";
+import type { DashboardTranslationKeys, HistoryRun, CheckListItem } from "./types";
 import type { SortKey } from "./runs/runs";
 
 /** The jump box only pays off once there are more pages than the shortcuts cover. */
@@ -31,7 +31,7 @@ interface CheckHistoryProps {
   requestSort: (key: SortKey) => void;
   startIndex: number;
   endIndex: number;
-  availableScripts?: ScriptInfo[];
+  availableChecks?: CheckListItem[];
   isLoading?: boolean;
 }
 
@@ -54,11 +54,11 @@ export const CheckHistory: React.FC<CheckHistoryProps> = ({
   requestSort,
   startIndex,
   endIndex,
-  availableScripts = [],
+  availableChecks = [],
   isLoading = false,
 }) => {
-  const displayNames = useMemo(() => scriptDisplayNames(availableScripts, language), [availableScripts, language]);
-  const availableHashtags = useMemo(() => collectHashtags(availableScripts), [availableScripts]);
+  const displayNames = useMemo(() => scriptDisplayNames(availableChecks, language), [availableChecks, language]);
+  const availableHashtags = useMemo(() => collectHashtags(availableChecks), [availableChecks]);
 
   return (
     <Card className="relative gap-0 overflow-hidden py-0">

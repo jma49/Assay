@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ScriptInfo } from "../types";
+import type { CheckListItem } from "../types";
 import {
   DEFAULT_SORT,
   apiSort,
@@ -9,7 +9,7 @@ import {
   parseRuns,
   nextScheduledRunOf,
   parsePagination,
-  parseScriptList,
+  parseCheckList,
   passRate,
   scriptDisplayNames,
   searchLinkOf,
@@ -90,11 +90,11 @@ describe("response parsing", () => {
   });
 
   it("lists the checks by name, as MongoDB sorts them", () => {
-    const list = [{ scriptId: "b", name: "b" }, { scriptId: "c", name: "B" }, { scriptId: "a", name: "A" }] as ScriptInfo[];
-    expect(parseScriptList({ checks: list }).map((s) => s.scriptId)).toEqual(["a", "c", "b"]);
-    expect(parseScriptList({ message: "nope" })).toEqual([]);
-    expect(parseScriptList(list)).toEqual([]);
-    expect(parseScriptList(null)).toEqual([]);
+    const list = [{ scriptId: "b", name: "b" }, { scriptId: "c", name: "B" }, { scriptId: "a", name: "A" }] as CheckListItem[];
+    expect(parseCheckList({ checks: list }).map((s) => s.scriptId)).toEqual(["a", "c", "b"]);
+    expect(parseCheckList({ message: "nope" })).toEqual([]);
+    expect(parseCheckList(list)).toEqual([]);
+    expect(parseCheckList(null)).toEqual([]);
   });
 
   it("finds the earliest next run across scheduled checks", () => {
@@ -104,7 +104,7 @@ describe("response parsing", () => {
       { scriptId: "daily", name: "d", isScheduled: true, cronSchedule: "0 9 * * *" },
       { scriptId: "manual", name: "m", isScheduled: false, cronSchedule: "*/5 * * * *" },
       { scriptId: "broken", name: "x", isScheduled: true, cronSchedule: "not cron" },
-    ] as ScriptInfo[];
+    ] as CheckListItem[];
     expect(nextScheduledRunOf(scripts, now)).toEqual(new Date("2026-09-27T08:00:00Z"));
     expect(nextScheduledRunOf([], now)).toBeNull();
   });
@@ -124,7 +124,7 @@ describe("page numbers", () => {
 });
 
 describe("selectedCheckId", () => {
-  const scripts = [{ scriptId: "a" }, { scriptId: "b" }] as ScriptInfo[];
+  const scripts = [{ scriptId: "a" }, { scriptId: "b" }] as CheckListItem[];
 
   it("defaults to the first check and keeps a choice", () => {
     expect(selectedCheckId("", scripts)).toBe("a");
@@ -170,7 +170,7 @@ describe("row display", () => {
       { scriptId: "a", name: "Orders", cnName: "订单" },
       { scriptId: "b", name: "Refunds" },
       { scriptId: "c", name: "" },
-    ] as ScriptInfo[];
+    ] as CheckListItem[];
     expect([...scriptDisplayNames(scripts, "zh").values()]).toEqual(["订单", "Refunds", "c"]);
     expect(scriptDisplayNames(scripts, "en").get("a")).toBe("Orders");
   });

@@ -2,9 +2,9 @@ import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { apiErrorText } from "@/client/api-errors";
 import { apiErrorCode, sendJson } from "@/client/send-json";
-import type { DashboardTranslationKeys, SqlScript } from "@/components/business/dashboard/types";
-import type { ScriptFormData } from "../ScriptMetadataForm";
-import { newCheckTemplate } from "../sql-template";
+import type { DashboardTranslationKeys, CheckDefinition } from "@/components/business/dashboard/types";
+import type { CheckFormData } from "./CheckMetadataForm";
+import { newCheckTemplate } from "./sql-template";
 import {
   applyFieldChange,
   approvalNotice,
@@ -18,8 +18,8 @@ import {
   type DialogMode,
   type Language,
   type Notice,
-  type ScriptFormState,
-} from "./script-form";
+  type CheckFormState,
+} from "./check-form";
 
 type Translate = (key: DashboardTranslationKeys | string) => string;
 
@@ -32,16 +32,16 @@ const showError = ({ title, ...options }: Notice) => toast.error(title, options)
 const showSuccess = ({ title, ...options }: Notice) => toast.success(title, options);
 
 /** State and save flow of the add/edit dialog. `reload` refreshes the list after a save or a conflict. */
-export function useScriptEditor(language: Language, t: Translate, reload: () => void) {
+export function useCheckEditor(language: Language, t: Translate, reload: () => void) {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<DialogMode>("add");
-  const [form, setForm] = useState<ScriptFormState>({});
+  const [form, setForm] = useState<CheckFormState>({});
   const [sql, setSql] = useState("");
   const [initialSql, setInitialSql] = useState("");
   const [idManuallyEdited, setIdManuallyEdited] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const open = useCallback((nextMode: DialogMode, script?: SqlScript) => {
+  const open = useCallback((nextMode: DialogMode, script?: CheckDefinition) => {
     setMode(nextMode);
     if (nextMode === "add") {
       const template = newCheckTemplate();
@@ -58,7 +58,7 @@ export function useScriptEditor(language: Language, t: Translate, reload: () => 
     setIsOpen(true);
   }, []);
 
-  const changeField = (field: keyof ScriptFormData, value: string | boolean | string[]) => {
+  const changeField = (field: keyof CheckFormData, value: string | boolean | string[]) => {
     const next = applyFieldChange({ form, idManuallyEdited }, mode, field, value);
     setForm(next.form);
     setIdManuallyEdited(next.idManuallyEdited);

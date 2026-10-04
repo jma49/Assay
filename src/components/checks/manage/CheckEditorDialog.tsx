@@ -13,12 +13,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { DashboardTranslationKeys } from "@/components/business/dashboard/types";
-import { ScriptMetadataForm, type ScriptFormData } from "../ScriptMetadataForm";
+import { CheckMetadataForm, type CheckFormData } from "./CheckMetadataForm";
 import { useDataSourceOptions } from "@/components/checks/data-source/useDataSourceOptions";
-import { stillNeededHint, toFormMetadata, type DialogMode, type Language, type ScriptFormState } from "./script-form";
+import { stillNeededHint, toFormMetadata, type DialogMode, type Language, type CheckFormState } from "./check-form";
 
 // CodeMirror and its themes are large; load them only where the editor renders.
-const CodeMirrorEditor = dynamic(() => import("../CodeMirrorEditor"), {
+const CodeMirrorEditor = dynamic(() => import("@/components/checks/editor/CodeMirrorEditor"), {
   ssr: false,
   loading: () => <div className="h-[480px] animate-pulse rounded-lg border bg-muted/40" />,
 });
@@ -27,17 +27,17 @@ interface ScriptEditorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: DialogMode;
-  form: ScriptFormState;
+  form: CheckFormState;
   sql: string;
   onSqlChange: (sql: string) => void;
-  onFieldChange: (field: keyof ScriptFormData, value: string | boolean | string[]) => void;
+  onFieldChange: (field: keyof CheckFormData, value: string | boolean | string[]) => void;
   onSave: () => void;
   isSubmitting: boolean;
   language: Language;
   t: (key: DashboardTranslationKeys | string) => string;
 }
 
-export function ScriptEditorDialog({
+export function CheckEditorDialog({
   open,
   onOpenChange,
   mode,
@@ -68,7 +68,7 @@ export function ScriptEditorDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="flex-grow overflow-y-auto pr-2 space-y-4 py-2">
-          <ScriptMetadataForm
+          <CheckMetadataForm
             formData={formMetadata}
             onFormChange={onFieldChange}
             t={t}

@@ -1,14 +1,14 @@
 import { Loader2, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { scheduleLabel } from "@/components/checks/status";
-import type { ScriptInfo } from "../types";
+import type { CheckListItem } from "../types";
 import { CheckCombobox } from "./CheckCombobox";
 import { triggerCopy } from "./copy";
 
 interface SingleRunPanelProps {
-  checks: ScriptInfo[];
+  checks: CheckListItem[];
   selectedScriptId: string;
-  selectedScript: ScriptInfo | undefined;
+  selectedCheck: CheckListItem | undefined;
   isTriggering: boolean;
   /** A run or a reload is in progress. */
   busy: boolean;
@@ -18,10 +18,10 @@ interface SingleRunPanelProps {
 }
 
 /** Pick one check and run it. */
-export function SingleRunPanel({ checks, selectedScriptId, selectedScript, isTriggering, busy, language, onSelect, onRun }: SingleRunPanelProps) {
+export function SingleRunPanel({ checks, selectedScriptId, selectedCheck, isTriggering, busy, language, onSelect, onRun }: SingleRunPanelProps) {
   const copy = triggerCopy(language);
   const zh = language === "zh";
-  const description = selectedScript ? (zh && selectedScript.cnDescription) || selectedScript.description : undefined;
+  const description = selectedCheck ? (zh && selectedCheck.cnDescription) || selectedCheck.description : undefined;
 
   return (
     <div className="space-y-2">
@@ -44,9 +44,9 @@ export function SingleRunPanel({ checks, selectedScriptId, selectedScript, isTri
           {isTriggering ? copy.running : copy.run}
         </Button>
       </div>
-      {selectedScript && (
+      {selectedCheck && (
         <p className="text-caption text-muted-foreground">
-          {[description, scheduleLabel(selectedScript.isScheduled ? selectedScript.cronSchedule || null : null, zh ? "zh" : "en")]
+          {[description, scheduleLabel(selectedCheck.isScheduled ? selectedCheck.cronSchedule || null : null, zh ? "zh" : "en")]
             .filter(Boolean)
             .join(" · ")}
         </p>

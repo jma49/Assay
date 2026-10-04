@@ -64,6 +64,7 @@ Treat these as API surface:
 | Contract | Stability rule |
 |----------|----------------|
 | Check outcome enum | `clean` \| `issues` \| `error` (do not rename casually) |
+| Check id field | `scriptId` in MongoDB (`checks`, `script_versions`, `approval_requests`, `edit_history`) and in API bodies. A legacy name kept on purpose: renaming it needs a data migration for no user benefit. Code names types, components and routes after checks (`/api/checks`, `check:*` permissions); `/api/scripts` is a deprecated alias |
 | Run document shape | count + sample + fingerprints + outcome + timing |
 | Alert event types | outcome changes, new rows, recovery, broken query |
 | `GET /api/health` | Public, no auth. `200` = ok, `503` = degraded. Reports component name/status/latency only — never internals or error details |

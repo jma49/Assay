@@ -5,14 +5,14 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import { ScriptsFinder } from "@/components/business/scripts/ScriptsFinder";
-import { EditHistoryDialog } from "@/components/business/scripts/EditHistoryDialog";
-import { DeleteScriptDialog } from "@/components/business/scripts/manage/DeleteScriptDialog";
-import { ManageScriptsHeader } from "@/components/business/scripts/manage/ManageScriptsHeader";
-import { ScriptEditorDialog } from "@/components/business/scripts/manage/ScriptEditorDialog";
-import { useScriptDelete } from "@/components/business/scripts/manage/useScriptDelete";
-import { useScriptEditor } from "@/components/business/scripts/manage/useScriptEditor";
-import { useScriptList } from "@/components/business/scripts/manage/useScriptList";
+import { ChecksFinder } from "@/components/checks/manage/ChecksFinder";
+import { EditHistoryDialog } from "@/components/checks/manage/EditHistoryDialog";
+import { DeleteCheckDialog } from "@/components/checks/manage/DeleteCheckDialog";
+import { ManageChecksHeader } from "@/components/checks/manage/ManageChecksHeader";
+import { CheckEditorDialog } from "@/components/checks/manage/CheckEditorDialog";
+import { useCheckDelete } from "@/components/checks/manage/useCheckDelete";
+import { useCheckEditor } from "@/components/checks/manage/useCheckEditor";
+import { useCheckList } from "@/components/checks/manage/useCheckList";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
 import { SkeletonTable } from "@/components/common/PageSkeletons";
@@ -27,9 +27,9 @@ const ManageScriptsContent = () => {
 
   const t = useDashboardT<string>();
 
-  const { scripts, isLoading, error, reload } = useScriptList();
-  const editor = useScriptEditor(language, t, reload);
-  const deletion = useScriptDelete(language, t, reload);
+  const { scripts, isLoading, error, reload } = useCheckList();
+  const editor = useCheckEditor(language, t, reload);
+  const deletion = useCheckDelete(language, t, reload);
 
   // Links from runs and coverage select a check (?scriptId=); editing stays one click away.
   const linkedScriptId = searchParams.get("scriptId");
@@ -64,7 +64,7 @@ const ManageScriptsContent = () => {
     <div className="min-h-screen    ">
       <div className={`${APP_CONTAINER} py-6`}>
         <div className="space-y-4 animate-fadeIn">
-          <ManageScriptsHeader
+          <ManageChecksHeader
             scripts={scripts}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
@@ -81,7 +81,7 @@ const ManageScriptsContent = () => {
               <p className="mt-1 text-body-sm text-muted-foreground">{error}</p>
             </div>
           ) : (
-            <ScriptsFinder
+            <ChecksFinder
               scripts={scripts}
               searchTerm={searchTerm}
               language={language}
@@ -95,7 +95,7 @@ const ManageScriptsContent = () => {
         </div>
       </div>
 
-      <ScriptEditorDialog
+      <CheckEditorDialog
         open={editor.isOpen}
         onOpenChange={editor.setIsOpen}
         mode={editor.mode}
@@ -109,7 +109,7 @@ const ManageScriptsContent = () => {
         t={t}
       />
 
-      <DeleteScriptDialog
+      <DeleteCheckDialog
         open={deletion.isOpen}
         onOpenChange={deletion.setIsOpen}
         script={deletion.target}

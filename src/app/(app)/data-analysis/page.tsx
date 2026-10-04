@@ -9,7 +9,7 @@ import { AnalysisChartsRow } from "@/components/business/analysis/AnalysisCharts
 import { AnalysisFilters } from "@/components/business/analysis/AnalysisFilters";
 import { AnalysisSummary } from "@/components/business/analysis/AnalysisSummary";
 import { DailyBreakdown } from "@/components/business/analysis/DailyBreakdown";
-import { ScriptPerformanceTable } from "@/components/business/analysis/ScriptPerformanceTable";
+import { CheckPerformanceTable } from "@/components/business/analysis/CheckPerformanceTable";
 import { collectTags, DAILY_BREAKDOWN_DAYS, DEFAULT_TIME_RANGE, type TimeRange } from "@/components/business/analysis/analytics";
 import { analysisCopy } from "@/components/business/analysis/copy";
 import { useAnalytics } from "@/components/business/analysis/useAnalytics";
@@ -80,7 +80,7 @@ export default function DataAnalysisPage() {
             <>
               <AnalysisChartsRow data={data} rangeLabel={rangeLabel} language={language} />
               <DailyBreakdown days={recentDays} hint={timeRange === "7d" ? rangeLabel : copy.lastDays(recentDays.length)} language={language} />
-              <ScriptPerformanceTable key={`${timeRange}|${scriptId}|${hashtags.join(",")}`} scripts={data.scriptAnalytics} hint={rangeLabel} language={language} />
+              <CheckPerformanceTable key={`${timeRange}|${scriptId}|${hashtags.join(",")}`} scripts={data.scriptAnalytics} hint={rangeLabel} language={language} />
             </>
           )}
         </div>

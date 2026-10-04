@@ -2,24 +2,24 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { runCheck } from "@/client/checks";
 import { runResultLabel } from "@/lib/utils/run-message";
-import type { ScriptInfo } from "../types";
+import type { CheckListItem } from "../types";
 import { selectedCheckId } from "./runs";
 import { apiErrorText } from "@/client/api-errors";
 
 const MESSAGE_DURATION_MS = 8000;
 
 /** The check picked in the Run sheet and a single run of it; `onTriggered` refreshes the page afterwards. */
-export function useTriggerCheck(availableScripts: ScriptInfo[], onTriggered: () => Promise<void>, language: "en" | "zh") {
+export function useTriggerCheck(availableChecks: CheckListItem[], onTriggered: () => Promise<void>, language: "en" | "zh") {
   const zh = language === "zh";
   const [chosenScriptId, setSelectedScriptId] = useState("");
-  const selectedScriptId = selectedCheckId(chosenScriptId, availableScripts);
+  const selectedScriptId = selectedCheckId(chosenScriptId, availableChecks);
   const [isTriggering, setIsTriggering] = useState(false);
   const [triggerMessage, setTriggerMessage] = useState<string | null>(null);
   const [triggerMessageType, setTriggerMessageType] = useState<"success" | "error" | null>(null);
 
-  const selectedScript = useMemo(
-    () => availableScripts.find((script) => script.scriptId === selectedScriptId),
-    [availableScripts, selectedScriptId],
+  const selectedCheck = useMemo(
+    () => availableChecks.find((script) => script.scriptId === selectedScriptId),
+    [availableChecks, selectedScriptId],
   );
 
   const handleTriggerCheck = useCallback(async () => {
@@ -55,7 +55,7 @@ export function useTriggerCheck(availableScripts: ScriptInfo[], onTriggered: () 
   return {
     selectedScriptId,
     setSelectedScriptId,
-    selectedScript,
+    selectedCheck,
     isTriggering,
     triggerMessage,
     triggerMessageType,

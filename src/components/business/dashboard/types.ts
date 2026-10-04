@@ -20,7 +20,7 @@ export interface HistoryRun {
   github_run_id?: string | number;
 }
 
-export interface ScriptInfo {
+export interface CheckListItem {
   scriptId: string;
   name: string;
   description?: string;
@@ -36,7 +36,7 @@ export interface ScriptInfo {
   hashtags?: string[];
 }
 
-export interface SqlScript {
+export interface CheckDefinition {
   _id?: string; // MongoDB ID, optional as it's not present before creation
   scriptId: string;
   name: string;

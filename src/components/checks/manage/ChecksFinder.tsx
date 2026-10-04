@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Activity, Edit, History, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { SqlScript } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/business/dashboard/types";
 import { cn } from "@/lib/utils/utils";
 import { scheduleLabel } from "@/components/checks/status";
 import { listKeyHandler } from "./list-keys";
@@ -72,7 +72,7 @@ function sameSource(a: Source, b: Source) {
  * checks in the chosen group, and a preview of the selected check with its
  * SQL and actions.
  */
-export function ScriptsFinder({
+export function ChecksFinder({
   scripts,
   searchTerm,
   language,
@@ -82,13 +82,13 @@ export function ScriptsFinder({
   onDelete,
   initialSelectedId = null,
 }: {
-  scripts: SqlScript[];
+  scripts: CheckDefinition[];
   searchTerm: string;
   language: string;
-  onEdit: (script: SqlScript) => void;
+  onEdit: (script: CheckDefinition) => void;
   onEditHistory: (scriptId: string) => void;
   onRunHistory: (scriptId: string) => void;
-  onDelete: (script: SqlScript) => void;
+  onDelete: (script: CheckDefinition) => void;
   /** A check to select when the list first loads, e.g. from a link. */
   initialSelectedId?: string | null;
 }) {
@@ -124,7 +124,7 @@ export function ScriptsFinder({
   }
 
   const selected = visible.find((script) => script.scriptId === selectedId) ?? null;
-  const name = (script: SqlScript) => (zh ? script.cnName || script.name : script.name);
+  const name = (script: CheckDefinition) => (zh ? script.cnName || script.name : script.name);
 
   const sourceItem = (item: Source, label: string, count: ReactNode) => {
     const active = sameSource(source, item);

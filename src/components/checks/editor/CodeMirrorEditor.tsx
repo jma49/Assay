@@ -8,13 +8,13 @@ import { useLanguage } from "@/components/common/LanguageProvider";
 import AIAssistantPanel from "@/components/business/ai/AIAssistantPanel";
 import { useMe } from "@/lib/auth/use-me";
 import { cn } from "@/lib/utils/utils";
-import { DashboardTranslationKeys } from "../dashboard/types";
+import { DashboardTranslationKeys } from "@/components/business/dashboard/types";
 import EditorThemeSettings from "./EditorThemeSettings";
-import { EditorStatusBar } from "./editor/EditorStatusBar";
-import { postgresExtensions } from "./editor/postgres";
-import { formatSql } from "./editor/sql-format";
-import { useEditorTheme } from "./editor/useEditorTheme";
-import { useSqlAssistant } from "./editor/useSqlAssistant";
+import { EditorStatusBar } from "./EditorStatusBar";
+import { postgresExtensions } from "./postgres";
+import { formatSql } from "./sql-format";
+import { useEditorTheme } from "./useEditorTheme";
+import { useSqlAssistant } from "./useSqlAssistant";
 
 // Pulls in a syntax highlighter; only load it when an analysis is shown.
 const AnalysisResultDialog = dynamic(() => import("@/components/business/ai/AnalysisResultDialog"), { ssr: false });

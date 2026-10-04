@@ -1,4 +1,4 @@
-import { CoverageView } from "@/components/business/scripts/CoverageView";
+import { CoverageView } from "@/components/checks/coverage/CoverageView";
 
 export const metadata = { title: "Coverage" };
 

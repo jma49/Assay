@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { apiErrorText } from "@/client/api-errors";
 import { readJson } from "@/client/send-json";
 import type { BatchItemView, BatchView } from "@/contracts/batches";
-import type { ScriptInfo } from "../types";
+import type { CheckListItem } from "../types";
 import { triggerCopy } from "./copy";
 import { batchCounts } from "./batch-progress";
 import type { BulkMode } from "./script-search";
@@ -57,7 +57,7 @@ export function useBatchRun(language: string) {
   }, [executionId, isRunning, language]);
 
   const start = useCallback(
-    async (targets: ScriptInfo[], mode: BulkMode, filtered: boolean) => {
+    async (targets: CheckListItem[], mode: BulkMode, filtered: boolean) => {
       const copy = triggerCopy(language);
       startAbort.current?.abort();
       startAbort.current = new AbortController();

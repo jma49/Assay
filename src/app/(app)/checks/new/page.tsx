@@ -4,7 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { useDashboardT } from "@/components/business/dashboard/useDashboardT";
-import { ScriptMetadataForm } from "@/components/business/scripts/ScriptMetadataForm";
+import { CheckMetadataForm } from "@/components/checks/manage/CheckMetadataForm";
 import { NoCreateAccess } from "@/components/checks/new/NoCreateAccess";
 import { useNewCheck } from "@/components/checks/new/useNewCheck";
 import { TemplatePicker } from "@/components/checks/templates/TemplatePicker";
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/utils";
 
 // CodeMirror and its themes are large; load them only where the editor renders.
-const CodeMirrorEditor = dynamic(() => import("@/components/business/scripts/CodeMirrorEditor"), {
+const CodeMirrorEditor = dynamic(() => import("@/components/checks/editor/CodeMirrorEditor"), {
   ssr: false,
   loading: () => <div className="skeleton-shimmer h-[480px] rounded-lg" />,
 });
@@ -93,7 +93,7 @@ export default function NewCheckPage() {
           )}
         </div>
         <aside className="self-start rounded-xl bg-card p-5 shadow-border lg:col-span-4">
-          <ScriptMetadataForm
+          <CheckMetadataForm
             formData={form.formData}
             onFormChange={form.changeField}
             errors={form.errors}

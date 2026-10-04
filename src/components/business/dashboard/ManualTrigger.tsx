@@ -6,14 +6,14 @@ import { BatchExecutionProgress } from "./BatchExecutionProgress";
 import { BulkRunPanel } from "./manual-trigger/BulkRunPanel";
 import { triggerCopy } from "./manual-trigger/copy";
 import { SingleRunPanel } from "./manual-trigger/SingleRunPanel";
-import { batchTargets, filterScripts, type BulkMode } from "./manual-trigger/script-search";
+import { batchTargets, filterChecks, type BulkMode } from "./manual-trigger/script-search";
 import { useBatchRun } from "./manual-trigger/useBatchRun";
-import type { DashboardTranslationKeys, ScriptInfo } from "./types";
+import type { DashboardTranslationKeys, CheckListItem } from "./types";
 
 interface ManualTriggerProps {
-  availableScripts: ScriptInfo[];
+  availableChecks: CheckListItem[];
   selectedScriptId: string;
-  selectedScript: ScriptInfo | undefined;
+  selectedCheck: CheckListItem | undefined;
   isTriggering: boolean;
   isFetchingScripts: boolean;
   loading: boolean;
@@ -34,9 +34,9 @@ interface ManualTriggerProps {
 
 /** The Run sheet's content: run one check now, or start a bulk run and follow it. */
 export function ManualTrigger({
-  availableScripts,
+  availableChecks,
   selectedScriptId,
-  selectedScript,
+  selectedCheck,
   isTriggering,
   isFetchingScripts,
   loading,
@@ -55,20 +55,20 @@ export function ManualTrigger({
   const [searchTerm, setSearchTerm] = useState("");
   const batch = useBatchRun(language);
 
-  const matching = useMemo(() => filterScripts(availableScripts, searchTerm), [availableScripts, searchTerm]);
+  const matching = useMemo(() => filterChecks(availableChecks, searchTerm), [availableChecks, searchTerm]);
   const targets = useMemo(() => batchTargets(matching, bulkMode), [matching, bulkMode]);
 
   // Select the first check once a list arrives, but never override the user's later choice.
   const autoSelected = useRef(false);
   useEffect(() => {
-    if (availableScripts.length === 0) {
+    if (availableChecks.length === 0) {
       autoSelected.current = false;
       return;
     }
-    if (!autoSelected.current && !selectedScriptId) setSelectedScriptId(availableScripts[0].scriptId);
+    if (!autoSelected.current && !selectedScriptId) setSelectedScriptId(availableChecks[0].scriptId);
     autoSelected.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availableScripts.length]);
+  }, [availableChecks.length]);
 
   const runBatch = () => batch.start(targets, bulkMode, searchTerm.trim().length > 0);
 
@@ -86,14 +86,14 @@ export function ManualTrigger({
           <Loader2 className="size-4 animate-spin" />
           {copy.loading}
         </p>
-      ) : availableScripts.length === 0 ? (
+      ) : availableChecks.length === 0 ? (
         <p className="text-body-sm text-muted-foreground">{copy.noChecks}</p>
       ) : mode === "single" ? (
         <>
           <SingleRunPanel
-            checks={availableScripts}
+            checks={availableChecks}
             selectedScriptId={selectedScriptId}
-            selectedScript={selectedScript}
+            selectedCheck={selectedCheck}
             isTriggering={isTriggering}
             busy={isTriggering || loading}
             language={language}

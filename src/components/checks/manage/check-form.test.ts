@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { SqlScript } from "@/components/business/dashboard/types";
+import type { CheckDefinition } from "@/components/business/dashboard/types";
 import {
   applyFieldChange,
   approvalNotice,
@@ -12,9 +12,9 @@ import {
   suggestScriptId,
   toFormMetadata,
   updatePayload,
-} from "./script-form";
+} from "./check-form";
 
-const script: SqlScript = {
+const script: CheckDefinition = {
   _id: "abc",
   scriptId: "orders-without-customer",
   name: "Orders without customer",

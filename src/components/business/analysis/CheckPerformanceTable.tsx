@@ -7,7 +7,7 @@ import type { RunOutcome } from "@/domain/run";
 import { formatDateTime, formatRelative } from "@/lib/utils/datetime";
 import { pagerLabel } from "@/lib/utils/pagination";
 import { cn } from "@/lib/utils/utils";
-import type { ScriptAnalytics } from "./analytics";
+import type { CheckAnalytics } from "./analytics";
 import { AnalysisSection } from "./AnalysisChartsRow";
 import { analysisCopy } from "./copy";
 
@@ -15,13 +15,13 @@ const PAGE_SIZE = 10;
 const OUTCOMES: RunOutcome[] = ["error", "issues", "clean"];
 
 /** Per-check outcome counts and clean rate, paged. Remount (via key) to go back to the first page. */
-export function ScriptPerformanceTable({ scripts, hint, language }: { scripts: ScriptAnalytics[]; hint: string; language: string }) {
+export function CheckPerformanceTable({ scripts, hint, language }: { scripts: CheckAnalytics[]; hint: string; language: string }) {
   const copy = analysisCopy(language);
   const lang = language === "zh" ? "zh" : "en";
   const [page, setPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(scripts.length / PAGE_SIZE));
   const rows = scripts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const name = (script: ScriptAnalytics) => (lang === "zh" && script.cnName) || script.scriptName;
+  const name = (script: CheckAnalytics) => (lang === "zh" && script.cnName) || script.scriptName;
 
   return (
     <AnalysisSection title={copy.byCheck} hint={hint}>

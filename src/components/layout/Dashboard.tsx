@@ -49,8 +49,8 @@ const Dashboard = ({ initialSearch = "" }: { initialSearch?: string }) => {
   }, []);
 
   const runs = useRunsPage(language, initialSearch);
-  const { history, overallStats, availableScripts, loading, isFetchingScripts } = runs;
-  const trigger = useTriggerCheck(availableScripts, runs.refresh, language === "zh" ? "zh" : "en");
+  const { history, overallStats, availableChecks, loading, isFetchingScripts } = runs;
+  const trigger = useTriggerCheck(availableChecks, runs.refresh, language === "zh" ? "zh" : "en");
   useFadeInStyle();
 
   const { startIndex, endIndex } = pageRange(history.currentPage, history.pagination.total, CHECK_HISTORY_ITEMS_PER_PAGE);
@@ -95,9 +95,9 @@ const Dashboard = ({ initialSearch = "" }: { initialSearch?: string }) => {
         mode={runSheetMode}
         canExecute={canExecute}
         demoRuns={demoRuns}
-        availableScripts={availableScripts}
+        availableChecks={availableChecks}
         selectedScriptId={trigger.selectedScriptId}
-        selectedScript={trigger.selectedScript}
+        selectedCheck={trigger.selectedCheck}
         isTriggering={trigger.isTriggering}
         isFetchingScripts={isFetchingScripts}
         loading={loading && isFetchingScripts}
@@ -128,7 +128,7 @@ const Dashboard = ({ initialSearch = "" }: { initialSearch?: string }) => {
           requestSort={history.requestSort}
           startIndex={startIndex}
           endIndex={endIndex}
-          availableScripts={availableScripts}
+          availableChecks={availableChecks}
           isLoading={history.isLoadingChecks || loading}
         />
       </section>
