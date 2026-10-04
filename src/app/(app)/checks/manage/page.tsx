@@ -36,7 +36,7 @@ const ManageScriptsContent = () => {
 
   const rejectBlankId = (scriptId: string) => {
     if (scriptId && scriptId.trim() !== "") return false;
-    toast.error(language === "zh" ? "无效的脚本ID" : "Invalid script ID");
+    toast.error(language === "zh" ? "无效的检查 ID" : "Invalid check ID");
     return true;
   };
 
@@ -54,7 +54,7 @@ const ManageScriptsContent = () => {
     if (rejectBlankId(scriptId)) return;
     const trimmed = scriptId.trim();
     toast.info(language === "zh" ? "正在跳转到执行历史" : "Opening run history", {
-      description: language === "zh" ? `将搜索脚本: ${trimmed}` : `Filtering by ${trimmed}`,
+      description: language === "zh" ? `筛选：${trimmed}` : `Filtering by ${trimmed}`,
       duration: 2000,
     });
     router.push(`/runs?search=${encodeURIComponent(trimmed)}#execution-history`);
