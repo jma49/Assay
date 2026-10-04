@@ -98,7 +98,7 @@ describe("PATCH /api/data-sources/[sourceId]", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ source: { sourceId: "billing", name: "Billing 2" } });
     expect(mocks.updateCalls).toHaveLength(1);
-    const [db, workspace, sourceId, by, input, deps] = mocks.updateCalls[0];
+    const [db, workspace, sourceId, by, input, deps] = mocks.updateCalls[0] ?? [];
     expect(db).toEqual({});
     expect(workspace).toBe("default");
     expect(sourceId).toBe("billing");

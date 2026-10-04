@@ -112,8 +112,8 @@ describe("POST /api/approvals", () => {
   it("applies the change once when the approval wins the race", async () => {
     const res = await decide({ requestId: "req_1", action: "approve", comment: "ok" });
     expect(res.status).toBe(200);
-    expect(mocks.requestsUpdate.mock.calls[0][0]).toEqual({ requestId: "req_1", status: "pending" });
-    const created = (mocks.scriptsInsert.mock.calls as unknown as [Record<string, unknown>][])[0][0];
+    expect(mocks.requestsUpdate.mock.calls[0]?.[0]).toEqual({ requestId: "req_1", status: "pending" });
+    const created = (mocks.scriptsInsert.mock.calls as unknown as [Record<string, unknown>][])[0]?.[0] ?? {};
     // The requester, not the approver, owns the check; payload-only fields are dropped.
     expect(created.createdBy).toEqual({ id: "user_dev", email: "dev@example.com" });
     expect(created).not.toHaveProperty("demoSeed");
@@ -129,7 +129,7 @@ describe("POST /api/approvals", () => {
   it("rejects a pending request with a reason", async () => {
     const res = await decide({ requestId: "req_1", action: "reject", comment: "too broad" });
     expect(res.status).toBe(200);
-    expect(mocks.requestsUpdate.mock.calls[0][1].$set).toMatchObject({ status: "rejected", reviewedBy: "user_admin", reviewComment: "too broad" });
+    expect(mocks.requestsUpdate.mock.calls[0]?.[1].$set).toMatchObject({ status: "rejected", reviewedBy: "user_admin", reviewComment: "too broad" });
     expect(mocks.scriptsInsert).not.toHaveBeenCalled();
   });
 });

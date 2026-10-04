@@ -11,7 +11,7 @@ describe("ensureDefaultRole", () => {
   it("only matches documents without an active role, so an admin is never replaced", async () => {
     updateOne.mockResolvedValueOnce({ acknowledged: true });
     await ensureDefaultRole("u1", "u1@example.com");
-    const [filter, update, options] = updateOne.mock.calls[0];
+    const [filter, update, options] = updateOne.mock.calls[0] ?? [];
     expect(filter).toEqual({ userId: "u1", isActive: { $ne: true } });
     expect(update.$set).toMatchObject({ role: "viewer", isActive: true });
     expect(options).toEqual({ upsert: true });

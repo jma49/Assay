@@ -11,10 +11,10 @@ function redirectFor(pathname: string): string | undefined {
     if (sourceParts.length !== pathParts.length) continue;
     const params: Record<string, string> = {};
     const matches = sourceParts.every((part, i) => {
-      if (part.startsWith(":")) return (params[part.slice(1)] = pathParts[i]) !== "";
+      if (part.startsWith(":")) return (params[part.slice(1)] = pathParts[i] ?? "") !== "";
       return part === pathParts[i];
     });
-    if (matches) return destination.replace(/:(\w+)/g, (_, name: string) => params[name]);
+    if (matches) return destination.replace(/:(\w+)/g, (_, name: string) => params[name] ?? "");
   }
   return undefined;
 }

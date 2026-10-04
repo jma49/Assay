@@ -37,7 +37,7 @@ describe("runChecks", () => {
   ): RunChecksDeps & { run: ReturnType<typeof vi.fn>; completeSlot: ReturnType<typeof vi.fn>; releaseSlot: ReturnType<typeof vi.fn> } {
     return {
       listChecks: async () => checks,
-      claimSlot: async (scriptId) => (scriptId in claims ? claims[scriptId] : `claim-${scriptId}`),
+      claimSlot: async (scriptId) => (scriptId in claims ? (claims[scriptId] ?? null) : `claim-${scriptId}`),
       completeSlot: vi.fn(async () => {}),
       releaseSlot: vi.fn(async () => {}),
       run: vi.fn(async () => completed),
@@ -247,7 +247,7 @@ describe("mongoRunChecksStore slot claims", () => {
     ];
     const store = mongoRunChecksStore(fakeDb({ find: () => ({ sort: () => ({ toArray }) }) }));
     const [candidate] = await store.listChecks("scheduled");
-    expect(candidate.slotClaim).toEqual({ slot, at: claimAt });
+    expect(candidate?.slotClaim).toEqual({ slot, at: claimAt });
   });
 });
   it("reports a failing check and keeps running the others, never more than the limit at once", async () => {

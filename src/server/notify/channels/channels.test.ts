@@ -108,7 +108,7 @@ describe("payloads", () => {
 
   it("the generic webhook signs timestamp and body", () => {
     const request = CHANNELS.webhook.request(message, { url: "https://example.com/h", signingSecret: "s" }, context);
-    const timestamp = request.headers["x-assay-timestamp"];
+    const timestamp = request.headers["x-assay-timestamp"] ?? "";
     expect(request.headers["x-assay-signature"]).toBe(webhookSignature("s", timestamp, request.body));
     expect(JSON.parse(request.body)).toMatchObject({ type: "assay.alert", alert: "issues" });
   });

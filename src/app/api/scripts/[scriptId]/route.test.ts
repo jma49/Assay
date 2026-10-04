@@ -172,7 +172,7 @@ describe.each([
     expect(res.status).toBe(200);
     expect((await res.json()).requiresApproval).toBe(true);
     expect(mocks.updateOne).not.toHaveBeenCalled();
-    const { originalData } = mocks.fileChangeRequest.mock.calls[0][1] as { originalData: Record<string, unknown> };
+    const { originalData } = mocks.fileChangeRequest.mock.calls[0]?.[1] as { originalData: Record<string, unknown> };
     expect(originalData.baseVersion).toBe(3);
     expect(originalData.name).toBe("Renamed");
   });
@@ -199,7 +199,7 @@ describe.each([
     const res = await update({ dataSourceId: "billing", version: 3 });
     expect((await res.json()).requiresApproval).toBe(true);
     expect(mocks.updateOne).not.toHaveBeenCalled();
-    const { originalData } = mocks.fileChangeRequest.mock.calls[0][1] as { originalData: Record<string, unknown> };
+    const { originalData } = mocks.fileChangeRequest.mock.calls[0]?.[1] as { originalData: Record<string, unknown> };
     expect(originalData.dataSourceId).toBe("billing");
   });
 

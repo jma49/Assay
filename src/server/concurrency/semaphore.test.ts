@@ -22,12 +22,12 @@ describe("createSemaphore", () => {
     await Promise.resolve();
     expect(started).toEqual([0, 1]);
     expect(semaphore.queued).toBe(1);
-    gates[0].resolve();
+    gates[0]?.resolve();
     await tasks[0];
     await Promise.resolve();
     expect(started).toEqual([0, 1, 2]);
-    gates[1].resolve();
-    gates[2].resolve();
+    gates[1]?.resolve();
+    gates[2]?.resolve();
     expect(await Promise.all(tasks)).toEqual([0, 1, 2]);
     expect(semaphore.active).toBe(0);
   });

@@ -11,7 +11,7 @@ describe("sendRequest", () => {
   it("sends without following redirects", async () => {
     const fetch = reply(200, "ok");
     expect(await sendRequest(CHANNELS.slack, request, { fetch, resolve: publicDns })).toEqual({ kind: "sent" });
-    expect(fetch.mock.calls[0][1]).toMatchObject({ method: "POST", redirect: "manual" });
+    expect(fetch.mock.calls[0]?.[1]).toMatchObject({ method: "POST", redirect: "manual" });
   });
 
   it("retries rate limits and server errors, gives up on client errors", async () => {

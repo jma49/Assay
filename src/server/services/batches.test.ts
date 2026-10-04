@@ -51,14 +51,19 @@ describe("runBatch", () => {
       c: completed("error"),
       d: { kind: "busy", runId: "x" },
     };
-    await runBatch("b1", { store, run: async (id) => results[id], now: () => new Date() });
+    const run = async (id: string) => {
+      const result = results[id];
+      if (!result) throw new Error(`No result for ${id}`);
+      return result;
+    };
+    await runBatch("b1", { store, run, now: () => new Date() });
     expect(batch.scripts.map((s) => [s.scriptId, s.status])).toEqual([
       ["a", "clean"],
       ["b", "issues"],
       ["c", "error"],
       ["d", "error"],
     ]);
-    expect(batch.scripts[1].mongoResultId).toBe("run-issues");
+    expect(batch.scripts[1]?.mongoResultId).toBe("run-issues");
     expect(batch.isActive).toBe(false);
   });
 
@@ -74,7 +79,7 @@ describe("runBatch", () => {
       now: () => new Date(),
     });
     expect(batch.scripts.map((s) => s.status)).toEqual(["error", "clean"]);
-    expect(batch.scripts[0].message).toBe("mongo down");
+    expect(batch.scripts[0]?.message).toBe("mongo down");
     expect(batch.isActive).toBe(false);
   });
 
@@ -107,14 +112,14 @@ describe("the time limit", () => {
     // a starts at 0 s, b at 30 s; c would start at 60 s and could end past 100 s.
     expect(ran).toEqual(["a", "b"]);
     expect(batch.scripts.map((s) => s.status)).toEqual(["clean", "clean", "skipped", "skipped"]);
-    expect(batch.scripts[2].message).toBe(SKIPPED_MESSAGE);
+    expect(batch.scripts[2]?.message).toBe(SKIPPED_MESSAGE);
     expect(batch.isActive).toBe(false);
   });
 
   it("shows a batch whose function was stopped as finished, with its unfinished checks not run", () => {
     const batch = batchOf(["a", "b", "c"]);
-    batch.scripts[0].status = "clean";
-    batch.scripts[1].status = "running";
+    batch.scripts[0]!.status = "clean";
+    batch.scripts[1]!.status = "running";
     const stale = asStale(batch);
     expect(stale.isActive).toBe(false);
     expect(stale.scripts.map((s) => s.status)).toEqual(["clean", "skipped", "skipped"]);

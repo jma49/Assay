@@ -84,6 +84,6 @@ describe("POST /api/integrations/telegram/links", () => {
 
   it("defaults to English", async () => {
     await link({});
-    expect(mocks.createCalls[0][3]).toBe("en");
+    expect(mocks.createCalls[0]?.[3]).toBe("en");
   });
 });

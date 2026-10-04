@@ -34,8 +34,8 @@ describe("structured logs", () => {
   it("routes warn and error to their own console methods", () => {
     logWarn("slow query");
     logError("query failed");
-    expect(lines[0].startsWith("warn:")).toBe(true);
-    expect(lines[1].startsWith("error:")).toBe(true);
+    expect(lines[0]?.startsWith("warn:")).toBe(true);
+    expect(lines[1]?.startsWith("error:")).toBe(true);
   });
 
   it("attaches the request id inside runWithRequestId", () => {

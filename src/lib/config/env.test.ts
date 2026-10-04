@@ -16,7 +16,10 @@ function namesRead(): Set<string> {
   const read = /(?:process\.env|\benv|\bEnv|environment|serverEnv\(\))\??\.([A-Z][A-Z0-9_]*)\b|\benv\[\s*"([A-Z][A-Z0-9_]*)"\s*\]/g;
   const names = new Set<string>();
   for (const file of [...sourceFiles("src"), ...sourceFiles("scripts")]) {
-    for (const match of readFileSync(file, "utf8").matchAll(read)) names.add(match[1] ?? match[2]);
+    for (const match of readFileSync(file, "utf8").matchAll(read)) {
+      const name = match[1] ?? match[2];
+      if (name) names.add(name);
+    }
   }
   return names;
 }

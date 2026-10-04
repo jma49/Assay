@@ -140,7 +140,7 @@ describe("GET /api/check-history", () => {
       $match: { $or: [{ checkId: { $regex: "duplicate", $options: "i" } }, { checkId: { $in: ["z-orders"] } }] },
     });
     expect(JSON.stringify(pipeline[1])).toContain('["z-orders","a-emails"]');
-    expect(mocks.countDocuments).toHaveBeenCalledWith(pipeline[0].$match, expect.anything());
+    expect(mocks.countDocuments).toHaveBeenCalledWith(pipeline[0]?.$match, expect.anything());
   });
 
   it("clamps the page size", async () => {
@@ -163,7 +163,7 @@ describe("GET /api/check-history", () => {
 
   it("filters one check's runs within a date range, as the Analysis page asks", async () => {
     await history("?checkId=orders-check&startDate=2026-09-01T00:00:00.000Z&endDate=2026-09-08T00:00:00.000Z&limit=500");
-    expect(mocks.runsFind.mock.calls[0][0]).toEqual({
+    expect(mocks.runsFind.mock.calls[0]?.[0]).toEqual({
       checkId: { $eq: "orders-check" },
       finishedAt: { $gte: new Date("2026-09-01T00:00:00.000Z"), $lte: new Date("2026-09-08T00:00:00.000Z") },
     });
@@ -172,7 +172,7 @@ describe("GET /api/check-history", () => {
 
   it("never reads or returns samples, even when asked for them", async () => {
     const res = await history("?include_sample=true");
-    const { projection } = mocks.runsFind.mock.calls[0][1];
+    const { projection } = mocks.runsFind.mock.calls[0]?.[1] ?? {};
     for (const field of ["sample", "raw_results", "rowKeys"]) expect(projection).not.toHaveProperty(field);
     expect((await res.json()).data[0]).not.toHaveProperty("sample");
   });
@@ -184,7 +184,7 @@ describe("GET /api/check-history", () => {
     ];
     const res = await history("?hashtags=billing,%20daily");
     expect(mocks.checksFind).toHaveBeenCalledWith({ hashtags: { $all: ["billing", "daily"] } }, expect.anything());
-    expect(mocks.runsFind.mock.calls[0][0]).toEqual({ checkId: { $in: ["orders-check"] } });
+    expect(mocks.runsFind.mock.calls[0]?.[0]).toEqual({ checkId: { $in: ["orders-check"] } });
     expect((await res.json()).query_info.hashtags).toEqual(["billing", "daily"]);
   });
 

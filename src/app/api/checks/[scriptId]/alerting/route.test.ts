@@ -66,7 +66,7 @@ describe("POST /api/checks/[scriptId]/alerting", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ alerting: { owner: null, acknowledged: { at: "now" } } });
     expect(mocks.calls).toHaveLength(1);
-    const [, scriptId, input, by, source] = mocks.calls[0];
+    const [, scriptId, input, by, source] = mocks.calls[0] ?? [];
     expect(scriptId).toBe("orders");
     expect(input).toEqual({ action: "acknowledge" });
     expect(by).toEqual({ id: "u1", name: "Ada" });

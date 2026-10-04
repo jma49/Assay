@@ -21,7 +21,7 @@ function fakeDb(initial: Record<string, number>, options: { renameFails?: (from:
       const failure = options.renameFails?.(from, to, collections);
       if (failure) throw failure;
       renames.push([from, to]);
-      collections[to] = collections[from];
+      collections[to] = collections[from] ?? 0;
       delete collections[from];
     },
   } as unknown as Db;
@@ -56,13 +56,13 @@ describe("migrateCollectionNames", () => {
       { sql_scripts: 5 },
       {
         renameFails: (from, to, state) => {
-          state[to] = state[from];
+          state[to] = state[from] ?? 0;
           delete state[from];
           return withCode(26);
         },
       },
     );
-    expect((await migrateCollectionNames(db, [["sql_scripts", "checks"]]))[0].outcome).toBe("already-done");
+    expect((await migrateCollectionNames(db, [["sql_scripts", "checks"]]))[0]?.outcome).toBe("already-done");
   });
 
   it("rethrows a rename failure that did not leave the move complete", async () => {
@@ -85,7 +85,7 @@ describe("migrateCollectionNames", () => {
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const { db } = fakeDb({ sql_scripts: 0, checks: 5 }, { renameFails: () => withCode(26) });
     const [result] = await migrateCollectionNames(db, [["sql_scripts", "checks"]]);
-    expect(result.outcome).toBe("moved-empty-old-aside");
+    expect(result?.outcome).toBe("moved-empty-old-aside");
   });
 
   it("leaves both alone and warns when both hold documents", async () => {
@@ -96,6 +96,6 @@ describe("migrateCollectionNames", () => {
     expect(renames).toEqual([]);
     expect(drops).toEqual([]);
     expect(collections).toEqual({ result: 3, runs: 40 });
-    expect(warn.mock.calls[0][0]).toContain("--merge");
+    expect(warn.mock.calls[0]?.[0]).toContain("--merge");
   });
 });

@@ -76,7 +76,7 @@ describe("getSchemaTables", () => {
     const edited = getSchemaTables(source("billing", 2, "invoices"));
     await vi.waitFor(() => expect(mocks.statements).toHaveLength(2));
     mocks.release();
-    expect((await edited)[0].name).toBe("invoices");
+    expect((await edited)[0]?.name).toBe("invoices");
     expect(mocks.cache.has("db_schema:v3:billing:2")).toBe(true);
   });
 });

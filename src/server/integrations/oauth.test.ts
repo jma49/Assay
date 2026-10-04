@@ -42,7 +42,7 @@ describe("finishInstall", () => {
       label: "#alerts · Acme",
       name: "Slack #alerts",
     });
-    const init = fetcher.mock.calls[0][1] as RequestInit;
+    const init = fetcher.mock.calls[0]?.[1] as RequestInit;
     expect((init.headers as Record<string, string>).authorization).toBe(`Basic ${Buffer.from("sc:ss").toString("base64")}`);
   });
 

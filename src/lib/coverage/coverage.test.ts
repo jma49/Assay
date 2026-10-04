@@ -18,7 +18,7 @@ describe("computeCoverage", () => {
     ]);
     expect(report.covered).toBe(2);
     expect(report.tables.map((t) => t.table)).toEqual(["demo.products", "public.orders", "demo.orders", "demo.payments"]);
-    expect(report.tables[2].checks).toEqual([{ scriptId: "a", name: "A", cnName: undefined }]);
+    expect(report.tables[2]?.checks).toEqual([{ scriptId: "a", name: "A", cnName: undefined }]);
   });
 
   it("resolves bare names to public first, then to a unique schema", () => {

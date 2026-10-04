@@ -31,7 +31,7 @@ describe("blocksAfterAction", () => {
       { type: "actions", elements: [{ action_id: "assay_open" }, { action_id: "assay_ack" }, { action_id: "assay_mute" }] },
     ];
     const once = blocksAfterAction(blocks, "✅ Acknowledged by @ada");
-    expect(once[1].elements).toEqual([{ action_id: "assay_open" }]);
+    expect(once[1]?.elements).toEqual([{ action_id: "assay_open" }]);
     const twice = blocksAfterAction(once, "🔕 Muted by @bob");
     expect(twice.filter((b) => b.type === "context")).toHaveLength(1);
     expect(JSON.stringify(twice)).toContain("Muted by @bob");

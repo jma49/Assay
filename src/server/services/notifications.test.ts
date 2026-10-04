@@ -189,7 +189,7 @@ function memoryStore(events: StoredEvent[], destinations: Destination[], checkEx
 }
 
 function deps(store: NotifyStore, outcomes: DeliveryOutcome[] = [{ kind: "sent" }], clock = { now: t0 }) {
-  const send = vi.fn(async () => outcomes[Math.min(send.mock.calls.length - 1, outcomes.length - 1)]);
+  const send = vi.fn(async (): Promise<DeliveryOutcome> => outcomes[Math.min(send.mock.calls.length - 1, outcomes.length - 1)] ?? { kind: "sent" });
   const d: DispatchDeps = {
     store,
     now: () => clock.now,
@@ -232,14 +232,14 @@ describe("dispatchNotifications", () => {
     const { deps: d, send, clock } = deps(store, [{ kind: "retry", error: "HTTP 503" }]);
     await dispatchNotifications(d);
     expect(deliveries[0]).toMatchObject({ status: "pending", attempts: 1, error: "HTTP 503" });
-    expect(deliveries[0].nextAttemptAt.getTime() - t0.getTime()).toBe(backoffMs(1));
+    expect((deliveries[0]?.nextAttemptAt.getTime() ?? 0) - t0.getTime()).toBe(backoffMs(1));
 
     // Not due yet: nothing is sent.
     await dispatchNotifications(d);
     expect(send).toHaveBeenCalledTimes(1);
 
     for (let i = 1; i < MAX_ATTEMPTS; i++) {
-      clock.now = new Date(deliveries[0].nextAttemptAt.getTime());
+      clock.now = new Date(deliveries[0]?.nextAttemptAt.getTime() ?? 0);
       await dispatchNotifications(d);
     }
     expect(send).toHaveBeenCalledTimes(MAX_ATTEMPTS);
@@ -272,11 +272,11 @@ describe("dispatchNotifications", () => {
     for (let i = 1; i < MAX_ATTEMPTS; i++) {
       expect(await dispatchNotifications(d)).toMatchObject({ sent: 0, retrying: 1, failed: 0 });
       expect(deliveries[0]).toMatchObject({ status: "pending", attempts: i });
-      clock.now = new Date(deliveries[0].nextAttemptAt.getTime());
+      clock.now = new Date(deliveries[0]?.nextAttemptAt.getTime() ?? 0);
     }
     expect(await dispatchNotifications(d)).toMatchObject({ sent: 0, retrying: 0, failed: 1 });
     expect(deliveries[0]).toMatchObject({ status: "failed", attempts: MAX_ATTEMPTS });
-    expect(deliveries[0].error).toContain("hourly send slot");
+    expect(deliveries[0]?.error).toContain("hourly send slot");
     expect(send).not.toHaveBeenCalled();
   });
 
@@ -296,7 +296,7 @@ describe("dispatchNotifications", () => {
   it("fails without retrying when the secret cannot be opened", async () => {
     const { store, deliveries } = memoryStore([event()], [destination({ sealed: "not json" })]);
     await dispatchNotifications(deps(store).deps);
-    expect(deliveries[0].status).toBe("failed");
+    expect(deliveries[0]?.status).toBe("failed");
   });
 
   it("uses the Chinese name for Chinese destinations and skips removed ones", async () => {

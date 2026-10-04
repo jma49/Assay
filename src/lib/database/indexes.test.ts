@@ -8,19 +8,19 @@ describe("INDEXES", () => {
   it("covers the lookups sign-in makes on every request", () => {
     expect(keys("session")).toContain(JSON.stringify({ token: 1 }));
     expect(keys("apikey")).toContain(JSON.stringify({ key: 1 }));
-    expect(INDEXES.user.find((i) => "email" in i.key)?.unique).toBe(true);
-    expect(INDEXES.account.find((i) => "providerId" in i.key)?.unique).toBe(true);
+    expect(INDEXES.user?.find((i) => "email" in i.key)?.unique).toBe(true);
+    expect(INDEXES.account?.find((i) => "providerId" in i.key)?.unique).toBe(true);
   });
 
   it("expires what should not be kept", () => {
-    for (const [collection, field] of [["session", "expiresAt"], ["verification", "expiresAt"], ["runs", "expiresAt"], ["batches", "startedAt"]]) {
+    for (const [collection, field] of [["session", "expiresAt"], ["verification", "expiresAt"], ["runs", "expiresAt"], ["batches", "startedAt"]] as const) {
       const ttl = INDEXES[collection]?.find((i) => field in i.key);
       expect(ttl?.expireAfterSeconds, `${collection}.${field}`).toBeTypeOf("number");
     }
   });
 
   it("expires deliveries 30 days after their last change, never counting from creation", () => {
-    const ttls = INDEXES.notification_deliveries.filter((i) => i.expireAfterSeconds !== undefined);
+    const ttls = INDEXES.notification_deliveries?.filter((i) => i.expireAfterSeconds !== undefined);
     expect(ttls).toEqual([{ key: { updatedAt: 1 }, expireAfterSeconds: 30 * 24 * 60 * 60 }]);
   });
 });
