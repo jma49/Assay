@@ -53,6 +53,16 @@ function collectErrors(page: Page) {
   return errors;
 }
 
+// Without a proxy in front, Better Auth sees no client address and puts every
+// request in one shared bucket per path (100 per 10 s), so a fast run of many
+// pages got 429s. A made-up address per test gives each test its own bucket.
+// 198.18.0.0/15 is reserved for benchmarking, so the addresses are never real.
+let testNumber = 0;
+test.beforeEach(async ({ context }, testInfo) => {
+  testNumber += 1;
+  await context.setExtraHTTPHeaders({ "x-forwarded-for": `198.18.${testInfo.workerIndex % 250}.${(testNumber % 250) + 1}` });
+});
+
 for (const language of languages) {
   for (const target of targets) {
     test(`${language} ${target.name}`, async ({ page, context, request, baseURL }, testInfo) => {
