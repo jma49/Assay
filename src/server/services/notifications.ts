@@ -174,7 +174,8 @@ export const HOURLY_LIMIT = 30;
 const THROTTLE_DELAY_MS = 10 * 60 * 1000;
 
 export function backoffMs(attempts: number, retryAfterMs?: number): number {
-  const base = BACKOFF_MS[Math.min(attempts - 1, BACKOFF_MS.length - 1)] ?? 0;
+  // An out-of-range count (no caller passes one) waits the shortest step, never zero.
+  const base = BACKOFF_MS[Math.min(Math.max(attempts - 1, 0), BACKOFF_MS.length - 1)] ?? 0;
   return Math.max(base, retryAfterMs ?? 0);
 }
 

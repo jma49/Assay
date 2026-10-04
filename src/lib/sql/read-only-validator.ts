@@ -239,11 +239,14 @@ export function validateReadOnlySql(sqlContent: string): SqlValidationResult {
   }
 
   for (const fn of FORBIDDEN_FUNCTIONS) {
-    if (new RegExp(`\\b(${fn})\\s*\\(`).test(`${codeWithIdentifiers} ${dollarBodies}`)) {
+    const match = new RegExp(`\\b(${fn})\\s*\\(`).exec(`${codeWithIdentifiers} ${dollarBodies}`);
+    if (match) {
+      // The name as written: some entries are patterns (DBLINK\w*), not literal names.
+      const name = (match[1] ?? fn).toLowerCase();
       return {
         isValid: false,
-        reason: `禁止调用函数 "${fn.toLowerCase()}"，它会产生副作用。`,
-        reasonEn: `The function "${fn.toLowerCase()}" has side effects and is not allowed.`,
+        reason: `禁止调用函数 "${name}"，它会产生副作用。`,
+        reasonEn: `The function "${name}" has side effects and is not allowed.`,
       };
     }
   }

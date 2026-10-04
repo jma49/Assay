@@ -461,3 +461,10 @@ describe("dispatchNotifications", () => {
     expect((await dispatchNotifications(deps(store).deps)).reminders).toBe(0);
   });
 });
+
+describe("backoffMs with an out-of-range attempt count", () => {
+  it("waits the shortest step instead of retrying at once", () => {
+    expect(backoffMs(0)).toBe(backoffMs(1));
+    expect(backoffMs(0)).toBeGreaterThan(0);
+  });
+});
