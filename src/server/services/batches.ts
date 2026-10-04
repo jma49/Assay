@@ -3,7 +3,7 @@ import { createSemaphore } from "@/server/concurrency/semaphore";
 import type { RunCheckResult, RunTrigger } from "./run-check";
 import { COLLECTIONS } from "@/lib/database/collections";
 
-import type { BatchItemStatus } from "@/contracts/batches";
+import type { BatchItemStatus, BatchView } from "@/contracts/batches";
 
 export interface BatchItem {
   scriptId: string;
@@ -170,5 +170,25 @@ export function mongoBatchStore(db: Db): BatchStore {
     async finish(executionId, at) {
       await batches.updateOne({ executionId }, { $set: { isActive: false, completedAt: at } });
     },
+  };
+}
+
+/** A stored batch under the check names of GET /api/batches/[executionId]. Stored fields keep their old names. */
+export function batchView(batch: Batch): BatchView {
+  return {
+    executionId: batch.executionId,
+    total: batch.totalScripts,
+    isActive: batch.isActive,
+    checks: batch.scripts.map((item) => ({
+      checkId: item.scriptId,
+      name: item.scriptName,
+      isScheduled: item.isScheduled,
+      status: item.status,
+      startTime: item.startTime ? new Date(item.startTime).toISOString() : undefined,
+      endTime: item.endTime ? new Date(item.endTime).toISOString() : undefined,
+      message: item.message,
+      findings: item.findings,
+      runId: item.mongoResultId,
+    })),
   };
 }

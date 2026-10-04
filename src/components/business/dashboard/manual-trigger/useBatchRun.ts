@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { apiErrorText } from "@/client/api-errors";
 import { readJson } from "@/client/send-json";
-import type { BatchItemView, BatchView } from "@/contracts/batches";
+import type { BatchCheckView, BatchView } from "@/contracts/batches";
 import type { CheckListItem } from "../types";
 import { triggerCopy } from "./copy";
 import { batchCounts } from "./batch-progress";
@@ -16,7 +16,7 @@ const isAbort = (error: unknown) => error instanceof Error && error.name === "Ab
 export function useBatchRun(language: string) {
   const [isRunning, setIsRunning] = useState(false);
   const [executionId, setExecutionId] = useState<string | null>(null);
-  const [items, setItems] = useState<BatchItemView[]>([]);
+  const [items, setItems] = useState<BatchCheckView[]>([]);
   const startAbort = useRef<AbortController | null>(null);
   const pollAbort = useRef<AbortController | null>(null);
 
@@ -32,16 +32,16 @@ export function useBatchRun(language: string) {
       try {
         pollAbort.current?.abort();
         pollAbort.current = new AbortController();
-        const response = await fetch(`/api/batch-execution-status?executionId=${executionId}`, { signal: pollAbort.current.signal });
+        const response = await fetch(`/api/batches/${encodeURIComponent(executionId)}`, { signal: pollAbort.current.signal });
         if (response.status === 404) return stop();
         if (!response.ok) return;
-        const batch = (await response.json()).data as BatchView | undefined;
-        if (!batch?.scripts) return;
-        setItems(batch.scripts);
+        const batch = (await response.json()).batch as BatchView | undefined;
+        if (!batch?.checks) return;
+        setItems(batch.checks);
         if (batch.isActive) return;
         stop();
         const copy = triggerCopy(language);
-        const counts = batchCounts(batch.scripts);
+        const counts = batchCounts(batch.checks);
         toast.success(copy.finished, { description: copy.finishedSummary(counts.clean, counts.issues, counts.error) + (counts.skipped > 0 ? copy.skippedSummary(counts.skipped) : ""), duration: 5000 });
       } catch (error) {
         if (!isAbort(error)) console.error("[batch] Polling the run status failed:", error);
@@ -63,20 +63,20 @@ export function useBatchRun(language: string) {
       startAbort.current = new AbortController();
       setIsRunning(true);
       try {
-        const response = await fetch("/api/run-all-scripts", {
+        const response = await fetch("/api/batches", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode, scriptIds: targets.map((script) => script.scriptId), filteredExecution: filtered }),
+          body: JSON.stringify({ mode, checkIds: targets.map((check) => check.scriptId), filteredExecution: filtered }),
           signal: startAbort.current.signal,
         });
         const result = await readJson<{ executionId?: string }>(response, copy.startFailed);
         if (!result.executionId) throw new Error(copy.startFailed);
         setExecutionId(result.executionId);
         setItems(
-          targets.map((script) => ({
-            scriptId: script.scriptId,
-            scriptName: (language === "zh" && script.cnName) || script.name || script.scriptId,
-            isScheduled: script.isScheduled || false,
+          targets.map((check) => ({
+            checkId: check.scriptId,
+            name: (language === "zh" && check.cnName) || check.name || check.scriptId,
+            isScheduled: check.isScheduled || false,
             status: "pending",
           })),
         );

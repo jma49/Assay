@@ -6,23 +6,24 @@ import type { RunOutcome } from "@/domain/run";
  */
 export type BatchItemStatus = "pending" | "running" | "skipped" | RunOutcome;
 
-/** One check of a batch as GET /api/batch-execution-status returns it (times as ISO strings). */
-export interface BatchItemView {
-  scriptId: string;
-  scriptName: string;
+
+/** One check of a batch as GET /api/batches/[executionId] returns it (times as ISO strings). */
+export interface BatchCheckView {
+  checkId: string;
+  name: string;
   isScheduled: boolean;
   status: BatchItemStatus;
   startTime?: string;
   endTime?: string;
   message?: string;
   findings?: string;
-  mongoResultId?: string;
+  runId?: string;
 }
 
-/** A batch as GET /api/batch-execution-status returns it in `data`. */
+/** A batch as GET /api/batches/[executionId] returns it in `batch`. */
 export interface BatchView {
   executionId: string;
-  scripts: BatchItemView[];
-  totalScripts: number;
+  checks: BatchCheckView[];
+  total: number;
   isActive: boolean;
 }
