@@ -54,7 +54,7 @@ describe("finishDelivery", () => {
       $set: { status: "pending", claim: null, updatedAt: NOW, nextAttemptAt: later, lastError: "HTTP 503" },
       $inc: { attempts: 1 },
     });
-    expect(updates[1].$inc).toEqual({});
+    expect(updates[1]?.$inc).toEqual({});
   });
 
   it("stamps updatedAt when a delivery dead-letters, so the failed list keeps it for the full retention", async () => {
@@ -175,7 +175,7 @@ describe("failedDeliveries", () => {
     const listed = await store.failedDeliveries("default", 50);
 
     expect(find).toHaveBeenCalledOnce();
-    expect(find.mock.calls[0][0]).toEqual({ workspaceId: "default", status: "failed" });
+    expect(find.mock.calls[0]?.[0]).toEqual({ workspaceId: "default", status: "failed" });
     expect(listed).toHaveLength(2);
     expect(listed[0]).toMatchObject({
       destinationName: "Ops channel",
@@ -183,7 +183,7 @@ describe("failedDeliveries", () => {
       attempts: 6,
       lastError: "HTTP 500",
     });
-    expect(listed[0].failedAt).toEqual(new Date("2026-09-28T13:00:00Z"));
+    expect(listed[0]?.failedAt).toEqual(new Date("2026-09-28T13:00:00Z"));
   });
 
   it("falls back to empty names when the destination or event is gone", async () => {
@@ -197,8 +197,8 @@ describe("failedDeliveries", () => {
 
     const [listed] = await store.failedDeliveries("default", 50);
 
-    expect(listed.destinationName).toBe("");
-    expect(listed.checkId).toBe("");
+    expect(listed?.destinationName).toBe("");
+    expect(listed?.checkId).toBe("");
   });
 });
 

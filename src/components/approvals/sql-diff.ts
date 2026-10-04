@@ -18,30 +18,35 @@ export function lineDiff(before: string, after: string): DiffLine[] {
     return [...a.map((text) => ({ kind: "removed" as const, text })), ...b.map((text) => ({ kind: "added" as const, text }))];
   }
 
-  // lcs[i][j] = length of the common subsequence of a[i..] and b[j..]
-  const lcs = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0));
+  // lcs[i][j] = length of the common subsequence of a[i..] and b[j..]; 0 past either end.
+  const lcs: number[][] = [];
+  const common = (i: number, j: number) => lcs[i]?.[j] ?? 0;
   for (let i = a.length - 1; i >= 0; i--) {
+    const row = new Array<number>(b.length).fill(0);
+    lcs[i] = row;
     for (let j = b.length - 1; j >= 0; j--) {
-      lcs[i][j] = a[i] === b[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+      row[j] = a[i] === b[j] ? common(i + 1, j + 1) + 1 : Math.max(common(i + 1, j), common(i, j + 1));
     }
   }
 
   const lines: DiffLine[] = [];
   let i = 0;
   let j = 0;
-  while (i < a.length && j < b.length) {
-    if (a[i] === b[j]) {
-      lines.push({ kind: "same", text: a[i] });
+  while (i < a.length || j < b.length) {
+    const left = a[i];
+    const right = b[j];
+    if (left !== undefined && left === right) {
+      lines.push({ kind: "same", text: left });
       i++;
       j++;
-    } else if (lcs[i + 1][j] >= lcs[i][j + 1]) {
-      lines.push({ kind: "removed", text: a[i++] });
-    } else {
-      lines.push({ kind: "added", text: b[j++] });
+    } else if (left !== undefined && (right === undefined || common(i + 1, j) >= common(i, j + 1))) {
+      lines.push({ kind: "removed", text: left });
+      i++;
+    } else if (right !== undefined) {
+      lines.push({ kind: "added", text: right });
+      j++;
     }
   }
-  while (i < a.length) lines.push({ kind: "removed", text: a[i++] });
-  while (j < b.length) lines.push({ kind: "added", text: b[j++] });
   return lines;
 }
 

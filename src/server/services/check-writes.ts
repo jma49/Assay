@@ -3,6 +3,7 @@ import { versionFilter } from "@/lib/workflows/check-fields";
 import { recordEditHistoryOnServer } from "@/lib/workflows/edit-history-store";
 import { createScriptVersion } from "@/lib/workflows/version-control";
 import { COLLECTIONS } from "@/lib/database/collections";
+import { emailLocalPart } from "@/lib/utils/email";
 
 /** Who is making the change, from the session or the approved request. */
 export interface CheckActor {
@@ -22,7 +23,7 @@ type VersionBump = "major" | "minor" | "patch";
  */
 
 const checks = (db: Db) => db.collection(COLLECTIONS.checks);
-const historyActor = (actor: CheckActor) => ({ id: actor.id, email: actor.email, name: actor.email.split("@")[0] });
+const historyActor = (actor: CheckActor) => ({ id: actor.id, email: actor.email, name: emailLocalPart(actor.email) });
 
 async function recordVersion(db: Db, check: Document, actor: CheckActor, change: "create" | "update", note: string, bump: VersionBump) {
   await createScriptVersion(

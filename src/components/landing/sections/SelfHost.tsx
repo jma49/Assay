@@ -39,7 +39,7 @@ export function SelfHost({ copy }: { copy: LandingCopy["selfHost"] }) {
               const Icon = ICONS[i];
               return (
                 <li key={point} className="flex gap-3">
-                  <Icon className="mt-0.5 size-[18px] shrink-0 text-primary" />
+                  {Icon && <Icon className="mt-0.5 size-[18px] shrink-0 text-primary" />}
                   <span>{point}</span>
                 </li>
               );

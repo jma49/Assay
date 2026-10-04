@@ -67,7 +67,7 @@ function rowsSource(rowsByCall: Record<string, unknown>[][]): DataSource & { cal
   const source = {
     calls: 0,
     async runReadOnly(): Promise<StatementResult[]> {
-      const rows = rowsByCall[Math.min(source.calls++, rowsByCall.length - 1)];
+      const rows = rowsByCall[Math.min(source.calls++, rowsByCall.length - 1)] ?? [];
       return [{ rows, rowCount: rows.length }];
     },
   };
@@ -103,7 +103,7 @@ describe("runCheck", () => {
 
     const state = docs.get(CHECK.scriptId)!.state as CheckState;
     expect(state).toMatchObject({ outcome: "issues", rowCount: 3, previousRowCount: 2, lastRunId: "run2" });
-    expect(state.since).toEqual(runs[0].finishedAt);
+    expect(state.since).toEqual(runs[0]?.finishedAt);
     expect(docs.get(CHECK.scriptId)!.lease).toBeNull();
   });
 
@@ -174,8 +174,8 @@ describe("runCheck", () => {
     const many = Array.from({ length: 6_000 }, (_, id) => ({ id }));
     const result = await runCheck(CHECK.scriptId, { kind: "manual" }, deps(store, rowsSource([many])));
     expect(result).toMatchObject({ rowCount: 6_000 });
-    expect(runs[0].sample).toHaveLength(500);
-    expect(runs[0].rowKeys).toHaveLength(5_000);
+    expect(runs[0]?.sample).toHaveLength(500);
+    expect(runs[0]?.rowKeys).toHaveLength(5_000);
   });
 
   it("continues a check's history when it has no stored state yet", async () => {
@@ -236,7 +236,7 @@ describe("large results", () => {
     const result = await runCheck(CHECK.scriptId, { kind: "schedule" }, deps(store, big));
     expect(result).toMatchObject({ kind: "completed", outcome: "issues", rowCount: 2_000_000 });
     expect(runs[0]).toMatchObject({ rowCount: 2_000_000, message: expect.stringContaining("Found 2000000 records") });
-    expect(runs[0].rowKeys).toHaveLength(5_000);
+    expect(runs[0]?.rowKeys).toHaveLength(5_000);
   });
 });
 

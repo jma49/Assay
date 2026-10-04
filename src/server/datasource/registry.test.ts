@@ -53,8 +53,8 @@ describe("createSourceRegistry", () => {
     expect(edited.version).toBe(2);
     expect(await poolOf(edited as never)).toBe("billing@2");
     expect(pools.map((p) => p.name)).toEqual(["billing@1", "billing@2"]);
-    expect(pools[0].end).toHaveBeenCalledOnce();
-    expect(pools[1].end).not.toHaveBeenCalled();
+    expect(pools[0]?.end).toHaveBeenCalledOnce();
+    expect(pools[1]?.end).not.toHaveBeenCalled();
   });
 
   it("fails for an unknown source, and ends the pool of one deleted since", async () => {
@@ -62,7 +62,7 @@ describe("createSourceRegistry", () => {
     await registry.resolve("billing");
     records.delete("billing");
     await expect(registry.resolve("billing")).rejects.toBeInstanceOf(UnknownDataSourceError);
-    expect(pools[0].end).toHaveBeenCalledOnce();
+    expect(pools[0]?.end).toHaveBeenCalledOnce();
     await expect(registry.resolve("nope")).rejects.toThrow("No data source with the id 'nope'");
   });
 

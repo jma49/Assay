@@ -65,7 +65,8 @@ export async function probeConnection(config: ClientConfig, connect: Connect = (
     await client.query(`SET LOCAL statement_timeout = ${TEST_TIMEOUT_MS}`);
     const { rows } = await client.query<ProbeRow>(PROBE);
     await client.query("COMMIT");
-    const row = rows[0];
+    const [row] = rows;
+    if (!row) throw new Error("The connection probe returned no row");
     const writeAccess = writeAccessOf(row);
     return {
       ok: true,

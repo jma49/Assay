@@ -34,7 +34,7 @@ describe("createHistoryLoader", () => {
     loader.load(query("o"));
     loader.load(query("or"));
     expect(fetchImpl).toHaveBeenCalledTimes(2);
-    expect(fetchImpl.mock.calls[1][0]).toContain("search=or");
+    expect(fetchImpl.mock.calls[1]?.[0]).toContain("search=or");
   });
 
   it("shows the newest request's page when an older one answers last", async () => {
@@ -73,7 +73,7 @@ describe("createHistoryLoader", () => {
     await loader.reload();
     expect(fetchImpl).toHaveBeenCalledTimes(2);
     expect(fetchImpl.mock.calls[1]).toEqual(fetchImpl.mock.calls[0]);
-    expect(fetchImpl.mock.calls[1][0]).toContain("page=2&limit=50&include_sample=false&outcome=error&search=orders&hashtags=billing");
+    expect(fetchImpl.mock.calls[1]?.[0]).toContain("page=2&limit=50&include_sample=false&outcome=error&search=orders&hashtags=billing");
   });
 
   it("has nothing to reload before the first request", async () => {

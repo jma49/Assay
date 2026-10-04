@@ -174,7 +174,7 @@ describe("data sources service", () => {
     const result = await testUnsavedConnection(CONNECTION, d);
     expect(result).toMatchObject({ ok: true, serverVersion: "17.2", currentUser: "reader", readOnly: false, writeAccess: ["table_write"] });
     expect(d.probed[0]).toMatchObject({ host: "billing.example.com", ssl: { rejectUnauthorized: true }, connectionTimeoutMillis: 5000 });
-    expect(typeof d.probed[0].stream).toBe("function");
+    expect(typeof d.probed[0]?.stream).toBe("function");
     expect(await code(testUnsavedConnection("postgres://u:p@127.0.0.1/db", d))).toBe("400 host_not_public");
     expect(d.probed).toHaveLength(1);
   });

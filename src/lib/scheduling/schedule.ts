@@ -84,7 +84,7 @@ export function describeCron(cron: string, language: "en" | "zh"): string | null
   const zh = language === "zh";
   const fields = normalize(cron).split(" ");
   if (fields.length !== 5) return null;
-  const [minute, hour, day, month, weekday] = fields;
+  const [minute = "", hour = "", day = "", month = "", weekday = ""] = fields;
   const num = (v: string) => (/^\d+$/.test(v) ? Number(v) : null);
   if (month !== "*") return null;
 

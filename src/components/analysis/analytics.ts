@@ -118,8 +118,9 @@ export function rangeDays(range: TimeRange, executions: ExecutionRecord[], now =
     first.setDate(now.getDate() - (days - 1));
     return dayKeysBetween(localDayKey(first, timeZone), today);
   }
-  if (executions.length === 0) return [];
-  const earliest = executions.reduce((min, e) => (e.createdAt < min ? e.createdAt : min), executions[0].createdAt);
+  const [first] = executions;
+  if (!first) return [];
+  const earliest = executions.reduce((min, e) => (e.createdAt < min ? e.createdAt : min), first.createdAt);
   return dayKeysBetween(localDayKey(earliest, timeZone), today);
 }
 

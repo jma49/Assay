@@ -52,7 +52,7 @@ import * as canonical from "../checks/route";
 
 const validBody = { scriptId: "orders-without-invoice", name: "Orders without invoice", sqlContent: "SELECT 1" };
 
-const inserted = () => mocks.insertOne.mock.calls[0][0];
+const inserted = () => mocks.insertOne.mock.calls[0]?.[0] ?? {};
 
 // /api/scripts is the deprecated alias of /api/checks: both must behave the same.
 describe.each([
@@ -184,7 +184,7 @@ describe.each([
     expect(guest.map((s: { author: string }) => s.author)).toEqual(["Teammate", "demo-seed"]);
     mocks.guest = false;
     const member = unwrap(await (await GET(new NextRequest(`http://localhost${path}`), { params: Promise.resolve({}) })).json());
-    expect(member[0].author).toBe("ada@example.com");
+    expect(member[0]?.author).toBe("ada@example.com");
   });
 
   it("returns the auth response when check:read is refused", async () => {

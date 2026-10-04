@@ -39,7 +39,7 @@ describe("createPastedDestination", () => {
     expect(destination).toMatchObject({ kind: "slack", label: "hooks.slack.com/…WXYZ", createdBy: "Ada" });
     expect(signingSecret).toBeUndefined();
     expect(JSON.stringify(inserted[0])).not.toContain("abcdWXYZ");
-    expect(JSON.parse(open(String(inserted[0].sealed)))).toEqual({ url: "https://hooks.slack.com/services/T0/B0/abcdWXYZ" });
+    expect(JSON.parse(open(String(inserted[0]?.sealed)))).toEqual({ url: "https://hooks.slack.com/services/T0/B0/abcdWXYZ" });
   });
 
   it("refuses a URL that belongs to another service", async () => {
@@ -54,7 +54,7 @@ describe("createPastedDestination", () => {
     const { db, inserted } = fakeDb();
     const { signingSecret } = await createPastedDestination(db, "default", by, { ...base, kind: "webhook", url: "https://hooks.example.com/in" });
     expect(signingSecret).toMatch(/^[A-Za-z0-9_-]{32}$/);
-    expect(JSON.parse(open(String(inserted[0].sealed))).signingSecret).toBe(signingSecret);
+    expect(JSON.parse(open(String(inserted[0]?.sealed))).signingSecret).toBe(signingSecret);
     await expect(
       createPastedDestination(db, "default", by, { ...base, kind: "webhook", url: "https://internal.example/in" }),
     ).rejects.toMatchObject({ status: 400, code: "url_not_public" });

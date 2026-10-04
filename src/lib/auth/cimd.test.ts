@@ -77,7 +77,7 @@ describe("CIMD client discovery", () => {
     const { auth, fetchSpy } = authWith(async () => json(metadata(clientId)));
     expect(await outcome(await authorize(auth, clientId))).toBe("sign-in");
     expect(fetchSpy).toHaveBeenCalledOnce();
-    expect(fetchSpy.mock.calls[0][1]?.redirect).toBe("error");
+    expect(fetchSpy.mock.calls[0]?.[1]?.redirect).toBe("error");
   });
 
   it.each([

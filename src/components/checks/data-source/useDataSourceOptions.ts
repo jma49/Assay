@@ -27,6 +27,7 @@ export function useDataSourceOptions(language: Language, enabled = true): DataSo
  * `default`). Unchanged while the options are still loading.
  */
 export function pickSource(current: string, options: DataSourceOption[]): string {
-  if (options.length === 0 || options.some((option) => option.sourceId === current)) return current;
-  return options[0].sourceId;
+  const [first] = options;
+  if (!first || options.some((option) => option.sourceId === current)) return current;
+  return first.sourceId;
 }

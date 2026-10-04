@@ -119,8 +119,9 @@ export function ChecksFinder({
 
   // Keep a check selected: the first one whenever the selection leaves the list (adjusted while rendering).
   // An empty list (still loading, or filtered out) keeps the choice, e.g. one from a link.
-  if (visible.length > 0 && !visible.some((script) => script.scriptId === selectedId)) {
-    setSelectedId(visible[0].scriptId);
+  const [firstVisible] = visible;
+  if (firstVisible && !visible.some((script) => script.scriptId === selectedId)) {
+    setSelectedId(firstVisible.scriptId);
   }
 
   const selected = visible.find((script) => script.scriptId === selectedId) ?? null;

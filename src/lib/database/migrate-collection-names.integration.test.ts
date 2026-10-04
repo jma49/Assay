@@ -36,9 +36,9 @@ describe.skipIf(!uri)("collection renames (MongoDB)", () => {
     await db.createCollection("sql_scripts");
     await db.collection("checks").insertOne({ scriptId: "a" });
     const [result] = await migrateCollectionNames(db, [["sql_scripts", "checks"]]);
-    expect(result.outcome).toBe("moved-empty-old-aside");
+    expect(result?.outcome).toBe("moved-empty-old-aside");
     const names = (await db.listCollections({}, { nameOnly: true }).toArray()).map((c) => c.name);
-    expect(names).toContain(result.aside);
+    expect(names).toContain(result?.aside);
     expect(names).not.toContain("sql_scripts");
   });
 });

@@ -70,14 +70,14 @@ describe("fileChangeRequest", () => {
     expect(needsReview(UserRole.DEVELOPER)).toBe(true);
     expect(needsReview(UserRole.ADMIN)).toBe(false);
     const requestId = await fileChangeRequest(db, change(UserRole.DEVELOPER));
-    const filed = store.insertApprovalRequest.mock.calls[0][1] as ApprovalRequest;
+    const filed = store.insertApprovalRequest.mock.calls[0]?.[1] as ApprovalRequest;
     expect(filed).toMatchObject({ requestId, status: "pending", requiredApprovers: ["admin"], currentApprovers: [], scriptType: "read_only" });
     expect(requestId).toMatch(/^req_/);
   });
 
   it("records an admin's change as approved by the system", async () => {
     await fileChangeRequest(db, change(UserRole.ADMIN));
-    const filed = store.insertApprovalRequest.mock.calls[0][1] as ApprovalRequest;
+    const filed = store.insertApprovalRequest.mock.calls[0]?.[1] as ApprovalRequest;
     expect(filed).toMatchObject({ status: "approved", reviewedBy: "system", currentApprovers: ["system"], autoApprovalEligible: true });
   });
 

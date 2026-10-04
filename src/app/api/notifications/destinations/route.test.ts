@@ -136,7 +136,7 @@ describe("POST /api/notifications/destinations", () => {
     expect(res.status).toBe(201);
     expect(await res.json()).toEqual({ id: "d1", kind: "webhook", name: "Ops" });
     expect(mocks.createCalls).toHaveLength(1);
-    const [db, workspace, by, input] = mocks.createCalls[0];
+    const [db, workspace, by, input] = mocks.createCalls[0] ?? [];
     expect(db).toEqual({});
     expect(workspace).toBe("default");
     expect(by).toEqual({ id: "u1", name: "Ada" });

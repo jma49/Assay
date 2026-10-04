@@ -121,7 +121,7 @@ function HeroWindow({ copy, outcomeCopy, language }: { copy: LandingCopy["hero"]
               {copy.triageLabel}
               <span className="rounded-full bg-night-failure/10 px-2 py-0.5 text-night-failure">{copy.triageKind}</span>
             </div>
-            <p className="mt-3 text-body-md font-medium text-night-foreground">{HERO_CHECKS[1].name[language]}</p>
+            <p className="mt-3 text-body-md font-medium text-night-foreground">{HERO_CHECKS.find((check) => check.outcome === "broken")?.name[language]}</p>
             <div className="mt-3 rounded-lg bg-night/60 p-3 font-mono text-caption text-night-failure">column &quot;shipping_status&quot; does not exist</div>
             <p className="mt-4 text-body-sm text-night-muted">{copy.triageBody}</p>
             <p className="mt-4 text-caption text-night-muted/80">{copy.triagePrivacy}</p>

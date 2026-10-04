@@ -46,7 +46,7 @@ describe.skipIf(!uri)("createScriptVersion (MongoDB)", () => {
     const versions = await db.collection(COLLECTIONS.scriptVersions).find({ scriptId: "mixed" }).toArray();
     expect(versions).toHaveLength(5);
     const highest = [...versions].sort((a, b) => b.majorVersion - a.majorVersion || b.minorVersion - a.minorVersion || b.patchVersion - a.patchVersion)[0];
-    expect(versions.filter((v) => v.isCurrentVersion).map((v) => v.version)).toEqual([highest.version]);
-    expect((await db.collection(COLLECTIONS.checks).findOne({ scriptId: "mixed" }))?.currentVersion).toBe(highest.version);
+    expect(versions.filter((v) => v.isCurrentVersion).map((v) => v.version)).toEqual([highest?.version]);
+    expect((await db.collection(COLLECTIONS.checks).findOne({ scriptId: "mixed" }))?.currentVersion).toBe(highest?.version);
   });
 });

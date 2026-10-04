@@ -20,9 +20,9 @@ export function listKeyHandler(
       End: ids.length - 1,
     }[event.key];
 
-    if (target !== undefined) {
+    const id = target === undefined ? undefined : ids[target];
+    if (id !== undefined) {
       event.preventDefault();
-      const id = ids[target];
       select(id);
       const list = event.currentTarget;
       requestAnimationFrame(() => {

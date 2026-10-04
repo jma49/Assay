@@ -46,9 +46,9 @@ describe("check writes", () => {
     const { db, collection } = fakeDb({ scriptId: "orders", version: 3 });
     const result = await updateCheck(db, "orders", { name: "New" }, 3, actor, "note");
     expect(result.kind).toBe("updated");
-    const [filter, update] = collection.findOneAndUpdate.mock.calls[0];
+    const [filter, update] = collection.findOneAndUpdate.mock.calls[0] ?? [];
     expect(filter).toEqual({ scriptId: "orders", version: 3 });
-    expect(update.$set.updatedBy).toEqual(actor);
+    expect(update?.$set.updatedBy).toEqual(actor);
     expect(calls).toEqual(["update", "history:update", "version:update"]);
   });
 

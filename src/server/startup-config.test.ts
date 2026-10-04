@@ -29,7 +29,7 @@ describe("checkStartupConfig", () => {
     const exit = spyExit();
     checkStartupConfig({ ...server, BETTER_AUTH_SECRET: "fake-secret" });
     expect(exit).toHaveBeenCalledWith(1);
-    const message = String(logError.mock.calls[0][0]);
+    const message = String(logError.mock.calls[0]?.[0]);
     expect(message).toContain("MONGODB_URI, DATABASE_URL, APP_URL");
     expect(message).not.toContain("fake-secret");
   });

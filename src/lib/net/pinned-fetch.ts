@@ -13,11 +13,12 @@ type LookupCallback = (error: NodeJS.ErrnoException | null, address: string | Lo
 export function publicOnlyLookup(hostname: string, options: { all?: boolean }, callback: LookupCallback): void {
   dnsLookup(hostname, { all: true }, (error, addresses) => {
     if (error) return callback(error, []);
-    if (addresses.length === 0 || addresses.some((entry) => isPrivateAddress(entry.address))) {
+    const [first] = addresses;
+    if (!first || addresses.some((entry) => isPrivateAddress(entry.address))) {
       return callback(Object.assign(new Error("Webhook host is not public"), { code: "ENOTPUBLIC" }), []);
     }
     if (options.all) return callback(null, addresses);
-    callback(null, addresses[0].address, addresses[0].family);
+    callback(null, first.address, first.family);
   });
 }
 

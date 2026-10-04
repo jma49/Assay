@@ -42,7 +42,7 @@ export function basicFormat(sql: string): string {
   return text
     .split("\n")
     .map((line) => line.trim())
-    .filter((line, index, lines) => line.length > 0 || (index > 0 && index < lines.length - 1 && lines[index - 1].length > 0 && lines[index + 1].length > 0))
+    .filter((line, index, lines) => line.length > 0 || (Boolean(lines[index - 1]) && Boolean(lines[index + 1])))
     .join("\n")
     .replace(/\n\s*\n\s*\n+/g, "\n\n")
     .trim();

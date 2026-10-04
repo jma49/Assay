@@ -21,7 +21,7 @@ describe("toSummary", () => {
     const history = Array.from({ length: 35 }, (_, i) => ({ runId: `r${i}`, outcome: "clean" as const, rowCount: i, at: at(30 - (i % 28)).toISOString() }));
     const summary = toSummary(check, history);
     expect(summary.history).toHaveLength(30);
-    expect(summary.history[29].rowCount).toBe(0);
+    expect(summary.history[29]?.rowCount).toBe(0);
     expect(summary.schedule).toBe("0 9 * * *");
     expect(summary.tags).toEqual(["x"]);
   });

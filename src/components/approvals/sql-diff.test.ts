@@ -29,6 +29,24 @@ describe("lineDiff", () => {
     expect(diffStats(lines)).toEqual({ added: 1, removed: 1 });
   });
 
+  it("lists the lines left over once one side runs out", () => {
+    expect(lineDiff("a\nb\nc", "c")).toEqual([
+      { kind: "removed", text: "a" },
+      { kind: "removed", text: "b" },
+      { kind: "same", text: "c" },
+    ]);
+    expect(lineDiff("a", "a\nb\nc")).toEqual([
+      { kind: "same", text: "a" },
+      { kind: "added", text: "b" },
+      { kind: "added", text: "c" },
+    ]);
+    expect(lineDiff("x\ny", "z")).toEqual([
+      { kind: "removed", text: "x" },
+      { kind: "removed", text: "y" },
+      { kind: "added", text: "z" },
+    ]);
+  });
+
   it("ignores line-ending style and trailing newlines", () => {
     expect(diffStats(lineDiff("a\r\nb\n", "a\nb"))).toEqual({ added: 0, removed: 0 });
   });

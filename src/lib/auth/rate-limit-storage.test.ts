@@ -19,7 +19,7 @@ describe("redisRateLimitStorage", () => {
     const results = [];
     for (let i = 0; i < 4; i++) results.push(await storage.consume("1.2.3.4|/sign-in/social", rule));
     expect(results.map((r) => r.allowed)).toEqual([true, true, true, false]);
-    expect(results[3].retryAfter).toBe(42);
+    expect(results[3]?.retryAfter).toBe(42);
   });
 
   it("namespaces keys and fails open when Redis is down", async () => {

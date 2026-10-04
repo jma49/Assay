@@ -7,7 +7,7 @@ type Language = "en" | "zh";
  * in English; codes listed here are shown in the reader's language, others
  * fall back to the server's message.
  */
-const TEXT: Record<string, Record<Language, string>> = {
+const TEXT: Record<string, Record<Language, string>> & { internal: Record<Language, string> } = {
   unauthorized: { en: "Sign in to continue.", zh: "请先登录。" },
   email_not_allowed: { en: "Only invited users may use this workspace.", zh: "只允许受邀用户使用。" },
   forbidden: { en: "You do not have permission to do this.", zh: "没有权限执行此操作。" },

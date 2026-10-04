@@ -20,8 +20,8 @@ function useActiveHeading(ids: string[]) {
     if (elements.length === 0) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        const visible = entries.filter((entry) => entry.isIntersecting);
-        if (visible.length > 0) setActive(visible[0].target.id);
+        const visible = entries.find((entry) => entry.isIntersecting);
+        if (visible) setActive(visible.target.id);
       },
       // A heading counts once it reaches the top fifth of the viewport.
       { rootMargin: "-56px 0px -80% 0px" },

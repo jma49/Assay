@@ -17,7 +17,7 @@ function tokenize(sql: string): Token[] {
   const tokens: Token[] = [];
   let i = 0;
   while (i < sql.length) {
-    const ch = sql[i];
+    const ch = sql.charAt(i);
     const next = sql[i + 1];
     if (/\s/.test(ch)) {
       i++;
@@ -71,7 +71,7 @@ export function tableReferences(sql: string): string[] {
     if (token.kind !== "ident") return;
     let j = index + 1;
     if (tokens[j]?.text === "(") {
-      while (j < tokens.length && tokens[j].text !== ")") j++;
+      while (j < tokens.length && tokens[j]?.text !== ")") j++;
       j++;
     }
     if (!isWord(tokens[j], "AS")) return;
@@ -109,7 +109,8 @@ export function tableReferences(sql: string): string[] {
       j = after;
       if (!allowComma) return;
       if (isWord(tokens[j], "AS")) j++;
-      if (tokens[j]?.kind === "ident" && !RESERVED_AFTER_TABLE.has(tokens[j].text.toUpperCase())) j++;
+      const alias = tokens[j];
+      if (alias?.kind === "ident" && !RESERVED_AFTER_TABLE.has(alias.text.toUpperCase())) j++;
       if (tokens[j]?.text !== ",") return;
       j++;
     }

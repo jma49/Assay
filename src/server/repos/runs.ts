@@ -57,9 +57,8 @@ export async function countRuns(db: Db, filter: Record<string, unknown>): Promis
  * run documents, where a $group would load every stored run and its sample.
  */
 export async function countRunsByOutcome(db: Db): Promise<CheckStats> {
-  const [successCount, needsAttentionCount, failureCount] = await Promise.all(
-    (["clean", "issues", "error"] as const).map((outcome) => runs(db).countDocuments({ outcome })),
-  );
+  const count = (outcome: "clean" | "issues" | "error") => runs(db).countDocuments({ outcome });
+  const [successCount, needsAttentionCount, failureCount] = await Promise.all([count("clean"), count("issues"), count("error")]);
   return { totalCount: successCount + needsAttentionCount + failureCount, successCount, failureCount, needsAttentionCount };
 }
 

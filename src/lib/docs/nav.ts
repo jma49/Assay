@@ -55,10 +55,13 @@ export const DOCS_NAV: DocsGroup[] = [
 ];
 
 export const DOCS_PAGES: DocsPage[] = DOCS_NAV.flatMap((group) => group.pages);
-export const FIRST_DOCS_SLUG = DOCS_PAGES[0].slug;
+const [firstPage] = DOCS_PAGES;
+if (!firstPage) throw new Error("The docs navigation has no pages.");
+export const FIRST_DOCS_SLUG = firstPage.slug;
 
 export function findDocsPage(slug: string) {
   const index = DOCS_PAGES.findIndex((page) => page.slug === slug);
-  if (index === -1) return null;
-  return { page: DOCS_PAGES[index], previous: DOCS_PAGES[index - 1] ?? null, next: DOCS_PAGES[index + 1] ?? null };
+  const page = DOCS_PAGES[index];
+  if (!page) return null;
+  return { page, previous: DOCS_PAGES[index - 1] ?? null, next: DOCS_PAGES[index + 1] ?? null };
 }

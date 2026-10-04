@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth/client";
 import { safeRedirect } from "@/lib/auth/redirect";
+import { emailLocalPart } from "@/lib/utils/email";
 import { cn } from "@/lib/utils/utils";
 
 export interface Providers {
@@ -172,7 +173,7 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
     setBusy(create ? "create" : "password");
     setError(null);
     const result = create
-      ? await authClient.signUp.email({ email, password, name: email.split("@")[0] })
+      ? await authClient.signUp.email({ email, password, name: emailLocalPart(email) })
       : await authClient.signIn.email({ email, password });
     if (result.error) {
       setError(result.error.message ? { message: result.error.message } : { code: "default" });

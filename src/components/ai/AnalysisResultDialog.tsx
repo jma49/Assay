@@ -68,7 +68,7 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
       }
       
       const language = match[1] || 'sql';
-      const code = match[2].trim();
+      const code = (match[2] ?? "").trim();
       if (code) {
         sections.push({ type: 'code', content: code, language });
       }
@@ -168,7 +168,7 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
                 {match[1]}.
               </span>
               <span className="text-muted-foreground leading-relaxed">
-                {formatInlineText(match[2])}
+                {formatInlineText(match[2] ?? "")}
               </span>
             </li>
           );

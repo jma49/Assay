@@ -10,7 +10,8 @@ import { isIP } from "node:net";
 export function isPrivateAddress(address: string): boolean {
   const version = isIP(address);
   if (version === 4) {
-    const [a, b] = address.split(".").map(Number);
+    // isIP guarantees four octets; the defaults only satisfy the type checker.
+    const [a = 0, b = 0] = address.split(".").map(Number);
     return (
       a === 0 ||
       a === 10 ||
@@ -39,14 +40,19 @@ export function isPrivateAddress(address: string): boolean {
   return true;
 }
 
+type Ipv6Groups = [number, number, number, number, number, number, number, number];
+
+const isIpv6Groups = (groups: number[]): groups is Ipv6Groups =>
+  groups.length === 8 && groups.every((g) => Number.isInteger(g) && g >= 0 && g <= 0xffff);
+
 const ipv4From = (high: number, low: number) => `${high >> 8}.${high & 0xff}.${low >> 8}.${low & 0xff}`;
 
 /** The eight 16-bit groups of an IPv6 address, including a trailing dotted IPv4 part. */
-function ipv6Groups(address: string): number[] | null {
-  let text = address.toLowerCase().split("%")[0];
+function ipv6Groups(address: string): Ipv6Groups | null {
+  let text = address.toLowerCase().split("%")[0] ?? "";
   const dotted = text.match(/(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
   if (dotted) {
-    const [a, b, c, d] = dotted.slice(1).map(Number);
+    const [a = 0, b = 0, c = 0, d = 0] = dotted.slice(1).map(Number);
     text = `${text.slice(0, dotted.index)}${((a << 8) | b).toString(16)}:${((c << 8) | d).toString(16)}`;
   }
   const [head, tail] = text.split("::");
@@ -54,7 +60,7 @@ function ipv6Groups(address: string): number[] | null {
   const front = parse(head);
   const back = parse(tail);
   const groups = tail === undefined ? front : [...front, ...Array(8 - front.length - back.length).fill(0), ...back];
-  return groups.length === 8 && groups.every((g) => Number.isInteger(g) && g >= 0 && g <= 0xffff) ? groups : null;
+  return isIpv6Groups(groups) ? groups : null;
 }
 
 export type Resolver = (hostname: string) => Promise<string[]>;

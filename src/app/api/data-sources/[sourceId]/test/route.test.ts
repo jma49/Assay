@@ -58,7 +58,7 @@ describe("POST /api/data-sources/[sourceId]/test", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ test: { ok: true, latencyMs: 12 } });
     expect(mocks.testCalls).toHaveLength(1);
-    const [db, workspace, sourceId, deps] = mocks.testCalls[0];
+    const [db, workspace, sourceId, deps] = mocks.testCalls[0] ?? [];
     expect(db).toEqual({});
     expect(workspace).toBe("default");
     expect(sourceId).toBe("billing");
