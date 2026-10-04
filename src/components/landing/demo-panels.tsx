@@ -194,7 +194,7 @@ function ScheduleDemo({ lang }: { lang: Language }) {
   return (
     <DemoFrame title={zh ? "定时任务" : "Scheduled checks"} meta={zh ? "5 个启用" : "5 enabled"}>
       <Table
-        head={[zh ? "脚本" : "Script", "Cron", zh ? "下次运行" : "Next run"]}
+        head={[zh ? "检查" : "Check", "Cron", zh ? "下次运行" : "Next run"]}
         alignRight={[2]}
         rows={[
           [zh ? "库存为负" : "Negative inventory", <span key="c" className="mono">*/30 * * * *</span>, "14:30"],
@@ -222,7 +222,7 @@ function StatusesDemo({ lang }: { lang: Language }) {
   return (
     <DemoFrame title={zh ? "执行历史" : "Run history"} meta={zh ? "今天" : "Today"}>
       <Table
-        head={[zh ? "脚本" : "Script", zh ? "状态" : "Status", zh ? "发现" : "Found"]}
+        head={[zh ? "检查" : "Check", zh ? "状态" : "Status", zh ? "发现" : "Found"]}
         alignRight={[2]}
         rows={RECENT_RUNS.map((r) => [
           r[lang],

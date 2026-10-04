@@ -33,7 +33,7 @@ export function EditHistoryToolbar({
   return (
     <WindowToolbar>
       <Button asChild variant="outline" size="sm">
-        <Link href="/checks/manage">‹ {language === "zh" ? "脚本" : "Scripts"}</Link>
+        <Link href="/checks/manage">‹ {language === "zh" ? "检查" : "Checks"}</Link>
       </Button>
       <div className="relative w-56 max-sm:w-full">
         <Search className="pointer-events-none absolute top-1/2 left-2.5 z-10 size-3.5 -translate-y-1/2 text-muted-foreground" />

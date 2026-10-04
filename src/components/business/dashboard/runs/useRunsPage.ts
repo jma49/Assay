@@ -11,7 +11,7 @@ const scrollToHistory = () => document.getElementById("execution-history")?.scro
 async function fetchScripts(): Promise<ScriptInfo[]> {
   const response = await fetch("/api/scripts");
   if (!response.ok) {
-    throw new Error(`脚本列表获取失败: ${response.status} ${response.statusText}`);
+    throw new Error(`Could not load the checks: ${response.status} ${response.statusText}`);
   }
   return parseScriptList(await response.json());
 }

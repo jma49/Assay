@@ -23,7 +23,7 @@ In production the server refuses to start without `BETTER_AUTH_SECRET`, `MONGODB
 
 | Variable | Purpose |
 |---|---|
-| `CHECK_TIMEOUT_MS` | How long a check's whole script may run, all statements together, before PostgreSQL stops it. Default 30000 (30 s); values are kept between 1000 and 300000. |
+| `CHECK_TIMEOUT_MS` | How long a check's SQL may run, all statements together, before PostgreSQL stops it. Default 30000 (30 s); values are kept between 1000 and 300000. |
 | `CHECK_CONCURRENCY` | How many checks one server instance runs at the same time; more wait for a free slot. Default 4. |
 | `PG_POOL_MAX` | Most connections one server instance opens to `DATABASE_URL`. Default 10. |
 | `PG_SOURCE_POOL_MAX` | Most connections one server instance opens to each data source added in Settings. Default 3. |

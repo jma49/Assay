@@ -20,7 +20,7 @@ Choose **Run in bulk…** in the top bar of the **Runs** page, narrow the checks
 
 ## Limits
 
-- Each check runs inside a read-only transaction. The whole script, every statement together, has `CHECK_TIMEOUT_MS` to finish: 30 seconds unless the server sets another value (see [Environment variables](/docs/environment-variables)). A check that runs out of time is stopped and marked **Broken**.
+- Each check runs inside a read-only transaction. The whole SQL, every statement together, has `CHECK_TIMEOUT_MS` to finish: 30 seconds unless the server sets another value (see [Environment variables](/docs/environment-variables)). A check that runs out of time is stopped and marked **Broken**.
 - A server runs a few checks at a time (`CHECK_CONCURRENCY`, 4 by default); more wait for a free slot.
 - In the demo, each person may start 20 runs an hour, and all guests together 200 an hour.
 

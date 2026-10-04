@@ -14,8 +14,8 @@ export interface EditHistoryActor {
 }
 
 const FIELD_DISPLAY_NAMES: Record<string, { en: string; cn: string }> = {
-  name: { en: "Script Name", cn: "脚本名称" },
-  cnName: { en: "Script Name (CN)", cn: "中文名称" },
+  name: { en: "Check name", cn: "检查名称" },
+  cnName: { en: "Check name (CN)", cn: "中文名称" },
   description: { en: "Description", cn: "描述" },
   cnDescription: { en: "Description (CN)", cn: "中文描述" },
   scope: { en: "Scope", cn: "作用域" },
@@ -34,14 +34,14 @@ function defaultDescriptions(
 ): { en: string; cn: string } {
   switch (operation) {
     case "create":
-      return { en: `Created script ${scriptId}`, cn: `创建了脚本 ${scriptId}` };
+      return { en: `Created check ${scriptId}`, cn: `创建了检查 ${scriptId}` };
     case "update":
       return {
-        en: `Updated script ${scriptId}, changed ${changedFields} fields`,
-        cn: `更新了脚本 ${scriptId}，变更了 ${changedFields} 个字段`,
+        en: `Updated check ${scriptId}, changed ${changedFields} fields`,
+        cn: `更新了检查 ${scriptId}，变更了 ${changedFields} 个字段`,
       };
     case "delete":
-      return { en: `Deleted script ${scriptId}`, cn: `删除了脚本 ${scriptId}` };
+      return { en: `Deleted check ${scriptId}`, cn: `删除了检查 ${scriptId}` };
   }
 }
 

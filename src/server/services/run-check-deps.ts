@@ -70,7 +70,7 @@ export interface ExecutionResult {
 
 export function toExecutionResult(result: Awaited<ReturnType<typeof runCheck>>): ExecutionResult {
   if (result.kind === "missing") {
-    return { success: false, outcome: "error", message: "No check with this id", findings: "Script not found", notFound: true };
+    return { success: false, outcome: "error", message: "No check with this id", findings: "Check not found", notFound: true };
   }
   if (result.kind === "busy") {
     return {

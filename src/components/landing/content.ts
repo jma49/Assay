@@ -76,7 +76,7 @@ const en: LandingCopy = {
     cards: [
       {
         title: "Read-only by design",
-        body: "Every script is validated before it is saved, and runs inside a read-only transaction with a server-side timeout.",
+        body: "Every check is validated before it is saved, and runs inside a read-only transaction with a server-side timeout.",
       },
       {
         title: "Runs on a schedule",
@@ -84,7 +84,7 @@ const en: LandingCopy = {
       },
       {
         title: "Reviewed before it runs",
-        body: "New and edited scripts go through approval. Roles decide who can write, approve or only read.",
+        body: "New and edited checks go through approval. Roles decide who can write, approve or only read.",
       },
       {
         title: "AI in the loop",
@@ -125,7 +125,7 @@ const en: LandingCopy = {
         {
           demo: "schedule",
           title: "Scheduled runs",
-          body: "Cron schedules per script, plus one-click manual and bulk runs.",
+          body: "Cron schedules per check, plus one-click manual and bulk runs.",
         },
         {
           demo: "statuses",
@@ -135,7 +135,7 @@ const en: LandingCopy = {
         {
           demo: "trends",
           title: "Trends over time",
-          body: "See pass rates and recurring findings across scripts and weeks.",
+          body: "See pass rates and recurring findings across checks and weeks.",
         },
       ],
     },
@@ -158,7 +158,7 @@ const en: LandingCopy = {
         {
           demo: "audit",
           title: "Edit history",
-          body: "Who changed which script, when, and what the diff was.",
+          body: "Who changed which check, when, and what the diff was.",
         },
       ],
     },
@@ -166,7 +166,7 @@ const en: LandingCopy = {
   quickStart: {
     eyebrow: "Open source",
     title: "Run it on your own stack",
-    body: `${BRAND} is a Next.js app. Bring a Google or GitHub OAuth app for sign-in, MongoDB for users, scripts and history, the PostgreSQL database you want to check, and Upstash Redis for caching.`,
+    body: `${BRAND} is a Next.js app. Bring a Google or GitHub OAuth app for sign-in, MongoDB for users, checks and history, the PostgreSQL database you want to check, and Upstash Redis for caching.`,
     readme: "Read the setup guide",
   },
   faq: {
@@ -174,7 +174,7 @@ const en: LandingCopy = {
     items: [
       {
         q: "Can a check modify my database?",
-        a: "No. Scripts are validated as read-only when saved and again before running, and every run happens inside a read-only transaction.",
+        a: "No. Checks are validated as read-only when saved and again before running, and every run happens inside a read-only transaction.",
       },
       {
         q: "Which databases can I check?",
@@ -216,7 +216,7 @@ const zh: LandingCopy = {
     cards: [
       {
         title: "天生只读",
-        body: "脚本保存前会做只读校验，执行时运行在只读事务里，并带有服务端超时。",
+        body: "检查保存前会做只读校验，执行时运行在只读事务里，并带有服务端超时。",
       },
       {
         title: "定时运行",
@@ -224,11 +224,11 @@ const zh: LandingCopy = {
       },
       {
         title: "先审批再运行",
-        body: "新建和修改的脚本需要审批，角色决定谁能编写、审批或只读查看。",
+        body: "新建和修改的检查需要审批，角色决定谁能编写、审批或只读查看。",
       },
       {
         title: "AI 协助",
-        body: "一句话生成检查脚本，让 AI 审阅查询，或在执行失败时给出原因分析。",
+        body: "一句话生成检查，让 AI 审阅查询，或在执行失败时给出原因分析。",
       },
     ],
   },
@@ -265,7 +265,7 @@ const zh: LandingCopy = {
         {
           demo: "schedule",
           title: "定时执行",
-          body: "每个脚本单独配置 cron，也支持一键手动执行和批量执行。",
+          body: "每个检查单独配置 cron，也支持一键手动执行和批量执行。",
         },
         {
           demo: "statuses",
@@ -275,7 +275,7 @@ const zh: LandingCopy = {
         {
           demo: "trends",
           title: "趋势分析",
-          body: "按脚本、按周查看通过率和反复出现的问题。",
+          body: "按检查、按周查看通过率和反复出现的问题。",
         },
       ],
     },
@@ -298,7 +298,7 @@ const zh: LandingCopy = {
         {
           demo: "audit",
           title: "编辑历史",
-          body: "谁在什么时候改了哪个脚本，改了什么，一清二楚。",
+          body: "谁在什么时候改了哪个检查，改了什么，一清二楚。",
         },
       ],
     },
@@ -306,7 +306,7 @@ const zh: LandingCopy = {
   quickStart: {
     eyebrow: "开源",
     title: "部署在你自己的环境里",
-    body: `${BRAND} 是一个 Next.js 应用。准备好用于登录的 Google 或 GitHub OAuth 应用、存放用户、脚本和历史的 MongoDB、要检查的 PostgreSQL，以及用于缓存的 Upstash Redis 即可。`,
+    body: `${BRAND} 是一个 Next.js 应用。准备好用于登录的 Google 或 GitHub OAuth 应用、存放用户、检查和历史的 MongoDB、要检查的 PostgreSQL，以及用于缓存的 Upstash Redis 即可。`,
     readme: "查看部署文档",
   },
   faq: {
@@ -314,7 +314,7 @@ const zh: LandingCopy = {
     items: [
       {
         q: "检查会修改我的数据库吗？",
-        a: "不会。脚本在保存时和执行前都会做只读校验，每次执行都运行在只读事务里。",
+        a: "不会。检查在保存时和执行前都会做只读校验，每次执行都运行在只读事务里。",
       },
       {
         q: "可以检查哪些数据库？",
