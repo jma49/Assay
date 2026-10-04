@@ -15,6 +15,7 @@ import { splitStatements } from "@/lib/sql/statements";
 import type { Semaphore } from "@/server/concurrency/semaphore";
 import type { DataSource } from "@/server/datasource/types";
 import { fingerprintRow } from "@/server/runs/fingerprint";
+import { logError } from "@/server/logging/log";
 
 type TriggerKind = "manual" | "schedule" | "batch" | "api";
 
@@ -142,7 +143,7 @@ async function withRetries<T>(fn: () => Promise<T>, attempts = 3, delayMs = 200)
 /** Writes an event; on failure it stays on the check for the next run or dispatch to write. */
 async function recordEventSafely(deps: RunCheckDeps, event: CheckEvent): Promise<void> {
   await withRetries(() => deps.store.recordEvent(event)).catch((cause) =>
-    console.error(`[runCheck] Could not record the event for run ${event.runId}; it stays pending on the check:`, cause),
+    logError(`[runCheck] Could not record the event for run ${event.runId}; it stays pending on the check`, { error: cause }),
   );
 }
 

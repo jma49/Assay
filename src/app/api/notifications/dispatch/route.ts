@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { safeEqual } from "@/server/crypto/secret-box";
 import { dispatchNow } from "@/server/services/notify-deps";
+import { logError } from "@/server/logging/log";
 
 // Runs checks (or sends their alerts): the Hobby plan's limit, FUNCTION_MAX_DURATION_S in
 // run-check-deps.ts. CHECK_TIMEOUT_MS and batch deadlines are sized to finish inside it.
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
     const report = await dispatchNow();
     return NextResponse.json(report ?? { skipped: "ASSAY_SECRET_KEY is not set" });
   } catch (error) {
-    console.error("[Notify] Dispatch failed:", error);
+    logError("[Notify] Dispatch failed", { error: error });
     return NextResponse.json({ error: { code: "internal", message: "Dispatch failed" } }, { status: 500 });
   }
 }

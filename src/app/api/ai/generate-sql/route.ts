@@ -8,6 +8,7 @@ import { draftCheck } from "@/lib/ai/draft-check";
 import { dryRunCheck } from "@/lib/sql/dry-run";
 import { DataSourceId } from "@/contracts/data-sources";
 import { requireSource } from "@/server/services/data-sources";
+import { logError } from "@/server/logging/log";
 
 const Body = z.object({
   prompt: z.string().min(1),
@@ -40,7 +41,7 @@ export const POST = withAuth(Permission.CHECK_CREATE, async (request, { principa
       attempts: result.attempts,
     });
   } catch (error) {
-    console.error("[AI generate SQL] The model call failed:", error);
+    logError("[AI generate SQL] The model call failed", { error: error });
     throw aiError(error);
   }
 });

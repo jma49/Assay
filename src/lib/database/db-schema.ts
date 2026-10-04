@@ -1,6 +1,7 @@
 import type { PoolClient } from "pg";
 import redis from "../cache/redis";
 import type { SchemaTable } from "@/contracts/schema";
+import { logError } from "@/server/logging/log";
 
 /** The source whose catalogue is read (a resolved source from the registry). */
 interface SchemaSource {
@@ -68,7 +69,7 @@ async function readCache(key: string): Promise<SchemaTable[] | null> {
   try {
     return await redis.get<SchemaTable[]>(key);
   } catch (error) {
-    console.error("[DB Schema] cache read failed, querying the database:", error);
+    logError("[DB Schema] cache read failed, querying the database", { error: error });
     return null;
   }
 }
@@ -80,7 +81,7 @@ async function loadSchema(target: SchemaSource, key: string): Promise<SchemaTabl
   });
   const tables = groupColumns(rows);
   await redis.setex(key, CACHE_TTL_SECONDS, tables).catch((error) => {
-    console.error("[DB Schema] cache write failed:", error);
+    logError("[DB Schema] cache write failed", { error: error });
   });
   return tables;
 }

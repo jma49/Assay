@@ -3,6 +3,7 @@ import { getMongoDbClient } from "@/lib/database/mongodb";
 import { blocksAfterAction, verifySlackSignature } from "@/server/integrations/slack";
 import { ACTION_IDS } from "@/server/notify/types";
 import { buttonReply, handleAlertButton, type ButtonAction } from "@/server/services/alert-buttons";
+import { logError } from "@/server/logging/log";
 
 interface SlackPayload {
   type?: string;
@@ -54,11 +55,11 @@ export async function POST(request: NextRequest) {
           ? { replace_original: true, text: payload.message?.text ?? note, blocks: blocksAfterAction(payload.message?.blocks, note) }
           : { replace_original: false, response_type: "ephemeral", text: note };
       await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(update), signal: AbortSignal.timeout(5000) }).catch(
-        (error) => console.error("[Slack] Could not update the message:", error),
+        (error) => logError("[Slack] Could not update the message", { error: error }),
       );
     }
   } catch (error) {
-    console.error("[Slack] Button click failed:", error);
+    logError("[Slack] Button click failed", { error: error });
   }
   // Slack wants a 200 within three seconds whatever happened.
   return new NextResponse(null, { status: 200 });

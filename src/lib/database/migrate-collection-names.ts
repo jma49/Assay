@@ -1,5 +1,6 @@
 import type { Db } from "mongodb";
 import { COLLECTIONS } from "./collections";
+import { logWarn } from "@/server/logging/log";
 
 /** Collections that were renamed, as [old name, new name]. */
 export const RENAMED_COLLECTIONS: readonly (readonly [string, string])[] = [
@@ -63,14 +64,12 @@ export async function migrateCollectionNames(db: Db, pairs = RENAMED_COLLECTIONS
       await db.renameCollection(from, aside).catch((error: { code?: number }) => {
         if (error.code !== NAMESPACE_NOT_FOUND) throw error; // another instance moved it first
       });
-      console.warn(`[MongoDB] Moved the empty "${from}" next to "${to}" aside as "${aside}"; drop it once nothing writes to "${from}".`);
+      logWarn(`[MongoDB] Moved the empty "${from}" next to "${to}" aside as "${aside}"; drop it once nothing writes to "${from}".`);
       results.push({ from, to, outcome: "moved-empty-old-aside", counts: { old: 0, new: newCount }, aside });
       continue;
     }
-    console.warn(
-      `[MongoDB] Both "${from}" (${oldCount} documents) and "${to}" (${newCount} documents) exist; the app uses "${to}". ` +
-        `Merge them with: npm run migrate:collections -- --merge --apply`,
-    );
+    logWarn(`[MongoDB] Both "${from}" (${oldCount} documents) and "${to}" (${newCount} documents) exist; the app uses "${to}". ` +
+        `Merge them with: npm run migrate:collections -- --merge --apply`);
     results.push({ from, to, outcome: "both-exist", counts: { old: oldCount, new: newCount } });
   }
   return results;

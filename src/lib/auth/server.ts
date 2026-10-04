@@ -19,6 +19,7 @@ import { refusedApiKeyUpdate } from "./api-key-update";
 import { MCP_SCOPES, mcpResourceUrl } from "./mcp-scopes";
 import { getUserRole, UserRole } from "./rbac";
 import { COLLECTIONS } from "@/lib/database/collections";
+import { logError } from "@/server/logging/log";
 
 /**
  * Sign-in for Assay: Google and GitHub through Better Auth, with users,
@@ -54,7 +55,7 @@ let oauthCollections: Promise<void> | null = null;
 const oauthCollectionsReady = (tables: Record<string, AuthTable>) =>
   (oauthCollections ??= prepareOAuthCollections(db, tables).catch((error) => {
     oauthCollections = null;
-    console.error("[Auth] Could not create the OAuth collections:", error);
+    logError("[Auth] Could not create the OAuth collections", { error: error });
   }));
 
 const providers = enabledProviders();
@@ -106,7 +107,7 @@ export const auth = betterAuth({
           if (!emailAllowed(user.email)) throw new APIError("FORBIDDEN", { message: "This email domain is not allowed" });
         },
         after: async (user) => {
-          await claimLegacyRole(db, user).catch((error) => console.error("[Auth] Could not link a legacy role:", error));
+          await claimLegacyRole(db, user).catch((error) => logError("[Auth] Could not link a legacy role", { error: error }));
         },
       },
     },

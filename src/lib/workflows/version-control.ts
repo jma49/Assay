@@ -1,5 +1,6 @@
 import type { Db } from "mongodb";
 import { COLLECTIONS } from "@/lib/database/collections";
+import { logError } from "@/server/logging/log";
 
 enum VersionStatus {
   DRAFT = "draft",
@@ -209,7 +210,7 @@ export async function createScriptVersion(
     }
     throw new Error(`No free version number after ${MAX_ATTEMPTS} attempts`);
   } catch (error) {
-    console.error(`[VersionControl] Recording a version of ${scriptId} failed:`, error);
+    logError(`[VersionControl] Recording a version of ${scriptId} failed`, { error: error });
     return null;
   }
 }

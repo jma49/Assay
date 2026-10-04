@@ -5,6 +5,7 @@ import {
   shouldEnforceRequiredEnv,
 } from "@/lib/config/required-env";
 import { logWarn } from "@/server/logging/log";
+import { logError } from "@/server/logging/log";
 
 /**
  * A production server without its required configuration exits instead of
@@ -15,7 +16,7 @@ export function checkStartupConfig(env: NodeJS.ProcessEnv = process.env): void {
   if (!shouldEnforceRequiredEnv(env)) return;
   const missing = missingRequiredEnv(env);
   if (missing.length > 0) {
-    console.error(missingEnvMessage(missing));
+    logError(missingEnvMessage(missing));
     process.exit(1);
   }
   for (const { feature, variables, whenOff } of disabledOptionalFeatures(env)) {

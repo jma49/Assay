@@ -37,13 +37,40 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return proto === Object.prototype || proto === null;
 }
 
+/** user:password in a URL (a database connection string in an error message). */
+const URL_CREDENTIALS = /\b([a-z][a-z0-9+.-]*:\/\/)[^\s/@:]+(?::[^\s/@]*)?@/gi;
+
+/** Text with the credentials of any URL in it replaced. */
+export function redactUrlCredentials(text: string): string {
+  return text.replace(URL_CREDENTIALS, "$1[redacted]@");
+}
+
+/**
+ * An Error as JSON can carry it: JSON.stringify drops message and stack,
+ * so they are copied out, with URL credentials redacted. The stack is cut to
+ * a few frames: enough to find the line, short enough to read in a log.
+ */
+function serializeError(error: Error): Record<string, unknown> {
+  const code = (error as { code?: unknown }).code;
+  return {
+    name: error.name,
+    message: redactUrlCredentials(error.message),
+    ...(typeof code === "string" || typeof code === "number" ? { code } : {}),
+    ...(error.stack ? { stack: redactUrlCredentials(error.stack.split("\n").slice(0, 6).join("\n")) } : {}),
+    ...(error.cause !== undefined ? { cause: scrub(error.cause) } : {}),
+  };
+}
+
 /**
  * Returns a copy of `value` with sensitive fields replaced by "[redacted]",
- * recursing into plain objects and arrays. Non-plain values (Date, Error,
- * class instances) pass through untouched so their JSON shape is unchanged.
+ * recursing into plain objects and arrays. Errors become plain objects
+ * (name, message, code, stack). Other non-plain values (Date, class
+ * instances) pass through untouched so their JSON shape is unchanged.
  * Exported for unit testing.
  */
 export function scrub(value: unknown): unknown {
+  if (value instanceof Error) return serializeError(value);
+  if (typeof value === "string") return redactUrlCredentials(value);
   if (Array.isArray(value)) return value.map(scrub);
   if (isPlainObject(value)) {
     const out: Record<string, unknown> = {};
@@ -62,7 +89,7 @@ function emit(level: "info" | "warn" | "error", message: string, fields: LogFiel
   const line = JSON.stringify({
     ts: new Date().toISOString(),
     level,
-    msg: message,
+    msg: redactUrlCredentials(message),
     ...(requestId ? { requestId } : {}),
     ...(scrub(fields) as LogFields),
   });

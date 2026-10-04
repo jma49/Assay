@@ -16,6 +16,7 @@ import { findRun, saveTriage } from "@/server/repos/runs";
 import { sourceIdOf } from "@/domain/data-source";
 import { UnknownDataSourceError } from "@/server/datasource/registry";
 import { resolveSource } from "@/server/datasource/sources";
+import { logError } from "@/server/logging/log";
 
 const Body = z.object({
   resultId: z.string().refine((id) => ObjectId.isValid(id), "Invalid run id"),
@@ -70,7 +71,7 @@ export const POST = withAuth(Permission.HISTORY_READ, async (request, { principa
       { userId: principal.id },
     );
   } catch (error) {
-    console.error("[AI triage] The model call failed:", error);
+    logError("[AI triage] The model call failed", { error: error });
     throw aiError(error);
   }
 

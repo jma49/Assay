@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { currentRequestId, logError, logInfo, logWarn, runWithRequestId, scrub } from "./log";
+import { currentRequestId, logError, logInfo, logWarn, redactUrlCredentials, runWithRequestId, scrub } from "./log";
 
 describe("structured logs", () => {
   const lines: string[] = [];
@@ -57,6 +57,15 @@ describe("structured logs", () => {
     expect(lastEntry()["requestId"]).toBeUndefined();
   });
 
+  it("writes an error's name, message, code and stack instead of {}", () => {
+    const error = Object.assign(new Error("connect ECONNREFUSED postgres://app:hunter2@db.internal:5432/x"), { code: "ECONNREFUSED" });
+    logError("[db] connect failed", { error });
+    const logged = lastEntry()["error"] as Record<string, unknown>;
+    expect(logged).toMatchObject({ name: "Error", code: "ECONNREFUSED", message: "connect ECONNREFUSED postgres://[redacted]@db.internal:5432/x" });
+    expect(String(logged["stack"])).toContain("log.test.ts");
+    expect(JSON.stringify(lastEntry())).not.toContain("hunter2");
+  });
+
   it("redacts sensitive keys in emitted log fields", () => {
     logWarn("login", {
       user: "u1",
@@ -106,5 +115,13 @@ describe("scrub", () => {
     expect(out["name"]).toBe("check");
     expect(scrub("token")).toBe("token");
     expect(scrub(null)).toBeNull();
+  });
+});
+
+describe("redactUrlCredentials", () => {
+  it("hides user and password in URLs, and leaves URLs without them alone", () => {
+    expect(redactUrlCredentials("mongodb+srv://u:p@cluster.example.net/db")).toBe("mongodb+srv://[redacted]@cluster.example.net/db");
+    expect(redactUrlCredentials("postgres://reader@host/db failed")).toBe("postgres://[redacted]@host/db failed");
+    expect(redactUrlCredentials("see https://assay.example.com/docs")).toBe("see https://assay.example.com/docs");
   });
 });

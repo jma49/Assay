@@ -2,6 +2,7 @@ import type { Db, MongoClient } from "mongodb";
 import { ensureIndexes } from "./indexes";
 import { migrateCollectionNames } from "./migrate-collection-names";
 import { closeSharedMongoClient, mongoDatabaseName, sharedMongoClient } from "./mongo-connection";
+import { logInfo } from "@/server/logging/log";
 
 const state = globalThis as unknown as {
   assayMongoReady?: Promise<MongoClient> | null;
@@ -31,7 +32,7 @@ class MongoDbClient {
     state.assayRenames ??= migrateCollectionNames(db)
       .then((results) => {
         const moved = results.filter((r) => r.outcome === "renamed");
-        if (moved.length) console.log("[MongoDB] Collections renamed:", moved.map((r) => `${r.from} → ${r.to} (${r.outcome})`).join(", "));
+        if (moved.length) logInfo("[MongoDB] Collections renamed", { renamed: moved.map((r) => `${r.from} → ${r.to} (${r.outcome})`).join(", ") });
       })
       .catch((error) => {
         state.assayRenames = null;
