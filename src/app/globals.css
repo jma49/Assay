@@ -42,6 +42,16 @@
   --night: #070a1a;
   --night-foreground: #eef0ff;
   --night-muted: #a9afd0;
+  /* The rest of the night palette, for the landing page's dark sections: surfaces, hairlines,
+     the accent and the three statuses as they read on night. The same in both themes. */
+  --night-surface: #0d1126;
+  --night-raised: #121736;
+  --night-line: #1c2140;
+  --night-accent: #8c9bff;
+  --night-accent-pale: #c3caff;
+  --night-success: #4fc48a;
+  --night-attention: #e4a94a;
+  --night-failure: #f07474;
 
   --success: #1f7a52;
   --success-soft: #e8f5ee;
@@ -168,6 +178,14 @@
   --color-night: var(--night);
   --color-night-foreground: var(--night-foreground);
   --color-night-muted: var(--night-muted);
+  --color-night-surface: var(--night-surface);
+  --color-night-raised: var(--night-raised);
+  --color-night-line: var(--night-line);
+  --color-night-accent: var(--night-accent);
+  --color-night-accent-pale: var(--night-accent-pale);
+  --color-night-success: var(--night-success);
+  --color-night-attention: var(--night-attention);
+  --color-night-failure: var(--night-failure);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -220,6 +238,10 @@
   /* Type scale (DESIGN.md). Body levels leave the weight to the element, so font-medium etc. still apply.
      Body, caption and label line heights are whole even pixels, so text of mixed levels centred in one
      row (a table row, a toolbar) lands on the same baseline instead of a pixel apart. */
+  --text-display-2xl: 88px;
+  --text-display-2xl--line-height: 0.98;
+  --text-display-2xl--letter-spacing: -0.045em;
+  --text-display-2xl--font-weight: 600;
   --text-display-xl: 60px;
   --text-display-xl--line-height: 1.04;
   --text-display-xl--letter-spacing: -0.035em;

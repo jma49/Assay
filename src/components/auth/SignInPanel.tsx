@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
-import { BellRing, Bot, ChevronDown, ListChecks, Loader2 } from "lucide-react";
-import { BeetleMark } from "@/components/brand/BeetleMark";
-import { BrandMark } from "@/components/common/BrandMark";
+import { ArrowLeft, ArrowRight, BellRing, Bot, ChevronDown, ListChecks, Loader2, ShieldCheck } from "lucide-react";
+import "@/components/landing/landing.css";
+import { landingMono, landingSans } from "@/components/landing/fonts";
+import { RowAMark } from "@/components/brand/RowAMark";
+import { GithubMark } from "@/components/common/GithubMark";
+import { SignInBrand } from "./SignInBrand";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +47,8 @@ const COPY = {
     demo: "Just looking?",
     demoLink: "Try the demo without an account",
     privacy: "Assay reads your name, email and avatar from the provider, nothing else.",
+    home: "Assay home",
+    openSource: "Open source · self-hostable",
     errors: {
       access_denied: "Sign-in was cancelled.",
       unable_to_link_account: "This email already has an Assay account from another provider. Sign in the way you did before.",
@@ -77,6 +82,8 @@ const COPY = {
     demo: "只是看看？",
     demoLink: "无需账号试用演示",
     privacy: "Assay 只会从登录服务读取你的名字、邮箱和头像。",
+    home: "Assay 首页",
+    openSource: "开源 · 可自托管",
     errors: {
       access_denied: "已取消登录。",
       unable_to_link_account: "这个邮箱已经通过其他方式注册了 Assay，请用之前的方式登录。",
@@ -102,15 +109,6 @@ function GoogleMark() {
   );
 }
 
-/** lucide-react 1.x dropped brand icons; this is its former GitHub glyph (ISC), drawn the same way. */
-function GithubMark() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-      <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-      <path d="M9 18c-4.51 2-5-2-7-2" />
-    </svg>
-  );
-}
 
 function ProviderButton({ provider, label, icon, busy, disabled, lastUsed, lastUsedLabel, onClick }: {
   provider: Provider;
@@ -128,7 +126,7 @@ function ProviderButton({ provider, label, icon, busy, disabled, lastUsed, lastU
       size="lg"
       disabled={disabled}
       onClick={() => onClick(provider)}
-      className={cn("relative h-11 w-full justify-center text-body-md", lastUsed && "shadow-[0_0_0_1.5px_var(--primary)]")}
+      className={cn("relative h-12 w-full justify-center rounded-full bg-card text-body-md", lastUsed && "shadow-[0_0_0_1.5px_var(--primary)]")}
     >
       {busy ? <Loader2 className="animate-spin" /> : icon}
       {label}
@@ -190,79 +188,72 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
   const noProvider = !providers.google && !providers.github && !providers.password;
 
   return (
-    <div className="grid min-h-screen bg-background lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+    <div className={cn("landing grid min-h-screen lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]", landingSans.variable, landingMono.variable)}>
       {/* The pitch, for people who arrive here first. Hidden on small screens, where the form matters most. */}
-      <aside className="hidden bg-night text-night-foreground lg:flex lg:flex-col lg:justify-between lg:p-14 xl:px-20">
-        <Link href="/" className="flex w-fit items-center gap-2 text-title-sm font-semibold">
-          <span className="grid size-8 place-items-center rounded-lg bg-white/95 shadow-sm">
-            <BeetleMark className="size-6" />
-          </span>
-          Assay
-        </Link>
-        <div className="max-w-md space-y-9">
-          <p className="text-display-md text-balance">{t.tagline}</p>
-          <ul className="space-y-5">
-            {t.points.map(({ icon: Icon, title, body }) => (
-              <li key={title} className="flex gap-3">
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-night-foreground/10 text-primary">
-                  <Icon className="size-4" />
-                </span>
-                <span className="grid gap-0.5">
-                  <span className="text-body-md font-semibold">{title}</span>
-                  <span className="text-body-sm text-night-muted">{body}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <p className="text-caption text-night-muted">Open source · self-hostable</p>
-      </aside>
+      <SignInBrand language={language} tagline={t.tagline} points={t.points} footnote={t.openSource} />
 
-      <main className="flex flex-col">
-        <header className="flex h-14 items-center justify-between px-5 sm:px-8">
-          <Link href="/" className="lg:invisible">
-            <BrandMark />
+      <main className="flex flex-col bg-background text-foreground">
+        {/* On small screens the brand panel shrinks to a slim night header. */}
+        <header className="relative overflow-hidden bg-night px-5 pt-5 pb-6 text-night-foreground lg:hidden">
+          <div aria-hidden className="spotlight absolute inset-0" />
+          <div className="relative flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2.5">
+              <RowAMark className="size-8" />
+              <span className="font-display text-title-sm">Assay</span>
+            </Link>
+            <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 rounded-full px-2.5 text-body-sm text-night-muted hover:text-night-foreground">
+              {language === "zh" ? "EN" : "中文"}
+            </button>
+          </div>
+          <p className="font-display relative mt-6 text-title text-balance">{t.tagline}</p>
+        </header>
+        <div className="hidden h-16 items-center justify-between px-8 lg:flex">
+          <Link href="/" className="inline-flex items-center gap-1.5 text-body-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="size-4" />
+            {t.home}
           </Link>
-          <button
-            type="button"
-            onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
-            className="h-8 rounded-md px-2 text-body-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
+          <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 rounded-full px-2.5 text-body-sm text-muted-foreground hover:bg-muted hover:text-foreground">
             {language === "zh" ? "EN" : "中文"}
           </button>
-        </header>
+        </div>
 
-        <div className="flex flex-1 items-start justify-center px-5 pt-10 pb-16 sm:items-center sm:pt-0">
-          <div className="w-full max-w-[380px] space-y-7">
-            <div className="space-y-2">
-              <h1 className="text-display-sm leading-tight font-bold">{page.title}</h1>
+        <div className="flex flex-1 items-start justify-center px-5 pt-10 pb-16 lg:items-center lg:pt-0">
+          <div className="w-full max-w-[400px]">
+            <RowAMark className="hidden size-11 lg:block" />
+            <div className="space-y-2 lg:mt-8">
+              <h1 className="text-display-sm">{page.title}</h1>
               <p className="text-body-md text-muted-foreground">{page.description}</p>
             </div>
 
-            <div className="grid gap-3">
+            <div className="mt-8 grid gap-3">
               {providers.google && (
                 <ProviderButton provider="google" label={t.google} icon={<GoogleMark />} busy={busy === "google"} disabled={busy !== null} lastUsed={lastUsed === "google"} lastUsedLabel={t.lastUsed} onClick={social} />
               )}
               {providers.github && (
                 <ProviderButton provider="github" label={t.github} icon={<GithubMark />} busy={busy === "github"} disabled={busy !== null} lastUsed={lastUsed === "github"} lastUsedLabel={t.lastUsed} onClick={social} />
               )}
-              {noProvider && <p className="rounded-lg bg-attention-soft px-3 py-2.5 text-body-sm text-attention">{t.none}</p>}
+              {noProvider && <p className="rounded-xl bg-attention-soft px-3.5 py-3 text-body-sm text-attention">{t.none}</p>}
               {errorText && (
-                <p role="alert" className="rounded-lg bg-failure-soft px-3 py-2.5 text-body-sm text-failure">
+                <p role="alert" className="rounded-xl bg-failure-soft px-3.5 py-3 text-body-sm text-failure">
                   {errorText}
                 </p>
               )}
-              {(providers.google || providers.github) && <p className="text-caption text-muted-foreground">{t.privacy}</p>}
+              {(providers.google || providers.github) && (
+                <p className="mt-1 flex gap-2 text-caption text-muted-foreground">
+                  <ShieldCheck className="mt-px size-3.5 shrink-0" />
+                  {t.privacy}
+                </p>
+              )}
             </div>
 
             {providers.password && (
-              <details className="group rounded-lg shadow-border" open={!providers.google && !providers.github}>
-                <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-body-sm font-medium text-muted-foreground">
+              <details className="group mt-6 rounded-xl bg-card shadow-border" open={!providers.google && !providers.github}>
+                <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3 text-body-sm font-medium text-muted-foreground">
                   {t.devToggle}
                   <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
                 </summary>
                 <form
-                  className="grid gap-2.5 border-t p-3"
+                  className="grid gap-2.5 border-t p-3.5"
                   onSubmit={(event) => {
                     event.preventDefault();
                     void devSignIn(false);
@@ -290,18 +281,19 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
               </details>
             )}
 
-            <div className="space-y-1.5 border-t pt-5 text-body-sm text-muted-foreground">
+            <div className="mt-8 space-y-2 border-t pt-6 text-body-sm text-muted-foreground">
               <p>
                 {page.switch}{" "}
-                <Link href={switchHref} className="font-medium text-primary hover:underline">
+                <Link href={switchHref} className="font-medium text-primary-ink hover:underline">
                   {page.switchLink}
                 </Link>
               </p>
               {demo && (
                 <p>
                   {t.demo}{" "}
-                  <Link href="/demo" className="font-medium text-primary hover:underline">
+                  <Link href="/demo" className="group inline-flex items-center gap-1 font-medium text-primary-ink hover:underline">
                     {t.demoLink}
+                    <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 </p>
               )}

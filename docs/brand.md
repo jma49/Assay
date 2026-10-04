@@ -1,51 +1,51 @@
 # Brand
 
-## Mascot
+## Mark
 
-Assay's mascot is a rhinoceros beetle (独角仙): small, armoured, and strong
-for its size, which is what a data check should be. It is drawn as a chibi
-toy rather than an anatomical study: one round glossy shell, a big head with
-big eyes, a thick horn that forks at the top, and short legs. It exists in
-two forms, both in `src/lib/brand/beetle.ts`:
+Assay's mark is the **Row A**: the initial A, with a crossbar that is a row
+being checked. It names the product and shows what a check looks at, it reads
+at 16 px, and the crossbar gives the product a motion of its own (on the
+landing page it sweeps up and down the A).
 
-- **Voxel figure** (`beetleVoxels`) for the landing page, rendered by
-  `src/components/brand/VoxelBeetle.tsx` with three.js. It spins in once,
-  then turns slowly, and under a mouse it turns to follow the pointer. With
-  reduced motion there is no spin-in or idle turn, but it still follows the
-  mouse, since that motion is the visitor's own.
-  three.js loads only where the figure is shown.
-- **Pixel icon** (`beetleIconGrid`), drawn for small sizes in the same chibi
-  style: round shell with a gloss, big eye, forked horn, three legs. It is the favicon, the iOS icon and
-  the mark beside the wordmark (`BeetleMark`, `BrandMark`).
+It replaced the rhinoceros beetle mascot in October 2026.
 
-After changing the icon, regenerate the favicon:
+One source draws it everywhere: `src/lib/brand/mark.ts`.
+
+- `RowAMark` (`src/components/brand/RowAMark.tsx`) in the interface, and
+  `BrandMark` for the mark beside the wordmark.
+- `src/app/icon.svg`, the favicon, written by the script below.
+- `src/app/apple-icon.tsx`, the iOS icon, on a square tile that iOS rounds.
+
+After changing the mark, regenerate the favicon:
 
 ```bash
 npx tsx scripts/brand/render-icons.ts
 ```
 
-Both are original work. Do not replace them with third-party models or icons
-without checking the licence.
+## Construction
+
+A 64-unit tile with a 15-unit corner radius. The legs are a 7-unit round
+stroke from (19.5, 50) to the apex at (32, 15.5) and back down to (44.5, 50).
+The bar is 8 units tall and overshoots the legs by about 10 units on each side;
+a 3-unit stroke in the tile colour cuts it from the legs. When the bar moves,
+it stays between y = 27 and y = 38, where it still crosses both legs.
 
 ## Colour
 
-The beetle uses the cobalt ramp of the interface accent:
+The mark keeps the same colours in both themes.
 
 | Role | Hex |
 |---|---|
-| Shell highlight | `#5B82E6` |
-| Shell | `#2350C8` (the interface accent) |
-| Head and pronotum shadow | `#1A3D9E` |
-| Horn | `#16307A`, tip `#2B4FA8` |
-| Legs | `#0F2257` |
-| Gloss and shine | `#8FAEF2`, `#DCE6FD` |
-| Eye, pupil | white, `#0B1636` |
-| Tile behind the icon | `#EAF0FD` (the accent's soft tint) |
+| Tile | `#4F63E8` (the light-theme `primary`) |
+| A | `#FFFFFF` |
+| Bar | `#C3CAFF` (the dark-theme `primary-ink`) |
+
+On the night background the tile stays indigo. Do not recolour the mark with
+status colours; green, amber and red mean run outcomes.
 
 ## Type
 
-Manrope for everything readable: interface text at 400–600, headings at
-600–700 with slightly tight letter-spacing (`font-display`). Its round forms
-suit the chibi mascot and stay clear in dense tables. JetBrains Mono for
-code, ids and cron expressions. Chinese falls back to the system face
-(PingFang SC, Microsoft YaHei, Noto Sans SC / Noto Sans CJK SC).
+Geist for the interface and every heading, Geist Mono for code in the app. The
+landing page sets its running text and code in its own faces; `DESIGN.md`
+(Landing) names them. Chinese falls back to a named system face (PingFang SC,
+Microsoft YaHei, Noto Sans SC).

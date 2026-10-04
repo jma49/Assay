@@ -3,6 +3,7 @@ import { extendTailwindMerge } from "tailwind-merge";
 
 /** The `text-<level>` sizes from globals.css; tailwind-merge would otherwise read them as colours. */
 const TYPE_SCALE = [
+  "display-2xl",
   "display-xl",
   "display-lg",
   "display-md",
