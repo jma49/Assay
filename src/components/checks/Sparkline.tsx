@@ -45,7 +45,7 @@ export function Sparkline({
           <path d={line} fill="none" stroke={color} strokeWidth={1.5} strokeLinejoin="round" />
         </>
       )}
-      <circle cx={x(values.length - 1)} cy={allErrors ? height / 2 : y(values[values.length - 1])} r={2.5} fill={color} />
+      <circle cx={x(values.length - 1)} cy={allErrors ? height / 2 : y(values.at(-1) ?? 0)} r={2.5} fill={color} />
     </svg>
   );
 }

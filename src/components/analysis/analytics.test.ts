@@ -45,7 +45,7 @@ describe("buildAnalytics", () => {
 
   it("lists every day of the range, oldest first, split by outcome", () => {
     expect(data.dailyTrend).toHaveLength(7);
-    expect(data.dailyTrend[0].date).toBe("2026-09-21");
+    expect(data.dailyTrend[0]?.date).toBe("2026-09-21");
     expect(data.dailyTrend.slice(-3)).toEqual([
       { date: "2026-09-25", runs: 1, clean: 1, issues: 0, error: 0 },
       { date: "2026-09-26", runs: 5, clean: 3, issues: 1, error: 1 },
@@ -65,9 +65,9 @@ describe("buildAnalytics", () => {
       ["a", "A", 2, 50],
       ["c", "C", 0, 0],
     ]);
-    expect(data.scriptAnalytics[1].counts).toEqual({ clean: 1, issues: 0, error: 1 });
-    expect(data.scriptAnalytics[1].lastRun).toBe("2026-09-26T10:00:00Z");
-    expect(data.scriptAnalytics[2].cnName).toBe("丙");
+    expect(data.scriptAnalytics[1]?.counts).toEqual({ clean: 1, issues: 0, error: 1 });
+    expect(data.scriptAnalytics[1]?.lastRun).toBe("2026-09-26T10:00:00Z");
+    expect(data.scriptAnalytics[2]?.cnName).toBe("丙");
   });
 });
 

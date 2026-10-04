@@ -111,8 +111,9 @@ export function passRate(stats: CheckStats): number {
 
 /** The check the Run sheet runs: the one picked, else the first; none while the list is empty. */
 export function selectedCheckId(chosen: string, scripts: CheckListItem[]): string {
-  if (scripts.length === 0) return "";
-  return chosen || scripts[0].scriptId;
+  const [first] = scripts;
+  if (!first) return "";
+  return chosen || first.scriptId;
 }
 
 /** The `?search=` a link to the run history carries (e.g. from a check's page), trimmed; "" for none. */

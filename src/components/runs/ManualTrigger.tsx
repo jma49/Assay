@@ -59,11 +59,12 @@ export function ManualTrigger({
   // Select the first check once a list arrives, but never override the user's later choice.
   const autoSelected = useRef(false);
   useEffect(() => {
-    if (availableChecks.length === 0) {
+    const [first] = availableChecks;
+    if (!first) {
       autoSelected.current = false;
       return;
     }
-    if (!autoSelected.current && !selectedScriptId) setSelectedScriptId(availableChecks[0].scriptId);
+    if (!autoSelected.current && !selectedScriptId) setSelectedScriptId(first.scriptId);
     autoSelected.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [availableChecks.length]);

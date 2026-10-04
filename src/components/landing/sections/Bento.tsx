@@ -78,7 +78,7 @@ function Validator({ copy }: { copy: LandingCopy["bento"]["validator"] }) {
           const Icon = checkpointIcons[i];
           return (
             <div key={point.title} className="rounded-xl bg-background px-4 py-3">
-              <Icon className="size-3.5 text-primary" />
+              {Icon && <Icon className="size-3.5 text-primary" />}
               <p className="mt-1.5 font-medium text-foreground">{point.title}</p>
               <p className="text-muted-foreground">{point.body}</p>
             </div>

@@ -23,6 +23,7 @@ export function Scenarios({ copy, outcomeCopy, demoHref }: { copy: LandingCopy["
         <div className="mt-16 flex flex-col gap-3 md:h-[520px] md:flex-row">
           {copy.items.map((item, i) => {
             const meta = SCENARIO_META[i];
+            if (!meta) return null;
             const isOpen = i === open;
             return (
               <div

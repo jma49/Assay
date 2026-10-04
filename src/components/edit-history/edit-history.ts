@@ -31,7 +31,7 @@ export const EMPTY_FILTERS: HistoryFilters = {
 export function parseDateInput(value: string): Date | undefined {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!match) return undefined;
-  const [, year, month, day] = match.map(Number);
+  const [, year = 0, month = 1, day = 1] = match.map(Number);
   return new Date(year, month - 1, day);
 }
 
@@ -63,7 +63,7 @@ export function formatPageInfo(
   return describePage(paginationCopy(language).pageInfo, { page: currentPage, totalPages, totalItems: totalRecords, pageSize, totalCapped });
 }
 
-const OPERATION_BADGE_CLASSES: Record<string, string> = {
+const OPERATION_BADGE_CLASSES: Record<string, string> & { update: string } = {
   create: "bg-success/10 text-success border-success/30",
   update: "bg-muted text-foreground border-border",
   delete: "bg-failure/10 text-failure border-failure/30",
@@ -99,7 +99,7 @@ export function fieldLabel(change: FieldChange, language: string): string {
 export function changesPreview(changes: EditHistoryRecord["changes"], language: string): string {
   const copy = editHistoryCopy(language);
   if (!changes || changes.length === 0) return copy.noChanges;
-  if (changes.length === 1) return fieldLabel(changes[0], language);
+  if (changes.length === 1 && changes[0]) return fieldLabel(changes[0], language);
   return copy.changeCount(changes.length);
 }
 

@@ -111,7 +111,7 @@ const EditorThemeSettings: React.FC = () => {
   const saveSettings = () => {
     localStorage.setItem("editor-theme", editorTheme);
     localStorage.setItem("editor-font-family", fontFamily);
-    localStorage.setItem("editor-font-size", fontSize[0].toString());
+    localStorage.setItem("editor-font-size", String(fontSize[0] ?? 14));
   };
 
   const resetToDefaults = () => {

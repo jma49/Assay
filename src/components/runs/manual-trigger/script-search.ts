@@ -9,7 +9,7 @@ const HASHTAG = /#(\w+)/g;
 export function filterChecks(scripts: CheckListItem[], term: string): CheckListItem[] {
   const query = term.trim().toLowerCase();
   if (!query) return scripts;
-  const tags = [...query.matchAll(HASHTAG)].map((match) => match[1]);
+  const tags = [...query.matchAll(HASHTAG)].map((match) => match[1] ?? "");
   const text = query.replace(HASHTAG, "").trim();
   return scripts.filter((script) => {
     const textMatches =

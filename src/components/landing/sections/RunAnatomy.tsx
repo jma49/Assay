@@ -55,7 +55,8 @@ export function RunAnatomy({ copy }: { copy: LandingCopy["run"] }) {
             activate(Math.round(p));
           },
         });
-        gsap.set(fills[0], { scaleX: 1 });
+        const [firstFill] = fills;
+        if (firstFill) gsap.set(firstFill, { scaleX: 1 });
         activate(0);
         const jump = (e: Event) => {
           const i = Number((e.currentTarget as HTMLElement).dataset.step);
@@ -132,11 +133,11 @@ export function RunAnatomy({ copy }: { copy: LandingCopy["run"] }) {
               >
                 <div>
                   <span className="font-display block text-display-xl tabular-nums text-night-foreground/[.08]">0{i + 1}</span>
-                  <p className="font-display mt-4 text-headline text-night-foreground">{copy.steps[i].title}</p>
-                  <p className="mt-3 max-w-xs text-body-md text-night-muted">{copy.steps[i].body}</p>
+                  <p className="font-display mt-4 text-headline text-night-foreground">{copy.steps[i]?.title}</p>
+                  <p className="mt-3 max-w-xs text-body-md text-night-muted">{copy.steps[i]?.body}</p>
                 </div>
                 <div className="min-w-0">
-                  <Scene copy={copy} play={plays[i]} />
+                  <Scene copy={copy} play={plays[i] ?? 0} />
                 </div>
               </div>
             ))}
@@ -160,11 +161,11 @@ export function RunAnatomy({ copy }: { copy: LandingCopy["run"] }) {
             <div key={i} data-run-mobile>
               <div className="flex items-baseline gap-2.5">
                 <span className="text-caption font-medium tabular-nums text-night-muted">0{i + 1}</span>
-                <p className="text-title-sm font-medium text-night-foreground">{copy.steps[i].title}</p>
+                <p className="text-title-sm font-medium text-night-foreground">{copy.steps[i]?.title}</p>
               </div>
-              <p className="mt-2 text-body-md text-night-muted">{copy.steps[i].body}</p>
+              <p className="mt-2 text-body-md text-night-muted">{copy.steps[i]?.body}</p>
               <div className="mt-4">
-                <Scene copy={copy} play={mobilePlays[i]} />
+                <Scene copy={copy} play={mobilePlays[i] ?? 0} />
               </div>
             </div>
           ))}

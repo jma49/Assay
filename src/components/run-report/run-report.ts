@@ -68,7 +68,8 @@ export function localized(language: Language, en: string | undefined, zh: string
 
 /** Columns come from the first row, in the order the query returned them. */
 export function findingColumns(rows: FindingDetail[]): string[] {
-  return rows.length > 0 ? Object.keys(rows[0]) : [];
+  const [first] = rows;
+  return first ? Object.keys(first) : [];
 }
 
 /** Columns whose non-null values are all numbers (pg returns numerics as strings); these are right-aligned. */
