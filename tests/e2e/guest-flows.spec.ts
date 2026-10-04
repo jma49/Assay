@@ -25,7 +25,7 @@ test("the Issues tile filters the list to checks that found rows", async ({ page
   test.skip(issues.length === 0, "the demo data has no check with issues");
 
   await page.goto("/checks");
-  await page.getByRole("button", { name: /^Issues/ }).first().click();
+  await page.getByRole("button", { name: /^With issues/ }).click();
   await expect(page.getByText("Issues found")).toBeVisible();
   await expect(page.getByText("Broken checks")).toHaveCount(0);
   for (const check of issues) await expect(page.getByText(check.name, { exact: true }).first()).toBeVisible();
@@ -55,8 +55,9 @@ test("a run's report opens from its id", async ({ page, request }) => {
 });
 
 test("a guest cannot create a check", async ({ page, request }) => {
+  // The proxy keeps guests off the editor and sends them to sign up.
   await page.goto("/checks/new");
-  await expect(page.getByText("Your role can't create checks")).toBeVisible();
+  await expect(page).toHaveURL(/\/sign-up\?redirect_url=%2Fchecks%2Fnew/);
 
   const response = await request.post("/api/checks", {
     headers: { cookie: `assay_guest=${GUEST_TOKEN}` },
