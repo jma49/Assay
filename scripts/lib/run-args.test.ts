@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseRunArgs } from "./run-args";
+import { parseRunArgs, recordsHeartbeat } from "./run-args";
 
 describe("parseRunArgs", () => {
   it("runs a batch of all or scheduled checks", () => {
@@ -19,5 +19,14 @@ describe("parseRunArgs", () => {
     expect(parseRunArgs(["--check=a b"])).toBeNull();
     expect(parseRunArgs(["--check=$(id)"])).toBeNull();
     expect(parseRunArgs(["--help"])).toBeNull();
+  });
+});
+
+describe("recordsHeartbeat", () => {
+  it("records only for a real scheduled run", () => {
+    expect(recordsHeartbeat({ kind: "batch", mode: "scheduled", dryRun: false })).toBe(true);
+    expect(recordsHeartbeat({ kind: "batch", mode: "all", dryRun: false })).toBe(false);
+    expect(recordsHeartbeat({ kind: "batch", mode: "scheduled", dryRun: true })).toBe(false);
+    expect(recordsHeartbeat({ kind: "one", checkId: "orders-without-invoice" })).toBe(false);
   });
 });
