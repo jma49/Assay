@@ -2,19 +2,32 @@
 
 ## Workflow
 
-- Never commit directly to `main` or `develop`. Branch from `develop` (e.g. `fix/...`, `feat/...`, `chore/...`) and open the PR against `develop`.
-- `main` is production: every push deploys to Vercel. Promote `develop` to `main` with a PR once a batch of work is verified.
+- Never commit directly to `main`. Branch from `main` (e.g. `fix/...`, `feat/...`, `chore/...`) and open the PR against `main`.
+- `main` is production: every merge deploys to Vercel, and there is no staging. Every commit on a PR must build and pass on its own; merge only when CI (`verify`) is green.
 - Keep commits small and focused: one logical change per commit.
 - Before every commit, make sure these pass:
   - `npm run typecheck`
   - `npm run lint`
   - `npm test`
+  - `npx knip` and `npm run build` before opening the PR (CI runs both)
 - Add or update tests alongside behavior changes, especially for security-sensitive code (SQL validation, auth, RBAC).
 - Tests never touch real services: mock MongoDB, PostgreSQL, Redis, AI and chat APIs. The local `.env.local` may point at a shared database.
 
 ## Code Layout
 
 - Keep files small: a page is a shell over a data hook and section components; pure logic lives in a `.ts` module with tests. See `docs/architecture.md`.
+- Routes are thin adapters over `src/server/services`; persistence lives in `src/server/repos`; `src/domain` is pure and imports nothing from `app/` or `server/`.
+
+## Red Lines
+
+Read `docs/engineering.md` (red lines, public contracts, hotspots, verification) before changing server code. The short version:
+
+- Checks are read-only: never weaken the SQL validator, the read-only transaction or the statement timeout.
+- Every check run goes through `runCheck`; respect its lease and fencing token.
+- Data-source and channel secrets stay sealed with `ASSAY_SECRET_KEY`: never returned by an API, never logged.
+- SSRF guards and PostgreSQL TLS verification stay on.
+- New accounts are viewers; non-admin check changes go through approval when review is on.
+- `GET /api/health`, the scheduler heartbeat, MCP tool names and `.env.example` variable names are public contracts.
 
 ## Repository Hygiene
 
