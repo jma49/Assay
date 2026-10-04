@@ -2,6 +2,7 @@ import type { Db, IndexDescription } from "mongodb";
 import { COLLECTIONS } from "./collections";
 
 const ACTIVITY_RETENTION_SECONDS = 180 * 24 * 60 * 60;
+const DELIVERY_RETENTION_SECONDS = 30 * 24 * 60 * 60;
 
 /** Indexes for the lookups every request makes; createIndexes is a no-op when they exist. */
 export const INDEXES: Record<string, IndexDescription[]> = {
@@ -23,11 +24,14 @@ export const INDEXES: Record<string, IndexDescription[]> = {
   // Checks name their source by id, so an id is taken once per workspace.
   [COLLECTIONS.dataSources]: [{ key: { workspaceId: 1, sourceId: 1 }, unique: true }],
   // One delivery per event and destination, so fan-out can run anywhere, any number of times.
+  // Every write stamps updatedAt, so a delivery goes 30 days after it last
+  // changed: one still retrying is never deleted, and a dead letter stays
+  // listed for 30 days after it failed or was requeued.
   [COLLECTIONS.notificationDeliveries]: [
     { key: { eventId: 1, destinationId: 1 }, unique: true },
     { key: { status: 1, nextAttemptAt: 1 } },
     { key: { destinationId: 1, sentAt: -1 } },
-    { key: { createdAt: 1 }, expireAfterSeconds: 30 * 24 * 60 * 60 },
+    { key: { updatedAt: 1 }, expireAfterSeconds: DELIVERY_RETENTION_SECONDS },
   ],
   // One row per problem and destination counts its reminders; old ones go after 30 days.
   [COLLECTIONS.notificationReminders]: [
@@ -58,13 +62,40 @@ export const INDEXES: Record<string, IndexDescription[]> = {
   [COLLECTIONS.batches]: [{ key: { executionId: 1 }, unique: true }, { key: { startedAt: 1 }, expireAfterSeconds: 7 * 24 * 60 * 60 }],
 };
 
-/** Creates the indexes of every collection, or only of `only`. */
+/**
+ * Indexes replaced by one in INDEXES, by name. MongoDB cannot change a TTL
+ * index's key in place, and a leftover TTL index keeps deleting on its own
+ * rule, so these are dropped before the replacement is created.
+ */
+const OBSOLETE_INDEXES: Record<string, string[]> = {
+  // TTL on createdAt deleted deliveries still retrying; replaced by updatedAt_1 (issue #213).
+  [COLLECTIONS.notificationDeliveries]: ["createdAt_1"],
+};
+
+const NAMESPACE_NOT_FOUND = 26;
+const INDEX_NOT_FOUND = 27;
+
+async function dropObsoleteIndexes(db: Db, collection: string): Promise<void> {
+  for (const name of OBSOLETE_INDEXES[collection] ?? []) {
+    try {
+      await db.collection(collection).dropIndex(name);
+      console.log(`[MongoDB] Dropped obsolete index ${collection}.${name}`);
+    } catch (error) {
+      const code = (error as { code?: number }).code;
+      // Still create the replacement: two TTL indexes delete no later than the old one alone did.
+      if (code !== INDEX_NOT_FOUND && code !== NAMESPACE_NOT_FOUND) console.error(`[MongoDB] Could not drop index ${collection}.${name}:`, error);
+    }
+  }
+}
+
+/** Drops replaced indexes, then creates the indexes of every collection, or only of `only`. */
 export async function ensureIndexes(db: Db, only?: readonly string[]): Promise<void> {
   await Promise.all(
     Object.entries(INDEXES)
       .filter(([collection]) => !only || only.includes(collection))
       .map(async ([collection, indexes]) => {
         try {
+          await dropObsoleteIndexes(db, collection);
           await db.collection(collection).createIndexes(indexes);
         } catch (error) {
           // A failed index (e.g. duplicates blocking a unique one) must not take the app down.
