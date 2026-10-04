@@ -3,12 +3,12 @@ import { getMongoDbClient } from "@/lib/database/mongodb";
 import { blocksAfterAction, verifySlackSignature } from "@/server/integrations/slack";
 import { ACTION_IDS } from "@/server/notify/types";
 import { buttonReply, handleAlertButton, type ButtonAction } from "@/server/services/alert-buttons";
-import { logError } from "@/lib/logging/log";
+import { logError, logWarn } from "@/lib/logging/log";
 import { serverEnv } from "@/lib/config/env";
 
 const SLACK_HOOKS_ORIGIN = "https://hooks.slack.com";
-/** The path of a Slack response_url: /actions/<team>/<id>/<token>. */
-const RESPONSE_PATH = /^\/actions\/[A-Z0-9]+\/\d+\/[A-Za-z0-9]+$/;
+/** The path of a Slack response_url: /actions/<team>/<id>/<token> (or the older /services/<team>/<id>/<token>). */
+const RESPONSE_PATH = /^\/(?:actions|services)\/[A-Z0-9]+\/[A-Za-z0-9]+\/[A-Za-z0-9]+$/;
 
 interface SlackPayload {
   type?: string;
@@ -65,6 +65,9 @@ export async function POST(request: NextRequest) {
       await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(update), signal: AbortSignal.timeout(5000) }).catch(
         (error) => logError("[Slack] Could not update the message", { error }),
       );
+    } else if (given?.hostname === "hooks.slack.com") {
+      // A change in Slack's URL shape would otherwise show only as buttons that stop updating messages.
+      logWarn("[Slack] response_url has an unexpected shape; the message was not updated", { path: given.pathname.split("/").slice(0, 2).join("/") });
     }
   } catch (error) {
     logError("[Slack] Button click failed", { error });
