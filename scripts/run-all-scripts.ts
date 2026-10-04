@@ -31,7 +31,7 @@ async function main() {
   const mongo = await getMongoDbClient().getDb();
   if (recordsHeartbeat(args)) {
     // The scheduler's heartbeat: /api/health reports the scheduler as stale
-    // when no scheduled run started in the last 90 minutes.
+    // when no scheduled run started in the last 12 hours.
     try {
       await recordHeartbeat(mongo, SCHEDULER_NAME, { runId: process.env.GITHUB_RUN_ID, mode: "scheduled" });
     } catch (error) {

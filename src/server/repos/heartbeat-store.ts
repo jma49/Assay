@@ -13,8 +13,13 @@ export interface HeartbeatDoc {
   mode?: string;
 }
 
-/** A heartbeat older than this means the schedule stopped firing. */
-export const HEARTBEAT_STALE_MS = 90 * 60 * 1000;
+/**
+ * A heartbeat older than this means the schedule stopped firing. GitHub runs
+ * the 30-minute cron late: between 2026-09-27 and 2026-10-04 the gap between
+ * scheduled runs had a median of 4.9 h and a maximum of 8.4 h, so anything
+ * shorter than 12 h reports a live schedule as dead.
+ */
+export const HEARTBEAT_STALE_MS = 12 * 60 * 60 * 1000;
 
 export type HeartbeatStatus = "ok" | "stale" | "never";
 

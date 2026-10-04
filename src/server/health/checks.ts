@@ -87,7 +87,7 @@ export function schedulerProbe(read: () => Promise<HeartbeatDoc | null>): Probe 
     run: async () => {
       const status = heartbeatStatus(await read());
       if (status === "never") return "unconfigured";
-      if (status === "stale") throw new Error("no scheduler run started in the last 90 minutes");
+      if (status === "stale") throw new Error("no scheduler run started in the last 12 hours");
     },
   };
 }

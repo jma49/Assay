@@ -67,7 +67,7 @@ Treat these as API surface:
 | Run document shape | count + sample + fingerprints + outcome + timing |
 | Alert event types | outcome changes, new rows, recovery, broken query |
 | `GET /api/health` | Public, no auth. `200` = ok, `503` = degraded. Reports component name/status/latency only — never internals or error details |
-| Scheduler heartbeat | Only a scheduled `scripts/run-all-scripts.ts` run writes it; health reports `stale` when no scheduled run started in the last 90 minutes (`HEARTBEAT_STALE_MS`) |
+| Scheduler heartbeat | Only a scheduled `scripts/run-all-scripts.ts` run writes it; health reports `stale` when no scheduled run started in the last 12 hours (`HEARTBEAT_STALE_MS`) |
 | Dead-letter API | `GET /api/notifications/deliveries/failed` + `POST .../requeue`, guarded by `NOTIFICATION_MANAGE` |
 | Sentry | `@sentry/nextjs` v11, `withSentryConfig` imported from `@sentry/nextjs/config`. No DSN = SDK disabled. Error tracking only: no tracing, no replay, `sendDefaultPii` off. Never send raw pg error fields (`detail`, `hint`, `internalQuery`) |
 | Structured logs | One JSON object per line; request id via `runWithRequestId`. Never log secrets/PII in full |

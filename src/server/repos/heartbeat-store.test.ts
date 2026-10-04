@@ -61,9 +61,12 @@ describe("heartbeatStatus", () => {
   it("is ok for a recent scheduled heartbeat", () => {
     expect(heartbeatStatus({ updatedAt: new Date(now.getTime() - 30 * 60 * 1000), mode: "scheduled" }, now)).toBe("ok");
   });
+  it("is ok through GitHub's usual cron delays", () => {
+    expect(heartbeatStatus({ updatedAt: new Date(now.getTime() - 8.5 * 60 * 60 * 1000), mode: "scheduled" }, now)).toBe("ok");
+  });
   it("is stale for an old scheduled heartbeat", () => {
     expect(
-      heartbeatStatus({ updatedAt: new Date(now.getTime() - 2 * 60 * 60 * 1000), mode: "scheduled" }, now),
+      heartbeatStatus({ updatedAt: new Date(now.getTime() - 13 * 60 * 60 * 1000), mode: "scheduled" }, now),
     ).toBe("stale");
   });
   it("is stale for a recent manual heartbeat: it must not mask a dead schedule", () => {
