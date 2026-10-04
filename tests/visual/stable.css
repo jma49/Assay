@@ -1,4 +1,17 @@
-/* The landing video plays on its own clock; keep its box, hide the moving frames. */
-video {
-  visibility: hidden !important;
+/* The landing page animates on its own clock (the marquee, the horizon glint, the
+   shine on the headline, the scan line). Freeze every CSS animation and transition
+   there so two screenshots of the same build match. GSAP-driven reveals honour the
+   reduced-motion setting the visual tests run with. */
+.landing *,
+.landing *::before,
+.landing *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Scroll-driven reveals start from opacity 0; with the clock frozen they would stay
+   hidden in a full-page screenshot. Show them in their final state. */
+.landing :is([data-hero-line], [data-hero-in], [data-hero-window], [data-word], [data-reveal], [data-bento], [data-table-chip], [data-cta-title]) {
+  opacity: 1 !important;
+  transform: none !important;
 }

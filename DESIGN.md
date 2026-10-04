@@ -46,7 +46,21 @@ colors:
   night: "#070A1A"
   night-foreground: "#EEF0FF"
   night-muted: "#A9AFD0"
+  night-surface: "#0D1126"
+  night-raised: "#121736"
+  night-line: "#1C2140"
+  night-accent: "#8C9BFF"
+  night-accent-pale: "#C3CAFF"
+  night-success: "#4FC48A"
+  night-attention: "#E4A94A"
+  night-failure: "#F07474"
 typography:
+  display-2xl:
+    fontFamily: Geist
+    fontSize: 88px
+    fontWeight: 600
+    lineHeight: 0.98
+    letterSpacing: -0.045em
   display-xl:
     fontFamily: Geist
     fontSize: 60px
@@ -252,6 +266,29 @@ components:
   demo-banner-title:
     backgroundColor: "{colors.night}"
     textColor: "{colors.night-foreground}"
+  landing-night-surface:
+    backgroundColor: "{colors.night-surface}"
+    textColor: "{colors.night-foreground}"
+  landing-night-raised:
+    backgroundColor: "{colors.night-raised}"
+    textColor: "{colors.night-muted}"
+  landing-night-divider:
+    backgroundColor: "{colors.night-line}"
+  landing-night-accent-button:
+    backgroundColor: "{colors.night-accent}"
+    textColor: "{colors.night}"
+  landing-night-highlight:
+    backgroundColor: "{colors.night}"
+    textColor: "{colors.night-accent-pale}"
+  landing-night-clean:
+    backgroundColor: "{colors.night-surface}"
+    textColor: "{colors.night-success}"
+  landing-night-issues:
+    backgroundColor: "{colors.night-surface}"
+    textColor: "{colors.night-attention}"
+  landing-night-error:
+    backgroundColor: "{colors.night-surface}"
+    textColor: "{colors.night-failure}"
   code-block-dark:
     backgroundColor: "{colors.code-bg-dark}"
     textColor: "{colors.foreground-dark}"
@@ -280,7 +317,8 @@ The September 2026 refresh took its direction from an Open Design mock of the de
 - **Indigo ink (`primary-ink`, #2B3AAE)** is the accent as text on `primary-soft` (the active nav item, selected rows): the plain indigo is 4.3:1 there, below AA.
 - **Neutrals** are cool greys that lean slightly toward the indigo. `foreground` for text, `muted-foreground` for secondary text, `subtle-foreground` never for text, only for marks (the idle status dot, list markers), `border` for dividers, `border-strong` for inputs.
 - **Status colours are semantic and fixed:** `failure` = the check itself broke (error), `attention` = it found rows (issues), `success` = it found none (clean). Each has a `-soft` tint for its background. They never decorate, and they are never swapped for the accent.
-- **Night (`night`, #070A1A)** is the dark band behind the demo notice and the landing video frame, in both themes, with `night-foreground` and `night-muted` for its text. It is not a surface for app content.
+- **Night (`night`, #070A1A)** is the dark band behind the demo notice and the background of the landing page's dark sections, in both themes, with `night-foreground` and `night-muted` for its text. It is not a surface for app content.
+- **The rest of the night palette** (`night-surface`, `night-raised`, `night-line`, `night-accent`, `night-accent-pale`, and `night-success | attention | failure`) exists for the landing page's dark sections: surfaces, hairlines, the accent and the three statuses as they read on night. App pages do not use it.
 - Dark theme values carry a `-dark` suffix here; in code the same CSS variable switches under `.dark`, so components never branch on the theme.
 - Colours reach components only through Tailwind utilities mapped in `@theme inline` (`bg-card`, `text-muted-foreground`, `text-attention`, …). No hex values, no raw palette classes (`text-blue-600`), no `dark:` overrides for colour.
 
@@ -290,7 +328,7 @@ Geist for everything readable, Geist Mono for SQL, ids, cron expressions and num
 
 The scale in the front matter is the whole set of sizes: every text size is one of its levels, used as a `text-<level>` utility (a test enforces it; see Migration). Roles:
 
-- `display-*`: landing page and docs titles, and app page titles (`display-md`, set by the shell, and a check's name on its page); `display-xl` is the landing hero alone.
+- `display-*`: landing page and docs titles, and app page titles (`display-md`, set by the shell, and a check's name on its page); `display-2xl` is the landing hero and closing headline alone, `display-xl` the landing section titles.
 - `headline`, `title`, `title-sm`: section headings, card titles, dialog titles.
 - `body-md` (15px) is the page default and the sidebar; `body-sm` (14px) is the workhorse for tables, buttons and form controls; `body-lg` (16px) is for docs prose and landing copy.
 - `caption` (13px): metadata, timestamps, badges, helper text.
@@ -309,7 +347,7 @@ The scale in the front matter is the whole set of sizes: every text size is one 
 
 ## Elevation & Depth
 
-Surfaces lift with a hairline ring and a long, soft drop (`shadow-border`, `shadow-border-hover` on hover) rather than a solid border, so a card reads the same on any background. Real borders are for dividers and inputs. `shadow-md` is for things that float (popovers, dropdowns, toasts) and the hover of a primary button. No other shadows, no glassmorphism; the only gradient is the landing hero's wash.
+Surfaces lift with a hairline ring and a long, soft drop (`shadow-border`, `shadow-border-hover` on hover) rather than a solid border, so a card reads the same on any background. Real borders are for dividers and inputs. `shadow-md` is for things that float (popovers, dropdowns, toasts) and the hover of a primary button. No other shadows, no glassmorphism in the app. The landing page has its own rules (see Landing).
 
 ## Shapes
 
@@ -325,13 +363,23 @@ One radius scale derived from `--radius` (0.5rem): `rounded-sm` (6px) for checkb
 - Toasts through `sonner`; dialogs through `Dialog` / `AlertDialog` (destructive confirmations always use `AlertDialog`).
 - Icons from `lucide-react`, 16px (`size-4`) in controls, 14px (`size-3.5`) inline with caption text.
 
+## Landing
+
+The landing page (`src/components/landing`) is the one place the product is sold rather than used, and it may be louder than the app.
+
+- **Type.** Headings keep Geist (`font-display`). Running text is set in Figtree and code (SQL, ids, cron, the terminal) in Maple Mono NL, both SIL OFL and self-hosted through `next/font` in `fonts.ts`; `landing.css` swaps them in by redefining `--app-font-sans` and `--app-font-mono` on `.landing`. Labels that are not code, like step numbers, stay in the running face with tabular figures.
+- **Sections.** Dark sections sit on `night` with the night palette; light sections (`data-landing-light`) use the theme tokens, so they follow light and dark. The floating nav turns light over a light section.
+- **Light and depth.** Allowed here only: the hero's spotlight, dot field and horizon rim with its travelling glint; film grain; soft indigo glows behind sections; the rotating border on the AI card; the pointer light on cards; glass on the nav. Grayscale photography (`public/landing`, credited in `THIRD_PARTY_NOTICES.md`) only under a night wash.
+- **Motion.** GSAP with ScrollTrigger (`motion.ts`). Reduced motion turns off large movement (pinning, the 3D tilt, sliding, scaling, the magnetic buttons) and keeps fades, typing, counters and the scan line. "What happens in one run" pins on desktop, becomes tabs with previous and next under reduced motion, and stacks on phones.
+- **Facts.** Everything the page shows exists in the product, and its numbers come from the live demo or `scripts/demo/checks.ts`.
+
 ## Do's and Don'ts
 
 - Do use colour only for meaning: indigo for action, the three status colours for check state.
 - Do keep every user-facing string in both English and Chinese, and check the Chinese layout: it runs longer and taller.
 - Do check light and dark, 375px and 1280px, before calling a UI change done.
 - Do respect `prefers-reduced-motion`; motion is 150–200ms ease-out and only for state changes.
-- Don't add gradients, glows, glass blur, `shadow-lg`, or decorative illustrations to app pages. The beetle is the only illustration, and only on the landing page and brand marks; it stays the logo through the refresh.
+- Don't add gradients, glows, glass blur, `shadow-lg`, or decorative illustrations to app pages. The Row A mark (`docs/brand.md`) is the logo; photography appears on the landing page only.
 - Don't use pill-shaped uppercase "eyebrow" labels above headlines, rows of identical icon cards, or centred hero-plus-three-cards layouts. `label-caps` is for grouping controls, not for decoration.
 - Don't use arbitrary font sizes (`text-[12.5px]`), arbitrary radii or hex colours in components.
 - Don't put text in `subtle-foreground`, not even a "—" for no value: it is 3.6–3.8:1 on light surfaces, below AA. The quietest text is `muted-foreground` (5.0–5.4:1).
@@ -373,5 +421,5 @@ The uppercase section label has one style: `text-label-caps uppercase text-muted
 - **Locally**, against your own `.env.local` data with `DEMO_MODE=true`: `npm run build && npm run visual:baseline` before the change, then `npm run build && npm run visual` after it. The browser clock is frozen at the baseline's time so relative times match; output stays in the git-ignored `.visual/`.
 - **In CI**, the Visual workflow starts MongoDB, PostgreSQL and Redis, seeds the demo data, runs every check twice, then builds the base branch and the pull request and compares them in one job. A pull request that changes the look on purpose gets the `visual-change` label and lists the expected differences; the job then passes, and annotations name the pages that changed.
 - A pure refactor step (tokens, aliases) must produce no visual diff; a step that intentionally changes sizes lists the expected diffs in its pull request.
-- `tests/visual/stable.css` hides the landing video (it plays on its own clock) and the voxel beetle's contents: it follows the pointer even with reduced motion, and headless browsers without a GPU render it differently between machines.
+- `tests/visual/stable.css` freezes the landing page's CSS animations (marquee, horizon glint, headline shine) and shows its scroll-driven reveals in their final state, so two screenshots of one build match.
 - Not covered yet: loading and empty states, dialogs, and pages a guest cannot open (new check, approvals, members, API keys).
