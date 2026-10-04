@@ -50,7 +50,6 @@ export function ApprovalList({ list, hasLoaded, emptyTitle, emptyHint, language,
             totalItems: list.totalItems,
             pageSize: ITEMS_PER_PAGE,
           })}
-          t={t}
           onPageChange={list.setPage}
           layered={false}
         />

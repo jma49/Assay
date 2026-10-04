@@ -117,7 +117,6 @@ export default function AdminUsersPage() {
                   page: page.page,
                   totalPages: page.totalPages,
                 })}
-                t={t}
                 onPageChange={setCurrentPage}
               />
             )}

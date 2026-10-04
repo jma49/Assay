@@ -8,7 +8,7 @@ import { triggerCopy } from "./manual-trigger/copy";
 import { SingleRunPanel } from "./manual-trigger/SingleRunPanel";
 import { batchTargets, filterChecks, type BulkMode } from "./manual-trigger/script-search";
 import { useBatchRun } from "./manual-trigger/useBatchRun";
-import type { DashboardTranslationKeys, CheckListItem } from "./types";
+import type { CheckListItem } from "./types";
 
 interface ManualTriggerProps {
   availableChecks: CheckListItem[];
@@ -20,8 +20,6 @@ interface ManualTriggerProps {
   triggerMessage: string | null;
   triggerMessageType: "success" | "error" | null;
   language: string;
-  /** Kept for callers that still pass it; the panel has its own copy. */
-  t?: (key: DashboardTranslationKeys) => string;
   setSelectedScriptId: (id: string) => void;
   handleTriggerCheck: () => void;
   /** Which panel to show: one check, or many at once. */

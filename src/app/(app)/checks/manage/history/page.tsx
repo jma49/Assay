@@ -80,7 +80,6 @@ export default function GlobalEditHistoryPage() {
                 page={currentPage}
                 totalPages={totalPages}
                 pageInfo={formatPageInfo(t, { currentPage, totalPages, totalRecords, totalCapped, pageSize: ITEMS_PER_PAGE })}
-                t={t}
                 onPageChange={(page) => fetchHistories(filters, page)}
                 disabled={loading}
               />

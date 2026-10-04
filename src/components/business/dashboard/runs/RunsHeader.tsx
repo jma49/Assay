@@ -1,11 +1,10 @@
 import { Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
-import type { DashboardTranslationKeys } from "../types";
+import { runsCopy } from "./copy";
 
 interface RunsHeaderProps {
   language: string;
-  t: (key: DashboardTranslationKeys) => string;
   canExecute: boolean;
   /** Runs per hour a demo viewer may start, or null when this is not a demo viewer. */
   demoRuns: number | null;
@@ -16,7 +15,7 @@ interface RunsHeaderProps {
 }
 
 /** Run actions in the window toolbar, and the run count and next scheduled run in the status bar. */
-export function RunsHeader({ language, t, canExecute, demoRuns, totalRuns, passRate, nextScheduled, onOpenRunSheet }: RunsHeaderProps) {
+export function RunsHeader({ language, canExecute, demoRuns, totalRuns, passRate, nextScheduled, onOpenRunSheet }: RunsHeaderProps) {
   return (
     <>
       {(canExecute || demoRuns !== null) && (
@@ -44,7 +43,7 @@ export function RunsHeader({ language, t, canExecute, demoRuns, totalRuns, passR
         </span>
         {nextScheduled && (
           <span>
-            · {t("nextScheduledCheck")}{" "}
+            · {runsCopy(language).nextScheduled}{" "}
             {nextScheduled.toLocaleString(language, { dateStyle: "medium", timeStyle: "short" })}
           </span>
         )}

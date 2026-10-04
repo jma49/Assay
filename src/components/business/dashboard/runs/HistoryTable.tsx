@@ -1,11 +1,10 @@
 import { ChevronDown, ChevronUp, Database } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils/utils";
-import type { DashboardTranslationKeys, HistoryRun } from "../types";
+import type { HistoryRun } from "../types";
+import { runsCopy } from "./copy";
 import { HistoryRow } from "./HistoryRow";
 import type { SortConfig, SortKey } from "./runs";
-
-type Translate = (key: DashboardTranslationKeys) => string;
 
 const SORT_ICON_TRANSITION = "transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300";
 
@@ -71,7 +70,8 @@ function SkeletonRows() {
   ));
 }
 
-function EmptyRow({ t }: { t: Translate }) {
+function EmptyRow({ language }: { language: string }) {
+  const copy = runsCopy(language);
   return (
     <TableRow>
       <TableCell colSpan={5} className="h-48 text-center  ">
@@ -83,9 +83,9 @@ function EmptyRow({ t }: { t: Translate }) {
             <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary/20 rounded-full animate-pulse"></div>
           </div>
           <div className="space-y-3 text-center">
-            <p className="text-title font-semibold text-muted-foreground">{t("noDataFound")}</p>
+            <p className="text-title font-semibold text-muted-foreground">{copy.noData}</p>
             <p className="text-body-md text-muted-foreground/80 max-w-md mx-auto leading-relaxed">
-              {t("noMatchingExecutionRecords")}
+              {copy.noMatches}
             </p>
           </div>
         </div>
@@ -101,11 +101,11 @@ interface HistoryTableProps {
   requestSort: (key: SortKey) => void;
   isLoading: boolean;
   language: string;
-  t: Translate;
 }
 
 /** The runs on this page, sortable by check name and time. */
-export function HistoryTable({ checks, displayNames, sortConfig, requestSort, isLoading, language, t }: HistoryTableProps) {
+export function HistoryTable({ checks, displayNames, sortConfig, requestSort, isLoading, language }: HistoryTableProps) {
+  const copy = runsCopy(language);
   return (
     <div className="overflow-hidden">
       <div className="overflow-x-auto">
@@ -113,27 +113,27 @@ export function HistoryTable({ checks, displayNames, sortConfig, requestSort, is
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="h-11 px-6 text-body-sm font-normal text-muted-foreground w-36">
-                <div className="flex items-center gap-2">{t("tableStatus")}</div>
+                <div className="flex items-center gap-2">{copy.status}</div>
               </TableHead>
               <SortableHead
-                label={t("tableScriptName")}
+                label={copy.check}
                 sortKey="name"
                 sortConfig={sortConfig}
                 onSort={requestSort}
                 className="w-64"
               />
               <SortableHead
-                label={t("tableExecutionTime")}
+                label={copy.finished}
                 sortKey="finishedAt"
                 sortConfig={sortConfig}
                 onSort={requestSort}
                 className="hidden lg:table-cell w-52"
               />
               <TableHead className="hidden md:table-cell px-4 text-body-sm font-normal text-muted-foreground">
-                <div className="flex items-center gap-2">{t("tableFindings")}</div>
+                <div className="flex items-center gap-2">{copy.result}</div>
               </TableHead>
               <TableHead className="px-6 text-right text-body-sm font-normal text-muted-foreground w-44">
-                <div className="flex items-center justify-end gap-2">{t("tableActions")}</div>
+                <div className="flex items-center justify-end gap-2">{copy.actions}</div>
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -141,7 +141,7 @@ export function HistoryTable({ checks, displayNames, sortConfig, requestSort, is
             {isLoading ? (
               <SkeletonRows />
             ) : checks.length === 0 ? (
-              <EmptyRow t={t} />
+              <EmptyRow language={language} />
             ) : (
               checks.map((check) => (
                 <HistoryRow
@@ -149,7 +149,6 @@ export function HistoryTable({ checks, displayNames, sortConfig, requestSort, is
                   check={check}
                   displayName={displayNames.get(check.checkId) ?? check.checkId}
                   language={language}
-                  t={t}
                 />
               ))
             )}
