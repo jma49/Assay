@@ -70,14 +70,25 @@ OAuth callbacks are `<BETTER_AUTH_URL>/api/auth/callback/google` and
 **Scheduled runs** come from `.github/workflows/sql-check-cron.yml` every 30
 minutes. It needs the repository secrets `DATABASE_URL`, `MONGODB_URI`,
 `APP_URL` and `CRON_SECRET` (plus the certificate URLs if PostgreSQL uses
-them, and `ASSAY_SECRET_KEY` once checks use an added data source); `MONGODB_DB_NAME` and the run limits go in repository variables with
+them, `ASSAY_SECRET_KEY` once checks use an added data source, and `SENTRY_DSN` for the check-ins below); `MONGODB_DB_NAME` and the run limits go in repository variables with
 the same values as the app. Without the secrets the workflow skips quietly.
 A self-hosted setup can call `npm run sql:run-scheduled` from cron instead.
 
-Every run writes a heartbeat to MongoDB. `GET /api/health` reports the
-scheduler as stale when no run started in the last hour (HTTP 503). Point an
-external uptime monitor at `/api/health`: the alert path must not depend on
-the scheduler itself.
+Every scheduled run writes a heartbeat to MongoDB. `GET /api/health`
+reports the scheduler as stale when no scheduled run started in the last 90
+minutes (HTTP 503); manual runs do not count.
+
+With the `SENTRY_DSN` repository secret set, each scheduled run also sends
+Sentry Cron check-ins (monitor `scheduled-sql-checks`, created on the first
+check-in). Sentry alerts when a slot is missed, a run fails or it runs past
+20 minutes, so the alert does not depend on GitHub Actions. Turn on the
+monitor's alert in Sentry (Crons → the monitor → Alerts) after the first
+check-in. An external uptime monitor on `/api/health` works too.
+
+GitHub disables scheduled workflows in a repository with no activity for 60
+days, and says so on the Actions tab. The stale heartbeat and the missed
+check-ins both show it; re-enable with
+`gh workflow enable sql-check-cron.yml`.
 
 Keep MongoDB backups current: the [backup and restore runbook](backup-restore.md)
 covers what is backed up, the schedule, and the restore procedure.
