@@ -45,7 +45,7 @@ export function useTelegramLink(open: boolean, language: "en" | "zh", onLinked: 
 
   useEffect(() => {
     if (!open || !link || status !== "pending") return;
-    const timer = setInterval(async () => {
+    const poll = async () => {
       // A failed poll is simply tried again on the next tick.
       const next = await fetch(`/api/integrations/telegram/links/${link.id}`)
         .then((response) => readJson<TelegramLinkStatus>(response))
@@ -53,7 +53,8 @@ export function useTelegramLink(open: boolean, language: "en" | "zh", onLinked: 
       if (!next?.status || next.status === "pending") return;
       setPolled({ linkId: link.id, status: next.status });
       if (next.status === "linked") onLinked();
-    }, POLL_MS);
+    };
+    const timer = setInterval(() => void poll(), POLL_MS);
     return () => clearInterval(timer);
   }, [open, link, status, onLinked]);
 

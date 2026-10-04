@@ -83,7 +83,7 @@ export function useRunsPage(language: string, initialSearch = "") {
       // Leave time for the filtered history to load before scrolling to it.
       setTimeout(scrollToHistory, 1000);
     }
-    loadAll(() => loadPage({ page: 1, outcome: null, search: initialSearch, hashtags: [], sort: DEFAULT_SORT }));
+    void loadAll(() => loadPage({ page: 1, outcome: null, search: initialSearch, hashtags: [], sort: DEFAULT_SORT }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

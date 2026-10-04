@@ -52,30 +52,30 @@ export function useRunHistory(onError: (message: string) => void, language: "en"
     const sort = nextSort(sortConfig, key);
     setSortConfig(sort);
     setCurrentPage(1);
-    loadPage(current({ sort }));
+    void loadPage(current({ sort }));
   };
 
   const changePage = (page: number) => {
     setCurrentPage(page);
-    loadPage(current({ page }));
+    void loadPage(current({ page }));
   };
 
   const changeStatus = (outcome: RunOutcome | null) => {
     setFilterStatus(outcome);
     setCurrentPage(1);
-    loadPage(current({ outcome }));
+    void loadPage(current({ outcome }));
   };
 
   const changeSearch = (search: string) => {
     setSearchTerm(search);
     setCurrentPage(1);
-    loadPage(current({ search }));
+    void loadPage(current({ search }));
   };
 
   const changeHashtags = (hashtags: string[]) => {
     setSelectedHashtags(hashtags);
     setCurrentPage(1);
-    loadPage(current({ hashtags }));
+    void loadPage(current({ hashtags }));
   };
 
   return {

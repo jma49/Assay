@@ -1,6 +1,7 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import tseslint from "typescript-eslint";
 
 export default defineConfig([
   ...nextVitals,
@@ -8,7 +9,7 @@ export default defineConfig([
   {
     rules: {
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
     },
   },
   {
@@ -76,6 +77,19 @@ export default defineConfig([
         "error",
         { selector: "CallExpression[callee.property.name='collection']", message: "Routes do not query MongoDB; call a service or repo in src/server." },
       ],
+    },
+  },
+  {
+    // Type-aware promise rules: an unawaited promise must be awaited, handled or marked
+    // `void` on purpose. Async event handlers on JSX attributes stay allowed.
+    files: ["src/**/*.ts", "src/**/*.tsx"],
+    // Tests start promises without awaiting on purpose (races, overlapping runs).
+    ignores: ["**/*.test.ts", "**/*.test.tsx"],
+    languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
+    plugins: { "@typescript-eslint": tseslint.plugin },
+    rules: {
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": ["error", { checksVoidReturn: { attributes: false } }],
     },
   },
   globalIgnores(["node_modules/**", ".next/**", ".visual/**", "out/**", "build/**", "coverage/**", "next-env.d.ts"]),

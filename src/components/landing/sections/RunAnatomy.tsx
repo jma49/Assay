@@ -49,7 +49,9 @@ export function RunAnatomy({ copy }: { copy: LandingCopy["run"] }) {
           snap: { snapTo: 1 / (STEPS - 1), duration: { min: 0.25, max: 0.6 }, delay: 0.08, ease: "power2.inOut" },
           onUpdate: (self) => {
             const p = self.progress * (STEPS - 1);
-            fills.forEach((f, i) => gsap.set(f, { scaleX: gsap.utils.clamp(0, 1, p - i + 1) }));
+            fills.forEach((f, i) => {
+              gsap.set(f, { scaleX: gsap.utils.clamp(0, 1, p - i + 1) });
+            });
             activate(Math.round(p));
           },
         });

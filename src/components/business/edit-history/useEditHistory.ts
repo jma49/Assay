@@ -68,7 +68,7 @@ export function useEditHistory({ scriptId, pageSize = ITEMS_PER_PAGE, enabled = 
 
   const retry = useCallback(() => {
     const { filters, page } = requests.current.latestParams();
-    fetchHistories(filters, page);
+    void fetchHistories(filters, page);
   }, [fetchHistories]);
 
   // The first page loads when enabled and again for another check; loading shows from that render on.
@@ -83,7 +83,7 @@ export function useEditHistory({ scriptId, pageSize = ITEMS_PER_PAGE, enabled = 
   }
 
   useEffect(() => {
-    if (enabled) load();
+    if (enabled) void load();
   }, [enabled, load]);
 
   return { histories, loading, error, currentPage, totalPages, totalRecords, totalCapped, fetchHistories, retry };

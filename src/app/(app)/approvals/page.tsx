@@ -45,7 +45,7 @@ export default function ApprovalsPage() {
 
   const submitDecision = () => {
     if (!selectedApproval) return;
-    approvals.decide(selectedApproval, approvalAction, approvalComment, () => {
+    void approvals.decide(selectedApproval, approvalAction, approvalComment, () => {
       setIsDialogOpen(false);
       setApprovalComment('');
       setSelectedApproval(null);

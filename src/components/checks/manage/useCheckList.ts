@@ -48,7 +48,7 @@ export function useCheckList() {
   }, [load]);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   return { scripts, isLoading, error, reload };

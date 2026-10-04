@@ -91,12 +91,12 @@ export function useApprovals(language: Language) {
   // No need to wait for the session: the proxy already guarantees a
   // signed-in user and each API call checks permissions on the server.
   useEffect(() => {
-    loadData();
+    void loadData();
   }, [loadData]);
 
   useEffect(() => {
     if (activeTab === "history") {
-      loadApprovalHistory(historyPage);
+      void loadApprovalHistory(historyPage);
     }
   }, [activeTab, historyPage, loadApprovalHistory]);
 

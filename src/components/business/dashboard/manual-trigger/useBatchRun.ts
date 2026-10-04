@@ -48,8 +48,8 @@ export function useBatchRun(language: string) {
       }
     };
 
-    poll();
-    intervalId = setInterval(poll, POLL_MS);
+    void poll();
+    intervalId = setInterval(() => void poll(), POLL_MS);
     return () => {
       if (intervalId) clearInterval(intervalId);
       pollAbort.current?.abort();
