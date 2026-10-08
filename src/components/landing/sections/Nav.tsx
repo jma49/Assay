@@ -2,10 +2,7 @@
 
 import Link from "next/link";
 import { useRef } from "react";
-import { useTheme } from "next-themes";
-import { Moon, Sun } from "lucide-react";
 import { useCurrentUser } from "@/lib/auth/client";
-import { useHydrated } from "@/components/common/use-hydrated";
 import { RowAMark } from "@/components/brand/RowAMark";
 import { GithubMark } from "@/components/common/GithubMark";
 import { cn } from "@/lib/utils/utils";
@@ -17,8 +14,6 @@ import { FRAME } from "../ui";
 export function Nav({ copy, language, setLanguage, demoHref }: { copy: LandingCopy["nav"]; language: Language; setLanguage: (l: Language) => void; demoHref: string }) {
   const scope = useRef<HTMLElement>(null);
   const session = useCurrentUser();
-  const { resolvedTheme, setTheme } = useTheme();
-  const hydrated = useHydrated();
   const quiet = "text-ink-muted transition-colors hover:text-ink";
 
   useGSAP(
@@ -46,26 +41,18 @@ export function Nav({ copy, language, setLanguage, demoHref }: { copy: LandingCo
           <a href={GITHUB_URL} aria-label="GitHub" className={cn("hidden size-9 items-center justify-center rounded-full sm:inline-flex", quiet)}>
             <GithubMark />
           </a>
-          <button type="button" onClick={() => setLanguage(language === "en" ? "zh" : "en")} className={cn("h-9 rounded-full px-2.5 text-body-sm", quiet)}>
+          <button type="button" onClick={() => setLanguage(language === "en" ? "zh" : "en")} className={cn("h-9 px-2.5 text-body-sm", quiet)}>
             {copy.language}
-          </button>
-          <button
-            type="button"
-            aria-label={copy.theme}
-            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            className={cn("hidden size-9 items-center justify-center rounded-full sm:inline-flex", quiet)}
-          >
-            {hydrated && resolvedTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </button>
           {/* Holds its width while the session loads so the nav does not shift. */}
           {!session.isLoaded ? (
             <span className="hidden h-9 w-[84px] sm:inline-block" aria-hidden />
           ) : (
-            <Link href={session.user ? "/checks" : "/sign-in?redirect_url=/checks"} className={cn("hidden h-9 items-center rounded-full px-3 text-body-sm sm:inline-flex", quiet)}>
+            <Link href={session.user ? "/checks" : "/sign-in?redirect_url=/checks"} className={cn("hidden h-9 items-center px-3 text-body-sm sm:inline-flex", quiet)}>
               {session.user ? copy.openApp : copy.signIn}
             </Link>
           )}
-          <Link href={demoHref} prefetch={false} className="ml-1 inline-flex h-9 items-center rounded-md bg-ink px-4 text-body-sm font-medium text-paper transition-opacity hover:opacity-85">
+          <Link href={demoHref} prefetch={false} className="ml-1 inline-flex h-9 items-center bg-ink px-4 text-body-sm font-medium text-paper transition-opacity hover:opacity-85">
             {copy.openDemo}
           </Link>
         </div>

@@ -39,7 +39,7 @@ function ValidateScene({ copy, play }: SceneProps) {
   );
 
   return (
-    <div ref={scope} className="rounded-md border border-rule bg-paper-raised font-mono text-body-sm">
+    <div ref={scope} className="border border-rule bg-paper-raised font-mono text-body-sm">
       <div className="flex items-center justify-between border-b border-rule px-5 py-2.5 font-sans text-caption text-ink-muted">
         <span className="font-mono">duplicate-orders.sql</span>
         <span>PostgreSQL</span>
@@ -47,7 +47,7 @@ function ValidateScene({ copy, play }: SceneProps) {
       <div className="space-y-1 px-5 py-4">
         <div><span className="text-primary">SELECT</span> a.id <span className="text-primary">AS</span> order_id, b.id <span className="text-primary">AS</span> duplicate_order_id</div>
         <div><span className="text-primary">FROM</span> demo.orders a <span className="text-primary">JOIN</span> demo.orders b <span className="text-primary">ON</span> …</div>
-        <div className={cn("min-h-7 rounded-sm px-1", blocked ? "bg-failure-soft text-failure line-through decoration-failure/60" : "text-ink")}>{typed}</div>
+        <div className={cn("min-h-7 px-1", blocked ? "bg-failure-soft text-failure line-through decoration-failure/60" : "text-ink")}>{typed}</div>
       </div>
       <div data-verdict className={cn("flex items-center gap-2 border-t border-rule px-5 py-3 font-sans text-body-sm", blocked ? "text-failure" : "text-success")}>
         {blocked ? <ShieldAlert className="size-4" /> : <CircleCheck className="size-4" />}
@@ -72,14 +72,14 @@ function ExecuteScene({ copy, play }: SceneProps) {
   );
 
   return (
-    <div ref={scope} className="rounded-md border border-rule bg-paper-raised">
+    <div ref={scope} className="border border-rule bg-paper-raised">
       <div className="flex items-center justify-between px-5 pt-4 text-caption text-ink-muted">
         <span>{copy.executeCheck}</span>
         <span className="font-mono">BEGIN READ ONLY</span>
       </div>
       <div className="px-5 pt-3">
-        <div className="h-1.5 overflow-hidden rounded-full bg-rule">
-          <div data-bar className="h-full w-full origin-left rounded-full bg-primary" />
+        <div className="h-1.5 overflow-hidden bg-rule">
+          <div data-bar className="h-full w-full origin-left bg-primary" />
         </div>
         <div className="mt-1.5 flex justify-between text-caption text-ink-muted">
           <span>{copy.running}</span>
@@ -112,7 +112,7 @@ function ExecuteScene({ copy, play }: SceneProps) {
         </table>
       </div>
       <div data-done className="flex items-center gap-3 px-5 py-3">
-        <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-attention-soft px-3 py-1 text-caption text-attention">
+        <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap bg-attention-soft px-3 py-1 text-caption text-attention">
           <span className="size-2 rounded-full bg-attention" />
           {copy.returned}
         </span>
@@ -147,7 +147,7 @@ function CompareScene({ copy, play }: SceneProps) {
     <div ref={scope}>
       <div className="grid grid-cols-3 gap-3">
         {columns.map((c) => (
-          <div key={c.label} className="rounded-md border border-rule bg-paper-raised p-5">
+          <div key={c.label} className="border border-rule bg-paper-raised p-5">
             <div data-count={c.n} className={cn("font-display text-display-lg tabular-nums", c.text)}>{c.n}</div>
             <div className="mt-2 text-caption text-ink-muted">{c.label}</div>
             <div className="mt-5 flex min-h-11 flex-wrap content-start gap-1.5">
@@ -180,10 +180,10 @@ function AlertScene({ copy, play }: SceneProps) {
   );
 
   return (
-    <div ref={scope} className="rounded-md border border-rule bg-paper-raised p-5 text-body-sm">
+    <div ref={scope} className="border border-rule bg-paper-raised p-5 text-body-sm">
       <div className="text-caption text-ink-muted">{copy.alert.channel}</div>
       <div data-message className="mt-4 flex gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><RowAMark className="size-5" /></span>
+        <span className="grid size-9 shrink-0 place-items-center bg-primary text-primary-foreground"><RowAMark className="size-5" /></span>
         <div className="min-w-0">
           <div className="font-medium text-ink">Assay</div>
           <div className="mt-1 font-medium text-ink">{copy.alert.title}</div>
@@ -192,9 +192,9 @@ function AlertScene({ copy, play }: SceneProps) {
             <div className="mt-4 flex items-center gap-2 text-success"><CircleCheck className="size-4" />{copy.alert.acknowledged}</div>
           ) : (
             <div className="mt-4 flex flex-wrap gap-2 text-caption">
-              <span className="rounded-md border border-rule px-3 py-1">{copy.alert.open}</span>
-              <span data-ack className="rounded-md bg-primary px-3 py-1 text-primary-foreground">{copy.alert.acknowledge}</span>
-              <span className="rounded-md border border-rule px-3 py-1">{copy.alert.mute}</span>
+              <span className="border border-rule px-3 py-1">{copy.alert.open}</span>
+              <span data-ack className="bg-primary px-3 py-1 text-primary-foreground">{copy.alert.acknowledge}</span>
+              <span className="border border-rule px-3 py-1">{copy.alert.mute}</span>
             </div>
           )}
         </div>

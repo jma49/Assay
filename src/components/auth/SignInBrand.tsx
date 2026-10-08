@@ -53,13 +53,13 @@ export function SignInBrand({ language, tagline, points, footnote }: { language:
       </ul>
 
       <div className="graph flex flex-1 flex-col justify-end px-14 py-12 xl:px-20">
-        <div className="max-w-lg rounded-md border border-rule bg-paper-raised p-5 text-body-sm shadow-md">
+        <div className="corners max-w-lg border border-rule-strong bg-paper-raised p-5 text-body-sm">
           <div className="flex items-center justify-between text-caption text-ink-muted">
             <span>{alert.channel}</span>
             <span>Sep 29</span>
           </div>
           <div className="mt-4 flex gap-3">
-            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><RowAMark className="size-5" /></span>
+            <span className="grid size-9 shrink-0 place-items-center bg-primary text-primary-foreground"><RowAMark className="size-5" /></span>
             <div className="min-w-0">
               <div className="font-medium">{BRAND}</div>
               <div className="mt-1 font-medium">{alert.title}</div>
@@ -68,9 +68,9 @@ export function SignInBrand({ language, tagline, points, footnote }: { language:
                 <div className="mt-4 flex items-center gap-2 text-success"><CircleCheck className="size-4" />{alert.acknowledged}</div>
               ) : (
                 <div className="mt-4 flex flex-wrap gap-2 text-caption">
-                  <span className="rounded-md border border-rule px-3 py-1">{alert.open}</span>
-                  <span className="rounded-md bg-primary px-3 py-1 text-primary-foreground">{alert.acknowledge}</span>
-                  <span className="rounded-md border border-rule px-3 py-1">{alert.mute}</span>
+                  <span className="border border-rule px-3 py-1">{alert.open}</span>
+                  <span className="bg-primary px-3 py-1 text-primary-foreground">{alert.acknowledge}</span>
+                  <span className="border border-rule px-3 py-1">{alert.mute}</span>
                 </div>
               )}
             </div>

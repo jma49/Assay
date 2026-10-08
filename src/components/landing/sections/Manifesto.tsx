@@ -12,9 +12,9 @@ const STRIP_CELL: Record<string, string> = { c: "bg-success", i: "bg-attention",
 function Mark({ part }: { part: Exclude<ManifestoPart, string> }) {
   if (part.mark === "strip") {
     return (
-      <span aria-hidden className="mx-[0.1em] inline-flex h-[0.7em] items-center gap-[0.07em] rounded-full border border-rule bg-paper-raised px-[0.25em] align-middle">
+      <span aria-hidden className="mx-[0.1em] inline-flex h-[0.7em] items-center gap-[0.07em] border border-rule bg-paper-raised px-[0.25em] align-middle">
         {STRIP.split("").map((s, i) => (
-          <span key={i} className={cn("h-[0.42em] w-[0.09em] rounded-full", STRIP_CELL[s])} />
+          <span key={i} className={cn("h-[0.42em] w-[0.09em]", STRIP_CELL[s])} />
         ))}
       </span>
     );
@@ -22,7 +22,7 @@ function Mark({ part }: { part: Exclude<ManifestoPart, string> }) {
   const tone = part.mark === "rows" ? "bg-attention-soft text-attention" : "bg-failure-soft text-failure";
   const dot = part.mark === "rows" ? "bg-attention" : "bg-failure";
   return (
-    <span className={cn("mx-[0.1em] inline-flex h-[0.8em] items-center gap-2 rounded-full px-[0.4em] align-middle font-sans manifesto-pill font-medium not-italic", tone)}>
+    <span className={cn("mx-[0.1em] inline-flex h-[0.8em] items-center gap-2 px-[0.4em] align-middle font-sans manifesto-pill font-medium not-italic", tone)}>
       <span className={cn("size-2 rounded-full", dot)} />
       {part.label}
     </span>

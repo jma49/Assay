@@ -1,5 +1,5 @@
-/* The landing page: a paper page ruled with hairlines. Headlines are set in the serif
-   (fonts.ts), labels in the mono; the night palette appears only inside product panels. */
+/* The landing page: a paper page ruled with hairlines, light whatever the theme
+   (`theme-light` on its root). Headlines are set in the serif (fonts.ts), labels in the mono. */
 .landing {
   --app-font-sans: var(--font-landing-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif;
@@ -53,6 +53,27 @@
   right: -5px;
 }
 
+/* Registration marks: a short ink L just outside each corner of a product panel. */
+.landing .corners {
+  position: relative;
+}
+.landing .corners::after {
+  --mark: 10px;
+  content: "";
+  position: absolute;
+  inset: -5px;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--ink), var(--ink)) top left / var(--mark) 1px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) top left / 1px var(--mark) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) top right / var(--mark) 1px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) top right / 1px var(--mark) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) bottom left / var(--mark) 1px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) bottom left / 1px var(--mark) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) bottom right / var(--mark) 1px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) bottom right / 1px var(--mark) no-repeat;
+}
+
 /* A band of diagonal hatching between sections. */
 .landing .hatch {
   background-image: repeating-linear-gradient(-45deg, var(--rule) 0 1px, transparent 1px 9px);
@@ -71,8 +92,8 @@
 
 /* The scan line that sweeps the hero table during a run. */
 .landing .scan-beam {
-  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--night-accent) 14%, transparent) 70%,
-    color-mix(in srgb, var(--night-accent-pale) 90%, transparent) 98%, transparent);
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--primary) 8%, transparent) 70%,
+    color-mix(in srgb, var(--primary) 70%, transparent) 98%, transparent);
 }
 
 .landing .marquee-track {
@@ -99,7 +120,7 @@
   height: 1.1em;
   margin-left: 2px;
   vertical-align: -0.15em;
-  background: var(--night-accent);
+  background: var(--primary);
   animation: landing-blink 1s steps(1) infinite;
 }
 @keyframes landing-blink {

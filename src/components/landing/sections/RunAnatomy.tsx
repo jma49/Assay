@@ -141,10 +141,10 @@ export function RunAnatomy({ label, copy }: { label: string; copy: LandingCopy["
         {/* Shown by CSS, not by the `tabs` state: the media query applies on first paint, so the
             section has its final height before GSAP's matchMedia callback runs. */}
         <div className="hidden justify-end gap-2 border-t border-rule px-8 py-4 motion-reduce:md:flex">
-          <button type="button" onClick={() => go(step - 1)} aria-label={copy.previous} className="inline-flex size-9 items-center justify-center rounded-md border border-rule-strong bg-paper-raised text-ink hover:border-ink-muted">
+          <button type="button" onClick={() => go(step - 1)} aria-label={copy.previous} className="inline-flex size-9 items-center justify-center border border-rule-strong bg-paper-raised text-ink hover:border-ink-muted">
             <ArrowLeft className="size-4" />
           </button>
-          <button type="button" onClick={() => go(step + 1)} className="inline-flex h-9 items-center gap-1.5 rounded-md bg-ink px-4 text-caption font-medium text-paper">
+          <button type="button" onClick={() => go(step + 1)} className="inline-flex h-9 items-center gap-1.5 bg-ink px-4 text-caption font-medium text-paper">
             {copy.next}
             <ArrowRight className="size-3.5" />
           </button>

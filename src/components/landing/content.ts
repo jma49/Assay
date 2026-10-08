@@ -22,7 +22,7 @@ interface Titled {
 }
 
 export interface LandingCopy {
-  nav: { product: string; run: string; demo: string; selfHost: string; docs: string; signIn: string; openApp: string; openDemo: string; language: string; theme: string };
+  nav: { product: string; run: string; demo: string; selfHost: string; docs: string; signIn: string; openApp: string; openDemo: string; language: string };
   /** The mono label above each section's title. */
   labels: { integrations: string; idea: string; product: string; run: string; scenarios: string; workflow: string; selfHost: string; faq: string };
   hero: {
@@ -93,7 +93,7 @@ export interface LandingCopy {
 
 const en: LandingCopy = {
   labels: { integrations: "Works with", idea: "The idea", product: "Safety and signal", run: "Anatomy of a run", scenarios: "In the demo", workflow: "Workflow", selfHost: "Self-host", faq: "FAQ" },
-  nav: { product: "Product", run: "How a run works", demo: "Demo", selfHost: "Self-host", docs: "Docs", signIn: "Sign in", openApp: "Open dashboard", openDemo: "Open demo", language: "中文", theme: "Toggle color theme" },
+  nav: { product: "Product", run: "How a run works", demo: "Demo", selfHost: "Self-host", docs: "Docs", signIn: "Sign in", openApp: "Open dashboard", openDemo: "Open demo", language: "中文" },
   hero: {
     eyebrow: "Open source · PostgreSQL · Read-only",
     stats: [
@@ -233,7 +233,7 @@ const en: LandingCopy = {
 
 const zh: LandingCopy = {
   labels: { integrations: "适配", idea: "理念", product: "安全与信号", run: "一次运行", scenarios: "演示", workflow: "工作流", selfHost: "自托管", faq: "常见问题" },
-  nav: { product: "产品", run: "一次运行", demo: "演示", selfHost: "自托管", docs: "文档", signIn: "登录", openApp: "进入控制台", openDemo: "打开演示", language: "EN", theme: "切换主题" },
+  nav: { product: "产品", run: "一次运行", demo: "演示", selfHost: "自托管", docs: "文档", signIn: "登录", openApp: "进入控制台", openDemo: "打开演示", language: "EN" },
   hero: {
     eyebrow: "开源 · PostgreSQL · 只读",
     stats: [

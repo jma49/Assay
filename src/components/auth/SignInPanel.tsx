@@ -127,12 +127,12 @@ function ProviderButton({ provider, label, icon, busy, disabled, lastUsed, lastU
       size="lg"
       disabled={disabled}
       onClick={() => onClick(provider)}
-      className={cn("relative h-12 w-full justify-center rounded-full bg-card text-body-md", lastUsed && "shadow-[0_0_0_1.5px_var(--primary)]")}
+      className={cn("relative h-12 w-full justify-center rounded-none border border-rule-strong bg-paper-raised text-body-md shadow-none hover:border-ink-muted", lastUsed && "border-primary")}
     >
       {busy ? <Loader2 className="animate-spin" /> : icon}
       {label}
       {lastUsed && (
-        <span className="absolute -top-2 right-3 rounded-full bg-primary px-1.5 py-px text-caption font-medium text-primary-foreground">{lastUsedLabel}</span>
+        <span className="absolute -top-2 right-3 bg-primary px-1.5 py-px text-caption font-medium text-primary-foreground">{lastUsedLabel}</span>
       )}
     </Button>
   );
@@ -189,7 +189,7 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
   const noProvider = !providers.google && !providers.github && !providers.password;
 
   return (
-    <div className={cn("landing grid min-h-screen lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]", landingSans.variable, landingMono.variable, landingSerif.variable)}>
+    <div className={cn("theme-light landing grid min-h-screen lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]", landingSans.variable, landingMono.variable, landingSerif.variable)}>
       {/* The pitch, for people who arrive here first. Hidden on small screens, where the form matters most. */}
       <SignInBrand language={language} tagline={t.tagline} points={t.points} footnote={t.openSource} />
 
@@ -201,7 +201,7 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
               <RowAMark className="size-8" />
               <span className="font-display text-title-sm">Assay</span>
             </Link>
-            <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 rounded-full px-2.5 text-body-sm text-ink-muted hover:text-ink">
+            <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 px-2.5 text-body-sm text-ink-muted hover:text-ink">
               {language === "zh" ? "EN" : "中文"}
             </button>
           </div>
@@ -212,7 +212,7 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
             <ArrowLeft className="size-4" />
             {t.home}
           </Link>
-          <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 rounded-full px-2.5 text-body-sm text-muted-foreground hover:bg-muted hover:text-foreground">
+          <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 px-2.5 text-body-sm text-muted-foreground hover:bg-muted hover:text-foreground">
             {language === "zh" ? "EN" : "中文"}
           </button>
         </div>
@@ -232,9 +232,9 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
               {providers.github && (
                 <ProviderButton provider="github" label={t.github} icon={<GithubMark />} busy={busy === "github"} disabled={busy !== null} lastUsed={lastUsed === "github"} lastUsedLabel={t.lastUsed} onClick={social} />
               )}
-              {noProvider && <p className="rounded-xl bg-attention-soft px-3.5 py-3 text-body-sm text-attention">{t.none}</p>}
+              {noProvider && <p className="bg-attention-soft px-3.5 py-3 text-body-sm text-attention">{t.none}</p>}
               {errorText && (
-                <p role="alert" className="rounded-xl bg-failure-soft px-3.5 py-3 text-body-sm text-failure">
+                <p role="alert" className="bg-failure-soft px-3.5 py-3 text-body-sm text-failure">
                   {errorText}
                 </p>
               )}
@@ -247,7 +247,7 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
             </div>
 
             {providers.password && (
-              <details className="group mt-6 rounded-xl bg-card shadow-border" open={!providers.google && !providers.github}>
+              <details className="group mt-6 border border-rule bg-paper-raised" open={!providers.google && !providers.github}>
                 <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3 text-body-sm font-medium text-muted-foreground">
                   {t.devToggle}
                   <ChevronDown className="size-4 transition-transform group-open:rotate-180" />

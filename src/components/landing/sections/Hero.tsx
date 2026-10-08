@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils/utils";
 import { GITHUB_URL, type Language, type LandingCopy } from "../content";
 import { HERO_CHECKS, runStrip } from "../data";
 import { gsap, MOTION, useGSAP } from "../motion";
-import { FRAME, INSET, NIGHT_CELL, OutcomePill } from "../ui";
+import { FRAME, INSET, OutcomePill, RUN_CELL } from "../ui";
 
 /** The product table in the hero. A run sweeps a scan line down the rows and each status lands as the line passes it. */
 function HeroWindow({ copy, outcomeCopy, language }: { copy: LandingCopy["hero"]["window"]; outcomeCopy: LandingCopy["outcome"]; language: Language }) {
@@ -32,7 +32,7 @@ function HeroWindow({ copy, outcomeCopy, language }: { copy: LandingCopy["hero"]
       rows.forEach((row, i) => {
         const at = ((row.offsetTop + row.offsetHeight / 2) / height) * 2.2;
         tl.call(() => setQueued((q) => q.map((v, k) => (k === i ? false : v))), undefined, at);
-        tl.fromTo(row, { backgroundColor: "color-mix(in srgb, var(--night-accent) 10%, transparent)" }, { backgroundColor: "color-mix(in srgb, var(--night-accent) 0%, transparent)", duration: 1 }, at);
+        tl.fromTo(row, { backgroundColor: "color-mix(in srgb, var(--primary) 8%, transparent)" }, { backgroundColor: "color-mix(in srgb, var(--primary) 0%, transparent)", duration: 1 }, at);
       });
       tl.to(beam, { opacity: 0, duration: 0.3 });
     })();
@@ -51,15 +51,15 @@ function HeroWindow({ copy, outcomeCopy, language }: { copy: LandingCopy["hero"]
 
   return (
     <div ref={scope} className="graph border-t border-rule px-3 py-8 sm:px-6 md:px-12 md:py-14">
-      <div data-hero-window className="overflow-hidden rounded-lg border border-night-line bg-night-surface text-night-foreground shadow-md">
-        <div className="flex items-center justify-between border-b border-night-line px-4 py-3">
+      <div data-hero-window className="corners border border-rule-strong bg-paper-raised text-ink">
+        <div className="flex items-center justify-between border-b border-rule bg-paper px-4 py-2.5">
           <div className="flex items-center gap-2">
-            <span className="size-2.5 rounded-full bg-night-foreground/15" />
-            <span className="size-2.5 rounded-full bg-night-foreground/15" />
-            <span className="size-2.5 rounded-full bg-night-foreground/15" />
-            <span className="ml-3 text-caption text-night-muted">{copy.label}</span>
+            <span className="size-2 bg-rule-strong" />
+            <span className="size-2 bg-rule-strong" />
+            <span className="size-2 bg-rule-strong" />
+            <span className="eyebrow ml-3 text-caption text-ink-muted">{copy.label}</span>
           </div>
-          <button type="button" onClick={runAll} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-night-accent px-3 text-caption font-medium text-night transition-transform active:scale-95">
+          <button type="button" onClick={runAll} className="inline-flex h-8 items-center gap-1.5 bg-ink px-3 text-caption font-medium text-paper transition-transform active:scale-95">
             <Play className="size-3 fill-current" />
             {copy.runAll}
           </button>
@@ -68,8 +68,8 @@ function HeroWindow({ copy, outcomeCopy, language }: { copy: LandingCopy["hero"]
           <div data-scan-area className="relative overflow-x-auto">
             <div data-scan-beam aria-hidden className="scan-beam pointer-events-none absolute inset-x-0 top-0 z-10 h-16 opacity-0" />
             <table className="w-full text-left text-body-sm sm:min-w-[560px]">
-              <thead className="text-caption text-night-muted">
-                <tr className="border-b border-night-line">
+              <thead className="eyebrow text-caption text-ink-muted">
+                <tr className="border-b border-rule">
                   <th className="px-5 py-3 font-normal">{copy.columns.check}</th>
                   <th className="px-3 py-3 font-normal">{copy.columns.status}</th>
                   <th className="hidden px-3 py-3 font-normal sm:table-cell">{copy.columns.runs}</th>
@@ -78,44 +78,44 @@ function HeroWindow({ copy, outcomeCopy, language }: { copy: LandingCopy["hero"]
               </thead>
               <tbody>
                 {HERO_CHECKS.map((check, i) => (
-                  <tr key={check.id} data-hero-row className="border-b border-night-line/60 last:border-0">
+                  <tr key={check.id} data-hero-row className="border-b border-rule last:border-0">
                     <td className="px-5 py-3.5">
-                      <div className="font-medium text-night-foreground">{check.name[language]}</div>
-                      <div className="max-w-44 truncate font-mono text-caption text-night-muted sm:max-w-none sm:overflow-visible sm:whitespace-nowrap">{check.id}</div>
+                      <div className="font-medium text-ink">{check.name[language]}</div>
+                      <div className="max-w-44 truncate font-mono text-caption text-ink-muted sm:max-w-none sm:overflow-visible sm:whitespace-nowrap">{check.id}</div>
                     </td>
                     <td className="px-3 py-3.5">
                       {queued[i] ? (
-                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-night-foreground/5 px-2.5 py-0.5 text-caption text-night-muted">
+                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap bg-paper px-2.5 py-0.5 text-caption text-ink-muted">
                           <LoaderCircle className="size-3 animate-spin" />
                           {copy.queued}
                         </span>
                       ) : (
-                        <OutcomePill night outcome={check.outcome} rows={check.rows} copy={outcomeCopy} />
+                        <OutcomePill outcome={check.outcome} rows={check.rows} copy={outcomeCopy} />
                       )}
                     </td>
                     <td className="hidden px-3 py-3.5 sm:table-cell">
                       <div className="flex gap-[3px]">
                         {runStrip(check.outcome, i).map((o, k) => (
-                          <span key={k} className={cn("h-4 w-1.5 rounded-sm", NIGHT_CELL[o])} />
+                          <span key={k} className={cn("h-4 w-1.5", RUN_CELL[o])} />
                         ))}
                       </div>
                     </td>
-                    <td className="hidden whitespace-nowrap px-5 py-3.5 text-right text-night-muted sm:table-cell">{check.schedule[language]}</td>
+                    <td className="hidden whitespace-nowrap px-5 py-3.5 text-right text-ink-muted sm:table-cell">{check.schedule[language]}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <aside className="hidden border-l border-night-line p-5 lg:block">
-            <div className="flex items-center gap-2 text-caption text-night-muted">
-              <Sparkles className="size-3.5 text-night-accent" />
+          <aside className="hidden border-l border-rule bg-paper p-5 lg:block">
+            <div className="flex items-center gap-2 text-caption text-ink-muted">
+              <Sparkles className="size-3.5 text-primary" />
               {copy.triageLabel}
-              <span className="rounded-full bg-night-failure/10 px-2 py-0.5 text-night-failure">{copy.triageKind}</span>
+              <span className="bg-failure-soft px-2 py-0.5 text-failure">{copy.triageKind}</span>
             </div>
-            <p className="mt-3 text-body-md font-medium text-night-foreground">{HERO_CHECKS.find((check) => check.outcome === "broken")?.name[language]}</p>
-            <div className="mt-3 rounded-lg bg-night/60 p-3 font-mono text-caption text-night-failure">column &quot;shipping_status&quot; does not exist</div>
-            <p className="mt-4 text-body-sm text-night-muted">{copy.triageBody}</p>
-            <p className="mt-4 text-caption text-night-muted/80">{copy.triagePrivacy}</p>
+            <p className="mt-3 text-body-md font-medium text-ink">{HERO_CHECKS.find((check) => check.outcome === "broken")?.name[language]}</p>
+            <div className="mt-3 border border-failure/20 bg-failure-soft p-3 font-mono text-caption text-failure">column &quot;shipping_status&quot; does not exist</div>
+            <p className="mt-4 text-body-sm text-ink-muted">{copy.triageBody}</p>
+            <p className="mt-4 text-caption text-ink-muted">{copy.triagePrivacy}</p>
           </aside>
         </div>
       </div>
@@ -152,11 +152,11 @@ export function Hero({ copy, outcomeCopy, language, demoHref, note }: { copy: La
             <div className="md:col-span-4">
               <p data-hero-in className="text-body-lg text-ink-muted">{copy.subtitle}</p>
               <div data-hero-in className="mt-7 flex flex-wrap items-center gap-3">
-                <Link href={demoHref} prefetch={false} className="group inline-flex h-11 items-center gap-2 rounded-md bg-ink px-5 text-body-md font-medium text-paper transition-opacity hover:opacity-85">
+                <Link href={demoHref} prefetch={false} className="group inline-flex h-11 items-center gap-2 bg-ink px-5 text-body-md font-medium text-paper transition-opacity hover:opacity-85">
                   {copy.primary}
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                 </Link>
-                <a href={GITHUB_URL} className="inline-flex h-11 items-center gap-2 rounded-md border border-rule-strong bg-paper-raised px-5 text-body-md font-medium text-ink transition-colors hover:border-ink-muted">
+                <a href={GITHUB_URL} className="inline-flex h-11 items-center gap-2 border border-rule-strong bg-paper-raised px-5 text-body-md font-medium text-ink transition-colors hover:border-ink-muted">
                   <GithubMark className="size-4" />
                   {copy.secondary}
                 </a>

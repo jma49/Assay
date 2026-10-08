@@ -43,29 +43,12 @@ colors:
   failure-dark: "#F07474"
   failure-soft-dark: "#331B1F"
   code-bg-dark: "#0C0F1C"
-  night: "#070A1A"
-  night-foreground: "#EEF0FF"
-  night-muted: "#A9AFD0"
-  night-surface: "#0D1126"
-  night-raised: "#121736"
-  night-line: "#1C2140"
-  night-accent: "#8C9BFF"
-  night-accent-pale: "#C3CAFF"
-  night-success: "#4FC48A"
-  night-attention: "#E4A94A"
-  night-failure: "#F07474"
   paper: "#F8F7F3"
   paper-raised: "#FFFFFF"
   rule: "#E3E1D8"
   rule-strong: "#CBC8BC"
   ink: "#16171B"
   ink-muted: "#64656B"
-  paper-dark: "#0D0E10"
-  paper-raised-dark: "#141518"
-  rule-dark: "#24252A"
-  rule-strong-dark: "#34363C"
-  ink-dark: "#ECEBE6"
-  ink-muted-dark: "#9C9C97"
 typography:
   display-2xl:
     fontFamily: Geist
@@ -301,39 +284,6 @@ components:
   landing-button:
     backgroundColor: "{colors.ink}"
     textColor: "{colors.paper}"
-  landing-paper-dark:
-    backgroundColor: "{colors.paper-dark}"
-    textColor: "{colors.ink-dark}"
-  landing-paper-muted-dark:
-    backgroundColor: "{colors.paper-raised-dark}"
-    textColor: "{colors.ink-muted-dark}"
-  landing-rule-dark:
-    backgroundColor: "{colors.rule-dark}"
-  landing-rule-strong-dark:
-    backgroundColor: "{colors.rule-strong-dark}"
-  landing-night-surface:
-    backgroundColor: "{colors.night-surface}"
-    textColor: "{colors.night-foreground}"
-  landing-night-raised:
-    backgroundColor: "{colors.night-raised}"
-    textColor: "{colors.night-muted}"
-  landing-night-divider:
-    backgroundColor: "{colors.night-line}"
-  landing-night-accent-button:
-    backgroundColor: "{colors.night-accent}"
-    textColor: "{colors.night}"
-  landing-night-highlight:
-    backgroundColor: "{colors.night}"
-    textColor: "{colors.night-accent-pale}"
-  landing-night-clean:
-    backgroundColor: "{colors.night-surface}"
-    textColor: "{colors.night-success}"
-  landing-night-issues:
-    backgroundColor: "{colors.night-surface}"
-    textColor: "{colors.night-attention}"
-  landing-night-error:
-    backgroundColor: "{colors.night-surface}"
-    textColor: "{colors.night-failure}"
   code-block-dark:
     backgroundColor: "{colors.code-bg-dark}"
     textColor: "{colors.foreground-dark}"
@@ -362,8 +312,7 @@ The September 2026 refresh took its direction from an Open Design mock of the de
 - **Indigo ink (`primary-ink`, #2B3AAE)** is the accent as text on `primary-soft` (the active nav item, selected rows): the plain indigo is 4.3:1 there, below AA.
 - **Neutrals** are cool greys that lean slightly toward the indigo. `foreground` for text, `muted-foreground` for secondary text, `subtle-foreground` never for text, only for marks (the idle status dot, list markers), `border` for dividers, `border-strong` for inputs.
 - **Status colours are semantic and fixed:** `failure` = the check itself broke (error), `attention` = it found rows (issues), `success` = it found none (clean). Each has a `-soft` tint for its background. They never decorate, and they are never swapped for the accent.
-- **Paper (`paper`, #F8F7F3)** is the landing page and the sign-in brand panel: a warm off-white ruled with `rule` hairlines (`rule-strong` for control borders and the crosses where rules meet), `paper-raised` for the panels that sit on it, `ink` and `ink-muted` for its text. It follows the theme. App pages do not use it.
-- **Night (`night`, #070A1A)** and the rest of the night palette (`night-surface`, `night-raised`, `night-line`, `night-accent`, `night-accent-pale`, and `night-success | attention | failure`) are for product panels set into the landing page (the hero's workspace, the terminal, the triage and agent snippets): dark in both themes, with the three statuses as they read on night. App pages do not use them.
+- **Paper (`paper`, #F8F7F3)** is the landing and sign-in pages: a warm off-white ruled with `rule` hairlines (`rule-strong` for panel and control borders and the crosses where rules meet), `paper-raised` for the panels that sit on it, `ink` and `ink-muted` for its text. These pages are light only: `theme-light` on their root restores the light tokens and switches off `dark:` variants inside. App pages do not use paper.
 - Dark theme values carry a `-dark` suffix here; in code the same CSS variable switches under `.dark`, so components never branch on the theme.
 - Colours reach components only through Tailwind utilities mapped in `@theme inline` (`bg-card`, `text-muted-foreground`, `text-attention`, …). No hex values, no raw palette classes (`text-blue-600`), no `dark:` overrides for colour.
 
@@ -414,9 +363,11 @@ The landing page (`src/components/landing`) is the one place the product is sold
 
 - **Type.** Headlines are set in Instrument Serif at regular weight (`font-editorial`), with the accent in italic for the second line of the hero and closing titles; Chinese falls back to a system Song face. Running text is Figtree, code (SQL, ids, cron, the terminal) Maple Mono NL, and section labels small mono capitals (`eyebrow`). All are SIL OFL and self-hosted through `next/font` in `fonts.ts`; `landing.css` swaps them in on `.landing`.
 - **The ruled column.** Every section sits in `FRAME` (`ui.tsx`): a 1200px column with hairlines down both sides, a rule across the page above each section and a small cross where they meet (`ticks`). Inside a section, cells are divided by hairlines, never spaced apart as cards. A band of diagonal hatching (`hatch`) opens the closing section.
-- **Graph paper.** Small diagrams, code and product panels sit on graph paper (`graph`: a 20px grid in `rule` with a faint indigo wash in one corner). Panels on it are `paper-raised` with a `rule` border and `shadow-sm`, or night with `night-line` and `shadow-md` for the workspace and terminal.
-- **Controls.** Buttons are `rounded-md`: ink for the primary action, a `rule-strong` outline on `paper-raised` for the secondary one. Indigo is for the scroll progress line under the nav, step progress, icons and the italic accent in titles; status colours keep their meaning.
-- **Not here.** No glows, glass, film grain, photography, pointer lights or 3D tilts.
+- **Graph paper.** Small diagrams, code and product panels sit on graph paper (`graph`: a 20px grid in `rule` with a faint indigo wash in one corner). Panels on it are `paper-raised` with a `rule-strong` border and no shadow; the main product panels (the hero workspace, the terminal, the triage and agent snippets, the sign-in alert) carry registration marks at their corners (`corners`). Everything is light: there are no dark panels.
+- **Corners.** Square. Panels, cells, buttons, tags and code blocks have no radius; only status dots stay round.
+- **Controls.** Ink for the primary action, a `rule-strong` outline on `paper-raised` for the secondary one. Indigo is for the scroll progress line under the nav, step progress, icons and the italic accent in titles; status colours keep their meaning.
+- **Light only.** The page and the sign-in page carry `theme-light` and stay light in the dark theme; the landing nav has no theme switch.
+- **Not here.** No glows, glass, film grain, photography, pointer lights, 3D tilts or shadows.
 - **Motion.** GSAP with ScrollTrigger (`motion.ts`). Reduced motion turns off large movement (pinning, sliding, scaling) and keeps fades, typing, counters and the scan line. "What happens in one run" pins on desktop, becomes tabs with previous and next under reduced motion, and stacks on phones.
 - **Facts.** Everything the page shows exists in the product, and its numbers come from the live demo or `scripts/demo/checks.ts`.
 

@@ -28,7 +28,7 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
   const note = session.isLoaded && !session.user ? (demo ? t.hero.guestNote : t.hero.demoNote) : null;
 
   return (
-    <div className={cn("landing min-h-screen overflow-x-clip", landingSans.variable, landingMono.variable, landingSerif.variable)}>
+    <div className={cn("theme-light landing min-h-screen overflow-x-clip", landingSans.variable, landingMono.variable, landingSerif.variable)}>
       <Nav copy={t.nav} language={language} setLanguage={setLanguage} demoHref={demoHref} />
       <main>
         <Hero copy={t.hero} outcomeCopy={t.outcome} language={language} demoHref={demoHref} note={note} />

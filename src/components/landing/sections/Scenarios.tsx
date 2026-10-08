@@ -38,7 +38,7 @@ export function Scenarios({ label, copy, outcomeCopy, demoHref }: { label: strin
               </button>
               {isOpen && (
                 <div className="graph border-t border-rule px-5 py-6 md:px-12 md:py-8">
-                  <pre className="overflow-x-auto rounded-md border border-rule bg-paper-raised p-4 font-mono text-caption text-ink md:ml-16">{SCENARIO_SQL[i]}</pre>
+                  <pre className="overflow-x-auto border border-rule bg-paper-raised p-4 font-mono text-caption text-ink md:ml-16">{SCENARIO_SQL[i]}</pre>
                 </div>
               )}
             </li>
@@ -46,7 +46,7 @@ export function Scenarios({ label, copy, outcomeCopy, demoHref }: { label: strin
         })}
       </ol>
       <div className="flex justify-end px-5 py-6 md:px-12">
-        <Link href={demoHref} prefetch={false} className="inline-flex h-10 items-center gap-1.5 rounded-md bg-ink px-4 text-body-sm font-medium text-paper transition-opacity hover:opacity-85">
+        <Link href={demoHref} prefetch={false} className="inline-flex h-10 items-center gap-1.5 bg-ink px-4 text-body-sm font-medium text-paper transition-opacity hover:opacity-85">
           {copy.cta}
           <ArrowUpRight className="size-4" />
         </Link>

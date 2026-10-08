@@ -58,7 +58,7 @@ function Validator({ copy, label }: { copy: LandingCopy["bento"]["validator"]; l
   return (
     <article ref={scope} data-bento className="grid min-w-0 md:col-span-2 md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
       <div className="graph min-w-0 border-b border-rule p-4 sm:p-6 md:border-b-0 md:border-r md:p-10">
-        <div className="overflow-hidden rounded-md border border-rule bg-paper-raised shadow-sm">
+        <div className="corners border border-rule-strong bg-paper-raised">
           <div className="flex items-center justify-between border-b border-rule px-4 py-2.5 text-caption text-ink-muted">
             <span className="font-mono">paid-orders-missing-payment.sql</span>
             <span>PostgreSQL</span>
@@ -69,7 +69,7 @@ function Validator({ copy, label }: { copy: LandingCopy["bento"]["validator"]; l
             <span className="tok-keyword">WHERE</span> o.status <span className="tok-keyword">IN</span> (<span className="tok-string">&apos;paid&apos;</span>, <span className="tok-string">&apos;shipped&apos;</span>){"\n"}
             {"  "}<span className="tok-keyword">AND NOT EXISTS</span> (<span className="tok-keyword">SELECT</span> 1 <span className="tok-keyword">FROM</span> demo.payments p{"\n"}
             {"                  "}<span className="tok-keyword">WHERE</span> p.order_id = o.id);{"\n"}
-            <span className={cn("block min-h-6 rounded-sm px-1", blocked && "bg-failure-soft text-failure line-through decoration-failure/60")}>{typed}</span>
+            <span className={cn("block min-h-6 px-1", blocked && "bg-failure-soft text-failure line-through decoration-failure/60")}>{typed}</span>
           </pre>
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-rule px-4 py-3 text-caption">
             {blocked ? (
@@ -129,7 +129,7 @@ export function Bento({ label, copy }: { label: string; copy: LandingCopy["bento
         <div className="grid border-t border-rule md:grid-cols-2">
           <Validator copy={copy.validator} label={validatorLabel} />
           <Cell label={statesLabel} index={2} title={copy.states.title} className="border-t border-rule">
-            <ul className="w-full max-w-xs divide-y divide-rule overflow-hidden rounded-md border border-rule bg-paper-raised text-body-sm shadow-sm">
+            <ul className="w-full max-w-xs divide-y divide-rule overflow-hidden border border-rule bg-paper-raised text-body-sm">
               {states.map(([dot, stateLabel, hint]) => (
                 <li key={stateLabel} className="flex items-center justify-between gap-3 px-4 py-3">
                   <span className="inline-flex items-center gap-2 font-medium text-ink"><span className={cn("size-2 rounded-full", dot)} />{stateLabel}</span>
@@ -141,20 +141,20 @@ export function Bento({ label, copy }: { label: string; copy: LandingCopy["bento
           <Cell label={coverageLabel} index={3} title={copy.coverage.title} body={copy.coverage.body} className="border-t border-rule md:border-l">
             <div data-table-grid className="grid w-full max-w-xs grid-cols-2 gap-1.5">
               {DEMO_TABLES.map((table) => (
-                <span key={table} data-table-chip className="truncate rounded-sm border border-success/20 bg-success-soft px-2 py-2 text-center font-mono text-caption text-success">{table}</span>
+                <span key={table} data-table-chip className="truncate border border-success/20 bg-success-soft px-2 py-2 text-center font-mono text-caption text-success">{table}</span>
               ))}
             </div>
           </Cell>
           <Cell label={triageLabel} index={4} title={copy.triage.title} body={copy.triage.body} className="border-t border-rule">
-            <div className="w-full max-w-sm rounded-md border border-night-line bg-night-surface p-4 font-mono text-caption shadow-sm">
-              <div className="text-night-failure">ERROR column &quot;shipping_status&quot; does not exist</div>
-              <div className="mt-2 text-night-muted">check_error · {copy.triage.kind}</div>
+            <div className="corners w-full max-w-sm border border-rule-strong bg-paper-raised p-4 font-mono text-caption">
+              <div className="text-failure">ERROR column &quot;shipping_status&quot; does not exist</div>
+              <div className="mt-2 text-ink-muted">check_error · {copy.triage.kind}</div>
             </div>
           </Cell>
           <Cell label={agentsLabel} index={5} title={copy.mcp.title} body={copy.mcp.body} className="border-t border-rule md:border-l">
-            <div className="w-full max-w-sm rounded-md border border-night-line bg-night-surface p-4 font-mono text-caption text-night-foreground shadow-sm">
-              <div><span className="text-night-accent">&gt;</span> {copy.mcp.prompt}</div>
-              <div className="text-night-muted">list_checks(status: &quot;broken&quot;)</div>
+            <div className="corners w-full max-w-sm border border-rule-strong bg-paper-raised p-4 font-mono text-caption text-ink">
+              <div><span className="text-primary">&gt;</span> {copy.mcp.prompt}</div>
+              <div className="text-ink-muted">list_checks(status: &quot;broken&quot;)</div>
               <div className="terminal-caret">{copy.mcp.answer}</div>
             </div>
           </Cell>

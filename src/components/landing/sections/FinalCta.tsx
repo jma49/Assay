@@ -36,11 +36,11 @@ export function FinalCta({ copy, demoHref }: { copy: LandingCopy["cta"]; demoHre
             {copy.titleTop} <span className="italic text-primary">{copy.titleBottom}</span>
           </h2>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link href={demoHref} prefetch={false} className="group inline-flex h-11 items-center gap-2 rounded-md bg-ink px-5 text-body-md font-medium text-paper transition-opacity hover:opacity-85">
+            <Link href={demoHref} prefetch={false} className="group inline-flex h-11 items-center gap-2 bg-ink px-5 text-body-md font-medium text-paper transition-opacity hover:opacity-85">
               {copy.primary}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
-            <a href="#self-host" className="inline-flex h-11 items-center rounded-md border border-rule-strong bg-paper-raised px-5 text-body-md font-medium text-ink transition-colors hover:border-ink-muted">
+            <a href="#self-host" className="inline-flex h-11 items-center border border-rule-strong bg-paper-raised px-5 text-body-md font-medium text-ink transition-colors hover:border-ink-muted">
               {copy.secondary}
             </a>
           </div>

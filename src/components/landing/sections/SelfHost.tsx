@@ -52,14 +52,14 @@ export function SelfHost({ label, copy }: { label: string; copy: LandingCopy["se
             </Link>
           </div>
           <div className="graph min-w-0 border-t border-rule p-4 sm:p-6 md:border-l md:border-t-0 md:p-10">
-            <div data-terminal className="overflow-hidden rounded-md border border-night-line bg-night-surface shadow-md">
-              <div className="flex items-center gap-2 border-b border-night-line px-4 py-3">
-                <span className="size-2.5 rounded-full bg-night-foreground/15" />
-                <span className="size-2.5 rounded-full bg-night-foreground/15" />
-                <span className="size-2.5 rounded-full bg-night-foreground/15" />
-                <span className="ml-2 font-mono text-caption text-night-muted">assay — zsh</span>
+            <div data-terminal className="corners border border-rule-strong bg-paper-raised">
+              <div className="flex items-center gap-2 border-b border-rule bg-paper px-4 py-2.5">
+                <span className="size-2 bg-rule-strong" />
+                <span className="size-2 bg-rule-strong" />
+                <span className="size-2 bg-rule-strong" />
+                <span className="eyebrow ml-2 text-caption text-ink-muted">assay — zsh</span>
               </div>
-              <pre className="min-h-[248px] overflow-x-auto p-5 font-mono text-body-sm text-night-foreground">
+              <pre className="min-h-[248px] overflow-x-auto p-5 font-mono text-body-sm text-ink">
                 {LINES.slice(0, shown).map((line, i) => (
                   <div key={i} className="whitespace-pre">{line ? <HighlightedLine text={line} language="shell" /> : " "}</div>
                 ))}

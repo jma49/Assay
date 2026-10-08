@@ -9,31 +9,31 @@ function Visual({ index, copy, language }: { index: number; copy: LandingCopy["w
     return (
       <div className="text-body-sm">
         <div className="text-ink-muted">{copy.prompt.label}</div>
-        <div className="mt-1 rounded-md bg-primary-soft px-3 py-2 text-primary-ink">{copy.prompt.text}</div>
+        <div className="mt-1 bg-primary-soft px-3 py-2 text-primary-ink">{copy.prompt.text}</div>
         <div className="mt-4 text-ink-muted">{copy.prompt.draft}</div>
-        <pre className="mt-1 overflow-x-auto rounded-md border border-rule bg-paper-raised p-3 font-mono text-caption">{"SELECT o.id FROM demo.orders o\nWHERE o.status IN ('paid', 'shipped')\n  AND NOT EXISTS (...)"}</pre>
+        <pre className="mt-1 overflow-x-auto border border-rule bg-paper-raised p-3 font-mono text-caption">{"SELECT o.id FROM demo.orders o\nWHERE o.status IN ('paid', 'shipped')\n  AND NOT EXISTS (...)"}</pre>
       </div>
     );
   }
   if (index === 1) {
     const [who, verb, check] = copy.approval.request;
     return (
-      <div className="rounded-md border border-rule bg-paper-raised">
+      <div className="border border-rule bg-paper-raised">
         <div className="flex items-center justify-between gap-3 border-b border-rule px-4 py-3 text-body-sm">
           <span><b className="font-medium">{who}</b> <span className="text-ink-muted">{verb}</span> {check}</span>
-          <span className="shrink-0 rounded-full bg-attention-soft px-2.5 py-0.5 text-caption text-attention">{copy.approval.pending}</span>
+          <span className="shrink-0 bg-attention-soft px-2.5 py-0.5 text-caption text-attention">{copy.approval.pending}</span>
         </div>
         <div className="px-4 py-3 text-caption text-ink-muted">{copy.approval.note}</div>
         <div className="flex gap-2 border-t border-rule px-4 py-3 text-caption">
-          <span className="rounded-full bg-ink px-3 py-1.5 text-paper">{copy.approval.approve}</span>
-          <span className="rounded-full border border-rule px-3 py-1.5">{copy.approval.reject}</span>
+          <span className="bg-ink px-3 py-1.5 text-paper">{copy.approval.approve}</span>
+          <span className="border border-rule px-3 py-1.5">{copy.approval.reject}</span>
         </div>
       </div>
     );
   }
   if (index === 2) {
     return (
-      <div className="divide-y divide-rule rounded-md border border-rule bg-paper-raised text-body-sm">
+      <div className="divide-y divide-rule border border-rule bg-paper-raised text-body-sm">
         {SCHEDULES.map((s) => (
           <div key={s.cron} className="flex items-center justify-between gap-3 px-4 py-3">
             <span className="truncate">{s.name[language]}</span>
@@ -44,10 +44,10 @@ function Visual({ index, copy, language }: { index: number; copy: LandingCopy["w
     );
   }
   return (
-    <div className="rounded-md border border-rule bg-paper-raised p-4 text-body-sm">
+    <div className="border border-rule bg-paper-raised p-4 text-body-sm">
       <div className="flex items-center gap-2">
         <span className="flex items-center gap-1.5 text-caption font-medium text-primary-ink"><Sparkles className="size-3.5" />{copy.triage.label}</span>
-        <span className="rounded-full bg-attention-soft px-2 py-0.5 text-caption text-attention">{copy.triage.kind}</span>
+        <span className="bg-attention-soft px-2 py-0.5 text-caption text-attention">{copy.triage.kind}</span>
       </div>
       <p className="mt-2">{copy.triage.summary}</p>
       <p className="mt-3 text-caption font-medium">{copy.triage.next}</p>

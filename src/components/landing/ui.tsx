@@ -37,25 +37,19 @@ const PAPER_PILL: Record<Outcome, string> = {
 };
 const PAPER_DOT: Record<Outcome, string> = { clean: "bg-success", issues: "bg-attention", broken: "bg-failure" };
 
-const NIGHT_PILL: Record<Outcome, string> = {
-  clean: "bg-night-success/10 text-night-success",
-  issues: "bg-night-attention/10 text-night-attention",
-  broken: "bg-night-failure/10 text-night-failure",
-};
-const NIGHT_DOT: Record<Outcome, string> = { clean: "bg-night-success", issues: "bg-night-attention", broken: "bg-night-failure" };
-
 function outcomeLabel(outcome: Outcome, rows: number | undefined, copy: LandingCopy["outcome"]) {
   return outcome === "issues" ? copy.rows(rows ?? 0) : outcome === "broken" ? copy.error : copy.clean;
 }
 
-/** A run outcome as a soft pill with a dot, the same three states as in the app. `night` for product panels. */
-export function OutcomePill({ outcome, rows, copy, night, className }: { outcome: Outcome; rows?: number; copy: LandingCopy["outcome"]; night?: boolean; className?: string }) {
+/** A run outcome as a soft tag with a dot, the same three states as in the app. */
+export function OutcomePill({ outcome, rows, copy, className }: { outcome: Outcome; rows?: number; copy: LandingCopy["outcome"]; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-caption", night ? NIGHT_PILL[outcome] : PAPER_PILL[outcome], className)}>
-      <span className={cn("size-1.5 rounded-full", night ? NIGHT_DOT[outcome] : PAPER_DOT[outcome])} />
+    <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap px-2.5 py-0.5 text-caption", PAPER_PILL[outcome], className)}>
+      <span className={cn("size-1.5 rounded-full", PAPER_DOT[outcome])} />
       {outcomeLabel(outcome, rows, copy)}
     </span>
   );
 }
 
-export const NIGHT_CELL: Record<Outcome, string> = { clean: "bg-night-success/70", issues: "bg-night-attention/80", broken: "bg-night-failure" };
+/** One run in a run-history strip. */
+export const RUN_CELL: Record<Outcome, string> = { clean: "bg-success/70", issues: "bg-attention/80", broken: "bg-failure" };
