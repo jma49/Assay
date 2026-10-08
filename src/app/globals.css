@@ -1,12 +1,15 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* `.theme-light` marks a page that stays light whatever the theme (the landing and sign-in pages). */
+@custom-variant dark (&:is(.dark *):not(.theme-light, .theme-light *));
 
 /* Design tokens. Neutrals lean slightly toward the indigo accent; status
    colours are separate from the accent and mean the same thing everywhere:
    error = the check itself broke, issues = it found rows, clean = it found none. */
-:root {
+:root,
+.theme-light {
+  color-scheme: light;
   --app-font-sans: var(--font-geist), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif;
   /* Headings use the same family, tighter. */
@@ -38,20 +41,14 @@
   --ring: color-mix(in srgb, #4f63e8 45%, transparent);
   --primary-soft: #eef0fe;
   --primary-ink: #2b3aae;
-  /* The dark band behind the demo notice and the landing video. */
-  --night: #070a1a;
-  --night-foreground: #eef0ff;
-  --night-muted: #a9afd0;
-  /* The rest of the night palette, for the landing page's dark sections: surfaces, hairlines,
-     the accent and the three statuses as they read on night. The same in both themes. */
-  --night-surface: #0d1126;
-  --night-raised: #121736;
-  --night-line: #1c2140;
-  --night-accent: #8c9bff;
-  --night-accent-pale: #c3caff;
-  --night-success: #4fc48a;
-  --night-attention: #e4a94a;
-  --night-failure: #f07474;
+
+  /* The landing page's paper: a warm off-white page ruled with hairlines, and its ink. Light only. */
+  --paper: #f8f7f3;
+  --paper-raised: #ffffff;
+  --rule: #e3e1d8;
+  --rule-strong: #cbc8bc;
+  --ink: #16171b;
+  --ink-muted: #64656b;
 
   --success: #1f7a52;
   --success-soft: #e8f5ee;
@@ -120,9 +117,6 @@
   --ring: color-mix(in srgb, #8c9bff 50%, transparent);
   --primary-soft: #1d2150;
   --primary-ink: #c3caff;
-  --night: #05070f;
-  --night-foreground: #eef0ff;
-  --night-muted: #a9afd0;
 
   --success: #4fc48a;
   --success-soft: #13291f;
@@ -175,17 +169,12 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-soft: var(--primary-soft);
   --color-primary-ink: var(--primary-ink);
-  --color-night: var(--night);
-  --color-night-foreground: var(--night-foreground);
-  --color-night-muted: var(--night-muted);
-  --color-night-surface: var(--night-surface);
-  --color-night-raised: var(--night-raised);
-  --color-night-line: var(--night-line);
-  --color-night-accent: var(--night-accent);
-  --color-night-accent-pale: var(--night-accent-pale);
-  --color-night-success: var(--night-success);
-  --color-night-attention: var(--night-attention);
-  --color-night-failure: var(--night-failure);
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -318,8 +307,8 @@
     color-scheme: light;
   }
 
-  .dark input[type="date"],
-  .dark input[type="datetime-local"] {
+  .dark input[type="date"]:not(.theme-light *),
+  .dark input[type="datetime-local"]:not(.theme-light *) {
     color-scheme: dark;
   }
 

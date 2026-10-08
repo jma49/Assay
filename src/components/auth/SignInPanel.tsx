@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, BellRing, Bot, ChevronDown, ListChecks, Loader2, ShieldCheck } from "lucide-react";
 import "@/components/landing/landing.css";
-import { landingMono, landingSans } from "@/components/landing/fonts";
+import { landingMono, landingSans, landingSerif } from "@/components/landing/fonts";
 import { RowAMark } from "@/components/brand/RowAMark";
 import { GithubMark } from "@/components/common/GithubMark";
 import { SignInBrand } from "./SignInBrand";
@@ -127,12 +127,12 @@ function ProviderButton({ provider, label, icon, busy, disabled, lastUsed, lastU
       size="lg"
       disabled={disabled}
       onClick={() => onClick(provider)}
-      className={cn("relative h-12 w-full justify-center rounded-full bg-card text-body-md", lastUsed && "shadow-[0_0_0_1.5px_var(--primary)]")}
+      className={cn("relative h-12 w-full justify-center rounded-none border border-rule-strong bg-paper-raised text-body-md shadow-none hover:border-ink-muted", lastUsed && "border-primary")}
     >
       {busy ? <Loader2 className="animate-spin" /> : icon}
       {label}
       {lastUsed && (
-        <span className="absolute -top-2 right-3 rounded-full bg-primary px-1.5 py-px text-caption font-medium text-primary-foreground">{lastUsedLabel}</span>
+        <span className="absolute -top-2 right-3 bg-primary px-1.5 py-px text-caption font-medium text-primary-foreground">{lastUsedLabel}</span>
       )}
     </Button>
   );
@@ -189,31 +189,30 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
   const noProvider = !providers.google && !providers.github && !providers.password;
 
   return (
-    <div className={cn("landing grid min-h-screen lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]", landingSans.variable, landingMono.variable)}>
+    <div className={cn("theme-light landing grid min-h-screen lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]", landingSans.variable, landingMono.variable, landingSerif.variable)}>
       {/* The pitch, for people who arrive here first. Hidden on small screens, where the form matters most. */}
       <SignInBrand language={language} tagline={t.tagline} points={t.points} footnote={t.openSource} />
 
-      <main className="flex flex-col bg-background text-foreground">
-        {/* On small screens the brand panel shrinks to a slim night header. */}
-        <header className="relative overflow-hidden bg-night px-5 pt-5 pb-6 text-night-foreground lg:hidden">
-          <div aria-hidden className="spotlight absolute inset-0" />
-          <div className="relative flex items-center justify-between">
+      <main className="flex flex-col bg-paper-raised text-foreground">
+        {/* On small screens the brand panel shrinks to a slim ruled header. */}
+        <header className="border-b border-rule bg-paper px-5 pt-5 pb-6 text-ink lg:hidden">
+          <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
               <RowAMark className="size-8" />
               <span className="font-display text-title-sm">Assay</span>
             </Link>
-            <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 rounded-full px-2.5 text-body-sm text-night-muted hover:text-night-foreground">
+            <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 px-2.5 text-body-sm text-ink-muted hover:text-ink">
               {language === "zh" ? "EN" : "中文"}
             </button>
           </div>
-          <p className="font-display relative mt-6 text-title text-balance">{t.tagline}</p>
+          <p className="font-editorial mt-6 text-display-sm text-balance">{t.tagline}</p>
         </header>
-        <div className="hidden h-16 items-center justify-between px-8 lg:flex">
+        <div className="hidden h-16 items-center justify-between border-b border-rule px-8 lg:flex">
           <Link href="/" className="inline-flex items-center gap-1.5 text-body-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="size-4" />
             {t.home}
           </Link>
-          <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 rounded-full px-2.5 text-body-sm text-muted-foreground hover:bg-muted hover:text-foreground">
+          <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 px-2.5 text-body-sm text-muted-foreground hover:bg-muted hover:text-foreground">
             {language === "zh" ? "EN" : "中文"}
           </button>
         </div>
@@ -233,9 +232,9 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
               {providers.github && (
                 <ProviderButton provider="github" label={t.github} icon={<GithubMark />} busy={busy === "github"} disabled={busy !== null} lastUsed={lastUsed === "github"} lastUsedLabel={t.lastUsed} onClick={social} />
               )}
-              {noProvider && <p className="rounded-xl bg-attention-soft px-3.5 py-3 text-body-sm text-attention">{t.none}</p>}
+              {noProvider && <p className="bg-attention-soft px-3.5 py-3 text-body-sm text-attention">{t.none}</p>}
               {errorText && (
-                <p role="alert" className="rounded-xl bg-failure-soft px-3.5 py-3 text-body-sm text-failure">
+                <p role="alert" className="bg-failure-soft px-3.5 py-3 text-body-sm text-failure">
                   {errorText}
                 </p>
               )}
@@ -248,7 +247,7 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
             </div>
 
             {providers.password && (
-              <details className="group mt-6 rounded-xl bg-card shadow-border" open={!providers.google && !providers.github}>
+              <details className="group mt-6 border border-rule bg-paper-raised" open={!providers.google && !providers.github}>
                 <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3 text-body-sm font-medium text-muted-foreground">
                   {t.devToggle}
                   <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
