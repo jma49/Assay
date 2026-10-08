@@ -59,6 +59,21 @@
     0 -40px 140px -30px color-mix(in srgb, var(--primary) 75%, transparent);
   mask-image: linear-gradient(90deg, transparent 4%, #000 30%, #000 70%, transparent 96%);
 }
+/* The WebGPU light (HeroShader) fades in over the CSS spotlight once it renders, and the spotlight fades out. */
+.landing .hero-shader {
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  mask-image: radial-gradient(ellipse 60% 72% at 50% 8%, #000 25%, transparent 78%);
+}
+.landing [data-shader-lit] .hero-shader {
+  opacity: 1;
+}
+.landing .spotlight {
+  transition: opacity 1.2s ease;
+}
+.landing [data-shader-lit] .spotlight {
+  opacity: 0;
+}
 /* A bright stretch of the rim travels left to right: a top border on the same ellipse, revealed by a moving mask. */
 .landing .horizon-glint {
   position: absolute;
