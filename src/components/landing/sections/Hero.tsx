@@ -10,6 +10,7 @@ import { GITHUB_URL, type Language, type LandingCopy } from "../content";
 import { HERO_CHECKS, runStrip } from "../data";
 import { gsap, MOTION, useGSAP } from "../motion";
 import { CONTAINER, NIGHT_CELL, NightOutcome } from "../ui";
+import { HeroLight } from "./HeroLight";
 import { Magnetic } from "./Magnetic";
 
 /** The product table in the hero. A run sweeps a scan line down the rows and each status lands as the line passes it. */
@@ -134,6 +135,7 @@ function HeroWindow({ copy, outcomeCopy, language }: { copy: LandingCopy["hero"]
 
 export function Hero({ copy, outcomeCopy, language, demoHref, note }: { copy: LandingCopy["hero"]; outcomeCopy: LandingCopy["outcome"]; language: Language; demoHref: string; note: string | null }) {
   const scope = useRef<HTMLElement>(null);
+  const [shaderLit, setShaderLit] = useState(false);
 
   useGSAP(
     () => {
@@ -150,11 +152,12 @@ export function Hero({ copy, outcomeCopy, language, demoHref, note }: { copy: La
 
   return (
     <section ref={scope} className="grain relative isolate overflow-hidden bg-night pb-16 pt-36 md:pb-24 md:pt-48">
-      <div aria-hidden className="absolute inset-0 -z-10">
+      <div aria-hidden data-shader-lit={shaderLit || undefined} className="absolute inset-0 -z-10">
         <Image src="/landing/hero.jpg" alt="" fill priority sizes="100vw" className="object-cover opacity-[.12] mix-blend-luminosity" />
         <div className="absolute inset-0 bg-[radial-gradient(120%_70%_at_50%_0%,transparent_35%,var(--night)_80%)]" />
         <div className="spotlight absolute inset-x-0 top-0 h-[900px]" />
         <div className="dot-field absolute inset-0" />
+        <HeroLight onLitChange={setShaderLit} />
       </div>
 
       <div className={cn(CONTAINER, "max-w-6xl text-center")}>

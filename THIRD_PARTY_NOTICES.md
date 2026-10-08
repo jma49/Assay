@@ -23,6 +23,9 @@ The landing page animates with [GSAP](https://gsap.com) and its ScrollTrigger
 plugin, used under the GSAP Standard "no charge" License
 (https://gsap.com/standard-license).
 
+The hero's light is drawn with [Shaders](https://github.com/shader-effects-inc/shaders)
+(WebGPU), licensed under the MIT License.
+
 ## Photography
 
 The landing page's photographs come from [Unsplash](https://unsplash.com),
