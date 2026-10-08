@@ -66,7 +66,7 @@ export function SignInBrand({ language, tagline, points, footnote }: { language:
             <span>Sep 29</span>
           </div>
           <div className="mt-4 flex gap-3">
-            <RowAMark className="size-9 shrink-0" />
+            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><RowAMark className="size-5" /></span>
             <div className="min-w-0">
               <div className="font-medium">{BRAND}</div>
               <div className="mt-1 font-medium">{alert.title}</div>

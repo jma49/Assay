@@ -183,7 +183,7 @@ function AlertScene({ copy, play }: SceneProps) {
     <div ref={scope} className="rounded-2xl border border-night-line bg-night/40 p-5 text-body-sm">
       <div className="text-caption text-night-muted">{copy.alert.channel}</div>
       <div data-message className="mt-4 flex gap-3">
-        <RowAMark className="size-9 shrink-0" />
+        <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><RowAMark className="size-5" /></span>
         <div className="min-w-0">
           <div className="font-medium text-night-foreground">Assay</div>
           <div className="mt-1 font-medium text-night-foreground">{copy.alert.title}</div>

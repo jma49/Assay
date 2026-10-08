@@ -4,7 +4,7 @@
  *   tsx scripts/brand/render-icons.ts
  */
 import { writeFileSync } from "node:fs";
-import { markSvg } from "@/lib/brand/mark";
+import { markIconSvg } from "@/lib/brand/mark";
 
-writeFileSync("src/app/icon.svg", `${markSvg()}\n`);
+writeFileSync("src/app/icon.svg", `${markIconSvg()}\n`);
 console.log("Wrote src/app/icon.svg");
