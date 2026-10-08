@@ -6,6 +6,7 @@ All fonts are licensed under the SIL Open Font License 1.1 and are self-hosted
 through `next/font`.
 
 - **Geist** and **Geist Mono** (interface, headings and code in the app).
+- **Instrument Serif** (headlines on the landing and sign-in pages).
 - **Figtree** (running text on the landing page).
 - **Maple Mono NL** (code on the landing page), shipped unmodified from the
   v7.9 release of [maple-font](https://github.com/subframe7536/maple-font) in
@@ -22,19 +23,3 @@ ISC License.
 The landing page animates with [GSAP](https://gsap.com) and its ScrollTrigger
 plugin, used under the GSAP Standard "no charge" License
 (https://gsap.com/standard-license).
-
-The hero's light is drawn with [Shaders](https://github.com/shader-effects-inc/shaders)
-(WebGPU), licensed under the MIT License.
-
-## Photography
-
-The landing page's photographs come from [Unsplash](https://unsplash.com),
-used under the Unsplash License, converted to grayscale and resized.
-
-| File | Photographer | Source |
-|---|---|---|
-| `public/landing/hero.jpg` | Simon Pape | https://unsplash.com/photos/2kc8bigeqEI |
-| `public/landing/duplicates.jpg` | Jake Givens | https://unsplash.com/photos/ocwmWiNAWGs |
-| `public/landing/inventory.jpg` | Florian Klauer | https://unsplash.com/photos/-K6JMRMj4x4 |
-| `public/landing/payments.jpg` | Julia Caesar | https://unsplash.com/photos/3-3k_sYEJ1s |
-| `public/landing/broken.jpg` | Brian Jimenez | https://unsplash.com/photos/ch-mPpglKjQ |

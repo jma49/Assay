@@ -1,5 +1,5 @@
-/* The landing page animates on its own clock (the marquee, the horizon glint, the
-   shine on the headline, the scan line). Freeze every CSS animation and transition
+/* The landing page animates on its own clock (the marquee, the terminal caret, the
+   scan line). Freeze every CSS animation and transition
    there so two screenshots of the same build match. GSAP-driven reveals honour the
    reduced-motion setting the visual tests run with. */
 .landing *,

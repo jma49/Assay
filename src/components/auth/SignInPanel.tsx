@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, BellRing, Bot, ChevronDown, ListChecks, Loader2, ShieldCheck } from "lucide-react";
 import "@/components/landing/landing.css";
-import { landingMono, landingSans } from "@/components/landing/fonts";
+import { landingMono, landingSans, landingSerif } from "@/components/landing/fonts";
 import { RowAMark } from "@/components/brand/RowAMark";
 import { GithubMark } from "@/components/common/GithubMark";
 import { SignInBrand } from "./SignInBrand";
@@ -189,26 +189,25 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
   const noProvider = !providers.google && !providers.github && !providers.password;
 
   return (
-    <div className={cn("landing grid min-h-screen lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]", landingSans.variable, landingMono.variable)}>
+    <div className={cn("landing grid min-h-screen lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]", landingSans.variable, landingMono.variable, landingSerif.variable)}>
       {/* The pitch, for people who arrive here first. Hidden on small screens, where the form matters most. */}
       <SignInBrand language={language} tagline={t.tagline} points={t.points} footnote={t.openSource} />
 
-      <main className="flex flex-col bg-background text-foreground">
-        {/* On small screens the brand panel shrinks to a slim night header. */}
-        <header className="relative overflow-hidden bg-night px-5 pt-5 pb-6 text-night-foreground lg:hidden">
-          <div aria-hidden className="spotlight absolute inset-0" />
-          <div className="relative flex items-center justify-between">
+      <main className="flex flex-col bg-paper-raised text-foreground">
+        {/* On small screens the brand panel shrinks to a slim ruled header. */}
+        <header className="border-b border-rule bg-paper px-5 pt-5 pb-6 text-ink lg:hidden">
+          <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
               <RowAMark className="size-8" />
               <span className="font-display text-title-sm">Assay</span>
             </Link>
-            <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 rounded-full px-2.5 text-body-sm text-night-muted hover:text-night-foreground">
+            <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 rounded-full px-2.5 text-body-sm text-ink-muted hover:text-ink">
               {language === "zh" ? "EN" : "中文"}
             </button>
           </div>
-          <p className="font-display relative mt-6 text-title text-balance">{t.tagline}</p>
+          <p className="font-editorial mt-6 text-display-sm text-balance">{t.tagline}</p>
         </header>
-        <div className="hidden h-16 items-center justify-between px-8 lg:flex">
+        <div className="hidden h-16 items-center justify-between border-b border-rule px-8 lg:flex">
           <Link href="/" className="inline-flex items-center gap-1.5 text-body-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="size-4" />
             {t.home}

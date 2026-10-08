@@ -46,11 +46,11 @@ WHERE status = 'shipped'
   AND shipping_status IS NULL;`,
 ] as const;
 
-export const SCENARIO_META: { outcome: Outcome; rows?: number; image: string }[] = [
-  { outcome: "issues", rows: 6, image: "/landing/duplicates.jpg" },
-  { outcome: "issues", rows: 3, image: "/landing/inventory.jpg" },
-  { outcome: "issues", rows: 5, image: "/landing/payments.jpg" },
-  { outcome: "broken", image: "/landing/broken.jpg" },
+export const SCENARIO_META: { outcome: Outcome; rows?: number }[] = [
+  { outcome: "issues", rows: 6 },
+  { outcome: "issues", rows: 3 },
+  { outcome: "issues", rows: 5 },
+  { outcome: "broken" },
 ];
 
 /** The first rows of the live demo's latest Duplicate orders run. */

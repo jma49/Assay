@@ -1,158 +1,78 @@
-/* The landing page. Running text and code use the landing faces (fonts.ts); headings keep the
-   display face. Night sections use the night palette; light sections follow the theme. */
+/* The landing page: a paper page ruled with hairlines. Headlines are set in the serif
+   (fonts.ts), labels in the mono; the night palette appears only inside product panels. */
 .landing {
   --app-font-sans: var(--font-landing-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif;
   --app-font-mono: var(--font-landing-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --landing-serif: var(--font-landing-serif), "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", Georgia, serif;
   font-family: var(--app-font-sans);
-  background: var(--night);
-  color: var(--night-foreground);
+  background: var(--paper);
+  color: var(--ink);
 }
 
-.landing :is(h1, h2, h3),
-.landing .font-display {
-  font-family: var(--app-font-display);
+/* Headlines: the serif at regular weight, set tight. */
+.landing .font-editorial {
+  font-family: var(--landing-serif);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 0.98;
 }
 
-/* Elevation: a hairline ring and a long soft drop, on light surfaces and on night. */
-.landing .lift {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--foreground) 7%, transparent),
-    0 1px 2px color-mix(in srgb, var(--foreground) 4%, transparent),
-    0 12px 32px -16px color-mix(in srgb, var(--foreground) 18%, transparent);
-}
-.landing .lift-night {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--night-accent) 16%, transparent),
-    0 40px 120px -30px color-mix(in srgb, var(--primary) 45%, transparent),
-    0 30px 60px -30px rgb(0 0 0 / 0.9);
+/* Section labels: small mono capitals. */
+.landing .eyebrow {
+  font-family: var(--app-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-/* Film grain over the hero and the closing section. */
-.landing .grain::after {
+/* The ruled column every section sits in: hairlines down both sides of the page. */
+.landing .ruled {
+  border-inline: 1px solid var(--rule);
+}
+
+/* A small cross where a section's top rule meets the side rules. */
+.landing .ticks {
+  position: relative;
+}
+.landing .ticks::before,
+.landing .ticks::after {
   content: "";
   position: absolute;
-  inset: 0;
+  top: -5px;
+  width: 9px;
+  height: 9px;
+  background:
+    linear-gradient(var(--rule-strong), var(--rule-strong)) center / 1px 100% no-repeat,
+    linear-gradient(var(--rule-strong), var(--rule-strong)) center / 100% 1px no-repeat;
   z-index: 1;
-  pointer-events: none;
-  opacity: 0.06;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.landing .ticks::before {
+  left: -5px;
+}
+.landing .ticks::after {
+  right: -5px;
 }
 
-/* Hero light: a narrow spotlight from above, a dot field, and a horizon rim the product sits on. */
-.landing .spotlight {
-  background:
-    conic-gradient(from 180deg at 50% -8%, transparent 162deg, color-mix(in srgb, var(--night-accent) 10%, transparent) 172deg,
-      color-mix(in srgb, var(--night-accent-pale) 20%, transparent) 180deg, color-mix(in srgb, var(--night-accent) 10%, transparent) 188deg, transparent 198deg),
-    radial-gradient(42% 46% at 50% 0%, color-mix(in srgb, var(--night-accent) 30%, transparent), transparent 72%);
-  mask-image: linear-gradient(to bottom, #000 30%, transparent 78%);
+/* A band of diagonal hatching between sections. */
+.landing .hatch {
+  background-image: repeating-linear-gradient(-45deg, var(--rule) 0 1px, transparent 1px 9px);
 }
-.landing .dot-field {
-  background-image: radial-gradient(color-mix(in srgb, var(--night-accent-pale) 22%, transparent) 1px, transparent 1.2px);
-  background-size: 26px 26px;
-  mask-image: radial-gradient(ellipse 46% 40% at 50% 34%, #000 10%, transparent 72%);
-}
-.landing .horizon {
-  border-radius: 50%;
-  background: radial-gradient(ellipse 50% 60% at 50% 0%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 60%), var(--night);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--night-accent-pale) 55%, transparent),
-    0 -1px 0 color-mix(in srgb, var(--night-accent) 25%, transparent),
-    0 -40px 140px -30px color-mix(in srgb, var(--primary) 75%, transparent);
-  mask-image: linear-gradient(90deg, transparent 4%, #000 30%, #000 70%, transparent 96%);
-}
-/* The WebGPU light (HeroShader) fades in over the CSS spotlight once it renders, and the spotlight fades out. */
-.landing .hero-shader {
-  opacity: 0;
-  transition: opacity 1.2s ease;
-  mask-image: radial-gradient(ellipse 60% 72% at 50% 8%, #000 25%, transparent 78%);
-}
-.landing [data-shader-lit] .hero-shader {
-  opacity: 1;
-}
-.landing .spotlight {
-  transition: opacity 1.2s ease;
-}
-.landing [data-shader-lit] .spotlight {
-  opacity: 0;
-}
-/* A bright stretch of the rim travels left to right: a top border on the same ellipse, revealed by a moving mask. */
-.landing .horizon-glint {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  border-top: 2px solid color-mix(in srgb, var(--night-foreground) 95%, transparent);
-  filter: drop-shadow(0 0 8px var(--night-accent-pale));
-  mask-image: linear-gradient(90deg, transparent 44%, #000 50%, transparent 56%);
-  mask-size: 300% 100%;
-  animation: landing-glint 6.5s cubic-bezier(0.55, 0, 0.45, 1) infinite;
-}
-@keyframes landing-glint {
-  0% { mask-position: 100% 0; opacity: 0; }
-  10%, 60% { opacity: 1; }
-  70%, 100% { mask-position: 0% 0; opacity: 0; }
+
+/* Graph paper behind the small diagrams on feature cells, with a faint wash of the accent. */
+.landing .graph {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--primary) 9%, transparent), transparent 60%),
+    linear-gradient(var(--rule) 1px, transparent 1px),
+    linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+  background-size: 100% 100%, 20px 20px, 20px 20px;
+  background-position: 0 0, -1px -1px, -1px -1px;
 }
 
 /* The scan line that sweeps the hero table during a run. */
 .landing .scan-beam {
   background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--night-accent) 14%, transparent) 70%,
     color-mix(in srgb, var(--night-accent-pale) 90%, transparent) 98%, transparent);
-}
-
-/* The headline's second line catches the light. */
-.landing .text-shine {
-  background: linear-gradient(100deg, var(--night-foreground) 30%, var(--night-accent-pale) 45%, var(--night-foreground) 60%);
-  background-size: 250% 100%;
-  background-clip: text;
-  color: transparent;
-  animation: landing-shine 6s ease-in-out infinite;
-}
-@keyframes landing-shine {
-  0%, 100% { background-position: 100% 0; }
-  50% { background-position: 0 0; }
-}
-
-/* A rotating light along the border of the featured card. */
-@property --landing-beam {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-.landing .border-beam {
-  position: relative;
-  isolation: isolate;
-}
-.landing .border-beam::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  z-index: -1;
-  border-radius: inherit;
-  padding: 1px;
-  background: conic-gradient(from var(--landing-beam), transparent 0 70%, var(--night-accent) 80%, var(--night-accent-pale) 85%, transparent 92%);
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  animation: landing-beam 5s linear infinite;
-}
-@keyframes landing-beam {
-  to { --landing-beam: 360deg; }
-}
-
-/* A soft light that follows the pointer across a card. */
-.landing .spotlight-card {
-  position: relative;
-  overflow: hidden;
-}
-.landing .spotlight-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s;
-  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--primary) 10%, transparent), transparent 45%);
-}
-.landing .spotlight-card:hover::after {
-  opacity: 1;
 }
 
 .landing .marquee-track {
@@ -168,7 +88,6 @@
 @keyframes landing-marquee {
   to { transform: translateX(-33.333%); }
 }
-
 .landing .marquee-fade {
   mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
 }
@@ -189,17 +108,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .landing .marquee-track,
-  .landing .text-shine,
-  .landing .border-beam::before,
-  .landing .horizon-glint {
+  .landing .terminal-caret::after {
     animation: none;
-  }
-  .landing .horizon-glint {
-    opacity: 0;
   }
 }
 
 /* The status pills set inside the manifesto scale with the sentence. */
 .landing .manifesto-pill {
-  font-size: 0.42em;
+  font-size: 0.36em;
 }

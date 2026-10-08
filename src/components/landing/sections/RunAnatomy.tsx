@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils/utils";
 import type { LandingCopy } from "../content";
 import { gsap, MOTION, ScrollTrigger, useGSAP } from "../motion";
 import { RUN_SCENES } from "./RunScenes";
+import { FRAME, SectionHead } from "../ui";
 
 const STEPS = RUN_SCENES.length;
 
@@ -15,7 +16,7 @@ const STEPS = RUN_SCENES.length;
  * Desktop with reduced motion: the stepper is a set of tabs, with previous and next.
  * Phones: the steps stack and each scene plays when it scrolls into view.
  */
-export function RunAnatomy({ copy }: { copy: LandingCopy["run"] }) {
+export function RunAnatomy({ label, copy }: { label: string; copy: LandingCopy["run"] }) {
   const scope = useRef<HTMLElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(0);
@@ -39,7 +40,8 @@ export function RunAnatomy({ copy }: { copy: LandingCopy["run"] }) {
       mm.add(`(min-width: 768px) and ${MOTION.full}`, () => {
         const pin = pinRef.current;
         if (!pin) return;
-        Object.assign(pin.style, { height: "100vh", justifyContent: "center", paddingTop: "96px", paddingBottom: "32px" });
+        // The sticky nav is 64px tall; the pinned stage fills the rest of the screen below it.
+        Object.assign(pin.style, { height: "100vh", justifyContent: "center", paddingTop: "64px" });
         const trigger = ScrollTrigger.create({
           trigger: pin,
           start: "top top",
@@ -91,14 +93,11 @@ export function RunAnatomy({ copy }: { copy: LandingCopy["run"] }) {
   const go = (n: number) => activate((n + STEPS) % STEPS);
 
   return (
-    <section ref={scope} id="run" className="relative bg-night">
-      <div ref={pinRef} className="relative mx-auto flex max-w-[1120px] flex-col px-4 py-24 sm:px-6">
-        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end md:gap-12">
-          <h2 className="text-display-md text-night-foreground lg:text-display-lg">{copy.title}</h2>
-          <p className="max-w-sm text-body-md text-night-muted">{copy.lead}</p>
-        </div>
+    <section ref={scope} id="run" className="border-t border-rule">
+      <div ref={pinRef} className={cn(FRAME, "ticks flex flex-col")}>
+        <SectionHead eyebrow={label} title={copy.title} lead={copy.lead} className="md:pb-10 md:pt-16" />
 
-        <div className="mt-10 hidden grid-cols-4 gap-4 md:grid">
+        <div className="hidden grid-cols-4 border-t border-rule md:grid">
           {copy.steps.map((s, i) => (
             <button
               key={s.title}
@@ -106,64 +105,59 @@ export function RunAnatomy({ copy }: { copy: LandingCopy["run"] }) {
               data-step={i}
               onClick={tabs ? () => activate(i) : undefined}
               aria-current={i === step ? "step" : undefined}
-              className="group flex flex-col justify-start self-start text-left"
+              className={cn("group relative flex flex-col items-start px-8 pb-5 pt-6 text-left", i > 0 && "border-l border-rule")}
             >
-              <span className="block h-[3px] overflow-hidden rounded-full bg-night-foreground/10">
-                <span data-run-fill className={cn("block h-full w-full origin-left rounded-full bg-night-accent", tabs ? (i <= step ? "scale-x-100" : "scale-x-0") : cn("scale-x-0", i === 0 && "motion-reduce:scale-x-100"))} />
+              <span className="absolute inset-x-0 -top-px block h-px overflow-hidden">
+                <span data-run-fill className={cn("block h-full w-full origin-left bg-primary", tabs ? (i <= step ? "scale-x-100" : "scale-x-0") : cn("scale-x-0", i === 0 && "motion-reduce:scale-x-100"))} />
               </span>
-              <span className="mt-4 flex items-baseline gap-2.5">
-                <span className="text-caption font-medium tabular-nums text-night-muted">0{i + 1}</span>
-                <span className={cn("text-body-md font-medium transition-colors duration-300 group-hover:text-night-foreground", i === step ? "text-night-foreground" : "text-night-muted")}>{s.title}</span>
-              </span>
+              <span className="font-mono text-caption tabular-nums text-ink-muted">0{i + 1}</span>
+              <span className={cn("mt-2 text-body-md font-medium transition-colors duration-300 group-hover:text-ink", i === step ? "text-ink" : "text-ink-muted")}>{s.title}</span>
             </button>
           ))}
         </div>
 
-        <div className="relative mt-6 hidden md:block" style={{ height: "clamp(340px, 52vh, 440px)" }}>
-          <div aria-hidden className="absolute inset-x-24 inset-y-10 rounded-full bg-primary/20 blur-[100px]" />
-          <div className="lift-night relative h-full overflow-hidden rounded-3xl border border-night-foreground/10 bg-night-raised/80 backdrop-blur">
-            {RUN_SCENES.map((Scene, i) => (
-              <div
-                key={i}
-                aria-hidden={i !== step}
-                className={cn(
-                  "absolute inset-0 grid items-center gap-8 p-9 transition-[opacity,transform] duration-500 ease-out motion-reduce:transform-none md:grid-cols-[minmax(0,.8fr)_minmax(0,1.6fr)]",
-                  i === step ? "opacity-100" : "pointer-events-none invisible translate-y-3 opacity-0",
-                )}
-              >
-                <div>
-                  <span className="font-display block text-display-xl tabular-nums text-night-foreground/[.08]">0{i + 1}</span>
-                  <p className="font-display mt-4 text-headline text-night-foreground">{copy.steps[i]?.title}</p>
-                  <p className="mt-3 max-w-xs text-body-md text-night-muted">{copy.steps[i]?.body}</p>
-                </div>
-                <div className="min-w-0">
-                  <Scene copy={copy} play={plays[i] ?? 0} />
-                </div>
+        <div className="graph relative hidden border-t border-rule md:block" style={{ height: "clamp(360px, 54vh, 460px)" }}>
+          {RUN_SCENES.map((Scene, i) => (
+            <div
+              key={i}
+              aria-hidden={i !== step}
+              className={cn(
+                "absolute inset-0 grid items-center gap-10 px-12 py-10 transition-[opacity,transform] duration-500 ease-out motion-reduce:transform-none md:grid-cols-[minmax(0,.8fr)_minmax(0,1.6fr)]",
+                i === step ? "opacity-100" : "pointer-events-none invisible translate-y-3 opacity-0",
+              )}
+            >
+              <div>
+                <span className="font-editorial block text-display-xl tabular-nums text-ink-muted/30">0{i + 1}</span>
+                <p className="font-editorial mt-3 text-display-sm text-ink">{copy.steps[i]?.title}</p>
+                <p className="mt-3 max-w-xs text-body-md text-ink-muted">{copy.steps[i]?.body}</p>
               </div>
-            ))}
-          </div>
+              <div className="min-w-0">
+                <Scene copy={copy} play={plays[i] ?? 0} />
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Shown by CSS, not by the `tabs` state: the media query applies on first paint, so the
             section has its final height before GSAP's matchMedia callback runs. */}
-        <div className="mt-4 hidden justify-end gap-2 motion-reduce:md:flex">
-          <button type="button" onClick={() => go(step - 1)} aria-label={copy.previous} className="inline-flex size-9 items-center justify-center rounded-full border border-night-foreground/15 bg-night-foreground/5 text-night-foreground hover:bg-night-foreground/10">
+        <div className="hidden justify-end gap-2 border-t border-rule px-8 py-4 motion-reduce:md:flex">
+          <button type="button" onClick={() => go(step - 1)} aria-label={copy.previous} className="inline-flex size-9 items-center justify-center rounded-md border border-rule-strong bg-paper-raised text-ink hover:border-ink-muted">
             <ArrowLeft className="size-4" />
           </button>
-          <button type="button" onClick={() => go(step + 1)} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-night-foreground px-4 text-caption font-medium text-night">
+          <button type="button" onClick={() => go(step + 1)} className="inline-flex h-9 items-center gap-1.5 rounded-md bg-ink px-4 text-caption font-medium text-paper">
             {copy.next}
             <ArrowRight className="size-3.5" />
           </button>
         </div>
 
-        <div className="mt-10 space-y-10 md:hidden">
+        <div className="space-y-10 border-t border-rule px-5 py-10 md:hidden">
           {RUN_SCENES.map((Scene, i) => (
             <div key={i} data-run-mobile>
               <div className="flex items-baseline gap-2.5">
-                <span className="text-caption font-medium tabular-nums text-night-muted">0{i + 1}</span>
-                <p className="text-title-sm font-medium text-night-foreground">{copy.steps[i]?.title}</p>
+                <span className="font-mono text-caption tabular-nums text-ink-muted">0{i + 1}</span>
+                <p className="text-title-sm font-medium text-ink">{copy.steps[i]?.title}</p>
               </div>
-              <p className="mt-2 text-body-md text-night-muted">{copy.steps[i]?.body}</p>
+              <p className="mt-2 text-body-md text-ink-muted">{copy.steps[i]?.body}</p>
               <div className="mt-4">
                 <Scene copy={copy} play={mobilePlays[i] ?? 0} />
               </div>

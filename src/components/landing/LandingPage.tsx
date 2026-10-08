@@ -5,7 +5,7 @@ import { useCurrentUser } from "@/lib/auth/client";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { cn } from "@/lib/utils/utils";
 import { landingCopy } from "./content";
-import { landingMono, landingSans } from "./fonts";
+import { landingMono, landingSans, landingSerif } from "./fonts";
 import { Bento } from "./sections/Bento";
 import { Faq } from "./sections/Faq";
 import { FinalCta } from "./sections/FinalCta";
@@ -28,18 +28,18 @@ export default function LandingPage({ demo = false }: { demo?: boolean }) {
   const note = session.isLoaded && !session.user ? (demo ? t.hero.guestNote : t.hero.demoNote) : null;
 
   return (
-    <div className={cn("landing min-h-screen overflow-x-clip", landingSans.variable, landingMono.variable)}>
+    <div className={cn("landing min-h-screen overflow-x-clip", landingSans.variable, landingMono.variable, landingSerif.variable)}>
       <Nav copy={t.nav} language={language} setLanguage={setLanguage} demoHref={demoHref} />
       <main>
         <Hero copy={t.hero} outcomeCopy={t.outcome} language={language} demoHref={demoHref} note={note} />
-        <Marquee caption={t.marquee} />
-        <Manifesto parts={t.manifesto} />
-        <Bento copy={t.bento} />
-        <RunAnatomy copy={t.run} />
-        <Scenarios copy={t.scenarios} outcomeCopy={t.outcome} demoHref={demoHref} />
-        <Workflow copy={t.workflow} language={language} />
-        <SelfHost copy={t.selfHost} />
-        <Faq copy={t.faq} />
+        <Marquee label={t.labels.integrations} caption={t.marquee} />
+        <Manifesto label={t.labels.idea} parts={t.manifesto} />
+        <Bento label={t.labels.product} copy={t.bento} />
+        <RunAnatomy label={t.labels.run} copy={t.run} />
+        <Scenarios label={t.labels.scenarios} copy={t.scenarios} outcomeCopy={t.outcome} demoHref={demoHref} />
+        <Workflow label={t.labels.workflow} copy={t.workflow} language={language} />
+        <SelfHost label={t.labels.selfHost} copy={t.selfHost} />
+        <Faq label={t.labels.faq} copy={t.faq} />
         <FinalCta copy={t.cta} demoHref={demoHref} />
       </main>
       <Footer copy={t.footer} demoHref={demoHref} language={language} setLanguage={setLanguage} />

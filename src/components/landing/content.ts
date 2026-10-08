@@ -23,7 +23,11 @@ interface Titled {
 
 export interface LandingCopy {
   nav: { product: string; run: string; demo: string; selfHost: string; docs: string; signIn: string; openApp: string; openDemo: string; language: string; theme: string };
+  /** The mono label above each section's title. */
+  labels: { integrations: string; idea: string; product: string; run: string; scenarios: string; workflow: string; selfHost: string; faq: string };
   hero: {
+    eyebrow: string;
+    stats: { value: string; label: string }[];
     titleTop: string;
     titleBottom: string;
     subtitle: string;
@@ -48,6 +52,8 @@ export interface LandingCopy {
   bento: {
     title: string;
     lead: string;
+    /** One mono label per feature cell: validator, states, coverage, triage, agents. */
+    cellLabels: string[];
     validator: Titled & { ok: string; blocked: string; footnote: string; checkpoints: Titled[] };
     states: { title: string; rows: { clean: [string, string]; issues: [string, string]; broken: [string, string] } };
     coverage: Titled;
@@ -86,8 +92,16 @@ export interface LandingCopy {
 }
 
 const en: LandingCopy = {
+  labels: { integrations: "Works with", idea: "The idea", product: "Safety and signal", run: "Anatomy of a run", scenarios: "In the demo", workflow: "Workflow", selfHost: "Self-host", faq: "FAQ" },
   nav: { product: "Product", run: "How a run works", demo: "Demo", selfHost: "Self-host", docs: "Docs", signIn: "Sign in", openApp: "Open dashboard", openDemo: "Open demo", language: "中文", theme: "Toggle color theme" },
   hero: {
+    eyebrow: "Open source · PostgreSQL · Read-only",
+    stats: [
+      { value: "3×", label: "read-only checks before a query touches data" },
+      { value: "30 s", label: "server-side statement timeout" },
+      { value: "5", label: "chat channels for alerts, plus webhooks" },
+      { value: "MCP", label: "for Claude Code, Cursor and other agents" },
+    ],
     titleTop: "Catch bad data",
     titleBottom: "before it ships.",
     subtitle: "Read-only SQL checks for PostgreSQL. Scheduled, reviewed and triaged by AI, so a broken query never passes for clean data.",
@@ -120,6 +134,7 @@ const en: LandingCopy = {
   bento: {
     title: "Safe enough for production. Simple enough for everyone.",
     lead: "Engineers write the SQL, managers approve it, analysts read the results. Nobody can write to your database.",
+    cellLabels: ["Validator", "Run states", "Coverage", "AI triage", "Agents"],
     validator: {
       title: "Read-only, enforced three times",
       body: "Validated on save, again on rollback, and run inside a read-only transaction with a server-side timeout.",
@@ -217,8 +232,16 @@ const en: LandingCopy = {
 };
 
 const zh: LandingCopy = {
+  labels: { integrations: "适配", idea: "理念", product: "安全与信号", run: "一次运行", scenarios: "演示", workflow: "工作流", selfHost: "自托管", faq: "常见问题" },
   nav: { product: "产品", run: "一次运行", demo: "演示", selfHost: "自托管", docs: "文档", signIn: "登录", openApp: "进入控制台", openDemo: "打开演示", language: "EN", theme: "切换主题" },
   hero: {
+    eyebrow: "开源 · PostgreSQL · 只读",
+    stats: [
+      { value: "3 道", label: "只读校验，查询碰到数据之前" },
+      { value: "30 秒", label: "服务端语句超时" },
+      { value: "5 种", label: "聊天告警渠道，另有 Webhook" },
+      { value: "MCP", label: "Claude Code、Cursor 等 AI 助手可直接调用" },
+    ],
     titleTop: "在坏数据",
     titleBottom: "上线之前发现它。",
     subtitle: "面向 PostgreSQL 的只读 SQL 检查。定时运行、审批后生效、出错时由 AI 分析，查询出错永远不会被当成数据正常。",
@@ -251,6 +274,7 @@ const zh: LandingCopy = {
   bento: {
     title: "放心用在生产库，整个团队都会用。",
     lead: "工程师写 SQL，经理审批，分析师看结果。没有人能写入你的数据库。",
+    cellLabels: ["校验器", "运行状态", "覆盖率", "AI 分析", "AI 助手"],
     validator: {
       title: "只读，三道关卡",
       body: "保存时校验一次，回滚时再校验一次，执行时运行在带服务端超时的只读事务里。",

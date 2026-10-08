@@ -53,6 +53,14 @@
   --night-attention: #e4a94a;
   --night-failure: #f07474;
 
+  /* The landing page's paper: a warm off-white page ruled with hairlines, and its ink. */
+  --paper: #f8f7f3;
+  --paper-raised: #ffffff;
+  --rule: #e3e1d8;
+  --rule-strong: #cbc8bc;
+  --ink: #16171b;
+  --ink-muted: #64656b;
+
   --success: #1f7a52;
   --success-soft: #e8f5ee;
   --attention: #8a5a12;
@@ -98,6 +106,12 @@
 
 .dark {
   --background: #0a0c16;
+  --paper: #0d0e10;
+  --paper-raised: #141518;
+  --rule: #24252a;
+  --rule-strong: #34363c;
+  --ink: #ecebe6;
+  --ink-muted: #9c9c97;
   --foreground: #eceef8;
   --card: #11141f;
   --card-foreground: #eceef8;
@@ -186,6 +200,12 @@
   --color-night-success: var(--night-success);
   --color-night-attention: var(--night-attention);
   --color-night-failure: var(--night-failure);
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
