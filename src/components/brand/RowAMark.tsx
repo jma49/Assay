@@ -1,18 +1,19 @@
-import type { SVGProps } from "react";
+import { useId, type SVGProps } from "react";
 import { MARK } from "@/lib/brand/mark";
 import { cn } from "@/lib/utils/utils";
 
-/** The Row A mark. Decorative by default; `barProps` reaches the crossbar, which the landing page animates. */
+/** The Row A mark in the current text colour. Decorative by default; `cutProps` reaches the cut, which the landing page animates. */
 export function RowAMark({
   className,
   title,
-  barProps,
+  cutProps,
 }: {
   className?: string;
   title?: string;
-  barProps?: SVGProps<SVGRectElement>;
+  cutProps?: SVGProps<SVGRectElement>;
 }) {
-  const { viewBox, tileRadius, legs, legWidth, bar, barGap, colors } = MARK;
+  const maskId = useId();
+  const { viewBox, glyph, soften, cut } = MARK;
   return (
     <svg
       viewBox={`0 0 ${viewBox} ${viewBox}`}
@@ -21,9 +22,11 @@ export function RowAMark({
       aria-hidden={title ? undefined : true}
       aria-label={title}
     >
-      <rect width={viewBox} height={viewBox} rx={tileRadius} fill={colors.tile} />
-      <path d={legs} fill="none" stroke={colors.glyph} strokeWidth={legWidth} strokeLinecap="round" strokeLinejoin="round" />
-      <rect {...bar} fill={colors.bar} stroke={colors.tile} strokeWidth={barGap} paintOrder="stroke" {...barProps} />
+      <mask id={maskId} maskUnits="userSpaceOnUse" x={0} y={0} width={viewBox} height={viewBox}>
+        <rect width={viewBox} height={viewBox} fill="white" />
+        <rect y={cut.y} width={viewBox} height={cut.height} fill="black" {...cutProps} />
+      </mask>
+      <path d={glyph} fill="currentColor" stroke="currentColor" strokeWidth={soften} strokeLinejoin="round" mask={`url(#${maskId})`} />
     </svg>
   );
 }

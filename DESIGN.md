@@ -320,7 +320,7 @@ The September 2026 refresh took its direction from an Open Design mock of the de
 
 ## Colors
 
-- **Indigo (`primary`, #4F63E8):** the one interactive colour. Primary buttons, links, the active nav item, focus rings, the brand mark. Never a status.
+- **Indigo (`primary`, #4F63E8):** the one interactive colour. Primary buttons, links, the active nav item, focus rings, the tile behind the mark where it stands in for an app icon. Never a status.
 - **Indigo ink (`primary-ink`, #2B3AAE)** is the accent as text on `primary-soft` (the active nav item, selected rows): the plain indigo is 4.3:1 there, below AA.
 - **Neutrals** are cool greys that lean slightly toward the indigo. `foreground` for text, `muted-foreground` for secondary text, `subtle-foreground` never for text, only for marks (the idle status dot, list markers), `border` for dividers, `border-strong` for inputs.
 - **Status colours are semantic and fixed:** `failure` = the check itself broke (error), `attention` = it found rows (issues), `success` = it found none (clean). Each has a `-soft` tint for its background. They never decorate, and they are never swapped for the accent.
