@@ -1,37 +1,12 @@
 # Deployment
 
-Assay runs as one Next.js app. The reference deployment is Vercel with
-Fluid Compute, MongoDB Atlas, a PostgreSQL database to check, and Upstash
-Redis; any Node.js host works the same way (`npm run build && npm start`).
+Assay is one Next.js app. The reference deployment is Vercel (Fluid
+Compute), MongoDB Atlas, a PostgreSQL database to check and Upstash Redis;
+any Node.js host works the same way (`npm run build && npm start`).
 
-## Branches and deploys
-
-- Pull requests go straight to `main`: open the PR, wait for CI (typecheck,
-  lint, knip, tests, build, and the visual comparison), and merge on green.
-- `main` is production: every push to it deploys to Vercel. Merge to `main`
-  only when the batch is verified. Pull requests get no preview
-  deployments; run `npx vercel deploy` by hand when one is needed.
-
-### Rollback
-
-When a deploy breaks production, redeploy the last good build:
-
-1. Open the Vercel dashboard → Deployments.
-2. Find the last good deployment and choose **Redeploy**. Uncheck "Use
-   existing Build Cache" when the build itself is suspect.
-3. Wait for the new deployment to go live.
-
-Data migrations roll forward only: do not roll back below a deploy that
-introduced a migration without reading [backup-restore.md](backup-restore.md)
-first.
-
-Then smoke-test the rollback:
-
-- `GET /api/health` returns 200 (and reports the scheduler state you expect).
-- Signed out, `/checks` redirects to `/sign-in`; Google and GitHub sign-in
-  work and land on `/checks`.
-- Trigger one check by hand from its page: the run appears in its history
-  and on the Runs page.
+`main` is production: every merge deploys to Vercel, and there is no
+staging. Pull requests get no preview deployments; run `npx vercel deploy`
+by hand when one is needed.
 
 ## Configuration
 
@@ -39,130 +14,123 @@ Then smoke-test the rollback:
 
 | What | Variables |
 | --- | --- |
-| Sign-in | `BETTER_AUTH_SECRET` (`openssl rand -base64 32`), `BETTER_AUTH_URL`, and `GOOGLE_CLIENT_ID/SECRET` and/or `GITHUB_CLIENT_ID/SECRET` |
-| Data | `MONGODB_URI` (and `MONGODB_DB_NAME` unless the URI names the database), `DATABASE_URL` pointing at a SELECT-only role ([architecture.md](architecture.md#running-a-check)), `UPSTASH_REDIS_REST_URL/TOKEN` |
-| Alerts and data sources | `ASSAY_SECRET_KEY` (required to add data sources or alert channels; changing it invalidates their sealed secrets — see [secret-rotation.md](secret-rotation.md) for the rotation and recovery procedure), `APP_URL`, `CRON_SECRET` |
-| Optional | `AI_ENABLED=true` with AI Gateway, `DEMO_MODE=true` (the public demo only), the Slack, Discord and Telegram app settings ([notifications.md](notifications.md)), `ALLOWED_EMAIL_DOMAINS`, run limits (`CHECK_TIMEOUT_MS`, `CHECK_CONCURRENCY`, `PG_POOL_MAX`, `PG_SOURCE_POOL_MAX`, `RUN_RETENTION_DAYS`), `ALLOW_PRIVATE_DATA_SOURCES` (below), `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` (error tracking) |
+| Sign-in | `BETTER_AUTH_SECRET` (`openssl rand -base64 32`), `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID/SECRET` and/or `GITHUB_CLIENT_ID/SECRET` ([authentication.md](authentication.md)) |
+| Data | `MONGODB_URI` (plus `MONGODB_DB_NAME` unless the URI names the database), `DATABASE_URL` for a SELECT-only role ([architecture.md](architecture.md#read-only-in-layers)), `UPSTASH_REDIS_REST_URL/TOKEN` |
+| Alerts and data sources | `ASSAY_SECRET_KEY` (seals their secrets; changing it makes them unreadable, see [secret-rotation.md](secret-rotation.md)), `APP_URL`, `CRON_SECRET` |
+| Scheduling | `QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY` |
+| Optional | `AI_ENABLED=true` with AI Gateway; `DEMO_MODE=true` (the public demo only); Slack, Discord and Telegram app settings ([notifications.md](notifications.md)); `ALLOWED_EMAIL_DOMAINS`; run limits `CHECK_TIMEOUT_MS`, `CHECK_CONCURRENCY`, `PG_POOL_MAX`, `PG_SOURCE_POOL_MAX`, `RUN_RETENTION_DAYS`; `ALLOW_PRIVATE_DATA_SOURCES`; `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` |
 
-**Missing configuration fails closed.** A production server (`next start`,
+Set `BETTER_AUTH_URL` and `APP_URL` to the public URL; OAuth callbacks are
+`<BETTER_AUTH_URL>/api/auth/callback/google` and `…/github`.
+
+**Missing configuration fails closed.** A production server (`next start`
 or a Vercel function) exits on start when `BETTER_AUTH_SECRET`,
-`MONGODB_URI`, `DATABASE_URL` or `APP_URL` is unset or blank, and logs
+`MONGODB_URI`, `DATABASE_URL` or `APP_URL` is unset or blank, logging
 `Assay refuses to start: missing required environment variable(s) …` with
-the names only, never values. On Vercel, `VERCEL_PROJECT_PRODUCTION_URL`
-stands in for `APP_URL`, as it does for alert links. The check
-(`src/server/startup-config.ts`, called from `src/instrumentation.ts`) skips
-`next build`, so CI and Vercel still build without secrets, and skips
-development and tests. Optional features stay off and log one warning each
-at start: no Google or GitHub sign-in provider, no `ASSAY_SECRET_KEY`
-(alerts and data sources), no `CRON_SECRET` (the dispatch endpoint refuses
-calls), no `SENTRY_DSN` (error tracking). A missing Upstash URL is reported
-by the Upstash client itself, and `/api/health` reports Redis as
-`unconfigured`. The edge proxy separately refuses requests without
-`BETTER_AUTH_SECRET`.
+names only. On Vercel, `VERCEL_PROJECT_PRODUCTION_URL` stands in for
+`APP_URL`. The check (`src/server/startup-config.ts`, called from
+`src/instrumentation.ts`) skips `next build`, development and tests, so CI
+builds without secrets. Optional features stay off with one warning each:
+no sign-in provider, no `ASSAY_SECRET_KEY`, no `CRON_SECRET` (dispatch
+refuses calls), no `SENTRY_DSN`. A missing Upstash URL is reported by the
+client and `/api/health` shows Redis as `unconfigured`. The edge proxy also
+refuses requests without `BETTER_AUTH_SECRET`.
 
-**Data sources.** Besides `DATABASE_URL`, admins can add PostgreSQL
-databases in Settings → Data sources; their connection strings are sealed
-with `ASSAY_SECRET_KEY`. Hosts on private networks (10.x, 192.168.x,
-localhost, `*.internal`, link-local) are refused, so a connection string
-cannot reach internal services or the cloud metadata endpoint. A
-self-hosted deployment whose databases sit on a private network sets
-`ALLOW_PRIVATE_DATA_SOURCES=true`; such hosts may then also use
-`sslmode=disable`. Public hosts always use verified TLS. Each instance
-opens at most `PG_SOURCE_POOL_MAX` (3) connections per added source.
+**Private databases.** Data-source hosts on private networks are refused
+([architecture.md](architecture.md#data-sources)). A self-hosted deployment
+whose databases sit on a private network sets
+`ALLOW_PRIVATE_DATA_SOURCES=true`; such hosts may then use
+`sslmode=disable`.
 
-**TLS to PostgreSQL is always verified when `DATABASE_URL` asks for it.**
-With `sslmode` set to `prefer`, `require`, `verify-ca` or `verify-full`, Assay
-removes the parameter and connects with full verification: the certificate
-chain against the system CAs (or `CA_CERT_BLOB_URL` when set) and the host
-name. This is what pg 8 does today, made explicit so pg 9's weaker libpq
-meaning of `require` never applies and pg's deprecation warning is not
-printed. `sslmode=require` in an existing URL needs no change;
+**TLS for `DATABASE_URL`.** With `sslmode` set to `prefer`, `require`,
+`verify-ca` or `verify-full`, Assay removes the parameter and connects with
+full verification: the chain against the system CAs (or `CA_CERT_BLOB_URL`)
+and the host name. This keeps pg 9's weaker libpq meaning of `require` from
+ever applying; existing `sslmode=require` URLs need no change.
 `sslmode=disable` stays plaintext (local development), and URLs naming
 certificate files (`sslrootcert`, `sslcert`, `sslkey`) are left to pg.
 
-OAuth callbacks are `<BETTER_AUTH_URL>/api/auth/callback/google` and
-`…/github`; set `BETTER_AUTH_URL` and `APP_URL` to the public URL.
+## Scheduled runs
 
-**Scheduled runs** are started on time by a QStash schedule that calls
-`POST /api/cron/run-scheduled` every 30 minutes (below). The endpoint accepts
-a QStash signature (`QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY`)
-or the `CRON_SECRET` bearer token, runs every check whose slot is due,
-defers checks that could not finish inside the function's 300 s, and sends
-alerts. It reports to its own Sentry Cron monitor, `scheduled-checks-trigger`
-(margin 15 minutes), created on its first call.
+A QStash schedule calls `POST /api/cron/run-scheduled` every 30 minutes. The
+endpoint accepts the QStash signature or the `CRON_SECRET` bearer, runs
+every check whose slot is due, defers what cannot finish within the
+function's 300 s, and sends alerts. It reports to the Sentry Cron monitor
+`scheduled-checks-trigger` (15-minute margin), created on its first call.
 
-The fallback is `.github/workflows/sql-check-cron.yml`, which asks for a run
-every 30 minutes; GitHub starts it hours late, so it only catches what the
-trigger missed. Slot claims keep the two from running a slot twice. It needs the repository secrets `DATABASE_URL`, `MONGODB_URI`,
-`APP_URL` and `CRON_SECRET` (plus the certificate URLs if PostgreSQL uses
-them, `ASSAY_SECRET_KEY` once checks use an added data source, and `SENTRY_DSN` for the check-ins below); `MONGODB_DB_NAME` and the run limits go in repository variables with
-the same values as the app. Without the secrets the workflow skips quietly.
-A self-hosted setup can call `npm run sql:run-scheduled` from cron instead.
+Set up QStash once per deployment:
 
-Every scheduled run writes a heartbeat to MongoDB. `GET /api/health`
-reports the scheduler as stale when no scheduled run started in the last 12
-hours (HTTP 503); manual runs do not count. GitHub runs the 30-minute cron
-late (a median of about 5 hours between runs in practice), so a shorter
-limit would report a live schedule as dead.
-
-With the `SENTRY_DSN` repository secret set, each scheduled run also sends
-Sentry Cron check-ins (monitor `scheduled-sql-checks`, created on the first
-check-in). Sentry alerts when no check-in arrives for 12 hours, a run fails or
-it runs past 20 minutes, so the alert does not depend on GitHub Actions. Turn on the
-monitor's alert in Sentry (Crons → the monitor → Alerts) after the first
-check-in. An external uptime monitor on `/api/health` works too.
-
-GitHub disables scheduled workflows in a repository with no activity for 60
-days, and says so on the Actions tab. The stale heartbeat and the missed
-check-ins both show it; re-enable with
-`gh workflow enable sql-check-cron.yml`.
-
-**Setting up the QStash schedule** (once per deployment):
-
-1. In the [Upstash console](https://console.upstash.com/qstash), open QStash
-   and copy the current and next signing keys.
-2. Add them to the host as `QSTASH_CURRENT_SIGNING_KEY` and
+1. In the [Upstash console](https://console.upstash.com/qstash), copy the
+   current and next signing keys into `QSTASH_CURRENT_SIGNING_KEY` and
    `QSTASH_NEXT_SIGNING_KEY` (on Vercel: Production, then redeploy).
-3. In QStash → Schedules, create a schedule: destination
+2. In QStash → Schedules, create a POST schedule to
    `<APP_URL>/api/cron/run-scheduled` (exactly the `APP_URL` origin; the
-   signature covers the URL), cron `*/30 * * * *`, method POST.
-4. Check the first call under QStash → Logs: status 200 with counts such
-   as `{"ran":1,"failed":0,"deferred":0,"skipped":4}`. A 401 means the keys
-   or the URL do not match.
+   signature covers the URL), cron `*/30 * * * *`.
+3. In QStash → Logs, the first call returns 200 with counts like
+   `{"ran":1,"failed":0,"deferred":0,"skipped":4}`. A 401 means the keys or
+   the URL do not match.
 
-Keep MongoDB backups current: the [backup and restore runbook](backup-restore.md)
-covers what is backed up, the schedule, and the restore procedure.
+**Fallback:** `.github/workflows/sql-check-cron.yml` asks for a run every 30
+minutes, but GitHub starts it hours late, so it only catches what the
+trigger missed; slot claims keep the two from running a slot twice. It needs
+the repository secrets `DATABASE_URL`, `MONGODB_URI`, `APP_URL` and
+`CRON_SECRET` (plus the certificate URLs if PostgreSQL uses them,
+`ASSAY_SECRET_KEY` for added data sources, and `SENTRY_DSN` for check-ins);
+`MONGODB_DB_NAME` and the run limits go in repository variables. Without
+the secrets it skips quietly. GitHub disables scheduled workflows after 60
+days without repository activity; re-enable with
+`gh workflow enable sql-check-cron.yml`. A self-hosted setup can run
+`npm run sql:run-scheduled` from cron instead.
+
+**Monitoring.** Each scheduled run writes a heartbeat to MongoDB;
+`GET /api/health` reports the scheduler `stale` (HTTP 503) when no scheduled
+run started in 12 hours (manual runs do not count). With `SENTRY_DSN` set
+as a repository secret, the workflow also sends check-ins to the monitor
+`scheduled-sql-checks`, which alerts after 12 hours without one, on a
+failed run, or on a run over 20 minutes. Turn on each monitor's alert in
+Sentry (Crons → the monitor → Alerts) after its first check-in. An external
+uptime monitor on `/api/health` works too.
 
 ## First deploy
 
-1. Create the read-only PostgreSQL role ([architecture.md](architecture.md#running-a-check)).
-2. Deploy, sign in once, and make yourself admin:
-   `npm run user:set-role -- you@example.com admin` (with the production
-   variables loaded).
-3. Optionally seed the demo schema and checks with `npm run seed:demo`
-   (`SEED_DATABASE_URL` names a role that may create tables, since
-   `DATABASE_URL` is read-only).
+1. Create the read-only PostgreSQL role
+   ([architecture.md](architecture.md#read-only-in-layers)).
+2. Deploy, sign in once, and make yourself admin with the production
+   variables loaded: `npm run user:set-role -- you@example.com admin`.
+3. Optionally `npm run seed:demo` (`SEED_DATABASE_URL` names a role that may
+   create tables, since `DATABASE_URL` is read-only).
 4. With Telegram configured, run `npm run telegram:webhook` once.
+5. Set up the QStash schedule and MongoDB backups
+   ([backup-restore.md](backup-restore.md)).
 
-Indexes are created on start, and the app renames the old collection names
-(`sql_scripts`, `result`) itself; `npm run migrate:collections` shows what it
-would do and handles a database that holds both names
-([scripts/README.md](../scripts/README.md)).
+Indexes and collection renames happen on start
+([database.md](database.md#renamed-collections)).
 
 ## After a deploy
 
-A short smoke test on the production URL:
+Smoke test on the production URL:
 
+- `GET /api/health` returns 200 and the scheduler state you expect.
 - `curl -sI <url>/` shows `Content-Security-Policy`, `X-Frame-Options: DENY`,
   `Strict-Transport-Security` and the other headers from `next.config.mjs`.
 - Signed out, `/checks` redirects to `/sign-in`; Google and GitHub sign-in
-  work and land on `/checks`.
-- Run a check from its page: the run appears in its history and on the Runs
-  page.
-- In Actions, the latest **Scheduled SQL checks** run succeeded, and its
-  **Send alerts** step returned JSON (a 401 means `CRON_SECRET` differs).
+  land on `/checks`.
+- Run a check from its page: the run appears in its history and on Runs.
+- The latest scheduled call succeeded (QStash → Logs, or the **Send
+  alerts** step of the GitHub workflow returned JSON; a 401 means
+  `CRON_SECRET` differs).
 - Settings → Notifications → **Send test** reaches a channel.
 - With `DEMO_MODE=true`: a private window can open `/demo`, run a sample
   check, and is sent to sign up for `/checks/new`.
-- An MCP client connects with an API key or OAuth
-  ([mcp.md](mcp.md)); revoking the key cuts it off.
+- An MCP client connects with an API key or OAuth ([mcp.md](mcp.md));
+  revoking the key cuts it off.
+
+## Rollback
+
+1. Vercel dashboard → Deployments → the last good deployment → **Redeploy**
+   (uncheck "Use existing Build Cache" when the build itself is suspect).
+2. Wait for it to go live, then run the smoke test above.
+
+Data migrations roll forward only: before rolling back below a deploy that
+introduced one, read [backup-restore.md](backup-restore.md) and, for the
+collection rename, [database.md](database.md#renamed-collections).

@@ -242,112 +242,107 @@ components:
 
 # Assay
 
-`src/app/globals.css` is the source of truth for values; this file mirrors it and says how to use them. Change a token in both, in the same commit. Brand history and the mascot live in `docs/brand.md`.
+`src/app/globals.css` holds the values; this file mirrors them and says how to use them. Change a token in both, in the same commit.
 
 ## Overview
 
-Assay is a tool people open when something might be wrong with their data. The UI should feel calm, precise and current: the product of a small, careful startup, not an enterprise console. Most screens are tables, lists and detail panes read by engineers and analysts, in English and Chinese. There is one theme, light.
+Assay is a tool people open when something might be wrong with their data. It should feel calm, precise and current, not like an enterprise console. Most screens are tables, lists and detail panes read by engineers and analysts, in English and Chinese. The app, the docs, sign-in and the landing page share one look: a technical document on ruled paper. Light only, warm neutrals, hairlines instead of cards and shadows, square corners, serif titles.
 
-Three words decide most calls: **quiet** (the data is loud, the chrome is not), **roomy** (large page titles, generous rows and white space; a working day's checks still fit without scrolling past the fold on a laptop), **consistent** (a status looks identical everywhere, so people learn it once).
-
-The September 2026 refresh gave the app Geist, an indigo accent, large page titles with a one-line intro and status colours that read the same everywhere. In October 2026 the app and the docs moved onto the landing page's paper: light only, warm neutrals, hairlines instead of cards and shadows, square corners and serif titles, so the product and the page that sells it read as one thing.
+Three words decide most calls: **quiet** (the data is loud, the chrome is not), **roomy** (large page titles, generous rows, yet a working day's checks fit above the fold on a laptop), **consistent** (a status looks identical everywhere).
 
 ## Colors
 
-- **Indigo (`primary`, #4F63E8):** the one interactive colour. Primary buttons, links, the active nav item, focus rings, the tile behind the mark where it stands in for an app icon. Never a status.
-- **Indigo ink (`primary-ink`, #2B3AAE)** is the accent as text on `primary-soft` (the active nav item, selected rows): the plain indigo is 4.3:1 there, below AA.
-- **Neutrals** are the paper: a warm off-white page (`background` = `paper`), white panels (`card` = `paper-raised`), `muted` a slightly darker paper for tracks, table heads and hover. `foreground` (`ink`) for text, `muted-foreground` for secondary text, `subtle-foreground` never for text, only for marks (the idle status dot, list markers), `border` (`rule`) for dividers and panel outlines, `border-strong` (`rule-strong`) for inputs and outlined buttons.
-- **Status colours are semantic and fixed:** `failure` = the check itself broke (error), `attention` = it found rows (issues), `success` = it found none (clean). Each has a `-soft` tint for its background. They never decorate, and they are never swapped for the accent.
-- **Paper (`paper`, #F8F7F3)** is every page: the landing page, sign-in, the app and the docs. `paper`, `paper-raised`, `rule`, `rule-strong`, `ink` and `ink-muted` are the source values; the app tokens (`background`, `card`, `border`, `foreground`, …) point at them in `globals.css`.
-- **Light only.** There is no dark theme, no theme switch and no `.dark` class; a dark system setting renders the same page. Do not add `dark:` variants.
-- Colours reach components only through Tailwind utilities mapped in `@theme inline` (`bg-card`, `text-muted-foreground`, `text-attention`, …). No hex values, no raw palette classes (`text-blue-600`), no `dark:` overrides for colour.
+- **Indigo (`primary`)** is the one interactive colour: links, the current page, focus rings, progress, the tile behind the mark where it stands in for an app icon. Never a status. **`primary-ink`** is the accent as text on `primary-soft` (plain indigo is only 4.3:1 there).
+- **Neutrals are the paper.** `paper`, `paper-raised`, `rule`, `rule-strong`, `ink` and `ink-muted` are the source values; the app tokens point at them: `background` (page), `card` (white panels), `border` (dividers, panel outlines), `border-strong` (inputs, outlined buttons), `foreground` (text). `muted` is a darker paper for tracks, table heads and hover; `muted-foreground` is secondary text.
+- **`subtle-foreground` is never text**, not even a "—": it is 3.6–3.8:1, below AA. Use it for marks only (the idle status dot, list markers). The quietest text is `muted-foreground`.
+- **Status colours are semantic and fixed:** `failure` = the check broke (error), `attention` = it found rows (issues), `success` = it found none (clean). Each has a `-soft` background tint. They never decorate and are never swapped for the accent.
+- **Light only.** No dark theme, theme switch, `.dark` class or `dark:` variant; a dark system setting renders the same page.
+- Colours reach components only through the utilities in `@theme inline` (`bg-card`, `text-muted-foreground`, `text-attention`, …). No hex values or raw palette classes (`text-blue-600`).
+- Every text pair meets WCAG AA (4.5:1); the lint below checks every component pair in the front matter.
 
 ## Typography
 
-Geist for everything readable, Geist Mono for SQL, ids, cron expressions, numbers that line up in columns and the small group labels, Instrument Serif (`font-editorial`, regular weight) for page titles: the app shell's title, a check's name, settings pages and docs articles, as on the landing page. The serif is loaded once in the root layout as `--font-serif`; Chinese falls back to a system Song face. Chinese falls back to a named Simplified Chinese face: PingFang SC (Apple), Microsoft YaHei (Windows), Noto Sans SC / Noto Sans CJK SC (Linux, Android). Name the face rather than leaving CJK to `system-ui`: the generic fallback picks a CJK font by the page language, which the language switch sets only after hydration, so Chinese text could render with Japanese glyph shapes.
-
-The scale in the front matter is the whole set of sizes: every text size is one of its levels, used as a `text-<level>` utility (a test enforces it; see Migration). Roles:
-
-- `display-*`: landing page and docs titles, and app page titles (`display-md` in `font-editorial`, set by the shell, and a check's name on its page); `display-2xl` is the landing hero and closing headline alone, `display-xl` the landing section titles.
-- `headline`, `title`, `title-sm`: section headings, card titles, dialog titles.
-- `body-md` (15px) is the page default and the sidebar; `body-sm` (14px) is the workhorse for tables, buttons and form controls; `body-lg` (16px) is for docs prose and landing copy.
-- `caption` (13px): metadata, timestamps, badges, helper text.
-- `label-caps` (11px, uppercase): the small section label above a group (sidebar groups, "On this page", form sections), set in Geist Mono in the sidebars. One style; do not invent variants.
-- `stat`: the big numbers in stat tiles, with tabular figures.
-- Weights: 400 body, 500 for emphasis inside UI and the `stat` numbers, 600 for headings, display and labels.
-- Line heights of the body levels, `caption` and `label-caps` are whole even pixels (26, 22, 20, 18, 14px). Text of mixed levels centred in one row, like a table row or a toolbar, then shares a baseline; with fractional or odd line boxes, 12px and 14px text in the same row land up to 2px apart.
+- **Faces.** Geist for everything readable. Geist Mono for SQL, ids, cron expressions, numbers that line up in columns and the sidebar group labels. Instrument Serif (`font-editorial`, regular weight, loaded once in the root layout as `--font-serif`) for page titles: the shell's title, a check's name, settings pages, docs articles and the landing page.
+- **Chinese** falls back to named faces: a Song face for the serif; PingFang SC, Microsoft YaHei, then Noto Sans SC / Noto Sans CJK SC for the sans. Never leave CJK to `system-ui`: it picks a font by page language, which the language switch sets only after hydration, so Chinese could render with Japanese glyphs.
+- **The scale** in the front matter is the whole set of sizes, used as `text-<level>` utilities (see [Type scale rules](#type-scale-rules)):
+  - `display-md` in `font-editorial`: app page titles (set by the shell) and a check's name. `display-lg`: docs article titles. `display-xl`: landing section titles. `display-2xl`: the landing hero and closing headline only.
+  - `headline`, `title`, `title-sm`: section, card and dialog titles.
+  - `body-md` (15px): the page default and the sidebar. `body-sm` (14px): tables, buttons, form controls. `body-lg` (16px): docs prose and landing copy.
+  - `caption` (13px): metadata, timestamps, badges, helper text.
+  - `label-caps` (11px, uppercase): the one style of small group label (sidebar groups, "On this page", form sections): `text-label-caps uppercase text-muted-foreground`, in Geist Mono in the sidebars. It groups controls; it never decorates.
+  - `stat`: big numbers in stat tiles, tabular figures.
+- **Weights:** 400 body, 500 for emphasis and `stat`, 600 for headings, display and labels.
+- Body, `caption` and `label-caps` line heights are whole even pixels (26, 22, 20, 18, 14px), so mixed levels centred in one row share a baseline.
 
 ## Layout
 
-- Spacing follows Tailwind's 4px scale. Prefer 2, 3, 4, 6 and 8 (8–32px); reach for odd steps only to align with a neighbour.
-- App pages sit in `APP_CONTAINER` (`max-w-[1280px]`, centred) so edges line up under the top bar. The shell is a ruled column: a paper sidebar (248px) with a hairline on its right, the mark in a 48px row and each nav section under a hairline; the current page is a white cell outlined in `rule` with an indigo edge. The demo notice is a 48px white band across the content column, its bottom rule level with the one under the mark.
-- A page is a shell over a data hook and section components (`AGENTS.md`). The app shell draws the page heading from `app-shell-routes.ts`, closed by a hairline: a serif `display-md` title, an optional count beside it (`WindowStatusBar`), a one-line intro, and the page's actions on the right (`WindowToolbar`). Pages about one thing (a check, a run) get a "‹ back to the list" link instead and draw their own heading. Then a stat strip or filters, then the main list. On the Checks page the stat tiles are the filter, and a chosen check opens beside the list (`?check=`, from 1280px; a drawer below) with the same tabs as its own page.
-- Controls are 36px tall (`h-9`), 32px when compact, 44px for landing CTAs. Search fields in a page heading are 40px tall.
-- Must work at 375px wide without horizontal page scroll; wide tables scroll inside their own container.
+- Spacing follows Tailwind's 4px scale; prefer 2, 3, 4, 6 and 8, and odd steps only to align with a neighbour.
+- App pages sit in `APP_CONTAINER` (`max-w-[1280px]`, centred). The shell is a ruled column: a 248px paper sidebar with a hairline on its right, the mark in a 48px row, each nav section under a hairline; the current page is a white cell outlined in `rule` with an indigo edge. The demo notice is a 48px white band whose bottom rule lines up with the one under the mark.
+- A page is a shell over a data hook and section components. The shell draws the heading from `app-shell-routes.ts`, closed by a hairline: serif title, optional count (`WindowStatusBar`), a one-line intro, actions on the right (`WindowToolbar`). Pages about one thing (a check, a run) show a "‹ back to the list" link and draw their own heading. Then a stat strip or filters, then the list. On Checks the stat tiles are the filter, and a chosen check opens beside the list (`?check=`, from 1280px; a drawer below) with the same tabs as its own page.
+- Controls are 36px (`h-9`), 32px compact, 44px for landing CTAs; search fields in a page heading are 40px.
+- Must work at 375px without horizontal page scroll; wide tables scroll inside their own container.
 
 ## Elevation & Depth
 
-Nothing lifts. Panels sit flat on the paper inside a `rule` hairline (`shadow-border`, a 1px ring so it never shifts layout; `shadow-border-hover` darkens it to `rule-strong`), and cells inside a panel are divided by hairlines rather than spaced apart. `shadow-md` is the one shadow, for things that float over the page: popovers, menus, dropdowns, toasts. No drop shadows on panels or buttons, no glass, no blur.
+Nothing lifts. Panels sit flat inside a `rule` hairline (`shadow-border`, a 1px ring that never shifts layout; `shadow-border-hover` darkens it to `rule-strong`), and cells inside a panel are divided by hairlines, not spaced apart. `shadow-md` is the one shadow, for things that float: popovers, menus, dropdowns, toasts. No glass, no blur.
 
 ## Shapes
 
-Square. `--radius` is 0, so `rounded-sm|md|lg|xl` (still used by the primitives) all draw square corners: panels, dialogs, menus, inputs, buttons, badges, pills, tabs, switches and code. `rounded-full` is kept for status dots, small marker dots and avatars only. Panels that matter on a page may carry registration marks at their corners (`corners`). No arbitrary radii (`rounded-[5px]`).
+Square. `--radius` is 0, so `rounded-sm|md|lg|xl` (still used by the primitives) draw square corners everywhere. `rounded-full` is for status dots, small marker dots and avatars only. Important panels may carry registration marks at their corners (`corners`). No arbitrary radii.
 
 ## Components
 
-- Use the shadcn primitives in `src/components/ui` (new-york style, Radix). Extend a primitive with a variant before writing a one-off; never fork its styles into a page.
-- **Buttons**: ink (`bg-foreground text-background`) for the main action, a `rule-strong` outline on white for the secondary one, ghost for quiet ones. Indigo is for links, focus, the current page and progress, not for buttons.
-- **Segmented filters** are a `bg-muted` track whose chosen option is filled with ink (`bg-foreground text-background`), optionally with a count; `Tabs` follows the same look on a white track.
-- **Status** is shown with `.status-dot` + `status-dot-{error|issues|clean|idle}`, a soft square status tag (`OUTCOME_PILL`, a dot in the current colour plus the finding, as in the checks table), or the `Badge` variants `failure | attention | success`. Map domain statuses in a pure function with a test (see `approvals.ts`, `checks/status.ts`), not inline in JSX.
-- **Empty, loading, error:** `EmptyState` (one quiet line, optional hint and action), the skeletons in `PageSkeletons.tsx` (shimmer, not blink), `LoadingError` / `RunReportStates` for failures with a retry. Every list and detail view has all three.
-- **Code** uses `CodeMirrorEditor` for editing and `HighlightedLine` / `.tok-*` classes for display, on `bg-code`.
-- Toasts through `sonner`; dialogs through `Dialog` / `AlertDialog` (destructive confirmations always use `AlertDialog`).
-- Icons from `lucide-react`, 16px (`size-4`) in controls, 14px (`size-3.5`) inline with caption text.
+- Use the shadcn primitives in `src/components/ui` (new-york, Radix). Add a variant before writing a one-off; never fork a primitive's styles into a page.
+- **Buttons:** ink (`bg-foreground text-background`) for the main action, a `rule-strong` outline on white for the secondary one, ghost for quiet ones. Indigo is not for buttons.
+- **Segmented filters:** a `bg-muted` track whose chosen option is filled with ink, optionally with a count; `Tabs` look the same on a white track.
+- **Status:** `.status-dot` + `status-dot-{error|issues|clean|idle}`, the square status tag `OUTCOME_PILL`, or the `Badge` variants `failure | attention | success`. Map domain statuses in a tested pure function (`approvals.ts`, `checks/status.ts`), not inline in JSX.
+- **Empty, loading, error:** `EmptyState`, the skeletons in `PageSkeletons.tsx` (shimmer, not blink), and `LoadingError` / `RunReportStates` with a retry. Every list and detail view has all three.
+- **Code:** `CodeMirrorEditor` for editing, `HighlightedLine` / `.tok-*` for display, on `bg-code`.
+- Toasts through `sonner`; dialogs through `Dialog` / `AlertDialog` (destructive confirmations always `AlertDialog`).
+- Icons from `lucide-react`: `size-4` in controls, `size-3.5` inline with caption text.
+
+## Brand mark
+
+The **Row A**: a solid A cut by a horizontal gap, the crossbar drawn as a row being checked. One source, `src/lib/brand/mark.ts`, draws it everywhere: `RowAMark` and `BrandMark` (mark plus wordmark) in the interface, the favicon `src/app/icon.svg`, and the iOS icon `src/app/apple-icon.tsx`. After changing it, regenerate the favicon with `npx tsx scripts/brand/render-icons.ts`.
+
+- **Construction:** a 64-unit square; the A is one polygon (apex (32, 7), feet x = 7–20 and 44–57 on y = 57, counter apex (32, 33)) with a 2.5-unit same-colour stroke to soften the corners, cut by a 5-unit gap at y = 30.5. A moving gap (the landing page sweeps it) stays between y = 22 and 40.
+- **Colour:** none of its own. In the interface it takes the colour of the text around it. The favicon is `#070A1A` in a light browser and `#EEF0FF` in a dark one; the iOS icon is the light mark on a dark square tile. As an alert's sender it sits on a `primary` tile. Never recolour it with status colours.
 
 ## Landing
 
-The landing page (`src/components/landing`) is the one place the product is sold rather than used. It reads like a technical document on ruled paper: structure comes from hairlines, not from cards, glows or shadows.
+The landing page (`src/components/landing`) is where the product is sold rather than used. Structure comes from hairlines, not cards, glows or shadows.
 
-- **Type.** Headlines are set in Instrument Serif at regular weight (`font-editorial`, the site-wide serif from the root layout), with the accent in italic for the second line of the hero and closing titles; Chinese falls back to a system Song face. Running text is Figtree, code (SQL, ids, cron, the terminal) Maple Mono NL, and section labels small mono capitals (`eyebrow`). All are SIL OFL and self-hosted through `next/font`; `landing.css` swaps Figtree and Maple Mono in on `.landing`.
-- **The ruled column.** Every section sits in `FRAME` (`ui.tsx`): a 1200px column with hairlines down both sides, a rule across the page above each section and a small cross where they meet (`ticks`). Inside a section, cells are divided by hairlines, never spaced apart as cards. A band of diagonal hatching (`hatch`) opens the closing section.
-- **Graph paper.** Small diagrams, code and product panels sit on graph paper (`graph`: a 20px grid in `rule` with a faint indigo wash in one corner). Panels on it are `paper-raised` with a `rule-strong` border and no shadow; the main product panels (the hero workspace, the terminal, the triage and agent snippets, the sign-in alert) carry registration marks at their corners (`corners`). Everything is light: there are no dark panels.
-- **Corners.** Square. Panels, cells, buttons, tags and code blocks have no radius; only status dots stay round.
-- **Controls.** Ink for the primary action, a `rule-strong` outline on `paper-raised` for the secondary one. Indigo is for the scroll progress line under the nav, step progress, icons and the italic accent in titles; status colours keep their meaning.
-- **Light only**, like the rest of the site; the landing nav has no theme switch.
-- **Not here.** No glows, glass, film grain, photography, pointer lights, 3D tilts or shadows.
-- **Motion.** GSAP with ScrollTrigger (`motion.ts`). Reduced motion turns off large movement (pinning, sliding, scaling) and keeps fades, typing, counters and the scan line. "What happens in one run" pins on desktop, becomes tabs with previous and next under reduced motion, and stacks on phones.
-- **Facts.** Everything the page shows exists in the product, and its numbers come from the live demo or `scripts/demo/checks.ts`.
+- **Type.** Headlines in Instrument Serif (`font-editorial`), with the second line of the hero and closing titles in italic indigo. Running text is Figtree, code (SQL, ids, cron, the terminal) Maple Mono NL, section labels small mono capitals (`eyebrow`). All SIL OFL, self-hosted through `next/font`; `landing.css` swaps Figtree and Maple Mono in on `.landing`.
+- **The ruled column.** Every section sits in `FRAME` (`ui.tsx`): a 1200px column with hairlines down both sides, a rule above each section and a small cross where they meet (`ticks`). A band of diagonal hatching (`hatch`) opens the closing section.
+- **Graph paper.** Diagrams, code and product panels sit on `graph` (a 20px grid in `rule` with a faint indigo wash in one corner). Panels on it are `paper-raised` with a `rule-strong` border; the main product panels carry `corners`. No dark panels.
+- **Controls** as in the app. Indigo is for the scroll progress line, step progress, icons and the italic accent; status colours keep their meaning.
+- **Not here:** glows, glass, film grain, photography, pointer lights, 3D tilts, shadows, a theme switch.
+- **Motion.** GSAP with ScrollTrigger (`motion.ts`). Reduced motion turns off pinning, sliding and scaling and keeps fades, typing, counters and the scan line. "What happens in one run" pins on desktop, becomes tabs with previous and next under reduced motion, and stacks on phones.
+- **Facts.** Everything shown exists in the product; numbers come from the live demo or `scripts/demo/checks.ts`.
 
 ## Docs
 
-The docs (`src/components/docs`) wrap their pages in the same ruled column as the landing page: a 1280px frame with hairlines down both sides, a 64px top bar on the paper (mark, a mono "Assay Help" label, search, the language switch and an ink "Open Assay" button), the contents on the left and "On this page" on the right, each behind a hairline. Article titles are serif `display-lg` closed by a rule; notes are white with an indigo left edge; code blocks and tables are square and ruled; previous and next are two cells of one ruled panel.
+The docs (`src/components/docs`) use the same ruled column: a 1280px frame, a 64px top bar (mark, a mono "Assay Help" label, search, the language switch, an ink "Open Assay" button), contents on the left and "On this page" on the right, each behind a hairline. Article titles are serif `display-lg` closed by a rule; notes are white with an indigo left edge; code blocks and tables are square and ruled; previous and next are two cells of one ruled panel.
 
 ## Do's and Don'ts
 
-- Do use colour only for meaning: indigo for action, the three status colours for check state.
-- Do keep every user-facing string in both English and Chinese, and check the Chinese layout: it runs longer and taller.
-- Do check 375px and 1280px, English and Chinese, before calling a UI change done.
+- Do use colour only for meaning: indigo for action, the status colours for check state.
+- Do keep every string in English and Chinese, and check the Chinese layout: it runs longer and taller.
+- Do check 375px and 1280px in both languages before calling a UI change done.
 - Do respect `prefers-reduced-motion`; motion is 150–200ms ease-out and only for state changes.
-- Don't add gradients, glows, glass blur, drop shadows, rounded corners or decorative illustrations to app pages. The Row A mark (`docs/brand.md`) is the logo; photography appears on the landing page only.
-- Don't use pill-shaped uppercase "eyebrow" labels above headlines, rows of identical icon cards, or centred hero-plus-three-cards layouts. `label-caps` is for grouping controls, not for decoration.
+- Don't add gradients, glows, glass, drop shadows, rounded corners, photography or decorative illustrations to app pages.
+- Don't use pill-shaped uppercase eyebrows above headlines, rows of identical icon cards, or a centred hero over three cards.
 - Don't use arbitrary font sizes (`text-[12.5px]`), arbitrary radii or hex colours in components.
-- Don't put text in `subtle-foreground`, not even a "—" for no value: it is 3.6–3.8:1 on light surfaces, below AA. The quietest text is `muted-foreground` (5.0–5.4:1).
 
-## Contrast
+## Type scale rules
 
-Every text pair meets WCAG AA (4.5:1). Fixed on 2026-09-27: the light-theme status colours were darkened within their hues (`success` #1D8A57 → #19754A, `attention` #B87408 → #915B06, `failure` #C93636 → #BB3232; `destructive` and `chart-2…4` follow them), and all text moved from `subtle-foreground` to `muted-foreground`. `npx @google/design.md lint` checks every component pair above.
+- **Guard.** `src/lib/type-scale.test.ts` (part of `npm test`) fails on `text-[Npx]` or a Tailwind default size (`text-xs|sm|base|lg|xl|2xl…`, with or without a variant) in `src/**/*.{ts,tsx}`, and on a literal `px`/`rem` `font-size` in `src/**/*.css`. Test files are not scanned. CSS reads `var(--text-<level>)`.
+- **`cn()`** registers the level names with tailwind-merge (`src/lib/utils/utils.ts`). Add a new level there too, or `cn("text-body-sm", "text-muted-foreground")` drops the size.
+- **Weights.** Only headings, `label-caps` and `stat` carry a weight; body levels and `caption` inherit, so `font-medium` and a parent's weight apply.
+- **Fields on phones.** `Input` and `Textarea` take their level from `sm:` up; below that a base rule in `globals.css` keeps `[data-slot=input|textarea]` at 16px (the guard's one allowed literal) because iOS Safari zooms into smaller focused fields. A raw `<input>` styled as a field opts in with `data-slot="input"`.
+- **Before deleting a class**, search for names built in template strings: `CoverageGrid.tsx` builds `` `status-dot-${tone}` ``, so `status-dot-success | attention_needed | failure` only look unused.
 
-## Migration
-
-The type-scale migration is done (September 2026, one pull request per step): tokens; primitives; the app, auth and docs shells; the pages by feature folder; the landing page, whose `--l-*` aliases gave way to the app tokens; and the clean-up of `.unified-card` and `.text-gradient`. Every text size in `src` is now a `text-<level>` utility, and CSS reads `var(--text-<level>)`.
-
-- **Guard.** `src/lib/type-scale.test.ts` runs with `npm test` and fails on any `text-[Npx]` or Tailwind default size (`text-xs|sm|base|lg|xl|2xl…`, with or without a variant) in `src/**/*.{ts,tsx}`, and on a literal `px`/`rem` `font-size` in `src/**/*.css`. Its one allowed literal is the 16px phone size for fields (below). Test files are not scanned.
-- **Levels in `cn()`.** `cn()` registers the level names with tailwind-merge (`src/lib/utils/utils.ts`). A new level goes there too, or `cn("text-body-sm", "text-muted-foreground")` drops the size.
-- **Weights.** Only headings, `label-caps` and `stat` carry a weight; body levels and `caption` inherit theirs, so `font-medium` and a parent's weight still apply.
-- **Fields on phones.** `Input` and `Textarea` take their level from `sm:` up. Below that a base rule in `globals.css` keeps `[data-slot=input|textarea]` at 16px, because iOS Safari zooms into a focused field set any smaller. A raw `<input>` styled like a field opts in with `data-slot="input"`.
-- **Before deleting a class**, search for template-built names too: `status-dot-success | attention_needed | failure` look unused, but `CoverageGrid.tsx` builds them as `` `status-dot-${tone}` ``.
-
-Choosing a level for a size that is not on the scale:
+A size that is not on the scale maps to a level:
 
 | Size | Level |
 |---|---|
@@ -361,14 +356,10 @@ Choosing a level for a size that is not on the scale:
 | 24–26px | `headline` (or `stat` for numbers) |
 | 28px, 30px; 34px, 36px; 38px; 46–52px | `display-sm`; `display-md`; `display-lg`; `display-xl` |
 
-The uppercase section label has one style: `text-label-caps uppercase text-muted-foreground`.
-
 ## Verification
 
-- Lint this file: `npx @google/design.md lint DESIGN.md` (structure, broken references, contrast of every component pair above).
-- **Screenshots** (`tests/visual/`, Playwright) at 375px and 1280px, English and Chinese: landing, sign-in, two docs articles, unauthorized; and as a demo guest, the checks list, a check with issues, a broken check and a clean one, manage checks, runs, a run report, coverage, analysis, activity and notification settings. Every page also fails on console errors.
-- **Locally**, against your own `.env.local` data with `DEMO_MODE=true`: `npm run build && npm run visual:baseline` before the change, then `npm run build && npm run visual` after it. The browser clock is frozen at the baseline's time so relative times match; output stays in the git-ignored `.visual/`.
-- **In CI**, the Visual workflow starts MongoDB, PostgreSQL and Redis, seeds the demo data, runs every check twice, then builds the base branch and the pull request and compares them in one job. A pull request that changes the look on purpose gets the `visual-change` label and lists the expected differences; the job then passes, and annotations name the pages that changed.
-- A pure refactor step (tokens, aliases) must produce no visual diff; a step that intentionally changes sizes lists the expected diffs in its pull request.
-- `tests/visual/stable.css` freezes the landing page's CSS animations (the marquee and the terminal caret) and shows its scroll-driven reveals in their final state, so two screenshots of one build match.
-- Not covered yet: loading and empty states, dialogs, and pages a guest cannot open (new check, approvals, members, API keys).
+- Lint this file: `npx @google/design.md lint DESIGN.md` (structure, references, contrast of every component pair).
+- **Screenshots** (`tests/visual/`, Playwright) at 375px and 1280px, English and Chinese: landing, sign-in, two docs articles, unauthorized; and as a demo guest, the checks list, a check with issues, a broken and a clean check, manage checks, runs, a run report, coverage, analysis, activity and notification settings. Every page also fails on console errors.
+- **Locally**, with `DEMO_MODE=true` and the demo data: `npm run build && npm run visual:baseline` before the change, `npm run build && npm run visual` after it. The browser clock is frozen at the baseline's time; output goes to the git-ignored `.visual/`. `tests/visual/stable.css` freezes the landing animations so two screenshots of one build match.
+- **In CI**, the Visual workflow seeds the demo data in MongoDB, PostgreSQL and Redis, runs every check twice, builds the base branch and the pull request and compares them. A pull request that changes the look on purpose gets the `visual-change` label and lists the expected differences; annotations name the changed pages. A pure refactor must produce no diff.
+- Not covered: loading and empty states, dialogs, and pages a guest cannot open (new check, approvals, members, API keys).
