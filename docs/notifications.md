@@ -1,6 +1,6 @@
 # Notifications
 
-Assay sends an alert when a check's outcome changes or new rows appear:
+Assay alerts when a check's outcome changes or new rows appear:
 
 | Alert | When |
 | --- | --- |
@@ -9,80 +9,76 @@ Assay sends an alert when a check's outcome changes or new rows appear:
 | New rows | More rows appear while a check already has issues |
 | Recovered | A check returns no rows again |
 
-Each destination chooses which of these it wants, optionally only for checks
-with certain tags, and the language of its messages (English or Chinese).
-Managers and admins set them up under **Settings → Notifications**.
+Managers and admins set up destinations under **Settings → Notifications**.
+Each picks which alerts it wants, optionally only for checks with certain
+tags, and its language (English or Chinese). A destination can also take:
 
-A destination can also get a **daily summary** at an hour of its choosing,
-in its own time zone: what is broken or has issues, and how many changes the
-last 24 hours had. A destination may take only the summary.
-
-A destination can also **remind** people of a problem that stays open with
-nobody on it: every 1, 4 or 24 hours while a check is broken or has issues
-and is neither acknowledged nor muted, at most three times per problem. The
-reminder names the owner and carries the same buttons as the alert.
-Reminders count from when the problem began, or from when the destination
-was made if that is later, so adding a destination does not replay old
-problems.
+- a **daily summary** at an hour of its choosing in its time zone (what is
+  broken or has issues, and how many changes the last 24 hours had), alone
+  or with alerts;
+- **reminders** for a problem nobody is on: every 1, 4 or 24 hours while a
+  check is broken or has issues and is neither acknowledged nor muted, at
+  most three times per problem, naming the owner, with the alert's buttons.
+  They count from when the problem began or the destination was made,
+  whichever is later, so a new destination does not replay old problems.
 
 ## Acknowledge, mute, owner
 
-On a check's page, the **Alerts** menu (for people who can run checks):
+The **Alerts** menu on a check's page (for people who can run checks):
 
-- **Acknowledge**: someone is on it. No more alerts for new rows of this
-  problem; a new failure or the recovery still alert. It lapses by itself
-  when the outcome changes.
-- **Mute** for 1 hour to 7 days: no alerts at all until then.
-- **Owner**: who looks after the check; shown in the checks list.
+- **Acknowledge:** someone is on it. No more new-rows alerts for this
+  problem; a new failure or the recovery still alert. It lapses when the
+  outcome changes.
+- **Mute** for 1 hour to 7 days: no alerts at all.
+- **Owner:** who looks after the check; shown in the checks list.
 
-Held-back alerts still appear in Activity, marked as muted or acknowledged.
-Every action is kept in `check_actions` with who did it and from where.
+Held-back alerts still appear in Activity, marked muted or acknowledged.
+Every action is recorded in `check_actions` with who did it and from where.
 
 Slack and Telegram alerts carry **Acknowledge** and **Mute 24 h** buttons.
-A button only acts on the check its alert was about (each event has its own
-random key), stops working after a week, and refuses to acknowledge a problem
-that has already ended. The person clicking is whoever Slack or Telegram says
-they are, so anyone in the channel can press them.
+A button acts only on its alert's check (each event has its own random key),
+expires after a week, and refuses to acknowledge a problem that has ended.
+The clicker is whoever Slack or Telegram says they are, so anyone in the
+channel can press them.
 
 ## How delivery works
 
 1. A run that changes a check's state writes an event (unique per run).
 2. The dispatcher turns each new event into one delivery per destination
-   that wants it. A unique index on (event, destination) makes this safe to
+   that wants it; a unique index on (event, destination) makes this safe to
    run anywhere, any number of times.
 3. Each delivery is claimed atomically before it is sent. Failures retry
-   after 1 min, 5 min, 30 min, 2 h and 6 h; errors that retrying cannot fix
-   (a deleted webhook, a refused signature) stop at once.
-4. A destination gets at most 30 alerts an hour; the rest wait 10 minutes
-   and try again. A wait spends one of the six attempts, so during a long
-   alert storm a delivery can end failed instead of late.
-5. A delivery that used all its attempts is kept as failed with the reason.
-   Admins list failed deliveries with
-   `GET /api/notifications/deliveries/failed` and send them again with
+   after 1 min, 5 min, 30 min, 2 h and 6 h; errors retrying cannot fix (a
+   deleted webhook, a refused signature) stop at once.
+4. A destination gets at most 30 alerts an hour; the rest wait 10 minutes.
+   A wait spends one of the six attempts, so in a long storm a delivery can
+   end failed instead of late.
+5. A delivery out of attempts stays failed with the reason. Admins list
+   them with `GET /api/notifications/deliveries/failed` and resend with
    `POST /api/notifications/deliveries/requeue`.
 
-The dispatcher runs after every run in the app, and the scheduled workflow
-calls `POST /api/notifications/dispatch` after scheduled runs. Delivery is at
-least once: a dispatcher that dies between sending and recording may send an
-alert again. A new destination never receives events from before it existed,
-and events older than 24 hours are never sent.
+The dispatcher runs after every run and after each scheduled run
+(`POST /api/notifications/dispatch` from the workflow). Delivery is at
+least once: a dispatcher that dies between sending and recording may send
+again. A destination never receives events from before it existed, and
+events older than 24 hours are never sent.
 
-Check names and error text are written by people and databases, so each
-channel escapes them for its own format (Slack mrkdwn, including the
-notification fallback; Discord markdown; Telegram HTML; WeCom markdown,
-which has no escape and gets full-width `＜＞［］` instead). Only the link
-to the check is ever a link, and Discord never pings anyone.
+Check names and error text come from people and databases, so each channel
+escapes them for its format (Slack mrkdwn, including the notification
+fallback; Discord markdown; Telegram HTML; WeCom markdown, which has no
+escape and gets full-width `＜＞［］` instead). Only the link to the check
+is ever a link, and Discord never pings anyone.
 
 ## Server setup
 
-| Variable | Needed for |
-| --- | --- |
-| `ASSAY_SECRET_KEY` | Everything. 32 random bytes, base64 (`openssl rand -base64 32`). Encrypts channel secrets with AES-256-GCM and signs OAuth state. Changing it makes stored destinations unreadable. |
-| `APP_URL` | Links in alerts and OAuth redirects, e.g. `https://assay.example.com`. On Vercel the production domain is used when unset. |
-| `CRON_SECRET` | The scheduled workflow's call to the dispatcher. Also add `APP_URL` and `CRON_SECRET` as GitHub Actions secrets. |
+`ASSAY_SECRET_KEY` is required for any destination (it seals channel
+secrets and signs OAuth state; see [secret-rotation.md](secret-rotation.md)).
+`APP_URL` builds the links in alerts and OAuth redirects (on Vercel the
+production domain is used when unset). `CRON_SECRET` lets the scheduled
+workflow call the dispatcher. See [deployment.md](deployment.md#configuration).
 
-Without the one-click variables below, people can still paste a webhook URL
-for Slack and Discord.
+Without the one-click variables below, people can still paste a Slack or
+Discord webhook URL.
 
 ### Slack (one click)
 
@@ -107,42 +103,40 @@ settings:
   token_rotation_enabled: false
 ```
 
-Set `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET` and `SLACK_SIGNING_SECRET`
-from **Basic Information**. Buttons appear only in channels connected with
-"Add to Slack" while the signing secret is set; a pasted webhook may belong
-to another Slack app, whose clicks would never reach Assay.
-To let other workspaces install it, enable **Manage Distribution**.
-"Add to Slack" then opens Slack's channel picker; Assay keeps only the
-webhook for the chosen channel, not a bot token.
+Set `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET` and `SLACK_SIGNING_SECRET` from
+**Basic Information**. Buttons appear only in channels connected with "Add
+to Slack" while the signing secret is set (a pasted webhook may belong to
+another Slack app). Enable **Manage Distribution** to let other workspaces
+install it. Assay keeps only the chosen channel's webhook, not a bot token.
 
 ### Discord (one click)
 
-Create an application at <https://discord.com/developers/applications>,
-add the redirect `<APP_URL>/api/integrations/discord/callback` under
+Create an application at <https://discord.com/developers/applications>, add
+the redirect `<APP_URL>/api/integrations/discord/callback` under
 **OAuth2**, and set `DISCORD_CLIENT_ID` and `DISCORD_CLIENT_SECRET`. The
-`webhook.incoming` scope lets people pick a server and channel in Discord.
+`webhook.incoming` scope lets people pick a server and channel.
 
 ### Telegram
 
-1. Create a bot with [@BotFather](https://t.me/BotFather) and set
-   `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` (without the `@`).
+1. Create a bot with [@BotFather](https://t.me/BotFather); set
+   `TELEGRAM_BOT_TOKEN` and `TELEGRAM_BOT_USERNAME` (without `@`).
 2. In production, set `TELEGRAM_WEBHOOK_SECRET` (letters, digits, `_`, `-`)
-   and run `npm run telegram:webhook` once so Telegram pushes updates to
-   `/api/integrations/telegram/webhook`. Without it (for example locally)
-   the settings page polls Telegram while someone is linking a chat, and
-   button clicks are only picked up then; use the webhook in production.
+   and run `npm run telegram:webhook` once, so Telegram pushes updates to
+   `/api/integrations/telegram/webhook`. Without it (e.g. locally) the
+   settings page polls Telegram while someone links a chat, and button
+   clicks are picked up only then.
 
-Linking: **Connect** shows two links carrying a one-time code, valid for 15
-minutes. Opening one adds the bot to a group or starts a direct chat; the
-bot receives `/start <code>` and that chat becomes the destination. Only a
-hash of the code is stored.
+**Connect** shows two links carrying a one-time code, valid for 15 minutes:
+one adds the bot to a group, the other starts a direct chat. The bot
+receives `/start <code>` and that chat becomes the destination. Only a hash
+of the code is stored.
 
 ### Feishu / Lark and WeCom
 
-Nothing to configure on the server. In a group, add a custom bot (Feishu:
-群设置 → 群机器人 → 自定义机器人; WeCom: 群聊 → 群机器人 → 添加) and paste
-its webhook URL. For Feishu bots with signature verification on, paste the
-secret as well.
+Nothing to configure on the server. Add a custom bot to the group (Feishu:
+group settings → Bots → Custom bot; WeCom: group chat → Group bots → Add)
+and paste its webhook URL, plus the secret for Feishu bots with signature
+verification.
 
 ### Generic webhook
 
@@ -174,4 +168,4 @@ function verify(secret: string, timestamp: string, body: string, signature: stri
 ```
 
 Webhook hosts are resolved before every request and refused when any
-address is private, loopback or link-local, and redirects are not followed.
+address is private, loopback or link-local; redirects are not followed.

@@ -37,9 +37,9 @@ Sign in once, then make yourself admin: `npm run user:set-role -- you@example.co
 
 ### Local services
 
-No cloud accounts needed for development: `npm run dev:services` starts
-MongoDB, PostgreSQL and Redis (with Upstash's REST protocol) from
-`compose.yaml`. Point `.env.local` at them:
+`npm run dev:services` starts MongoDB, PostgreSQL and Redis (with Upstash's
+REST protocol) from `compose.yaml`, so development needs no cloud accounts.
+Point `.env.local` at them:
 
 ```bash
 MONGODB_URI=mongodb://127.0.0.1:27017/assay_dev
@@ -51,31 +51,30 @@ APP_URL=http://localhost:3000
 AUTH_DEV_PASSWORD_LOGIN=true   # email and password sign-in, next dev only
 ```
 
-With `AUTH_DEV_PASSWORD_LOGIN=true` the sign-in page also offers email and
-password, so you need no Google or GitHub app locally; it is refused in
-production.
+`AUTH_DEV_PASSWORD_LOGIN` removes the need for a Google or GitHub app
+locally; production refuses it.
 
 ### Scheduled runs
 
-A schedule calls `POST /api/cron/run-scheduled` every 30 minutes: an Upstash
-QStash schedule (signed) or any cron with the `CRON_SECRET` bearer token. The
-GitHub Actions workflow `.github/workflows/sql-check-cron.yml` is the
-fallback, and a server of your own can run `npm run sql:run-scheduled` from
-cron. See [docs/deployment.md](docs/deployment.md).
+Scheduled runs need something to call `POST /api/cron/run-scheduled` every
+30 minutes (QStash, any cron, or `npm run sql:run-scheduled`); see
+[docs/deployment.md](docs/deployment.md#scheduled-runs).
 
 ## Documentation
 
 | | |
 | --- | --- |
-| [docs/architecture.md](docs/architecture.md) | Layers, run pipeline, concurrency rules, phases |
-| [docs/database.md](docs/database.md) | Collections, fields, indexes, retention, concurrency |
-| [docs/authentication.md](docs/authentication.md) | Sign-in, roles, moving from Clerk |
+| [docs/architecture.md](docs/architecture.md) | Layers, how a check runs, data sources, API conventions |
 | [docs/engineering.md](docs/engineering.md) | Invariants, public contracts, hotspots, verification |
-| [docs/roadmap.md](docs/roadmap.md) | Reliability and infrastructure goals |
-| [docs/notifications.md](docs/notifications.md) | Alert channels, delivery model, setup |
+| [docs/database.md](docs/database.md) | Collections, fields, indexes, retention, concurrency |
+| [docs/authentication.md](docs/authentication.md) | Sign-in and roles |
+| [docs/notifications.md](docs/notifications.md) | Alert channels, delivery, setup |
 | [docs/mcp.md](docs/mcp.md) | Connecting agents (OAuth or API key), tools, security |
-| [docs/brand.md](docs/brand.md) | The Row A mark, colours, type |
-| [docs/deployment.md](docs/deployment.md) | Configuration, scheduled runs, first deploy and a smoke test after each one |
+| [docs/deployment.md](docs/deployment.md) | Configuration, scheduled runs, first deploy, smoke test, rollback |
+| [docs/backup-restore.md](docs/backup-restore.md) | MongoDB backups and restore |
+| [docs/secret-rotation.md](docs/secret-rotation.md) | Rotating or recovering `ASSAY_SECRET_KEY` |
+| [docs/roadmap.md](docs/roadmap.md) | Open reliability goals |
+| [DESIGN.md](DESIGN.md) | Design tokens, components, the brand mark |
 | [scripts/README.md](scripts/README.md) | Command-line tools and migrations |
 | `/docs` in the app | User guide (English and Chinese) |
 
@@ -83,8 +82,7 @@ cron. See [docs/deployment.md](docs/deployment.md).
 
 ```bash
 npm run typecheck && npm run lint && npm test   # before every commit (see AGENTS.md)
-npx knip                                          # unused files, exports and dependencies (CI runs it)
-npm run build
+npx knip && npm run build                         # before a pull request (CI runs both)
 ```
 
 ```
