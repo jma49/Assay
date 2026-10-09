@@ -53,21 +53,20 @@ export function DocsArticle({
 
   return (
     <div className="flex">
-      <article className="min-w-0 flex-1 px-5 py-8 sm:px-10 lg:px-12" lang={language === "zh" ? "zh-CN" : "en"}>
-        <h1 className="font-display text-display-md leading-tight font-semibold tracking-tight">{page.title[language]}</h1>
-        <div className="docs-prose mt-6">{content[language]}</div>
+      <article className="min-w-0 flex-1 px-5 py-10 sm:px-10 lg:px-12" lang={language === "zh" ? "zh-CN" : "en"}>
+        <h1 className="font-editorial border-b pb-6 text-display-lg">{page.title[language]}</h1>
+        <div className="docs-prose mt-8">{content[language]}</div>
 
-        <nav className="mt-14 grid gap-3 border-t pt-6 sm:grid-cols-2" aria-label="Previous and next">
+        {/* Two cells divided by hairlines, not two cards. */}
+        <nav className="mt-14 grid border sm:grid-cols-2 sm:divide-x max-sm:divide-y" aria-label="Previous and next">
           {previous ? (
-            <Link href={`/docs/${previous.slug}`} className="flex flex-col items-start rounded-lg bg-card px-4 py-2.5 shadow-border transition-[box-shadow] duration-150 hover:shadow-border-hover">
+            <Link href={`/docs/${previous.slug}`} className="flex flex-col items-start bg-card px-5 py-4 transition-colors duration-150 hover:bg-muted">
               <span className="text-caption text-muted-foreground">← {t.previous}</span>
               <span className="text-body-md font-medium">{previous.title[language]}</span>
             </Link>
-          ) : (
-            <span />
-          )}
+          ) : null}
           {next && (
-            <Link href={`/docs/${next.slug}`} className="flex flex-col items-end rounded-lg bg-card px-4 py-2.5 text-right shadow-border transition-[box-shadow] duration-150 hover:shadow-border-hover">
+            <Link href={`/docs/${next.slug}`} className="col-start-2 flex flex-col items-end bg-card px-5 py-4 text-right transition-colors duration-150 hover:bg-muted max-sm:col-start-1">
               <span className="text-caption text-muted-foreground">{t.next} →</span>
               <span className="text-body-md font-medium">{next.title[language]}</span>
             </Link>
@@ -76,9 +75,9 @@ export function DocsArticle({
       </article>
 
       {toc.length > 0 && (
-        <aside className="hidden w-56 shrink-0 xl:block">
-          <div className="sticky top-14 px-5 py-8">
-            <p className="text-label-caps uppercase text-muted-foreground">{t.onThisPage}</p>
+        <aside className="hidden w-56 shrink-0 border-l xl:block">
+          <div className="sticky top-16 px-5 py-10">
+            <p className="font-mono text-label-caps uppercase text-muted-foreground">{t.onThisPage}</p>
             <ul className="mt-2 space-y-1 border-l">
               {toc.map((heading) => (
                 <li key={heading.id}>

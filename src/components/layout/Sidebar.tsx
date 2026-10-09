@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ComponentType } from "react";
-import { useTheme } from "next-themes";
 import {
   Activity,
   BarChart3,
@@ -14,8 +13,6 @@ import {
   History,
   KeyRound,
   ListChecks,
-  Moon,
-  Sun,
   Table2,
   Users,
 } from "lucide-react";
@@ -25,7 +22,6 @@ import { useLanguage } from "@/components/common/LanguageProvider";
 import { useCurrentUser } from "@/lib/auth/client";
 import { useMe } from "@/lib/auth/use-me";
 import { cn } from "@/lib/utils/utils";
-import { useHydrated } from "@/components/common/use-hydrated";
 
 type Label = { en: string; zh: string };
 
@@ -66,11 +62,6 @@ const SECTIONS: { title: Label; items: NavItem[] }[] = [
   },
 ];
 
-const COPY = {
-  en: { theme: "Toggle dark mode" },
-  zh: { theme: "切换深色模式" },
-};
-
 /** How specifically an item matches the path: the length of its href when it owns the path, or 0. */
 function matchLength(pathname: string, item: NavItem): number {
   const owns = pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -86,29 +77,27 @@ function isActive(pathname: string, item: NavItem, all: NavItem[]): boolean {
 export function Sidebar() {
   const pathname = usePathname() ?? "";
   const { language, setLanguage } = useLanguage();
-  const { resolvedTheme, setTheme } = useTheme();
   const { user, isLoaded } = useCurrentUser();
   const me = useMe();
-  const mounted = useHydrated();
-  const t = COPY[language] ?? COPY.en;
 
   // Items that need a permission stay hidden until it is known, so they never flash for people without it.
   const allowed = (item: NavItem) => !item.requires || (me?.permissions.includes(item.requires) ?? false);
   const allItems = SECTIONS.flatMap((section) => section.items);
 
+  // A ruled column on the paper: the mark, then each section under a hairline, the account at the foot.
   return (
-    <aside className="flex min-h-0 flex-col gap-7 border-r border-sidebar-border bg-sidebar px-3 py-5 max-md:flex-row max-md:items-center max-md:gap-3 max-md:overflow-x-auto max-md:border-r-0 max-md:border-b max-md:px-4 max-md:py-2">
-      <Link href="/checks" className="flex items-center px-3 py-1 max-md:px-0">
+    <aside className="flex min-h-0 flex-col border-r border-sidebar-border bg-sidebar max-md:flex-row max-md:items-center max-md:gap-3 max-md:overflow-x-auto max-md:border-r-0 max-md:border-b max-md:px-4 max-md:py-2">
+      <Link href="/checks" className="flex h-12 shrink-0 items-center border-b border-sidebar-border px-5 max-md:h-auto max-md:border-b-0 max-md:px-0">
         <BrandMark className="max-md:[&>span:last-child]:hidden" />
       </Link>
 
-      <nav aria-label={language === "zh" ? "主导航" : "Main"} className="flex flex-col gap-5 max-md:flex-row max-md:gap-1">
+      <nav aria-label={language === "zh" ? "主导航" : "Main"} className="flex flex-col max-md:flex-row max-md:gap-1">
         {SECTIONS.map((section) => {
           const items = section.items.filter(allowed);
           if (items.length === 0) return null;
           return (
-            <div key={section.title.en} className="flex flex-col gap-0.5 max-md:flex-row">
-              <p className="px-3 pb-1.5 text-label-caps uppercase text-muted-foreground max-md:hidden">
+            <div key={section.title.en} className="flex flex-col gap-px border-b border-sidebar-border px-3 pt-4 pb-3 max-md:flex-row max-md:border-b-0 max-md:p-0">
+              <p className="px-2 pb-2 font-mono text-label-caps uppercase text-muted-foreground max-md:hidden">
                 {section.title[language]}
               </p>
               {items.map((item) => {
@@ -120,14 +109,14 @@ export function Sidebar() {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "relative flex h-9 items-center gap-3 rounded-lg px-3 text-body-md whitespace-nowrap transition-colors",
+                      "relative flex h-9 items-center gap-3 px-2 text-body-md whitespace-nowrap transition-colors",
                       active
-                        ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                        ? "bg-card font-medium text-foreground shadow-border"
                         : "text-sidebar-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
-                    {/* A bar on the active item, so the current page reads at a glance. */}
-                    {active && <span className="absolute inset-y-2 left-0 w-[3px] rounded-full bg-primary max-md:hidden" aria-hidden />}
+                    {/* An indigo rule on the current page's edge, so it reads at a glance. */}
+                    {active && <span className="absolute inset-y-0 left-0 w-0.5 bg-primary max-md:hidden" aria-hidden />}
                     <Icon className={cn("size-4 shrink-0", active ? "text-primary" : "text-muted-foreground")} />
                     {item.label[language]}
                   </Link>
@@ -138,29 +127,19 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto flex flex-col gap-3 max-md:mt-0 max-md:ml-auto max-md:flex-row max-md:items-center">
-        <div className="flex items-center gap-1 border-t border-sidebar-border px-1 pt-3 max-md:border-t-0 max-md:pt-0">
-          {isLoaded && user && (
-            <div className="mr-auto flex min-w-0 items-center gap-2 max-md:mr-0">
-              <UserMenu user={user} />
-            </div>
-          )}
-          <button
-            type="button"
-            className="h-8 rounded-full px-2.5 text-caption text-muted-foreground hover:bg-muted hover:text-foreground"
-            onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
-          >
-            {language === "zh" ? "EN" : "中文"}
-          </button>
-          <button
-            type="button"
-            aria-label={t.theme}
-            className="grid size-8 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
-            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-          >
-            {mounted && resolvedTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-          </button>
-        </div>
+      <div className="mt-auto flex items-center gap-1 border-t border-sidebar-border px-3 py-3 max-md:mt-0 max-md:ml-auto max-md:border-t-0 max-md:p-0">
+        {isLoaded && user && (
+          <div className="mr-auto flex min-w-0 items-center gap-2 max-md:mr-0">
+            <UserMenu user={user} />
+          </div>
+        )}
+        <button
+          type="button"
+          className="h-8 border border-transparent px-2.5 font-mono text-caption text-muted-foreground hover:border-rule-strong hover:bg-card hover:text-foreground"
+          onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
+        >
+          {language === "zh" ? "EN" : "中文"}
+        </button>
       </div>
     </aside>
   );

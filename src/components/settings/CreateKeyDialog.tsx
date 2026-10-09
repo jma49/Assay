@@ -73,7 +73,7 @@ export function CreateKeyDialog({
             </div>
             <div className="grid gap-1.5">
               <span className="text-body-sm font-medium">{t.expires}</span>
-              <div className="inline-flex w-fit rounded-full bg-muted p-1" role="radiogroup" aria-label={t.expires}>
+              <div className="inline-flex w-fit rounded-none bg-muted p-1" role="radiogroup" aria-label={t.expires}>
                 {EXPIRY_DAYS.map((n) => (
                   <button
                     key={n}
@@ -81,7 +81,7 @@ export function CreateKeyDialog({
                     role="radio"
                     aria-checked={days === n}
                     onClick={() => setDays(n)}
-                    className={`h-8 rounded-full px-3.5 text-body-sm font-medium transition-[background-color,color] duration-150 ${days === n ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
+                    className={`h-8 rounded-none px-3.5 text-body-sm font-medium transition-[background-color,color] duration-150 ${days === n ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
                   >
                     {t.days(n)}
                   </button>

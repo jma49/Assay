@@ -26,7 +26,7 @@ export function DailyBreakdown({ days, hint, language }: { days: DailyTrendPoint
             {day.runs === 0 ? (
               <span className="text-muted-foreground max-sm:col-span-1">{copy.noRunsDay}</span>
             ) : (
-              <div className="flex h-2 overflow-hidden rounded-full bg-muted" style={{ width: `${(day.runs / most) * 100}%` }} aria-hidden>
+              <div className="flex h-2 overflow-hidden rounded-none bg-muted" style={{ width: `${(day.runs / most) * 100}%` }} aria-hidden>
                 {OUTCOMES.map((outcome) =>
                   day[outcome] > 0 ? <span key={outcome} className={BAR[outcome]} style={{ width: `${(day[outcome] / day.runs) * 100}%` }} /> : null,
                 )}

@@ -9,7 +9,8 @@ const port = Number(process.env.VISUAL_PORT ?? 3100);
 const baseURL = process.env.VISUAL_BASE_URL ?? `http://localhost:${port}`;
 
 const widths = { phone: 375, desktop: 1280 };
-const schemes = ["light", "dark"] as const;
+// Assay is light only; a dark system setting renders the same page.
+const schemes = ["light"] as const;
 
 export default defineConfig({
   testDir: "tests/visual",

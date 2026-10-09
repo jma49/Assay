@@ -35,7 +35,7 @@ export const LoadingError: React.FC<LoadingErrorProps> = ({ error }) => {
   const t = COPY[useLanguage().language];
   return (
     <div className="flex flex-col justify-center items-center min-h-screen p-4">
-      <Card className="w-full max-w-md border-destructive bg-card/90 dark:bg-card/90 backdrop-blur-sm">
+      <Card className="w-full max-w-md border-destructive bg-card/90 backdrop-blur-sm">
         <CardHeader>
           <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-2" />
           <CardTitle className="text-center text-destructive">

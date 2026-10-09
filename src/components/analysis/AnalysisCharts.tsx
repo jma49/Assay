@@ -6,7 +6,7 @@ import type { RunOutcome } from "@/domain/run";
 import { formatDayKey } from "@/lib/utils/datetime";
 import type { DailyTrendPoint, OutcomeCounts } from "./analytics";
 
-// Chart ink resolves to the design tokens, so it follows light and dark mode.
+// Chart ink resolves to the design tokens.
 const INK = { text: "var(--foreground)", muted: "var(--muted-foreground)", grid: "var(--border)", surface: "var(--popover)" };
 
 const tooltipStyle = {

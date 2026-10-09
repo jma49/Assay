@@ -109,8 +109,8 @@ export function CoverageGrid({
     <div className="space-y-5">
       <div className="max-w-sm">
         <p className="text-body-sm text-muted-foreground">{t.tablesCovered(report.covered, report.tables.length)}</p>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${Math.round(share * 100)}%` }} />
+        <div className="mt-2 h-2 overflow-hidden rounded-none bg-muted">
+          <div className="h-full rounded-none bg-primary" style={{ width: `${Math.round(share * 100)}%` }} />
         </div>
       </div>
       <ul aria-label={t.list} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -123,7 +123,7 @@ export function CoverageGrid({
                   <span className={cn("status-dot shrink-0", `status-dot-${tone}`)} aria-hidden />
                   <span className="truncate font-mono text-body-md">{row.table}</span>
                 </span>
-                <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-caption", row.missing ? "bg-failure-soft text-failure" : row.checks.length ? "bg-primary-soft text-primary-ink" : "bg-muted text-muted-foreground")}>
+                <span className={cn("shrink-0 rounded-none px-2 py-0.5 text-caption", row.missing ? "bg-failure-soft text-failure" : row.checks.length ? "bg-primary-soft text-primary-ink" : "bg-muted text-muted-foreground")}>
                   {row.missing ? t.missing : row.checks.length}
                 </span>
               </div>

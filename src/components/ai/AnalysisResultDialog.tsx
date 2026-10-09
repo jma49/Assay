@@ -21,8 +21,7 @@ SyntaxHighlighter.registerLanguage('bash', bash);
 SyntaxHighlighter.registerLanguage('javascript', javascript);
 SyntaxHighlighter.registerLanguage('typescript', typescript);
 SyntaxHighlighter.registerLanguage('python', python);
-import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { useTheme } from 'next-themes';
+import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface AnalysisResultDialogProps {
   isOpen: boolean;
@@ -39,7 +38,6 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
   type,
   title
 }) => {
-  const { theme } = useTheme();
   const [copiedIndex, setCopiedIndex] = React.useState<number | null>(null);
 
   const copyToClipboard = async (text: string, index: number) => {
@@ -249,7 +247,6 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
   if (!result) return null;
 
   const sections = parseAnalysisResult(result);
-  const isDark = theme === 'dark';
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -275,7 +272,7 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
           {sections.map((section, index) => (
             <div key={index}>
               {section.type === 'text' ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none">
+                <div className="prose prose-sm max-w-none">
                   {formatTextContent(section.content)}
                 </div>
               ) : (
@@ -300,7 +297,7 @@ const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
                   <div className="rounded-lg border border-border overflow-hidden">
                     <SyntaxHighlighter
                       language={section.language || 'sql'}
-                      style={isDark ? oneDark : oneLight}
+                      style={oneLight}
                       customStyle={{
                         margin: 0,
                         padding: '1rem',

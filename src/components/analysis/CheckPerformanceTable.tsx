@@ -61,8 +61,8 @@ export function CheckPerformanceTable({ scripts, hint, language }: { scripts: Ch
                 <td className="px-3 py-2.5">
                   {script.runs > 0 ? (
                     <div className="flex items-center gap-3">
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                        <div className="h-full rounded-full bg-foreground/60" style={{ width: `${script.cleanRate}%` }} />
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-none bg-muted">
+                        <div className="h-full rounded-none bg-foreground/60" style={{ width: `${script.cleanRate}%` }} />
                       </div>
                       <span className="w-10 text-right tabular-nums">{script.cleanRate.toFixed(0)}%</span>
                     </div>

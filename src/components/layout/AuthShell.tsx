@@ -39,7 +39,7 @@ export function AuthShell({
       <main className="flex flex-1 items-start justify-center px-4 pt-12 pb-16 sm:pt-20">
         <div className="flex w-full max-w-[420px] flex-col items-center gap-6 rounded-xl bg-card px-6 pt-8 pb-6 shadow-border">
           <div className="space-y-2 text-center">
-            <h1 className="text-display-sm leading-tight font-semibold">{title}</h1>
+            <h1 className="font-editorial text-display-sm">{title}</h1>
             {description && <p className="text-body-md text-muted-foreground">{description}</p>}
           </div>
           {children}

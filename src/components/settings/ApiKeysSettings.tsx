@@ -50,7 +50,7 @@ export function ApiKeysSettings() {
       {keys && <WindowStatusBar>{t.count(keys.length)}</WindowStatusBar>}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="max-w-2xl space-y-1.5">
-          <h1 className="text-display-sm leading-tight font-bold">{t.title}</h1>
+          <h1 className="font-editorial text-display-sm">{t.title}</h1>
           <p className="text-body-md leading-6 text-muted-foreground">{t.intro}</p>
           <Endpoint url={endpoint} />
         </div>

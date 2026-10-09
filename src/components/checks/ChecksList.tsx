@@ -103,7 +103,7 @@ function Now({ check, t }: { check: CheckSummary; t: Copy }) {
   if (!state) return <span className="text-muted-foreground">—</span>;
   const text = state.outcome === "error" ? t.queryError : t.rows(state.rowCount);
   return (
-    <span className={cn("inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-caption font-medium tabular-nums", OUTCOME_PILL[state.outcome])}>
+    <span className={cn("inline-flex h-6 items-center gap-1.5 rounded-none px-2.5 text-caption font-medium tabular-nums", OUTCOME_PILL[state.outcome])}>
       <span className="size-1.5 rounded-full bg-current" aria-hidden />
       {text}
     </span>
@@ -218,7 +218,7 @@ export function ChecksList() {
       <WindowToolbar>
         <div className="relative w-72 max-sm:w-full">
           <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input type="search" aria-label={t.search} placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} className="h-10 rounded-full pl-10" />
+          <Input type="search" aria-label={t.search} placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} className="h-10 rounded-none pl-10" />
         </div>
       </WindowToolbar>
       {data && <WindowStatusBar>{t.count(checks.length)}</WindowStatusBar>}

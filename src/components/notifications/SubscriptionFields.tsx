@@ -46,7 +46,7 @@ export function SubscriptionFields({ value, onChange }: { value: Subscription; o
         </div>
         <div className="grid content-start gap-1.5">
           <span className="text-body-sm font-medium">{t.language}</span>
-          <div className="inline-flex rounded-full bg-muted p-1" role="radiogroup" aria-label={t.language}>
+          <div className="inline-flex rounded-none bg-muted p-1" role="radiogroup" aria-label={t.language}>
             {(["en", "zh"] as const).map((lang) => (
               <button
                 key={lang}
@@ -55,7 +55,7 @@ export function SubscriptionFields({ value, onChange }: { value: Subscription; o
                 aria-checked={value.language === lang}
                 onClick={() => onChange({ ...value, language: lang })}
                 className={cn(
-                  "h-8 rounded-full px-3.5 text-body-sm font-medium transition-[background-color,color] duration-150",
+                  "h-8 rounded-none px-3.5 text-body-sm font-medium transition-[background-color,color] duration-150",
                   value.language === lang ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
                 )}
               >

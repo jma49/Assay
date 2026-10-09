@@ -1,32 +1,23 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
-import { useTheme } from "next-themes";
-import { okaidia } from "@uiw/codemirror-theme-okaidia";
 import { githubLight } from "@uiw/codemirror-theme-github";
-import { dracula } from "@uiw/codemirror-theme-dracula";
 import { nord } from "@uiw/codemirror-theme-nord";
-import { materialLight, materialDark } from "@uiw/codemirror-theme-material";
+import { materialLight } from "@uiw/codemirror-theme-material";
 import { eclipse } from "@uiw/codemirror-theme-eclipse";
-import { tokyoNight } from "@uiw/codemirror-theme-tokyo-night";
-import { solarizedLight, solarizedDark } from "@uiw/codemirror-theme-solarized";
+import { solarizedLight } from "@uiw/codemirror-theme-solarized";
 
+// The app is light only, so the editor offers light themes; a saved dark one falls back to the default.
 const THEMES = {
   eclipse,
   githubLight,
   materialLight,
   nord,
   solarizedLight,
-  tokyoNight,
-  okaidia,
-  dracula,
-  materialDark,
-  solarizedDark,
 };
 
 const isTheme = (name: unknown): name is keyof typeof THEMES => typeof name === "string" && name in THEMES;
 
 const STORAGE_KEY = "editor-theme";
-const fallbackFor = (appTheme: string | undefined): keyof typeof THEMES => (appTheme === "dark" ? "tokyoNight" : "eclipse");
-
+const FALLBACK: keyof typeof THEMES = "eclipse";
 function readSaved(): keyof typeof THEMES | null {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -44,18 +35,16 @@ function subscribe(onChange: () => void) {
 
 /**
  * The editor's colour theme: the one picked in EditorThemeSettings (kept in
- * localStorage and announced with an `editorThemeChange` event), else one
- * that matches the app's light or dark mode.
+ * localStorage and announced with an `editorThemeChange` event), else Eclipse.
  */
 export function useEditorTheme() {
-  const { theme: appTheme } = useTheme();
   const saved = useSyncExternalStore(subscribe, readSaved, () => null);
-  const name = saved ?? fallbackFor(appTheme);
+  const name = saved ?? FALLBACK;
 
-  // Without a saved choice, remember the one matching the app's mode.
+  // Without a saved choice, remember the default.
   useEffect(() => {
-    if (readSaved() === null) localStorage.setItem(STORAGE_KEY, fallbackFor(appTheme));
-  }, [appTheme]);
+    if (readSaved() === null) localStorage.setItem(STORAGE_KEY, FALLBACK);
+  }, []);
 
-  return useMemo(() => THEMES[name] ?? (appTheme === "dark" ? tokyoNight : eclipse), [name, appTheme]);
+  return useMemo(() => THEMES[name], [name]);
 }

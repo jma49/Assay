@@ -19,7 +19,7 @@ The sidebar has two groups, **Monitor** and **Workspace**.
 | **Members** | Who has access and with which role (shown to admins) |
 | **Docs** | These pages |
 
-Items you do not have permission for are hidden. At the bottom of the sidebar are your account, the language switch and the dark mode switch. On a phone the sidebar becomes a row along the top.
+Items you do not have permission for are hidden. At the bottom of the sidebar are your account and the language switch. On a phone the sidebar becomes a row along the top.
 
 ## Top bar
 

@@ -116,7 +116,7 @@ export function Pagination({
                   onKeyDown={handleJumpKeyDown}
                   placeholder={t.jumpToPage}
                   className={cn(
-                    "w-12 h-6 px-1 text-caption text-center border border-input bg-card rounded-[3px] focus:outline-none focus:ring-1 focus:ring-ring",
+                    "w-12 h-6 px-1 text-caption text-center border border-input bg-card rounded-none focus:outline-none focus:ring-1 focus:ring-ring",
                     layer("relative z-50"),
                   )}
                   style={pointerStyle}

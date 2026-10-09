@@ -6,7 +6,7 @@ All fonts are licensed under the SIL Open Font License 1.1 and are self-hosted
 through `next/font`.
 
 - **Geist** and **Geist Mono** (interface, headings and code in the app).
-- **Instrument Serif** (headlines on the landing and sign-in pages).
+- **Instrument Serif** (page titles and headlines across the site).
 - **Figtree** (running text on the landing page).
 - **Maple Mono NL** (code on the landing page), shipped unmodified from the
   v7.9 release of [maple-font](https://github.com/subframe7536/maple-font) in

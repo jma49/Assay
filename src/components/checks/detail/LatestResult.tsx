@@ -23,7 +23,7 @@ export function LatestResult({ latest, t }: { latest: LatestRun; t: Copy }) {
   if (latest.rowCount === 0) {
     return (
       <div className="flex flex-col items-center gap-1.5 px-6 py-12 text-center">
-        <span className="grid size-10 place-items-center rounded-full bg-success-soft text-success">✓</span>
+        <span className="grid size-10 place-items-center rounded-none bg-success-soft text-success">✓</span>
         <p className="text-body-md font-medium">{t.noRows}</p>
         <p className="text-body-sm text-muted-foreground">
           {t.passed} {latest.fixed.length > 0 && t.fixedRows(latest.fixed.length)}

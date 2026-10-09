@@ -32,14 +32,14 @@ export function RecentRuns({
         {/* Always 30 slots, newest on the right, so the strip reads the same for every check. */}
         <div className="grid grid-cols-[repeat(30,minmax(0,1fr))] gap-[3px]">
           {Array.from({ length: 30 - history.length }, (_, i) => (
-            <span key={`empty-${i}`} className="h-7 rounded-[3px] bg-muted" />
+            <span key={`empty-${i}`} className="h-7 rounded-none bg-muted" />
           ))}
           {history.map((point, i) => (
             <span
               key={i}
               title={`${formatDateTime(point.at, language)} · ${point.outcome === "error" ? t.queryError : t.rows(point.rowCount)}`}
               className={cn(
-                "h-7 rounded-[3px]",
+                "h-7 rounded-none",
                 point.outcome === "error" ? "bg-failure" : point.outcome === "issues" ? "bg-attention" : "bg-success",
               )}
             />

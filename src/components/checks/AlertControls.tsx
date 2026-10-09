@@ -63,13 +63,13 @@ export function AlertBadges({ alerting }: { alerting: AlertingDto }) {
   return (
     <>
       {alerting.acknowledged && (
-        <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 font-medium text-primary-ink" title={formatDateTime(alerting.acknowledged.at, language)}>
+        <span className="inline-flex items-center gap-1 rounded-none bg-primary-soft px-2 py-0.5 font-medium text-primary-ink" title={formatDateTime(alerting.acknowledged.at, language)}>
           <Hand className="size-3" />
           {t.acknowledgedBy(alerting.acknowledged.by, formatRelative(alerting.acknowledged.at, language))}
         </span>
       )}
       {alerting.mutedUntil && (
-        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 font-medium text-muted-foreground" title={alerting.mutedBy ?? undefined}>
+        <span className="inline-flex items-center gap-1 rounded-none bg-muted px-2 py-0.5 font-medium text-muted-foreground" title={alerting.mutedBy ?? undefined}>
           <BellOff className="size-3" />
           {t.mutedUntil(formatDateTime(alerting.mutedUntil, language))}
         </span>

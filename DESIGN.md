@@ -1,48 +1,28 @@
 ---
 version: alpha
 name: Assay
-description: A calm, modern operations UI for SQL data checks. Indigo accent, cool neutrals, generous type and pill-shaped controls, and three status colours that mean the same thing on every screen.
+description: A calm operations UI for SQL data checks, set like a technical document on ruled paper. Light only, warm paper neutrals, hairlines instead of cards and shadows, square corners, serif titles, an indigo accent and three status colours that mean the same thing on every screen.
 colors:
   primary: "#4F63E8"
   on-primary: "#FFFFFF"
   primary-soft: "#EEF0FE"
   primary-ink: "#2B3AAE"
-  background: "#F6F7F9"
-  foreground: "#15161C"
+  background: "#F8F7F3"
+  foreground: "#16171B"
   card: "#FFFFFF"
-  sidebar: "#FFFFFF"
-  muted: "#F1F2F5"
-  muted-foreground: "#5A5D6B"
-  subtle-foreground: "#8A8E9C"
-  border: "#E4E6EC"
-  border-strong: "#D3D6DF"
+  sidebar: "#F8F7F3"
+  muted: "#F0EEE7"
+  muted-foreground: "#64656B"
+  subtle-foreground: "#9A988F"
+  border: "#E3E1D8"
+  border-strong: "#CBC8BC"
   success: "#1F7A52"
   success-soft: "#E8F5EE"
   attention: "#8A5A12"
   attention-soft: "#FBF1DE"
   failure: "#B42A2A"
   failure-soft: "#FBEAEA"
-  code-bg: "#F7F8FA"
-  primary-dark: "#8C9BFF"
-  on-primary-dark: "#0A0C16"
-  primary-soft-dark: "#1D2150"
-  primary-ink-dark: "#C3CAFF"
-  background-dark: "#0A0C16"
-  foreground-dark: "#ECEEF8"
-  card-dark: "#11141F"
-  sidebar-dark: "#0D1019"
-  muted-dark: "#181B29"
-  muted-foreground-dark: "#A9AEC6"
-  subtle-foreground-dark: "#7C8199"
-  border-dark: "#232739"
-  border-strong-dark: "#30354B"
-  success-dark: "#4FC48A"
-  success-soft-dark: "#13291F"
-  attention-dark: "#E4A94A"
-  attention-soft-dark: "#33281A"
-  failure-dark: "#F07474"
-  failure-soft-dark: "#331B1F"
-  code-bg-dark: "#0C0F1C"
+  code-bg: "#F4F3EE"
   paper: "#F8F7F3"
   paper-raised: "#FFFFFF"
   rule: "#E3E1D8"
@@ -50,6 +30,12 @@ colors:
   ink: "#16171B"
   ink-muted: "#64656B"
 typography:
+  editorial:
+    fontFamily: Instrument Serif
+    fontSize: 34px
+    fontWeight: 400
+    lineHeight: 1.1
+    letterSpacing: -0.01em
   display-2xl:
     fontFamily: Geist
     fontSize: 88px
@@ -136,10 +122,7 @@ typography:
     fontWeight: 400
     lineHeight: 1.65
 rounded:
-  sm: 6px
-  md: 8px
-  lg: 12px
-  xl: 16px
+  none: 0px
   full: 9999px
 spacing:
   unit: 4px
@@ -148,104 +131,70 @@ spacing:
   control-height-lg: 44px
   content-max: 1280px
   card-padding: 24px
+  sidebar-width: 248px
+  shell-bar-height: 48px
   status-dot: 8px
 components:
   page:
     backgroundColor: "{colors.background}"
     textColor: "{colors.foreground}"
     typography: "{typography.body-md}"
-  page-dark:
-    backgroundColor: "{colors.background-dark}"
-    textColor: "{colors.foreground-dark}"
   card:
     backgroundColor: "{colors.card}"
     textColor: "{colors.foreground}"
-    rounded: "{rounded.xl}"
+    rounded: "{rounded.none}"
     padding: "{spacing.card-padding}"
-  card-dark:
-    backgroundColor: "{colors.card-dark}"
-    textColor: "{colors.foreground-dark}"
   secondary-text:
     backgroundColor: "{colors.card}"
     textColor: "{colors.muted-foreground}"
     typography: "{typography.body-sm}"
-  secondary-text-dark:
-    backgroundColor: "{colors.card-dark}"
-    textColor: "{colors.muted-foreground-dark}"
   sidebar-label:
     backgroundColor: "{colors.sidebar}"
     textColor: "{colors.muted-foreground}"
     typography: "{typography.label-caps}"
-  sidebar-label-dark:
-    backgroundColor: "{colors.sidebar-dark}"
-    textColor: "{colors.muted-foreground-dark}"
   status-dot-idle:
     backgroundColor: "{colors.subtle-foreground}"
     size: "{spacing.status-dot}"
     rounded: "{rounded.full}"
-  status-dot-idle-dark:
-    backgroundColor: "{colors.subtle-foreground-dark}"
   button-primary:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.on-primary}"
+    backgroundColor: "{colors.foreground}"
+    textColor: "{colors.card}"
     typography: "{typography.body-sm}"
-    rounded: "{rounded.full}"
+    rounded: "{rounded.none}"
     height: "{spacing.control-height}"
-  button-primary-dark:
-    backgroundColor: "{colors.primary-dark}"
-    textColor: "{colors.on-primary-dark}"
   button-secondary:
     backgroundColor: "{colors.muted}"
     textColor: "{colors.foreground}"
-    rounded: "{rounded.full}"
+    rounded: "{rounded.none}"
     height: "{spacing.control-height}"
-  button-secondary-dark:
-    backgroundColor: "{colors.muted-dark}"
-    textColor: "{colors.foreground-dark}"
   input:
     backgroundColor: "{colors.card}"
     textColor: "{colors.foreground}"
-    rounded: "{rounded.md}"
+    rounded: "{rounded.none}"
     height: "{spacing.control-height}"
   input-border:
     backgroundColor: "{colors.border-strong}"
-  input-border-dark:
-    backgroundColor: "{colors.border-strong-dark}"
   divider:
     backgroundColor: "{colors.border}"
-  divider-dark:
-    backgroundColor: "{colors.border-dark}"
   nav-item-active:
     backgroundColor: "{colors.primary-soft}"
     textColor: "{colors.primary-ink}"
-    rounded: "{rounded.md}"
-  nav-item-active-dark:
-    backgroundColor: "{colors.primary-soft-dark}"
-    textColor: "{colors.primary-ink-dark}"
+    rounded: "{rounded.none}"
   badge-clean:
     backgroundColor: "{colors.success-soft}"
     textColor: "{colors.success}"
     typography: "{typography.caption}"
-    rounded: "{rounded.full}"
-  badge-clean-dark:
-    backgroundColor: "{colors.success-soft-dark}"
-    textColor: "{colors.success-dark}"
+    rounded: "{rounded.none}"
   badge-issues:
     backgroundColor: "{colors.attention-soft}"
     textColor: "{colors.attention}"
     typography: "{typography.caption}"
-    rounded: "{rounded.full}"
-  badge-issues-dark:
-    backgroundColor: "{colors.attention-soft-dark}"
-    textColor: "{colors.attention-dark}"
+    rounded: "{rounded.none}"
   badge-error:
     backgroundColor: "{colors.failure-soft}"
     textColor: "{colors.failure}"
     typography: "{typography.caption}"
-    rounded: "{rounded.full}"
-  badge-error-dark:
-    backgroundColor: "{colors.failure-soft-dark}"
-    textColor: "{colors.failure-dark}"
+    rounded: "{rounded.none}"
   status-dot:
     size: "{spacing.status-dot}"
     rounded: "{rounded.full}"
@@ -253,7 +202,7 @@ components:
     backgroundColor: "{colors.code-bg}"
     textColor: "{colors.foreground}"
     typography: "{typography.code}"
-    rounded: "{rounded.lg}"
+    rounded: "{rounded.none}"
   demo-banner:
     backgroundColor: "{colors.card}"
     textColor: "{colors.muted-foreground}"
@@ -284,14 +233,11 @@ components:
   landing-button:
     backgroundColor: "{colors.ink}"
     textColor: "{colors.paper}"
-  code-block-dark:
-    backgroundColor: "{colors.code-bg-dark}"
-    textColor: "{colors.foreground-dark}"
   stat-tile:
     backgroundColor: "{colors.card}"
     textColor: "{colors.foreground}"
     typography: "{typography.stat}"
-    rounded: "{rounded.xl}"
+    rounded: "{rounded.none}"
 ---
 
 # Assay
@@ -300,33 +246,33 @@ components:
 
 ## Overview
 
-Assay is a tool people open when something might be wrong with their data. The UI should feel calm, precise and current: the product of a small, careful startup, not an enterprise console. Most screens are tables, lists and detail panes read by engineers and analysts, in English and Chinese, in light and dark themes.
+Assay is a tool people open when something might be wrong with their data. The UI should feel calm, precise and current: the product of a small, careful startup, not an enterprise console. Most screens are tables, lists and detail panes read by engineers and analysts, in English and Chinese. There is one theme, light.
 
 Three words decide most calls: **quiet** (the data is loud, the chrome is not), **roomy** (large page titles, generous rows and white space; a working day's checks still fit without scrolling past the fold on a laptop), **consistent** (a status looks identical everywhere, so people learn it once).
 
-The September 2026 refresh took its direction from an Open Design mock of the demo workspace: Geist, an indigo accent, 16px cards on a soft grey page, pill-shaped buttons and filters, large page titles with a one-line intro, and a dark demo notice band.
+The September 2026 refresh gave the app Geist, an indigo accent, large page titles with a one-line intro and status colours that read the same everywhere. In October 2026 the app and the docs moved onto the landing page's paper: light only, warm neutrals, hairlines instead of cards and shadows, square corners and serif titles, so the product and the page that sells it read as one thing.
 
 ## Colors
 
 - **Indigo (`primary`, #4F63E8):** the one interactive colour. Primary buttons, links, the active nav item, focus rings, the tile behind the mark where it stands in for an app icon. Never a status.
 - **Indigo ink (`primary-ink`, #2B3AAE)** is the accent as text on `primary-soft` (the active nav item, selected rows): the plain indigo is 4.3:1 there, below AA.
-- **Neutrals** are cool greys that lean slightly toward the indigo. `foreground` for text, `muted-foreground` for secondary text, `subtle-foreground` never for text, only for marks (the idle status dot, list markers), `border` for dividers, `border-strong` for inputs.
+- **Neutrals** are the paper: a warm off-white page (`background` = `paper`), white panels (`card` = `paper-raised`), `muted` a slightly darker paper for tracks, table heads and hover. `foreground` (`ink`) for text, `muted-foreground` for secondary text, `subtle-foreground` never for text, only for marks (the idle status dot, list markers), `border` (`rule`) for dividers and panel outlines, `border-strong` (`rule-strong`) for inputs and outlined buttons.
 - **Status colours are semantic and fixed:** `failure` = the check itself broke (error), `attention` = it found rows (issues), `success` = it found none (clean). Each has a `-soft` tint for its background. They never decorate, and they are never swapped for the accent.
-- **Paper (`paper`, #F8F7F3)** is the landing and sign-in pages: a warm off-white ruled with `rule` hairlines (`rule-strong` for panel and control borders and the crosses where rules meet), `paper-raised` for the panels that sit on it, `ink` and `ink-muted` for its text. These pages are light only: `theme-light` on their root restores the light tokens and switches off `dark:` variants inside. App pages do not use paper.
-- Dark theme values carry a `-dark` suffix here; in code the same CSS variable switches under `.dark`, so components never branch on the theme.
+- **Paper (`paper`, #F8F7F3)** is every page: the landing page, sign-in, the app and the docs. `paper`, `paper-raised`, `rule`, `rule-strong`, `ink` and `ink-muted` are the source values; the app tokens (`background`, `card`, `border`, `foreground`, …) point at them in `globals.css`.
+- **Light only.** There is no dark theme, no theme switch and no `.dark` class; a dark system setting renders the same page. Do not add `dark:` variants.
 - Colours reach components only through Tailwind utilities mapped in `@theme inline` (`bg-card`, `text-muted-foreground`, `text-attention`, …). No hex values, no raw palette classes (`text-blue-600`), no `dark:` overrides for colour.
 
 ## Typography
 
-Geist for everything readable, Geist Mono for SQL, ids, cron expressions and numbers that line up in columns. Chinese falls back to a named Simplified Chinese face: PingFang SC (Apple), Microsoft YaHei (Windows), Noto Sans SC / Noto Sans CJK SC (Linux, Android). Name the face rather than leaving CJK to `system-ui`: the generic fallback picks a CJK font by the page language, which the language switch sets only after hydration, so Chinese text could render with Japanese glyph shapes.
+Geist for everything readable, Geist Mono for SQL, ids, cron expressions, numbers that line up in columns and the small group labels, Instrument Serif (`font-editorial`, regular weight) for page titles: the app shell's title, a check's name, settings pages and docs articles, as on the landing page. The serif is loaded once in the root layout as `--font-serif`; Chinese falls back to a system Song face. Chinese falls back to a named Simplified Chinese face: PingFang SC (Apple), Microsoft YaHei (Windows), Noto Sans SC / Noto Sans CJK SC (Linux, Android). Name the face rather than leaving CJK to `system-ui`: the generic fallback picks a CJK font by the page language, which the language switch sets only after hydration, so Chinese text could render with Japanese glyph shapes.
 
 The scale in the front matter is the whole set of sizes: every text size is one of its levels, used as a `text-<level>` utility (a test enforces it; see Migration). Roles:
 
-- `display-*`: landing page and docs titles, and app page titles (`display-md`, set by the shell, and a check's name on its page); `display-2xl` is the landing hero and closing headline alone, `display-xl` the landing section titles.
+- `display-*`: landing page and docs titles, and app page titles (`display-md` in `font-editorial`, set by the shell, and a check's name on its page); `display-2xl` is the landing hero and closing headline alone, `display-xl` the landing section titles.
 - `headline`, `title`, `title-sm`: section headings, card titles, dialog titles.
 - `body-md` (15px) is the page default and the sidebar; `body-sm` (14px) is the workhorse for tables, buttons and form controls; `body-lg` (16px) is for docs prose and landing copy.
 - `caption` (13px): metadata, timestamps, badges, helper text.
-- `label-caps` (11px, uppercase): the small section label above a group (sidebar groups, "On this page", form sections). One style; do not invent variants.
+- `label-caps` (11px, uppercase): the small section label above a group (sidebar groups, "On this page", form sections), set in Geist Mono in the sidebars. One style; do not invent variants.
 - `stat`: the big numbers in stat tiles, with tabular figures.
 - Weights: 400 body, 500 for emphasis inside UI and the `stat` numbers, 600 for headings, display and labels.
 - Line heights of the body levels, `caption` and `label-caps` are whole even pixels (26, 22, 20, 18, 14px). Text of mixed levels centred in one row, like a table row or a toolbar, then shares a baseline; with fractional or odd line boxes, 12px and 14px text in the same row land up to 2px apart.
@@ -334,24 +280,25 @@ The scale in the front matter is the whole set of sizes: every text size is one 
 ## Layout
 
 - Spacing follows Tailwind's 4px scale. Prefer 2, 3, 4, 6 and 8 (8–32px); reach for odd steps only to align with a neighbour.
-- App pages sit in `APP_CONTAINER` (`max-w-[1280px]`, centred) so edges line up under the top bar. The shell is a light sidebar (248px; a bar and the primary tint mark the current page) beside the content column; the demo notice is a slim card-coloured band across the top of the content column.
-- A page is a shell over a data hook and section components (`AGENTS.md`). The app shell draws the page heading from `app-shell-routes.ts`: a `display-md` title, an optional count beside it (`WindowStatusBar`), a one-line intro, and the page's actions on the right (`WindowToolbar`). Pages about one thing (a check, a run) get a "‹ back to the list" link instead and draw their own heading. Then a stat strip or filters, then the main list. On the Checks page the stat tiles are the filter, and a chosen check opens beside the list (`?check=`, from 1280px; a drawer below) with the same tabs as its own page.
-- Controls are 36px tall (`h-9`), 32px when compact, 44px for landing CTAs. Search fields in a page heading are 40px pills.
+- App pages sit in `APP_CONTAINER` (`max-w-[1280px]`, centred) so edges line up under the top bar. The shell is a ruled column: a paper sidebar (248px) with a hairline on its right, the mark in a 48px row and each nav section under a hairline; the current page is a white cell outlined in `rule` with an indigo edge. The demo notice is a 48px white band across the content column, its bottom rule level with the one under the mark.
+- A page is a shell over a data hook and section components (`AGENTS.md`). The app shell draws the page heading from `app-shell-routes.ts`, closed by a hairline: a serif `display-md` title, an optional count beside it (`WindowStatusBar`), a one-line intro, and the page's actions on the right (`WindowToolbar`). Pages about one thing (a check, a run) get a "‹ back to the list" link instead and draw their own heading. Then a stat strip or filters, then the main list. On the Checks page the stat tiles are the filter, and a chosen check opens beside the list (`?check=`, from 1280px; a drawer below) with the same tabs as its own page.
+- Controls are 36px tall (`h-9`), 32px when compact, 44px for landing CTAs. Search fields in a page heading are 40px tall.
 - Must work at 375px wide without horizontal page scroll; wide tables scroll inside their own container.
 
 ## Elevation & Depth
 
-Surfaces lift with a hairline ring and a long, soft drop (`shadow-border`, `shadow-border-hover` on hover) rather than a solid border, so a card reads the same on any background. Real borders are for dividers and inputs. `shadow-md` is for things that float (popovers, dropdowns, toasts) and the hover of a primary button. No other shadows, no glassmorphism in the app. The landing page has its own rules (see Landing).
+Nothing lifts. Panels sit flat on the paper inside a `rule` hairline (`shadow-border`, a 1px ring so it never shifts layout; `shadow-border-hover` darkens it to `rule-strong`), and cells inside a panel are divided by hairlines rather than spaced apart. `shadow-md` is the one shadow, for things that float over the page: popovers, menus, dropdowns, toasts. No drop shadows on panels or buttons, no glass, no blur.
 
 ## Shapes
 
-One radius scale derived from `--radius` (0.5rem): `rounded-sm` (6px) for checkboxes and tiny chips, `rounded-md` (8px) for inputs, selects and code chips, `rounded-lg` (12px) for code blocks, menus and nav items, `rounded-xl` (16px) for cards and dialogs, `rounded-full` for buttons, badges, status pills, segmented filters, dots and avatars. No arbitrary radii (`rounded-[5px]`).
+Square. `--radius` is 0, so `rounded-sm|md|lg|xl` (still used by the primitives) all draw square corners: panels, dialogs, menus, inputs, buttons, badges, pills, tabs, switches and code. `rounded-full` is kept for status dots, small marker dots and avatars only. Panels that matter on a page may carry registration marks at their corners (`corners`). No arbitrary radii (`rounded-[5px]`).
 
 ## Components
 
 - Use the shadcn primitives in `src/components/ui` (new-york style, Radix). Extend a primitive with a variant before writing a one-off; never fork its styles into a page.
-- **Segmented filters** are a `bg-muted` pill track whose chosen option is a filled `bg-foreground text-background` pill, optionally with a count; `Tabs` follows the same look on a card track.
-- **Status** is shown with `.status-dot` + `status-dot-{error|issues|clean|idle}`, a soft status pill (`OUTCOME_PILL`, a dot in the current colour plus the finding, as in the checks table), or the `Badge` variants `failure | attention | success`. Map domain statuses in a pure function with a test (see `approvals.ts`, `checks/status.ts`), not inline in JSX.
+- **Buttons**: ink (`bg-foreground text-background`) for the main action, a `rule-strong` outline on white for the secondary one, ghost for quiet ones. Indigo is for links, focus, the current page and progress, not for buttons.
+- **Segmented filters** are a `bg-muted` track whose chosen option is filled with ink (`bg-foreground text-background`), optionally with a count; `Tabs` follows the same look on a white track.
+- **Status** is shown with `.status-dot` + `status-dot-{error|issues|clean|idle}`, a soft square status tag (`OUTCOME_PILL`, a dot in the current colour plus the finding, as in the checks table), or the `Badge` variants `failure | attention | success`. Map domain statuses in a pure function with a test (see `approvals.ts`, `checks/status.ts`), not inline in JSX.
 - **Empty, loading, error:** `EmptyState` (one quiet line, optional hint and action), the skeletons in `PageSkeletons.tsx` (shimmer, not blink), `LoadingError` / `RunReportStates` for failures with a retry. Every list and detail view has all three.
 - **Code** uses `CodeMirrorEditor` for editing and `HighlightedLine` / `.tok-*` classes for display, on `bg-code`.
 - Toasts through `sonner`; dialogs through `Dialog` / `AlertDialog` (destructive confirmations always use `AlertDialog`).
@@ -361,30 +308,34 @@ One radius scale derived from `--radius` (0.5rem): `rounded-sm` (6px) for checkb
 
 The landing page (`src/components/landing`) is the one place the product is sold rather than used. It reads like a technical document on ruled paper: structure comes from hairlines, not from cards, glows or shadows.
 
-- **Type.** Headlines are set in Instrument Serif at regular weight (`font-editorial`), with the accent in italic for the second line of the hero and closing titles; Chinese falls back to a system Song face. Running text is Figtree, code (SQL, ids, cron, the terminal) Maple Mono NL, and section labels small mono capitals (`eyebrow`). All are SIL OFL and self-hosted through `next/font` in `fonts.ts`; `landing.css` swaps them in on `.landing`.
+- **Type.** Headlines are set in Instrument Serif at regular weight (`font-editorial`, the site-wide serif from the root layout), with the accent in italic for the second line of the hero and closing titles; Chinese falls back to a system Song face. Running text is Figtree, code (SQL, ids, cron, the terminal) Maple Mono NL, and section labels small mono capitals (`eyebrow`). All are SIL OFL and self-hosted through `next/font`; `landing.css` swaps Figtree and Maple Mono in on `.landing`.
 - **The ruled column.** Every section sits in `FRAME` (`ui.tsx`): a 1200px column with hairlines down both sides, a rule across the page above each section and a small cross where they meet (`ticks`). Inside a section, cells are divided by hairlines, never spaced apart as cards. A band of diagonal hatching (`hatch`) opens the closing section.
 - **Graph paper.** Small diagrams, code and product panels sit on graph paper (`graph`: a 20px grid in `rule` with a faint indigo wash in one corner). Panels on it are `paper-raised` with a `rule-strong` border and no shadow; the main product panels (the hero workspace, the terminal, the triage and agent snippets, the sign-in alert) carry registration marks at their corners (`corners`). Everything is light: there are no dark panels.
 - **Corners.** Square. Panels, cells, buttons, tags and code blocks have no radius; only status dots stay round.
 - **Controls.** Ink for the primary action, a `rule-strong` outline on `paper-raised` for the secondary one. Indigo is for the scroll progress line under the nav, step progress, icons and the italic accent in titles; status colours keep their meaning.
-- **Light only.** The page and the sign-in page carry `theme-light` and stay light in the dark theme; the landing nav has no theme switch.
+- **Light only**, like the rest of the site; the landing nav has no theme switch.
 - **Not here.** No glows, glass, film grain, photography, pointer lights, 3D tilts or shadows.
 - **Motion.** GSAP with ScrollTrigger (`motion.ts`). Reduced motion turns off large movement (pinning, sliding, scaling) and keeps fades, typing, counters and the scan line. "What happens in one run" pins on desktop, becomes tabs with previous and next under reduced motion, and stacks on phones.
 - **Facts.** Everything the page shows exists in the product, and its numbers come from the live demo or `scripts/demo/checks.ts`.
+
+## Docs
+
+The docs (`src/components/docs`) wrap their pages in the same ruled column as the landing page: a 1280px frame with hairlines down both sides, a 64px top bar on the paper (mark, a mono "Assay Help" label, search, the language switch and an ink "Open Assay" button), the contents on the left and "On this page" on the right, each behind a hairline. Article titles are serif `display-lg` closed by a rule; notes are white with an indigo left edge; code blocks and tables are square and ruled; previous and next are two cells of one ruled panel.
 
 ## Do's and Don'ts
 
 - Do use colour only for meaning: indigo for action, the three status colours for check state.
 - Do keep every user-facing string in both English and Chinese, and check the Chinese layout: it runs longer and taller.
-- Do check light and dark, 375px and 1280px, before calling a UI change done.
+- Do check 375px and 1280px, English and Chinese, before calling a UI change done.
 - Do respect `prefers-reduced-motion`; motion is 150–200ms ease-out and only for state changes.
-- Don't add gradients, glows, glass blur, `shadow-lg`, or decorative illustrations to app pages. The Row A mark (`docs/brand.md`) is the logo; photography appears on the landing page only.
+- Don't add gradients, glows, glass blur, drop shadows, rounded corners or decorative illustrations to app pages. The Row A mark (`docs/brand.md`) is the logo; photography appears on the landing page only.
 - Don't use pill-shaped uppercase "eyebrow" labels above headlines, rows of identical icon cards, or centred hero-plus-three-cards layouts. `label-caps` is for grouping controls, not for decoration.
 - Don't use arbitrary font sizes (`text-[12.5px]`), arbitrary radii or hex colours in components.
 - Don't put text in `subtle-foreground`, not even a "—" for no value: it is 3.6–3.8:1 on light surfaces, below AA. The quietest text is `muted-foreground` (5.0–5.4:1).
 
 ## Contrast
 
-Every text pair in the light theme meets WCAG AA (4.5:1); the dark theme always did. Fixed on 2026-09-27: the light-theme status colours were darkened within their hues (`success` #1D8A57 → #19754A, `attention` #B87408 → #915B06, `failure` #C93636 → #BB3232; `destructive` and `chart-2…4` follow them), and all text moved from `subtle-foreground` to `muted-foreground`. `npx @google/design.md lint` checks every component pair above.
+Every text pair meets WCAG AA (4.5:1). Fixed on 2026-09-27: the light-theme status colours were darkened within their hues (`success` #1D8A57 → #19754A, `attention` #B87408 → #915B06, `failure` #C93636 → #BB3232; `destructive` and `chart-2…4` follow them), and all text moved from `subtle-foreground` to `muted-foreground`. `npx @google/design.md lint` checks every component pair above.
 
 ## Migration
 
@@ -415,7 +366,7 @@ The uppercase section label has one style: `text-label-caps uppercase text-muted
 ## Verification
 
 - Lint this file: `npx @google/design.md lint DESIGN.md` (structure, broken references, contrast of every component pair above).
-- **Screenshots** (`tests/visual/`, Playwright) at 375px and 1280px, light and dark, English and Chinese: landing, sign-in, two docs articles, unauthorized; and as a demo guest, the checks list, a check with issues, a broken check and a clean one, manage checks, runs, a run report, coverage, analysis, activity and notification settings. Every page also fails on console errors.
+- **Screenshots** (`tests/visual/`, Playwright) at 375px and 1280px, English and Chinese: landing, sign-in, two docs articles, unauthorized; and as a demo guest, the checks list, a check with issues, a broken check and a clean one, manage checks, runs, a run report, coverage, analysis, activity and notification settings. Every page also fails on console errors.
 - **Locally**, against your own `.env.local` data with `DEMO_MODE=true`: `npm run build && npm run visual:baseline` before the change, then `npm run build && npm run visual` after it. The browser clock is frozen at the baseline's time so relative times match; output stays in the git-ignored `.visual/`.
 - **In CI**, the Visual workflow starts MongoDB, PostgreSQL and Redis, seeds the demo data, runs every check twice, then builds the base branch and the pull request and compares them in one job. A pull request that changes the look on purpose gets the `visual-change` label and lists the expected differences; the job then passes, and annotations name the pages that changed.
 - A pure refactor step (tokens, aliases) must produce no visual diff; a step that intentionally changes sizes lists the expected diffs in its pull request.
