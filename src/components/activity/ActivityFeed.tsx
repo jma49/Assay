@@ -150,7 +150,7 @@ function Row({ item }: { item: ActivityItem }) {
                 title={`${delivery.destination}: ${t.delivery[delivery.status]}`}
                 className="inline-flex items-center gap-1 rounded-md py-0.5 pr-1.5 pl-0.5 text-caption shadow-border"
               >
-                <ChannelIcon kind={delivery.kind} className="size-5 rounded-[5px] [&_svg]:size-3" />
+                <ChannelIcon kind={delivery.kind} className="size-5 rounded-none [&_svg]:size-3" />
                 <Icon className={cn("size-3.5", DELIVERY_COLOR[delivery.status])} />
                 <span className="sr-only">
                   {delivery.destination}: {t.delivery[delivery.status]}
@@ -202,7 +202,7 @@ export function ActivityFeed() {
   return (
     <div className={`${APP_CONTAINER} space-y-5 py-6`}>
       <WindowToolbar>
-        <div className="inline-flex rounded-full bg-muted p-1" role="tablist" aria-label="Filter">
+        <div className="inline-flex rounded-none bg-muted p-1" role="tablist" aria-label="Filter">
           {(Object.keys(FILTER_KINDS) as Filter[]).map((key) => (
             <button
               key={key}
@@ -211,7 +211,7 @@ export function ActivityFeed() {
               aria-selected={filter === key}
               onClick={() => changeFilter(key)}
               className={cn(
-                "h-8 rounded-full px-3.5 text-body-sm font-medium transition-[background-color,color] duration-150",
+                "h-8 rounded-none px-3.5 text-body-sm font-medium transition-[background-color,color] duration-150",
                 filter === key ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -232,7 +232,7 @@ export function ActivityFeed() {
         </div>
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-xl bg-card px-6 py-14 text-center shadow-border">
-          <span className="grid size-10 place-items-center rounded-full bg-muted text-muted-foreground">
+          <span className="grid size-10 place-items-center rounded-none bg-muted text-muted-foreground">
             <BellRing className="size-5" />
           </span>
           <p className="max-w-md text-body-md text-muted-foreground">{filter === "all" ? t.empty : t.emptyFiltered}</p>

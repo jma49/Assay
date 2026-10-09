@@ -58,7 +58,7 @@ export function DataSourcesSettings() {
       <WindowStatusBar>{t.count(sources.length)}</WindowStatusBar>
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="max-w-2xl space-y-1.5">
-          <h1 className="text-display-sm">{t.title}</h1>
+          <h1 className="font-editorial text-display-sm">{t.title}</h1>
           <p className="text-body-md text-muted-foreground">{t.intro}</p>
         </div>
         {setup.canManage && (

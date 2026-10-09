@@ -1,54 +1,53 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* `.theme-light` marks a page that stays light whatever the theme (the landing and sign-in pages). */
-@custom-variant dark (&:is(.dark *):not(.theme-light, .theme-light *));
-
-/* Design tokens. Neutrals lean slightly toward the indigo accent; status
-   colours are separate from the accent and mean the same thing everywhere:
-   error = the check itself broke, issues = it found rows, clean = it found none. */
-:root,
-.theme-light {
+/* Design tokens. Assay is light only: one paper palette for the landing page, the app and the docs.
+   Neutrals are warm off-whites ruled with hairlines; status colours are separate from the accent and
+   mean the same thing everywhere: error = the check itself broke, issues = it found rows, clean = it found none. */
+:root {
   color-scheme: light;
   --app-font-sans: var(--font-geist), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif;
   /* Headings use the same family, tighter. */
   --app-font-display: var(--app-font-sans);
   --app-font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* Page and document titles; Chinese falls back to a Song face. */
+  --app-font-serif: var(--font-serif), "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", Georgia, serif;
 
-  --radius: 0.5rem;
+  /* Square corners everywhere; only status dots, avatars and switch knobs stay round. */
+  --radius: 0px;
 
-  --background: #f6f7f9;
-  --foreground: #15161c;
-  --card: #ffffff;
-  --card-foreground: #15161c;
-  --popover: #ffffff;
-  --popover-foreground: #15161c;
-  --primary: #4f63e8;
-  --primary-foreground: #ffffff;
-  --secondary: #f1f2f5;
-  --secondary-foreground: #15161c;
-  --muted: #f1f2f5;
-  --muted-foreground: #5a5d6b;
-  --subtle-foreground: #8a8e9c;
-  --accent: #f1f2f5;
-  --accent-foreground: #15161c;
-  --destructive: #b42a2a;
-  --destructive-foreground: #ffffff;
-  --border: #e4e6ec;
-  --border-strong: #d3d6df;
-  --input: #d3d6df;
-  --ring: color-mix(in srgb, #4f63e8 45%, transparent);
-  --primary-soft: #eef0fe;
-  --primary-ink: #2b3aae;
-
-  /* The landing page's paper: a warm off-white page ruled with hairlines, and its ink. Light only. */
+  /* Paper: a warm off-white page ruled with hairlines, panels in white, text in ink. */
   --paper: #f8f7f3;
   --paper-raised: #ffffff;
   --rule: #e3e1d8;
   --rule-strong: #cbc8bc;
   --ink: #16171b;
   --ink-muted: #64656b;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper-raised);
+  --card-foreground: var(--ink);
+  --popover: var(--paper-raised);
+  --popover-foreground: var(--ink);
+  --primary: #4f63e8;
+  --primary-foreground: #ffffff;
+  --secondary: #f0eee7;
+  --secondary-foreground: var(--ink);
+  --muted: #f0eee7;
+  --muted-foreground: var(--ink-muted);
+  --subtle-foreground: #9a988f;
+  --accent: #f0eee7;
+  --accent-foreground: var(--ink);
+  --destructive: #b42a2a;
+  --destructive-foreground: #ffffff;
+  --border: var(--rule);
+  --border-strong: var(--rule-strong);
+  --input: var(--rule-strong);
+  --ring: color-mix(in srgb, #4f63e8 45%, transparent);
+  --primary-soft: #eef0fe;
+  --primary-ink: #2b3aae;
 
   --success: #1f7a52;
   --success-soft: #e8f5ee;
@@ -58,7 +57,7 @@
   --failure-soft: #fbeaea;
   --info: #4f63e8;
 
-  --code-bg: #f7f8fa;
+  --code-bg: #f4f3ee;
   /* Syntax colours for code samples: the accent for keywords, the rest kept
      off the status hues so a string never reads as a failure. */
   --syntax-keyword: #4153d6;
@@ -67,97 +66,35 @@
   --syntax-function: #0b7285;
   --syntax-comment: #6e7282;
   --syntax-punctuation: #5a5d6b;
-  /* Surfaces lift with a hairline ring and a long soft shadow instead of a
-     solid border, so they read the same on any background. Dividers and
-     inputs keep real borders. */
-  --shadow-border:
-    0 0 0 1px rgba(21, 22, 28, 0.07), 0 1px 2px rgba(21, 22, 28, 0.04), 0 12px 32px -16px rgba(21, 22, 28, 0.12);
-  --shadow-border-hover:
-    0 0 0 1px rgba(21, 22, 28, 0.1), 0 1px 2px rgba(21, 22, 28, 0.05), 0 16px 36px -14px rgba(21, 22, 28, 0.18);
-  --shadow-sm: 0 1px 2px rgba(21, 22, 28, 0.06), 0 1px 1px rgba(21, 22, 28, 0.03);
-  --shadow-md: 0 8px 24px -8px rgba(21, 22, 28, 0.24), 0 1px 2px rgba(21, 22, 28, 0.06);
+  /* No drop shadows: panels sit on the paper inside a hairline (a ring, so it never shifts layout),
+     and only things that float (menus, popovers, toasts) cast a short shadow. */
+  --shadow-border: 0 0 0 1px var(--rule);
+  --shadow-border-hover: 0 0 0 1px var(--rule-strong);
+  --shadow-sm: 0 0 #0000;
+  --shadow-md: 0 0 0 1px var(--rule-strong), 0 10px 24px -14px rgba(22, 23, 27, 0.22);
 
   --chart-1: #4f63e8;
   --chart-2: var(--success);
   --chart-3: var(--attention);
   --chart-4: var(--failure);
-  --chart-5: #8a8e9c;
+  --chart-5: #9a988f;
 
-  --sidebar: #ffffff;
-  --sidebar-foreground: #4a4d5a;
+  --sidebar: var(--paper);
+  --sidebar-foreground: #46474d;
   --sidebar-primary: #4f63e8;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #eef0fe;
   --sidebar-accent-foreground: var(--primary-ink);
-  --sidebar-border: #e4e6ec;
+  --sidebar-border: var(--rule);
   --sidebar-ring: color-mix(in srgb, #4f63e8 45%, transparent);
 }
 
-.dark {
-  --background: #0a0c16;
-  --foreground: #eceef8;
-  --card: #11141f;
-  --card-foreground: #eceef8;
-  --popover: #181b29;
-  --popover-foreground: #eceef8;
-  --primary: #8c9bff;
-  --primary-foreground: #0a0c16;
-  --secondary: #181b29;
-  --secondary-foreground: #eceef8;
-  --muted: #181b29;
-  --muted-foreground: #a9aec6;
-  --subtle-foreground: #7c8199;
-  --accent: #181b29;
-  --accent-foreground: #eceef8;
-  --destructive: #f07474;
-  --destructive-foreground: #0a0c16;
-  --border: #232739;
-  --border-strong: #30354b;
-  --input: #30354b;
-  --ring: color-mix(in srgb, #8c9bff 50%, transparent);
-  --primary-soft: #1d2150;
-  --primary-ink: #c3caff;
-
-  --success: #4fc48a;
-  --success-soft: #13291f;
-  --attention: #e4a94a;
-  --attention-soft: #33281a;
-  --failure: #f07474;
-  --failure-soft: #331b1f;
-  --info: #8c9bff;
-
-  --code-bg: #0c0f1c;
-  --syntax-keyword: #a5b1ff;
-  --syntax-string: #8fe3c0;
-  --syntax-number: #f5c58a;
-  --syntax-function: #67c8da;
-  --syntax-comment: #7e86b3;
-  --syntax-punctuation: #9aa0bd;
-  --shadow-border: 0 0 0 1px oklch(1 0 0 / 0.07), 0 12px 32px -16px rgba(0, 0, 0, 0.6);
-  --shadow-border-hover: 0 0 0 1px oklch(1 0 0 / 0.12), 0 16px 36px -14px rgba(0, 0, 0, 0.7);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
-
-  --chart-1: #8c9bff;
-  --chart-2: var(--success);
-  --chart-3: var(--attention);
-  --chart-4: var(--failure);
-  --chart-5: #7c8199;
-
-  --sidebar: #0d1019;
-  --sidebar-foreground: #a9aec6;
-  --sidebar-primary: #8c9bff;
-  --sidebar-primary-foreground: #0a0c16;
-  --sidebar-accent: #1d2150;
-  --sidebar-accent-foreground: var(--primary-ink);
-  --sidebar-border: #232739;
-  --sidebar-ring: color-mix(in srgb, #8c9bff 50%, transparent);
-}
 
 @theme inline {
   --font-sans: var(--app-font-sans);
   --font-display: var(--app-font-display);
   --font-mono: var(--app-font-mono);
+  --font-serif: var(--app-font-serif);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -219,10 +156,10 @@
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
 
-  --radius-sm: calc(var(--radius) - 2px);
+  --radius-sm: var(--radius);
   --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 4px);
-  --radius-xl: calc(var(--radius) + 8px);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
 
   /* Type scale (DESIGN.md). Body levels leave the weight to the element, so font-medium etc. still apply.
      Body, caption and label line heights are whole even pixels, so text of mixed levels centred in one
@@ -302,16 +239,6 @@
     background: color-mix(in srgb, var(--primary) 22%, transparent);
   }
 
-  input[type="date"],
-  input[type="datetime-local"] {
-    color-scheme: light;
-  }
-
-  .dark input[type="date"]:not(.theme-light *),
-  .dark input[type="datetime-local"]:not(.theme-light *) {
-    color-scheme: dark;
-  }
-
   /* Titles: the display face, tighter as it gets larger. */
   h1 {
     @apply font-display;
@@ -332,7 +259,6 @@
   height: 2.25rem;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius);
   background-color: var(--muted);
 }
 
@@ -381,7 +307,7 @@
 
 /* Toasts sit on the popover surface. */
 [data-sonner-toast] {
-  border-radius: 12px !important;
+  border-radius: 0 !important;
   box-shadow: var(--shadow-md) !important;
 }
 
@@ -398,7 +324,7 @@
 
 .docs-prose h2 {
   margin-top: 2.5rem;
-  scroll-margin-top: 4rem;
+  scroll-margin-top: 5rem;
   font-size: var(--text-title);
   font-weight: var(--text-title--font-weight);
   line-height: var(--text-title--line-height);
@@ -407,7 +333,7 @@
 
 .docs-prose h3 {
   margin-top: 1.75rem;
-  scroll-margin-top: 4rem;
+  scroll-margin-top: 5rem;
   font-size: var(--text-title-sm);
   font-weight: var(--text-title-sm--font-weight);
   line-height: var(--text-title-sm--line-height);
@@ -451,7 +377,6 @@
 
 .docs-prose :not(pre) > code {
   padding: 0.1em 0.35em;
-  border-radius: 4px;
   background: var(--code-bg);
   box-shadow: inset 0 0 0 1px var(--border);
   font-family: var(--font-mono);
@@ -461,7 +386,6 @@
 .docs-prose pre {
   overflow-x: auto;
   padding: 0.9rem 1rem;
-  border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--code-bg);
   font-family: var(--font-mono);
@@ -471,7 +395,6 @@
 
 .docs-table {
   overflow-x: auto;
-  border-radius: 8px;
   border: 1px solid var(--border);
 }
 
@@ -499,9 +422,9 @@
 
 .docs-note {
   padding: 0.75rem 1rem;
-  border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--border));
-  background: var(--primary-soft);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--primary);
+  background: var(--card);
 }
 
 .docs-note > * + * {
@@ -584,4 +507,32 @@
 /* The display face runs tight at heading sizes. */
 .font-display {
   letter-spacing: -0.02em;
+}
+
+/* Page and document titles: the serif at regular weight, as on the landing page. */
+.font-editorial {
+  font-family: var(--app-font-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Registration marks: a short ink L just outside each corner of a panel that matters. */
+.corners {
+  position: relative;
+}
+.corners::after {
+  --mark: 10px;
+  content: "";
+  position: absolute;
+  inset: -5px;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--ink), var(--ink)) top left / var(--mark) 1px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) top left / 1px var(--mark) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) top right / var(--mark) 1px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) top right / 1px var(--mark) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) bottom left / var(--mark) 1px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) bottom left / 1px var(--mark) no-repeat,
+    linear-gradient(var(--ink), var(--ink)) bottom right / var(--mark) 1px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) bottom right / 1px var(--mark) no-repeat;
 }

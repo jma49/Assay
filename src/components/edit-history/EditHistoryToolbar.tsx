@@ -44,7 +44,7 @@ export function EditHistoryToolbar({
           value={filters.scriptName}
           onChange={(e) => onFiltersChange({ scriptName: e.target.value })}
           onKeyDown={(e) => e.key === "Enter" && onApply()}
-          className="h-7 rounded-full pl-8 text-body-sm"
+          className="h-7 rounded-none pl-8 text-body-sm"
         />
       </div>
       <Select value={filters.operation} onValueChange={(value) => onOperationChange(value as OperationFilter)}>

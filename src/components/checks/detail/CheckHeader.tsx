@@ -27,7 +27,7 @@ export function CheckHeader({
       <div className="flex flex-wrap items-center gap-2 text-caption">
         {state ? (
           <>
-            <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-medium", OUTCOME_PILL[state.outcome])}>
+            <span className={cn("inline-flex items-center gap-1.5 rounded-none px-2 py-0.5 font-medium", OUTCOME_PILL[state.outcome])}>
               <span className={cn("status-dot", OUTCOME_DOT[state.outcome])} aria-hidden />
               {OUTCOME_LABEL[state.outcome][language]}
             </span>
@@ -40,7 +40,7 @@ export function CheckHeader({
         )}
         <AlertBadges alerting={check.alerting} />
       </div>
-      <h1 className="text-display-md">{name}</h1>
+      <h1 className="font-editorial text-display-md">{name}</h1>
       {description && <p className="max-w-[70ch] text-pretty text-body-md text-muted-foreground">{description}</p>}
       <p className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-muted-foreground">
         <span className="font-mono">{check.scriptId}</span>

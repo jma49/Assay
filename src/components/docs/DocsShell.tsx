@@ -3,15 +3,13 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useTheme } from "next-themes";
-import { Moon, Search, Sun } from "lucide-react";
+import { Search } from "lucide-react";
 import { BrandMark } from "@/components/common/BrandMark";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { DOCS_NAV } from "@/lib/docs/nav";
 import type { DocsSearchEntry } from "@/lib/docs/content";
 import { GITHUB_URL } from "@/lib/brand";
 import { cn } from "@/lib/utils/utils";
-import { useHydrated } from "@/components/common/use-hydrated";
 
 const COPY = {
   en: { help: "Assay Help", search: "Search docs", noResults: "No matches", openApp: "Open Assay", contents: "Contents", close: "Close window" },
@@ -90,10 +88,10 @@ function DocsSearch({ index }: { index: DocsSearchEntry[] }) {
           else return;
           event.preventDefault();
         }}
-        className="h-8 w-full rounded-md border border-input bg-card pr-3 pl-8 shadow-xs sm:text-body-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+        className="h-9 w-full border border-input bg-card pr-3 pl-8 sm:text-body-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
       />
       {query.trim() && (
-        <ul className="absolute top-full right-0 z-50 mt-1.5 w-[340px] rounded-lg border bg-popover p-1 text-popover-foreground shadow-md" role="listbox">
+        <ul className="absolute top-full right-0 z-50 mt-1.5 w-[340px] bg-popover p-1 text-popover-foreground shadow-md" role="listbox">
           {results.length === 0 ? (
             <li className="px-3 py-2 text-body-sm text-muted-foreground">{t.noResults}</li>
           ) : (
@@ -104,7 +102,7 @@ function DocsSearch({ index }: { index: DocsSearchEntry[] }) {
                   onMouseEnter={() => setActive(i)}
                   onClick={() => go(result.href)}
                   className={cn(
-                    "block w-full rounded-[3px] px-3 py-1.5 text-left",
+                    "block w-full rounded-none px-3 py-1.5 text-left",
                     i === active && "bg-muted",
                   )}
                 >
@@ -126,13 +124,13 @@ function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname() ?? "";
   const { language } = useLanguage();
   return (
-    <nav aria-label="Docs" className="space-y-5">
+    <nav aria-label="Docs">
       {DOCS_NAV.map((group) => (
-        <div key={group.title.en}>
-          <p className="px-3 pb-1 text-label-caps uppercase text-muted-foreground">
+        <div key={group.title.en} className="border-b px-3 pt-4 pb-3">
+          <p className="px-2 pb-2 font-mono text-label-caps uppercase text-muted-foreground">
             {group.title[language]}
           </p>
-          <ul>
+          <ul className="flex flex-col gap-px">
             {group.pages.map((page) => {
               const href = `/docs/${page.slug}`;
               const current = pathname === href;
@@ -143,10 +141,11 @@ function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
                     onClick={onNavigate}
                     aria-current={current ? "page" : undefined}
                     className={cn(
-                      "block rounded-[4px] px-3 py-1 text-body-sm",
-                      current ? "bg-primary-soft font-medium text-primary-ink" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      "relative block px-2 py-1.5 text-body-sm",
+                      current ? "bg-card font-medium text-foreground shadow-border" : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
+                    {current && <span className="absolute inset-y-0 left-0 w-0.5 bg-primary" aria-hidden />}
                     {page.title[language]}
                   </Link>
                 </li>
@@ -159,22 +158,21 @@ function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-/** Docs: a top bar with search, the table of contents on the left, the page beside it. */
+/** Docs: a ruled column on the paper, as on the landing page: a top bar with search, the contents on the left, the page beside it. */
 export function DocsShell({ index, children }: { index: DocsSearchEntry[]; children: ReactNode }) {
   const { language, setLanguage } = useLanguage();
-  const { resolvedTheme, setTheme } = useTheme();
-  const mounted = useHydrated();
   const [contentsOpen, setContentsOpen] = useState(false);
   const t = COPY[language];
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur">
-        <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-5 px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-40 border-b bg-background">
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-5 px-4 sm:px-6 xl:border-x">
           <Link href="/">
             <BrandMark />
           </Link>
-          <Link href="/docs" className="text-body-md font-medium whitespace-nowrap max-sm:hidden">
+          <span className="h-5 w-px bg-border max-sm:hidden" aria-hidden />
+          <Link href="/docs" className="font-mono text-label-caps whitespace-nowrap text-muted-foreground uppercase hover:text-foreground max-sm:hidden">
             {t.help}
           </Link>
           <a href={GITHUB_URL} className="text-body-md text-muted-foreground hover:text-foreground max-sm:hidden">
@@ -186,22 +184,14 @@ export function DocsShell({ index, children }: { index: DocsSearchEntry[]; child
             </div>
             <button
               type="button"
-              className="h-8 rounded-md px-2 text-body-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="h-9 border border-transparent px-2.5 font-mono text-caption text-muted-foreground hover:border-rule-strong hover:bg-card hover:text-foreground"
               onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
             >
               {language === "zh" ? "EN" : "中文"}
             </button>
-            <button
-              type="button"
-              aria-label="Toggle color theme"
-              className="grid size-8 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            >
-              {mounted && resolvedTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-            </button>
             <Link
               href="/checks"
-              className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-body-sm font-medium text-primary-foreground shadow-xs hover:brightness-110 transition-[filter,box-shadow,background-color,scale] duration-150 ease-out active:scale-[0.96]"
+              className="inline-flex h-9 items-center bg-foreground px-3.5 text-body-sm font-medium text-background transition-colors duration-150 hover:bg-foreground/85"
             >
               {t.openApp}
             </Link>
@@ -209,20 +199,20 @@ export function DocsShell({ index, children }: { index: DocsSearchEntry[]; child
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-7xl gap-8 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-7xl xl:border-x">
         <aside
           className={cn(
-            "sticky top-14 h-[calc(100dvh-3.5rem)] w-56 shrink-0 overflow-y-auto py-8 max-lg:fixed max-lg:inset-y-14 max-lg:left-0 max-lg:z-30 max-lg:h-auto max-lg:border-r max-lg:bg-card max-lg:px-3 max-lg:shadow-md",
+            "sticky top-16 h-[calc(100dvh-4rem)] w-60 shrink-0 overflow-y-auto border-r max-lg:fixed max-lg:inset-y-16 max-lg:left-0 max-lg:z-30 max-lg:h-auto max-lg:bg-background max-lg:shadow-md",
             !contentsOpen && "max-lg:hidden",
           )}
         >
           <DocsSidebar onNavigate={() => setContentsOpen(false)} />
         </aside>
-        <div className="min-w-0 flex-1 py-6">
-          <div className="mb-4 flex items-center gap-2 lg:hidden">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 border-b px-4 py-3 sm:px-6 lg:hidden">
             <button
               type="button"
-              className="inline-flex h-8 items-center rounded-md bg-card px-3 text-body-sm shadow-border"
+              className="inline-flex h-9 items-center border border-rule-strong bg-card px-3 text-body-sm"
               aria-expanded={contentsOpen}
               onClick={() => setContentsOpen((open) => !open)}
             >

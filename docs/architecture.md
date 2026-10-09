@@ -370,7 +370,7 @@ the lists carried over from the first version still page by number.
   components. They fetch with `useApi` (`src/client/use-api.ts`), a plain
   `useEffect` fetch with abort and `reload()`: no cache, deduplication or
   revalidation. A query library is a later step.
-- One set of design tokens (CSS variables) for light and dark, and a small
+- One set of design tokens (CSS variables), light only, and a small
   set of primitives: button, pill, table, tabs, sparkline, empty state.
 
 ## Extension points

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useTheme } from "next-themes";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import {
   Dialog,
@@ -28,7 +27,6 @@ import {
   Zap,
   RotateCcw,
   Sun,
-  Moon,
 } from "lucide-react";
 import { editorCopy } from "./copy";
 
@@ -40,13 +38,6 @@ const LIGHT_THEMES = [
   { value: "solarizedLight", label: "Solarized Light", icon: Sun },
 ];
 
-const DARK_THEMES = [
-  { value: "tokyoNight", label: "Tokyo Night", icon: Moon },
-  { value: "okaidia", label: "Okaidia Dark", icon: Moon },
-  { value: "dracula", label: "Dracula", icon: Moon },
-  { value: "materialDark", label: "Material Dark", icon: Moon },
-  { value: "solarizedDark", label: "Solarized Dark", icon: Moon },
-];
 
 const FONT_FAMILIES = [
   { value: "fira-code", label: "Fira Code", style: "'Fira Code', monospace" },
@@ -59,19 +50,13 @@ const FONT_FAMILIES = [
 
 const EditorThemeSettings: React.FC = () => {
   const t = editorCopy(useLanguage().language);
-  const { theme: systemTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [editorTheme, setEditorTheme] = useState("");
   const [fontFamily, setFontFamily] = useState("fira-code");
   const [fontSize, setFontSize] = useState([14]);
 
-  const getDefaultTheme = useCallback(() => {
-    return systemTheme === "dark" ? "tokyoNight" : "eclipse";
-  }, [systemTheme]);
-
-  const getAvailableThemes = useCallback(() => {
-    return systemTheme === "dark" ? DARK_THEMES : LIGHT_THEMES;
-  }, [systemTheme]);
+  const getDefaultTheme = useCallback(() => "eclipse", []);
+  const getAvailableThemes = useCallback(() => LIGHT_THEMES, []);
 
   // The dialog edits a copy of the saved settings, read each time it opens.
   const loadSaved = () => {
@@ -92,7 +77,7 @@ const EditorThemeSettings: React.FC = () => {
     setIsOpen(open);
   };
 
-  // A saved theme that does not suit the app's light or dark mode is replaced, and the editor told.
+  // A saved theme that is no longer offered (the dark ones) is replaced, and the editor told.
   useEffect(() => {
     const currentTheme = localStorage.getItem("editor-theme");
     const availableThemes = getAvailableThemes();
@@ -106,7 +91,7 @@ const EditorThemeSettings: React.FC = () => {
         detail: { theme: defaultTheme }
       }));
     }
-  }, [systemTheme, getAvailableThemes, getDefaultTheme]);
+  }, [getAvailableThemes, getDefaultTheme]);
 
   const saveSettings = () => {
     localStorage.setItem("editor-theme", editorTheme);
@@ -171,7 +156,7 @@ const EditorThemeSettings: React.FC = () => {
                 {t.editorThemeSettings}
               </DialogTitle>
               <p className="text-body-md text-muted-foreground">
-                {t.appliesImmediately} • {systemTheme === "dark" ? t.darkMode : t.lightMode}
+                {t.appliesImmediately}
               </p>
             </div>
           </div>
@@ -182,7 +167,7 @@ const EditorThemeSettings: React.FC = () => {
             <div className="flex items-center gap-2">
               <Palette className="h-4 w-4 text-primary" />
               <Label className="text-body-md font-medium">
-                {t.editorTheme} ({systemTheme === "dark" ? t.darkTheme : t.lightTheme})
+                {t.editorTheme}
               </Label>
             </div>
             <Select value={editorTheme} onValueChange={setEditorTheme}>
@@ -201,10 +186,7 @@ const EditorThemeSettings: React.FC = () => {
               </SelectContent>
             </Select>
             <p className="text-caption text-muted-foreground">
-              {systemTheme === "dark" 
-                ? t.themeHelpDark 
-                : t.themeHelpLight
-              }
+              {t.themeHelpLight}
             </p>
           </div>
 
@@ -254,7 +236,7 @@ const EditorThemeSettings: React.FC = () => {
             <h4 className="font-medium text-body-md">{t.currentSettings}</h4>
             <div className="flex flex-wrap gap-2">
               <Badge variant="outline" className="bg-muted text-foreground border-border   ">
-                {systemTheme === "dark" ? t.darkTheme : t.lightTheme}: {currentThemeLabel}
+                {t.editorTheme}: {currentThemeLabel}
               </Badge>
               <Badge variant="outline" className="bg-success/10 text-success border-success/30   ">
                 {t.font}: {FONT_FAMILIES.find(f => f.value === fontFamily)?.label}

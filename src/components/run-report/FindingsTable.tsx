@@ -69,11 +69,11 @@ export function FindingsTable({ rows, language }: { rows: FindingDetail[]; langu
       </div>
 
       {showScrollBar && (
-        <div className="relative h-3 bg-muted/20 rounded-full border border-border/20 mx-4">
+        <div className="relative h-3 bg-muted/20 rounded-none border border-border/20 mx-4">
           <div
             ref={scrollBarRef}
             className={cn(
-              "absolute top-0 h-full rounded-full cursor-grab transition-colors duration-200 border border-primary/20",
+              "absolute top-0 h-full rounded-none cursor-grab transition-colors duration-200 border border-primary/20",
               isDragging
                 ? "cursor-grabbing bg-primary/90  "
                 : "  "

@@ -62,13 +62,13 @@ function RunStrip({ check, t, language }: { check: CheckDetail; t: Copy; languag
     <div>
       <div className="grid grid-cols-[repeat(30,minmax(0,1fr))] gap-[3px]">
         {Array.from({ length: 30 - history.length }, (_, i) => (
-          <span key={`empty-${i}`} className="h-6 rounded-[3px] bg-muted" />
+          <span key={`empty-${i}`} className="h-6 rounded-none bg-muted" />
         ))}
         {history.map((point, i) => (
           <span
             key={i}
             title={`${formatDateTime(point.at, language)} · ${point.outcome === "error" ? t.queryError : t.rows(point.rowCount)}`}
-            className={cn("h-6 rounded-[3px]", point.outcome === "error" ? "bg-failure" : point.outcome === "issues" ? "bg-attention" : "bg-success")}
+            className={cn("h-6 rounded-none", point.outcome === "error" ? "bg-failure" : point.outcome === "issues" ? "bg-attention" : "bg-success")}
           />
         ))}
       </div>
@@ -110,7 +110,7 @@ export function CheckPanel({ scriptId, onClose }: { scriptId: string; onClose: (
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-caption">
             {state ? (
-              <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-medium", OUTCOME_PILL[state.outcome])}>
+              <span className={cn("inline-flex items-center gap-1.5 rounded-none px-2 py-0.5 font-medium", OUTCOME_PILL[state.outcome])}>
                 <span className={cn("status-dot", OUTCOME_DOT[state.outcome])} aria-hidden />
                 {OUTCOME_LABEL[state.outcome][language]}
               </span>

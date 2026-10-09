@@ -1,10 +1,9 @@
-/* The landing page: a paper page ruled with hairlines, light whatever the theme
-   (`theme-light` on its root). Headlines are set in the serif (fonts.ts), labels in the mono. */
+/* The landing page: a paper page ruled with hairlines. Headlines are set in the serif
+   (the root layout loads it for the whole site), labels in the mono (fonts.ts). */
 .landing {
   --app-font-sans: var(--font-landing-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif;
   --app-font-mono: var(--font-landing-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  --landing-serif: var(--font-landing-serif), "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", Georgia, serif;
   font-family: var(--app-font-sans);
   background: var(--paper);
   color: var(--ink);
@@ -12,7 +11,7 @@
 
 /* Headlines: the serif at regular weight, set tight. */
 .landing .font-editorial {
-  font-family: var(--landing-serif);
+  font-family: var(--app-font-serif);
   font-weight: 400;
   letter-spacing: -0.02em;
   line-height: 0.98;
@@ -51,27 +50,6 @@
 }
 .landing .ticks::after {
   right: -5px;
-}
-
-/* Registration marks: a short ink L just outside each corner of a product panel. */
-.landing .corners {
-  position: relative;
-}
-.landing .corners::after {
-  --mark: 10px;
-  content: "";
-  position: absolute;
-  inset: -5px;
-  pointer-events: none;
-  background:
-    linear-gradient(var(--ink), var(--ink)) top left / var(--mark) 1px no-repeat,
-    linear-gradient(var(--ink), var(--ink)) top left / 1px var(--mark) no-repeat,
-    linear-gradient(var(--ink), var(--ink)) top right / var(--mark) 1px no-repeat,
-    linear-gradient(var(--ink), var(--ink)) top right / 1px var(--mark) no-repeat,
-    linear-gradient(var(--ink), var(--ink)) bottom left / var(--mark) 1px no-repeat,
-    linear-gradient(var(--ink), var(--ink)) bottom left / 1px var(--mark) no-repeat,
-    linear-gradient(var(--ink), var(--ink)) bottom right / var(--mark) 1px no-repeat,
-    linear-gradient(var(--ink), var(--ink)) bottom right / 1px var(--mark) no-repeat;
 }
 
 /* A band of diagonal hatching between sections. */

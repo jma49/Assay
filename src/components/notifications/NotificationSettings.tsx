@@ -66,7 +66,7 @@ export function NotificationSettings() {
     <div className={`${APP_CONTAINER} space-y-8 py-6`}>
       <WindowStatusBar>{t.count(destinations.length)}</WindowStatusBar>
       <header className="max-w-2xl space-y-1.5">
-        <h1 className="text-display-sm leading-tight font-bold">{t.title}</h1>
+        <h1 className="font-editorial text-display-sm">{t.title}</h1>
         <p className="text-body-md leading-6 text-muted-foreground">{t.intro}</p>
       </header>
 

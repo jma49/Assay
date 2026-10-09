@@ -30,13 +30,13 @@ function PageHeading() {
   }, [title, pathname]);
 
   return (
-    <div className={`${APP_CONTAINER} flex flex-wrap items-end gap-x-6 gap-y-4 pt-10 max-md:pt-6`}>
+    <div className={`${APP_CONTAINER} mb-2 flex flex-wrap items-end gap-x-6 gap-y-4 border-b pt-10 pb-6 max-md:pt-6 max-md:pb-4`}>
       {/* The page's own <h1> is read by screen readers (PageHeader); this is the visible title. */}
       <div className="min-w-0 flex-1" aria-hidden={parent ? undefined : true}>
         {parent ? (
           <Link
             href={parent.href}
-            className="inline-flex h-8 items-center gap-1 rounded-full pr-2 text-body-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="inline-flex h-8 items-center gap-1 pr-2 text-body-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             <ChevronLeft className="size-4" />
             {parent.label[language]}
@@ -44,7 +44,7 @@ function PageHeading() {
         ) : (
           <>
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <p className="text-display-md text-foreground">{title}</p>
+              <p className="font-editorial text-display-md text-foreground">{title}</p>
               <span ref={setStatusSlot} className="text-body-sm text-muted-foreground empty:hidden" />
             </div>
             {intro && <p className="mt-2 max-w-[68ch] text-pretty text-body-md text-muted-foreground">{intro}</p>}
@@ -75,8 +75,8 @@ function GuestBanner() {
   if (!me?.guest) return null;
   const zh = language === "zh";
   return (
-    <div role="note" className="border-b bg-card px-8 py-2 text-body-sm text-muted-foreground max-md:px-4">
-      <div className="flex items-center gap-3">
+    <div role="note" className="flex h-12 shrink-0 items-center border-b bg-card px-8 text-body-sm text-muted-foreground max-md:px-4">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <span className="min-w-0 flex-1 truncate">
           <b className="font-medium text-foreground">{zh ? "演示工作区。" : "Demo workspace."}</b>
           <span className="max-sm:hidden"> {zh ? "监控着一个预先埋入问题的示例商店数据库。" : "It watches a sample shop database with problems planted in it."}</span>
@@ -85,7 +85,7 @@ function GuestBanner() {
           <a href="/demo/exit" className="px-2 transition-colors hover:text-foreground max-sm:hidden">
             {zh ? "退出演示" : "Leave demo"}
           </a>
-          <Link href="/sign-up?redirect_url=/checks" className="inline-flex h-7 items-center rounded-full bg-foreground px-3 font-medium text-background transition-opacity hover:opacity-90">
+          <Link href="/sign-up?redirect_url=/checks" className="inline-flex h-7 items-center bg-foreground px-3 font-medium text-background transition-opacity hover:opacity-90">
             {zh ? "注册" : "Sign up"}
           </Link>
         </span>
@@ -100,7 +100,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <AppShellStateProvider>
       <a
         href="#content"
-        className="fixed top-2 left-2 z-50 -translate-y-16 rounded-md bg-primary px-3 py-2 text-body-sm font-medium text-primary-foreground focus-visible:translate-y-0"
+        className="fixed top-2 left-2 z-50 -translate-y-16 bg-primary px-3 py-2 text-body-sm font-medium text-primary-foreground focus-visible:translate-y-0"
       >
         Skip to content
       </a>

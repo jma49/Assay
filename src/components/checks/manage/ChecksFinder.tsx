@@ -136,7 +136,7 @@ export function ChecksFinder({
           onClick={() => setSource(item)}
           aria-pressed={active}
           className={cn(
-            "flex w-full items-center justify-between gap-2 rounded-[4px] px-3 py-1 text-left text-body-sm whitespace-nowrap",
+            "flex w-full items-center justify-between gap-2 rounded-none px-3 py-1 text-left text-body-sm whitespace-nowrap",
             active ? "bg-primary-soft font-medium text-primary-ink" : "text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
         >

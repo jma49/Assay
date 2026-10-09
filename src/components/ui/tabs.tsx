@@ -14,8 +14,8 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      // A segmented control: the chosen option sits raised on a muted track.
-      "inline-flex h-10 items-stretch justify-start gap-0.5 rounded-full bg-card p-1 text-muted-foreground shadow-border",
+      // A segmented control: hairline-ruled options, the chosen one filled with ink.
+      "inline-flex h-10 items-stretch justify-start gap-0.5 rounded-none bg-card p-1 text-muted-foreground shadow-border",
       className
     )}
     {...props}
@@ -30,7 +30,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-body-sm transition-[color,background-color,box-shadow] duration-150 data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+      "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-none px-3.5 text-body-sm transition-[color,background-color,box-shadow] duration-150 data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
       className
     )}
     {...props}
