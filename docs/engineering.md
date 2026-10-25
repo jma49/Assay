@@ -65,7 +65,7 @@ A change that breaks one is incomplete.
 | Run document shape | count + sample + fingerprints + outcome + timing |
 | Alert event types | outcome changes, new rows, recovery, broken query |
 | `GET /api/health` | Public, no auth. `200` ok, `503` degraded. Reports component name, status and latency only, never internals or error details |
-| Scheduler heartbeat | Written only by a scheduled `scripts/run-all-scripts.ts` run; health reports `stale` when none started in 12 hours (`HEARTBEAT_STALE_MS`) |
+| Scheduler heartbeat | Written at the start of every scheduled trigger (`POST /api/cron/run-scheduled` or a scheduled `scripts/run-all-scripts.ts` run), even when no check is due; health reports `stale` when none started in 12 hours (`HEARTBEAT_STALE_MS`) |
 | Scheduled trigger | `POST /api/cron/run-scheduled`: QStash signature (`QSTASH_*_SIGNING_KEY`, `devMode: false`) or `CRON_SECRET` bearer; answers counts only; a 500 makes QStash retry. Fallback: `.github/workflows/sql-check-cron.yml` runs `npx tsx scripts/run-all-scripts.ts "$EXECUTION_MODE"` (`npm run sql:run-scheduled` locally) |
 | Dispatch | `POST /api/notifications/dispatch`, `CRON_SECRET` bearer |
 | Dead-letter API | `GET /api/notifications/deliveries/failed` and `POST .../requeue`, guarded by `NOTIFICATION_MANAGE` |
