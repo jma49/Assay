@@ -18,9 +18,13 @@ describe("demoChecks", () => {
     }
   });
 
-  it("gives every scheduled check a cron schedule", () => {
-    for (const check of demoChecks.filter((c) => c.isScheduled)) {
-      expect(check.cronSchedule.split(" ")).toHaveLength(5);
+  it("schedules no check, so the demo database only wakes when a visitor runs one", () => {
+    for (const check of demoChecks) {
+      expect({ id: check.scriptId, isScheduled: check.isScheduled, cronSchedule: check.cronSchedule }).toEqual({
+        id: check.scriptId,
+        isScheduled: false,
+        cronSchedule: "",
+      });
     }
   });
 
