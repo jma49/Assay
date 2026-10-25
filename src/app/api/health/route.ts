@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkHealth } from "@/server/health/checks";
-import { REQUEST_ID_HEADER, runWithRequestId } from "@/lib/logging/log";
+import { REQUEST_ID_HEADER, logWarn, runWithRequestId } from "@/lib/logging/log";
 
 /** Never cached: a probe must reflect the current state. */
 export const dynamic = "force-dynamic";
@@ -15,6 +15,11 @@ function requestIdOf(request: Request): string {
   return header !== null && UUID_PATTERN.test(header) ? header : crypto.randomUUID();
 }
 
+/** The caller's user agent, shortened; it identifies a monitor, never a person's data. */
+function callerOf(request: Request): string {
+  return request.headers.get("user-agent")?.slice(0, 160) ?? "none";
+}
+
 /**
  * Public on purpose: load balancers and uptime monitors call it without
  * credentials. It reports component states, never internals.
@@ -23,6 +28,11 @@ export async function GET(request: Request): Promise<NextResponse> {
   const requestId = requestIdOf(request);
   try {
     const report = await runWithRequestId(requestId, () => checkHealth());
+    if (report.status !== "ok") {
+      // Names the monitor that saw the outage: each call may wake a
+      // scale-to-zero database, so an over-eager monitor costs compute.
+      runWithRequestId(requestId, () => logWarn("Health degraded", { caller: callerOf(request) }));
+    }
     const response = NextResponse.json(report, { status: report.status === "ok" ? 200 : 503 });
     response.headers.set(REQUEST_ID_HEADER, requestId);
     return response;
