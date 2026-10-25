@@ -1,6 +1,6 @@
 import { Sparkles } from "lucide-react";
 import type { Language, LandingCopy } from "../content";
-import { SCHEDULES } from "../data";
+import { SCHEDULE_EXAMPLES } from "../data";
 import { cn } from "@/lib/utils/utils";
 import { Section, SectionHead } from "../ui";
 
@@ -34,7 +34,8 @@ function Visual({ index, copy, language }: { index: number; copy: LandingCopy["w
   if (index === 2) {
     return (
       <div className="divide-y divide-rule border border-rule bg-paper-raised text-body-sm">
-        {SCHEDULES.map((s) => (
+        <div className="px-4 py-2 text-caption text-ink-muted">{copy.schedules}</div>
+        {SCHEDULE_EXAMPLES.map((s) => (
           <div key={s.cron} className="flex items-center justify-between gap-3 px-4 py-3">
             <span className="truncate">{s.name[language]}</span>
             <span className="shrink-0 font-mono text-caption text-ink-muted">{s.cron}</span>

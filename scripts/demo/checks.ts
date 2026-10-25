@@ -1,6 +1,8 @@
 /**
  * Demo check scripts that run against the tables created by schema.sql.
  * Convention of the executor: rows returned = attention needed, no rows = OK.
+ * None is scheduled: the public demo's database runs on a small compute quota,
+ * so a demo check only runs when a visitor presses Run (rate limited in demo-sandbox.ts).
  */
 export interface DemoCheck {
   scriptId: string;
@@ -25,8 +27,8 @@ export const demoChecks: DemoCheck[] = [
       "Orders from the same customer with the same total placed within 5 minutes of each other.",
     cnDescription: "同一客户在 5 分钟内以相同金额重复下单。",
     hashtags: ["demo", "orders", "duplicates"],
-    isScheduled: true,
-    cronSchedule: "0 * * * *",
+    isScheduled: false,
+    cronSchedule: "",
     sqlContent: `SELECT a.id AS order_id, b.id AS duplicate_order_id,
        a.customer_id, a.total, a.created_at, b.created_at AS duplicate_created_at
 FROM demo.orders a
@@ -44,8 +46,8 @@ ORDER BY a.id;`,
     description: "Products whose on-hand stock is below zero.",
     cnDescription: "现有库存小于 0 的商品。",
     hashtags: ["demo", "inventory"],
-    isScheduled: true,
-    cronSchedule: "*/30 * * * *",
+    isScheduled: false,
+    cronSchedule: "",
     sqlContent: `SELECT p.sku, p.name, i.on_hand, i.reserved
 FROM demo.inventory i
 JOIN demo.products p ON p.id = i.product_id
@@ -59,8 +61,8 @@ ORDER BY i.on_hand;`,
     description: "Orders marked paid or shipped that have no payment record.",
     cnDescription: "状态为已支付或已发货，但没有任何支付记录的订单。",
     hashtags: ["demo", "orders", "payments"],
-    isScheduled: true,
-    cronSchedule: "0 9 * * *",
+    isScheduled: false,
+    cronSchedule: "",
     sqlContent: `SELECT o.id AS order_id, o.customer_id, o.status, o.total, o.created_at
 FROM demo.orders o
 WHERE o.status IN ('paid', 'shipped')
@@ -105,8 +107,8 @@ ORDER BY id;`,
     description: "Orders still pending more than 7 days after being placed.",
     cnDescription: "下单超过 7 天仍处于待支付状态的订单。",
     hashtags: ["demo", "orders"],
-    isScheduled: true,
-    cronSchedule: "0 8 * * 1",
+    isScheduled: false,
+    cronSchedule: "",
     sqlContent: `SELECT id AS order_id, customer_id, total, created_at,
        date_part('day', now() - created_at)::int AS days_pending
 FROM demo.orders
@@ -162,8 +164,8 @@ WHERE refunded > amount;`,
     description: "Orders with a creation time in the future. Expected to be clean.",
     cnDescription: "创建时间晚于当前时间的订单。正常情况下应无结果。",
     hashtags: ["demo", "orders", "data-quality"],
-    isScheduled: true,
-    cronSchedule: "0 0 * * *",
+    isScheduled: false,
+    cronSchedule: "",
     sqlContent: `SELECT id AS order_id, created_at
 FROM demo.orders
 WHERE created_at > now() + interval '5 minutes';`,

@@ -15,11 +15,11 @@ export interface HeroCheck {
 }
 
 export const HERO_CHECKS: HeroCheck[] = [
-  { id: "demo-duplicate-orders", name: { en: "Duplicate orders", zh: "重复下单" }, outcome: "issues", rows: 6, schedule: { en: "Every hour", zh: "每小时" } },
+  { id: "demo-duplicate-orders", name: { en: "Duplicate orders", zh: "重复下单" }, outcome: "issues", rows: 6, schedule: { en: "Manual", zh: "手动" } },
   { id: "demo-broken-shipping-check", name: { en: "Shipping status check (broken)", zh: "物流状态检查（故意出错）" }, outcome: "broken", schedule: { en: "Manual", zh: "手动" } },
-  { id: "demo-negative-inventory", name: { en: "Negative inventory", zh: "库存为负" }, outcome: "issues", rows: 3, schedule: { en: "Every 30 min", zh: "每 30 分钟" } },
-  { id: "demo-future-dated-orders", name: { en: "Future-dated orders", zh: "下单时间在未来的订单" }, outcome: "clean", schedule: { en: "Daily 00:00", zh: "每天 00:00" } },
-  { id: "demo-paid-orders-missing-payment", name: { en: "Paid orders without a payment", zh: "已支付订单缺少支付记录" }, outcome: "issues", rows: 5, schedule: { en: "Daily 09:00", zh: "每天 09:00" } },
+  { id: "demo-negative-inventory", name: { en: "Negative inventory", zh: "库存为负" }, outcome: "issues", rows: 3, schedule: { en: "Manual", zh: "手动" } },
+  { id: "demo-future-dated-orders", name: { en: "Future-dated orders", zh: "下单时间在未来的订单" }, outcome: "clean", schedule: { en: "Manual", zh: "手动" } },
+  { id: "demo-paid-orders-missing-payment", name: { en: "Paid orders without a payment", zh: "已支付订单缺少支付记录" }, outcome: "issues", rows: 5, schedule: { en: "Manual", zh: "手动" } },
 ];
 
 /** The four problems planted in the demo, with the SQL each check runs. */
@@ -66,7 +66,8 @@ export const STALE_DIFF = { added: 8, still: 0, fixed: 7 } as const;
 
 export const DEMO_TABLES = ["orders", "payments", "products", "inventory", "customers", "order_items"] as const;
 
-export const SCHEDULES = [
+/** Example schedules for the workflow section. The demo's own checks are manual: none is scheduled (scripts/demo/checks.ts). */
+export const SCHEDULE_EXAMPLES = [
   { name: { en: "Negative inventory", zh: "库存为负" }, cron: "*/30 * * * *" },
   { name: { en: "Duplicate orders", zh: "重复下单" }, cron: "0 * * * *" },
   { name: { en: "Paid orders without a payment", zh: "已支付订单缺少支付记录" }, cron: "0 9 * * *" },

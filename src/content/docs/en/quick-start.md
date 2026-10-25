@@ -6,7 +6,7 @@ Run your first data check on the live demo in a few minutes.
 
 Open [the demo](https://assay.majincheng.com) and choose **Try the live demo**. You can look around as a guest without an account, or sign in with Google or GitHub. New accounts join the demo workspace as **viewers**: you can read every check and every result, but not change them.
 
-> On the demo, viewers can run the sample checks (up to 20 runs an hour) but not edit them. To try the whole flow, [host your own copy](/docs/deployment) or ask an admin for the developer role.
+> On the demo, viewers can run the sample checks (up to 20 runs an hour) but not edit them. The sample checks are not scheduled: each one runs when someone runs it, so its last result may be a few days old until you run it again. To try the whole flow, [host your own copy](/docs/deployment) or ask an admin for the developer role.
 
 ## Step 2 — Look around
 

@@ -82,6 +82,8 @@ export interface LandingCopy {
     stepLabel: (i: number, n: number) => string;
     steps: Titled[];
     prompt: { label: string; text: string; draft: string };
+    /** Caption over the schedule examples: the demo's own checks are manual. */
+    schedules: string;
     approval: { request: [string, string, string]; pending: string; note: string; approve: string; reject: string };
     triage: { label: string; kind: string; summary: string; next: string; steps: string[] };
   };
@@ -205,6 +207,7 @@ const en: LandingCopy = {
       { title: "Triaged when it goes wrong", body: "On a failed or flagged run, AI reads the query, the schema and a column profile, then says whether the data or the check is at fault." },
     ],
     prompt: { label: "Prompt", text: "orders marked paid but with no payment row", draft: "Draft" },
+    schedules: "Example schedules",
     approval: { request: ["sam", "wants to update", "Duplicate orders"], pending: "Pending", note: "Update · the diff is kept in edit history", approve: "Approve", reject: "Reject" },
     triage: { label: "AI triage", kind: "Data issue", summary: "Each row pairs an order with a second one from the same customer and total within five minutes.", next: "Next steps", steps: ["Confirm which order is real", "Cancel or refund the duplicate"] },
   },
@@ -345,6 +348,7 @@ const zh: LandingCopy = {
       { title: "出错时有人帮你分析", body: "运行失败或查出问题时，AI 会读查询、表结构和列的统计概况，判断是数据有问题还是检查本身有误。" },
     ],
     prompt: { label: "描述", text: "状态是已支付，但没有支付记录的订单", draft: "草稿" },
+    schedules: "调度示例",
     approval: { request: ["sam", "提交了修改：", "重复下单"], pending: "待审批", note: "修改 · 差异保存在编辑历史中", approve: "批准", reject: "拒绝" },
     triage: { label: "AI 分析", kind: "数据问题", summary: "每一行都是同一客户、同一金额、5 分钟内的两笔订单。", next: "下一步", steps: ["确认哪一笔订单是真实的", "取消或退款重复的那一笔"] },
   },
