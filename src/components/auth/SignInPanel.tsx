@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, BellRing, Bot, ChevronDown, ListChecks, Loader2, ShieldCheck } from "lucide-react";
-import "@/components/landing/landing.css";
-import { landingMono, landingSans } from "@/components/landing/fonts";
+import "./sign-in.css";
+import { signInMono, signInSans } from "./fonts";
 import { RowAMark } from "@/components/brand/RowAMark";
 import { GithubMark } from "@/components/common/GithubMark";
 import { SignInBrand } from "./SignInBrand";
@@ -189,7 +189,7 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
   const noProvider = !providers.google && !providers.github && !providers.password;
 
   return (
-    <div className={cn("landing grid min-h-screen lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]", landingSans.variable, landingMono.variable)}>
+    <div className={cn("sign-in grid min-h-screen lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]", signInSans.variable, signInMono.variable)}>
       {/* The pitch, for people who arrive here first. Hidden on small screens, where the form matters most. */}
       <SignInBrand language={language} tagline={t.tagline} points={t.points} footnote={t.openSource} />
 
