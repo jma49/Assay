@@ -84,7 +84,13 @@ for (const language of languages) {
       // glyphs fall back to a different CJK face until it does.
       await expect(page.locator("html")).toHaveAttribute("lang", language === "zh" ? "zh-CN" : "en");
       await page.evaluate(() => document.fonts.ready);
-
+      // A full-page screenshot never scrolls, so lazy images below the fold would
+      // stay empty or arrive mid-capture; load and decode them all first.
+      await page.evaluate(async () => {
+        const images = [...document.querySelectorAll<HTMLImageElement>("img[loading=lazy]")];
+        for (const image of images) image.loading = "eager";
+        await Promise.all(images.map((image) => image.decode().catch(() => undefined)));
+      });
 
       await expect(page).toHaveScreenshot(`${language}-${target.name}.png`, { fullPage: true, timeout: 30_000 });
 
