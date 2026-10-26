@@ -1,0 +1,765 @@
+/* Section 2 · How a run works (signature) · ground: the lit face of the light box.
+   Base rules = the settled, static composition (no JS, reduced motion): both films registered, the SQL,
+   the rows, the diff and the alert, all four step texts. `html.lt-run-story` (set before first paint by the landing's
+   inline script when motion is allowed and the window has room) turns on the pinned story on desktop and the sticky
+   film on tablet and phone: run.story.css, run.narrow.css. */
+.lt .s-run {
+  --run-out: cubic-bezier(.5, 0, 1, 1); /* a reading leaving under the film's edge */
+  /* sizes off the landing's scale, defined once */
+  --run-text-count: clamp(150px, 13.4vw, 196px);
+  --run-text-count-md: clamp(120px, 12vw, 150px);
+  --run-text-count-sm: 40px;
+  --run-text-count-phone: 32px;
+  --run-text-unit: clamp(34px, 2.9vw, 42px);
+  --run-text-diff: clamp(52px, 4.4vw, 64px);
+  --run-text-diff-sm: 34px;
+  --run-text-diff-tablet: 28px;
+  --run-text-alert: clamp(20px, 1.55vw, 22px);
+  --run-text-h2-md: clamp(42px, 3.7vw, 50px);
+  --run-text-h2-sm: clamp(38px, 3.5vw, 44px);
+  --run-text-h2-short: 52px;
+  --run-text-h2-zh: clamp(34px, 3.9vw, 56px);
+  --run-text-row-short: 13.5px;
+  --film-w: 584px;
+  --row: 20px;
+  --gut: 18px;
+  --pad-x: 14px;
+  --pad-top: 14px;
+  --f-head-top: calc(var(--pad-top) + 20px + 6px + 22px + 6px); /* top of the rows inside a film */
+  --film-h: calc(var(--f-head-top) + 30 * var(--row) + 6px + 20px + 12px);
+  --cols: 8ch 11ch 5ch 5ch;
+  position: relative;
+  isolation: isolate;
+  color: var(--lt-box-ink);
+  overflow-x: clip; /* clip keeps the sticky story working */
+  /* baked: the opal face with its metal rails (repeat-y) and the bottom bar of the frame */
+  background:
+      url("/landing/run/face-bot-d.webp") bottom center / 100% auto no-repeat,
+      url("/landing/run/face-mid-d.webp") top center / 100% auto repeat-y,
+      var(--lt-box);
+}
+.lt .s-run code {
+  font-size: inherit;
+  font-family: var(--lt-font-mono);
+}
+.lt .s-run .run-pin {
+  position: relative;
+  padding: clamp(112px, 10vw, 152px) 0 clamp(150px, 12vw, 184px);
+}
+.lt .s-run .run-inner {
+  width: min(var(--lt-wrap), 100% - 2 * var(--lt-gutter));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  column-gap: 36px;
+  align-items: start;
+}
+
+/* ---------- text column ---------- */
+.lt .s-run .run-h2 {
+  color: var(--lt-box-ink);
+}
+.lt .s-run .run-lede {
+  margin-top: 18px;
+  font-size: var(--lt-text-body);
+  line-height: 1.55;
+  color: var(--lt-box-ink-2);
+  max-width: 22rem;
+}
+.lt .s-run .run-steps {
+  list-style: none;
+  margin: 30px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--lt-box-line);
+}
+.lt .s-run .run-step {
+  border-bottom: 1px solid var(--lt-box-line);
+}
+.lt .s-run .step-btn {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  width: 100%;
+  min-height: 48px;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 12px 0;
+  font: inherit;
+  font-size: var(--lt-text-h3);
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--lt-box-ink);
+  cursor: pointer;
+}
+.lt .s-run .step-btn:disabled {
+  cursor: default;
+}
+.lt .s-run .step-btn:focus-visible {
+  outline: 2px solid var(--lt-box-ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.lt .s-run .step-n {
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-14);
+  color: var(--lt-lumen-ink);
+  min-width: 14px;
+}
+.lt .s-run .step-body > p {
+  font-size: var(--lt-text-16);
+  line-height: 1.6;
+  color: var(--lt-box-ink-2);
+  padding: 0 0 16px 28px;
+}
+
+/* ---------- the stage (static: slip above the film, readings beside it) ---------- */
+.lt .s-run .run-viewer {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--film-w) 1fr;
+  column-gap: 32px;
+  row-gap: 28px;
+  align-items: start;
+}
+.lt .s-run .slip {
+  grid-column: 1;
+  grid-row: 1;
+}
+.lt .s-run .run-films {
+  grid-column: 1;
+  grid-row: 2 / span 3;
+  position: relative;
+  width: var(--film-w);
+  height: var(--film-h);
+  margin-top: 18px;
+}
+.lt .s-run .obj-1 {
+  grid-column: 2;
+  grid-row: 2;
+  margin-top: 18px;
+}
+.lt .s-run .obj-2 {
+  grid-column: 2;
+  grid-row: 3;
+}
+.lt .s-run .obj-3 {
+  grid-column: 2;
+  grid-row: 4;
+}
+
+/* ---------- a film: the table printed row by row, backlit on the face ---------- */
+.lt .s-run .rf {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  border-radius: 4px;
+  padding: var(--pad-top) var(--pad-x) 0;
+  color: var(--lt-film-print);
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-14);
+  letter-spacing: 0;
+}
+.lt .s-run .rf-a {
+  z-index: 0;
+  background: var(--lt-film-900) url("/landing/run/film.webp") center / cover;
+  /* the film lies a few mm off the opal, held by the clips: the room's light throws its soft shadow down onto the face */
+  box-shadow: 0 0 0 1px var(--lt-film-edge), inset 0 0 0 3px var(--lt-run-film-sheen), var(--lt-run-shadow-film);
+}
+.lt .s-run .rf-b {
+  z-index: 1;
+}
+.lt .s-run .rf-b::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--lt-film-950) url("/landing/run/film.webp") center / cover;
+  opacity: .52;
+  box-shadow: 0 0 0 1px var(--lt-film-edge), var(--lt-run-shadow-film-b);
+}
+.lt .s-run .rf-b > * {
+  position: relative;
+}
+.lt .s-run .f-lead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 20px;
+  color: var(--lt-film-print);
+  white-space: nowrap;
+}
+.lt .s-run .f-lead > span {
+  flex: 1;
+}
+.lt .s-run .f-lead > span:last-child {
+  text-align: right;
+}
+.lt .s-run .f-foot {
+  margin-top: 6px;
+}
+.lt .s-run .reg {
+  position: relative;
+  flex: none;
+  width: 15px;
+  height: 15px;
+  border: 1.25px solid var(--lt-film-print);
+  border-radius: 50%;
+  margin: 0 10px;
+}
+.lt .s-run .reg::before,
+.lt .s-run .reg::after {
+  content: "";
+  position: absolute;
+  background: var(--lt-film-print);
+}
+.lt .s-run .reg::before {
+  left: -6px;
+  right: -6px;
+  top: 50%;
+  height: 1.25px;
+  margin-top: -0.6px;
+}
+.lt .s-run .reg::after {
+  top: -6px;
+  bottom: -6px;
+  left: 50%;
+  width: 1.25px;
+  margin-left: -0.6px;
+}
+.lt .s-run .f-head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--gut);
+  height: 22px;
+  margin-top: 6px;
+  border-bottom: 1px solid var(--lt-film-line);
+  background: var(--lt-run-film-head);
+  margin-inline: -4px;
+  padding-inline: 4px;
+}
+.lt .s-run .f-head > div {
+  display: grid;
+  grid-template-columns: var(--cols);
+  column-gap: 1ch;
+  align-items: center;
+  font-size: var(--lt-text-14);
+}
+.lt .s-run .f-head .h3 {
+  display: none;
+}
+.lt .s-run .f-head span {
+  font-family: var(--lt-font-lead);
+  font-weight: 600;
+  font-size: var(--lt-text-13);
+  letter-spacing: 0.02em;
+  color: var(--lt-film-ink-3);
+}
+.lt .s-run .f-rows {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-rows: repeat(30, var(--row));
+  grid-auto-flow: column;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--gut);
+}
+.lt .s-run .r {
+  display: grid;
+  grid-template-columns: var(--cols);
+  column-gap: 1ch;
+  align-items: center;
+  height: var(--row);
+  line-height: var(--row);
+  white-space: nowrap;
+  color: var(--lt-film-ink-3);
+}
+.lt .s-run .v,
+.lt .s-run .f-head .v {
+  text-align: right;
+}
+.lt .s-run .r.lit {
+  position: relative;
+  z-index: 1;
+  margin: 0 -5px;
+  padding: 0 5px;
+  color: var(--lt-film-950);
+}
+.lt .s-run .r.lit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 2px;
+  background: var(--lt-lumen-core);
+  box-shadow: 0 0 0 1px var(--lt-lumen), 0 0 8px 1px var(--lt-lumen-halo);
+  transform-origin: 0 50%;
+}
+.lt .s-run .rf-b .r:not(.lit) {
+  color: var(--lt-run-film-faint);
+}
+
+/* develop covers (hidden in the settled state) */
+.lt .s-run .f-covers {
+  position: absolute;
+  z-index: 2;
+  left: var(--pad-x);
+  right: var(--pad-x);
+  top: var(--f-head-top);
+  height: calc(30 * var(--row));
+  pointer-events: none;
+}
+.lt .s-run .cover {
+  position: absolute;
+  width: calc((100% - var(--gut)) / 2 + 8px);
+  height: calc(10 * var(--row) + 1px);
+  margin-left: -4px;
+  background: var(--lt-film-900);
+  transform-origin: 100% 50%;
+  transform: scaleX(0);
+}
+.lt .s-run .cover:nth-child(-n+3) {
+  left: 0;
+}
+.lt .s-run .cover:nth-child(n+4) {
+  left: calc((100% + var(--gut)) / 2);
+}
+.lt .s-run .cover:nth-child(3n+1) {
+  top: 0;
+}
+.lt .s-run .cover:nth-child(3n+2) {
+  top: calc(10 * var(--row));
+}
+.lt .s-run .cover:nth-child(3n) {
+  top: calc(20 * var(--row));
+}
+
+/* lead tags: on the film, in the empty value columns of the row under each lit row */
+.lt .s-run .f-tags {
+  position: absolute;
+  left: var(--pad-x);
+  right: var(--pad-x);
+  top: var(--f-head-top);
+  height: calc(30 * var(--row));
+  pointer-events: none;
+  z-index: 2;
+}
+.lt .s-run .dtag {
+  position: absolute;
+  top: calc((var(--r) + 1) * var(--row) + 1px);
+  right: calc((100% + var(--gut)) / 2 - 2px);
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 3px;
+  font-size: var(--lt-text-13);
+  line-height: 18px;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  color: var(--lt-film-950);
+}
+.lt .s-run .dtag.c2 {
+  right: -2px;
+}
+.lt .s-run .dtag::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  width: 1px;
+  height: 5px;
+  background: currentColor;
+  opacity: .7;
+}
+.lt .s-run .dtag.is-fixed::before {
+  background: var(--lt-film-print);
+}
+.lt .s-run .dtag {
+  transform-origin: 50% -5px;
+}
+.lt .s-run .dtag.is-new {
+  background: var(--lt-lumen-core);
+  box-shadow: 0 0 0 1px var(--lt-lumen), 0 0 8px 1px var(--lt-lumen-halo);
+}
+.lt .s-run .dtag.is-still {
+  background: var(--lt-lumen);
+}
+.lt .s-run .dtag.is-fixed {
+  color: var(--lt-film-print);
+  box-shadow: inset 0 0 0 1px var(--lt-film-print);
+  background: var(--lt-film-950);
+}
+
+/* the clips: baked metal spring clips holding both films */
+.lt .s-run .rclip {
+  position: absolute;
+  z-index: 4;
+  top: -22px;
+  width: 44px;
+  height: 46px;
+  margin-left: -22px;
+  background: url("/landing/run/clip.webp") center / contain no-repeat;
+  pointer-events: none;
+}
+.lt .s-run .rclip-l {
+  left: 22%;
+}
+.lt .s-run .rclip-r {
+  left: 78%;
+}
+
+/* ---------- the SQL slip: a strip of film, the WHERE clause in focus ---------- */
+.lt .s-run .slip {
+  position: relative;
+  background: var(--lt-film-900) url("/landing/run/film.webp") center / cover;
+  color: var(--lt-film-print);
+  border-radius: 4px;
+  padding: 12px 16px 12px;
+  box-shadow: 0 0 0 1px var(--lt-film-edge);
+}
+.lt .s-run .slip-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--lt-film-print);
+}
+.lt .s-run .slip-sql {
+  margin: 10px 0;
+  font-size: var(--lt-text-14);
+  line-height: 1.75;
+  white-space: pre;
+  color: var(--lt-film-ink-3);
+}
+.lt .s-run .slip-sql .sl {
+  display: block;
+  padding-left: 2.5ch;
+  text-indent: -2.5ch;
+}
+.lt .s-run .slip-sql .k {
+  color: var(--lt-film-ink-2);
+}
+.lt .s-run .slip-sql .ln {
+  display: inline-block;
+  width: 2.5ch;
+  text-indent: 0;
+  color: var(--lt-run-sql-ln);
+  user-select: none;
+}
+.lt .s-run .slip-sql .focus {
+  margin-inline: -16px;
+  padding-left: calc(16px + 2.5ch);
+  color: var(--lt-film-print);
+  background: var(--lt-run-sql-focus);
+  box-shadow: inset 2px 0 0 var(--lt-film-print);
+}
+.lt .s-run .slip-sql .focus .k {
+  color: var(--lt-film-print);
+}
+.lt .s-run .slip-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--lt-film-line);
+  padding-top: 9px;
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-13);
+  color: var(--lt-film-ink-2);
+}
+
+/* ---------- readings printed on the box ---------- */
+.lt .s-run .rd {
+  color: var(--lt-box-ink);
+}
+.lt .s-run .rd-k {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: var(--lt-text-15);
+  color: var(--lt-box-ink-2);
+}
+.lt .s-run .rd-big {
+  margin-top: 6px;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 0.28em;
+  font-size: var(--run-text-count-sm);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 560;
+}
+.lt .s-run .rd-big b {
+  font-weight: 560;
+  color: var(--lt-lumen-ink);
+}
+.lt .s-run .rd-u {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 12px;
+}
+.lt .s-run .rd-w {
+  color: var(--lt-lumen-ink);
+}
+.lt .s-run .rd-st {
+  color: var(--lt-box-ink-2);
+  font-size: 0.6em;
+  letter-spacing: -0.01em;
+}
+
+/* row strips (the desktop story's readouts) and the alert's change line are not part of the static composition */
+.lt .s-run .ds,
+.lt .s-run .al-top {
+  display: none;
+}
+
+/* the returned rows, printed as the query returned them */
+.lt .s-run .rd-table {
+  width: 100%;
+  margin: 16px 0 0;
+  border-collapse: collapse;
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-15);
+  line-height: 1.3;
+}
+.lt .s-run .rd-table th {
+  padding: 0 0 6px;
+  font-family: var(--lt-font-lead);
+  font-weight: 600;
+  font-size: var(--lt-text-13);
+  letter-spacing: 0.02em;
+  text-align: left;
+  color: var(--lt-box-ink-3);
+  border-bottom: 1px solid var(--lt-box-line-2);
+}
+.lt .s-run .rd-table td {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--lt-box-line);
+  white-space: nowrap;
+  color: var(--lt-box-ink);
+}
+.lt .s-run .rd-table td:first-child {
+  color: var(--lt-box-ink-2);
+}
+.lt .s-run .rd-table th + th,
+.lt .s-run .rd-table td + td {
+  padding-left: 1.2ch;
+}
+.lt .s-run .rd-table .v {
+  text-align: right;
+}
+.lt .s-run .rd-table td.v:nth-child(3) {
+  color: var(--lt-lumen-ink);
+}
+.lt .s-run .rd-note {
+  margin-top: 12px;
+  font-size: var(--lt-text-15);
+  line-height: 1.5;
+  color: var(--lt-box-ink-2);
+}
+.lt .s-run .rd-diff {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+}
+.lt .s-run .rd-diff li {
+  display: grid;
+  grid-template-columns: 24px minmax(2ch, auto) 1fr;
+  align-items: center;
+  column-gap: 14px;
+  padding: 12px 0;
+  border-top: 1px solid var(--lt-box-line);
+}
+.lt .s-run .rd-diff li:first-child {
+  border-top: 0;
+}
+.lt .s-run .rd-diff b {
+  font-weight: 560;
+  font-size: var(--run-text-count-sm);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--lt-lumen-ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.lt .s-run .rd-diff li:last-child b {
+  color: var(--lt-box-ink-2);
+}
+.lt .s-run .rd-diff .dl {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-size: var(--lt-text-18);
+  font-weight: 560;
+  line-height: 1.3;
+}
+.lt .s-run .rd-diff .dc {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1.2ch;
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-15);
+  font-weight: 400;
+  color: var(--lt-box-ink-2);
+}
+.lt .s-run .dm {
+  width: 24px;
+  height: 13px;
+  border-radius: 2px;
+  flex: none;
+}
+.lt .s-run .dm.is-new {
+  background: var(--lt-lumen-core);
+  box-shadow: 0 0 0 1px var(--lt-lumen-ink);
+}
+.lt .s-run .dm.is-still {
+  background: var(--lt-lumen);
+  box-shadow: 0 0 0 1px var(--lt-lumen-ink);
+}
+.lt .s-run .dm.is-fixed {
+  box-shadow: inset 0 0 0 1.5px var(--lt-box-ink-3);
+}
+
+/* ---------- the alert: assay's words, in assay's ink, at the film's weight. It is the one object that leaves the box,
+   so it alone stands off the face and casts a shadow on it ---------- */
+.lt .s-run .alert {
+  margin: 0;
+  position: relative;
+}
+.lt .s-run .alert-msg {
+  position: relative;
+  padding: 18px 18px 18px;
+  border-radius: var(--lt-r-md);
+  background: var(--lt-film-950);
+  color: var(--lt-box-hi);
+  box-shadow: var(--lt-run-shadow-alert);
+}
+.lt .s-run .alert-lift {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--lt-r-md);
+  box-shadow: var(--lt-run-shadow-lift);
+  pointer-events: none;
+}
+.lt .s-run .alert-mark {
+  align-self: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  background: var(--lt-run-alert-chip);
+  color: var(--lt-box-hi);
+}
+.lt .s-run .alert-mark svg {
+  width: 17px;
+  height: 17px;
+}
+.lt .s-run .alert-mark rect:last-child {
+  fill: var(--lt-lumen);
+}
+.lt .s-run .alert-body {
+  min-width: 0;
+  display: grid;
+}
+.lt .s-run .alert-from {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  font-size: var(--lt-text-16);
+  line-height: 26px;
+}
+.lt .s-run .alert-time {
+  font-size: var(--lt-text-14);
+  color: var(--lt-run-alert-ink-3);
+}
+.lt .s-run .alert-title {
+  margin-top: 10px;
+  font-size: var(--lt-text-18);
+  font-weight: 640;
+  line-height: 1.35;
+}
+.lt .s-run .alert-lines {
+  margin-top: 4px;
+  font-size: var(--lt-text-16);
+  line-height: 1.55;
+  color: var(--lt-run-alert-ink-2);
+}
+.lt .s-run .alert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.lt .s-run .abtn {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--lt-r-sm);
+  font-size: var(--lt-text-15);
+  font-weight: 560;
+  color: var(--lt-box-hi);
+  box-shadow: inset 0 0 0 1px var(--lt-run-alert-ring);
+  white-space: nowrap;
+}
+.lt .s-run .abtn-ink {
+  background: var(--lt-box-hi);
+  color: var(--lt-box-ink);
+  box-shadow: none;
+}
+.lt .s-run .alert-cap {
+  margin-top: 16px;
+  font-size: var(--lt-text-15);
+  line-height: 1.5;
+  color: var(--lt-box-ink-2);
+}
+.lt .s-run .alert-cap .tag,
+.lt .s-run .rd-k .tag {
+  margin-right: 4px;
+}
+
+/* the reading line (desktop pointer): a thin neutral line under the row at the pointer, the row printed on a lead tag (as in the hero) */
+.lt .s-run .rreader {
+  position: absolute;
+  height: var(--row);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 3;
+  transition: opacity .2s var(--lt-glide);
+}
+.lt .s-run .rreader::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: var(--lt-film-print);
+  opacity: .8;
+}
+.lt .s-run .rreader-tag {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 4px);
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: var(--lt-r-xs);
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-13);
+  line-height: 18px;
+  color: var(--lt-film-print);
+  background: var(--lt-run-reader-bg);
+  box-shadow: 0 0 0 1px var(--lt-film-line);
+}
+.lt .s-run .rreader-tag b {
+  font-weight: 400;
+  color: var(--lt-lumen);
+}
+.lt .s-run .run-films.is-reading .rreader {
+  opacity: 1;
+}

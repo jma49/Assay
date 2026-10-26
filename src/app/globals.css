@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Design tokens. Assay is light only: one paper palette for the landing page, the app and the docs.
+/* Design tokens. Assay is light only: one paper palette for the app, the docs and sign-in (the landing has its own below).
    Neutrals are warm off-whites ruled with hairlines; status colours are separate from the accent and
    mean the same thing everywhere: error = the check itself broke, issues = it found rows, clean = it found none. */
 :root {
@@ -87,6 +87,168 @@
   --sidebar-accent-foreground: var(--primary-ink);
   --sidebar-border: var(--rule);
   --sidebar-ring: color-mix(in srgb, #4f63e8 45%, transparent);
+}
+
+/* The landing's light table (src/components/landing): a dark room, a light box and film, its own world apart from
+   the paper palette above. Only the landing reads these; DESIGN.md (Landing) says how. Lumen is the one accent and
+   means one thing: light through a row a check returned. Sizes, spaces and curves: landing/styles/tokens.css. */
+:root {
+  /* G1 room: the dim viewing room, warm umber walls lit only by the box */
+  --lt-room-1000: #080605;
+  --lt-room-950: #0e0a07;
+  --lt-room-900: #19130f;
+  --lt-room-800: #2a211a;
+  --lt-room-wall: #332c24;
+  --lt-room-wall-lit: rgb(98 85 73 / 0.55);
+  --lt-room-ink: #f2ece5;
+  --lt-room-ink-2: rgb(242 236 229 / 0.74);
+  --lt-room-ink-3: rgb(242 236 229 / 0.62);
+  --lt-room-line: rgb(242 236 229 / 0.12);
+  --lt-room-line-2: rgb(242 236 229 / 0.24);
+  --lt-etch: rgb(242 236 229 / 0.5);
+  --lt-etch-2: rgb(242 236 229 / 0.22);
+
+  /* G2 box: the lit face of the light box, opal acrylic over tubes */
+  --lt-box: #eef2f3;
+  --lt-box-hi: #f7fafa;
+  --lt-box-ink: #121619;
+  --lt-box-ink-2: rgb(18 22 25 / 0.72);
+  --lt-box-ink-3: rgb(18 22 25 / 0.62);
+  --lt-box-line: rgb(18 22 25 / 0.12);
+  --lt-box-line-2: rgb(18 22 25 / 0.22);
+  --lt-box-edge: #d9e0e3;
+  --lt-box-shade: #c9d1d5;
+
+  /* film: developed film base, silver graphite */
+  --lt-film-950: #121618;
+  --lt-film-900: #1b2124;
+  --lt-film-800: #262d31;
+  --lt-film-700: #333c41;
+  --lt-film-print: #c6d0d5;
+  --lt-film-print-hi: #e4ebee;
+  --lt-film-ink-2: rgb(214 222 226 / 0.74);
+  --lt-film-ink-3: rgb(214 222 226 / 0.6);
+  --lt-film-line: rgb(198 208 213 / 0.18);
+  --lt-film-edge: rgb(18 22 25 / 0.6);
+  --lt-film-edge-ink: rgb(18 22 25 / 0.84);
+  --lt-film-base: rgb(30 36 40 / 0.5);
+
+  /* G3 lead: sheet lead, the shielding of a radiography room */
+  --lt-lead-700: #474e52;
+  --lt-lead-600: #5b6266;
+  --lt-lead-ink: #f4f4f0;
+  --lt-lead-ink-2: #e2e4e1;
+  --lt-lead-line: rgb(244 244 240 / 0.22);
+
+  /* G4 daylight: house lights on, the reading room after the session */
+  --lt-day: #e6e6e2;
+  --lt-day-hi: #f0f0ec;
+  --lt-day-white: #ffffff;
+  --lt-day-ink: #16181a;
+  --lt-day-ink-2: rgb(22 24 26 / 0.74);
+  --lt-day-ink-3: rgb(22 24 26 / 0.64);
+  --lt-day-line: rgb(22 24 26 / 0.13);
+  --lt-day-line-2: rgb(22 24 26 / 0.24);
+
+  /* the one accent: light coming through a returned row. Nothing else. */
+  --lt-lumen: #9fdcff;
+  --lt-lumen-core: #f1fbff;
+  --lt-lumen-glow: rgb(140 210 255 / 0.55);
+  --lt-lumen-halo: rgb(140 210 255 / 0.32);
+  --lt-lumen-ink: #0b5a80;
+
+  /* fog: a broken check, a film that cannot be read */
+  --lt-fog: #6d7478;
+  --lt-fog-950: #2a2f32;
+  --lt-fog-hi: #b9c0c3;
+  --lt-fog-veil: rgb(150 158 162 / 0.62);
+  --lt-fog-ink: #e9ecec;
+  --lt-fog-ink-dark: #15191b;
+
+  /* frame metal and clips */
+  --lt-metal-900: #24282b;
+  --lt-metal-800: #33383b;
+  --lt-metal-700: #4a5054;
+  --lt-metal-300: #aeb5b9;
+  --lt-metal-500: #8c9498;
+  --lt-metal-sheen: rgb(255 255 255 / 0.62);
+
+  /* shade: the one light's shadows and the darker film tints, always used at an alpha (color-mix with transparent) */
+  --lt-shadow-black: #000000;
+  --lt-shadow-ink: #14181a;
+  --lt-shadow-warm: #14100c;
+  --lt-shadow-deep: #0a0c0d;
+  --lt-shadow-deeper: #080a0c;
+  --lt-shadow-deepest: #060809;
+  --lt-film-dark: #101315;
+  --lt-film-smoke: #111517;
+  --lt-film-tint: #1e2428;
+  --lt-room-glow: #625549;
+
+  /* the chat message is drawn in assay's own ink (no Slack green, no emoji) */
+  --lt-chat-bg: #ffffff;
+  --lt-chat-ink: #1d1c1d;
+
+  /* the nav bar's glass on each ground */
+  --lt-nav-room: rgb(25 19 15 / 0.82);
+  --lt-nav-box: rgb(247 250 250 / 0.88);
+  --lt-nav-lead: rgb(71 78 82 / 0.9);
+  --lt-nav-daylight: rgb(240 240 236 / 0.88);
+
+  /* shadows and lift: one light, from the box (pre-blurred; only opacity and transform animate) */
+  --lt-shadow-box: 0 22px 50px -26px rgb(18 22 25 / 0.32), 0 4px 12px -6px rgb(18 22 25 / 0.14);
+
+  /* the sections' own materials */
+  /* the hero's slip, replay button and band fronts */
+  --lt-hero-slip: rgb(18 22 24 / 0.94);
+  --lt-hero-replay-bg: rgb(15 11 9 / 0.5);
+  --lt-hero-front-glow: rgb(198 208 213 / 0.35);
+  /* the run: the box's housing, film sheens, the SQL slip, the alert, the reading line, the dims and the lifted shadows */
+  --lt-run-housing: color-mix(in srgb, var(--lt-lead-700) 78%, var(--lt-film-950));
+  --lt-run-film-sheen: rgb(198 208 213 / 0.08);
+  --lt-run-film-head: rgb(198 208 213 / 0.05);
+  --lt-run-film-faint: rgb(214 222 226 / 0.34);
+  --lt-run-sql-ln: rgb(214 222 226 / 0.4);
+  --lt-run-sql-focus: rgb(198 208 213 / 0.1);
+  --lt-run-alert-ink-2: rgb(247 250 250 / 0.84);
+  --lt-run-alert-ink-3: rgb(247 250 250 / 0.62);
+  --lt-run-alert-ring: rgb(247 250 250 / 0.26);
+  --lt-run-alert-chip: rgb(247 250 250 / 0.1);
+  --lt-run-reader-bg: rgb(18 22 24 / 0.94);
+  --lt-run-scan-glow: rgb(247 250 250 / 0.35);
+  --lt-run-scan-trail: rgb(247 250 250 / 0.09);
+  --lt-run-dim-in: rgb(30 34 36 / 0.55);
+  --lt-run-dim-out: rgb(20 24 26 / 0.85);
+  --lt-run-shadow-film: 0 26px 44px -22px rgb(16 22 26 / 0.5), 0 8px 16px -8px rgb(16 22 26 / 0.3);
+  --lt-run-shadow-film-b: 0 14px 26px -14px rgb(10 14 16 / 0.6);
+  --lt-run-shadow-slip: 0 18px 34px -16px rgb(18 24 28 / 0.42), 0 3px 8px -3px rgb(18 24 28 / 0.25);
+  --lt-run-shadow-alert: 0 0 0 1px rgb(247 250 250 / 0.06), 0 8px 18px -10px rgb(18 22 25 / 0.45);
+  --lt-run-shadow-lift: 0 44px 72px -26px rgb(18 22 25 / 0.6), 0 18px 28px -14px rgb(18 22 25 / 0.32);
+  /* read-only: the beam's veil, the slip, the cast-lead ground and its rules */
+  --lt-safety-veil: rgb(8 10 11 / 0.3);
+  --lt-safety-film: rgb(17 21 23 / 0.8);
+  --lt-safety-ground: color-mix(in oklab, var(--lt-lead-700) 50%, black);
+  --lt-safety-rule: rgb(244 244 240 / 0.12);
+  /* outcomes: the viewer's dimmer, the error print and the sheen */
+  --lt-outcomes-dimmer: rgb(10 8 6 / 0.88);
+  --lt-outcomes-error-ink: rgb(18 22 24 / 0.78);
+  --lt-outcomes-sheen: rgb(241 251 255 / 0.16);
+  --lt-outcomes-sheen-edge: rgb(241 251 255 / 0.07);
+  /* the plates: rail, frame and clip metal */
+  --lt-plates-rail-hi: #80878b;
+  --lt-plates-rail-lo: #353b3f;
+  --lt-plates-frame-in: #24292c;
+  --lt-plates-frame-mid: #4b5155;
+  --lt-plates-frame-out: #2a2f32;
+  --lt-plates-clip-hi: #9aa0a4;
+  --lt-plates-clip-lo: #5c6266;
+  /* self-host: the live engraving on the rating plate */
+  --lt-selfhost-engrave-ink: rgb(31 32 33);
+  --lt-selfhost-engrave-lip: rgb(255 255 255 / 0.55);
+  --lt-selfhost-engrave-rim: rgb(20 22 24 / 0.22);
+  /* the closing box: halo and shadow */
+  --lt-final-halo: rgb(238 246 250 / 0.55);
+  --lt-final-shadow: rgb(8 10 11 / 0.55);
 }
 
 
@@ -509,7 +671,7 @@
   letter-spacing: -0.02em;
 }
 
-/* Page and document titles: the serif at regular weight, as on the landing page. */
+/* Page and document titles: the serif at regular weight. */
 .font-editorial {
   font-family: var(--app-font-serif);
   font-weight: 400;

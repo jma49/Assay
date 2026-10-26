@@ -1,0 +1,602 @@
+/* The hero: the viewing room. Frame 0 is the composed room with the box on standby; the switch-on, the idle cycle and
+   the push-in run from hero.motion.ts. */
+.lt .hero {
+  --hero-text-display-tablet: clamp(72px, 10.6vw, 112px);
+  --hero-text-display-tablet-zh: clamp(60px, 9vw, 92px);
+  --hero-text-display-phone: clamp(40px, 12.4vw, 50px);
+  --hero-text-display-phone-zh: clamp(36px, 11.2vw, 44px);
+  --hero-text-display-narrow: 7.9vw;
+  position: relative;
+  background: var(--lt-room-950);
+}
+.lt .hero-pin {
+  position: relative;
+  height: max(100svh, 760px);
+  overflow: clip;
+  isolation: isolate;
+}
+.lt .hero-stage {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: max(100%, 160svh);
+  aspect-ratio: 1440 / 900;
+  transform: translateY(-50%);
+  z-index: -1;
+}
+.lt .hero-cam {
+  position: absolute;
+  inset: 0;
+}
+.lt .hero-bake {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.lt .hero .dimmer {
+  position: absolute;
+  inset: 0;
+  background: var(--lt-room-950);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* the switch-on drawn tube by tube (hero.motion.ts); only during the intro and the idle cycle's tube beats */
+.lt .tube-light {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* the replay is a switch-on: with reduced motion there is none to replay */
+@media (prefers-reduced-motion: reduce) {
+  .lt .hero-reading .replay {
+    display: none;
+  }
+}
+
+/* the idle cycle's canvas (hero-idle.ts): empty and transparent at rest */
+.lt .film-live {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* the live-art mount has the poster's exact box: a canvas placed in it never shifts layout */
+.lt .hero-gl {
+  position: absolute;
+  inset: 0;
+}
+.lt .hero-gl > picture,
+.lt .hero-gl > canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.lt .band-front {
+  position: absolute;
+  height: 1.5px;
+  background: var(--lt-film-print);
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 0 6px var(--lt-hero-front-glow);
+}
+.lt .film-hero {
+  left: 51.04%;
+  top: 28%;
+  width: 42.85%;
+  height: 49.78%;
+  overflow: visible;
+}
+.lt .clips-hero .clip {
+  top: 28%;
+}
+.lt .clips-hero .clip:nth-child(1) {
+  left: 61%;
+}
+.lt .clips-hero .clip:nth-child(2) {
+  left: 83.6%;
+}
+.lt .film-proof {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* reading the film under the pointer: a thin neutral line and the real row on a lead tag */
+.lt .reader {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s var(--lt-glide);
+}
+.lt .reader.is-on {
+  opacity: 1;
+}
+.lt .reader-line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 1px;
+  background: var(--lt-film-print);
+  opacity: .78;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.lt .reader-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 4px 8px;
+  border-radius: var(--lt-r-xs);
+  background: var(--lt-hero-slip);
+  box-shadow: 0 0 0 1px var(--lt-film-line);
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-14);
+  line-height: 1.4;
+  color: var(--lt-film-print);
+  white-space: nowrap;
+  will-change: transform;
+}
+.lt .reader-tag b {
+  font-weight: 400;
+  color: var(--lt-lumen);
+}
+.lt .hero-copy {
+  position: relative;
+  z-index: 1;
+  padding-top: max(144px, 20svh);
+  pointer-events: none;
+}
+.lt .hero-copy a,
+.lt .hero-copy button {
+  pointer-events: auto;
+}
+.lt .hero-copy .display {
+  max-width: 9.2em;
+}
+.lt .hero-copy .lede {
+  margin-top: 30px;
+  max-width: min(31rem, 46vw - var(--lt-gutter));
+}
+.lt .hero-copy .actions {
+  margin-top: 32px;
+}
+.lt .hero-copy .note {
+  margin-top: 16px;
+  max-width: min(28rem, 46vw - var(--lt-gutter));
+}
+
+/* shown to a guest; its space is held while the session loads and for a signed-in reader */
+.lt .hero-copy .note[data-session]:not([data-session="guest"]) {
+  visibility: hidden;
+}
+.lt .hero-reading {
+  position: absolute;
+  z-index: 1;
+  left: 51%;
+  right: 5.4%;
+  bottom: max(28px, 3.6svh);
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  justify-content: space-between;
+}
+.lt .reading {
+  font-size: var(--lt-text-14);
+  line-height: 1.55;
+  color: var(--lt-room-ink-2);
+  max-width: 36rem;
+}
+.lt .reading b {
+  color: var(--lt-lumen);
+  font-weight: 600;
+}
+.lt .reading code {
+  color: var(--lt-room-ink);
+  font-size: 0.95em;
+}
+.lt .reading .tag {
+  margin-right: 4px;
+}
+.lt .replay {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--lt-room-line-2);
+  background: var(--lt-hero-replay-bg);
+  color: var(--lt-room-ink-2);
+  font-size: var(--lt-text-13);
+  cursor: pointer;
+  transition: color var(--lt-t-fast);
+}
+.lt .replay:hover {
+  color: var(--lt-room-ink);
+}
+.lt .replay svg {
+  width: 16px;
+  height: 16px;
+}
+html:not(.lt-js) .lt .replay {
+  display: none;
+}
+
+/* the light that the push-in ends on: the bare lit face, which is the next section's ground */
+.lt .hero-face {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse 70% 62% at 50% 48%, var(--lt-box-hi) 0%, var(--lt-box) 60%, var(--lt-box) 100%);
+}
+
+/* intro (first load): set before first paint (lib/prepaint.tsx), removed when the switch-on settles */
+html.lt-intro .lt .hero .dimmer {
+  opacity: .82;
+}
+html.lt-intro .lt .film-hero .band-cover {
+  transform: scaleY(1);
+}
+html.lt-intro .lt .film-hero .film-glow {
+  opacity: 0;
+}
+html.lt-intro .lt .hero-reading > * {
+  opacity: 0;
+}
+html.lt-intro .lt .hero-copy .display .line > span {
+  transform: translateY(var(--rise, 18px));
+}
+
+/* scroll is the camera: the hero pins, the camera pushes into the film until it fills the frame, then the film is lifted
+   off the clips and the bare lit face is left: the next section's ground */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) and (min-width: 1101px) {
+    html.lt-push .lt .hero {
+      height: calc(max(100svh, 760px) + 150svh);
+      view-timeline: --hero block;
+      view-timeline-inset: 0px;
+    }
+    html.lt-push .lt .hero-pin {
+      position: sticky;
+      top: 0;
+    }
+    html.lt-push .lt .hero-cam {
+      transform-origin: var(--push-ox, 72.47%) var(--push-oy, 52.9%);
+      animation: lt-push linear both;
+      animation-timeline: --hero;
+      animation-range: contain 0% contain 48%;
+    }
+    html.lt-push .lt .hero-copy,
+    html.lt-push .lt .hero-reading {
+      animation: lt-leave linear both;
+      animation-timeline: --hero;
+      animation-range: contain 0% contain 18%;
+    }
+    html.lt-push .lt .film-hero,
+    html.lt-push .lt .clips-hero {
+      animation: lt-lift linear both;
+      animation-timeline: --hero;
+      animation-range: contain 56% contain 100%;
+    }
+    html.lt-push .lt .clips-hero {
+      animation-name: lt-leave;
+      animation-range: contain 52% contain 60%;
+    }
+    html.lt-push .lt .hero-face {
+      animation: lt-face linear both;
+      animation-timeline: --hero;
+      animation-range: contain 84% contain 100%;
+    }
+  }
+}
+@keyframes lt-push {
+  from {
+    scale: 1;
+    translate: 0 0;
+  }
+  to {
+    scale: var(--push-s, 2.6);
+    translate: var(--push-x, -22.4%) var(--push-y, -2.9%);
+  }
+}
+@keyframes lt-leave {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes lt-lift {
+  0% {
+    translate: 0 0;
+  }
+  10% {
+    translate: 0 -3%;
+  }
+  100% {
+    translate: 0 -106%;
+  }
+}
+@keyframes lt-face {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* tablet (701-1100): copy first, then the box cropped and centred under it */
+@media (min-width: 701px) and (max-width: 1100px) {
+  .lt .hero-pin {
+    height: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .lt .hero-copy {
+    order: 1;
+    padding-top: 136px;
+  }
+  .lt .hero-copy .display {
+    max-width: none;
+    font-size: var(--hero-text-display-tablet);
+  }
+  .lt:lang(zh) .hero-copy .display {
+    font-size: var(--hero-text-display-tablet-zh);
+  }
+  .lt .hero-copy .lede {
+    max-width: 34rem;
+    font-size: var(--lt-text-18);
+    margin-top: 28px;
+  }
+  .lt .hero-copy .actions {
+    margin-top: 28px;
+  }
+  .lt .hero-copy .note {
+    max-width: 34rem;
+    margin-top: 14px;
+  }
+  /* the bake fades into the room above and below, so the stage has no edge of its own */
+  .lt .hero-stage {
+    order: 2;
+    position: relative;
+    top: auto;
+    right: auto;
+    transform: none;
+    width: 176%;
+    margin: -96px 0 0 -79%;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16%, black 84%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, black 16%, black 84%, transparent 100%);
+  }
+  .lt .hero-reading {
+    order: 3;
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: min(100% - 2 * var(--lt-gutter), 640px);
+    margin: -24px auto 0;
+    padding-bottom: 64px;
+  }
+}
+
+/* phone (<=700): a separate bake, the box cropped by both edges */
+@media (max-width: 700px) {
+  .lt .hero-pin {
+    height: auto;
+    min-height: 0;
+  }
+  .lt .hero-stage {
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    aspect-ratio: 390 / 844;
+    transform: none;
+    -webkit-mask-image: linear-gradient(black 93%, transparent);
+    mask-image: linear-gradient(black 93%, transparent);
+  }
+  .lt .film-hero {
+    left: 2.56%;
+    top: 48.2%;
+    width: 94.88%;
+    height: 36.5%;
+  }
+  .lt .clips-hero .clip {
+    top: 48.2%;
+    width: 30px;
+    height: 24px;
+    margin-left: -15px;
+    margin-top: -14px;
+  }
+  .lt .clips-hero .clip:nth-child(1) {
+    left: 22%;
+  }
+  .lt .clips-hero .clip:nth-child(2) {
+    left: 78%;
+  }
+  .lt .hero-copy {
+    padding-top: 84px;
+    min-height: calc(100vw * 844 / 390);
+  }
+  .lt .hero .display {
+    font-size: var(--hero-text-display-phone);
+    line-height: 0.95;
+  }
+  .lt:lang(zh) .hero .display {
+    font-size: var(--hero-text-display-phone-zh);
+    line-height: 1.1;
+  }
+  .lt .hero-copy .display {
+    max-width: none;
+  }
+  .lt .hero-copy .lede {
+    font-size: var(--lt-text-16);
+    margin-top: 16px;
+    max-width: 24rem;
+  }
+  .lt .hero-copy .actions {
+    position: absolute;
+    left: var(--lt-gutter);
+    right: var(--lt-gutter);
+    top: calc(100vw * 755 / 390);
+    margin: 0;
+    flex-wrap: nowrap;
+  }
+  .lt .hero-copy .actions .btn {
+    flex: 1;
+    padding: 0 10px;
+    font-size: var(--lt-text-15);
+  }
+  .lt .hero-copy .note {
+    display: none;
+  }
+  .lt .hero-reading {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    margin: 28px var(--lt-gutter) 0;
+    padding-bottom: 64px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .lt .reading {
+    font-size: var(--lt-text-15);
+  }
+}
+html.lt-intro .lt .film-hero .film-poster {
+  opacity: 0;
+}
+
+/* standby before the canvas paints: the undeveloped film base, never an empty face */
+html.lt-intro .lt .film-hero {
+  background: var(--lt-film-900);
+}
+@media (min-width: 1101px) and (max-width: 1240px) {
+  .lt:not(:lang(zh)) .hero-copy .display {
+    font-size: var(--hero-text-display-narrow);
+  }
+}
+
+/* the live hero (html.lt-gl-hero, set by hero-gl-scene.ts once its canvas renders; desktop push-in only): the scene is
+   the bake projected back onto its own geometry, so at rest it is the poster. It takes over the push-in as a real camera
+   move; the film and the clips stay the DOM ones, carried on its planes (matrix3d). */
+html.lt-gl-hero .lt .hero-gl > picture {
+  visibility: hidden;
+}
+html.lt-gl-hero.lt-push .lt .hero-cam,
+html.lt-gl-hero.lt-push .lt .film-hero,
+html.lt-gl-hero.lt-push .lt .clips-hero {
+  animation: none;
+}
+
+/* the live hero draws the film itself; the intro's film background would cover it */
+html.lt-gl-hero .lt .film-hero {
+  background: none;
+}
+
+/* hero -> run without the push-in (tablet, phone): the box's light rises into the room from below as the hero leaves,
+   so the lit face of the next section arrives as light, not a cut */
+.lt .hero-rise {
+  display: none;
+}
+@media (max-width: 1100px) {
+  .lt .hero-rise {
+    display: block;
+    position: relative;
+    height: 64px;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    background: linear-gradient(transparent 0%, color-mix(in oklab, var(--lt-box) 10%, transparent) 40%, color-mix(in oklab, var(--lt-box) 55%, transparent) 78%, var(--lt-box) 100%);
+  }
+  .lt .hero-reading {
+    padding-bottom: 8px;
+  }
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      html.lt-js .lt .hero-rise {
+        animation: lt-rise linear both;
+        animation-timeline: view();
+        animation-range: entry 10% exit 40%;
+      }
+    }
+  }
+}
+@keyframes lt-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(14%);
+  }
+  60% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 700px) {
+  .lt .hero-copy {
+    --rise: 8px;
+  }
+}
+@media (min-width: 701px) and (max-width: 1100px) {
+  .lt .hero-copy {
+    --rise: 12px;
+  }
+}
+
+/* the intro's moving parts get their layers before the switch-on starts, not on its first frames */
+html.lt-intro .lt .hero .display .line > span,
+html.lt-intro .lt .film-hero .band-cover,
+html.lt-intro .lt .film-hero .film-glow,
+html.lt-intro .lt .film-hero .film-flare,
+html.lt-intro .lt .hero .dimmer,
+html.lt-intro .lt .hero .tube-light,
+html.lt-intro .lt .hero-reading > * {
+  will-change: transform, opacity;
+}
+
+/* push-in, poster path: as the film is lifted, the box around it becomes the plain lit face under the film */
+.lt .cam-face {
+  display: none;
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) and (min-width: 1101px) {
+    html.lt-push .lt .cam-face {
+      display: block;
+      position: absolute;
+      inset: -20%;
+      pointer-events: none;
+      opacity: 0;
+      background: var(--lt-box);
+      animation: lt-face linear both;
+      animation-timeline: --hero;
+      animation-range: contain 54% contain 74%;
+    }
+    html.lt-gl-hero .lt .cam-face {
+      display: none;
+    }
+  }
+}

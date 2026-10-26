@@ -1,17 +1,23 @@
-/* The landing page animates on its own clock (the marquee, the terminal caret, the
-   scan line). Freeze every CSS animation and transition
-   there so two screenshots of the same build match. GSAP-driven reveals honour the
-   reduced-motion setting the visual tests run with. */
-.landing *,
-.landing *::before,
-.landing *::after {
+/* The landing page (.lt) animates on its own clock: CSS keyframes, scroll-driven light (seams, house lights, the
+   hero's push-in), WAAPI and GSAP. The visual tests run with reduced motion (every motion module shows its final
+   state at once) and a frozen clock; freeze every CSS animation and transition so two screenshots of one build match. */
+.lt *,
+.lt *::before,
+.lt *::after {
   animation: none !important;
   transition: none !important;
 }
 
-/* Scroll-driven reveals start from opacity 0; with the clock frozen they would stay
-   hidden in a full-page screenshot. Show them in their final state. */
-.landing :is([data-hero-line], [data-hero-in], [data-hero-window], [data-word], [data-reveal], [data-bento], [data-table-chip], [data-cta-title]) {
-  opacity: 1 !important;
-  transform: none !important;
+/* Layers added at an idle moment or driven by scroll are timing-dependent: a full-page screenshot shows the grounds
+   without them. */
+.lt :is(.seam, .houselights, .house-in, .lt-grain) {
+  display: none !important;
+}
+
+/* The sign-in page: its spinner and hover transitions stay frozen too. */
+.sign-in *,
+.sign-in *::before,
+.sign-in *::after {
+  animation: none !important;
+  transition: none !important;
 }

@@ -1,0 +1,1280 @@
+/* Section 5 · Workflow: a strip of landscape film frames threaded through a viewer gate on the lit box face.
+   Without motion (no JS, reduced motion) the three frames lie side by side (portrait, one column each);
+   with motion on desktop the frames are landscape and the strip is pulled through the gate one frame at a time. */
+.lt .s-workflow {
+  /* film colours, scoped (all from tokens) */
+  --wf-print-hi: var(--lt-film-print-hi); /* the brightest print on film: names, keywords */
+  --wf-base: var(--lt-film-base); /* translucent film base between frames (matches img/rebate.webp) */
+  --wf-edge-ink: var(--lt-film-edge-ink); /* edge print on the base, 6.1 : 1 on the base over the face */
+  --wf-fog-ink: var(--lt-fog-ink-dark); /* lead marker printed over fog */
+  --wf-frame-w: 432px; /* one exposed frame */
+  --wf-gap: 36px; /* base between two frames */
+  --wf-rebate: 40px;
+  --wf-latent: 0.24;
+  /* sizes off the shared scale, defined once */
+  --wf-text-name: 21px;
+  --wf-text-slate: 52px;
+  --wf-text-title-desk: min(var(--lt-text-h2), 4vw, 6.4svh);
+  --wf-text-title-short: min(var(--lt-text-h2), 4.9svh);
+
+  position: relative;
+  isolation: isolate;
+  color: var(--lt-box-ink);
+  background: var(--lt-box) url("/landing/workflow/face.webp") center / 100% 100% no-repeat;
+  padding: 120px 0 120px;
+  overflow: hidden;
+}
+/* the opal diffuser's own texture over the baked face (the same opal as the foundation's .box-face) */
+.lt .s-workflow .wf-opal {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url("/landing/shared/opal.webp") 0 0 / 320px 320px;
+  opacity: 0.045;
+  mix-blend-mode: multiply;
+}
+/* the frame edge of the box, top and bottom: baked metal extrusion with its bright lip */
+.lt .s-workflow::before, .lt .s-workflow::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 20px;
+  z-index: 2;
+  background: url("/landing/workflow/rail-top.webp") 0 0 / 32px 20px repeat-x;
+}
+.lt .s-workflow::before {
+  top: 0;
+}
+.lt .s-workflow::after {
+  bottom: 0;
+  background-image: url("/landing/workflow/rail-bottom.webp");
+}
+
+/* ---------- head ---------- */
+.lt .s-workflow .wf-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: end;
+}
+.lt .s-workflow .wf-title {
+  max-width: 11em;
+}
+.lt .s-workflow .wf-lede {
+  font-size: var(--lt-text-18);
+  line-height: 1.55;
+  color: var(--lt-box-ink-2);
+  max-width: 27rem;
+  justify-self: end;
+  padding-bottom: 6px;
+}
+
+/* ---------- the strip ---------- */
+.lt .s-workflow .wf-viewport {
+  position: relative;
+  margin-top: 64px;
+  overflow-x: clip;
+  outline-offset: -4px;
+}
+/* one grid row for the film, one for the captions: every frame and every caption lines up (subgrid) */
+.lt .s-workflow .wf-strip {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: auto auto;
+  justify-content: center;
+}
+.lt .s-workflow .wf-cell {
+  grid-row: span 2;
+  display: grid;
+  grid-template-rows: subgrid;
+  width: calc(var(--wf-frame-w) + var(--wf-gap));
+}
+.lt .s-workflow .wf-film {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.lt .s-workflow .wf-rebate {
+  position: relative;
+  height: var(--wf-rebate);
+  background: url("/landing/workflow/rebate-top.webp") 0 0 / 34px var(--wf-rebate) round no-repeat;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0 22px;
+}
+.lt .s-workflow .wf-rebate-b {
+  align-items: flex-end;
+  background-image: url("/landing/workflow/rebate-bottom.webp");
+}
+/* edge print sits between the perforations, like latent edge numbers */
+.lt .s-workflow .wf-ep {
+  font-family: var(--lt-font-lead);
+  font-weight: 800;
+  font-size: var(--lt-text-13);
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: var(--wf-edge-ink);
+  text-transform: uppercase;
+  white-space: nowrap;
+  position: relative;
+  top: 3px;
+  padding: 0 3px;
+}
+.lt .s-workflow .wf-rebate-b .wf-ep {
+  top: -3px;
+}
+.lt .s-workflow .wf-ep-n {
+  font-size: var(--lt-text-15);
+}
+.lt .s-workflow .wf-base {
+  flex: 1;
+  display: flex;
+  background: var(--wf-base);
+  padding: 0 calc(var(--wf-gap) / 2);
+  container-type: inline-size;
+}
+.lt .s-workflow .wf-window {
+  position: relative;
+  flex: 1;
+  background: var(--lt-film-900) url("/landing/shared/grain.png") 0 0 / 128px 128px;
+  background-blend-mode: soft-light;
+  color: var(--lt-film-print);
+  border-radius: 3px;
+  overflow: hidden;
+  /* the print's edge: a faint frame line and the slight burn-in a real exposure has toward its corners */
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lt-film-print) 7%, transparent), inset 0 0 28px color-mix(in srgb, var(--lt-shadow-deepest) 40%, transparent);
+  --wf-pad-x: 20px;
+  padding: 18px var(--wf-pad-x) 20px;
+  font-size: var(--lt-text-15);
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+}
+.lt .s-workflow .wf-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.lt .s-workflow .wf-col-r {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, var(--lt-film-print) 14%, transparent);
+}
+/* a frame wide enough is printed in two columns (landscape, as a real frame) */
+@container (min-width: 560px) {
+  .lt .s-workflow .wf-window {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+    column-gap: 22px;
+    align-content: start;
+    padding: 16px var(--wf-pad-x) 18px;
+  }
+  .lt .s-workflow .wf-w3 {
+    grid-template-columns: minmax(0, 1fr) 154px;
+  }
+  .lt .s-workflow .wf-col-r {
+    margin: 0;
+    padding: 0 0 0 20px;
+    border-top: 0;
+    border-left: 1px solid color-mix(in srgb, var(--lt-film-print) 14%, transparent);
+  }
+  .lt .s-workflow .wf-w2 {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .lt .s-workflow .wf-wrap {
+    display: none;
+  }
+}
+
+/* ---------- print on the frames ---------- */
+.lt .s-workflow .mono, .lt .s-workflow pre, .lt .s-workflow code {
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-14);
+  letter-spacing: 0;
+}
+.lt .s-workflow .wf-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 26px;
+}
+.lt .s-workflow .wf-op {
+  color: var(--lt-film-ink-2);
+  font-size: var(--lt-text-14);
+}
+.lt .s-workflow .wf-op .mono {
+  font-size: var(--lt-text-14);
+}
+.lt .s-workflow .wf-name {
+  margin-top: 6px;
+  font-size: var(--wf-text-name);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--wf-print-hi);
+  font-weight: 540;
+}
+.lt .s-workflow .wf-note {
+  margin-top: 6px;
+  color: var(--lt-film-print);
+  font-size: var(--lt-text-15);
+  line-height: 1.45;
+}
+.lt .s-workflow .wf-ex, .lt .s-workflow .wf-kind, .lt .s-workflow .wf-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 3px;
+  flex: none;
+  font-size: var(--lt-text-13);
+  line-height: 1;
+  white-space: nowrap;
+}
+.lt .s-workflow .wf-ex {
+  font-family: var(--lt-font-lead);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lt-film-print);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lt-film-print) 55%, transparent);
+}
+.lt .s-workflow .wf-kind {
+  background: var(--wf-print-hi);
+  color: var(--lt-film-950);
+}
+/* lead marker tags (as the run section's): a lead block on the cassette prints as clear film, the brightest thing
+   on the frame. Approved: the block itself; rejected: its outline, the letters cut through; pending: not placed yet */
+.lt .s-workflow .wf-tag {
+  position: relative;
+}
+.lt .s-workflow .wf-tag-ok {
+  background: var(--wf-print-hi);
+  color: var(--lt-film-950);
+}
+.lt .s-workflow .wf-tag-no {
+  color: var(--wf-print-hi);
+  box-shadow: inset 0 0 0 2px var(--wf-print-hi);
+}
+.lt .s-workflow .wf-tag-wait {
+  color: var(--lt-film-print);
+  border: 1px dashed color-mix(in srgb, var(--lt-film-print) 70%, transparent);
+}
+.lt .s-workflow .wf-tag::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 4px;
+  background: var(--lt-box-hi);
+  opacity: 0;
+  pointer-events: none;
+}
+.lt .s-workflow .wf-code {
+  position: relative;
+  margin-top: 12px;
+  padding: 8px 0;
+  border-top: 1px solid color-mix(in srgb, var(--lt-film-print) 16%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--lt-film-print) 16%, transparent);
+}
+.lt .s-workflow pre {
+  margin: 0;
+  line-height: 1.5;
+  white-space: pre;
+  color: var(--lt-film-print);
+}
+.lt .s-workflow pre b {
+  font-weight: 400;
+  color: var(--wf-print-hi);
+}
+.lt .s-workflow pre i {
+  font-style: normal;
+  position: relative;
+}
+.lt .s-workflow .wf-readline {
+  position: absolute;
+  left: calc(-1 * var(--wf-pad-x));
+  right: -10px;
+  top: 8px;
+  height: 21px;
+  border-top: 1px solid color-mix(in srgb, var(--lt-film-print-hi) 70%, transparent);
+  background: color-mix(in srgb, var(--lt-film-print-hi) 6%, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+.lt .s-workflow .wf-wait {
+  margin-top: 6px;
+  color: var(--lt-film-ink-2);
+  font-size: var(--lt-text-14);
+}
+.lt .s-workflow .wf-chips {
+  display: inline-flex;
+  gap: 6px;
+}
+.lt .s-workflow .wf-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 5px;
+  font-size: var(--lt-text-14);
+  color: var(--lt-film-print);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lt-film-print) 40%, transparent);
+}
+.lt .s-workflow .wf-hist {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--lt-film-print) 14%, transparent);
+  display: grid;
+  gap: 10px;
+}
+.lt .s-workflow .wf-sub {
+  font-size: var(--lt-text-14);
+  color: var(--lt-film-ink-2);
+}
+.lt .s-workflow .wf-dec {
+  display: grid;
+  gap: 4px;
+}
+.lt .s-workflow .wf-dec-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.lt .s-workflow .wf-dec p {
+  font-size: var(--lt-text-14);
+  color: var(--lt-film-print);
+  line-height: 1.45;
+}
+.lt .s-workflow .wf-dec .mono {
+  font-size: var(--lt-text-14);
+}
+.lt .s-workflow .wf-quote {
+  color: var(--wf-print-hi);
+}
+.lt .s-workflow .wf-by {
+  color: var(--lt-film-ink-2);
+}
+
+/* frame 2: a fogged film, the error, the triage */
+.lt .s-workflow .wf-fog {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  height: 46px;
+  border-radius: 2px;
+  background: var(--lt-fog) url("/landing/workflow/fog.webp") center / cover;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  color: var(--wf-fog-ink);
+}
+.lt .s-workflow .wf-fog-mark {
+  font-size: var(--lt-text-15);
+  letter-spacing: 0.1em;
+}
+.lt .s-workflow .wf-fog-note {
+  font-size: var(--lt-text-14);
+  line-height: 1.25;
+}
+.lt .s-workflow .wf-op-2 {
+  color: var(--wf-print-hi);
+  font-size: var(--lt-text-15);
+  margin-bottom: 8px;
+}
+.lt .s-workflow .wf-err {
+  margin-top: 8px;
+  color: var(--wf-print-hi);
+}
+.lt .s-workflow .wf-err-k {
+  color: var(--lt-film-ink-2);
+  margin-right: 4px;
+}
+.lt .s-workflow .wf-ul {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  background: var(--wf-print-hi);
+  transform-origin: 0 50%;
+}
+.lt .s-workflow .wf-triage {
+  position: relative;
+  display: grid;
+  gap: 8px;
+}
+.lt .s-workflow .wf-sum {
+  font-size: var(--lt-text-15);
+  line-height: 1.45;
+  color: var(--wf-print-hi);
+}
+.lt .s-workflow .wf-next {
+  font-size: var(--lt-text-14);
+  line-height: 1.45;
+  color: var(--lt-film-print);
+}
+.lt .s-workflow .wf-btn {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+}
+.lt .s-workflow .wf-btn-in {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: var(--lt-film-print);
+  color: var(--lt-film-950);
+  font-size: var(--lt-text-15);
+  font-weight: 520;
+  white-space: nowrap;
+}
+.lt .s-workflow.wf-armed .wf-btn:not(.gone) {
+  display: block;
+}
+.lt .s-workflow .wf-sent {
+  margin: 12px 0 0;
+  padding-top: 8px;
+  display: grid;
+  gap: 6px;
+  font-size: var(--lt-text-14);
+  line-height: 1.45;
+  border-top: 1px solid color-mix(in srgb, var(--lt-film-print) 16%, transparent);
+}
+.lt .s-workflow .wf-sent > div {
+  display: grid;
+  grid-template-columns: 8.2em 1fr;
+  gap: 10px;
+}
+.lt .s-workflow .wf-sent dt {
+  color: var(--lt-film-ink-2);
+}
+.lt .s-workflow .wf-sent dd {
+  margin: 0;
+  color: var(--lt-film-print);
+}
+
+/* frame 3: one MCP call and its result, the eight tools beside it */
+.lt .s-workflow .wf-call {
+  margin-top: 8px;
+  display: flex;
+  gap: 10px;
+  color: var(--wf-print-hi);
+}
+.lt .s-workflow .wf-dir {
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-14);
+  color: var(--lt-film-ink-2);
+}
+.lt .s-workflow .wf-json {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 6px 0;
+  border-bottom: 0;
+}
+.lt .s-workflow .wf-json pre {
+  line-height: 1.45;
+}
+.lt .s-workflow .wf-json pre > code > span {
+  display: inline-block;
+}
+.lt .s-workflow .wf-tools ul {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+  font-size: var(--lt-text-14);
+  line-height: 1.6;
+  color: var(--lt-film-ink-2);
+}
+.lt .s-workflow .wf-tools li {
+  position: relative;
+  justify-self: start;
+}
+.lt .s-workflow .wf-tools .is-called {
+  color: var(--wf-print-hi);
+}
+/* two columns: the tool list is one column, the sent / never-sent lines run as sentences */
+@container (min-width: 560px) {
+  .lt .s-workflow .wf-tools ul {
+    grid-template-columns: 1fr;
+  }
+  .lt .s-workflow .wf-sent > div {
+    display: block;
+  }
+  .lt .s-workflow .wf-sent dt, .lt .s-workflow .wf-sent dd {
+    display: inline;
+  }
+  .lt .s-workflow .wf-sent dt::after {
+    content: ": ";
+  }
+  .lt:lang(zh) .s-workflow .wf-sent dt::after {
+    content: "：";
+  }
+}
+
+/* ---------- captions on the box ---------- */
+.lt .s-workflow .wf-cap {
+  padding: 22px calc(var(--wf-gap) / 2 + 2px) 0;
+  transition: opacity 0.5s var(--lt-settle);
+}
+.lt .s-workflow .wf-cap-t {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  font-size: var(--lt-text-20);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-weight: 560;
+}
+.lt .s-workflow .wf-cap-n {
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-14);
+  color: var(--lt-box-ink-2);
+  font-weight: 400;
+}
+.lt .s-workflow .wf-cap p {
+  margin-top: 8px;
+  padding-left: 22px;
+  font-size: var(--lt-text-16);
+  line-height: 1.55;
+  color: var(--lt-box-ink-2);
+  max-width: 34rem;
+}
+
+/* film leaders: the head and tail of the strip, clear film with frame lines at the same pitch as the real frames */
+.lt .s-workflow .wf-leader .wf-base {
+  background: color-mix(in srgb, var(--lt-film-tint) 10%, transparent);
+}
+.lt .s-workflow .wf-leader .wf-window.wf-blank {
+  background: color-mix(in srgb, var(--lt-film-tint) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lt-film-tint) 12%, transparent);
+}
+.lt .s-workflow .wf-start {
+  position: absolute;
+  right: 22px;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--lt-font-lead);
+  font-weight: 800;
+  font-size: var(--lt-text-14);
+  letter-spacing: 0.12em;
+  color: var(--wf-edge-ink);
+  white-space: nowrap;
+}
+.lt .s-workflow .wf-end {
+  right: auto;
+  left: 22px;
+}
+/* the start mark printed on the leader: a cross in a circle, like an editor's sync mark */
+.lt .s-workflow .wf-start::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--wf-edge-ink);
+  background: linear-gradient(var(--wf-edge-ink), var(--wf-edge-ink)) center / 2px 100% no-repeat, linear-gradient(var(--wf-edge-ink), var(--wf-edge-ink)) center / 100% 2px no-repeat;
+}
+
+/* the slate printed on the head leader (what is on the strip) and the tail's end mark: only where the leaders
+   show (desktop with motion); the clear leader lets the face through, the print sits dark on it */
+.lt .s-workflow .wf-slate {
+  display: none;
+}
+.lt .s-workflow.wf-desk .wf-leader .wf-base {
+  background: color-mix(in srgb, var(--lt-film-tint) 6%, transparent);
+}
+.lt .s-workflow.wf-desk .wf-leader .wf-window.wf-blank {
+  background: color-mix(in srgb, var(--lt-film-tint) 8%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lt-film-tint) 16%, transparent);
+}
+.lt .s-workflow.wf-desk .wf-slate {
+  display: block;
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  width: 268px;
+  color: var(--wf-edge-ink);
+}
+.lt .s-workflow.wf-desk .wf-slate-tail {
+  right: auto;
+  left: 24px;
+}
+.lt .s-workflow.wf-desk .wf-end {
+  display: none;
+}
+/* the tail's slate already says END */
+.lt .s-workflow .wf-slate-k {
+  font-family: var(--lt-font-lead);
+  font-weight: 800;
+  font-size: var(--lt-text-13);
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.lt .s-workflow .wf-slate-k2 {
+  margin-top: 10px;
+  font-family: var(--lt-font-mono);
+  font-weight: 400;
+  font-size: var(--lt-text-14);
+  letter-spacing: 0.04em;
+}
+.lt .s-workflow .wf-slate-n {
+  margin-top: 12px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid currentColor;
+  font-family: var(--lt-font-lead);
+  font-weight: 800;
+  font-size: var(--wf-text-slate);
+  line-height: 0.92;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+.lt .s-workflow .wf-slate-l {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.lt .s-workflow .wf-slate-l li {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  font-family: var(--lt-font-lead);
+  font-weight: 800;
+  font-size: var(--lt-text-15);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.lt .s-workflow .wf-slate-i {
+  font-family: var(--lt-font-mono);
+  font-weight: 400;
+  font-size: var(--lt-text-14);
+  letter-spacing: 0;
+  width: 1.1em;
+}
+.lt:lang(zh) .s-workflow .wf-slate-n {
+  letter-spacing: 0.04em;
+}
+/* lead letters slid into a marker holder one by one (the script splits the tag's text) */
+.lt .s-workflow .wf-tag .ch {
+  display: inline-block;
+}
+
+/* ---------- controls (the snap strip) ---------- */
+.lt .s-workflow .wf-controls {
+  display: none;
+  margin-top: 28px;
+  gap: 8px;
+  justify-content: center;
+}
+.lt .s-workflow .wf-ctl {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--lt-box-line);
+  background: color-mix(in srgb, var(--lt-box-hi) 60%, transparent);
+  color: var(--lt-box-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-14);
+}
+.lt .s-workflow .wf-ctl svg, .lt .s-workflow .wf-pbtn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lt .s-workflow .wf-ctl[aria-current="true"] {
+  background: var(--lt-box-ink);
+  color: var(--lt-box-hi);
+  border-color: var(--lt-box-ink);
+}
+.lt .s-workflow .wf-ctl:disabled {
+  opacity: .4;
+  cursor: default;
+}
+.lt .s-workflow .wf-gate, .lt .s-workflow .wf-plate, .lt .s-workflow .wf-shade {
+  display: none;
+}
+
+/* ---------- motion (only once the script armed the section; no JS and reduced motion keep the settled layout) ---------- */
+/* the box switches on as the section arrives: one dimmer layer, two flickers, then steady */
+.lt .s-workflow .wf-dim {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: var(--lt-room-950);
+  opacity: 0;
+}
+.lt .s-workflow.wf-armed:not(.wf-on) .wf-dim {
+  opacity: 0.74;
+}
+
+/* snap strip: an unexposed frame waits under a veil (its print shows faintly); a slit of light sweeps the veil off */
+.lt .s-workflow .wf-veil {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--lt-film-900) 76%, transparent);
+}
+.lt .s-workflow .wf-veil::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--lt-box-hi);
+  box-shadow: 0 0 5px 1px color-mix(in srgb, var(--lt-box-hi) 70%, transparent), 0 0 12px 1px color-mix(in srgb, var(--lt-box-hi) 20%, transparent);
+  opacity: 0;
+}
+.lt .s-workflow.wf-armed .wf-cell:not(.dev) .wf-veil {
+  display: block;
+}
+.lt .s-workflow .wf-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: var(--lt-box-hi);
+  opacity: 0;
+}
+.lt .s-workflow.wf-armed .wf-cell.lit .wf-veil::before {
+  opacity: 1;
+}
+/* once lit, the parts that play are latent until their beat */
+.lt .s-workflow.wf-armed .wf-cell.lit [data-b]:not(.on), .lt .s-workflow.wf-armed .wf-cell.lit [data-type]:not(.on):not(.typing) {
+  opacity: var(--wf-latent);
+}
+.lt .s-workflow.wf-armed .wf-cell.lit [data-mark]:not(.on) {
+  opacity: 0;
+}
+.lt .s-workflow.wf-armed .wf-cell.lit .wf-ul:not(.on) {
+  transform: scaleX(0);
+}
+.lt .s-workflow .typing .ch:not(.t) {
+  opacity: var(--wf-latent);
+}
+.lt .s-workflow .ch.cur {
+  position: relative;
+}
+.lt .s-workflow .ch.cur::after {
+  content: "";
+  position: absolute;
+  right: -2px;
+  top: 0.12em;
+  bottom: 0.08em;
+  width: 0.55em;
+  transform: translateX(100%);
+  background: currentColor;
+  opacity: 0.85;
+  animation: wf-caret 0.9s steps(1) infinite;
+}
+@keyframes wf-caret {
+  50% {
+    opacity: 0;
+  }
+}
+/* the snap strip shows its neighbours only as film: their print waits until they are the current frame */
+.lt .s-workflow.wf-armed:not(.wf-desk) .wf-cell[data-wf-frame]:not(.is-cur) :is(.wf-window > :not(.wf-veil):not(.wf-flash), .wf-cap) {
+  opacity: 0;
+}
+.lt .s-workflow.wf-armed:not(.wf-desk) .wf-cell[data-wf-frame] :is(.wf-window > *, .wf-cap) {
+  transition: opacity 0.35s var(--lt-settle);
+}
+
+/* Broken: the fog churns slowly while the frame is on screen */
+.lt .s-workflow .wf-fog-churn {
+  position: absolute;
+  inset: -30% -20%;
+  z-index: -1;
+  background: url("/landing/workflow/fog.webp") center / 60% 100%;
+  opacity: 0;
+}
+.lt .s-workflow.wf-armed .wf-fog.churn .wf-fog-churn {
+  opacity: 0.55;
+  animation: wf-churn 9s ease-in-out infinite alternate;
+}
+@keyframes wf-churn {
+  from {
+    transform: translate3d(-8%, 4%, 0) scale(1.05);
+  }
+  to {
+    transform: translate3d(8%, -5%, 0) scale(1.18);
+  }
+}
+
+/* ---------- desktop with motion: landscape frames pulled through the viewer gate ---------- */
+@media (min-width: 1240px) {
+  .lt .s-workflow.wf-desk {
+    --wf-frame-w: 600px;
+    --wf-gap: 40px;
+    --wf-rebate: 36px;
+  }
+  /* the leaders run on past the screen edge on wide screens: twice as long, overhanging by one pitch */
+  .lt .s-workflow.wf-desk .wf-leader {
+    width: calc(2 * (var(--wf-frame-w) + var(--wf-gap)));
+  }
+  .lt .s-workflow.wf-desk .wf-head-leader {
+    margin-left: calc(-1 * (var(--wf-frame-w) + var(--wf-gap)));
+  }
+  .lt .s-workflow.wf-desk .wf-tail-leader {
+    margin-right: calc(-1 * (var(--wf-frame-w) + var(--wf-gap)));
+  }
+  /* outside the gate the film is unlit: its print reads, a step down */
+  .lt .s-workflow.wf-desk .wf-shade {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    background: color-mix(in srgb, var(--lt-film-smoke) 46%, transparent);
+    opacity: 0;
+    transition: opacity 0.6s var(--lt-settle);
+  }
+  .lt .s-workflow.wf-desk .wf-cell:not(.in-gate) .wf-shade {
+    opacity: 1;
+  }
+  /* the captions belong to the gate: only the frame in the gate is captioned (no caption is ever cut by the screen) */
+  .lt .s-workflow.wf-desk .wf-cell:not(.in-gate) .wf-cap {
+    opacity: 0;
+  }
+  .lt .s-workflow.wf-desk .wf-gate {
+    display: block;
+    position: absolute;
+    z-index: 4;
+    top: 0;
+    left: 50%;
+    height: var(--wf-film-h, 400px);
+    width: calc(var(--wf-frame-w) + var(--wf-gap));
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  /* the jaws: baked metal bars on the frame lines either side of the aperture, the lip toward the light */
+  .lt .s-workflow .wf-jaw {
+    position: absolute;
+    top: -16px;
+    bottom: -12px;
+    width: 16px;
+    margin-left: -8px;
+    background: url("/landing/workflow/jaw-l.webp") 0 0 / 16px 26px repeat-y;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--lt-shadow-ink) 35%, transparent);
+  }
+  /* the bridge across the top of the gate: the jaws hang from it and the counter plate is mounted on it */
+  .lt .s-workflow .wf-bridge {
+    position: absolute;
+    left: -8px;
+    right: -8px;
+    top: -20px;
+    height: 10px;
+    border-radius: 2px;
+    background: url("/landing/workflow/rail-top.webp") 0 0 / 16px 10px repeat-x;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--lt-shadow-ink) 40%, transparent), 0 4px 6px -4px color-mix(in srgb, var(--lt-shadow-deep) 55%, transparent);
+  }
+  .lt .s-workflow .wf-jaw-l {
+    left: 0;
+  }
+  .lt .s-workflow .wf-jaw-r {
+    left: 100%;
+    background-image: url("/landing/workflow/jaw-r.webp");
+  }
+  /* four sprocket rollers on the perforation rows (baked: 8 phases of one tooth, stepped by the script) */
+  .lt .s-workflow .wf-roller {
+    position: absolute;
+    width: 40px;
+    height: 65px;
+    margin-left: -20px;
+    overflow: hidden;
+    filter: drop-shadow(0 1px 1.5px color-mix(in srgb, var(--lt-shadow-deeper) 55%, transparent));
+  }
+  .lt .s-workflow .wf-roller > span {
+    display: block;
+    width: 40px;
+    height: 520px;
+    background: url("/landing/workflow/roller.webp") 0 0 / 40px 520px no-repeat;
+  }
+  .lt .s-workflow .wf-r-tl, .lt .s-workflow .wf-r-tr {
+    top: calc(var(--wf-rebate) / 2 - 32px);
+  }
+  .lt .s-workflow .wf-r-bl, .lt .s-workflow .wf-r-br {
+    top: calc(var(--wf-film-h, 400px) - var(--wf-rebate) / 2 - 33px);
+  }
+  /* the guide rails across the film where the image meets the perforated edge: with the jaws, the crisp
+     rectangle of the aperture */
+  .lt .s-workflow .wf-gate::before, .lt .s-workflow .wf-gate::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: url("/landing/workflow/rail-top.webp") 0 0 / 16px 6px repeat-x;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--lt-shadow-ink) 30%, transparent);
+  }
+  .lt .s-workflow .wf-gate::before {
+    top: calc(var(--wf-rebate) - 4px);
+  }
+  .lt .s-workflow .wf-gate::after {
+    top: calc(var(--wf-film-h, 400px) - var(--wf-rebate) - 2px);
+    background-image: url("/landing/workflow/rail-bottom.webp");
+  }
+  .lt .s-workflow .wf-r-tl, .lt .s-workflow .wf-r-bl {
+    left: 0;
+  }
+  .lt .s-workflow .wf-r-tr, .lt .s-workflow .wf-r-br {
+    left: 100%;
+  }
+  /* the counter plate over the gate, with its own two buttons */
+  .lt .s-workflow.wf-desk .wf-plate {
+    position: absolute;
+    z-index: 5;
+    top: -58px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 48px;
+    padding: 0 2px;
+    border-radius: 10px;
+    background: var(--lt-film-950);
+    color: var(--lt-film-print);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--lt-box-hi) 55%, transparent), 0 0 0 1px color-mix(in srgb, var(--lt-shadow-ink) 50%, transparent), 0 6px 14px -8px color-mix(in srgb, var(--lt-shadow-deep) 60%, transparent);
+  }
+  .lt .s-workflow .wf-pbtn {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--lt-film-print);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .lt .s-workflow .wf-pbtn:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--lt-film-print) 12%, transparent);
+  }
+  .lt .s-workflow .wf-pbtn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .lt .s-workflow .wf-pbtn:focus-visible {
+    outline: 2px solid var(--lt-box-hi);
+    outline-offset: -2px;
+  }
+  .lt .s-workflow .wf-counter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px;
+    font-family: var(--lt-font-lead);
+    font-weight: 800;
+    font-size: var(--lt-text-13);
+    letter-spacing: 0.1em;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .lt .s-workflow .wf-counter-k, .lt .s-workflow .wf-counter-of {
+    color: var(--lt-film-ink-2);
+  }
+  .lt .s-workflow .wf-reel-win {
+    display: inline-block;
+    height: 18px;
+    overflow: hidden;
+    font-family: var(--lt-font-mono);
+    font-weight: 400;
+    font-size: var(--lt-text-16);
+    letter-spacing: 0;
+    color: var(--wf-print-hi);
+  }
+  .lt .s-workflow .wf-reel {
+    display: flex;
+    flex-direction: column;
+  }
+  .lt .s-workflow .wf-reel span {
+    display: block;
+    height: 18px;
+    line-height: 18px;
+  }
+}
+@media (min-width: 1240px) and (max-width: 1380px) {
+  .lt .s-workflow {
+    --wf-frame-w: 396px;
+  }
+  .lt .s-workflow.wf-desk {
+    --wf-frame-w: 580px;
+    --wf-gap: 36px;
+  }
+  .lt .s-workflow .wf-window {
+    --wf-pad-x: 16px;
+  }
+}
+
+/* ---------- below 1240 (and desktop without motion): a snap strip, one frame at a time ---------- */
+@media (max-width: 1239px) {
+  .lt .s-workflow {
+    --wf-frame-w: min(600px, 100vw - 136px);
+  }
+  .lt .s-workflow .wf-viewport {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    scroll-padding-inline: 24px;
+  }
+  .lt .s-workflow .wf-viewport::-webkit-scrollbar {
+    display: none;
+  }
+  .lt .s-workflow .wf-strip {
+    justify-content: flex-start;
+    width: max-content;
+  }
+  .lt .s-workflow .wf-cell {
+    scroll-snap-align: center;
+  }
+  .lt .s-workflow .wf-leader {
+    width: max(24px, calc((100vw - var(--wf-frame-w) - var(--wf-gap)) / 2));
+    overflow: hidden;
+  }
+  .lt .s-workflow .wf-leader .wf-base {
+    padding: 0;
+  }
+  .lt .s-workflow .wf-controls {
+    display: flex;
+  }
+  html:not(.lt-js) .lt .s-workflow .wf-controls {
+    display: none;
+  }
+  /* the leaders are only a sliver here: no edge print on them */
+  .lt .s-workflow .wf-leader .wf-ep, .lt .s-workflow .wf-start {
+    display: none;
+  }
+}
+@media (max-width: 1100px) {
+  .lt .s-workflow {
+    padding: 112px 0 104px;
+  }
+  .lt .s-workflow .wf-head {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .lt .s-workflow .wf-lede {
+    justify-self: start;
+  }
+}
+@media (max-width: 700px) {
+  .lt .s-workflow {
+    --wf-frame-w: calc(100vw - 52px);
+    --wf-gap: 16px;
+    --wf-rebate: 34px;
+    padding: 96px 0 84px;
+    background-size: 100% 100%;
+  }
+  .lt .s-workflow::before, .lt .s-workflow::after {
+    height: 14px;
+    background-size: 22px 14px;
+  }
+  .lt .s-workflow .wrap {
+    width: calc(100% - 40px);
+  }
+  .lt .s-workflow .wf-title {
+    font-size: var(--lt-text-h2-phone);
+  }
+  .lt .s-workflow .wf-lede {
+    font-size: var(--lt-text-16);
+  }
+  .lt .s-workflow .wf-viewport {
+    margin-top: 36px;
+    scroll-padding-inline: 0;
+  }
+  .lt .s-workflow .wf-leader {
+    width: calc((100vw - var(--wf-frame-w) - var(--wf-gap)) / 2);
+  }
+  .lt .s-workflow .wf-rebate {
+    background-size: 28px var(--wf-rebate);
+    padding: 0 12px;
+  }
+  .lt .s-workflow .wf-ep {
+    top: 2px;
+    font-size: var(--lt-text-13);
+  }
+  .lt .s-workflow .wf-rebate-b .wf-ep {
+    top: -2px;
+  }
+  .lt .s-workflow .wf-window {
+    --wf-pad-x: 12px;
+    padding: 14px var(--wf-pad-x) 16px;
+    font-size: var(--lt-text-14);
+  }
+  .lt .s-workflow .mono, .lt .s-workflow pre, .lt .s-workflow code, .lt .s-workflow .wf-op .mono, .lt .s-workflow .wf-dec .mono {
+    font-size: var(--lt-text-13);
+  }
+  .lt .s-workflow .wf-json {
+    gap: 6px;
+  }
+  .lt .s-workflow .wf-name {
+    font-size: var(--lt-text-19);
+  }
+  .lt .s-workflow .wf-note, .lt .s-workflow .wf-next {
+    font-size: var(--lt-text-14);
+  }
+  .lt .s-workflow .wf-sum {
+    font-size: var(--lt-text-14);
+  }
+  .lt .s-workflow .wf-sent > div {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .lt .s-workflow .wf-tools ul {
+    gap: 0 10px;
+    font-size: var(--lt-text-14);
+  }
+  /* the MCP call and the tool names stay at 14 px; only the streamed result drops to 13 */
+  .lt .s-workflow .wf-call .mono, .lt .s-workflow .wf-call .wf-dir {
+    font-size: var(--lt-text-14);
+  }
+  .lt .s-workflow .wf-cap {
+    padding: 20px 4px 0;
+  }
+  .lt .s-workflow .wf-cap-t {
+    font-size: var(--lt-text-19);
+  }
+  .lt .s-workflow .wf-cap p {
+    padding-left: 0;
+    font-size: var(--lt-text-16);
+  }
+  .lt .s-workflow .wf-controls {
+    margin-top: 20px;
+  }
+}
+
+/* Chinese: headline set smaller, broken by hand in zh.js */
+.lt:lang(zh) .s-workflow .wf-title {
+  font-size: var(--lt-text-h2-zh);
+  line-height: 1.12;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+.lt:lang(zh) .s-workflow .wf-lede, .lt:lang(zh) .s-workflow .wf-cap p {
+  line-height: 1.75;
+}
+.lt:lang(zh) .s-workflow .wf-tag, .lt:lang(zh) .s-workflow .wf-kind, .lt:lang(zh) .s-workflow .wf-fog-mark {
+  letter-spacing: 0.04em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lt .s-workflow .wf-dim, .lt .s-workflow .wf-veil, .lt .s-workflow .wf-gate, .lt .s-workflow .wf-plate, .lt .s-workflow .wf-shade {
+    display: none !important;
+  }
+}
+
+/* on the assembled page */
+/* one lede level across the page */
+.lt .s-workflow .wf-lede {
+  font-size: var(--lt-text-lede);
+}
+/* the pager: the next frame peeks as film edge, its text fades out at the screen edge */
+@media (max-width: 1100px) {
+  .lt .s-workflow .wf-viewport {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 26px, black calc(100% - 26px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, black 26px, black calc(100% - 26px), transparent 100%);
+  }
+}
+/* the box face reads as a lit diffuser: a bright centre, light falling off toward the frame, the metal lip down both
+   sides; less grain on the face (grain belongs to emulsion) */
+.lt .s-workflow {
+  background: radial-gradient(ellipse 62% 58% at 50% 60%, color-mix(in oklab, var(--lt-box-hi) 85%, transparent) 0%, transparent 72%), var(--lt-box) url("/landing/workflow/face.webp") center / 100% 100% no-repeat;
+  box-shadow: inset 22px 0 26px -18px color-mix(in srgb, var(--lt-shadow-ink) 42%, transparent), inset -22px 0 26px -18px color-mix(in srgb, var(--lt-shadow-ink) 42%, transparent), inset 3px 0 0 0 color-mix(in srgb, var(--lt-metal-500) 90%, transparent), inset -3px 0 0 0 color-mix(in srgb, var(--lt-metal-500) 90%, transparent);
+}
+.lt .s-workflow .wf-opal {
+  opacity: 0.025;
+}
+/* desktop: the head is compact and the strip sits high, so the whole film row (frame 1 in the gate) and the gate's
+   caption are on screen when the section's top reaches the nav, at 1440x900 and 1280x800 */
+@media (min-width: 1240px) {
+  .lt .s-workflow {
+    padding-top: 40px;
+  }
+  .lt .s-workflow .wf-viewport {
+    margin-top: 58px;
+  }
+  .lt .s-workflow .wf-title, .lt:lang(zh) .s-workflow .wf-title {
+    font-size: var(--wf-text-title-desk);
+  }
+  .lt .s-workflow.wf-desk .wf-cap {
+    padding-top: 12px;
+  }
+  .lt .s-workflow.wf-desk .wf-cap p {
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+  /* Chinese captions keep their 1.75 leading on the desk (:lang(zh) alone only ties the line above) */
+  .lt:lang(zh) .s-workflow.wf-desk .wf-cap p {
+    line-height: 1.75;
+  }
+}
+@media (min-width: 1240px) and (max-height: 940px) {
+  .lt .s-workflow {
+    padding-top: 28px;
+  }
+  .lt .s-workflow .wf-viewport {
+    margin-top: 54px;
+  }
+}
+@media (min-width: 1240px) and (max-height: 860px) {
+  .lt .s-workflow {
+    padding-top: 14px;
+  }
+  .lt .s-workflow .wf-viewport {
+    margin-top: 30px;
+  }
+  .lt .s-workflow.wf-desk .wf-cap {
+    padding-top: 8px;
+  }
+  .lt .s-workflow .wf-title, .lt:lang(zh) .s-workflow .wf-title {
+    font-size: var(--wf-text-title-short);
+    line-height: 1.02;
+  }
+  .lt .s-workflow .wf-head {
+    align-items: center;
+  }
+  .lt .s-workflow .wf-lede {
+    font-size: var(--lt-text-17);
+  }
+  .lt .s-workflow.wf-desk .wf-cap-t {
+    font-size: var(--lt-text-18);
+  }
+  .lt .s-workflow.wf-desk .wf-cap p {
+    font-size: var(--lt-text-15);
+  }
+}

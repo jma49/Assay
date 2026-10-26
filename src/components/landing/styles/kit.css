@@ -1,0 +1,26 @@
+/* The motion kit's grain layer (lib/kit.ts). Compositor-only motion. */
+
+/* grain: a 160 px tile on an oversized layer that is stepped by transform (no repaint) */
+.lt .lt-grain {
+  position: absolute;
+  inset: -80px;
+  z-index: 3;
+  pointer-events: none;
+  background-image: var(--grain);
+  background-size: 160px 160px;
+  will-change: transform;
+}
+.lt .lt-grain.is-static {
+  inset: 0;
+  z-index: 0;
+  will-change: auto;
+}
+.lt .lt-grain.is-page {
+  position: fixed;
+  z-index: 90;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lt .lt-grain {
+    will-change: auto;
+  }
+}
