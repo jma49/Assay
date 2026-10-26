@@ -6,9 +6,11 @@ All fonts are licensed under the SIL Open Font License 1.1 and are self-hosted
 through `next/font`.
 
 - **Geist** and **Geist Mono** (interface, headings and code in the app).
-- **Instrument Serif** (page titles and headlines across the site).
-- **Figtree** (running text on the landing page).
-- **Maple Mono NL** (code on the landing page), shipped unmodified from the
+- **Instrument Serif** (page titles in the app, the docs and sign-in).
+- **Figtree** (running text on the sign-in page).
+- **Sofia Sans** and **Sofia Sans Condensed** (the landing page: running text,
+  headlines and the lead letters printed on films).
+- **Maple Mono NL** (code on the landing and sign-in pages), shipped unmodified from the
   v7.9 release of [maple-font](https://github.com/subframe7536/maple-font) in
   `src/components/landing/fonts/`, with its licence in `MapleMono-OFL.txt`.
   "Maple Mono" is a Reserved Font Name.
@@ -20,6 +22,9 @@ ISC License.
 
 ## Animation
 
-The landing page animates with [GSAP](https://gsap.com) and its ScrollTrigger
-plugin, used under the GSAP Standard "no charge" License
-(https://gsap.com/standard-license).
+The landing page animates with [GSAP](https://gsap.com) and its ScrollTrigger,
+DrawSVG and CustomEase plugins, used under the GSAP Standard
+"no charge" License (https://gsap.com/standard-license).
+
+Its live 3D light box is drawn with [three.js](https://threejs.org), licensed
+under the MIT License.

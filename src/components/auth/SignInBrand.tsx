@@ -4,8 +4,30 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CircleCheck, type LucideIcon } from "lucide-react";
 import { RowAMark } from "@/components/brand/RowAMark";
-import { landingCopy, type Language } from "@/components/landing/content";
+import type { Language } from "@/components/common/language-store";
 import { BRAND } from "@/lib/brand";
+
+/** The live demo's last alert (Stale pending orders, Sep 29). */
+const ALERT: Record<Language, { channel: string; title: string; lines: string; open: string; acknowledge: string; mute: string; acknowledged: string }> = {
+  en: {
+    channel: "# data-alerts",
+    title: "Stale pending orders: 8 rows new",
+    lines: "Now returns 8 rows · 8 new, 0 still open, 7 fixed",
+    open: "Open check",
+    acknowledge: "Acknowledge",
+    mute: "Mute 24 h",
+    acknowledged: "Acknowledged by Sam",
+  },
+  zh: {
+    channel: "# data-alerts",
+    title: "长时间未处理的待支付订单 新增 8 行问题数据",
+    lines: "当前返回 8 行 · 新增 8 行，仍存在 0 行，已修复 7 行",
+    open: "查看检查",
+    acknowledge: "确认处理",
+    mute: "静音 24 小时",
+    acknowledged: "Sam 已确认处理",
+  },
+};
 
 interface Point {
   icon: LucideIcon;
@@ -14,12 +36,12 @@ interface Point {
 }
 
 /**
- * The panel beside the sign-in form, in the landing page's language: ruled paper with a
+ * The panel beside the sign-in form, in the reader's language: ruled paper with a
  * serif tagline, and the live demo's last alert sitting on graph paper. The alert's
  * Acknowledge press plays once; it is a small change of state, so it stays under reduced motion.
  */
 export function SignInBrand({ language, tagline, points, footnote }: { language: Language; tagline: string; points: Point[]; footnote: string }) {
-  const alert = landingCopy[language].run.alert;
+  const alert = ALERT[language];
   const [acked, setAcked] = useState(false);
 
   useEffect(() => {

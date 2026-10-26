@@ -1,0 +1,72 @@
+/* The light table's sizes, spaces, radii and curves, defined once on .lt. Its colours are `--lt-*` tokens in
+   src/app/globals.css (mirrored in DESIGN.md). Declared on the page root too (only while a landing is on it), so
+   <html> can use them. */
+:root:has(.lt),
+.lt {
+  /* type: faces from next/font (fonts.ts) */
+  --lt-font-display: var(--font-lt-sans), "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --lt-font-lead: var(--font-lt-lead), var(--font-lt-sans), "PingFang SC", sans-serif;
+  --lt-font-mono: var(--font-lt-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* type sizes: the landing's own scale. CSS reads these with var(); it never writes a literal font size
+     (src/lib/type-scale.test.ts). Semantic levels first, then the fixed steps the chrome and proofs use. */
+  --lt-text-h1: clamp(48px, 8.6vw, 124px);
+  --lt-text-h1-zh: clamp(44px, 6.95vw, 100px);
+  --lt-text-h2-xl: clamp(42px, 6.1vw, 88px);
+  --lt-text-h2-xl-zh: clamp(38px, 5.3vw, 76px);
+  --lt-text-h2: clamp(36px, 4.45vw, 64px);
+  --lt-text-h2-zh: clamp(32px, 3.9vw, 56px);
+  --lt-text-h2-phone: 36px;
+  --lt-text-h2-zh-phone: 32px;
+  --lt-text-h2-xl-phone: 42px;
+  --lt-text-h2-xl-zh-phone: 38px;
+  --lt-text-h3: clamp(19px, 1.4vw, 20px);
+  --lt-text-lede: clamp(17px, 1.4vw, 20px);
+  --lt-text-body: 17px;
+  --lt-text-proof: 15px; /* SQL, rows, ids on desktop (14-16, never below 13) */
+  --lt-text-note: 14px;
+  --lt-text-tag: 13px; /* the floor for any text on the page */
+  --lt-text-13: 13px;
+  --lt-text-14: 14px;
+  --lt-text-15: 15px;
+  --lt-text-16: 16px;
+  --lt-text-17: 17px;
+  --lt-text-18: 18px;
+  --lt-text-19: 19px;
+  --lt-text-20: 20px;
+  --lt-text-24: 24px;
+  --lt-text-26: 26px;
+
+  /* space: 4-based steps; sections breathe 128-160 desktop, 80-96 phone */
+  --lt-sp-2: 8px;
+  --lt-sp-3: 12px;
+  --lt-sp-4: 16px;
+  --lt-sp-5: 24px;
+  --lt-sp-6: 32px;
+  --lt-sp-7: 48px;
+  --lt-sp-8: 64px;
+  --lt-section-y: clamp(88px, 10.5vw, 152px);
+  --lt-wrap: 1280px;
+  --lt-gutter: clamp(20px, 5.6vw, 80px);
+  --lt-nav-h: 56px;
+
+  /* radii */
+  --lt-r-xs: 4px;
+  --lt-r-sm: 6px;
+  --lt-r-md: 10px;
+
+  /* motion: four curves (also GSAP eases of the same names, lib/gsap.ts) and the short transition */
+  --lt-settle: cubic-bezier(0.2, 0.75, 0.15, 1);
+  --lt-glide: cubic-bezier(0.45, 0, 0.2, 1);
+  --lt-develop: cubic-bezier(0.6, 0, 0.4, 1);
+  --lt-snap: cubic-bezier(0.3, 1.4, 0.5, 1);
+  --lt-t-fast: 150ms;
+}
+
+@media (max-width: 700px) {
+  :root:has(.lt),
+  .lt {
+    --lt-text-body: 16px;
+    --lt-text-proof: 13px;
+  }
+}

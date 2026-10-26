@@ -1,0 +1,36 @@
+/* The sign-in page: paper ruled with hairlines. Headlines are set in the serif (the root layout loads it for the
+   whole site), labels in the mono (fonts.ts). */
+.sign-in {
+  --app-font-sans: var(--font-sign-in-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif;
+  --app-font-mono: var(--font-sign-in-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-family: var(--app-font-sans);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* Headlines: the serif at regular weight, set tight. */
+.sign-in .font-editorial {
+  font-family: var(--app-font-serif);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 0.98;
+}
+
+/* Small mono capitals. */
+.sign-in .eyebrow {
+  font-family: var(--app-font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Graph paper behind the alert, with a faint wash of the accent. */
+.sign-in .graph {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--primary) 9%, transparent), transparent 60%),
+    linear-gradient(var(--rule) 1px, transparent 1px),
+    linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+  background-size: 100% 100%, 20px 20px, 20px 20px;
+  background-position: 0 0, -1px -1px, -1px -1px;
+}

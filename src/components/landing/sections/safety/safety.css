@@ -1,0 +1,674 @@
+/* Section 3 · Safety (lead). One object: a slit beam carries the DELETE draft toward four heavy cast-lead plates, one
+   per read-only layer, and the first plate's edge stops it dead. Everything physical is a one-light three.js bake
+   (made outside the repo): the plates (pass=base, on transparent with their own contact shadows), the beam (pass=beam, its
+   light baked into alpha, so it adds to the lead ground with normal blending) and the plates catching a raking light
+   (pass=glint, light as alpha, one clip per plate). The only live layer is a 2D canvas of dust in the beam (safety.motion.ts).
+   Every rect is a share of the bake frame: desktop (>= 1180 px) 1280 x 720, tablet and phone a portrait frame
+   440 x 1240 with the beam coming down. --u is one frame px (a container query unit), so the notes printed on the
+   plates stay on their bands at any width. */
+.lt .s-safety {
+  --sf-text-sql: clamp(15px, 4.4vw, 21px);
+  --sf-text-sql-wide: clamp(18px, 1.6vw, 23px);
+  --sf-text-title: clamp(96px, 8.2vw, 124px);
+  --sf-text-title-zh: clamp(88px, 7.4vw, 112px);
+  --sf-text-lede: clamp(16px, 1.32vw, 19px);
+  padding-block: var(--lt-section-y) clamp(72px, 7vw, 112px);
+  color: var(--lt-lead-ink);
+  overflow: clip;
+  position: relative;
+}
+.lt .s-safety > .wrap {
+  position: relative;
+  z-index: 1;
+}
+
+.lt .s-safety .sf-head {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--lt-sp-6) var(--lt-sp-8);
+  align-items: end;
+}
+.lt .s-safety .sf-title {
+  color: var(--lt-lead-ink);
+  max-width: 9.5em;
+}
+.lt .s-safety .sf-lede {
+  color: var(--lt-lead-ink-2);
+  max-width: 27rem;
+  padding-bottom: 10px;
+}
+
+/* the stage: portrait frame by default (tablet and phone) */
+.lt .s-safety .sf-object {
+  position: relative;
+  margin: var(--lt-sp-8) 0 0;
+}
+.lt .s-safety .sf-stage {
+  --fw: 440;
+  --u: calc(100cqw / var(--fw));
+  container-type: inline-size;
+  position: relative;
+  width: min(100%, 460px);
+  margin-inline: auto;
+  aspect-ratio: 440 / 1240;
+}
+.lt .s-safety .sf-stage > * {
+  position: absolute;
+}
+.lt .s-safety .sf-plates {
+  inset: 0;
+  display: block;
+}
+.lt .s-safety .sf-plates img, .lt .s-safety .sf-cut img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* the beam: from far above (portrait). It fades in from its source; .sf-beam-in carries a soft front past its end */
+.lt .s-safety .sf-beam {
+  left: 11.364%;
+  top: 0;
+  width: 47.727%;
+  height: 36.29%;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 26%);
+  mask-image: linear-gradient(to bottom, transparent, black 26%);
+}
+.lt .s-safety .sf-beam-in {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: calc(100% + 60px);
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 60px), transparent);
+  mask-image: linear-gradient(to bottom, black calc(100% - 60px), transparent);
+}
+.lt .s-safety .sf-beam picture, .lt .s-safety .sf-beam img {
+  display: block;
+  width: 100%;
+  height: calc(100% - 60px);
+}
+.lt .s-safety .sf-beam img {
+  height: 100%;
+}
+.lt .s-safety .sf-cut {
+  left: 12.273%;
+  top: 27.419%;
+  width: 45.455%;
+  height: 8.065%;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* the plates catching the light: the raking-light pass, one clip per plate (its visible band), settled at .6.
+   Portrait frame: the image covers y 390-1240. safety.motion.ts sweeps each in (mover + counter-moved picture, transform only) */
+.lt .s-safety .sf-glints {
+  inset: 0;
+  pointer-events: none;
+}
+.lt .s-safety .sf-glint {
+  position: absolute;
+  left: 0;
+  top: 31.452%;
+  width: 100%;
+  height: 68.548%;
+  opacity: 0.6;
+}
+/* band k runs from 14 px above its plate's top (its lit top wall) to 14 px above the next plate's */
+.lt .s-safety .sf-g1 {
+  clip-path: inset(0 0 78.824% 0);
+}
+.lt .s-safety .sf-g2 {
+  clip-path: inset(21.176% 0 57.176% 0);
+}
+.lt .s-safety .sf-g3 {
+  clip-path: inset(42.824% 0 35.529% 0);
+}
+.lt .s-safety .sf-g4 {
+  clip-path: inset(64.471% 0 0 0);
+}
+.lt .s-safety .sf-glint-m {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: calc(100% + 90px);
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 90px), transparent);
+  mask-image: linear-gradient(to bottom, black calc(100% - 90px), transparent);
+}
+.lt .s-safety .sf-glint picture, .lt .s-safety .sf-glint img {
+  display: block;
+  width: 100%;
+  height: calc(100% - 90px);
+}
+.lt .s-safety .sf-glint img {
+  height: 100%;
+}
+.lt .s-safety .sf-beam-tail {
+  display: none;
+}
+/* the dust canvas covers the beam's path up to the struck face (portrait: frame x 96-204, y 0-388) */
+.lt .s-safety .sf-dust {
+  left: 21.818%;
+  top: 0;
+  width: 24.545%;
+  height: 31.29%;
+  pointer-events: none;
+}
+
+/* the slip: a strip of developed film carrying the check draft, held in the beam */
+.lt .s-safety .sf-slip-pos {
+  z-index: 2;
+  left: 4%;
+  top: 1.774%;
+  width: 92%;
+}
+.lt .s-safety .sf-slip {
+  position: relative;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--lt-safety-film);
+  color: var(--lt-film-print);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--lt-day-white) 7%, transparent) inset, 0 0 0 1px color-mix(in srgb, var(--lt-shadow-black) 30%, transparent), 0 22px 40px -18px color-mix(in srgb, var(--lt-shadow-black) 70%, transparent), 0 2px 5px color-mix(in srgb, var(--lt-shadow-black) 35%, transparent);
+}
+/* where the beam passes through the film base: the same baked beam, registered on the stage, seen through the film
+   (portrait: frame x 50-260, y 0-450; the slip sits at 17.6, 22) */
+.lt .s-safety .sf-slip-light {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  left: calc(32.4 * var(--u));
+  top: calc(-22 * var(--u));
+  width: calc(210 * var(--u));
+  height: calc(450 * var(--u));
+  background: url("/landing/safety/beam-p.webp") 0 0 / 100% 100% no-repeat;
+  opacity: 0.36;
+}
+.lt .s-safety .sf-slip > :not(.sf-slip-light) {
+  position: relative;
+  z-index: 1;
+}
+.lt .s-safety .sf-rebate {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--lt-sp-4);
+  margin: 0;
+  padding: 10px 16px 0;
+  color: var(--lt-film-ink-3);
+}
+.lt .s-safety .sf-sql {
+  margin: 0;
+  padding: 14px 16px 16px;
+  font-family: var(--lt-font-mono);
+  font-size: var(--sf-text-sql);
+  line-height: 1.45;
+  color: var(--lt-film-print);
+  white-space: pre;
+  overflow: hidden;
+}
+.lt .s-safety .sf-sql code {
+  font: inherit;
+}
+/* the draft sits in the beam: its print reads as the brightest thing on the film, with a thin dark edge against the light */
+.lt .s-safety .sf-sql {
+  color: var(--lt-lead-ink);
+  text-shadow: 0 0 1px color-mix(in srgb, var(--lt-shadow-black) 55%, transparent), 0 1px 3px color-mix(in srgb, var(--lt-shadow-black) 35%, transparent);
+}
+.lt .s-safety .sf-kw {
+  position: relative;
+  display: inline-block;
+  color: var(--lt-lead-ink);
+}
+.lt .s-safety .sf-strike {
+  position: absolute;
+  left: -3px;
+  right: -3px;
+  top: 52%;
+  height: 2px;
+  background: currentColor;
+  transform-origin: 0 50%;
+}
+.lt .s-safety .sf-refusal {
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--lt-film-line);
+  background: color-mix(in srgb, var(--lt-shadow-black) 22%, transparent);
+}
+.lt .s-safety .sf-refusal-h {
+  margin: 0 0 6px;
+  color: var(--lt-film-ink-2);
+}
+.lt .s-safety .sf-refusal-msg {
+  margin: 0;
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-14);
+  line-height: 1.55;
+  color: var(--lt-film-print);
+}
+
+/* the notes printed on each plate's visible band (the names are engraved in the bake) */
+.lt .s-safety .sf-layers {
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lt .s-safety .sf-band {
+  position: absolute;
+  left: var(--l);
+  top: var(--t);
+  width: var(--w);
+  height: var(--h);
+  box-sizing: border-box;
+  padding: calc(64 * var(--u)) calc(14 * var(--u)) 0 calc(18 * var(--u));
+}
+.lt .s-safety .sf-b1 {
+  --l: 5%;
+  --t: 32.258%;
+  --w: 83.159%;
+  --h: 14.839%;
+}
+.lt .s-safety .sf-b2 {
+  --l: 7.727%;
+  --t: 47.097%;
+  --w: 83.182%;
+  --h: 14.839%;
+}
+.lt .s-safety .sf-b3 {
+  --l: 10.455%;
+  --t: 61.935%;
+  --w: 83.341%;
+  --h: 14.839%;
+}
+.lt .s-safety .sf-b4 {
+  --l: 13.182%;
+  --t: 76.774%;
+  --w: 83.636%;
+  --h: 21.774%;
+}
+.lt .s-safety .sf-band-p {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  max-width: 36em;
+  font-size: var(--lt-text-14);
+  line-height: 1.42;
+  font-weight: 500;
+  color: var(--lt-lead-ink-2);
+  text-wrap: pretty;
+}
+.lt .s-safety .sf-band-h {
+  font-weight: 700;
+  color: var(--lt-lead-ink);
+}
+/* the engraving already names the layer: the printed name is for screen readers, and in Chinese for everyone */
+.lt .s-safety .sf-k, .lt .s-safety .sf-k-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.lt:lang(zh) .s-safety .sf-k {
+  position: static;
+  display: block;
+  width: auto;
+  height: auto;
+  margin: 0 0 3px;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  font-size: var(--lt-text-16);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--lt-lead-ink);
+}
+/* a plate before it catches the light: a dark veil, swept off left to right (transform only; safety.motion.ts) */
+.lt .s-safety .sf-veil {
+  position: absolute;
+  z-index: 0;
+  inset: -2px 0 0 calc(-10 * var(--u));
+  overflow: hidden;
+  border-radius: calc(10 * var(--u)) calc(10 * var(--u)) 0 0;
+  pointer-events: none;
+  opacity: 0;
+}
+.lt .s-safety .sf-veil i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 240%;
+  background: linear-gradient(to right, transparent 0 42%, var(--lt-safety-veil) 58% 100%);
+}
+
+/* the three guarantees: legible and quieter than the plates */
+.lt .s-safety .sf-markers {
+  margin: var(--lt-sp-8) 0 0;
+  padding: var(--lt-sp-6) 0 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--lt-sp-5) var(--lt-sp-7);
+  border-top: 1px solid var(--lt-lead-line);
+}
+.lt .s-safety .sf-mark-p {
+  margin: 0;
+  font-size: var(--lt-text-15);
+  line-height: 1.55;
+  color: var(--lt-lead-ink-2);
+  max-width: 26rem;
+}
+
+.lt:lang(zh) .s-safety .sf-band-p {
+  line-height: 1.5;
+}
+.lt:lang(zh) .s-safety .sf-mark-p {
+  line-height: 1.7;
+}
+.lt:lang(zh) .s-safety .sf-title {
+  max-width: none;
+}
+
+/* the plates carry only the layer's name in the metal; its qualifier ("on save and before every run", "recommended")
+   is printed as the note's run-in, so it reads at text contrast at every width */
+
+/* tablet: the portrait object beside nothing else; a little more room for the notes */
+@media (min-width: 700px) and (max-width: 1179px) {
+  .lt .s-safety .sf-stage {
+    width: min(100%, 480px);
+  }
+  .lt .s-safety .sf-band-p {
+    font-size: var(--lt-text-15);
+  }
+  .lt .s-safety .sf-markers {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* desktop: the landscape frame, the beam comes in from the left */
+@media (min-width: 1180px) {
+  .lt .s-safety .sf-head {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+  .lt .s-safety .sf-stage {
+    --fw: 1280;
+    width: 100%;
+    aspect-ratio: 1280 / 720;
+  }
+  .lt .s-safety .sf-beam {
+    left: 0;
+    top: 30.556%;
+    width: 50%;
+    height: 40.278%;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  /* the far end of the beam, tiled (mirrored, seamless) from the stage's edge to the screen's; the section clips it */
+  .lt .s-safety .sf-beam-tail {
+    display: block;
+    right: 100%;
+    top: 30.556%;
+    width: 50vw;
+    height: 40.278%;
+    pointer-events: none;
+    background: url("/landing/safety/beam-tail-d.webp") right center / auto 100% repeat-x;
+  }
+  .lt .s-safety .sf-glint {
+    left: 41.406%;
+    top: 0;
+    width: 58.594%;
+    height: 100%;
+  }
+  /* desktop: frame x 0-550, y 300-424 */
+  .lt .s-safety .sf-dust {
+    left: 0;
+    top: 41.667%;
+    width: 42.969%;
+    height: 17.222%;
+  }
+  /* plate k: its top band, plus its lit left wall all the way down (cut in the dark gap before the next plate's wall) */
+  .lt .s-safety .sf-g1 {
+    clip-path: polygon(0 0, 100% 0, 100% 25%, 5.467% 25%, 5.467% 100%, 0 100%);
+  }
+  .lt .s-safety .sf-g2 {
+    clip-path: polygon(5.467% 25%, 100% 25%, 100% 45.833%, 8.667% 45.833%, 8.667% 100%, 5.467% 100%);
+  }
+  .lt .s-safety .sf-g3 {
+    clip-path: polygon(8.667% 45.833%, 100% 45.833%, 100% 66.667%, 11.867% 66.667%, 11.867% 100%, 8.667% 100%);
+  }
+  .lt .s-safety .sf-g4 {
+    clip-path: polygon(11.867% 66.667%, 100% 66.667%, 100% 100%, 11.867% 100%);
+  }
+  .lt .s-safety .sf-glint-m {
+    width: calc(100% + 120px);
+    height: 100%;
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 120px), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - 120px), transparent);
+  }
+  .lt .s-safety .sf-glint picture {
+    width: calc(100% - 120px);
+    height: 100%;
+  }
+  .lt .s-safety .sf-beam-in {
+    width: calc(100% + 80px);
+    height: 100%;
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 80px), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - 80px), transparent);
+  }
+  .lt .s-safety .sf-beam picture {
+    width: calc(100% - 80px);
+    height: 100%;
+  }
+  .lt .s-safety .sf-cut {
+    left: 37.5%;
+    top: 36.111%;
+    width: 10.9375%;
+    height: 27.778%;
+  }
+  .lt .s-safety .sf-slip-pos {
+    left: 2.1875%;
+    top: 50.278%;
+    width: 30.625%;
+    transform: translateY(-50%);
+  }
+  /* the beam image covers frame x 0-640, y 220-510; the slip starts at x 28 and is centred on y 362 */
+  .lt .s-safety .sf-slip-light {
+    left: calc(-28 * var(--u));
+    top: calc(50% - 142 * var(--u));
+    width: calc(640 * var(--u));
+    height: calc(290 * var(--u));
+    background-image: url("/landing/safety/beam-d.webp");
+  }
+  .lt .s-safety .sf-rebate {
+    padding: 12px 20px 0;
+  }
+  .lt .s-safety .sf-sql {
+    padding: 16px 20px 18px;
+    font-size: var(--sf-text-sql-wide);
+  }
+  .lt .s-safety .sf-refusal {
+    padding: 14px 20px 16px;
+  }
+  .lt .s-safety .sf-refusal-msg {
+    font-size: var(--lt-text-15);
+  }
+  .lt .s-safety .sf-band {
+    padding: calc(78 * var(--u)) calc(18 * var(--u)) 0 calc(76 * var(--u));
+  }
+  .lt .s-safety .sf-b1 {
+    --l: 43.75%;
+    --t: 4.1667%;
+    --w: 47.5625%;
+    --h: 20.833%;
+  }
+  .lt .s-safety .sf-b2 {
+    --l: 45.625%;
+    --t: 25%;
+    --w: 47.742%;
+    --h: 20.833%;
+  }
+  .lt .s-safety .sf-b3 {
+    --l: 47.5%;
+    --t: 45.833%;
+    --w: 48.031%;
+    --h: 20.833%;
+  }
+  .lt .s-safety .sf-b4 {
+    --l: 49.375%;
+    --t: 66.667%;
+    --w: 48.4375%;
+    --h: 29.167%;
+  }
+  .lt .s-safety .sf-band-p {
+    font-size: var(--lt-text-15);
+    line-height: 1.45;
+  }
+  .lt .s-safety .sf-markers {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* motion: armed only when the object is still below the fold with motion allowed (safety.motion.ts) */
+.lt .s-safety.sf-armed .sf-slip-light {
+  opacity: 0;
+}
+.lt .s-safety.sf-armed .sf-strike {
+  transform: scaleX(0);
+}
+.lt .s-safety.sf-armed .sf-refusal {
+  opacity: 0;
+}
+.lt .s-safety.sf-armed .sf-beam-in {
+  transform: translateY(-100%);
+}
+.lt .s-safety.sf-armed .sf-beam picture {
+  transform: translateY(calc(100% + 60px));
+}
+.lt .s-safety.sf-armed .sf-cut {
+  opacity: 0;
+}
+.lt .s-safety.sf-armed .sf-beam-tail {
+  opacity: 0;
+}
+.lt .s-safety.sf-armed .sf-glint-m {
+  transform: translateY(-100%);
+}
+.lt .s-safety.sf-armed .sf-glint picture {
+  transform: translateY(calc(100% + 90px));
+}
+.lt .s-safety.sf-armed .sf-veil {
+  opacity: 1;
+}
+.lt .s-safety.sf-armed .sf-veil i {
+  transform: translateX(-58.333%);
+}
+.lt .s-safety.sf-armed .sf-markers li {
+  opacity: 0.8;
+  transform: translateY(8px);
+}
+@media (min-width: 1180px) {
+  .lt .s-safety.sf-armed .sf-beam-in {
+    transform: translateX(-100%);
+  }
+  .lt .s-safety.sf-armed .sf-beam picture {
+    transform: translateX(calc(100% + 80px));
+  }
+  .lt .s-safety.sf-armed .sf-glint-m {
+    transform: translateX(-100%);
+  }
+  .lt .s-safety.sf-armed .sf-glint picture {
+    transform: translateX(calc(100% + 120px));
+  }
+}
+
+/* narrower desktops: the Chinese notes (with their printed run-in names) keep to two lines on each band */
+@media (min-width: 1180px) and (max-width: 1399px) {
+  .lt:lang(zh) .s-safety .sf-band-p {
+    font-size: var(--lt-text-14);
+    line-height: 1.42;
+  }
+}
+/* desktop: the zh title is a bold run-in (the landscape bands hold two lines of note), its own line on the portrait plates */
+@media (min-width: 1180px) {
+  .lt:lang(zh) .s-safety .sf-k {
+    display: inline;
+    margin: 0 0.4em 0 0;
+    font-size: 1.06em;
+  }
+}
+@media (max-width: 380px) {
+  .lt .s-safety .sf-band-p {
+    font-size: var(--lt-text-13);
+    line-height: 1.38;
+  }
+  .lt .s-safety .sf-band {
+    padding-top: calc(60 * var(--u));
+  }
+}
+
+/* ---------- on the assembled page ---------- */
+/* a dark lead room, so the beam is the brightest thing on it and the plates are mid-value metal; the ground comes back
+   to lead-700 at both ends, where the run's dimmed box and the outcomes seam meet it */
+.lt .s-safety[data-ground="lead"] {
+  background-color: var(--lt-safety-ground);
+  background-image: linear-gradient(var(--lt-lead-700), var(--lt-safety-ground) 20%, var(--lt-safety-ground) 86%, var(--lt-lead-700));
+}
+/* on the desktop story the run section already dims the box down to lead as it leaves: safety must not light it again */
+html.lt-run-story .lt .s-safety > .seam {
+  display: none;
+}
+.lt .s-safety .sf-mark {
+  display: block;
+  margin: 0 0 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--lt-font-display);
+  font-size: var(--lt-text-16);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.3;
+  color: var(--lt-lead-ink);
+}
+.lt .s-safety .sf-markers {
+  border-top-color: var(--lt-safety-rule);
+}
+@media (min-width: 1180px) {
+  /* the statement is the page's one scale break in the middle */
+  .lt .s-safety .sf-head {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    position: relative;
+    z-index: 3;
+  }
+  .lt .s-safety .sf-title {
+    font-size: var(--sf-text-title);
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+    max-width: none;
+  }
+  .lt:lang(zh) .s-safety .sf-title {
+    font-size: var(--sf-text-title-zh);
+    line-height: 1.05;
+    letter-spacing: 0;
+  }
+  /* the lede is printed on the dark lead floor in the stage's empty top-left corner (left of the cut, above the beam),
+     so the headline, the beam through the slip and all four plates fit one screen at 1440x900 */
+  .lt .s-safety .sf-lede {
+    position: absolute;
+    left: 0;
+    top: calc(100% + var(--lt-sp-8) + 22px);
+    width: min(30rem, 35%);
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    font-size: var(--sf-text-lede);
+    line-height: 1.5;
+  }
+  .lt:lang(zh) .s-safety .sf-lede {
+    line-height: 1.7;
+  }
+}

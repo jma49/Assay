@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: Assay
-description: A calm operations UI for SQL data checks, set like a technical document on ruled paper. Light only, warm paper neutrals, hairlines instead of cards and shadows, square corners, serif titles, an indigo accent and three status colours that mean the same thing on every screen.
+description: A calm operations UI for SQL data checks, set like a technical document on ruled paper. Light only, warm paper neutrals, hairlines instead of cards and shadows, square corners, serif titles, an indigo accent and three status colours that mean the same thing on every screen. The landing page has its own world, the light table (the lt-* tokens).
 colors:
   primary: "#4F63E8"
   on-primary: "#FFFFFF"
@@ -29,6 +29,38 @@ colors:
   rule-strong: "#CBC8BC"
   ink: "#16171B"
   ink-muted: "#64656B"
+  lt-room-1000: "#080605"
+  lt-room-950: "#0E0A07"
+  lt-room-900: "#19130F"
+  lt-room-800: "#2A211A"
+  lt-room-ink: "#F2ECE5"
+  lt-box: "#EEF2F3"
+  lt-box-hi: "#F7FAFA"
+  lt-box-ink: "#121619"
+  lt-box-edge: "#D9E0E3"
+  lt-box-shade: "#C9D1D5"
+  lt-film-950: "#121618"
+  lt-film-900: "#1B2124"
+  lt-film-print: "#C6D0D5"
+  lt-film-print-hi: "#E4EBEE"
+  lt-lead-700: "#474E52"
+  lt-lead-600: "#5B6266"
+  lt-lead-ink: "#F4F4F0"
+  lt-day: "#E6E6E2"
+  lt-day-hi: "#F0F0EC"
+  lt-day-white: "#FFFFFF"
+  lt-day-ink: "#16181A"
+  lt-lumen: "#9FDCFF"
+  lt-lumen-core: "#F1FBFF"
+  lt-lumen-ink: "#0B5A80"
+  lt-fog-950: "#2A2F32"
+  lt-fog-hi: "#B9C0C3"
+  lt-fog-ink: "#E9ECEC"
+  lt-fog-ink-dark: "#15191B"
+  lt-metal-900: "#24282B"
+  lt-metal-300: "#AEB5B9"
+  lt-chat-bg: "#FFFFFF"
+  lt-chat-ink: "#1D1C1D"
 typography:
   editorial:
     fontFamily: Instrument Serif
@@ -210,6 +242,13 @@ components:
   demo-banner-title:
     backgroundColor: "{colors.card}"
     textColor: "{colors.foreground}"
+  popover:
+    backgroundColor: "{colors.paper-raised}"
+    textColor: "{colors.ink}"
+  panel-ring:
+    backgroundColor: "{colors.rule}"
+  panel-ring-hover:
+    backgroundColor: "{colors.rule-strong}"
   auth-brand-panel:
     backgroundColor: "{colors.paper}"
     textColor: "{colors.ink}"
@@ -217,22 +256,81 @@ components:
   auth-brand-panel-muted:
     backgroundColor: "{colors.paper}"
     textColor: "{colors.ink-muted}"
-  landing-paper:
-    backgroundColor: "{colors.paper}"
-    textColor: "{colors.ink}"
-  landing-paper-muted:
-    backgroundColor: "{colors.paper}"
-    textColor: "{colors.ink-muted}"
-  landing-paper-raised:
-    backgroundColor: "{colors.paper-raised}"
-    textColor: "{colors.ink}"
-  landing-rule:
-    backgroundColor: "{colors.rule}"
-  landing-rule-strong:
-    backgroundColor: "{colors.rule-strong}"
-  landing-button:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.paper}"
+  landing-room:
+    backgroundColor: "{colors.lt-room-950}"
+    textColor: "{colors.lt-room-ink}"
+  landing-room-dark:
+    backgroundColor: "{colors.lt-room-1000}"
+    textColor: "{colors.lt-room-ink}"
+  landing-room-ground:
+    backgroundColor: "{colors.lt-room-900}"
+    textColor: "{colors.lt-room-ink}"
+  landing-room-raised:
+    backgroundColor: "{colors.lt-room-800}"
+    textColor: "{colors.lt-room-ink}"
+  landing-room-button:
+    backgroundColor: "{colors.lt-room-ink}"
+    textColor: "{colors.lt-room-900}"
+  landing-box:
+    backgroundColor: "{colors.lt-box}"
+    textColor: "{colors.lt-box-ink}"
+  landing-box-centre:
+    backgroundColor: "{colors.lt-box-hi}"
+    textColor: "{colors.lt-box-ink}"
+  landing-box-edge:
+    backgroundColor: "{colors.lt-box-edge}"
+    textColor: "{colors.lt-box-ink}"
+  landing-box-frame:
+    backgroundColor: "{colors.lt-box-shade}"
+    textColor: "{colors.lt-box-ink}"
+  landing-box-button:
+    backgroundColor: "{colors.lt-box-ink}"
+    textColor: "{colors.lt-box-hi}"
+  landing-film:
+    backgroundColor: "{colors.lt-film-900}"
+    textColor: "{colors.lt-film-print}"
+  landing-film-dense:
+    backgroundColor: "{colors.lt-film-950}"
+    textColor: "{colors.lt-film-print-hi}"
+  landing-returned-row:
+    backgroundColor: "{colors.lt-lumen-core}"
+    textColor: "{colors.lt-film-950}"
+  landing-lumen-on-film:
+    backgroundColor: "{colors.lt-film-950}"
+    textColor: "{colors.lt-lumen}"
+  landing-returned-count:
+    backgroundColor: "{colors.lt-box-hi}"
+    textColor: "{colors.lt-lumen-ink}"
+  landing-lead:
+    backgroundColor: "{colors.lt-lead-600}"
+    textColor: "{colors.lt-lead-ink}"
+  landing-lead-deep:
+    backgroundColor: "{colors.lt-lead-700}"
+    textColor: "{colors.lt-lead-ink}"
+  landing-lead-button:
+    backgroundColor: "{colors.lt-lead-ink}"
+    textColor: "{colors.lt-lead-700}"
+  landing-daylight:
+    backgroundColor: "{colors.lt-day}"
+    textColor: "{colors.lt-day-ink}"
+  landing-daylight-raised:
+    backgroundColor: "{colors.lt-day-white}"
+    textColor: "{colors.lt-day-ink}"
+  landing-daylight-button:
+    backgroundColor: "{colors.lt-day-ink}"
+    textColor: "{colors.lt-day-hi}"
+  landing-fog:
+    backgroundColor: "{colors.lt-fog-950}"
+    textColor: "{colors.lt-fog-ink}"
+  landing-fog-lit:
+    backgroundColor: "{colors.lt-fog-hi}"
+    textColor: "{colors.lt-fog-ink-dark}"
+  landing-metal:
+    backgroundColor: "{colors.lt-metal-900}"
+    textColor: "{colors.lt-metal-300}"
+  landing-alert:
+    backgroundColor: "{colors.lt-chat-bg}"
+    textColor: "{colors.lt-chat-ink}"
   stat-tile:
     backgroundColor: "{colors.card}"
     textColor: "{colors.foreground}"
@@ -246,7 +344,7 @@ components:
 
 ## Overview
 
-Assay is a tool people open when something might be wrong with their data. It should feel calm, precise and current, not like an enterprise console. Most screens are tables, lists and detail panes read by engineers and analysts, in English and Chinese. The app, the docs, sign-in and the landing page share one look: a technical document on ruled paper. Light only, warm neutrals, hairlines instead of cards and shadows, square corners, serif titles.
+Assay is a tool people open when something might be wrong with their data. It should feel calm, precise and current, not like an enterprise console. Most screens are tables, lists and detail panes read by engineers and analysts, in English and Chinese. The app, the docs and sign-in share one look: a technical document on ruled paper. Light only, warm neutrals, hairlines instead of cards and shadows, square corners, serif titles. The landing page now has its own world, the light table (see [Landing](#landing)); the app, the docs and sign-in will follow in a later redesign. Until then, everything outside the Landing section describes them, not the landing.
 
 Three words decide most calls: **quiet** (the data is loud, the chrome is not), **roomy** (large page titles, generous rows, yet a working day's checks fit above the fold on a laptop), **consistent** (a status looks identical everywhere).
 
@@ -262,12 +360,12 @@ Three words decide most calls: **quiet** (the data is loud, the chrome is not), 
 
 ## Typography
 
-- **Faces.** Geist for everything readable. Geist Mono for SQL, ids, cron expressions, numbers that line up in columns and the sidebar group labels. Instrument Serif (`font-editorial`, regular weight, loaded once in the root layout as `--font-serif`) for page titles: the shell's title, a check's name, settings pages, docs articles and the landing page.
+- **Faces.** Geist for everything readable. Geist Mono for SQL, ids, cron expressions, numbers that line up in columns and the sidebar group labels. Instrument Serif (`font-editorial`, regular weight, loaded once in the root layout as `--font-serif`) for page titles: the shell's title, a check's name, settings pages and docs articles.
 - **Chinese** falls back to named faces: a Song face for the serif; PingFang SC, Microsoft YaHei, then Noto Sans SC / Noto Sans CJK SC for the sans. Never leave CJK to `system-ui`: it picks a font by page language, which the language switch sets only after hydration, so Chinese could render with Japanese glyphs.
 - **The scale** in the front matter is the whole set of sizes, used as `text-<level>` utilities (see [Type scale rules](#type-scale-rules)):
-  - `display-md` in `font-editorial`: app page titles (set by the shell) and a check's name. `display-lg`: docs article titles. `display-xl`: landing section titles. `display-2xl`: the landing hero and closing headline only.
+  - `display-md` in `font-editorial`: app page titles (set by the shell) and a check's name. `display-lg`: docs article titles. `display-xl` and `display-2xl` are unused since the landing moved to its own scale; they stay for the coming redesign.
   - `headline`, `title`, `title-sm`: section, card and dialog titles.
-  - `body-md` (15px): the page default and the sidebar. `body-sm` (14px): tables, buttons, form controls. `body-lg` (16px): docs prose and landing copy.
+  - `body-md` (15px): the page default and the sidebar. `body-sm` (14px): tables, buttons, form controls. `body-lg` (16px): docs prose.
   - `caption` (13px): metadata, timestamps, badges, helper text.
   - `label-caps` (11px, uppercase): the one style of small group label (sidebar groups, "On this page", form sections): `text-label-caps uppercase text-muted-foreground`, in Geist Mono in the sidebars. It groups controls; it never decorates.
   - `stat`: big numbers in stat tiles, tabular figures.
@@ -279,7 +377,7 @@ Three words decide most calls: **quiet** (the data is loud, the chrome is not), 
 - Spacing follows Tailwind's 4px scale; prefer 2, 3, 4, 6 and 8, and odd steps only to align with a neighbour.
 - App pages sit in `APP_CONTAINER` (`max-w-[1280px]`, centred). The shell is a ruled column: a 248px paper sidebar with a hairline on its right, the mark in a 48px row, each nav section under a hairline; the current page is a white cell outlined in `rule` with an indigo edge. The demo notice is a 48px white band whose bottom rule lines up with the one under the mark.
 - A page is a shell over a data hook and section components. The shell draws the heading from `app-shell-routes.ts`, closed by a hairline: serif title, optional count (`WindowStatusBar`), a one-line intro, actions on the right (`WindowToolbar`). Pages about one thing (a check, a run) show a "‹ back to the list" link and draw their own heading. Then a stat strip or filters, then the list. On Checks the stat tiles are the filter, and a chosen check opens beside the list (`?check=`, from 1280px; a drawer below) with the same tabs as its own page.
-- Controls are 36px (`h-9`), 32px compact, 44px for landing CTAs; search fields in a page heading are 40px.
+- Controls are 36px (`h-9`), 32px compact, 44px for large calls to action; search fields in a page heading are 40px.
 - Must work at 375px without horizontal page scroll; wide tables scroll inside their own container.
 
 ## Elevation & Depth
@@ -303,22 +401,41 @@ Square. `--radius` is 0, so `rounded-sm|md|lg|xl` (still used by the primitives)
 
 ## Brand mark
 
-The **Row A**: a solid A cut by a horizontal gap, the crossbar drawn as a row being checked. One source, `src/lib/brand/mark.ts`, draws it everywhere: `RowAMark` and `BrandMark` (mark plus wordmark) in the interface, the favicon `src/app/icon.svg`, and the iOS icon `src/app/apple-icon.tsx`. After changing it, regenerate the favicon with `npx tsx scripts/brand/render-icons.ts`.
+The **Row A**: a solid A cut by a horizontal gap, the crossbar drawn as a row being checked. One source, `src/lib/brand/mark.ts`, draws it everywhere: `RowAMark` and `BrandMark` (mark plus wordmark) in the interface, the favicon `src/app/icon.svg`, and the iOS icon `src/app/apple-icon.tsx`. The landing's nav is the one exception: in the light table's world it draws a film with one lit row (`landing/sections/nav/BrandMark.tsx`), which lights with the hero's returned rows. After changing the Row A, regenerate the favicon with `npx tsx scripts/brand/render-icons.ts`.
 
-- **Construction:** a 64-unit square; the A is one polygon (apex (32, 7), feet x = 7–20 and 44–57 on y = 57, counter apex (32, 33)) with a 2.5-unit same-colour stroke to soften the corners, cut by a 5-unit gap at y = 30.5. A moving gap (the landing page sweeps it) stays between y = 22 and 40.
+- **Construction:** a 64-unit square; the A is one polygon (apex (32, 7), feet x = 7–20 and 44–57 on y = 57, counter apex (32, 33)) with a 2.5-unit same-colour stroke to soften the corners, cut by a 5-unit gap at y = 30.5. A moving gap stays between y = 22 and 40.
 - **Colour:** none of its own. In the interface it takes the colour of the text around it. The favicon is `#070A1A` in a light browser and `#EEF0FF` in a dark one; the iOS icon is the light mark on a dark square tile. As an alert's sender it sits on a `primary` tile. Never recolour it with status colours.
 
 ## Landing
 
-The landing page (`src/components/landing`) is where the product is sold rather than used. Structure comes from hairlines, not cards, glows or shadows.
+The landing page (`src/components/landing`) is where the product is sold rather than used, and it has its own world: **the light table**. A dark viewing room, a light box, and the database held up to the light as film. A check reads a table; the rows it returns are the only marks of light. Nothing outside this section applies to the landing unless it says so, and nothing here applies to the app.
 
-- **Type.** Headlines in Instrument Serif (`font-editorial`), with the second line of the hero and closing titles in italic indigo. Running text is Figtree, code (SQL, ids, cron, the terminal) Maple Mono NL, section labels small mono capitals (`eyebrow`). All SIL OFL, self-hosted through `next/font`; `landing.css` swaps Figtree and Maple Mono in on `.landing`.
-- **The ruled column.** Every section sits in `FRAME` (`ui.tsx`): a 1200px column with hairlines down both sides, a rule above each section and a small cross where they meet (`ticks`). A band of diagonal hatching (`hatch`) opens the closing section.
-- **Graph paper.** Diagrams, code and product panels sit on `graph` (a 20px grid in `rule` with a faint indigo wash in one corner). Panels on it are `paper-raised` with a `rule-strong` border; the main product panels carry `corners`. No dark panels.
-- **Controls** as in the app. Indigo is for the scroll progress line, step progress, icons and the italic accent; status colours keep their meaning.
-- **Not here:** glows, glass, film grain, photography, pointer lights, 3D tilts, shadows, a theme switch.
-- **Motion.** GSAP with ScrollTrigger (`motion.ts`). Reduced motion turns off pinning, sliding and scaling and keeps fades, typing, counters and the scan line. "What happens in one run" pins on desktop, becomes tabs with previous and next under reduced motion, and stacks on phones.
-- **Facts.** Everything shown exists in the product; numbers come from the live demo or `scripts/demo/checks.ts`.
+- **Grounds.** Each section sets `data-ground`, which sets its background and the ground's ink, lines and CTA colours (`styles/base.css`): `room` (the dim room: hero, outcomes, the plates, final, footer), `box` (the lit opal face of the light box: how a run works, workflow), `lead` (sheet lead: read-only), `daylight` (house lights on: self-host, FAQ). A ground change is a change of light, never a cut: a `.seam` (the previous ground's light going out as the section scrolls in) or house lights (`lt-house`, `.houselights` and `.house-in`). The fixed nav takes the ground under its bar.
+- **Palette.** The `lt-*` colours, defined once in `globals.css` (one `:root` block that only the landing reads; the front matter mirrors the opaque base colours, each paired with its ink in a `landing-*` component): `lt-room-*`, `lt-box-*`, `lt-film-*`, `lt-lead-*`, `lt-day-*`, `lt-fog-*` (a broken check: film that cannot be read), `lt-metal-*` (frames and clips), `lt-chat-*` (the alert, in assay's own ink), `lt-nav-*` (the bar on each ground), the translucent inks and lines of each ground (`-ink-2`, `-ink-3`, `-line`, `-line-2`), the one-light shadows (`--lt-shadow-*`), and each section's own materials (`lt-hero-*`, `lt-run-*`, `lt-safety-*`, `lt-outcomes-*`, `lt-plates-*`, `lt-selfhost-*`, `lt-final-*`). A colour a section needs is added there, never written in place; canvas and shader colours are the exception, read from these tokens where they can be.
+- **Lumen means one thing.** `lt-lumen` (`#9FDCFF`) and its core, glow, halo, line and ink are light through a row a check returned. Never a link, a button, a focus ring, a highlight or decoration. Calls to action are the ground's ink (`.btn-ink`, `.btn-ghost`); focus rings use the ground's ink. Outcomes keep the app's meaning, drawn as film: clear film is Clean, lit rows are Issues, fog is Broken.
+- **Type.** Sofia Sans for everything read (headlines 600, tight), Sofia Sans Condensed 800 capitals only for the lead letters printed on a film's edge, Maple Mono NL (regular) for SQL, rows, ids and code; all SIL OFL through `next/font` (`landing/fonts.ts`). No Instrument Serif or Geist on the landing. Sizes are the landing's own scale in `landing/styles/tokens.css`: the levels `--lt-text-h1`, `-h2-xl`, `-h2`, `-h3`, `-lede`, `-body`, `-proof`, `-note`, `-tag` (with `-zh` and phone variants) and the fixed steps `--lt-text-13` to `-26`. A size off that scale (a giant count, an engraving) is a custom property defined once on its section's root (`--run-text-count`). CSS reads sizes with `var()`; it never writes a literal `font-size`. Proof text (SQL, rows, ids) is 14–16px on desktop; 13px is the floor for any text. Chinese sets leading 1.75 and its headlines are broken by hand in the copy table.
+- **Shapes and depth.** Objects are physical: the radii `--lt-r-xs` to `--lt-r-md`, shadows from the one light (the box), baked 3D art in `public/landing/<section>/` (keep its formats and sizes; next/image where the art allows it).
+- **Allowed here, not in the app:** dark grounds, light through returned rows with a tight halo, film grain, baked 3D art and live WebGL, shadows and lift, rounded objects. **Not here either:** glass (the fixed nav's frosted bar, `lt-nav-*`, is the one exception), decorative gradients or glows, light that is not a returned row, invented data, a theme switch.
+- **Facts.** Everything shown exists in the product; rows, counts, errors and run times come from the demo seed and real demo runs (`scripts/demo/`). A composed run, or a schedule printed next to a demo check, is labelled Example / 示例.
+
+### Landing structure
+
+- `LandingPage.tsx` is the client shell: the `.lt` root, the fonts, the pre-paint flags (`lib/prepaint.tsx`: `lt-js`, `lt-intro`, `lt-push`, `lt-run-story`, `lt-zh-wait` on `<html>`), the section order. `page.tsx` passes `demo`; the nav's session link comes from `useCurrentUser()` and holds its width while the session loads; the language is the app's `LanguageProvider`.
+- `lib/`: the context, the copy tables (`defineCopy`, `useCopy`), the motion hook and runtime, the GSAP loader, the film renderer (`film.ts`), the grain, and the page motion (nav ground, anchors, seam fallback). `styles/`: tokens, base (grounds, type, buttons, film, seams, house lights) and the grain.
+- `sections/<name>/`: `<Name>.tsx`, `<name>.css`, `<name>.motion.ts`, `copy.tsx`, and whatever else the section needs. Ids: `top`, `run`, `safety`, `outcomes`, `workflow`, `plates`, `selfhost`, `faq`, `final`.
+- Every CSS rule is scoped under `.lt` (Chinese: `.lt:lang(zh)`), so nothing leaks into the app. Class names that collide with Tailwind utilities (`fixed`, `hidden`, `block`, `grid`, …) are never used for landing state; use `is-*`. No hex values in TSX and no Tailwind size classes.
+
+### Landing motion
+
+- **The markup is the settled page.** React renders every string and element on the server, in English and Chinese from typed copy tables next to each section. Without JS, under reduced motion, and before motion loads, the page is complete: baked posters (never blank boxes), every row, every count.
+- **Motion is a module.** Rich, choreographed and physical, but always an imperative module, `mount(root, ctx) => cleanup`, started by `useMotion` after hydration as its own chunk. GSAP comes from the npm package with its plugins on demand; three.js only on desktop, imported after the hero's switch-on, with WebGL rendered only while visible and the device pixel ratio capped. Neither is ever on the critical path.
+- **Rules.** Animate transform and opacity only. Arm a set piece only while it is still below the fold, and only once. Loops run only while visible. Never animate one property of one element from both CSS and GSAP. Continuous, scroll-linked light (seams, house lights, the push-in) is a CSS scroll-driven animation; ScrollTrigger is for scrubbed or pinned stories CSS cannot do. Heavy set-up waits for the hero to settle (`afterIntro`) and is split across idle moments when it builds many nodes.
+- **Layout changes.** A set piece that changes layout does it unseen: whatever moves is at opacity 0 while it moves, and nothing the reader is reading moves. The workflow's contact sheet opens only while the next section's heading is below the fold (otherwise frame 3 stays in the gate).
+- **WebKit.** Never hand GSAP (or ScrollTrigger) a target that is not rendered: it measures a `display: none` element by attaching it to `<html>`, and on `/` that restyles the whole page (60–80ms a node on a phone). Skip hidden targets, as the run does below the desk layout; avoid `ScrollTrigger.refresh()` when nothing moved (it appends a probe to `<body>`).
+- **Page-wide patches** (the parked ScrollTrigger loop in `lib/gsap.ts`) last only while the landing is mounted: `lifetime.onLeave` undoes them after a client-side navigation away.
+- **Language switch.** Every module is torn down before React swaps the text and mounts again with `ctx.remount` (show settled states, never replay an entrance; `ctx.memo` remembers what played). A cleanup restores exactly what React rendered: no leftover nodes, inline styles, canvases or listeners. The reader keeps their place.
+- **Reduced motion** shows every final state at once: no pinning, no WebGL, no loops, no pointer effects.
+- **Budget**, measured on a production build in Chromium: median ≥ 55 fps during the hero switch-on, its idle cycle and a reading-pace scroll at 1440 and 390; no long task over 50ms after first paint while scrolling; CLS < 0.05; no horizontal overflow at 1440, 1280, 768 and 390; no console errors or hydration warnings.
 
 ## Docs
 
@@ -329,7 +446,7 @@ The docs (`src/components/docs`) use the same ruled column: a 1280px frame, a 64
 - Do use colour only for meaning: indigo for action, the status colours for check state.
 - Do keep every string in English and Chinese, and check the Chinese layout: it runs longer and taller.
 - Do check 375px and 1280px in both languages before calling a UI change done.
-- Do respect `prefers-reduced-motion`; motion is 150–200ms ease-out and only for state changes.
+- Do respect `prefers-reduced-motion`; in the app, motion is 150–200ms ease-out and only for state changes (the landing has its own rules).
 - Don't add gradients, glows, glass, drop shadows, rounded corners, photography or decorative illustrations to app pages.
 - Don't use pill-shaped uppercase eyebrows above headlines, rows of identical icon cards, or a centred hero over three cards.
 - Don't use arbitrary font sizes (`text-[12.5px]`), arbitrary radii or hex colours in components.
@@ -360,6 +477,7 @@ A size that is not on the scale maps to a level:
 
 - Lint this file: `npx @google/design.md lint DESIGN.md` (structure, references, contrast of every component pair).
 - **Screenshots** (`tests/visual/`, Playwright) at 375px and 1280px, English and Chinese: landing, sign-in, two docs articles, unauthorized; and as a demo guest, the checks list, a check with issues, a broken and a clean check, manage checks, runs, a run report, coverage, analysis, activity and notification settings. Every page also fails on console errors.
-- **Locally**, with `DEMO_MODE=true` and the demo data: `npm run build && npm run visual:baseline` before the change, `npm run build && npm run visual` after it. The browser clock is frozen at the baseline's time; output goes to the git-ignored `.visual/`. `tests/visual/stable.css` freezes the landing animations so two screenshots of one build match.
+- **Locally**, with `DEMO_MODE=true` and the demo data: `npm run build && npm run visual:baseline` before the change, `npm run build && npm run visual` after it. The browser clock is frozen at the baseline's time; output goes to the git-ignored `.visual/`. The landing is shot under reduced motion (its settled state); `tests/visual/stable.css` also freezes its CSS animations and transitions and hides the live light (seams, house lights, grain) so two screenshots of one build match.
 - **In CI**, the Visual workflow seeds the demo data in MongoDB, PostgreSQL and Redis, runs every check twice, builds the base branch and the pull request and compares them. A pull request that changes the look on purpose gets the `visual-change` label and lists the expected differences; annotations name the changed pages. A pure refactor must produce no diff.
+- **Landing**, beyond the screenshots: compare a change with the settled views at 1440, 1280, 768 and 390 in both languages, with JS off and under reduced motion, and measure the budget in [Landing motion](#landing-motion) on `npm run build && npx next start` (Playwright, Chromium and WebKit).
 - Not covered: loading and empty states, dialogs, and pages a guest cannot open (new check, approvals, members, API keys).

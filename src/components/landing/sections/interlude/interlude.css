@@ -1,0 +1,416 @@
+/* Interlude (room): radiographs of the demo database. One plate per table, one line per row; the plates light one by
+   one and a reading line runs down each, lighting the rows the checks returned as it passes. Every rule is scoped. */
+.lt .s-interlude {
+  --il-gap: 26px;
+  --il-max: min(600px, calc(100svh - 290px)); /* the tallest plate (order_items); the others scale by --h */
+  --il-frame: 7px;
+  --il-wall-light: var(--lt-room-wall-lit); /* the umber wall where a lit plate's light falls on it */
+  /* the house lights: the room comes up over the box above */
+  --lt-house-up: var(--lt-room-950);
+  --lt-house-down: var(--lt-box);
+  position: relative;
+  background: var(--lt-room-950);
+  color: var(--lt-room-ink);
+  overflow-x: clip;
+  overflow-y: visible;
+  isolation: isolate;
+  padding-top: var(--lt-section-y, 120px);
+}
+/* the room's light: grows as plates come on (opacity set by the script; lit by default) */
+.lt .s-interlude .il-spill {
+  position: absolute;
+  inset: 30% -10% -5%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 55% 48% at 54% 50%, color-mix(in srgb, var(--lt-room-glow) 34%, transparent), color-mix(in srgb, var(--lt-room-wall) 16%, transparent) 55%, transparent 78%);
+}
+
+.lt .s-interlude .il-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 27rem);
+  gap: 48px;
+  align-items: end;
+}
+.lt .s-interlude .il-head .h2 {
+  margin: 0;
+  max-width: 11em;
+}
+/* one lede level across the page */
+.lt .s-interlude .il-head .lede {
+  margin: 0;
+  color: var(--lt-room-ink-2);
+  font-size: var(--lt-text-lede);
+}
+.lt .s-interlude .il-side {
+  display: grid;
+  gap: 12px;
+}
+/* the stage the script pins: the whole viewport is the wall */
+.lt .s-interlude .il-pin {
+  position: relative;
+  min-height: 100svh;
+  box-sizing: border-box;
+  padding: calc(var(--lt-nav-h, 64px) + 30px) 0 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* the wall: a rail the plates hang from */
+.lt .s-interlude .il-viewport {
+  position: relative;
+}
+.lt .s-interlude .il-viewport:focus-visible {
+  outline-offset: -4px;
+}
+.lt .s-interlude .il-wall {
+  position: relative;
+  display: flex;
+  gap: var(--il-gap);
+  align-items: flex-start;
+  width: min(1392px, 100% - 2 * var(--lt-gutter));
+  margin-inline: auto;
+  padding-top: 16px;
+  will-change: transform;
+}
+.lt .s-interlude .il-rail {
+  position: absolute;
+  left: -48px;
+  right: -48px;
+  top: 4px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(var(--lt-plates-rail-hi), var(--lt-plates-rail-lo));
+  box-shadow: 0 3px 5px -1px color-mix(in srgb, var(--lt-shadow-black) 55%, transparent);
+}
+
+.lt .s-interlude .plate {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+}
+.lt .s-interlude .plate-wide {
+  flex-grow: 1.42;
+}
+/* the wall lit around the plate when its panel is on */
+.lt .s-interlude .plate::before {
+  content: "";
+  position: absolute;
+  left: -34%;
+  right: -34%;
+  top: -10%;
+  height: calc(var(--il-max) * var(--h) * 1.25);
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(closest-side, var(--il-wall-light), transparent);
+  opacity: var(--wall, 1);
+}
+
+/* each plate is a small light box: metal frame, the lit opal margin, the film */
+.lt .s-interlude .plate-box {
+  position: relative;
+  height: calc(var(--il-max) * var(--h));
+  border-radius: 5px;
+  overflow: hidden;
+  background: radial-gradient(ellipse 80% 70% at 50% 46%, var(--lt-box-hi), var(--lt-box) 58%, var(--lt-box-shade));
+  box-shadow: 0 0 0 1px var(--lt-plates-frame-in), 0 0 0 4px var(--lt-plates-frame-mid), 0 0 0 5px var(--lt-plates-frame-out), 0 22px 40px -18px color-mix(in srgb, var(--lt-shadow-black) 85%, transparent);
+}
+.lt .s-interlude .plate-poster, .lt .s-interlude .plate-film, .lt .s-interlude .plate-lit, .lt .s-interlude .plate-flare {
+  position: absolute;
+  inset: var(--il-frame);
+  width: calc(100% - 2 * var(--il-frame));
+  height: calc(100% - 2 * var(--il-frame));
+  border-radius: 2px;
+}
+.lt .s-interlude .plate-poster {
+  object-fit: cover;
+  object-position: 50% 0;
+}
+.lt .s-interlude .plate-lit {
+  overflow: hidden;
+}
+.lt .s-interlude .plate-lit-in, .lt .s-interlude .plate-rows {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.lt .s-interlude .plate-flare {
+  opacity: 0;
+  pointer-events: none;
+}
+.lt .s-interlude .plate.is-drawn .plate-poster {
+  visibility: hidden;
+}
+.lt .s-interlude .plate:not(.is-drawn) .plate-film, .lt .s-interlude .plate:not(.is-drawn) .plate-lit, .lt .s-interlude .plate:not(.is-drawn) .plate-flare {
+  visibility: hidden;
+}
+
+/* the reading line: neutral, like the hero's; lumen is only for the returned rows */
+.lt .s-interlude .plate-scan {
+  position: absolute;
+  left: var(--il-frame);
+  right: var(--il-frame);
+  top: var(--il-frame);
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  background: var(--lt-film-print);
+  box-shadow: 0 -10px 14px -8px color-mix(in srgb, var(--lt-film-print) 45%, transparent);
+  will-change: transform, opacity;
+}
+/* the panel switched off: the room's own colour over the box (only while the script runs the light) */
+.lt .s-interlude .plate-dark {
+  position: absolute;
+  inset: 0;
+  background: var(--lt-room-950);
+  opacity: 0;
+  pointer-events: none;
+}
+.lt .s-interlude .plate-lead {
+  position: absolute;
+  left: calc(var(--il-frame) + 10px);
+  right: calc(var(--il-frame) + 10px);
+  top: calc(var(--il-frame) + 9px);
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: var(--lt-font-lead);
+  font-weight: 800;
+  font-size: var(--lt-text-13);
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: var(--lt-film-print);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.lt .s-interlude .plate-lead span:last-child {
+  color: var(--lt-film-ink-2);
+}
+
+/* clips on the rail */
+.lt .s-interlude .plate-clip {
+  position: absolute;
+  top: -13px;
+  width: 22px;
+  height: 18px;
+  margin-left: -11px;
+  border-radius: 3px;
+  background: linear-gradient(var(--lt-plates-clip-hi), var(--lt-plates-clip-lo));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--lt-day-white) 25%, transparent), 0 3px 4px -1px color-mix(in srgb, var(--lt-shadow-black) 60%, transparent);
+}
+.lt .s-interlude .plate-clip:nth-of-type(1) {
+  left: 26%;
+}
+.lt .s-interlude .plate-clip:nth-of-type(2) {
+  left: 74%;
+}
+
+/* the tags under each plate: the proof, at proof size */
+/* tags line up in one row under the tallest plate, so the plates' bottoms make the skyline, not the text */
+.lt .s-interlude .plate-tag {
+  margin-top: calc(var(--il-max) * (1 - var(--h)) + 16px);
+  display: grid;
+  gap: 3px;
+  font-size: var(--lt-text-14);
+  line-height: 1.4;
+  color: var(--lt-room-ink-2);
+}
+.lt .s-interlude .plate-tag p {
+  margin: 0;
+}
+.lt .s-interlude .plate-name {
+  color: var(--lt-room-ink);
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 7px;
+}
+.lt .s-interlude .plate-name code {
+  font-size: var(--lt-text-14);
+  color: var(--lt-room-ink);
+}
+.lt .s-interlude .plate-name span {
+  white-space: nowrap;
+  color: var(--lt-room-ink-2);
+}
+.lt .s-interlude .plate-check {
+  text-wrap: pretty;
+}
+.lt .s-interlude .il-count {
+  color: var(--lt-lumen);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.lt .s-interlude .il-zero {
+  color: var(--lt-room-ink-3);
+  font-weight: 420;
+  white-space: nowrap;
+}
+
+.lt .s-interlude .il-caption {
+  margin: 0;
+  color: var(--lt-room-ink-3);
+  font-size: var(--lt-text-14);
+}
+.lt .s-interlude .il-caption code {
+  color: var(--lt-room-ink-2);
+}
+
+/* armed (script on, motion allowed): every plate starts with its panel off; the script switches them on */
+.lt .s-interlude.is-armed .plate-dark {
+  opacity: 0.9;
+}
+.lt .s-interlude.is-armed .plate {
+  --wall: 0;
+}
+.lt .s-interlude.is-armed .il-spill {
+  opacity: 0.25;
+}
+.lt .s-interlude.is-armed .plate-lit {
+  transform: translateY(-100%);
+}
+.lt .s-interlude.is-armed .plate-lit-in {
+  transform: translateY(100%);
+}
+.lt .s-interlude.is-armed .plate-tag .il-count, .lt .s-interlude.is-armed .plate-tag .il-zero {
+  opacity: 0;
+}
+
+.lt:lang(zh) .s-interlude .il-head .h2 {
+  max-width: none;
+}
+
+/* tablet and phone: the wall drifts sideways under the pin, plates a little wider */
+@media (max-width: 1100px) {
+  .lt .s-interlude {
+    --il-max: min(520px, calc(100svh - 300px));
+  }
+  .lt .s-interlude .il-head {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .lt .s-interlude .il-viewport {
+    overflow: hidden;
+  }
+  .lt .s-interlude .il-wall {
+    width: max-content;
+    padding-inline: var(--lt-gutter);
+    margin: 0;
+  }
+  .lt .s-interlude .plate {
+    flex: 0 0 210px;
+  }
+  .lt .s-interlude .plate-wide {
+    flex-basis: 300px;
+  }
+}
+@media (max-width: 700px) {
+  .lt .s-interlude {
+    --il-max: min(440px, calc(100svh - 300px));
+    --il-gap: 20px;
+    padding-top: 96px;
+  }
+  .lt .s-interlude .il-head .lede {
+    line-height: 1.5;
+  }
+  .lt .s-interlude .il-pin {
+    padding-top: 84px;
+    padding-bottom: 24px;
+  }
+  .lt .s-interlude .plate {
+    flex-basis: 214px;
+  }
+  .lt .s-interlude .plate-wide {
+    flex-basis: 272px;
+  }
+  .lt .s-interlude .il-caption {
+    font-size: var(--lt-text-13);
+  }
+}
+/* no script or reduced motion: the wall is a native sideways scroll on narrow screens */
+@media (max-width: 1100px) {
+  html:not(.lt-js) .lt .s-interlude .il-viewport, .lt .s-interlude.is-static .il-viewport {
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+  html:not(.lt-js) .lt .s-interlude .plate, .lt .s-interlude.is-static .plate {
+    scroll-snap-align: center;
+  }
+}
+
+/* demo.payments, the clean table: the clearest film on the wall (a thin base the light comes through evenly, the
+   print sharp and dark), as Clean is drawn everywhere on the page */
+.lt .s-interlude .plate.is-clean .plate-film, .lt .s-interlude .plate.is-clean .plate-poster {
+  filter: invert(0.86) hue-rotate(180deg) contrast(1.04);
+}
+.lt .s-interlude .plate.is-clean .plate-lead {
+  color: var(--lt-film-edge-ink);
+}
+.lt .s-interlude .plate.is-clean .plate-lead span:last-child {
+  color: var(--lt-film-edge-ink);
+}
+
+/* on the assembled page */
+/* the static grain (added at idle by the motion) never widens the page */
+.lt .s-interlude > .lt-grain {
+  inset: 0;
+  z-index: 0;
+}
+/* the head reads as a wall label, stacked on the left above its wall */
+.lt .s-interlude .il-head {
+  grid-template-columns: minmax(0, 44rem);
+  gap: 22px;
+  align-items: start;
+}
+.lt .s-interlude .il-side {
+  max-width: 36rem;
+}
+/* unpinned: section rhythm instead of a full screen */
+.lt .s-interlude .il-pin {
+  min-height: 0;
+  padding-top: 64px;
+  padding-bottom: var(--lt-section-y);
+}
+@media (max-width: 1100px) {
+  .lt .s-interlude .il-pin {
+    padding-top: 48px;
+  }
+}
+/* narrow: a native sideways scroller with snap points; the edges fade like the edge of a light wall */
+@media (max-width: 1100px) {
+  .lt .s-interlude.is-scroller .il-viewport {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 22px, black calc(100% - 22px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, black 22px, black calc(100% - 22px), transparent 100%);
+  }
+  .lt .s-interlude.is-scroller .il-viewport::-webkit-scrollbar {
+    display: none;
+  }
+  .lt .s-interlude.is-scroller .plate {
+    scroll-snap-align: center;
+  }
+}
+/* phone: one plate per screen in the snap strip, its caption directly under it */
+@media (max-width: 700px) {
+  .lt .s-interlude .plate, .lt .s-interlude .plate-wide {
+    flex-basis: min(340px, 84vw);
+  }
+  .lt .s-interlude .plate-tag {
+    margin-top: 14px;
+    font-size: var(--lt-text-14);
+  }
+  .lt .s-interlude .plate::before {
+    height: calc(var(--il-max) * var(--h) * 1.15);
+  }
+}
+
+/* inline code in running text never drops below 13 px (base.css's .mono/code size would win over its own floor) */
+.lt .s-interlude .il-caption code {
+  font-size: max(var(--lt-text-13), 0.92em);
+}

@@ -1,0 +1,459 @@
+/* Section 6, open source and self-host: the rating plate on the back of the light box
+   (a baked, etched steel plate) and the quick start as a film slip laid on its lower edge.
+   Ground: daylight (house lights on). Every selector is scoped under .s-selfhost. */
+
+.lt .s-selfhost {
+  /* visible plate width; the baked image adds its shadow margin around it */
+  --pw: 860px;
+  --plate-iw: 988;
+  --plate-ih: 688;
+  --plate-m: 64;
+  --plate-w: 860;
+  --plate-h: 560;
+  /* the house lights: daylight comes up over the room above */
+  --lt-house-up: var(--lt-day);
+  --lt-house-down: var(--lt-room-950);
+  padding-block: var(--lt-section-y) calc(var(--lt-section-y) * 0.86);
+  overflow-x: clip; /* the plate's baked shadow margin may pass the viewport edge on phones */
+  position: relative;
+  isolation: isolate; /* the house-lights layer sits at z-index -1, under the text */
+}
+.lt .s-selfhost .sh-head {
+  text-align: center;
+  max-width: 46rem;
+  margin-inline: auto;
+}
+.lt .s-selfhost .sh-head .h2 {
+  margin-inline: auto;
+}
+.lt .s-selfhost .sh-lede {
+  margin: var(--lt-sp-5) auto 0;
+  max-width: 36rem;
+}
+.lt .s-selfhost .sh-lede code {
+  color: var(--lt-ink);
+}
+
+/* ---------- the stage: one centred object ---------- */
+.lt .s-selfhost .sh-stage {
+  position: relative;
+  margin-top: var(--lt-sp-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.lt .s-selfhost .sh-plate {
+  position: relative;
+  margin: 0;
+  width: min(var(--pw), 100%);
+  aspect-ratio: var(--plate-w) / var(--plate-h);
+}
+/* the baked image is wider than the plate by its shadow margin; centre it on the plate */
+.lt .s-selfhost .sh-plate-img, .lt .s-selfhost .sh-plate-shadow {
+  position: absolute;
+  display: block;
+  width: calc(100% * var(--plate-iw) / var(--plate-w));
+  height: calc(100% * var(--plate-ih) / var(--plate-h));
+  left: calc(100% * var(--plate-m) / var(--plate-w) * -1);
+  top: calc(100% * var(--plate-m) / var(--plate-h) * -1);
+}
+.lt .s-selfhost .sh-plate-img img {
+  width: 100%;
+  height: 100%;
+}
+.lt .s-selfhost .sh-plate-shadow {
+  background: url("/landing/selfhost/plate-d-shadow.webp") 0 0 / 100% 100% no-repeat;
+  transform-origin: 50% 55%;
+}
+
+/* ---------- the quick start: a film slip laid over the plate's lower edge ---------- */
+.lt .s-selfhost .sh-slip {
+  position: relative;
+  z-index: 2;
+  width: min(580px, 100%);
+  margin-top: -44px;
+  background: var(--lt-film-900);
+  color: var(--lt-film-print);
+  border-radius: var(--lt-r-md);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lt-day-white) 4%, transparent) inset, 0 1px 2px color-mix(in srgb, var(--lt-box-ink) 35%, transparent), 10px 22px 40px -18px color-mix(in srgb, var(--lt-shadow-warm) 55%, transparent);
+  text-align: left;
+}
+.lt .s-selfhost .sh-slip-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lt-sp-4);
+  padding: 10px 10px 10px 22px;
+  border-bottom: 1px solid var(--lt-film-line);
+}
+.lt .s-selfhost .sh-slip-name {
+  display: flex;
+  align-items: baseline;
+  gap: var(--lt-sp-3);
+  color: var(--lt-film-print);
+}
+.lt .s-selfhost .sh-slip-meta {
+  font-size: var(--lt-text-tag);
+  color: var(--lt-film-ink-2);
+}
+.lt .s-selfhost .sh-code {
+  margin: 0;
+  padding: 18px 22px 22px;
+  font-size: var(--lt-text-proof);
+  line-height: 1.75;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--lt-film-print);
+  tab-size: 2;
+}
+.lt .s-selfhost .sh-code code {
+  font-size: 1em;
+}
+.lt .s-selfhost .sh-code .l {
+  display: block;
+}
+.lt .s-selfhost .sh-code .c {
+  color: var(--lt-film-ink-2);
+}
+
+/* the copy button: a real button on the film, ink of the film */
+.lt .s-selfhost .sh-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--lt-film-line);
+  border-radius: var(--lt-r-sm);
+  background: transparent;
+  color: var(--lt-film-print);
+  font-size: var(--lt-text-note);
+  cursor: pointer;
+  transition: border-color var(--lt-t-fast, 150ms) var(--lt-glide), background-color var(--lt-t-fast, 150ms) var(--lt-glide), transform .1s var(--lt-glide);
+}
+.lt .s-selfhost .sh-copy:hover {
+  border-color: color-mix(in srgb, var(--lt-film-print) 50%, transparent);
+  background: color-mix(in srgb, var(--lt-film-print) 6%, transparent);
+}
+.lt .s-selfhost .sh-copy:active {
+  transform: scale(.96);
+}
+.lt .s-selfhost .sh-copy:focus-visible {
+  outline: 2px solid var(--lt-film-print);
+  outline-offset: 2px;
+}
+.lt .s-selfhost .sh-copy svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.lt .s-selfhost .sh-copy .sh-done-i {
+  display: none;
+}
+.lt .s-selfhost .sh-copy.is-done .sh-copy-i {
+  display: none;
+}
+.lt .s-selfhost .sh-copy.is-done .sh-done-i {
+  display: block;
+  animation: sh-tick .35s var(--lt-snap) both;
+}
+@keyframes sh-tick {
+  from {
+    opacity: 0;
+    transform: scale(.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+html:not(.lt-js) .lt .s-selfhost .sh-copy {
+  display: none;
+}
+
+.lt .s-selfhost .nw {
+  white-space: nowrap;
+}
+.lt .s-selfhost .sh-after {
+  margin: var(--lt-sp-6) auto 0;
+  text-align: center;
+  max-width: 40rem;
+  font-size: var(--lt-text-body);
+  color: var(--lt-ink-2);
+}
+.lt .s-selfhost .sh-after code {
+  display: block;
+  margin-top: 2px;
+  color: var(--lt-ink);
+  white-space: nowrap;
+  font-size: var(--lt-text-proof);
+}
+.lt .s-selfhost .sh-actions {
+  margin-top: var(--lt-sp-5);
+}
+
+/* ---------- the plate body: what turns into the light ---------- */
+.lt .s-selfhost .sh-plate {
+  perspective: 1700px;
+}
+.lt .s-selfhost .sh-plate-body {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 55%;
+}
+.lt .s-selfhost .sh-engrave {
+  position: absolute;
+  display: block;
+  overflow: visible;
+  width: calc(100% * var(--plate-iw) / var(--plate-w));
+  height: calc(100% * var(--plate-ih) / var(--plate-h));
+  left: calc(100% * var(--plate-m) / var(--plate-w) * -1);
+  top: calc(100% * var(--plate-m) / var(--plate-h) * -1);
+}
+.lt .s-selfhost.is-engraving .sh-plate-img {
+  visibility: hidden;
+}
+.lt .s-selfhost .sh-engrave > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.lt .s-selfhost .sh-eng-win {
+  position: absolute;
+  overflow: hidden;
+}
+.lt .s-selfhost .sh-eng-mv {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  will-change: transform;
+}
+.lt .s-selfhost .sh-eng-mv img {
+  position: absolute;
+  display: block;
+  max-width: none;
+}
+/* the raking light reaching the plate: a shade that slides off it as the plate turns square to the light */
+.lt .s-selfhost .sh-plate-dim {
+  position: absolute;
+  inset: 1px;
+  overflow: hidden;
+  border-radius: 3px;
+  pointer-events: none;
+  opacity: 0;
+}
+.lt .s-selfhost .sh-plate-dim i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 250%;
+  background: linear-gradient(90deg, transparent 40%, color-mix(in srgb, var(--lt-film-dark) 50%, transparent) 58%, color-mix(in srgb, var(--lt-film-dark) 64%, transparent) 100%);
+}
+
+/* pending: set by JS only when motion is allowed and the section starts below the viewport */
+.lt .s-selfhost.is-pending .sh-plate-body {
+  transform: rotateY(-34deg) rotateX(12deg) translateZ(-60px);
+}
+.lt .s-selfhost.is-pending .sh-plate-dim {
+  opacity: 1;
+}
+.lt .s-selfhost.is-pending .sh-plate-dim i {
+  transform: translateX(-60%);
+}
+.lt .s-selfhost.is-pending .sh-plate-shadow {
+  transform: translate(34px, 28px) rotateY(-34deg) rotateX(12deg);
+  opacity: .3;
+}
+/* the slip is held just above the plate (lifted toward the viewer), never over the text below */
+.lt .s-selfhost.is-pending .sh-slip {
+  transform: translateY(-18px) scale(1.035);
+}
+.lt .s-selfhost.is-pending .sh-slip::after, .lt .s-selfhost .sh-slip.is-lifted::after {
+  opacity: 1;
+}
+.lt .s-selfhost .sh-slip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+  box-shadow: 18px 40px 70px -24px color-mix(in srgb, var(--lt-shadow-warm) 45%, transparent);
+  opacity: 0;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .lt .s-selfhost .sh-plate-img, .lt .s-selfhost .sh-engrave, .lt .s-selfhost .sh-live {
+    transition: transform .6s var(--lt-settle);
+  }
+  .lt .s-selfhost .sh-plate-shadow {
+    transition: opacity .6s var(--lt-settle);
+  }
+  .lt .s-selfhost.is-settled .sh-plate:hover .sh-plate-img, .lt .s-selfhost.is-settled .sh-plate:hover .sh-engrave, .lt .s-selfhost.is-settled .sh-plate:hover .sh-live {
+    transform: translateY(-5px);
+  }
+  .lt .s-selfhost.is-settled .sh-plate:hover .sh-plate-shadow {
+    opacity: .8;
+  }
+}
+
+/* the stamp the copy button presses onto the slip */
+.lt .s-selfhost .sh-stamp {
+  position: absolute;
+  right: 22px;
+  top: 66px;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  padding: 5px 10px 4px;
+  border: 2px solid var(--lt-film-print);
+  border-radius: var(--lt-r-xs);
+  color: var(--lt-film-print);
+  font-family: var(--lt-font-lead);
+  font-weight: 800;
+  font-size: var(--lt-text-tag);
+  line-height: 1;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  transform: rotate(-5deg);
+  mix-blend-mode: screen;
+}
+.lt:lang(zh) .s-selfhost .sh-stamp {
+  letter-spacing: .2em;
+  font-weight: 700;
+  font-family: "PingFang SC", "Noto Sans SC", sans-serif;
+}
+
+/* ---------- tablet and phone: the portrait plate, cropped to fill the width ---------- */
+@media (max-width: 959px) {
+  .lt .s-selfhost {
+    --pw: 460px;
+    --plate-iw: 414;
+    --plate-ih: 724;
+    --plate-m: 32;
+    --plate-w: 350;
+    --plate-h: 660;
+  }
+  .lt .s-selfhost .sh-plate-shadow {
+    background-image: url("/landing/selfhost/plate-p-shadow.webp");
+  }
+  /* the slip stays narrower than the plate it lies on; long lines wrap with a hanging indent */
+  .lt .s-selfhost .sh-slip {
+    width: min(420px, 100%);
+    margin-top: -10px;
+  }
+  .lt .s-selfhost .sh-code {
+    font-size: var(--lt-text-14);
+    white-space: pre-wrap;
+    overflow-x: visible;
+  }
+  .lt .s-selfhost .sh-code .l {
+    padding-left: 2ch;
+    text-indent: -2ch;
+  }
+}
+@media (max-width: 700px) {
+  .lt .s-selfhost .sh-stage {
+    margin-top: var(--lt-sp-7);
+  }
+  .lt .s-selfhost .sh-slip {
+    width: calc(100% - 12px);
+  }
+  .lt .s-selfhost .sh-slip-head {
+    padding-left: 16px;
+  }
+  .lt .s-selfhost .sh-code {
+    padding: 14px 16px 18px;
+    font-size: var(--lt-text-13);
+    white-space: pre-wrap;
+    overflow-x: visible;
+  }
+  .lt .s-selfhost .sh-code .l {
+    padding-left: 2ch;
+    text-indent: -2ch;
+  }
+  .lt .s-selfhost .sh-after {
+    font-size: var(--lt-text-15);
+  }
+  .lt .s-selfhost .sh-after code {
+    font-size: var(--lt-text-13);
+    white-space: normal;
+  }
+}
+.lt:lang(zh) .s-selfhost .sh-head {
+  max-width: 40rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lt .s-selfhost .sh-copy.is-done .sh-done-i {
+    animation: none;
+  }
+  .lt .s-selfhost .sh-stamp {
+    display: none;
+  }
+}
+
+/* ---------- the live engraving: VERSION and APP from package.json, cut into the plate like the bake ---------- */
+.lt .s-selfhost .sh-live {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+  width: calc(100% * var(--plate-iw) / var(--plate-w));
+  height: calc(100% * var(--plate-ih) / var(--plate-h));
+  left: calc(100% * var(--plate-m) / var(--plate-w) * -1);
+  top: calc(100% * var(--plate-m) / var(--plate-h) * -1);
+}
+.lt .s-selfhost .sh-live-p {
+  display: none;
+}
+.lt .s-selfhost .sh-eng-mv svg {
+  position: absolute;
+  display: block;
+  max-width: none;
+  overflow: visible;
+}
+.lt .s-selfhost .sh-live text {
+  font-family: var(--lt-font-display);
+  font-weight: 540;
+}
+.lt .s-selfhost .sh-live-ink {
+  fill: var(--lt-selfhost-engrave-ink);
+  stroke: var(--lt-selfhost-engrave-ink);
+  stroke-width: 0.9px;
+  stroke-linejoin: round;
+}
+/* the groove's walls: a soft dark rim around the cut, and its lower lip catching the raking light */
+.lt .s-selfhost .sh-live-lip {
+  fill: var(--lt-selfhost-engrave-lip);
+  stroke: var(--lt-selfhost-engrave-rim);
+  stroke-width: 2.4px;
+  stroke-linejoin: round;
+}
+/* the portrait plate is baked at 2.5x with a wider groove blur: its cut letters are a little fatter */
+.lt .s-selfhost .sh-live-p .sh-live-ink {
+  stroke-width: 1px;
+}
+@media (max-width: 959px) {
+  .lt .s-selfhost .sh-live-d {
+    display: none;
+  }
+  .lt .s-selfhost .sh-live-p {
+    display: block;
+  }
+}
+
+/* inline code in running text: max(13 px, 0.92em) (base.css's .mono/code size would win over it) */
+.lt .s-selfhost .sh-lede code {
+  font-size: max(var(--lt-text-13), 0.92em);
+}
+/* the live rows are layers only while the engraving cuts them */
+.lt .s-selfhost .sh-live .sh-eng-mv {
+  will-change: auto;
+}
+.lt .s-selfhost.is-engraving:not(.is-settled) .sh-live .sh-eng-mv {
+  will-change: transform;
+}

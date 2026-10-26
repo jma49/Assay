@@ -1,0 +1,443 @@
+/* FAQ: a stainless drying rack of film hangers on the daylight ground. Each question is a hanger tab (a real button);
+   its answer is a film clipped under the tab. Two bays on desktop, one below 900 px. Flat line art: token metals, one
+   crisp line, no bevels or drop shadows on the hardware. */
+
+.lt .s-faq {
+  padding-block: calc(var(--lt-section-y) * 0.78) var(--lt-section-y);
+  border-top: 1px solid var(--lt-line-2);
+}
+.lt .s-faq .faq-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--lt-sp-6);
+}
+.lt .s-faq .faq-head .h2 {
+  max-width: 14em;
+}
+.lt .s-faq .faq-more {
+  flex: none;
+  margin-bottom: 6px;
+}
+.lt .s-faq .faq-more svg {
+  transition: transform var(--lt-t-fast) var(--lt-glide);
+}
+.lt .s-faq .faq-more:hover svg {
+  transform: translateX(3px);
+}
+.lt .s-faq .nw {
+  white-space: nowrap;
+}
+
+/* ---------- the rack: one bay per column, three uprights, a rail per hanger ---------- */
+.lt .s-faq .hg-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+.lt .s-faq .rack {
+  margin-top: calc(var(--lt-sp-8) + 18px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--lt-sp-7);
+  align-items: start;
+}
+.lt .s-faq .rack-col {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 78px;
+  align-self: stretch;
+  align-content: start;
+  --post-l: 14px;
+  --post-r: calc(var(--lt-sp-7) / 2);
+}
+.lt .s-faq .rack-col + .rack-col {
+  --post-l: calc(var(--lt-sp-7) / 2);
+  --post-r: 14px;
+}
+.lt .s-faq .rack-col::before,
+.lt .s-faq .rack-col::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: -54px;
+  bottom: -36px;
+  width: 5px;
+  margin-left: -2.5px;
+  border-radius: 2.5px;
+  background: var(--lt-metal-700);
+  pointer-events: none;
+}
+.lt .s-faq .rack-col::before {
+  left: calc(0px - var(--post-l));
+}
+.lt .s-faq .rack-col::after {
+  left: calc(100% + var(--post-r));
+}
+.lt .s-faq .rack-col + .rack-col::before {
+  display: none;
+}
+/* each hanger hooks over its own rail; the hanger (.hg-body) swings about the point where its hook rests on the rail */
+.lt .s-faq .hg {
+  position: relative;
+}
+.lt .s-faq .hg-body {
+  position: relative;
+  transform-origin: 50% -34px;
+}
+.lt .s-faq .hg-rail {
+  position: absolute;
+  z-index: 1;
+  left: calc(0px - var(--post-l));
+  right: calc(0px - var(--post-r));
+  top: -36px;
+  height: 3px;
+  border-radius: 1.5px;
+  background: var(--lt-metal-700);
+  pointer-events: none;
+}
+/* where a rail meets an upright: a collar */
+.lt .s-faq .hg-rail::before,
+.lt .s-faq .hg-rail::after {
+  content: "";
+  position: absolute;
+  top: -4.5px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: var(--lt-day);
+  border: 1.5px solid var(--lt-metal-700);
+}
+.lt .s-faq .hg-rail::before {
+  left: 0;
+}
+.lt .s-faq .hg-rail::after {
+  left: 100%;
+}
+.lt .s-faq .hg-hook {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: -45px;
+  width: 36px;
+  height: 45px;
+  margin-left: -18px;
+  pointer-events: none;
+  overflow: visible;
+}
+.lt .s-faq .hg-q {
+  position: relative;
+  z-index: 3;
+  margin: 0;
+  font: inherit;
+}
+/* a closed hanger still holds its film: on hover its edge slides out from under the bar */
+.lt .s-faq .hg-q::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 18px;
+  right: 18px;
+  top: calc(100% - 12px);
+  height: 12px;
+  background: var(--lt-film-900);
+  border-radius: 0 0 3px 3px;
+  opacity: 0;
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .lt .s-faq .hg-q::after {
+    transition: transform 0.45s var(--lt-settle), opacity 0.2s var(--lt-glide);
+  }
+  .lt .s-faq .hg:not(.is-open) .hg-q:hover::after {
+    opacity: 1;
+    transform: translateY(9px);
+  }
+}
+
+/* the hanger bar, the question printed on it */
+.lt .s-faq .hg-tab {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  min-height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--lt-sp-4);
+  padding: 14px 16px 14px 22px;
+  text-align: left;
+  cursor: pointer;
+  background: var(--lt-day-hi);
+  border: 1.5px solid var(--lt-metal-700);
+  border-radius: 4px;
+  font-size: var(--lt-text-h3);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+  color: var(--lt-day-ink);
+}
+.lt .s-faq .hg-tab:hover {
+  background: var(--lt-day-white);
+}
+.lt .s-faq .hg-tab:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--lt-day-ink);
+  outline-offset: 3px;
+}
+.lt:lang(zh) .s-faq .hg-tab {
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+/* the pin: a plus that turns to a cross when the film hangs */
+.lt .s-faq .hg-pin {
+  position: relative;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.2px solid color-mix(in srgb, var(--lt-day-ink) 55%, transparent);
+  transition: transform 0.45s var(--lt-settle);
+}
+.lt .s-faq .hg-pin::before,
+.lt .s-faq .hg-pin::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 1.6px;
+  margin: -0.8px 0 0 -6px;
+  background: var(--lt-day-ink);
+  border-radius: 1px;
+}
+.lt .s-faq .hg-pin::after {
+  transform: rotate(90deg);
+}
+.lt .s-faq .hg-tab[aria-expanded="true"] .hg-pin {
+  transform: rotate(45deg);
+}
+
+/* two spring clips hang from the bar; an open hanger's film is held in their jaws */
+.lt .s-faq .hg-clips {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  top: calc(100% - 9px);
+  height: 43px;
+  pointer-events: none;
+}
+.lt .s-faq .hg-clips svg {
+  position: absolute;
+  top: 0;
+  width: 30px;
+  height: 43px;
+  margin-left: -15px;
+  transform-origin: 50% 0;
+  overflow: visible;
+}
+.lt .s-faq .hg-clips svg:first-child {
+  left: calc(22px + 44px);
+}
+.lt .s-faq .hg-clips svg:last-child {
+  left: calc(100% - 22px - 44px);
+}
+
+/* the film: a sheet of developed film held by its top edge in the clips' jaws, an ID marker in its corner */
+.lt .s-faq .hg-a {
+  position: relative;
+  z-index: 2;
+  padding: 0 22px;
+  filter: drop-shadow(4px 12px 9px color-mix(in srgb, var(--lt-box-ink) 30%, transparent)) drop-shadow(0 1px 1px color-mix(in srgb, var(--lt-box-ink) 30%, transparent));
+}
+.lt .s-faq .hg-film {
+  position: relative;
+  margin-top: 12px;
+  padding: 34px 30px 36px;
+  border-radius: 2px;
+  /* the strip the clips held stays a shade lighter (no developer reached it under the jaws) */
+  background: linear-gradient(var(--lt-film-800) 0 13px, var(--lt-film-900) 13px);
+  color: var(--lt-film-print);
+  /* sheet film's notch code: a V cut into the right edge near the top corner */
+  clip-path: polygon(0 0, 100% 0, 100% 26px, calc(100% - 8px) 33px, 100% 40px, 100% 100%, 0 100%);
+  font-size: var(--lt-text-16);
+  line-height: 1.65;
+  transform-origin: 50% 0;
+}
+.lt .s-faq .hg-film p {
+  margin: 0;
+}
+.lt .s-faq .hg-film p + p {
+  margin-top: var(--lt-sp-3);
+}
+.lt .s-faq .hg-film code {
+  color: var(--lt-film-print);
+  background: var(--lt-film-700);
+  padding: 1px 5px;
+  border-radius: var(--lt-r-xs);
+  font-size: 0.88em;
+}
+.lt .s-faq .hg-id {
+  position: absolute;
+  right: 18px;
+  bottom: 11px;
+  font-size: var(--lt-text-13);
+  line-height: 1;
+  color: var(--lt-film-ink-3);
+}
+.lt:lang(zh) .s-faq .hg-film {
+  line-height: 1.8;
+}
+/* a fogged strip: the error a Broken run prints */
+.lt .s-faq .hg-proof {
+  display: block;
+  padding: 8px 12px;
+  border-radius: var(--lt-r-xs);
+  background: var(--lt-fog-veil);
+  color: var(--lt-fog-ink);
+  font-size: var(--lt-text-14);
+  line-height: 1.5;
+}
+
+/* without JS the tabs cannot toggle: show no pin and no pointer */
+html:not(.lt-js) .lt .s-faq .hg-pin {
+  display: none;
+}
+html:not(.lt-js) .lt .s-faq .hg-tab {
+  cursor: default;
+}
+
+/* faq.motion.ts closes a hanger with hidden="until-found" (find-in-page opens it); without JS every film hangs */
+.lt .s-faq .hg-a[hidden] {
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lt .s-faq .hg.is-hanging .hg-film {
+    animation: faq-hang 0.62s var(--lt-settle) both;
+  }
+  .lt .s-faq .hg.is-hanging .hg-clips svg {
+    animation: faq-clip 0.34s var(--lt-snap) 0.1s both;
+  }
+  .lt .s-faq .hg.is-hanging .hg-clips svg:last-child {
+    animation-delay: 0.16s;
+  }
+}
+@keyframes faq-hang {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* the jaws open as the film goes in, and snap shut on it */
+@keyframes faq-clip {
+  0% {
+    transform: rotate(0) scaleY(1);
+  }
+  40% {
+    transform: rotate(-7deg) scaleY(0.9);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* desktop: the two bays share their rows (subgrid), so each row's rails meet at the middle upright at one height */
+@media (min-width: 901px) {
+  .lt .s-faq .rack {
+    grid-template-rows: repeat(4, auto);
+    row-gap: 78px;
+  }
+  .lt .s-faq .rack-col {
+    grid-row: 1 / -1;
+    display: grid;
+    grid-template-rows: subgrid;
+    row-gap: 78px;
+    gap: 78px 0;
+  }
+  .lt .s-faq .rack-col > .hg {
+    align-self: start;
+  }
+}
+/* one column: the second bay hangs on the same two uprights */
+@media (max-width: 900px) {
+  .lt .s-faq .rack {
+    grid-template-columns: 1fr;
+    gap: 78px;
+  }
+  .lt .s-faq :is(.rack-col, .rack-col + .rack-col) {
+    --post-l: 14px;
+    --post-r: 14px;
+  }
+  .lt .s-faq .rack-col + .rack-col::before {
+    display: block;
+  }
+  .lt .s-faq .rack-col::before,
+.lt .s-faq .rack-col::after {
+    bottom: -78px;
+  }
+  .lt .s-faq .rack-col + .rack-col::before,
+.lt .s-faq .rack-col + .rack-col::after {
+    bottom: -36px;
+  }
+}
+@media (max-width: 700px) {
+  .lt .s-faq .faq-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--lt-sp-5);
+  }
+  .lt .s-faq .faq-more {
+    order: 2;
+    margin: 0;
+  }
+  .lt .s-faq .rack {
+    margin-top: 64px;
+    gap: 70px;
+  }
+  .lt .s-faq .hg-tab {
+    min-height: 60px;
+    padding: 12px 12px 12px 16px;
+    font-size: var(--lt-text-18);
+  }
+  .lt .s-faq .hg-pin {
+    width: 30px;
+    height: 30px;
+  }
+  .lt .s-faq .hg-a {
+    padding: 0 12px;
+  }
+  .lt .s-faq .hg-film {
+    padding: 28px 20px 34px;
+  }
+  .lt .s-faq .hg-clips svg:first-child {
+    left: calc(12px + 34px);
+  }
+  .lt .s-faq .hg-clips svg:last-child {
+    left: calc(100% - 12px - 34px);
+  }
+  .lt .s-faq .rack-col {
+    gap: 70px;
+  }
+  .lt .s-faq :is(.rack-col, .rack-col + .rack-col) {
+    --post-l: 8px;
+    --post-r: 8px;
+  }
+  .lt .s-faq .rack-col::before,
+.lt .s-faq .rack-col::after {
+    bottom: -70px;
+  }
+  .lt .s-faq .hg-proof {
+    font-size: var(--lt-text-13);
+  }
+}

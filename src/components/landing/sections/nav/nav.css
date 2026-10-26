@@ -1,0 +1,137 @@
+/* The nav: a fixed bar that takes the ground under it (data-theme, lib/page.motion.ts). */
+.lt .nav {
+  position: fixed;
+  z-index: 30;
+  top: 12px;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  --lt-ink: var(--lt-room-ink);
+  --lt-line: var(--lt-room-line);
+  --lt-line-2: var(--lt-room-line-2);
+  --lt-cta-bg: var(--lt-room-ink);
+  --lt-cta-ink: var(--lt-room-900);
+  --lt-nav-glass: var(--lt-nav-room);
+  /* the nav sits outside every ground: its focus ring follows its own ink */
+  --lt-focus: var(--lt-ink);
+}
+.lt .nav-bar {
+  pointer-events: auto;
+  width: min(1240px, 100% - 48px);
+  margin-inline: auto;
+  height: var(--lt-nav-h);
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 0 10px 0 18px;
+  border-radius: 12px;
+  color: var(--lt-ink);
+  border: 1px solid var(--lt-line);
+  background: var(--lt-nav-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background-color 0.35s var(--lt-glide), color 0.35s var(--lt-glide), border-color 0.35s var(--lt-glide);
+}
+.lt .nav .btn {
+  transition: background-color 0.35s var(--lt-glide), color 0.35s var(--lt-glide);
+}
+.lt .nav[data-theme="box"] {
+  --lt-ink: var(--lt-box-ink);
+  --lt-line: var(--lt-box-line);
+  --lt-line-2: var(--lt-box-line-2);
+  --lt-cta-bg: var(--lt-box-ink);
+  --lt-cta-ink: var(--lt-box-hi);
+  --lt-nav-glass: var(--lt-nav-box);
+}
+.lt .nav[data-theme="lead"] {
+  --lt-ink: var(--lt-lead-ink);
+  --lt-line: var(--lt-lead-line);
+  --lt-line-2: var(--lt-lead-line);
+  --lt-cta-bg: var(--lt-lead-ink);
+  --lt-cta-ink: var(--lt-lead-700);
+  --lt-nav-glass: var(--lt-nav-lead);
+}
+.lt .nav[data-theme="daylight"] {
+  --lt-ink: var(--lt-day-ink);
+  --lt-line: var(--lt-day-line);
+  --lt-line-2: var(--lt-day-line-2);
+  --lt-cta-bg: var(--lt-day-ink);
+  --lt-cta-ink: var(--lt-day-hi);
+  --lt-nav-glass: var(--lt-nav-daylight);
+}
+.lt .nav:is([data-theme="box"], [data-theme="daylight"]) .bm-row {
+  fill: var(--lt-lumen-ink);
+}
+.lt .nav-links {
+  display: flex;
+  gap: 22px;
+  font-size: var(--lt-text-14);
+}
+.lt :is(.nav-links a, .nav-signin) {
+  text-decoration: none;
+  opacity: 0.84;
+  white-space: nowrap;
+}
+.lt :is(.nav-links a:hover, .nav-signin:hover, .nav-links a[aria-current="true"]) {
+  opacity: 1;
+}
+.lt .nav-end {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: var(--lt-text-14);
+}
+/* the session link's stand-in while the session loads */
+.lt .session-pending {
+  visibility: hidden;
+}
+/* the hero's switch-on: the logo's row lights with the returned rows */
+html.lt-intro .lt .nav .bm-row {
+  opacity: 0.22;
+}
+
+@media (max-width: 1320px) {
+  .lt .nav-links .ext {
+    display: none;
+  }
+}
+@media (max-width: 1200px) {
+  .lt .nav-links {
+    gap: 16px;
+  }
+  .lt .nav-bar {
+    gap: 20px;
+  }
+}
+@media (max-width: 1100px) {
+  .lt :is(.nav-links, .nav-signin) {
+    display: none;
+  }
+  /* one "Open the live demo" at a time: the nav's CTA steps back while the hero's are on screen */
+  .lt .nav-end .btn {
+    transition: opacity 0.25s, visibility 0s 0.25s;
+  }
+  html.lt-hero-cta-in .lt .nav-end .btn {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+@media (max-width: 700px) {
+  .lt .nav {
+    top: 8px;
+  }
+  .lt .nav-bar {
+    width: calc(100% - 16px);
+    height: 52px;
+    gap: 10px;
+    padding: 0 8px 0 14px;
+  }
+  .lt .nav-end {
+    gap: 8px;
+  }
+  .lt .nav-end .btn-sm {
+    padding: 0 12px;
+  }
+}

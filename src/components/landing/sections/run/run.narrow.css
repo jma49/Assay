@@ -1,0 +1,321 @@
+/* ================= tablet and phone: the film sticks under the nav, the step texts scroll beneath ================= */
+@media (max-width: 1100px) {
+  .lt .s-run .run-inner {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .lt .s-run .run-text {
+    display: contents;
+  }
+  .lt .s-run .run-h2 {
+    max-width: 12em;
+  }
+  .lt .s-run .run-lede {
+    max-width: 32rem;
+  }
+  .lt .s-run .run-stage {
+    order: 2;
+    margin-top: 36px;
+  }
+  .lt .s-run .run-steps {
+    order: 3;
+    margin-top: 40px;
+  }
+  .lt .s-run .run-viewer {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    row-gap: 24px;
+  }
+  .lt .s-run .slip,
+  .lt .s-run .run-films,
+  .lt .s-run .obj-1,
+  .lt .s-run .obj-2,
+  .lt .s-run .obj-3 {
+    grid-column: 1;
+    grid-row: auto;
+    margin-top: 0;
+  }
+  .lt .s-run .run-films {
+    margin-top: 18px;
+  }
+  .lt .s-run .slip,
+  .lt .s-run .obj-1,
+  .lt .s-run .obj-2,
+  .lt .s-run .obj-3 {
+    width: 100%;
+    max-width: 560px;
+  }
+  html.lt-run-story .lt .s-run .run-stage {
+    position: sticky;
+    top: calc(var(--lt-nav-h) + 16px);
+    z-index: 2;
+    margin-top: 28px;
+  }
+  html.lt-run-story .lt .s-run .run-viewer {
+    display: block;
+    position: relative;
+    height: calc(var(--film-h) + 26px);
+  }
+  html.lt-run-story .lt .s-run .run-films {
+    margin-inline: auto;
+  }
+  html.lt-run-story .lt .s-run .obj {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: min(100%, 520px);
+    max-width: none;
+    transform: translate(-50%, 16px);
+    opacity: 0;
+    visibility: hidden;
+    z-index: 5;
+    transition: opacity .35s var(--lt-glide), transform .5s var(--lt-settle), visibility 0s .35s;
+  }
+  html.lt-run-story .lt .s-run .rd {
+    background: var(--lt-box-hi);
+    padding: 14px 16px;
+    border-radius: var(--lt-r-md);
+    box-shadow: 0 0 0 1px var(--lt-box-line), var(--lt-shadow-box);
+  }
+  html.lt-run-story .lt .s-run [data-at="0"] .obj-0,
+  html.lt-run-story .lt .s-run [data-at="1"] .obj-1,
+  html.lt-run-story .lt .s-run [data-at="2"] .obj-2,
+  html.lt-run-story .lt .s-run [data-at="3"] .obj-3 {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+    transition: opacity .45s .1s var(--lt-settle), transform .7s .1s var(--lt-settle), visibility 0s;
+  }
+  html.lt-run-story .lt .s-run .rd-table,
+  html.lt-run-story .lt .s-run .obj-2 .rd-note {
+    display: none;
+  }
+  html.lt-run-story .lt .s-run .rd-diff .dc {
+    display: none;
+  }
+  /* the ids are on the film right above */
+  html.lt-run-story .lt .s-run .rd-diff li {
+    grid-template-columns: 22px 2.2ch 1fr;
+    padding: 3px 0;
+  }
+  html.lt-run-story .lt .s-run .rd-diff b {
+    font-size: var(--run-text-diff-tablet);
+  }
+  html.lt-run-story .lt .s-run .rd-diff .dl {
+    font-size: var(--lt-text-16);
+  }
+  html.lt-run-story .lt .s-run .alert-cap {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: var(--lt-r-md);
+    background: var(--lt-box-hi);
+    box-shadow: 0 0 0 1px var(--lt-box-line);
+  }
+  html.lt-run-story .lt .s-run .run-steps {
+    border-top: 0;
+  }
+  html.lt-run-story .lt .s-run .run-step {
+    min-height: 46svh;
+    border-bottom: 0;
+    padding-top: 8px;
+  }
+  html.lt-run-story .lt .s-run .run-step:last-child {
+    min-height: 40svh;
+  }
+  html.lt-run-story .lt .s-run .step-btn {
+    color: var(--lt-box-ink-2);
+  }
+  html.lt-run-story .lt .s-run .is-on .step-btn {
+    color: var(--lt-box-ink);
+  }
+}
+@media (min-width: 701px) and (max-width: 1100px) {
+  .lt .s-run {
+    --row: 18px;
+  }
+}
+
+/* phone: its own crop of the film: three columns of 20 rows, ids and values, 13 px */
+@media (max-width: 700px) {
+  .lt .s-run {
+    --film-w: calc(100vw - 28px);
+    --row: 17px;
+    --gut: 12px;
+    --pad-x: 10px;
+    --pad-top: 10px;
+    --f-head-top: calc(var(--pad-top) + 18px + 4px + 18px + 4px);
+    --film-h: calc(var(--f-head-top) + 20 * var(--row) + 6px + 18px + 10px);
+    --cols: 1fr auto;
+    background:
+        url("/landing/run/face-bot-p.webp") bottom center / 100% auto no-repeat,
+        url("/landing/run/face-mid-p.webp") top center / 100% auto repeat-y,
+        var(--lt-box);
+  }
+  .lt .s-run .run-pin {
+    padding: 104px 0 96px;
+  }
+  .lt .s-run .run-inner {
+    width: calc(100% - 40px);
+  }
+  .lt .s-run .rf {
+    font-size: var(--lt-text-13);
+  }
+  .lt .s-run .f-lead {
+    font-size: var(--lt-text-13);
+    letter-spacing: 0.04em;
+    height: 18px;
+  }
+  .lt .s-run .f-lead > span:first-child {
+    white-space: nowrap;
+  }
+  /* the foot's crosshair would sit on film B's long label; the head's crosshairs carry the registration on the phone */
+  .lt .s-run .f-foot .reg {
+    display: none;
+  }
+  .lt .s-run .f-foot > span {
+    flex: none;
+  }
+  .lt .s-run .reg {
+    width: 12px;
+    height: 12px;
+    margin: 0 6px;
+  }
+  .lt .s-run .f-head {
+    grid-template-columns: repeat(3, 1fr);
+    height: 18px;
+    margin-top: 4px;
+  }
+  .lt .s-run .f-head .h3 {
+    display: grid;
+  }
+  .lt .s-run .f-head > div {
+    font-size: var(--lt-text-13);
+  }
+  .lt .s-run .f-head span {
+    font-size: var(--lt-text-13);
+    letter-spacing: 0;
+  }
+  .lt .s-run .f-head .nm,
+  .lt .s-run .r .nm,
+  .lt .s-run .f-head > div > span:nth-child(4),
+  .lt .s-run .r > span:nth-child(4) {
+    display: none;
+  }
+  .lt .s-run .f-rows {
+    grid-template-rows: repeat(20, var(--row));
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: 4px;
+  }
+  .lt .s-run .r {
+    font-size: var(--lt-text-13);
+  }
+  .lt .s-run .r.lit {
+    margin: 0 -3px;
+    padding: 0 3px;
+  }
+  .lt .s-run .f-tags {
+    display: none;
+  }
+  .lt .s-run .f-covers {
+    height: calc(20 * var(--row));
+  }
+  .lt .s-run .cover {
+    width: calc((100% - 2 * var(--gut)) / 3 + 6px);
+    height: calc(20 * var(--row) + 1px);
+    top: 0 !important;
+    margin-left: -3px;
+  }
+  .lt .s-run .cover:nth-child(1),
+  .lt .s-run .cover:nth-child(4) {
+    left: 0;
+  }
+  .lt .s-run .cover:nth-child(2),
+  .lt .s-run .cover:nth-child(5) {
+    left: calc((100% + var(--gut)) / 3);
+  }
+  .lt .s-run .cover:nth-child(3),
+  .lt .s-run .cover:nth-child(6) {
+    left: calc((100% + var(--gut)) * 2 / 3);
+  }
+  .lt .s-run .rclip {
+    width: 34px;
+    height: 36px;
+    margin-left: -17px;
+    top: -17px;
+  }
+  /* the static composition: the readings keep inside the text measure (the film alone runs wider) */
+  .lt .s-run .slip,
+  .lt .s-run .obj-1,
+  .lt .s-run .obj-2,
+  .lt .s-run .obj-3 {
+    max-width: calc(100vw - 40px);
+  }
+  .lt .s-run .slip {
+    padding: 12px 12px 10px;
+  }
+  .lt .s-run .slip-sql {
+    font-size: var(--lt-text-13);
+    white-space: pre-wrap;
+  }
+  .lt .s-run .slip-sql .focus {
+    margin-inline: -12px;
+    padding-left: calc(12px + 2.5ch);
+  }
+  .lt .s-run .rd-big {
+    font-size: var(--run-text-count-phone);
+  }
+  .lt .s-run .rd-diff li {
+    padding: 5px 0;
+  }
+  .lt .s-run .rd-diff b {
+    font-size: var(--lt-text-24);
+  }
+  .lt .s-run .alert-msg {
+    padding: 12px;
+  }
+  .lt .s-run .alert-title {
+    font-size: var(--lt-text-15);
+  }
+  .lt .s-run .alert-lines {
+    font-size: var(--lt-text-14);
+  }
+  .lt .s-run .abtn {
+    height: 30px;
+    padding: 0 9px;
+    font-size: var(--lt-text-13);
+  }
+  .lt .s-run .alert-cap {
+    font-size: var(--lt-text-13);
+  }
+  html.lt-run-story .lt .s-run .run-stage {
+    top: calc(var(--lt-nav-h) + 10px);
+    margin-inline: -6px;
+  }
+  html.lt-run-story .lt .s-run .run-step {
+    min-height: 52svh;
+  }
+  html.lt-run-story .lt .s-run .step-btn {
+    font-size: var(--lt-text-19);
+  }
+}
+
+/* Chinese: set smaller, broken by hand (after the story's sizes, which it overrides) */
+html .lt:lang(zh) .s-run .run-h2 {
+  font-size: var(--run-text-h2-zh);
+  line-height: 1.16;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+.lt:lang(zh) .s-run .step-btn {
+  letter-spacing: 0;
+}
+.lt:lang(zh) .s-run .step-body > p,
+.lt:lang(zh) .s-run .run-lede {
+  line-height: 1.75;
+}
+.lt:lang(zh) .s-run .dtag {
+  letter-spacing: 0.02em;
+  font-family: var(--lt-font-display);
+  font-weight: 600;
+}

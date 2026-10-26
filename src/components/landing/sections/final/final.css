@@ -1,0 +1,238 @@
+/* The final: the box again, smaller, with a clear film of demo.payments (0 rows · Clean). The state you want.
+   House lights and the phone crop are at the end. */
+.lt .final {
+  --final-text-count: clamp(32px, 3.1vw, 48px);
+  --final-text-title-desk: min(var(--lt-text-h2-xl), 5.4vw);
+  --lt-house-up: var(--lt-room-950);
+  --lt-house-down: var(--lt-day);
+  position: relative;
+  background: var(--lt-room-950);
+  overflow: clip;
+  overflow-y: visible;
+  padding-bottom: 112px;
+  isolation: isolate;
+}
+.lt .final-stage {
+  position: relative;
+  z-index: 1;
+  width: max(100%, 1100px);
+  left: 50%;
+  transform: translateX(-50%);
+  aspect-ratio: 1440 / 800;
+  margin-top: -24px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 26%, black 66%, transparent 97%);
+  mask-image: linear-gradient(to bottom, transparent 0, black 26%, black 66%, transparent 97%);
+}
+.lt .final-bake {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.lt .film-final {
+  left: 36.8%;
+  top: 36.25%;
+  width: 26.4%;
+  height: 33.75%;
+  overflow: visible;
+}
+.lt .clips-final .clip {
+  top: 36.25%;
+  width: 30px;
+  height: 24px;
+  margin-left: -15px;
+  margin-top: -14px;
+}
+.lt .clips-final .clip:nth-child(1) {
+  left: 43%;
+}
+.lt .clips-final .clip:nth-child(2) {
+  left: 57%;
+}
+
+/* the payoff is the light itself: the clear film glows evenly edge to edge and the result is printed on it; its halo
+   is a layer of its own, so the light coming up is an opacity change (final.motion.ts), not a repainted shadow */
+.lt .film-final::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 0 26px 4px var(--lt-final-halo);
+}
+.lt .film-final.is-armed::after {
+  opacity: 0;
+}
+.lt .final-print {
+  position: absolute;
+  inset: 18% 8% 16%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  pointer-events: none;
+}
+.lt .final-check {
+  font-size: var(--lt-text-14);
+  color: var(--lt-film-950);
+  opacity: .78;
+}
+.lt .final-count {
+  font-family: var(--lt-font-mono);
+  font-weight: 500;
+  font-size: var(--final-text-count);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--lt-film-950);
+  white-space: nowrap;
+}
+.lt .final-copy {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  margin-top: -7%;
+}
+.lt .final-copy .h2-xl {
+  margin-inline: auto;
+  max-width: 10.5em;
+}
+.lt .final-reading {
+  margin: 22px auto 0;
+  max-width: 40rem;
+  font-size: var(--lt-text-15);
+  color: var(--lt-room-ink-2);
+  text-wrap: balance;
+}
+.lt .final-reading code {
+  color: var(--lt-room-ink);
+}
+.lt .final-copy .actions {
+  margin-top: 36px;
+}
+.lt .final-copy .note {
+  margin-top: 18px;
+}
+
+/* desktop: box and headline side by side, the whole set piece inside one screen */
+@media (min-width: 1101px) {
+  .lt .final {
+    min-height: max(100svh, 760px);
+    padding: 96px 0 72px;
+    display: flex;
+    align-items: center;
+  }
+  .lt .final-stage {
+    position: absolute;
+    width: 150%;
+    left: 70%;
+    top: 50%;
+    transform: translate(-50%, -48%);
+    margin: 0;
+    -webkit-mask-image: radial-gradient(ellipse 36% 46% at 50% 53%, black 62%, transparent 100%);
+    mask-image: radial-gradient(ellipse 36% 46% at 50% 53%, black 62%, transparent 100%);
+  }
+  .lt .final-copy {
+    margin: 0 auto;
+    text-align: left;
+    width: min(var(--lt-wrap), 100% - 2 * var(--lt-gutter));
+  }
+  .lt .final-copy > * {
+    max-width: min(30rem, 36vw);
+  }
+  .lt .final-copy .h2-xl {
+    margin-inline: 0;
+    max-width: 6.4em;
+  }
+  .lt:not(:lang(zh)) .final-copy .h2-xl {
+    font-size: var(--final-text-title-desk);
+  }
+  .lt .final-reading {
+    margin: 22px 0 0;
+    text-wrap: pretty;
+  }
+  .lt .final-copy .actions {
+    justify-content: flex-start;
+  }
+  .lt .final-copy .note.center {
+    text-align: left;
+  }
+}
+@media (min-width: 701px) and (max-width: 1100px) {
+  .lt .final-stage {
+    width: 150%;
+  }
+}
+.lt .final-dim {
+  position: absolute;
+  inset: 0;
+  background: var(--lt-room-1000);
+  opacity: 0;
+  pointer-events: none;
+}
+.lt .film-shadow {
+  position: absolute;
+  left: 37.6%;
+  top: 38.4%;
+  width: 24.8%;
+  height: 33.2%;
+  border-radius: 4px;
+  background: var(--lt-final-shadow);
+  filter: blur(10px);
+  opacity: .7;
+  pointer-events: none;
+}
+
+/* the final's moving parts are layers before they move (WebKit made a 110 ms frame on the first frame of the lowering) */
+.lt .final-stage.is-armed :is(.film-final, .film-shadow, .final-dim, .clips-final .clip) {
+  will-change: transform, opacity;
+}
+
+/* the static grain (final.motion.ts) needs no oversized layer */
+.lt .final > .lt-grain {
+  inset: 0;
+  z-index: 0;
+}
+
+/* the baked stage covers the ground: the outgoing daylight lies over the stage, under the copy */
+.lt .final > .house-in {
+  z-index: 1;
+}
+
+/* phone: the climax is as large as the hero: the film is ~90 % of the screen's width (at most 352 px), the box runs off
+   both edges, "0 rows · Clean" is 26 px on one line. The stage is cropped above the box. */
+@media (max-width: 700px) {
+  .lt .final {
+    padding-bottom: 88px;
+    --fw: min(352px, 90vw);
+    --crop: calc(var(--fw) / 0.264 * 0.2014 - 96px);
+  }
+  .lt .final-stage {
+    width: calc(var(--fw) / 0.264);
+    margin-top: 0;
+    top: calc(-1 * var(--crop));
+    margin-bottom: calc(56px - var(--crop) - var(--fw) / 0.264 * 0.1667);
+    -webkit-mask-image: linear-gradient(transparent var(--crop), black calc(var(--crop) + 96px));
+    mask-image: linear-gradient(transparent var(--crop), black calc(var(--crop) + 96px));
+  }
+  .lt .final-count {
+    font-size: var(--lt-text-26);
+  }
+  .lt .final-check {
+    font-size: var(--lt-text-13);
+  }
+  .lt .final-print {
+    inset: 16% 6% 14%;
+    gap: 2px;
+  }
+  .lt .final-copy {
+    margin-top: 0;
+  }
+  .lt .final-copy .actions {
+    flex-direction: column;
+    align-items: stretch;
+    max-width: 340px;
+    margin-inline: auto;
+  }
+}

@@ -1,0 +1,130 @@
+/* ================= integration with the neighbours ================= */
+
+/* on the desktop story the run section already dims the box down to lead as it leaves: safety must not light it again */
+html.lt-run-story .lt .s-safety > .seam {
+  display: none;
+}
+
+/* Hero -> run: the push-in ends on the bare lit face, and the run section is that face. The baked rails start with a soft
+   fall-off of the same face light (no edge where they begin). */
+.lt .s-run::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 220px;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(var(--lt-box) 0%, color-mix(in oklab, var(--lt-box) 60%, transparent) 45%, transparent 100%);
+}
+
+/* Desktop push: the run is pulled up under the end of the hero's pinned range; its ground starts transparent and
+   becomes the lit face over 34svh, so the run's headline is already rising as the hero's film is lifted off. */
+@media (min-width: 1101px) {
+  html.lt-push .lt .s-run {
+    margin-top: -80svh;
+    background: none;
+  }
+  html.lt-push .lt .s-run::before {
+    inset: 0;
+    height: auto;
+    z-index: -1;
+    background:
+        url("/landing/run/face-bot-d.webp") bottom center / 100% auto no-repeat,
+        url("/landing/run/face-mid-d.webp") top center / 100% auto repeat-y,
+        url("/landing/run/box-opal-strip-d.webp") top center / 100% 200px repeat-y,
+        var(--lt-box);
+    -webkit-mask-image: linear-gradient(transparent 0, black 34svh);
+    mask-image: linear-gradient(transparent 0, black 34svh);
+  }
+}
+
+/* Tablet and phone: the film sticks under the nav while the step texts scroll beneath it. Once stuck, the face
+   continues above the film up to the screen edge (scroll-state queries: Chrome 133+; elsewhere the text passes). */
+@media (max-width: 1100px) {
+  html.lt-run-story .lt .s-run .run-stage {
+    container-type: scroll-state;
+  }
+  @container scroll-state(stuck: top) {
+    html.lt-run-story .lt .s-run .run-viewer::before {
+      content: "";
+      position: absolute;
+      left: -14px;
+      right: -14px;
+      bottom: 100%;
+      height: calc(var(--lt-nav-h) + 40px);
+      background: var(--lt-box);
+      pointer-events: none;
+    }
+  }
+}
+
+/* the sticky stage carries its own lit face, full width, with the box's metal rails down both screen edges; each
+   step's object docks under the film instead of over it, so the lit rows stay uncovered in every step */
+@media (max-width: 1100px) {
+  html.lt-run-story .lt .s-run .run-stage {
+    isolation: isolate;
+  }
+  html.lt-run-story .lt .s-run .run-stage::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: calc(50% - 50vw);
+    right: calc(50% - 50vw);
+    top: -14px;
+    bottom: -18px;
+    pointer-events: none;
+    background: url("/landing/run/face-mid-d.webp") left top / 100% auto repeat-y, var(--lt-box);
+    -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 18px), transparent);
+    mask-image: linear-gradient(to bottom, black calc(100% - 18px), transparent);
+  }
+  html.lt-run-story .lt .s-run .run-viewer {
+    height: calc(var(--film-h) + 26px + var(--obj-h));
+  }
+  html.lt-run-story .lt .s-run .obj {
+    top: calc(var(--film-h) + 30px);
+    bottom: auto;
+  }
+}
+@media (min-width: 701px) and (max-width: 1100px) {
+  .lt .s-run {
+    --row: 16px;
+    --obj-h: 232px;
+  }
+}
+@media (max-width: 700px) {
+  .lt .s-run {
+    --row: 15px;
+    --obj-h: 250px;
+  }
+  html.lt-run-story .lt .s-run .run-step {
+    min-height: 44svh;
+  }
+  html.lt-run-story .lt .s-run .run-stage::before {
+    background-image: url("/landing/run/face-mid-p.webp");
+  }
+}
+
+/* the active step number uses the ground's ink, not lumen */
+html.lt-run-story .lt .s-run .is-on .step-n,
+.lt .s-run .step-n {
+  color: var(--lt-box-ink-2);
+}
+html.lt-run-story .lt .s-run .is-on .step-n {
+  color: var(--lt-box-ink);
+}
+
+/* Run -> safety: the box's light source dims (the face loses luminance) instead of a grey veil over film and text */
+.lt .s-run .run-dim {
+  background: radial-gradient(ellipse 80% 70% at 50% 45%, var(--lt-run-dim-in), var(--lt-run-dim-out));
+  mix-blend-mode: multiply;
+  z-index: -1;
+}
+
+/* a remount after a language switch shows the current step as it stands: no transition replays it */
+.lt .s-run.is-hold *,
+.lt .s-run.is-hold *::before,
+.lt .s-run.is-hold *::after {
+  transition: none !important;
+}

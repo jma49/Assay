@@ -1,0 +1,782 @@
+/* ================= the story (JS, motion allowed) ================= */
+@media (min-width: 1101px) {
+  html.lt-run-story .lt .s-run {
+    height: 440vh;
+  }
+  html.lt-run-story .lt .s-run .run-pin {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    min-height: 760px;
+    padding: calc(var(--lt-nav-h) + 12px) 0 0;
+    display: flex;
+    align-items: center;
+  }
+  html.lt-run-story .lt .s-run .run-inner {
+    align-items: center;
+  }
+  /* the steps: titles stacked, the four texts share one cell so nothing is clipped */
+  html.lt-run-story .lt .s-run .run-steps {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  html.lt-run-story .lt .s-run .run-step {
+    display: contents;
+  }
+  html.lt-run-story .lt .s-run .run-step:nth-child(1) .step-btn {
+    grid-row: 1;
+  }
+  html.lt-run-story .lt .s-run .run-step:nth-child(2) .step-btn {
+    grid-row: 2;
+  }
+  html.lt-run-story .lt .s-run .run-step:nth-child(3) .step-btn {
+    grid-row: 3;
+  }
+  html.lt-run-story .lt .s-run .run-step:nth-child(4) .step-btn {
+    grid-row: 4;
+  }
+  html.lt-run-story .lt .s-run .step-btn {
+    grid-column: 1;
+    border-bottom: 1px solid var(--lt-box-line);
+    color: var(--lt-box-ink-2);
+    transition: color .3s var(--lt-glide);
+  }
+  html.lt-run-story .lt .s-run .step-n {
+    color: var(--lt-box-ink-3);
+    transition: color .3s var(--lt-glide);
+  }
+  html.lt-run-story .lt .s-run .is-on .step-btn {
+    color: var(--lt-box-ink);
+  }
+  html.lt-run-story .lt .s-run .is-on .step-n {
+    color: var(--lt-lumen-ink);
+  }
+  html.lt-run-story .lt .s-run .step-body {
+    grid-row: 5;
+    grid-column: 1;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity .3s var(--lt-glide), transform .45s var(--lt-settle);
+  }
+  html.lt-run-story .lt .s-run .step-body > p {
+    padding-top: 18px;
+  }
+  html.lt-run-story .lt .s-run .is-on .step-body {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    transition-delay: .12s;
+  }
+  html.lt-run-story .lt .s-run .run-viewer {
+    display: block;
+    height: calc(var(--film-h) + 18px);
+  }
+  html.lt-run-story .lt .s-run .run-films {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin-top: 18px;
+    z-index: 1;
+  }
+  /* the right third: each step's object sits on the face at the film's scale, centred on the film, reaching out to
+     the frame (--obj-bleed runs into the wrap's margin, never into the frame) */
+  /* the bleed: the wrap's side margin, less the frame (its lip ends 33 px in) and a clear 17 px */
+  html.lt-run-story .lt .s-run {
+    --obj-gap: 30px;
+    --obj-bleed: max(0px, max((100vw - var(--lt-wrap)) / 2, var(--lt-gutter)) - 50px);
+  }
+  html.lt-run-story .lt .s-run .obj {
+    position: absolute;
+    left: calc(var(--film-w) + var(--obj-gap));
+    right: calc(-1 * var(--obj-bleed));
+    top: 18px;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transform: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .4s var(--lt-glide), transform .6s var(--lt-settle), visibility 0s .4s;
+  }
+  html.lt-run-story .lt .s-run [data-at="0"] .obj-0,
+  html.lt-run-story .lt .s-run [data-at="1"] .obj-1,
+  html.lt-run-story .lt .s-run [data-at="2"] .obj-2,
+  html.lt-run-story .lt .s-run [data-at="3"] .obj-3 {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity .5s .15s var(--lt-settle), transform .8s .15s var(--lt-settle), visibility 0s;
+  }
+  html.lt-run-story .lt .s-run .obj-1,
+  html.lt-run-story .lt .s-run .obj-2 {
+    transform: translateY(12px);
+  }
+  html.lt-run-story .lt .s-run [data-at="1"] .obj-1,
+  html.lt-run-story .lt .s-run [data-at="2"] .obj-2 {
+    transform: none;
+  }
+  /* the slip lies across the film's empty value columns (nothing is lit yet) */
+  html.lt-run-story .lt .s-run .slip {
+    display: block;
+    left: auto;
+    bottom: auto;
+    top: calc(18px + var(--f-head-top) + 3 * var(--row));
+    width: 476px;
+    z-index: 3;
+    transform: translateX(16px);
+    box-shadow: 0 0 0 1px var(--lt-film-edge), var(--lt-run-shadow-slip);
+  }
+  html.lt-run-story .lt .s-run .slip-sql {
+    font-size: var(--lt-text-15);
+  }
+  html.lt-run-story .lt .s-run .slip-foot {
+    font-size: var(--lt-text-14);
+  }
+  @media (min-width: 1380px) {
+    html.lt-run-story .lt .s-run .slip {
+      top: calc(18px + var(--f-head-top) + 6 * var(--row));
+      width: 516px;
+      padding: 14px 18px;
+    }
+    html.lt-run-story .lt .s-run .slip-sql {
+      font-size: var(--lt-text-16);
+    }
+    html.lt-run-story .lt .s-run .slip-sql .focus {
+      margin-inline: -18px;
+      padding-left: calc(18px + 2.5ch);
+    }
+  }
+  /* the right third: each reading spans the film's height, its first line on the film's lead line and its last on the
+     film's foot, at the film's scale; the rows it reports are shown as the film shows them, as strips of light */
+  html.lt-run-story .lt .s-run .obj-1,
+  html.lt-run-story .lt .s-run .obj-2,
+  html.lt-run-story .lt .s-run .obj-3 {
+    justify-content: flex-start;
+    margin: 0;
+    padding: 13px 0 10px;
+  }
+  html.lt-run-story .lt .s-run .rd-k {
+    font-size: var(--lt-text-15);
+    line-height: 22px;
+  }
+  html.lt-run-story .lt .s-run .rd-note,
+  html.lt-run-story .lt .s-run .alert-cap {
+    margin-top: auto;
+    padding-top: 18px;
+    font-size: var(--lt-text-15);
+    line-height: 1.5;
+  }
+  /* 2 · the count: a numeral at the scale of the film, then the three rows as the query returned them */
+  html.lt-run-story .lt .s-run .obj-1 .rd-big {
+    margin-top: auto;
+    align-items: flex-end;
+    column-gap: 20px;
+    flex-wrap: nowrap;
+  }
+  html.lt-run-story .lt .s-run .rd-n {
+    font-size: var(--run-text-count);
+    font-weight: 300;
+    line-height: 0.74;
+    letter-spacing: -0.045em;
+  }
+  html.lt-run-story .lt .s-run .rd-u {
+    flex-direction: column;
+    align-items: flex-start;
+    row-gap: 12px;
+    padding-bottom: 2px;
+  }
+  html.lt-run-story .lt .s-run .rd-w {
+    font-size: var(--run-text-unit);
+    line-height: 1;
+    color: var(--lt-box-ink);
+  }
+  html.lt-run-story .lt .s-run .rd-st {
+    font-size: var(--lt-text-15);
+    line-height: 26px;
+    padding: 0 10px;
+    border-radius: var(--lt-r-xs);
+    letter-spacing: 0.02em;
+    color: var(--lt-box-ink);
+    box-shadow: inset 0 0 0 1px var(--lt-box-line-2);
+  }
+  html.lt-run-story .lt .s-run .obj-1 .rd-table {
+    margin: 34px 0 auto;
+    font-size: var(--lt-text-16);
+    border-collapse: separate;
+    border-spacing: 0 10px;
+  }
+  html.lt-run-story .lt .s-run .rd-table th {
+    padding: 0 0 0 12px;
+    border: 0;
+  }
+  html.lt-run-story .lt .s-run .rd-table th.v:last-child {
+    padding-right: 12px;
+  }
+  html.lt-run-story .lt .s-run .rd-table td {
+    height: 50px;
+    padding: 0 0 0 12px;
+    border: 0;
+    color: var(--lt-film-950);
+    background: var(--lt-lumen-core);
+    box-shadow: inset 0 1px 0 var(--lt-lumen), inset 0 -1px 0 var(--lt-lumen);
+  }
+  html.lt-run-story .lt .s-run .rd-table td:first-child {
+    color: var(--lt-film-950);
+    border-radius: 3px 0 0 3px;
+    box-shadow: inset 1px 1px 0 var(--lt-lumen), inset 0 -1px 0 var(--lt-lumen);
+  }
+  html.lt-run-story .lt .s-run .rd-table td:last-child {
+    padding-right: 12px;
+    border-radius: 0 3px 3px 0;
+    box-shadow: inset -1px 1px 0 var(--lt-lumen), inset 0 -1px 0 var(--lt-lumen);
+  }
+  html.lt-run-story .lt .s-run .rd-table td.v:nth-child(3) {
+    color: var(--lt-lumen-ink);
+  }
+  /* 3 · the diff: each kind with its count and its rows, lit as on film B (fixed: no longer returned, so unlit) */
+  html.lt-run-story .lt .s-run .rd-diff {
+    margin-top: 14px;
+  }
+  html.lt-run-story .lt .s-run .rd-diff li {
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "n l" "s s";
+    align-items: baseline;
+    column-gap: 14px;
+    row-gap: 10px;
+    padding: 20px 0 22px;
+  }
+  html.lt-run-story .lt .s-run .rd-diff li > .dm {
+    display: none;
+  }
+  html.lt-run-story .lt .s-run .rd-diff b {
+    grid-area: n;
+    font-size: var(--run-text-diff);
+    line-height: 0.8;
+    font-weight: 400;
+    min-width: 0.6em;
+    text-align: left;
+  }
+  html.lt-run-story .lt .s-run .rd-diff .dl {
+    grid-area: l;
+    font-size: var(--lt-text-20);
+  }
+  html.lt-run-story .lt .s-run .rd-diff .dc {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  html.lt-run-story .lt .s-run .ds {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: 8ch 11ch 1fr 1fr;
+    column-gap: 1ch;
+    align-items: center;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 3px;
+    font-family: var(--lt-font-mono);
+    font-size: var(--lt-text-16);
+    white-space: nowrap;
+    color: var(--lt-film-950);
+  }
+  html.lt-run-story .lt .s-run .ds.is-new {
+    background: var(--lt-lumen-core);
+    box-shadow: 0 0 0 1px var(--lt-lumen), 0 0 8px 1px var(--lt-lumen-halo);
+  }
+  html.lt-run-story .lt .s-run .ds.is-still {
+    background: var(--lt-lumen);
+  }
+  html.lt-run-story .lt .s-run .ds.is-fixed {
+    color: var(--lt-box-ink-3);
+    box-shadow: inset 0 0 0 1px var(--lt-box-line-2);
+  }
+  html.lt-run-story .lt .s-run .ds .v {
+    text-align: right;
+  }
+  html.lt-run-story .lt .s-run .rd-diff li > * {
+    min-width: 0;
+  }
+  html.lt-run-story .lt .s-run .dm {
+    width: 26px;
+    height: 14px;
+  }
+  html.lt-run-story .lt .s-run [data-at="0"] .slip {
+    transform: none;
+  }
+  /* 4 · the alert: the change it reports stays printed on the box; the message is the one object that leaves. It slides
+     out from under the film and stands off the face (its own shadow) */
+  html.lt-run-story .lt .s-run .al-top {
+    display: block;
+  }
+  html.lt-run-story .lt .s-run .al-diff {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 22px;
+    row-gap: 6px;
+    margin-top: 14px;
+    font-size: var(--lt-text-18);
+    font-weight: 560;
+    line-height: 1.2;
+    color: var(--lt-box-ink);
+  }
+  html.lt-run-story .lt .s-run .al-diff > span {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  html.lt-run-story .lt .s-run .al-diff b {
+    font-size: var(--run-text-diff-sm);
+    font-weight: 400;
+    line-height: 0.9;
+    color: var(--lt-lumen-ink);
+  }
+  html.lt-run-story .lt .s-run .al-diff > span:last-child b {
+    color: var(--lt-box-ink-2);
+  }
+  html.lt-run-story .lt .s-run .al-diff .dm {
+    align-self: center;
+    width: 20px;
+    height: 11px;
+  }
+  html.lt-run-story .lt .s-run .obj-3 {
+    z-index: 0;
+  }
+  html.lt-run-story .lt .s-run [data-at="3"] .obj-3 {
+    z-index: 2;
+    transition: opacity .45s .1s var(--lt-glide), visibility 0s, z-index 0s .5s;
+  }
+  html.lt-run-story .lt .s-run .obj-3 .alert-msg {
+    margin-block: auto;
+    padding: 22px 18px 22px;
+    transform: translateX(-180px) scale(.94);
+    transition: transform .6s var(--lt-settle);
+  }
+  html.lt-run-story .lt .s-run [data-at="3"] .obj-3 .alert-msg {
+    transform: none;
+    transition: transform 1s .1s var(--lt-settle);
+  }
+  html.lt-run-story .lt .s-run .alert-from {
+    font-size: var(--lt-text-17);
+  }
+  html.lt-run-story .lt .s-run .alert-title {
+    margin-top: 14px;
+    font-size: var(--run-text-alert);
+  }
+  html.lt-run-story .lt .s-run .alert-lines {
+    margin-top: 6px;
+    font-size: var(--lt-text-16);
+  }
+  html.lt-run-story .lt .s-run .alert-actions {
+    margin-top: 20px;
+    gap: 8px;
+  }
+  html.lt-run-story .lt .s-run .abtn {
+    height: 42px;
+    padding: 0 12px;
+    font-size: var(--lt-text-15);
+  }
+  html.lt-run-story .lt .s-run .obj-3 .alert-cap {
+    margin-top: 0;
+    padding-top: 22px;
+  }
+}
+
+/* the light box seen up close, while the story is pinned: the opal face (tubes behind it, light falling off toward the
+   frame) inside the box's frame (a 9-slice of a three.js render: dark housing, a bright aluminium lip that catches the
+   face light, the lip's shadow on the opal). It comes into view as the story pins: a short pull back from the face. */
+.lt .s-run .run-box {
+  display: none;
+}
+@media (min-width: 1101px) {
+  /* before and after the pin the face already shows its tubes and its falloff toward the sides (a strip that tiles
+     down the section); the framed box takes over while pinned */
+  html.lt-run-story .lt .s-run {
+    background:
+        url("/landing/run/face-bot-d.webp") bottom center / 100% auto no-repeat,
+        url("/landing/run/face-mid-d.webp") top center / 100% auto repeat-y,
+        url("/landing/run/box-opal-strip-d.webp") top center / 100% 200px repeat-y,
+        var(--lt-box);
+  }
+  html.lt-run-story .lt .s-run .run-box {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        url("/landing/run/box-opal-d.webp") center / calc(100% - 56px) calc(100% - 56px) no-repeat,
+        var(--lt-run-housing);
+    opacity: 0;
+    transform: scale(1.05);
+    transition: opacity .5s var(--lt-glide), transform 1.3s var(--lt-settle);
+    will-change: opacity, transform;
+  }
+  html.lt-run-story .lt .s-run .run-box::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 50px solid transparent;
+    border-image: url("/landing/run/box-frame.webp") 100 / 50px stretch;
+  }
+  html.lt-run-story .lt .s-run .run-pin.is-boxed .run-box {
+    opacity: 1;
+    transform: none;
+  }
+  /* the static composition (no JS, reduced motion, a short window) is the same box, framed around the whole section */
+  html:not(.lt-run-story):not(.lt-push) .lt .s-run {
+    background:
+        url("/landing/run/box-opal-d.webp") center / calc(100% - 56px) calc(100% - 56px) no-repeat,
+        var(--lt-run-housing);
+  }
+  html:not(.lt-run-story) .lt .s-run .run-pin::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    border: 50px solid transparent;
+    border-image: url("/landing/run/box-frame.webp") 100 / 50px stretch;
+  }
+}
+@media (min-width: 1101px) and (max-height: 860px) {
+  .lt .s-run {
+    --row: 18px;
+  }
+}
+@media (min-width: 1101px) and (max-height: 820px) {
+  html.lt-run-story .lt .s-run .run-h2 {
+    font-size: var(--run-text-h2-short);
+  }
+  html.lt-run-story .lt .s-run .run-lede {
+    font-size: var(--lt-text-16);
+    margin-top: 12px;
+  }
+  html.lt-run-story .lt .s-run .run-steps {
+    margin-top: 22px;
+  }
+}
+@media (min-width: 1101px) and (max-height: 770px) {
+  .lt .s-run {
+    --row: 16px;
+    --pad-top: 10px;
+  }
+  .lt .s-run .r {
+    font-size: var(--run-text-row-short);
+  }
+}
+
+/* narrower desktops: the text column gives way so the right third keeps room for the readings */
+@media (min-width: 1101px) and (max-width: 1439px) {
+  html.lt-run-story .lt .s-run .abtn {
+    height: 40px;
+    padding: 0 11px;
+    font-size: var(--lt-text-14);
+  }
+}
+@media (min-width: 1101px) and (max-width: 1379px) {
+  html.lt-run-story .lt .s-run {
+    --obj-gap: 26px;
+  }
+  html.lt-run-story .lt .s-run .run-inner {
+    grid-template-columns: 260px 1fr;
+    column-gap: 24px;
+  }
+  html.lt-run-story .lt .s-run .run-h2 {
+    font-size: var(--run-text-h2-md);
+  }
+  html.lt-run-story .lt .s-run .step-body > p {
+    font-size: var(--lt-text-15);
+  }
+  html.lt-run-story .lt .s-run .rd-table th {
+    letter-spacing: 0;
+  }
+  html.lt-run-story .lt .s-run .rd-table th + th,
+  html.lt-run-story .lt .s-run .rd-table td + td {
+    padding-left: 0.9ch;
+  }
+  html.lt-run-story .lt .s-run .obj-1 .rd-table,
+  html.lt-run-story .lt .s-run .ds {
+    font-size: var(--lt-text-15);
+  }
+  html.lt-run-story .lt .s-run .ds {
+    padding: 0 10px;
+  }
+  html.lt-run-story .lt .s-run .obj-3 .alert-msg {
+    padding: 18px 16px;
+  }
+}
+
+/* small desktops: the film drops its reserved column (as the phone crop drops two), so the right third keeps the room
+   for the readings at proof size; the readings keep all four columns */
+@media (min-width: 1101px) and (max-width: 1299px) {
+  html.lt-run-story .lt .s-run {
+    --film-w: 484px;
+    --cols: 8ch 11ch 5ch;
+    --obj-gap: 24px;
+  }
+  html.lt-run-story .lt .s-run .f-head > div > span:nth-child(4),
+  html.lt-run-story .lt .s-run .rf .r > span:nth-child(4) {
+    display: none;
+  }
+  html.lt-run-story .lt .s-run .run-inner {
+    grid-template-columns: 240px 1fr;
+    column-gap: 22px;
+  }
+  html.lt-run-story .lt .s-run .run-h2 {
+    font-size: var(--run-text-h2-sm);
+  }
+  html.lt-run-story .lt .s-run .run-lede {
+    font-size: var(--lt-text-16);
+  }
+  html.lt-run-story .lt .s-run .slip {
+    width: 440px;
+  }
+  html.lt-run-story .lt .s-run .slip-sql {
+    font-size: var(--lt-text-14);
+  }
+  html.lt-run-story .lt .s-run .obj-1 .rd-table,
+  html.lt-run-story .lt .s-run .ds {
+    font-size: var(--lt-text-14);
+  }
+  html.lt-run-story .lt .s-run .rd-n {
+    font-size: var(--run-text-count-md);
+  }
+  html.lt-run-story .lt .s-run .alert-title {
+    font-size: var(--lt-text-19);
+  }
+  html.lt-run-story .lt .s-run .alert-lines {
+    font-size: var(--lt-text-16);
+  }
+  html.lt-run-story .lt .s-run .abtn {
+    height: 38px;
+    padding: 0 11px;
+    font-size: var(--lt-text-14);
+  }
+}
+@media (min-width: 1101px) and (max-width: 1199px) {
+  html.lt-run-story .lt .s-run .obj-1 .rd-table,
+  html.lt-run-story .lt .s-run .ds {
+    font-size: var(--lt-text-13);
+  }
+  html.lt-run-story .lt .s-run .ds {
+    padding: 0 8px;
+  }
+  html.lt-run-story .lt .s-run .run-inner {
+    grid-template-columns: 228px 1fr;
+  }
+  html.lt-run-story .lt .s-run .rd-table th:first-child,
+  html.lt-run-story .lt .s-run .rd-table td:first-child {
+    padding-left: 7px;
+  }
+  html.lt-run-story .lt .s-run .rd-table th.v:last-child,
+  html.lt-run-story .lt .s-run .rd-table td:last-child {
+    padding-right: 7px;
+  }
+  html.lt-run-story .lt .s-run .rd-table th + th,
+  html.lt-run-story .lt .s-run .rd-table td + td {
+    padding-left: 0.6ch;
+  }
+  html.lt-run-story .lt .s-run .al-top {
+    display: none;
+  }
+  /* the alert says the same in words; the column is too narrow for both */
+  html.lt-run-story .lt .s-run .alert-cap {
+    font-size: var(--lt-text-14);
+  }
+}
+
+/* story states shared by every width */
+html.lt-run-story .lt .s-run .cover {
+  transform: scaleX(1);
+}
+html.lt-run-story .lt .s-run .is-developed .cover {
+  transform: scaleX(0);
+  transition: transform .42s calc(var(--i) * 120ms + .2s) var(--lt-develop);
+}
+html.lt-run-story .lt .s-run .rf-a .r.lit {
+  color: var(--lt-film-ink-3);
+  transition: color .2s;
+}
+html.lt-run-story .lt .s-run .rf-a .r.lit::before {
+  opacity: 0;
+  transform: scaleX(0);
+  transition: opacity .2s, transform .2s;
+}
+html.lt-run-story .lt .s-run .is-lit .rf-a .r.lit::before {
+  opacity: 1;
+  transform: none;
+  transition: opacity .08s calc(var(--k, 0) * 180ms) linear, transform .55s calc(var(--k, 0) * 180ms) var(--lt-develop);
+}
+html.lt-run-story .lt .s-run .rf-a .r.lit .v {
+  opacity: 0;
+  transition: opacity .2s;
+}
+html.lt-run-story .lt .s-run .is-lit .rf-a .r.lit {
+  color: var(--lt-film-950);
+  transition: color .25s calc(var(--k, 0) * 180ms + .12s);
+}
+html.lt-run-story .lt .s-run .is-lit .rf-a .r.lit .v {
+  opacity: 1;
+  transition: opacity .4s calc(var(--k, 0) * 180ms + .3s);
+}
+html.lt-run-story .lt .s-run .rf-b {
+  opacity: 0;
+  transform: translateY(-64px) rotate(-0.9deg);
+  transition: opacity .3s var(--lt-glide), transform .4s var(--lt-glide);
+}
+html.lt-run-story .lt .s-run .is-registered .rf-b {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+html.lt-run-story .lt .s-run .dtag {
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity .2s, transform .2s;
+}
+html.lt-run-story .lt .s-run .is-tagged .dtag {
+  opacity: 1;
+  transform: none;
+  transition:
+      opacity .35s calc(var(--i) * 120ms) var(--lt-glide),
+      transform .45s calc(var(--i) * 120ms) var(--lt-settle);
+}
+
+/* GSAP choreography (choreo.ts adds .is-gsap once the library is in): it owns these transforms, so CSS stops transitioning them */
+.lt .s-run.is-gsap .rf-a,
+.lt .s-run.is-gsap .rf-b,
+.lt .s-run.is-gsap .dtag,
+.lt .s-run.is-gsap .rclip,
+.lt .s-run.is-gsap .rd-diff li,
+.lt .s-run.is-gsap .rd-table tbody tr,
+.lt .s-run.is-gsap-desk .slip,
+html.lt-run-story .lt .s-run.is-gsap-desk .run-stage .obj-3 .alert-msg {
+  transition: none;
+  will-change: transform, opacity;
+}
+
+/* the read head: a crisp line of the box's light passing down each column of the film */
+.lt .s-run .scan {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 1px;
+  background: var(--lt-box-hi);
+  box-shadow: 0 0 6px 1px var(--lt-run-scan-glow);
+  pointer-events: none;
+  opacity: 0;
+}
+.lt .s-run .scan::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  height: 30px;
+  background: linear-gradient(to top, var(--lt-run-scan-trail), transparent);
+}
+
+/* the lights go down at the end: the box dims toward the lead ground below, only the alert stays lit */
+.lt .s-run .run-dim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: var(--lt-lead-600);
+  opacity: 0;
+  pointer-events: none;
+}
+.lt .s-run .slip-soft {
+  position: absolute;
+  margin: 0;
+  pointer-events: none;
+  filter: blur(1.6px);
+  opacity: 0;
+}
+.lt .s-run .slip-soft .focus {
+  background: none;
+  box-shadow: none;
+}
+.lt .s-run .rpulse {
+  position: absolute;
+  z-index: 3;
+  height: var(--row);
+  margin-left: -5px;
+  border-radius: 2px;
+  background: var(--lt-lumen-core);
+  box-shadow: 0 0 0 1px var(--lt-lumen), 0 0 10px 2px var(--lt-lumen-glow);
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: 0 50%;
+}
+.lt .s-run .regpulse {
+  position: absolute;
+  z-index: 3;
+  width: 15px;
+  height: 15px;
+  margin: -7.5px 0 0 -7.5px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.25px var(--lt-box-hi);
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* round 2 polish: a step change is sequenced, never a cross-fade of two objects in one place. The readings of steps
+   2 and 3 are windows just right of film A: the outgoing reading slides back under the film's edge in 180 ms, then the
+   incoming one slides out from under it, opaque the whole time (transform only). */
+@media (min-width: 1101px) {
+  html.lt-run-story .lt .s-run .obj-1,
+  html.lt-run-story .lt .s-run .obj-2 {
+    overflow: hidden;
+    opacity: 1;
+    transform: none;
+    transition: visibility 0s .2s;
+  }
+  html.lt-run-story .lt .s-run [data-at="1"] .obj-1,
+  html.lt-run-story .lt .s-run [data-at="2"] .obj-2 {
+    opacity: 1;
+    transform: none;
+    transition: visibility 0s .2s;
+    visibility: visible;
+  }
+  html.lt-run-story .lt .s-run .obj-1 > *,
+  html.lt-run-story .lt .s-run .obj-2 > * {
+    transform: translateX(calc(-100% - 24px));
+    transition: transform .18s var(--run-out);
+  }
+  html.lt-run-story .lt .s-run [data-at="1"] .obj-1 > *,
+  html.lt-run-story .lt .s-run [data-at="2"] .obj-2 > * {
+    transform: none;
+    transition: transform .7s .2s var(--lt-settle);
+  }
+  html.lt-run-story .lt .s-run [data-at="1"] .obj-1 > :nth-child(2),
+  html.lt-run-story .lt .s-run [data-at="2"] .obj-2 > :nth-child(2) {
+    transition-delay: .26s;
+  }
+  html.lt-run-story .lt .s-run [data-at="1"] .obj-1 > :nth-child(n+3),
+  html.lt-run-story .lt .s-run [data-at="2"] .obj-2 > :nth-child(n+3) {
+    transition-delay: .32s;
+  }
+  html.lt-run-story .lt .s-run .obj-3 > :not(.alert-msg) {
+    transform: translateX(calc(-100% - 24px));
+    transition: transform .18s var(--run-out);
+  }
+  html.lt-run-story .lt .s-run [data-at="3"] .obj-3 > :not(.alert-msg) {
+    transform: none;
+    transition: transform .7s .3s var(--lt-settle);
+  }
+  html.lt-run-story .lt .s-run .obj-3 {
+    opacity: 1;
+    transition: visibility 0s .2s;
+  }
+  html.lt-run-story .lt .s-run [data-at="3"] .obj-3 {
+    transition: visibility 0s .2s, z-index 0s .7s;
+  }
+}

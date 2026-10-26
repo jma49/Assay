@@ -1,0 +1,681 @@
+/* The light table's shared foundation: base, type, grounds, buttons, films and the lighting changes between
+   grounds. Every rule is scoped under .lt (or
+   conditioned on a page that holds one), so nothing reaches the app.
+
+   State flags live on <html> (set before first paint by the landing's inline script, lib/prepaint.ts):
+   lt-js (script ran; without it the markup is the settled page), lt-intro (first visit, hero switch-on),
+   lt-push (desktop scroll push-in), lt-zh-wait (Chinese chosen, English still painted), lt-zh-later (the
+   sections under the hero not swapped yet). The language is the
+   root's lang attribute: style Chinese with `.lt:lang(zh) ...`. */
+
+/* In-page anchors scroll smoothly through lib/page.motion.ts, not `scroll-behavior` (it would also smooth Next's route
+   transitions). */
+:root:has(.lt) {
+  scroll-padding-top: 84px;
+  background-color: var(--lt-room-900);
+}
+
+.lt {
+  position: relative;
+  min-height: 100vh;
+  background: var(--lt-room-900);
+  color: var(--lt-room-ink);
+  font-family: var(--lt-font-display);
+  font-size: var(--lt-text-body);
+  line-height: 1.6;
+  font-weight: 420;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+.lt:lang(zh) {
+  line-height: 1.75;
+}
+/* Chinese stored, English painted: the text waits for React to swap it, so nothing shifts (lib/prepaint.ts) */
+html.lt-zh-wait .lt {
+  visibility: hidden;
+}
+html.lt-zh-wait .lt [data-lt-art] {
+  visibility: visible;
+}
+/* the sections under the hero swap one render later on a Chinese reader's first load (lib/context.tsx Later) */
+html.lt-zh-later .lt main > section:not(.hero) {
+  visibility: hidden;
+}
+
+/* ---------- base: the landing's defaults over the app's preflight ---------- */
+.lt *,
+.lt *::before,
+.lt *::after {
+  box-sizing: border-box;
+  border-color: currentColor;
+}
+.lt :is(img, canvas, svg) {
+  display: block;
+}
+.lt img {
+  max-width: none;
+}
+.lt a {
+  color: inherit;
+  text-decoration: underline;
+}
+/* two selectors (not :is()), so the inline-code rule below wins for <code> in running text */
+.lt code,
+.lt .mono {
+  font-family: var(--lt-font-mono);
+  font-size: 0.88em;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.lt :is(h1, h2, h3) {
+  margin: 0;
+  font-family: inherit;
+  text-wrap: balance;
+  font-weight: 540;
+}
+.lt p {
+  margin: 0;
+  text-wrap: pretty;
+}
+.lt button {
+  font: inherit;
+  color: inherit;
+}
+.lt :focus-visible {
+  outline: 2px solid var(--lt-focus, currentColor);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+/* inline code in running text never drops below 13 px */
+.lt :where(p, li, dd, figcaption) code {
+  font-size: max(var(--lt-text-13), 0.92em);
+}
+
+.lt .skip {
+  --lt-focus: var(--lt-room-ink);
+  position: absolute;
+  left: 12px;
+  top: -60px;
+  z-index: 50;
+  background: var(--lt-room-ink);
+  color: var(--lt-room-900);
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+.lt .skip:focus {
+  top: 12px;
+}
+.lt .wrap {
+  width: min(var(--lt-wrap), 100% - 2 * var(--lt-gutter));
+  margin-inline: auto;
+}
+.lt .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.lt .section {
+  padding-block: var(--lt-section-y);
+}
+.lt .center {
+  text-align: center;
+}
+
+/* ---------- grounds: each sets its own inks, so shared classes work on any of them ---------- */
+.lt [data-ground] {
+  --lt-ink: var(--lt-room-ink);
+  --lt-ink-2: var(--lt-room-ink-2);
+  --lt-ink-3: var(--lt-room-ink-3);
+  --lt-line: var(--lt-room-line);
+  --lt-line-2: var(--lt-room-line-2);
+  --lt-cta-bg: var(--lt-room-ink);
+  --lt-cta-ink: var(--lt-room-900);
+  color: var(--lt-ink);
+}
+.lt [data-ground="room"] {
+  background-color: var(--lt-room-900);
+}
+.lt [data-ground="box"] {
+  --lt-ink: var(--lt-box-ink);
+  --lt-ink-2: var(--lt-box-ink-2);
+  --lt-ink-3: var(--lt-box-ink-3);
+  --lt-line: var(--lt-box-line);
+  --lt-line-2: var(--lt-box-line-2);
+  --lt-cta-bg: var(--lt-box-ink);
+  --lt-cta-ink: var(--lt-box-hi);
+  background-color: var(--lt-box);
+}
+.lt [data-ground="lead"] {
+  --lt-ink: var(--lt-lead-ink);
+  --lt-ink-2: var(--lt-lead-ink-2);
+  --lt-ink-3: var(--lt-lead-ink-2);
+  --lt-line: var(--lt-lead-line);
+  --lt-line-2: var(--lt-lead-line);
+  --lt-cta-bg: var(--lt-lead-ink);
+  --lt-cta-ink: var(--lt-lead-700);
+  background-color: var(--lt-lead-600);
+}
+.lt [data-ground="daylight"] {
+  --lt-ink: var(--lt-day-ink);
+  --lt-ink-2: var(--lt-day-ink-2);
+  --lt-ink-3: var(--lt-day-ink-3);
+  --lt-line: var(--lt-day-line);
+  --lt-line-2: var(--lt-day-line-2);
+  --lt-cta-bg: var(--lt-day-ink);
+  --lt-cta-ink: var(--lt-day-hi);
+  background-color: var(--lt-day);
+}
+/* Lumen means one thing (a row the check returned): focus rings use the ground's ink */
+.lt [data-ground] {
+  --lt-focus: var(--lt-ink);
+}
+/* every ground is positioned, so a later section always paints over an earlier one's light layers */
+.lt main > section,
+.lt > footer {
+  position: relative;
+}
+/* No section may widen the page. clip (not hidden) makes no scroll container, so sticky stories keep working. */
+.lt main > section {
+  overflow-x: clip;
+}
+
+/* the lit face: opal diffuser, brighter at the centre, falling off toward the frame */
+.lt :is(.box-face, [data-ground="box"].is-face) {
+  position: relative;
+  isolation: isolate;
+  background: radial-gradient(ellipse 70% 62% at 50% 48%, var(--lt-box-hi) 0%, var(--lt-box) 46%, var(--lt-box-edge) 88%, var(--lt-box-shade) 100%);
+}
+.lt :is(.box-face, [data-ground="box"].is-face)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url("/landing/shared/opal.webp") 0 0 / 320px 320px;
+  opacity: 0.07;
+  mix-blend-mode: multiply;
+}
+/* the frame lip at a box edge: metal, catching the face light on its inner bevel */
+.lt :is(.lip-top, .lip-bottom) {
+  position: relative;
+}
+.lt :is(.lip-top, .lip-bottom)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 12px;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(var(--lt-metal-800), var(--lt-metal-900));
+}
+.lt .lip-top::after {
+  top: 0;
+  box-shadow: inset 0 -1px 0 var(--lt-metal-300), 0 6px 14px -6px color-mix(in srgb, var(--lt-box-ink) 35%, transparent);
+}
+.lt .lip-bottom::after {
+  bottom: 0;
+  box-shadow: inset 0 1px 0 var(--lt-metal-300), 0 -6px 14px -6px color-mix(in srgb, var(--lt-box-ink) 35%, transparent);
+}
+/* daylight: house lights on, a faint paper grain */
+.lt [data-ground="daylight"].is-grain {
+  position: relative;
+  isolation: isolate;
+}
+.lt [data-ground="daylight"].is-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url("/landing/shared/grain-day.webp") 0 0 / 160px 160px;
+  opacity: 0.05;
+  mix-blend-mode: multiply;
+}
+/* lead: sheet lead mottle */
+.lt [data-ground="lead"].is-mottle {
+  position: relative;
+  isolation: isolate;
+}
+.lt [data-ground="lead"].is-mottle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url("/landing/shared/grain.png"), url("/landing/shared/lead.jpg") center / cover;
+  opacity: 0.16;
+  mix-blend-mode: soft-light;
+}
+/* soft seam: the previous ground's light falls into this one (set --seam-from to the ground above) */
+.lt .seam-fade {
+  position: relative;
+}
+.lt .seam-fade::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 120px;
+  pointer-events: none;
+  background: linear-gradient(var(--seam-from, var(--lt-room-950)), transparent);
+}
+
+/* ---------- type: hierarchy by size, one weight family ---------- */
+.lt .display {
+  font-size: var(--lt-text-h1);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  font-weight: 560;
+}
+.lt .display .line {
+  display: block;
+}
+.lt .display .line > span {
+  display: inline-block;
+}
+.lt .h2 {
+  font-size: var(--lt-text-h2);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  font-weight: 540;
+}
+.lt .h2-xl {
+  font-size: var(--lt-text-h2-xl);
+  line-height: 0.96;
+  letter-spacing: -0.03em;
+}
+.lt .h3 {
+  font-size: var(--lt-text-h3);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-weight: 560;
+}
+.lt .lede {
+  font-size: var(--lt-text-lede);
+  line-height: 1.5;
+  color: var(--lt-ink-2, var(--lt-room-ink-2));
+  max-width: 32rem;
+}
+.lt .body {
+  font-size: var(--lt-text-body);
+  line-height: 1.6;
+  color: var(--lt-ink-2, var(--lt-room-ink-2));
+  max-width: 38rem;
+}
+.lt .note {
+  font-size: var(--lt-text-note);
+  line-height: 1.5;
+  letter-spacing: 0.005em;
+  color: var(--lt-ink-3, var(--lt-room-ink-3));
+}
+.lt .proof {
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-proof);
+  line-height: 1.7;
+  letter-spacing: 0;
+}
+.lt .lead-letters {
+  font-family: var(--lt-font-lead);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--lt-text-tag);
+  line-height: 1.2;
+}
+.lt .tag {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: var(--lt-r-xs);
+  font-size: var(--lt-text-tag);
+  letter-spacing: 0.01em;
+  border: 1px solid var(--lt-line-2, var(--lt-room-line));
+  color: var(--lt-ink-2, var(--lt-room-ink-2));
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+.lt .count {
+  color: var(--lt-lumen-ink);
+  font-weight: 500;
+}
+.lt :is([data-ground="room"], [data-ground="lead"]) .count {
+  color: var(--lt-lumen);
+}
+.lt:lang(zh) .display {
+  font-size: var(--lt-text-h1-zh);
+  line-height: 1.06;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+.lt:lang(zh) .h2 {
+  font-size: var(--lt-text-h2-zh);
+  letter-spacing: 0;
+  line-height: 1.15;
+  font-weight: 600;
+}
+.lt:lang(zh) .h2-xl {
+  font-size: var(--lt-text-h2-xl-zh);
+  line-height: 1.1;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+.lt:lang(zh) .h3 {
+  letter-spacing: 0;
+  font-weight: 600;
+}
+.lt:lang(zh) :is(.lede, .body) {
+  line-height: 1.75;
+}
+.lt:lang(zh) .lead-letters {
+  letter-spacing: 0.04em;
+}
+/* a hand break that only applies in one language: <br className="br-en" /> / <br className="br-zh" /> */
+.lt:lang(zh) .br-en,
+.lt:not(:lang(zh)) .br-zh {
+  display: none;
+}
+@media (max-width: 700px) {
+  .lt .h2 {
+    font-size: var(--lt-text-h2-phone);
+  }
+  .lt .h2-xl {
+    font-size: var(--lt-text-h2-xl-phone);
+  }
+  .lt:lang(zh) .h2 {
+    font-size: var(--lt-text-h2-zh-phone);
+  }
+  .lt:lang(zh) .h2-xl {
+    font-size: var(--lt-text-h2-xl-zh-phone);
+  }
+}
+
+/* ---------- buttons: ink, never the accent ---------- */
+.lt .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 22px;
+  border-radius: var(--lt-r-md);
+  font-size: var(--lt-text-16);
+  font-weight: 560;
+  text-decoration: none;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color var(--lt-t-fast) var(--lt-glide), border-color var(--lt-t-fast) var(--lt-glide),
+    color var(--lt-t-fast) var(--lt-glide), transform 0.1s var(--lt-glide);
+}
+.lt .btn:active {
+  transform: scale(0.98);
+}
+.lt .btn-sm {
+  height: 36px;
+  padding: 0 14px;
+  font-size: var(--lt-text-14);
+  border-radius: 8px;
+}
+.lt .btn-ink {
+  background: var(--lt-cta-bg, var(--lt-room-ink));
+  color: var(--lt-cta-ink, var(--lt-room-900));
+}
+.lt .btn-ink:hover {
+  background: color-mix(in oklab, var(--lt-cta-bg, var(--lt-room-ink)) 88%, var(--lt-cta-ink, var(--lt-room-900)));
+}
+.lt .btn-ghost {
+  background: transparent;
+  border-color: var(--lt-line-2, var(--lt-room-line-2));
+  color: var(--lt-ink, var(--lt-room-ink));
+}
+.lt .btn-ghost:hover {
+  border-color: currentColor;
+}
+.lt .btn svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.lt .actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.lt .actions-center {
+  justify-content: center;
+}
+/* the language switch (nav and footer) */
+.lt .lang {
+  background: none;
+  border: 1px solid var(--lt-line-2, var(--lt-room-line-2));
+  height: 32px;
+  min-width: 44px;
+  padding: 0 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: var(--lt-text-14);
+  color: inherit;
+}
+/* the brand: a film with one lit row, and the word */
+.lt .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: var(--lt-text-20);
+  font-weight: 640;
+  letter-spacing: -0.01em;
+}
+.lt .brand-mark {
+  width: 22px;
+  height: 22px;
+}
+.lt .bm-film {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+.lt .bm-row {
+  fill: var(--lt-lumen);
+}
+
+/* ---------- films: the poster is the no-JS state; canvases paint over it once the renderer runs (lib/film.ts) ---------- */
+.lt .film {
+  position: absolute;
+  border-radius: 0.5% / 0.7%;
+  overflow: hidden;
+}
+.lt :is(.film-poster, .film-canvas, .film-glow, .film-flare) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.lt .film-poster {
+  object-fit: fill;
+}
+.lt .film-glow {
+  pointer-events: none;
+}
+.lt .film-flare {
+  pointer-events: none;
+  opacity: 0;
+}
+.lt .film-bands {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.lt .band-cover {
+  position: absolute;
+  background: var(--lt-film-800);
+  transform-origin: 50% 100%;
+  transform: scaleY(0);
+}
+/* once a canvas has painted, its poster is never shown again (it is the no-JS state only) */
+.lt .film.is-drawn .film-poster {
+  visibility: hidden;
+}
+.lt .clips {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.lt .clip {
+  position: absolute;
+  width: 38px;
+  height: 30px;
+  margin-left: -19px;
+  margin-top: -17px;
+  background: url("/landing/shared/clip.svg") center / contain no-repeat;
+}
+
+/* ---------- ground seams: a lighting change, not a cut ----------
+   <div className="seam" data-from="day|room|box|lead" aria-hidden /> as the first child of a section (the section is
+   positioned; its content sits above with position: relative; z-index: 1). The previous ground's light stays full
+   while the boundary crosses the screen and goes out as it leaves the top. Scroll-driven, compositor-only; off under
+   reduced motion; without scroll timelines lib/page.motion.ts drives the same opacities (html.lt-sda-js). */
+.lt .seam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 100svh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+.lt .seam[data-from="day"] {
+  background: linear-gradient(var(--lt-day) 0%, color-mix(in oklab, var(--lt-day) 55%, transparent) 26%, transparent 78%);
+}
+.lt .seam[data-from="box"] {
+  background: linear-gradient(var(--lt-box) 0%, color-mix(in oklab, var(--lt-box) 50%, transparent) 24%, transparent 76%);
+}
+.lt .seam[data-from="room"] {
+  background: linear-gradient(var(--lt-room-950) 0%, color-mix(in oklab, var(--lt-room-950) 60%, transparent) 30%, transparent 80%);
+}
+.lt .seam[data-from="lead"] {
+  background: linear-gradient(var(--lt-lead-600) 0%, color-mix(in oklab, var(--lt-lead-600) 55%, transparent) 26%, transparent 78%);
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html.lt-js .lt .seam {
+      animation: lt-seam-page linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 80%;
+    }
+  }
+}
+@keyframes lt-seam-page {
+  0%,
+  52% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- house lights: a ground change as two layers in the incoming section ----------
+   Give the section className "lt-house" and two children: <div className="houselights" /> (the incoming ground's light
+   spilling up above its top edge, colour --lt-house-up) and <div className="house-in" /> (the outgoing ground's light
+   lying over its top, colour --lt-house-down). Both run over the section's entry 0-60 %. */
+.lt :is(.houselights, .house-in) {
+  display: none;
+}
+.lt .lt-house > .houselights {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 100%;
+  height: 62svh;
+  z-index: -2;
+  pointer-events: none;
+  --c: var(--lt-house-up, var(--lt-room-950));
+  background: linear-gradient(to top, var(--c) 0%, color-mix(in oklab, var(--c) 64%, transparent) 9%,
+    color-mix(in oklab, var(--c) 34%, transparent) 24%, color-mix(in oklab, var(--c) 14%, transparent) 44%,
+    color-mix(in oklab, var(--c) 4%, transparent) 70%, transparent 100%);
+}
+.lt .lt-house > .house-in {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 42svh;
+  z-index: -1;
+  pointer-events: none;
+  --c: var(--lt-house-down, var(--lt-box));
+  background: linear-gradient(to bottom, var(--c) 0%, color-mix(in oklab, var(--c) 58%, transparent) 12%,
+    color-mix(in oklab, var(--c) 24%, transparent) 32%, color-mix(in oklab, var(--c) 7%, transparent) 60%, transparent 100%);
+}
+.lt .lt-house {
+  overflow-y: visible;
+}
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html.lt-js .lt .lt-house {
+      view-timeline: --hl block;
+      isolation: isolate;
+    }
+    html.lt-js .lt .lt-house > .houselights {
+      display: block;
+      opacity: 0;
+      animation: lt-house linear both;
+      animation-timeline: --hl;
+      animation-range: entry 0% entry 60%;
+    }
+    html.lt-js .lt .lt-house > .house-in {
+      display: block;
+      opacity: 1;
+      animation: lt-house-in linear both;
+      animation-timeline: --hl;
+      animation-range: entry 0% entry 60%;
+    }
+  }
+}
+/* browsers without scroll timelines (Firefox): lib/page.motion.ts sets the same opacities from a scroll handler */
+html.lt-sda-js .lt .lt-house {
+  isolation: isolate;
+}
+html.lt-sda-js .lt .lt-house > .houselights {
+  display: block;
+  opacity: 0;
+}
+html.lt-sda-js .lt .lt-house > .house-in {
+  display: block;
+  opacity: 1;
+}
+@keyframes lt-house {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes lt-house-in {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* ---------- reduced motion: every final state at once ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .lt *,
+  .lt *::before,
+  .lt *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
+}

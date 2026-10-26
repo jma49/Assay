@@ -1,0 +1,455 @@
+/* Section 4 · Three outcomes (room). One baked three-panel viewer; each panel is a crop of the same bake
+   (img/viewer-*-2x.webp, 2880 x 1440, cropped to y 100..1380), so the panels tile into one object on desktop
+   and stand alone in a snap row on the phone. Film rects are the bake's own measurements. */
+.lt .s-outcomes {
+  --oc-film-ratio: 706.37 / 904;
+  padding-block: var(--lt-section-y);
+  color: var(--lt-room-ink);
+  overflow: clip;
+  position: relative;
+}
+/* the lead's light lies over the top of the room and goes out as the section scrolls in (shared .seam): the room dims */
+.lt .s-outcomes > :not(.seam) {
+  position: relative;
+  z-index: 1;
+}
+.lt .s-outcomes .oc-head {
+  text-align: center;
+}
+.lt .s-outcomes .oc-title {
+  margin: 0 auto;
+  max-width: 12em;
+}
+.lt .s-outcomes .oc-lede {
+  margin: var(--lt-sp-5) auto 0;
+  max-width: 34rem;
+  color: var(--lt-room-ink-2);
+}
+
+.lt .s-outcomes .oc-viewer {
+  width: min(100%, 1600px);
+  margin: var(--lt-sp-8) auto 0;
+}
+.lt .s-outcomes .oc-panels {
+  display: grid;
+  grid-template-columns: 35.84% 28.32% 35.84%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lt .s-outcomes .oc-panels:focus-visible {
+  outline: 2px solid var(--lt-room-ink);
+  outline-offset: 4px;
+}
+
+/* desktop crop of each panel out of the one bake */
+.lt .s-outcomes .oc-p1 {
+  --sw: 1032.18;
+  --iw: 279.02%;
+  --il: 0%;
+  --fl: 26.27%;
+  --ft: 14.24%;
+  --fw: 68.43%;
+}
+.lt .s-outcomes .oc-p2 {
+  --sw: 815.64;
+  --iw: 353.10%;
+  --il: -126.55%;
+  --fl: 6.7%;
+  --ft: 18.02%;
+  --fw: 86.6%;
+}
+.lt .s-outcomes .oc-p3 {
+  --sw: 1032.18;
+  --iw: 279.02%;
+  --il: -179.02%;
+  --fl: 5.29%;
+  --ft: 14.24%;
+  --fw: 68.43%;
+}
+.lt .s-outcomes .oc-panel {
+  display: grid;
+  grid-template-rows: auto auto;
+  min-width: 0;
+}
+.lt .s-outcomes .oc-crop {
+  grid-area: 1 / 1;
+  position: relative;
+  aspect-ratio: var(--sw) / 1280;
+  overflow: hidden;
+}
+.lt .s-outcomes .oc-crop img {
+  position: absolute;
+  top: -7.8125%;
+  left: var(--il);
+  width: var(--iw);
+  max-width: none;
+  height: auto;
+  display: block;
+}
+/* the bake's wall fades into the room on every outer edge (no rectangle seam) */
+.lt .s-outcomes .oc-crop {
+  --oc-v: linear-gradient(to bottom, transparent, black 4%, black 96%, transparent);
+  -webkit-mask-image: var(--oc-v);
+  mask-image: var(--oc-v);
+}
+.lt .s-outcomes .oc-p1 .oc-crop {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 15%), var(--oc-v);
+  mask-image: linear-gradient(to right, transparent, black 15%), var(--oc-v);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+.lt .s-outcomes .oc-p3 .oc-crop {
+  -webkit-mask-image: linear-gradient(to left, transparent, black 15%), var(--oc-v);
+  mask-image: linear-gradient(to left, transparent, black 15%), var(--oc-v);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+/* the film mount: the film, its dimmer (box off) and the clips */
+.lt .s-outcomes .oc-mount {
+  grid-area: 1 / 1;
+  align-self: start;
+  justify-self: start;
+  position: relative;
+  z-index: 1;
+  margin: var(--ft) 0 0 var(--fl);
+  width: var(--fw);
+  aspect-ratio: var(--oc-film-ratio);
+}
+.lt .s-outcomes .oc-film, .lt .s-outcomes .oc-dim {
+  position: absolute;
+  inset: 0;
+  border-radius: 3px;
+}
+.lt .s-outcomes .oc-film {
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--lt-film-900) url("/landing/outcomes/film-orders.webp") center / 100% 100%;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lt-shadow-black) 40%, transparent), 0 1px 0 1px color-mix(in srgb, var(--lt-day-white) 5%, transparent);
+}
+.lt .s-outcomes .oc-film-clean {
+  background-image: url("/landing/outcomes/film-payments.webp");
+}
+.lt .s-outcomes .oc-dim {
+  background: var(--lt-outcomes-dimmer);
+  opacity: 0;
+  pointer-events: none;
+}
+.lt .s-outcomes .oc-clip {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  width: 18.12%;
+  height: auto;
+  transform: translateY(-46.9%);
+  pointer-events: none;
+}
+.lt .s-outcomes .oc-clip-a {
+  left: 15.74%;
+}
+.lt .s-outcomes .oc-clip-b {
+  left: 66.14%;
+}
+
+/* printed table: the column header strip and the lit rows share the column stops */
+.lt .s-outcomes .oc-film {
+  --c1: 4%;
+  --c2: 15%;
+  --c3r: 42%;
+  --c4: 62%;
+}
+.lt .s-outcomes .oc-film-clean {
+  --c2: 19%;
+  --c3r: 44%;
+  --c4: 63%;
+}
+.lt .s-outcomes .oc-cols {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-13);
+  line-height: 20px;
+  color: var(--lt-film-ink-2);
+}
+.lt .s-outcomes .c1, .lt .s-outcomes .c2, .lt .s-outcomes .c3, .lt .s-outcomes .c4 {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+}
+.lt .s-outcomes .c1 {
+  left: var(--c1);
+}
+.lt .s-outcomes .c2 {
+  left: var(--c2);
+}
+.lt .s-outcomes .c3 {
+  right: var(--c3r);
+  text-align: right;
+}
+.lt .s-outcomes .c4 {
+  left: var(--c4);
+}
+.lt .s-outcomes .oc-lit {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  isolation: isolate;
+}
+.lt .s-outcomes .oc-lit-top {
+  top: 8.4%;
+}
+.lt .s-outcomes .oc-lit-bot {
+  bottom: 8.6%;
+}
+.lt .s-outcomes .oc-row {
+  position: relative;
+  height: 21px;
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-14);
+  line-height: 21px;
+  color: var(--lt-film-950);
+}
+/* light through a row: a crisp band with a tight halo, nothing wider */
+.lt .s-outcomes .oc-row::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 2%;
+  right: 2%;
+  top: 1px;
+  bottom: 1px;
+  border-radius: 2px;
+  background: var(--lt-lumen-core);
+  box-shadow: 0 0 0 1px var(--lt-lumen), 0 0 8px 1px var(--lt-lumen-halo);
+}
+.lt .s-outcomes .oc-rebate {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: 7px;
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  color: var(--lt-film-print);
+}
+
+/* Broken: fogged, hanging from one clip, the error printed across the fog */
+.lt .s-outcomes .oc-p3 .oc-film, .lt .s-outcomes .oc-p3 .oc-dim {
+  transform: rotate(2.4deg);
+  transform-origin: 24.8% 0;
+}
+.lt .s-outcomes .oc-fog {
+  position: absolute;
+  inset: -6%;
+  z-index: 1;
+  background: url("/landing/outcomes/fog.webp") center / cover;
+}
+.lt .s-outcomes .oc-film-broken .oc-rebate {
+  z-index: 2;
+  color: var(--lt-film-950);
+}
+.lt .s-outcomes .oc-error {
+  position: absolute;
+  z-index: 2;
+  left: 6%;
+  right: 6%;
+  top: 37%;
+  margin: 0;
+  text-align: center;
+  color: var(--lt-film-950);
+}
+.lt .s-outcomes .oc-error-h {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--lt-outcomes-error-ink);
+}
+.lt .s-outcomes .oc-error code {
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-15);
+  line-height: 1.5;
+}
+
+/* captions on the room below each film */
+.lt .s-outcomes .oc-cap {
+  grid-area: 2 / 1;
+  margin: 0 0 0 var(--fl);
+  width: var(--fw);
+  padding-top: var(--lt-sp-5);
+}
+.lt .s-outcomes .oc-state {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--lt-sp-3);
+  margin: 0 0 var(--lt-sp-2);
+  font-size: var(--lt-text-h3);
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  color: var(--lt-room-ink);
+}
+.lt .s-outcomes .oc-n {
+  font-family: var(--lt-font-mono);
+  font-size: var(--lt-text-note);
+  font-weight: 400;
+  color: var(--lt-room-ink-2);
+  letter-spacing: 0;
+}
+.lt .s-outcomes .oc-n.count {
+  color: var(--lt-lumen);
+}
+.lt .s-outcomes .oc-what {
+  margin: 0;
+  font-size: var(--lt-text-16);
+  line-height: 1.55;
+  color: var(--lt-room-ink-2);
+}
+.lt .s-outcomes .oc-src {
+  margin: var(--lt-sp-3) 0 0;
+  font-size: var(--lt-text-tag);
+  line-height: 1.5;
+  color: var(--lt-room-ink-3);
+}
+.lt .s-outcomes .oc-note {
+  margin-top: var(--lt-sp-7);
+  text-align: center;
+  color: var(--lt-room-ink-3);
+}
+.lt:lang(zh) .s-outcomes .oc-what {
+  line-height: 1.75;
+}
+
+/* motion (outcomes.motion.ts): armed = the box is off until the section enters */
+.lt .s-outcomes.oc-armed .oc-on {
+  opacity: 0;
+}
+.lt .s-outcomes.oc-armed .oc-dim {
+  opacity: 1;
+}
+.lt .s-outcomes.oc-armed .oc-row {
+  opacity: 0;
+}
+
+/* the live fog (outcomes.motion.ts): a WebGL layer over the baked poster; the poster is the no-JS and first-frame state */
+.lt .s-outcomes .oc-fogcanvas {
+  position: absolute;
+  inset: -6%;
+  z-index: 1;
+  width: 112%;
+  height: 112%;
+  display: block;
+  pointer-events: none;
+}
+.lt .s-outcomes .oc-film-broken.is-drawn .oc-fog {
+  opacity: 0;
+}
+/* the clean film's one sheen: a thin reflection across the clear base, not a glow */
+.lt .s-outcomes .oc-sheen {
+  position: absolute;
+  z-index: 3;
+  top: -10%;
+  bottom: -10%;
+  left: 0;
+  width: 18%;
+  pointer-events: none;
+  transform: translateX(-140%) skewX(-18deg);
+  background: linear-gradient(90deg, transparent, var(--lt-outcomes-sheen-edge) 40%, var(--lt-outcomes-sheen) 50%, var(--lt-outcomes-sheen-edge) 60%, transparent);
+}
+
+/* phone and tablet: one panel in focus, a snap row of three full crops */
+@media (max-width: 900px) {
+  .lt .s-outcomes .oc-viewer {
+    width: 100%;
+    margin-top: var(--lt-sp-7);
+  }
+  .lt .s-outcomes .oc-panels {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    padding-inline: max(6vw, calc(50vw - 210px));
+    scrollbar-width: none;
+  }
+  .lt .s-outcomes .oc-panels::-webkit-scrollbar {
+    display: none;
+  }
+  .lt .s-outcomes .oc-panel {
+    flex: 0 0 min(88vw, 420px);
+    scroll-snap-align: center;
+  }
+  .lt .s-outcomes .oc-panel {
+    --sw: 926.37;
+    --iw: 310.89%;
+    --fl: 11.87%;
+    --ft: 15.87%;
+    --fw: 76.25%;
+  }
+  .lt .s-outcomes .oc-p1 {
+    --il: -17.4%;
+  }
+  .lt .s-outcomes .oc-p2 {
+    --il: -105.45%;
+  }
+  .lt .s-outcomes .oc-p3 {
+    --il: -193.49%;
+  }
+  .lt .s-outcomes .oc-panel .oc-crop {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent), var(--oc-v);
+    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent), var(--oc-v);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+  .lt .s-outcomes .oc-film {
+    --c1: 3%;
+    --c2: 13%;
+    --c3r: 34%;
+    --c4: 69%;
+  }
+  .lt .s-outcomes .oc-film-clean {
+    --c2: 15%;
+    --c3r: 37%;
+    --c4: 67%;
+  }
+  .lt .s-outcomes .oc-row {
+    height: 19px;
+    font-size: var(--lt-text-13);
+    line-height: 19px;
+  }
+  .lt .s-outcomes .oc-d {
+    display: none;
+  }
+  .lt .s-outcomes .oc-error code {
+    font-size: var(--lt-text-14);
+  }
+  .lt .s-outcomes .oc-cap {
+    padding-top: var(--lt-sp-4);
+  }
+  .lt .s-outcomes .oc-what {
+    font-size: var(--lt-text-15);
+  }
+}
+.lt .s-outcomes .oc-note code {
+  font-size: inherit;
+}
+
+/* ---------- on the assembled page ---------- */
+/* the dead stretch between safety and outcomes: the lead's light lies over the outcomes head, not over empty ground */
+.lt .s-outcomes > .seam[data-from="lead"] {
+  height: 60svh;
+  background: linear-gradient(var(--lt-lead-700) 0%, color-mix(in oklab, var(--lt-lead-700) 45%, transparent) 30%, transparent 100%);
+}
+/* Clean is the clearest film on the page (thin base, the light comes through evenly, the print sharp and dark), not the
+   same dark film without marks */
+.lt .s-outcomes .oc-film-clean {
+  filter: invert(0.87) hue-rotate(180deg) contrast(1.05);
+}
