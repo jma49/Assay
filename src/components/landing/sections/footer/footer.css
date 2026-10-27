@@ -109,6 +109,16 @@
   max-width: 52rem;
 }
 
+/* the sign-off keeps the edge the hero and the final use, so the page ends as it began */
+@media (min-width: 1101px) {
+  .lt .foot-grid.wrap,
+  .lt .foot-base.wrap {
+    width: auto;
+    margin-inline: 0;
+    padding-inline: var(--lt-edge);
+  }
+}
+
 @media (min-width: 701px) and (max-width: 1100px) {
   .lt .foot-grid {
     grid-template-columns: 1fr 1fr 1fr;
