@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { signOut, type CurrentUser } from "@/lib/auth/client";
+import { cn } from "@/lib/utils/utils";
 
 const initials = (name: string) =>
   name
@@ -13,20 +14,24 @@ const initials = (name: string) =>
     .map((part) => part[0]!.toUpperCase())
     .join("") || "?";
 
-/** The signed-in person's avatar, with who they are and a way out. */
-export function UserMenu({ user }: { user: CurrentUser }) {
+/** The signed-in person's avatar, with who they are and a way out. `room` is the dark rail variant. */
+export function UserMenu({ user, tone }: { user: CurrentUser; tone?: "room" }) {
   const { language } = useLanguage();
+  const room = tone === "room";
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex min-w-0 items-center gap-2 rounded-md py-0.5 pr-1.5 text-left outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50">
+      <DropdownMenuTrigger className={cn(
+          "flex min-w-0 items-center gap-2 rounded-sm py-0.5 pr-1.5 text-left outline-none",
+          room ? "hover:bg-room-800 focus-visible:outline-room-ink" : "hover:bg-muted",
+        )}>
         {user.image ? (
           // Provider avatars come from many hosts; next/image would need each one configured.
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.image} alt="" referrerPolicy="no-referrer" className="size-6 shrink-0 rounded-full" />
         ) : (
-          <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary-soft text-caption font-semibold text-primary-ink">{initials(user.name)}</span>
+          <span className={cn("grid size-6 shrink-0 place-items-center rounded-full text-caption font-semibold", room ? "bg-room-800 text-room-ink" : "bg-primary-soft text-primary-ink")}>{initials(user.name)}</span>
         )}
-        <span className="truncate text-body-sm text-muted-foreground max-md:hidden">{user.name}</span>
+        <span className={cn("truncate text-body-sm max-md:hidden", room ? "text-room-ink-2" : "text-muted-foreground")}>{user.name}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top" className="w-56">
         <DropdownMenuLabel className="grid gap-0.5 font-normal">

@@ -9,8 +9,8 @@ interface PageHeaderProps {
 }
 
 /**
- * The window title bar already names the page, so the heading is kept for
- * screen readers only and the actions move to the window toolbar.
+ * The shell draws the visible title as decoration for sighted readers; this is the page's real
+ * `<h1>` for assistive tech. The page's actions move up to the shell toolbar.
  */
 export function PageHeader({ title, description, actions }: PageHeaderProps) {
   return (
