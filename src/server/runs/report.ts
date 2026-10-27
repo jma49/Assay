@@ -4,9 +4,9 @@ import { findRun } from "@/server/repos/runs";
 import { responseSample, SAMPLE_FIELDS } from "./sample";
 
 /** What the report shows; never `rowKeys` (up to 5,000 fingerprints) or other stored fields. */
-const REPORT_FIELDS = { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, error: 1, message: 1, findings: 1, ...SAMPLE_FIELDS } as const;
+const REPORT_FIELDS = { checkId: 1, finishedAt: 1, outcome: 1, rowCount: 1, error: 1, message: 1, findings: 1, diff: 1, ...SAMPLE_FIELDS } as const;
 
-const CHECK_FIELDS = { name: 1, cnName: 1, description: 1, cnDescription: 1, scope: 1, cnScope: 1, author: 1 } as const;
+const CHECK_FIELDS = { name: 1, cnName: 1, description: 1, cnDescription: 1, scope: 1, cnScope: 1, author: 1, sqlContent: 1 } as const;
 
 /**
  * One run's report (/runs/[runId]): the run with a trimmed sample and the
@@ -26,6 +26,7 @@ export async function runReport(db: Db, runId: string) {
     error: run.error ?? null,
     message: run.message ?? "",
     findings: run.findings ?? "",
+    diff: run.diff ?? null,
     sample: responseSample(run),
     ...(check && {
       name: check.name,
@@ -35,6 +36,7 @@ export async function runReport(db: Db, runId: string) {
       scope: check.scope,
       cnScope: check.cnScope,
       author: check.author as string | undefined,
+      sql: typeof check.sqlContent === "string" ? check.sqlContent : null,
     }),
   };
 }

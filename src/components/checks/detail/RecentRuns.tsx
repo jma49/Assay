@@ -2,6 +2,7 @@ import type { CheckDetail } from "@/contracts/checks";
 import { formatDateTime } from "@/lib/utils/datetime";
 import { cn } from "@/lib/utils/utils";
 import { Sparkline } from "../Sparkline";
+import { OUTCOME_LABEL } from "../status";
 import type { Copy } from "./copy";
 
 /** The last 30 runs as a strip, and how many rows the check flags now, last time and at most. */
@@ -23,31 +24,28 @@ export function RecentRuns({
   const previousRows: number | string = previousPoint && previousPoint.outcome !== "error" ? previousPoint.rowCount : "—";
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-      <div className="rounded-xl bg-card p-4 shadow-border">
-        <div className="mb-2.5 flex justify-between text-caption text-muted-foreground">
-          <span>{t.lastRuns(history.length)}</span>
+    <div className="grid overflow-hidden rounded-sm border border-line-2 bg-white/30 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="border-b border-line p-4 lg:border-r lg:border-b-0">
+        <div className="mb-2.5 flex justify-between text-caption text-ink-3">
+          <span className="lead">{t.lastRuns(history.length)}</span>
           <span>{t.now}</span>
         </div>
         {/* Always 30 slots, newest on the right, so the strip reads the same for every check. */}
-        <div className="grid grid-cols-[repeat(30,minmax(0,1fr))] gap-[3px]">
+        <div className="run-strip">
           {Array.from({ length: 30 - history.length }, (_, i) => (
-            <span key={`empty-${i}`} className="h-7 rounded-none bg-muted" />
+            <span key={`empty-${i}`} className="run-frame run-frame-empty" />
           ))}
           {history.map((point, i) => (
             <span
               key={i}
-              title={`${formatDateTime(point.at, language)} · ${point.outcome === "error" ? t.queryError : t.rows(point.rowCount)}`}
-              className={cn(
-                "h-7 rounded-none",
-                point.outcome === "error" ? "bg-failure" : point.outcome === "issues" ? "bg-attention" : "bg-success",
-              )}
+              title={`${formatDateTime(point.at, language)} · ${point.outcome === "error" ? OUTCOME_LABEL.error[language] : t.rows(point.rowCount)}`}
+              className={cn("run-frame", `run-frame-${point.outcome}`)}
             />
           ))}
         </div>
       </div>
-      <div className="rounded-xl bg-card p-4 shadow-border">
-        <p className="mb-2 text-caption text-muted-foreground">{t.rowsFlagged}</p>
+      <div className="p-4">
+        <p className="lead mb-2 text-ink-3">{t.rowsFlagged}</p>
         <div className="flex items-end justify-between gap-4">
           <dl className="flex gap-5">
             {[
@@ -56,8 +54,8 @@ export function RecentRuns({
               [t.high, high],
             ].map(([label, value]) => (
               <div key={String(label)}>
-                <dd className="text-title leading-tight font-semibold tabular-nums">{value}</dd>
-                <dt className="text-caption text-muted-foreground">{label}</dt>
+                <dd className="text-title leading-tight font-semibold text-ink tabular-nums">{value}</dd>
+                <dt className="text-caption text-ink-3">{label}</dt>
               </div>
             ))}
           </dl>

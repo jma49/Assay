@@ -20,13 +20,14 @@ import { RecentRuns } from "./detail/RecentRuns";
 import { RunHistory } from "./detail/RunHistory";
 import { TriagePanel } from "./detail/TriagePanel";
 import { useCheckDetail } from "./detail/useCheckDetail";
-import { OUTCOME_DOT, OUTCOME_LABEL, OUTCOME_PILL, scheduleLabel } from "./status";
+import { OUTCOME_LABEL, scheduleLabel } from "./status";
+import { OutcomeGlyph } from "./OutcomeGlyph";
 
 /** The four tabs under a check, shared by its page and the side panel on the Checks page. */
 function CheckTabs({ check, name, t, language, tab, setTab, flush }: { check: CheckDetail; name: string; t: Copy; language: "en" | "zh"; tab: Tab; setTab: (tab: Tab) => void; flush?: boolean }) {
   return (
-    <div className={cn(!flush && "overflow-hidden rounded-xl bg-card shadow-border")}>
-      <div role="tablist" aria-label={name} className={cn("flex gap-1 overflow-x-auto border-b [scrollbar-width:none]", flush ? "-mx-1" : "px-2")}>
+    <div className={cn(!flush && "overflow-hidden rounded-sm border border-line-2 bg-white/30")}>
+      <div role="tablist" aria-label={name} className={cn("flex gap-1 overflow-x-auto border-b border-line [scrollbar-width:none]", flush ? "px-0" : "px-2")}>
         {(Object.keys(t.tabs) as Tab[]).map((key) => (
           <button
             key={key}
@@ -36,7 +37,7 @@ function CheckTabs({ check, name, t, language, tab, setTab, flush }: { check: Ch
             onClick={() => setTab(key)}
             className={cn(
               "-mb-px border-b-2 px-3 py-2.5 text-body-sm whitespace-nowrap transition-[color,border-color] duration-150",
-              tab === key ? "border-primary font-medium text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
+              tab === key ? "border-ink font-medium text-ink" : "border-transparent text-ink-3 hover:text-ink",
             )}
           >
             {t.tabs[key]}
@@ -45,9 +46,9 @@ function CheckTabs({ check, name, t, language, tab, setTab, flush }: { check: Ch
       </div>
       <div role="tabpanel" className={cn(flush && "-mx-6 [&_table]:min-w-0")}>
         {tab === "result" &&
-          (check.latest ? <LatestResult latest={check.latest} t={t} /> : <p className="px-6 py-10 text-center text-body-sm text-muted-foreground">{t.notRun}</p>)}
+          (check.latest ? <LatestResult latest={check.latest} sql={check.sql} t={t} language={language} /> : <p className="px-6 py-10 text-center text-body-sm text-ink-2">{t.notRun}</p>)}
         {tab === "history" &&
-          (check.runs.length ? <RunHistory runs={check.runs} t={t} language={language} /> : <p className="px-6 py-10 text-center text-body-sm text-muted-foreground">{t.notRun}</p>)}
+          (check.runs.length ? <RunHistory runs={check.runs} t={t} language={language} /> : <p className="px-6 py-10 text-center text-body-sm text-ink-2">{t.notRun}</p>)}
         {tab === "definition" && <Definition check={check} t={t} language={language} />}
         {tab === "triage" && <TriagePanel check={check} t={t} language={language} />}
       </div>
@@ -60,19 +61,19 @@ function RunStrip({ check, t, language }: { check: CheckDetail; t: Copy; languag
   const history = check.history;
   return (
     <div>
-      <div className="grid grid-cols-[repeat(30,minmax(0,1fr))] gap-[3px]">
+      <div className="run-strip">
         {Array.from({ length: 30 - history.length }, (_, i) => (
-          <span key={`empty-${i}`} className="h-6 rounded-none bg-muted" />
+          <span key={`empty-${i}`} className="run-frame run-frame-empty" />
         ))}
         {history.map((point, i) => (
           <span
             key={i}
-            title={`${formatDateTime(point.at, language)} · ${point.outcome === "error" ? t.queryError : t.rows(point.rowCount)}`}
-            className={cn("h-6 rounded-none", point.outcome === "error" ? "bg-failure" : point.outcome === "issues" ? "bg-attention" : "bg-success")}
+            title={`${formatDateTime(point.at, language)} · ${point.outcome === "error" ? OUTCOME_LABEL.error[language] : t.rows(point.rowCount)}`}
+            className={cn("run-frame", `run-frame-${point.outcome}`)}
           />
         ))}
       </div>
-      <div className="mt-1.5 flex justify-between text-caption text-muted-foreground">
+      <div className="mt-1.5 flex justify-between text-caption text-ink-3">
         <span>{t.lastRuns(history.length)}</span>
         <span>{t.now}</span>
       </div>
@@ -88,13 +89,13 @@ export function CheckPanel({ scriptId, onClose }: { scriptId: string; onClose: (
   const [tab, setTab] = useState<Tab>("result");
   const { check, error, loading, reload, running, runNow, canRun, canAlert } = useCheckDetail(scriptId, language, { onRan: () => setTab("result"), nameTab: false });
 
-  if (error) return <p className="px-6 py-10 text-center text-body-sm text-muted-foreground">{error}</p>;
+  if (error) return <p className="px-6 py-10 text-center text-body-sm text-ink-2">{error}</p>;
   if (loading && !check) {
     return (
-      <div className="space-y-4 p-6" aria-busy>
-        <div className="skeleton-shimmer h-16 rounded-lg" />
-        <div className="skeleton-shimmer h-8 rounded-lg" />
-        <div className="skeleton-shimmer h-48 rounded-lg" />
+      <div className="space-y-4 p-5" aria-busy>
+        <div className="skeleton-shimmer h-16 rounded-sm" />
+        <div className="skeleton-shimmer h-8 rounded-sm" />
+        <div className="skeleton-shimmer h-48 rounded-sm" />
       </div>
     );
   }
@@ -105,22 +106,22 @@ export function CheckPanel({ scriptId, onClose }: { scriptId: string; onClose: (
   const href = `/checks/${encodeURIComponent(check.scriptId)}`;
 
   return (
-    <div className="p-6">
+    <div className="p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-caption">
             {state ? (
-              <span className={cn("inline-flex items-center gap-1.5 rounded-none px-2 py-0.5 font-medium", OUTCOME_PILL[state.outcome])}>
-                <span className={cn("status-dot", OUTCOME_DOT[state.outcome])} aria-hidden />
+              <span className="inline-flex items-center gap-1.5 font-medium text-ink">
+                <OutcomeGlyph outcome={state.outcome} />
                 {OUTCOME_LABEL[state.outcome][language]}
               </span>
             ) : (
-              <span className="text-muted-foreground">{t.neverRan}</span>
+              <span className="text-ink-3">{t.neverRan}</span>
             )}
             <AlertBadges alerting={check.alerting} />
           </div>
           <h2 className="mt-3 text-headline">{name}</h2>
-          <p className="mt-1 text-caption text-muted-foreground">
+          <p className="mt-1 text-caption text-ink-3">
             <span className="font-mono">{check.scriptId}</span> · {scheduleLabel(check.schedule, language)}
           </p>
         </div>
@@ -178,9 +179,9 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
   if (loading && !check) {
     return (
       <div className={`${APP_CONTAINER} space-y-4 py-6`} aria-busy>
-        <div className="skeleton-shimmer h-20 rounded-xl" />
-        <div className="skeleton-shimmer h-28 rounded-xl" />
-        <div className="skeleton-shimmer h-64 rounded-xl" />
+        <div className="skeleton-shimmer h-20 rounded-sm" />
+        <div className="skeleton-shimmer h-28 rounded-sm" />
+        <div className="skeleton-shimmer h-64 rounded-sm" />
       </div>
     );
   }
@@ -190,7 +191,7 @@ export function CheckDetailView({ scriptId }: { scriptId: string }) {
   const description = zh ? check.cnDescription || check.description : check.description;
 
   return (
-    <div className={`${APP_CONTAINER} space-y-5 py-6`}>
+    <div className={`${APP_CONTAINER} space-y-4 py-6`}>
       <WindowToolbar>
         {canRun && (
           <Button size="sm" onClick={runNow} disabled={running}>

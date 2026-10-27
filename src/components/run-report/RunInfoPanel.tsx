@@ -2,11 +2,12 @@ import Link from "next/link";
 import { cn } from "@/lib/utils/utils";
 import { runResultLabel } from "@/lib/utils/run-message";
 import type { RunReportMessages } from "./messages";
-import { OUTCOME_DOT, OUTCOME_LABEL, OUTCOME_TEXT } from "@/components/checks/status";
+import { OUTCOME_LABEL, OUTCOME_TEXT } from "@/components/checks/status";
+import { OutcomeGlyph } from "@/components/checks/OutcomeGlyph";
 import type { RunOutcome } from "@/domain/run";
 import { localized, type ExecutionResult, type Language } from "./run-report";
 
-/** A "Get Info"-style inspector: facts about the run and its check. */
+/** One line of facts about the run and its check, so the returned rows get the full width. */
 export function RunInfoPanel({
   result,
   outcome,
@@ -22,15 +23,14 @@ export function RunInfoPanel({
   language: Language;
   t: RunReportMessages;
 }) {
-  const zh = language === "zh";
   const description = localized(language, result.description, result.cnDescription);
   const scope = localized(language, result.scope, result.cnScope);
   const info: { label: string; value: React.ReactNode; mono?: boolean }[] = [
     {
       label: t.status,
       value: (
-        <span className={cn("inline-flex items-center gap-1.5", OUTCOME_TEXT[outcome])}>
-          <span className={cn("status-dot", OUTCOME_DOT[outcome])} aria-hidden />
+        <span className={cn("inline-flex items-center gap-1.5 font-medium", OUTCOME_TEXT[outcome])}>
+          <OutcomeGlyph outcome={outcome} />
           {OUTCOME_LABEL[outcome][language]}
         </span>
       ),
@@ -41,32 +41,26 @@ export function RunInfoPanel({
       label: t.scriptId,
       mono: true,
       value: (
-        <Link href={`/checks/${encodeURIComponent(result.checkId)}`} className="text-primary hover:underline">
+        <Link href={`/checks/${encodeURIComponent(result.checkId)}`} className="text-ink underline underline-offset-4">
           {result.checkId}
         </Link>
       ),
     },
     ...(scriptName ? [{ label: t.name, value: scriptName }] : []),
-    ...((result.description || result.cnDescription) ? [{ label: t.description, value: description }] : []),
-    ...((result.scope || result.cnScope) ? [{ label: t.scope, value: scope }] : []),
+    ...(result.description || result.cnDescription ? [{ label: t.description, value: description }] : []),
+    ...(result.scope || result.cnScope ? [{ label: t.scope, value: scope }] : []),
     ...(result.author ? [{ label: t.author, value: result.author }] : []),
     { label: t.resultId, value: result._id, mono: true },
   ];
 
   return (
-    <aside className="lg:col-span-4">
-      {/* Sticks at the page's top padding, so it starts level with the headline. */}
-      <div className="overflow-hidden rounded-xl bg-card shadow-border lg:sticky lg:top-6">
-        <p className="border-b bg-muted px-4 py-2 text-caption font-medium text-muted-foreground">{zh ? "简介" : "Info"}</p>
-        <dl className="divide-y text-body-sm">
-          {info.map((item) => (
-            <div key={item.label} className="grid grid-cols-[7.5rem_1fr] gap-3 px-4 py-2">
-              <dt className="text-muted-foreground">{item.label}</dt>
-              <dd className={cn("min-w-0 break-words", item.mono && "font-mono text-caption")}>{item.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-    </aside>
+    <dl className="flex flex-wrap gap-x-6 gap-y-2 border-y border-line px-1 py-2.5 text-caption">
+      {info.map((item) => (
+        <div key={item.label} className="flex min-w-0 items-baseline gap-1.5">
+          <dt className="lead shrink-0 text-ink-3">{item.label}</dt>
+          <dd className={cn("min-w-0 truncate text-body-sm text-ink", item.mono && "font-mono text-caption")}>{item.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
