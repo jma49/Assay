@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateReadOnlySql } from "./read-only-validator";
+import { rejectedSqlTerm, validateReadOnlySql } from "./read-only-validator";
 
 const allowed = (sql: string) => expect(validateReadOnlySql(sql).isValid).toBe(true);
 const rejected = (sql: string) => expect(validateReadOnlySql(sql).isValid).toBe(false);
@@ -165,5 +165,18 @@ describe("forbidden function messages", () => {
     expect(result.isValid).toBe(false);
     expect(result.reasonEn).toContain('"dblink_exec"');
     expect(result.reason).toContain('"dblink_exec"');
+  });
+});
+
+describe("rejectedSqlTerm", () => {
+  it("names the refused keyword or function", () => {
+    expect(rejectedSqlTerm("DELETE FROM orders")).toBe("DELETE");
+    expect(rejectedSqlTerm("select pg_sleep(10)")).toBe("pg_sleep");
+    expect(rejectedSqlTerm("SELECT * FROM t FOR SHARE")).toBe("FOR SHARE");
+  });
+
+  it("is null for an allowed statement or a shape refusal", () => {
+    expect(rejectedSqlTerm("SELECT 1")).toBeNull();
+    expect(rejectedSqlTerm("BEGIN; SELECT 1; END;")).toBeNull();
   });
 });

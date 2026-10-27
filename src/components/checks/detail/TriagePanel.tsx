@@ -15,9 +15,9 @@ export function TriagePanel({ check, t, language }: { check: CheckDetail; t: Cop
   const [busy, setBusy] = useState(false);
   const latest = check.latest;
 
-  if (!me?.ai) return <p className="px-6 py-10 text-center text-body-sm text-muted-foreground">{t.triageOff}</p>;
+  if (!me?.ai) return <p className="px-6 py-10 text-center text-body-sm text-ink-3">{t.triageOff}</p>;
   if (!latest || latest.outcome === "clean") {
-    return <p className="px-6 py-10 text-center text-body-sm text-muted-foreground">{t.triageClean}</p>;
+    return <p className="px-6 py-10 text-center text-body-sm text-ink-3">{t.triageClean}</p>;
   }
 
   const start = async () => {
@@ -36,7 +36,7 @@ export function TriagePanel({ check, t, language }: { check: CheckDetail; t: Cop
     <div className="space-y-4 p-5">
       {!triage ? (
         <div className="flex flex-col items-start gap-3">
-          <p className="max-w-[60ch] text-body-sm text-muted-foreground">{t.triageIntro}</p>
+          <p className="max-w-[60ch] text-body-sm text-ink-3">{t.triageIntro}</p>
           <Button onClick={start} disabled={busy}>
             <Sparkles />
             {busy ? t.triaging : t.triageRun}
@@ -50,19 +50,19 @@ export function TriagePanel({ check, t, language }: { check: CheckDetail; t: Cop
           </p>
           {triage.causes.length > 0 && (
             <div>
-              <p className="mb-1 text-label-caps uppercase text-muted-foreground">{t.causes}</p>
+              <p className="mb-1 lead text-ink-3">{t.causes}</p>
               <ul className="list-disc space-y-1 pl-5">{triage.causes.map((c) => <li key={c}>{c}</li>)}</ul>
             </div>
           )}
           {triage.nextSteps.length > 0 && (
             <div>
-              <p className="mb-1 text-label-caps uppercase text-muted-foreground">{t.nextSteps}</p>
+              <p className="mb-1 lead text-ink-3">{t.nextSteps}</p>
               <ul className="list-disc space-y-1 pl-5">{triage.nextSteps.map((c) => <li key={c}>{c}</li>)}</ul>
             </div>
           )}
           {triage.fixedSql && (
             <div>
-              <p className="mb-1 text-label-caps uppercase text-muted-foreground">{t.fixedSql}</p>
+              <p className="mb-1 lead text-ink-3">{t.fixedSql}</p>
               <pre className="overflow-x-auto rounded-lg bg-code p-4 font-mono text-body-sm leading-6">
                 {triage.fixedSql.split("\n").map((line, i) => (
                   <div key={i} className="whitespace-pre">

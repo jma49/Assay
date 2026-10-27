@@ -59,9 +59,8 @@ const ManageScriptsContent = () => {
   };
 
   return (
-    <div className="min-h-screen    ">
-      <div className={`${APP_CONTAINER} py-6`}>
-        <div className="space-y-4 animate-fadeIn">
+    <div className={`${APP_CONTAINER} py-6`}>
+      <div className="space-y-4 animate-fadeIn">
           <ManageChecksHeader
             scripts={scripts}
             searchTerm={searchTerm}
@@ -89,7 +88,6 @@ const ManageScriptsContent = () => {
               initialSelectedId={linkedScriptId}
             />
           )}
-        </div>
       </div>
 
       <CheckEditorDialog

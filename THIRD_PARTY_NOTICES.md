@@ -5,14 +5,12 @@
 All fonts are licensed under the SIL Open Font License 1.1 and are self-hosted
 through `next/font`.
 
-- **Geist** and **Geist Mono** (interface, headings and code in the app).
-- **Instrument Serif** (page titles in the app, the docs and sign-in).
-- **Figtree** (running text on the sign-in page).
-- **Sofia Sans** and **Sofia Sans Condensed** (the landing page: running text,
-  headlines and the lead letters printed on films).
-- **Maple Mono NL** (code on the landing and sign-in pages), shipped unmodified from the
-  v7.9 release of [maple-font](https://github.com/subframe7536/maple-font) in
-  `src/components/landing/fonts/`, with its licence in `MapleMono-OFL.txt`.
+- **Sofia Sans** and **Sofia Sans Condensed** (running text and headlines across the app,
+  docs, sign-in and landing; the lead letters printed on films are the condensed face).
+- **Maple Mono NL** (SQL, rows, ids and code across the app, docs, sign-in and landing),
+  shipped unmodified from the v7.9 release of
+  [maple-font](https://github.com/subframe7536/maple-font) in
+  `src/components/type/font-files/`, with its licence in `MapleMono-OFL.txt`.
   "Maple Mono" is a Reserved Font Name.
 
 ## Icons

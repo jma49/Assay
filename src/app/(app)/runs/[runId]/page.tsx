@@ -4,7 +4,6 @@ import { useParams } from "next/navigation";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { APP_CONTAINER } from "@/components/layout/app-container";
 import { formatDateTime } from "@/lib/utils/datetime";
-import { runErrorText } from "@/lib/utils/run-message";
 import { useMe } from "@/lib/auth/use-me";
 import { runReportMessages } from "@/components/run-report/messages";
 import {
@@ -23,6 +22,9 @@ import { RunReportToolbar } from "@/components/run-report/RunReportToolbar";
 import { RunHeadline } from "@/components/run-report/RunHeadline";
 import { FindingsPanel } from "@/components/run-report/FindingsPanel";
 import { RunInfoPanel } from "@/components/run-report/RunInfoPanel";
+import { RunDiffBar } from "@/components/run-report/RunDiffBar";
+import { SqlSlip } from "@/components/common/SqlSlip";
+import { runErrorText } from "@/lib/utils/run-message";
 import { RunTriageDialog } from "@/components/run-report/RunTriageDialog";
 
 export default function RunReportPage() {
@@ -76,25 +78,19 @@ export default function RunReportPage() {
         onBack={actions.goBack}
       />
 
-      <div className="grid gap-6 lg:grid-cols-12">
-        <section className="min-w-0 space-y-5 lg:col-span-8">
-          <RunHeadline
-            outcome={outcome}
-            headline={runHeadline(outcome, count, language)}
-            subtitle={`${title} · ${executedAt}`}
-            errorText={runErrorText(result)}
-          />
-          <FindingsPanel findings={result.sample} language={language} t={t} />
-        </section>
-
-        <RunInfoPanel
-          result={result}
+      <div className="mt-5 space-y-4">
+        <RunHeadline
           outcome={outcome}
-          scriptName={scriptName}
-          executedAt={executedAt}
+          headline={runHeadline(outcome, count, language)}
+          subtitle={`${title} · ${executedAt}`}
+          errorText={runErrorText(result)}
+          sql={result.sql}
           language={language}
-          t={t}
         />
+        <RunInfoPanel result={result} outcome={outcome} scriptName={scriptName} executedAt={executedAt} language={language} t={t} />
+        {outcome !== "error" && <RunDiffBar diff={result.diff} language={language} t={t} />}
+        <FindingsPanel findings={result.sample} language={language} t={t} />
+        {result.sql && outcome !== "error" && <SqlSlip sql={result.sql} language={language} title={t.query} />}
       </div>
 
       <RunTriageDialog

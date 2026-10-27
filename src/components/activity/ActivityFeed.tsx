@@ -5,7 +5,9 @@ import { useMemo, useState } from "react";
 import { BellOff, BellRing, CheckCircle2, Clock, Hand, XCircle } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { APP_CONTAINER } from "@/components/layout/app-container";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { WindowToolbar } from "@/components/layout/WindowChrome";
+import { pageTitle } from "@/components/layout/app-shell-routes";
 import { ChannelIcon } from "@/components/notifications/channels";
 import { OUTCOME_DOT, OUTCOME_LABEL } from "@/components/checks/status";
 import { apiErrorCodeText } from "@/client/api-errors";
@@ -201,6 +203,7 @@ export function ActivityFeed() {
 
   return (
     <div className={`${APP_CONTAINER} space-y-5 py-6`}>
+      <PageHeader title={pageTitle("/activity")?.[language] ?? "Activity"} />
       <WindowToolbar>
         <div className="inline-flex rounded-none bg-muted p-1" role="tablist" aria-label="Filter">
           {(Object.keys(FILTER_KINDS) as Filter[]).map((key) => (

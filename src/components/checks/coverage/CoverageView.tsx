@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { APP_CONTAINER } from "@/components/layout/app-container";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { pageTitle } from "@/components/layout/app-shell-routes";
 import { DataSourceSelect } from "@/components/checks/data-source/DataSourceSelect";
 import { pickSource, useDataSourceOptions } from "@/components/checks/data-source/useDataSourceOptions";
 import { DEFAULT_SOURCE_ID } from "@/domain/data-source";
@@ -14,15 +16,16 @@ export function CoverageView() {
   const sources = useDataSourceOptions(language);
   const [chosen, setChosen] = useState(DEFAULT_SOURCE_ID);
   const sourceId = pickSource(chosen, sources);
-  const coverage = useCoverage(true, sourceId);
+  const { state, reload } = useCoverage(true, sourceId);
   return (
     <div className={`${APP_CONTAINER} space-y-4 py-6`}>
+      <PageHeader title={pageTitle("/coverage")?.[language] ?? "Coverage"} />
       {sources.length > 1 && (
         <div className="max-w-xs">
           <DataSourceSelect id="coverage-source" value={sourceId} options={sources} onChange={setChosen} language={language} withHint={false} />
         </div>
       )}
-      <CoverageGrid coverage={coverage} scripts={[]} language={language} checkHref={(scriptId) => `/checks?check=${encodeURIComponent(scriptId)}`} sourceId={sourceId} />
+      <CoverageGrid coverage={state} scripts={[]} language={language} checkHref={(scriptId) => `/checks?check=${encodeURIComponent(scriptId)}`} sourceId={sourceId} onRetry={reload} />
     </div>
   );
 }

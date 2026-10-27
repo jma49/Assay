@@ -1,29 +1,21 @@
 import React from "react";
-import { AlertCircle, RefreshCw } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { useLanguage } from "@/components/common/LanguageProvider";
+import { OutcomeGlyph } from "@/components/checks/OutcomeGlyph";
 
 const COPY = {
   en: {
-    title: "Data loading failed",
-    description: "Could not connect or process the request. Check your connection or try again later.",
+    title: "Could not load the runs",
+    description: "The server did not answer. The rest of Assay still works; try again.",
     info: "Error information",
-    retry: "Retry load",
+    retry: "Retry",
   },
   zh: {
-    title: "数据加载失败",
-    description: "无法连接到服务器或处理请求时出错。请检查您的网络连接或稍后重试。",
+    title: "无法加载执行记录",
+    description: "服务器没有响应。Assay 的其他部分不受影响，可以重试。",
     info: "错误信息",
-    retry: "重试加载",
+    retry: "重试",
   },
 };
 
@@ -31,35 +23,26 @@ interface LoadingErrorProps {
   error: string | null;
 }
 
+/** A contained failure of the runs list: the page frame stays, the next step is a retry. */
 export const LoadingError: React.FC<LoadingErrorProps> = ({ error }) => {
   const t = COPY[useLanguage().language];
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen p-4">
-      <Card className="w-full max-w-md border-destructive bg-card/90 backdrop-blur-sm">
-        <CardHeader>
-          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-2" />
-          <CardTitle className="text-center text-destructive">
-            {t.title}
-          </CardTitle>
-          <CardDescription className="text-center">
-            {t.description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="destructive">
-            <AlertTitle>{t.info}</AlertTitle>
-            <AlertDescription className="font-mono text-body-md break-all">
-              {error}
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <Button onClick={() => window.location.reload()} className="mt-2">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            {t.retry}
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+    <section className="face-note max-w-2xl p-5" role="alert">
+      <div className="flex items-start gap-3">
+        <OutcomeGlyph outcome="error" large className="mt-0.5" />
+        <div className="min-w-0 flex-1">
+          <p className="text-body-md font-medium text-ink">{t.title}</p>
+          <p className="mt-1 text-body-sm text-ink-2">{t.description}</p>
+        </div>
+      </div>
+      <p className="lead mt-4 text-ink-3">{t.info}</p>
+      <div className="fog-message mt-1.5">
+        <pre>{error}</pre>
+      </div>
+      <Button variant="outline" size="sm" className="mt-4" onClick={() => window.location.reload()}>
+        <RefreshCw />
+        {t.retry}
+      </Button>
+    </section>
   );
 };

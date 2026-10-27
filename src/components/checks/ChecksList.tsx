@@ -6,7 +6,9 @@ import { useEffect, useMemo, useState } from "react";
 import { BellOff, Hand, Search } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { APP_CONTAINER } from "@/components/layout/app-container";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
+import { pageTitle } from "@/components/layout/app-shell-routes";
 import { Input } from "@/components/ui/input";
 import { apiErrorCodeText } from "@/client/api-errors";
 import { useApi } from "@/client/use-api";
@@ -17,7 +19,8 @@ import { cn } from "@/lib/utils/utils";
 import { Sparkline } from "./Sparkline";
 import { CheckPanel } from "./CheckDetailView";
 import { StatStrip, type StatTile } from "./StatStrip";
-import { OUTCOME_DOT, OUTCOME_GROUPS, OUTCOME_LABEL, OUTCOME_PILL } from "./status";
+import { OUTCOME_GROUPS, OUTCOME_LABEL, OUTCOME_TEXT } from "./status";
+import { OutcomeGlyph } from "./OutcomeGlyph";
 
 type Filter = "all" | RunOutcome;
 
@@ -27,7 +30,7 @@ const COPY = {
     summary: "Checks by outcome",
     broken: "Broken",
     brokenHint: "Queries that fail",
-    issues: "With issues",
+    issues: "Issues",
     issuesHint: (rows: number) => `${rows} rows need attention`,
     clean: "Clean",
     cleanHint: "No rows returned",
@@ -38,14 +41,13 @@ const COPY = {
     delta: "Δ last run",
     trend: "Last 30 runs",
     lastRun: "Last run",
-    queryError: "Query error",
     rows: (n: number) => (n === 1 ? "1 row" : `${n} rows`),
     neverRan: "Not run yet",
-    empty: "No checks match.",
-    noChecks: "No checks yet.",
+    empty: "No check matches. Clear the search or choose another tile.",
+    noChecks: "No checks yet. A check is a read-only query whose rows are problems.",
     newCheck: "Write your first check",
     loadFailed: "Could not load checks",
-    count: (n: number) => `${n} checks`,
+    count: (n: number) => (n === 1 ? "1 check" : `${n} checks`),
     acknowledgedBy: (name: string) => `Acknowledged by ${name}`,
     muted: "Alerts muted",
   },
@@ -65,11 +67,10 @@ const COPY = {
     delta: "较上次",
     trend: "最近 30 次",
     lastRun: "上次执行",
-    queryError: "查询出错",
     rows: (n: number) => `${n} 行`,
     neverRan: "尚未执行",
-    empty: "没有匹配的检查。",
-    noChecks: "还没有检查。",
+    empty: "没有匹配的检查。清空搜索，或换一个筛选。",
+    noChecks: "还没有检查。检查就是一条只读查询，它返回的行就是问题。",
     newCheck: "编写第一个检查",
     loadFailed: "无法加载检查",
     count: (n: number) => `${n} 个检查`,
@@ -84,39 +85,34 @@ type Copy = (typeof COPY)["en"];
 function Delta({ check }: { check: CheckSummary }) {
   const state = check.state;
   if (!state || state.outcome === "error" || state.previousRowCount === null) {
-    return <span className="text-muted-foreground">—</span>;
+    return <span className="text-ink-3">—</span>;
   }
   const diff = state.rowCount - state.previousRowCount;
-  if (diff === 0) return <span className="text-muted-foreground tabular-nums">0</span>;
-  // More flagged rows is more to look at (attention), fewer is progress (success); never the error red.
+  if (diff === 0) return <span className="text-ink-3 tabular-nums">0</span>;
+  // More flagged rows is more to look at; fewer is progress. Never the safelight.
   return (
-    <span className={cn("font-medium tabular-nums", diff > 0 ? "text-attention" : "text-success")}>
+    <span className={cn("font-medium tabular-nums", diff > 0 ? "text-attention" : "text-ink-2")}>
       {diff > 0 ? "+" : "−"}
       {Math.abs(diff)}
     </span>
   );
 }
 
-/** What the check found on its last run, as a pill in its outcome's colour. */
-function Now({ check, t }: { check: CheckSummary; t: Copy }) {
+/** What the check found on its last run: the outcome word, never a coloured pill. */
+function Now({ check, t, language }: { check: CheckSummary; t: Copy; language: "en" | "zh" }) {
   const state = check.state;
-  if (!state) return <span className="text-muted-foreground">—</span>;
-  const text = state.outcome === "error" ? t.queryError : t.rows(state.rowCount);
-  return (
-    <span className={cn("inline-flex h-6 items-center gap-1.5 rounded-none px-2.5 text-caption font-medium tabular-nums", OUTCOME_PILL[state.outcome])}>
-      <span className="size-1.5 rounded-full bg-current" aria-hidden />
-      {text}
-    </span>
-  );
+  if (!state) return <span className="text-ink-3">—</span>;
+  const text = state.outcome === "error" ? OUTCOME_LABEL.error[language] : t.rows(state.rowCount);
+  return <span className={cn("font-medium whitespace-nowrap tabular-nums", OUTCOME_TEXT[state.outcome])}>{text}</span>;
 }
 
 function Markers({ check, t }: { check: CheckSummary; t: Copy }) {
   return (
     <>
       {check.alerting.acknowledged && (
-        <Hand className="size-3.5 shrink-0 text-primary" aria-label={t.acknowledgedBy(check.alerting.acknowledged.by)} />
+        <Hand className="size-3.5 shrink-0 text-ink-2" aria-label={t.acknowledgedBy(check.alerting.acknowledged.by)} />
       )}
-      {check.alerting.mutedUntil && <BellOff className="size-3.5 shrink-0 text-muted-foreground" aria-label={t.muted} />}
+      {check.alerting.mutedUntil && <BellOff className="size-3.5 shrink-0 text-ink-3" aria-label={t.muted} />}
     </>
   );
 }
@@ -173,25 +169,25 @@ export function ChecksList() {
     );
   }, [checks, filter, query]);
 
-  // On a wide screen the first problem opens beside the list, so the panel is never empty.
+  // On a wide screen the most urgent check opens beside the list, so the panel is never empty.
   const shown = selected ?? (split ? (checks.find((c) => c.state?.outcome === "error") ?? checks.find((c) => c.state?.outcome === "issues") ?? checks[0])?.scriptId : null) ?? null;
 
   const name = (c: CheckSummary) => (zh ? c.cnName || c.name : c.name);
   const pending = loading && !data;
-  const tile = (key: Filter, label: string, value: number, hint: string, dot?: string): StatTile => ({
+  const tile = (key: Filter, label: string, value: number, hint: string, glyph: RunOutcome | null): StatTile => ({
     key,
     label,
-    dot,
+    glyph,
     value: pending ? "–" : value,
     hint: pending ? " " : hint,
     pressed: filter === key,
     onClick: () => setFilter(filter === key && key !== "all" ? "all" : key),
   });
   const tiles: StatTile[] = [
-    tile("all", t.allChecks, checks.length, t.allHint(checks.length)),
-    tile("error", t.broken, counts.error, t.brokenHint, OUTCOME_DOT.error),
-    tile("issues", t.issues, counts.issues, t.issuesHint(counts.rows), OUTCOME_DOT.issues),
-    tile("clean", t.clean, counts.clean, t.cleanHint, OUTCOME_DOT.clean),
+    tile("all", t.allChecks, checks.length, t.allHint(checks.length), null),
+    tile("error", t.broken, counts.error, t.brokenHint, "error"),
+    tile("issues", t.issues, counts.issues, t.issuesHint(counts.rows), "issues"),
+    tile("clean", t.clean, counts.clean, t.cleanHint, "clean"),
   ];
   const groups = [...OUTCOME_GROUPS, null]
     .map((group) => ({ group, rows: visible.filter((c) => (group ? c.state?.outcome === group.outcome : !c.state)) }))
@@ -214,11 +210,19 @@ export function ChecksList() {
   const lastRun = (c: CheckSummary) => (c.state ? formatRelative(c.state.lastRunAt, language) : t.neverRan);
 
   return (
-    <div className={`${APP_CONTAINER} space-y-6 py-6`}>
+    <div className={`${APP_CONTAINER} space-y-4 py-6`}>
+      <PageHeader title={pageTitle("/checks")?.[language] ?? "Checks"} />
       <WindowToolbar>
         <div className="relative w-72 max-sm:w-full">
-          <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input type="search" aria-label={t.search} placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} className="h-10 rounded-none pl-10" />
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" />
+          <Input
+            type="search"
+            aria-label={t.search}
+            placeholder={t.search}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="h-9 rounded-sm border-line-2 bg-white/45 pl-9"
+          />
         </div>
       </WindowToolbar>
       {data && <WindowStatusBar>{t.count(checks.length)}</WindowStatusBar>}
@@ -226,69 +230,76 @@ export function ChecksList() {
       {/* The tiles are the filter. */}
       <StatStrip tiles={tiles} label={t.summary} />
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_480px]">
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_460px]">
         <div className="space-y-4">
           {error ? (
-            <p className="rounded-xl bg-card px-6 py-10 text-center text-body-sm text-muted-foreground shadow-border">
-              {t.loadFailed}: {apiErrorCodeText(errorCode, language) ?? error}
-            </p>
+            <div className="face-note px-6 py-10 text-center text-body-sm text-ink-2">
+              <p className="font-medium text-ink">{t.loadFailed}</p>
+              <p className="mt-1">{apiErrorCodeText(errorCode, language) ?? String(error)}</p>
+            </div>
           ) : pending ? (
-            <div className="space-y-2 rounded-xl bg-card p-4 shadow-border" aria-busy>
+            <div className="space-y-px overflow-hidden rounded-sm border border-line-2" aria-busy>
               {Array.from({ length: 6 }, (_, i) => (
-                <div key={i} className="skeleton-shimmer h-12 rounded-md" />
+                <div key={i} className="skeleton-shimmer h-14" />
               ))}
             </div>
           ) : checks.length === 0 ? (
-            <div className="rounded-xl bg-card px-6 py-12 text-center text-body-sm text-muted-foreground shadow-border">
+            <div className="face-note px-6 py-12 text-center text-body-sm text-ink-2">
               <p>{t.noChecks}</p>
-              <Link href="/checks/new" className="mt-2 inline-block font-medium text-primary hover:underline">
+              <Link href="/checks/new" className="mt-2 inline-block font-medium text-ink underline underline-offset-4">
                 {t.newCheck}
               </Link>
             </div>
           ) : visible.length === 0 ? (
-            <p className="rounded-xl bg-card px-6 py-10 text-center text-body-sm text-muted-foreground shadow-border">{t.empty}</p>
+            <p className="face-note px-6 py-10 text-center text-body-sm text-ink-2">{t.empty}</p>
           ) : (
             groups.map(({ group, rows }) => (
-              <section key={group?.outcome ?? "never"} aria-label={group ? group.title[language] : t.neverRan} className="overflow-hidden rounded-xl bg-card shadow-border">
-                <h2 className="border-b bg-muted/50 px-5 py-2.5 text-caption text-muted-foreground max-md:px-4">
-                  <span className="font-medium text-foreground">{group ? group.title[language] : t.neverRan}</span> · {rows.length}
-                  {group && <span> — {group.hint[language]}</span>}
-                </h2>
-                <ul>
+              <section key={group?.outcome ?? "never"} aria-label={group ? group.title[language] : t.neverRan}>
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-1 pb-2">
+                  <h2 className="lead text-ink-2">{group ? group.title[language] : t.neverRan}</h2>
+                  <span className="font-mono text-caption text-ink-3 tabular-nums">{rows.length}</span>
+                  {group && <span className="text-caption text-ink-3">{group.hint[language]}</span>}
+                </div>
+                <ul className="overflow-hidden rounded-sm border border-line-2 bg-white/30">
                   {rows.map((c) => {
                     const active = shown === c.scriptId;
                     return (
-                      <li key={c.scriptId} className="border-b last:border-0">
+                      <li key={c.scriptId} className="border-b border-line last:border-0">
                         <Link
                           href={`/checks?check=${encodeURIComponent(c.scriptId)}`}
                           scroll={false}
                           replace
                           aria-current={active ? "true" : undefined}
                           className={cn(
-                            "relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-5 py-3.5 text-body-sm transition-[background-color] duration-150 max-md:px-4 md:grid-cols-[minmax(0,1fr)_8.5rem_8rem_7rem] xl:grid-cols-[minmax(0,1fr)_auto_6.5rem]",
-                            active ? "bg-primary-soft" : "hover:bg-muted/60",
+                            "relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-4 py-3 text-body-sm transition-[background-color] duration-150 max-md:px-3 md:grid-cols-[minmax(0,1fr)_9rem_8rem_7rem] xl:grid-cols-[minmax(0,1fr)_auto_6.5rem]",
+                            active ? "bg-face-hi" : "hover:bg-white/50",
                           )}
                         >
-                          {active && <span className="absolute inset-y-0 left-0 w-[3px] bg-primary" aria-hidden />}
-                          <span className="min-w-0">
-                            <span className="flex min-w-0 items-center gap-2">
-                              {c.state && <span className={cn("status-dot shrink-0", OUTCOME_DOT[c.state.outcome])} aria-label={OUTCOME_LABEL[c.state.outcome][language]} />}
-                              <span className={cn("truncate text-body-md font-medium", active && "text-primary-ink")}>{name(c)}</span>
-                              <Markers check={c} t={t} />
-                            </span>
-                            <span className="mt-0.5 block truncate font-mono text-caption text-muted-foreground">
-                              {c.scriptId}
-                              {c.alerting.owner && <span className="font-sans"> · {c.alerting.owner.name}</span>}
+                          {active && <span className="absolute inset-y-0 left-0 w-[3px] bg-ink" aria-hidden />}
+                          <span className="flex min-w-0 items-start gap-2.5">
+                            <OutcomeGlyph outcome={c.state?.outcome ?? null} className="mt-1" />
+                            <span className="min-w-0">
+                              <span className="flex min-w-0 items-center gap-2">
+                                <span className={cn("truncate text-body-md font-medium text-ink", active && "text-ink")}>{name(c)}</span>
+                                <Markers check={c} t={t} />
+                              </span>
+                              <span className="mt-0.5 block truncate font-mono text-caption text-ink-3">
+                                {c.scriptId}
+                                {c.alerting.owner && <span className="font-sans"> · {c.alerting.owner.name}</span>}
+                              </span>
                             </span>
                           </span>
-                          <span className="flex items-center gap-1.5 whitespace-nowrap">
-                            <Now check={c} t={t} />
+                          <span className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                            <Now check={c} t={t} language={language} />
                             <Delta check={c} />
                           </span>
                           <span className="max-md:hidden xl:hidden">
                             <Sparkline points={c.history} outcome={c.state?.outcome ?? "clean"} />
                           </span>
-                          <span className="text-right whitespace-nowrap text-muted-foreground max-md:hidden" title={c.state ? formatDateTime(c.state.lastRunAt, language) : undefined}>
+                          <span
+                            className="text-right whitespace-nowrap text-caption text-ink-3 max-md:hidden"
+                            title={c.state ? formatDateTime(c.state.lastRunAt, language) : undefined}
+                          >
                             {lastRun(c)}
                           </span>
                         </Link>
@@ -302,17 +313,18 @@ export function ChecksList() {
         </div>
 
         {/* Beside the list on wide screens; a drawer over the page below that. */}
-        {shown && (split ? (
-          <aside className="sticky top-6 max-h-[calc(100dvh-7rem)] overflow-y-auto rounded-xl bg-card shadow-border">
-            <CheckPanel key={shown} scriptId={shown} onClose={() => select(null)} />
-          </aside>
-        ) : (
-          <div className="fixed inset-0 z-40 flex justify-end bg-foreground/30" onClick={(e) => e.target === e.currentTarget && select(null)}>
-            <aside role="dialog" aria-modal="true" className="h-full w-full max-w-[520px] overflow-y-auto bg-card shadow-md">
+        {shown &&
+          (split ? (
+            <aside className="panel-sheet sticky top-4 max-h-[calc(100dvh-6rem)] overflow-y-auto">
               <CheckPanel key={shown} scriptId={shown} onClose={() => select(null)} />
             </aside>
-          </div>
-        ))}
+          ) : (
+            <div className="fixed inset-0 z-40 flex justify-end bg-room-950/45" onClick={(e) => e.target === e.currentTarget && select(null)}>
+              <aside role="dialog" aria-modal="true" className="h-full w-full max-w-[520px] overflow-y-auto bg-face-hi shadow-md">
+                <CheckPanel key={shown} scriptId={shown} onClose={() => select(null)} />
+              </aside>
+            </div>
+          ))}
       </div>
     </div>
   );

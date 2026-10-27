@@ -12,8 +12,8 @@ import { GITHUB_URL } from "@/lib/brand";
 import { cn } from "@/lib/utils/utils";
 
 const COPY = {
-  en: { help: "Assay Help", search: "Search docs", noResults: "No matches", openApp: "Open Assay", contents: "Contents", close: "Close window" },
-  zh: { help: "Assay 帮助", search: "搜索文档", noResults: "没有找到", openApp: "打开 Assay", contents: "目录", close: "关闭窗口" },
+  en: { help: "Assay Help", search: "Search docs", noResults: "No matches", openApp: "Open Assay", contents: "Contents" },
+  zh: { help: "Assay 帮助", search: "搜索文档", noResults: "没有找到", openApp: "打开 Assay", contents: "目录" },
 };
 
 const MAX_RESULTS = 8;
@@ -68,7 +68,7 @@ function DocsSearch({ index }: { index: DocsSearchEntry[] }) {
 
   return (
     <div className="relative w-full max-w-[260px]">
-      <Search className="pointer-events-none absolute top-1/2 left-2.5 z-10 size-3.5 -translate-y-1/2 text-muted-foreground" />
+      <Search className="pointer-events-none absolute top-1/2 left-2.5 z-10 size-3.5 -translate-y-1/2 text-room-ink-3" />
       <input
         ref={inputRef}
         type="search"
@@ -88,12 +88,12 @@ function DocsSearch({ index }: { index: DocsSearchEntry[] }) {
           else return;
           event.preventDefault();
         }}
-        className="h-9 w-full border border-input bg-card pr-3 pl-8 sm:text-body-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring"
+        className="h-9 w-full rounded-sm border border-room-line-2 bg-room-900 pr-3 pl-8 text-body-sm text-room-ink placeholder:text-room-ink-3 outline-none focus-visible:outline-room-ink sm:text-body-sm"
       />
       {query.trim() && (
-        <ul className="absolute top-full right-0 z-50 mt-1.5 w-[340px] bg-popover p-1 text-popover-foreground shadow-md" role="listbox">
+        <ul className="absolute top-full right-0 z-50 mt-1.5 w-[340px] rounded-sm bg-popover p-1 text-popover-foreground shadow-md" role="listbox">
           {results.length === 0 ? (
-            <li className="px-3 py-2 text-body-sm text-muted-foreground">{t.noResults}</li>
+            <li className="px-3 py-2 text-body-sm text-ink-2">{t.noResults}</li>
           ) : (
             results.map((result, i) => (
               <li key={result.href + i} role="option" aria-selected={i === active}>
@@ -101,15 +101,10 @@ function DocsSearch({ index }: { index: DocsSearchEntry[] }) {
                   type="button"
                   onMouseEnter={() => setActive(i)}
                   onClick={() => go(result.href)}
-                  className={cn(
-                    "block w-full rounded-none px-3 py-1.5 text-left",
-                    i === active && "bg-muted",
-                  )}
+                  className={cn("block w-full rounded-sm px-3 py-1.5 text-left", i === active && "bg-muted")}
                 >
                   <span className="block truncate text-body-sm font-medium">{result.title}</span>
-                  <span className={cn("block truncate text-caption", "text-muted-foreground")}>
-                    {result.context}
-                  </span>
+                  <span className="block truncate text-caption text-ink-3">{result.context}</span>
                 </button>
               </li>
             ))
@@ -126,10 +121,8 @@ function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav aria-label="Docs">
       {DOCS_NAV.map((group) => (
-        <div key={group.title.en} className="border-b px-3 pt-4 pb-3">
-          <p className="px-2 pb-2 font-mono text-label-caps uppercase text-muted-foreground">
-            {group.title[language]}
-          </p>
+        <div key={group.title.en} className="border-b border-line px-3 pt-4 pb-3">
+          <p className="lead px-2 pb-2 text-ink-3">{group.title[language]}</p>
           <ul className="flex flex-col gap-px">
             {group.pages.map((page) => {
               const href = `/docs/${page.slug}`;
@@ -141,11 +134,11 @@ function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
                     onClick={onNavigate}
                     aria-current={current ? "page" : undefined}
                     className={cn(
-                      "relative block px-2 py-1.5 text-body-sm",
-                      current ? "bg-card font-medium text-foreground shadow-border" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      "relative block rounded-sm px-2 py-1.5 text-body-sm transition-colors",
+                      current ? "bg-face-hi font-medium text-ink" : "text-ink-2 hover:bg-white/50 hover:text-ink",
                     )}
                   >
-                    {current && <span className="absolute inset-y-0 left-0 w-0.5 bg-primary" aria-hidden />}
+                    {current && <span className="absolute inset-y-1 left-0 w-0.5 bg-ink" aria-hidden />}
                     {page.title[language]}
                   </Link>
                 </li>
@@ -158,24 +151,24 @@ function DocsSidebar({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-/** Docs: a ruled column on the paper, as on the landing page: a top bar with search, the contents on the left, the page beside it. */
+/** Docs: the same room and lit face as the app. The contents sit on the face's left, the page beside it. */
 export function DocsShell({ index, children }: { index: DocsSearchEntry[]; children: ReactNode }) {
   const { language, setLanguage } = useLanguage();
   const [contentsOpen, setContentsOpen] = useState(false);
   const t = COPY[language];
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-5 px-4 sm:px-6 xl:border-x">
-          <Link href="/">
-            <BrandMark />
+    <div className="min-h-screen bg-room-950">
+      <header className="sticky top-0 z-40 border-b border-room-line bg-room-950 text-room-ink">
+        <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center gap-5 px-4 sm:px-6">
+          <Link href="/" className="shrink-0">
+            <BrandMark className="[&>span:last-child]:text-room-ink" />
           </Link>
-          <span className="h-5 w-px bg-border max-sm:hidden" aria-hidden />
-          <Link href="/docs" className="font-mono text-label-caps whitespace-nowrap text-muted-foreground uppercase hover:text-foreground max-sm:hidden">
+          <span className="h-5 w-px bg-room-line-2 max-sm:hidden" aria-hidden />
+          <Link href="/docs" className="lead whitespace-nowrap text-room-ink-3 hover:text-room-ink max-sm:hidden">
             {t.help}
           </Link>
-          <a href={GITHUB_URL} className="text-body-md text-muted-foreground hover:text-foreground max-sm:hidden">
+          <a href={GITHUB_URL} className="text-body-sm text-room-ink-3 hover:text-room-ink max-sm:hidden">
             GitHub
           </a>
           <div className="ml-auto flex items-center gap-2 whitespace-nowrap">
@@ -184,14 +177,14 @@ export function DocsShell({ index, children }: { index: DocsSearchEntry[]; child
             </div>
             <button
               type="button"
-              className="h-9 border border-transparent px-2.5 font-mono text-caption text-muted-foreground hover:border-rule-strong hover:bg-card hover:text-foreground"
+              className="h-9 rounded-sm border border-transparent px-2.5 font-mono text-caption text-room-ink-2 hover:border-room-line-2 hover:bg-room-800 hover:text-room-ink"
               onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
             >
               {language === "zh" ? "EN" : "中文"}
             </button>
             <Link
               href="/checks"
-              className="inline-flex h-9 items-center bg-foreground px-3.5 text-body-sm font-medium text-background transition-colors duration-150 hover:bg-foreground/85"
+              className="inline-flex h-9 items-center rounded-sm bg-room-ink px-3.5 text-body-sm font-medium text-room-950 transition-opacity hover:opacity-90"
             >
               {t.openApp}
             </Link>
@@ -199,30 +192,32 @@ export function DocsShell({ index, children }: { index: DocsSearchEntry[]; child
         </div>
       </header>
 
-      <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-7xl xl:border-x">
-        <aside
-          className={cn(
-            "sticky top-16 h-[calc(100dvh-4rem)] w-60 shrink-0 overflow-y-auto border-r max-lg:fixed max-lg:inset-y-16 max-lg:left-0 max-lg:z-30 max-lg:h-auto max-lg:bg-background max-lg:shadow-md",
-            !contentsOpen && "max-lg:hidden",
-          )}
-        >
-          <DocsSidebar onNavigate={() => setContentsOpen(false)} />
-        </aside>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 border-b px-4 py-3 sm:px-6 lg:hidden">
-            <button
-              type="button"
-              className="inline-flex h-9 items-center border border-rule-strong bg-card px-3 text-body-sm"
-              aria-expanded={contentsOpen}
-              onClick={() => setContentsOpen((open) => !open)}
-            >
-              {t.contents}
-            </button>
-            <div className="ml-auto md:hidden">
-              <DocsSearch index={index} />
+      <div className="mx-auto w-full max-w-[1400px] px-2 pb-2 max-md:px-0 max-md:pb-0">
+        <div className="app-face flex min-h-[calc(100dvh-3.5rem)] max-md:min-h-[calc(100dvh-3.5rem)]">
+          <aside
+            className={cn(
+              "sticky top-14 h-[calc(100dvh-3.5rem)] w-64 shrink-0 overflow-y-auto border-r border-line bg-white/25 max-lg:fixed max-lg:inset-y-14 max-lg:left-0 max-lg:z-30 max-lg:h-auto max-lg:bg-face max-lg:shadow-md",
+              !contentsOpen && "max-lg:hidden",
+            )}
+          >
+            <DocsSidebar onNavigate={() => setContentsOpen(false)} />
+          </aside>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 border-b border-line px-4 py-3 sm:px-6 lg:hidden">
+              <button
+                type="button"
+                className="inline-flex h-9 items-center rounded-sm border border-line-2 bg-white/40 px-3 text-body-sm text-ink"
+                aria-expanded={contentsOpen}
+                onClick={() => setContentsOpen((open) => !open)}
+              >
+                {t.contents}
+              </button>
+              <div className="ml-auto md:hidden">
+                <DocsSearch index={index} />
+              </div>
             </div>
+            {children}
           </div>
-          {children}
         </div>
       </div>
     </div>

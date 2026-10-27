@@ -1,4 +1,4 @@
-import { HighlightedLine } from "@/components/code/HighlightedLine";
+import { SqlSlip } from "@/components/common/SqlSlip";
 import type { CheckDetail } from "@/contracts/checks";
 import { nextScheduledRun } from "@/lib/scheduling/schedule";
 import { tableReferences } from "@/lib/sql/table-references";
@@ -11,40 +11,28 @@ export function Definition({ check, t, language }: { check: CheckDetail; t: Copy
   const tables = tableReferences(check.sql);
   return (
     <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-      <div className="overflow-hidden rounded-lg border">
-        <div className="flex items-center gap-2 border-b bg-muted/50 px-3 py-2 text-caption">
-          <span className="font-medium">{t.query}</span>
-          <span className="rounded-md bg-success-soft px-1.5 py-0.5 font-medium text-success">{t.readOnly}</span>
-        </div>
-        <pre className="overflow-x-auto bg-code p-4 font-mono text-body-sm leading-6">
-          {check.sql.split("\n").map((line, i) => (
-            <div key={i} className="whitespace-pre">
-              {line ? <HighlightedLine text={line} language="sql" /> : " "}
-            </div>
-          ))}
-        </pre>
-      </div>
+      <SqlSlip sql={check.sql} language={language} title={t.query} />
       <dl className="grid h-fit grid-cols-[96px_minmax(0,1fr)] gap-x-3 gap-y-3 text-body-sm">
-        <dt className="text-muted-foreground">{t.schedule}</dt>
+        <dt className="text-ink-3">{t.schedule}</dt>
         <dd>
           {scheduleLabel(check.schedule, language)}
           {next && (
-            <span className="block text-caption text-muted-foreground" title={formatDateTime(next, language)}>
+            <span className="block text-caption text-ink-3" title={formatDateTime(next, language)}>
               {t.nextRun(formatRelative(next, language))}
             </span>
           )}
         </dd>
-        <dt className="text-muted-foreground">{t.reads}</dt>
+        <dt className="text-ink-3">{t.reads}</dt>
         <dd className="space-y-0.5 font-mono text-body-sm">
           {tables.length ? tables.map((table) => <span key={table} className="block">{table}</span>) : "—"}
         </dd>
-        <dt className="text-muted-foreground">{t.tags}</dt>
+        <dt className="text-ink-3">{t.tags}</dt>
         <dd>{check.tags.length ? check.tags.map((tag) => `#${tag}`).join("  ") : "—"}</dd>
-        <dt className="text-muted-foreground">{t.scope}</dt>
+        <dt className="text-ink-3">{t.scope}</dt>
         <dd>{check.scope || "—"}</dd>
-        <dt className="text-muted-foreground">{t.author}</dt>
+        <dt className="text-ink-3">{t.author}</dt>
         <dd>{check.author || "—"}</dd>
-        <dt className="text-muted-foreground">{t.created}</dt>
+        <dt className="text-ink-3">{t.created}</dt>
         <dd className="tabular-nums">{check.createdAt ? formatDateTime(check.createdAt, language) : "—"}</dd>
       </dl>
     </div>

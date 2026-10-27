@@ -83,4 +83,13 @@ describe("GET /api/coverage", () => {
     await coverage();
     expect(mocks.requireSource).toHaveBeenCalledWith(null);
   });
+
+  it("answers 503 with a safe message when the database cannot be read", async () => {
+    mocks.getSchemaTables.mockRejectedValue(new Error("connect ECONNREFUSED 10.0.0.5:5432"));
+    const res = await coverage();
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error.code).toBe("source_unavailable");
+    expect(JSON.stringify(body)).not.toContain("10.0.0.5");
+  });
 });

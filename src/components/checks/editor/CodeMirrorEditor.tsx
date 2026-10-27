@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import ReactCodeMirror, { ReactCodeMirrorProps } from "@uiw/react-codemirror";
+import { Decoration, EditorView } from "@codemirror/view";
 import dynamic from "next/dynamic";
 import { AlignLeft, Code, Eye, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import AIAssistantPanel from "@/components/ai/AIAssistantPanel";
 import { useMe } from "@/lib/auth/use-me";
+import { rejectedSqlTerm } from "@/lib/sql/read-only-validator";
 import { cn } from "@/lib/utils/utils";
 import { editorCopy } from "./copy";
 import EditorThemeSettings from "./EditorThemeSettings";
@@ -47,6 +49,16 @@ const BASIC_SETUP = {
   searchKeymap: true,
 };
 
+/** The word the read-only validator refused, marked in the statement as the reader types. */
+const rejectedMark = Decoration.mark({ class: "cm-rejected" });
+const rejectedHighlight = EditorView.decorations.compute(["doc"], (state) => {
+  const text = state.doc.toString();
+  const term = rejectedSqlTerm(text);
+  if (!term) return Decoration.none;
+  const from = text.toLowerCase().indexOf(term.toLowerCase());
+  return from < 0 ? Decoration.none : Decoration.set([rejectedMark.range(from, from + term.length)]);
+});
+
 /** The SQL editor: toolbar (AI, format, preview, theme), CodeMirror and the read-only status. */
 const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   value,
@@ -61,7 +73,7 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   const t = editorCopy(language);
   const aiAvailable = useMe()?.ai === true;
   const theme = useEditorTheme();
-  const extensions = useMemo(() => postgresExtensions(), []);
+  const extensions = useMemo(() => [...postgresExtensions(), rejectedHighlight], []);
   const assistant = useSqlAssistant(value, language, onChange, dataSourceId);
   const [showPreview, setShowPreview] = useState(false);
   const [showAI, setShowAI] = useState(false);
@@ -92,8 +104,8 @@ const CodeMirrorEditor: React.FC<CodeMirrorEditorProps> = ({
   };
 
   return (
-    <div className={cn("overflow-hidden rounded-lg border bg-card", fill && "flex h-full flex-col")}>
-      <div className="flex h-11 items-center justify-between gap-2 border-b bg-muted/40 px-4">
+    <div className={cn("overflow-hidden rounded-sm border border-line-2 bg-white/40", fill && "flex h-full flex-col")}>
+      <div className="flex h-11 items-center justify-between gap-2 border-b border-line bg-face-lo/60 px-3">
         <div className="flex min-w-0 items-center gap-3 text-body-sm">
           <span className="font-medium">SQL</span>
           <span className="text-muted-foreground tabular-nums">

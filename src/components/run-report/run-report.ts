@@ -20,6 +20,10 @@ export interface ExecutionResult {
   message: string;
   /** The runner's one-line summary. */
   findings: string;
+  /** How this run differs from the previous one, when there was one. */
+  diff?: { added: number; still: number; fixed: number } | null;
+  /** The check's statement as it was last saved. */
+  sql?: string | null;
   /** The sample rows the run kept. */
   sample: FindingDetail[];
   name?: string;
@@ -48,6 +52,19 @@ export function tableRows(findings: RunRows): FindingDetail[] | null {
 
 export function rowCount(findings: RunRows): number | null {
   return Array.isArray(findings) ? findings.length : null;
+}
+
+/** A plain-language account of the change, for people who should not have to read three counters. */
+export function changeSummary(diff: { added: number; still: number; fixed: number }, language: Language): string {
+  const zh = language === "zh";
+  if (diff.added === 0 && diff.fixed === 0) {
+    return zh ? "与上一次执行相同的行，没有新增，也没有修复。" : "The same rows as the previous run: nothing new, nothing fixed.";
+  }
+  const parts: string[] = [];
+  if (diff.added > 0) parts.push(zh ? `新增 ${diff.added} 行` : `${diff.added} ${diff.added === 1 ? "row is" : "rows are"} new`);
+  if (diff.still > 0) parts.push(zh ? `${diff.still} 行仍未解决` : `${diff.still} ${diff.still === 1 ? "row is" : "rows are"} still open`);
+  if (diff.fixed > 0) parts.push(zh ? `${diff.fixed} 行已修复` : `${diff.fixed} ${diff.fixed === 1 ? "row is" : "rows are"} fixed`);
+  return `${parts.join(zh ? "，" : ", ")}${zh ? "。" : "."}`;
 }
 
 /** One sentence that says what happened, before any detail. */

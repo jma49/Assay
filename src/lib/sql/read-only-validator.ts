@@ -267,3 +267,15 @@ export function validateReadOnlySql(sqlContent: string): SqlValidationResult {
 
   return { isValid: true };
 }
+
+/**
+ * The word or phrase the validator refused, as it appears in the statement, so the editor can
+ * mark it. Null when the statement is allowed or the refusal is about the statement's shape
+ * (there is no one token to point at).
+ */
+export function rejectedSqlTerm(sqlContent: string): string | null {
+  const result = validateReadOnlySql(sqlContent);
+  if (result.isValid) return null;
+  const message = result.reasonEn ?? result.reason ?? "";
+  return /"([^"]+)"/.exec(message)?.[1] ?? null;
+}

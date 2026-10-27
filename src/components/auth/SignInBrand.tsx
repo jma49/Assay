@@ -36,9 +36,8 @@ interface Point {
 }
 
 /**
- * The panel beside the sign-in form, in the reader's language: ruled paper with a
- * serif tagline, and the live demo's last alert sitting on graph paper. The alert's
- * Acknowledge press plays once; it is a small change of state, so it stays under reduced motion.
+ * The panel beside the sign-in form: the dark room around the light box, the pitch in room ink,
+ * and the live demo's last alert printed on film. The alert's Acknowledge press plays once.
  */
 export function SignInBrand({ language, tagline, points, footnote }: { language: Language; tagline: string; points: Point[]; footnote: string }) {
   const alert = ALERT[language];
@@ -50,8 +49,8 @@ export function SignInBrand({ language, tagline, points, footnote }: { language:
   }, []);
 
   return (
-    <aside className="hidden border-r border-rule bg-paper text-ink lg:flex lg:flex-col">
-      <div className="flex h-16 items-center border-b border-rule px-14 xl:px-20">
+    <aside className="hidden border-r border-room-line bg-room-950 text-room-ink lg:flex lg:flex-col">
+      <div className="flex h-16 items-center border-b border-room-line px-14 xl:px-20">
         <Link href="/" className="flex w-fit items-center gap-2.5">
           <RowAMark className="size-7" />
           <span className="font-display text-title-sm">{BRAND}</span>
@@ -59,46 +58,54 @@ export function SignInBrand({ language, tagline, points, footnote }: { language:
       </div>
 
       <div className="px-14 py-14 xl:px-20">
-        <p className="font-editorial max-w-lg text-balance text-display-lg">{tagline}</p>
+        <p className="lead mb-4 text-room-ink-3">{language === "zh" ? "只读检查" : "Read-only checks"}</p>
+        <p className="font-display max-w-lg text-balance text-display-lg text-room-ink">{tagline}</p>
       </div>
 
-      <ul className="border-t border-rule">
+      <ul className="border-t border-room-line">
         {points.map(({ icon: Icon, title, body }) => (
-          <li key={title} className="flex gap-4 border-b border-rule px-14 py-5 xl:px-20">
-            <Icon className="mt-0.5 size-[18px] shrink-0 text-primary" />
+          <li key={title} className="flex gap-4 border-b border-room-line px-14 py-5 xl:px-20">
+            <Icon className="mt-0.5 size-[18px] shrink-0 text-room-ink-3" />
             <span className="grid gap-0.5">
-              <span className="text-body-md font-medium">{title}</span>
-              <span className="text-body-sm text-ink-muted">{body}</span>
+              <span className="text-body-md font-medium text-room-ink">{title}</span>
+              <span className="text-body-sm text-room-ink-2">{body}</span>
             </span>
           </li>
         ))}
       </ul>
 
-      <div className="graph flex flex-1 flex-col justify-end px-14 py-12 xl:px-20">
-        <div className="corners max-w-lg border border-rule-strong bg-paper-raised p-5 text-body-sm">
-          <div className="flex items-center justify-between text-caption text-ink-muted">
-            <span>{alert.channel}</span>
-            <span>Sep 29</span>
+      <div className="flex flex-1 flex-col justify-end px-14 py-12 xl:px-20">
+        <div className="slip max-w-lg">
+          <div className="slip-head">
+            <span className="lead">{alert.channel}</span>
+            <span className="text-caption text-film-print">{language === "zh" ? "9月29日" : "Sep 29"}</span>
           </div>
-          <div className="mt-4 flex gap-3">
-            <span className="grid size-9 shrink-0 place-items-center bg-primary text-primary-foreground"><RowAMark className="size-5" /></span>
-            <div className="min-w-0">
-              <div className="font-medium">{BRAND}</div>
-              <div className="mt-1 font-medium">{alert.title}</div>
-              <div className="text-ink-muted">{alert.lines}</div>
-              {acked ? (
-                <div className="mt-4 flex items-center gap-2 text-success"><CircleCheck className="size-4" />{alert.acknowledged}</div>
-              ) : (
-                <div className="mt-4 flex flex-wrap gap-2 text-caption">
-                  <span className="border border-rule px-3 py-1">{alert.open}</span>
-                  <span className="bg-primary px-3 py-1 text-primary-foreground">{alert.acknowledge}</span>
-                  <span className="border border-rule px-3 py-1">{alert.mute}</span>
-                </div>
-              )}
+          <div className="px-4 py-3">
+            <div className="flex items-center gap-2 text-caption text-film-print">
+              <span className="grid size-6 place-items-center rounded-sm bg-room-ink text-room-950">
+                <RowAMark className="size-4" />
+              </span>
+              {BRAND}
             </div>
+            <p className="mt-2 text-body-sm font-medium">{alert.title}</p>
+            <p className="text-caption text-film-print">{alert.lines}</p>
+          </div>
+          <div className="slip-foot">
+            {acked ? (
+              <span className="inline-flex items-center gap-1.5 text-film-print">
+                <CircleCheck className="size-4" />
+                {alert.acknowledged}
+              </span>
+            ) : (
+              <span className="flex flex-wrap gap-2">
+                <span className="border border-room-line-2 px-2 py-1">{alert.open}</span>
+                <span className="bg-room-ink px-2 py-1 text-room-950">{alert.acknowledge}</span>
+                <span className="border border-room-line-2 px-2 py-1">{alert.mute}</span>
+              </span>
+            )}
           </div>
         </div>
-        <p className="eyebrow mt-8 text-caption text-ink-muted">{footnote}</p>
+        <p className="mt-8 font-mono text-caption text-room-ink-3">{footnote}</p>
       </div>
     </aside>
   );

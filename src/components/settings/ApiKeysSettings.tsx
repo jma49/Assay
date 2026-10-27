@@ -4,7 +4,8 @@ import { useState, useSyncExternalStore } from "react";
 import { Plus } from "lucide-react";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { APP_CONTAINER } from "@/components/layout/app-container";
-import { WindowStatusBar } from "@/components/layout/WindowChrome";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,19 +47,20 @@ export function ApiKeysSettings() {
   }
 
   return (
-    <div className={`${APP_CONTAINER} space-y-8 py-6`}>
+    <div className={`${APP_CONTAINER} space-y-5 py-6`}>
+      <PageHeader title={t.title} />
       {keys && <WindowStatusBar>{t.count(keys.length)}</WindowStatusBar>}
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="max-w-2xl space-y-1.5">
-          <h1 className="font-editorial text-display-sm">{t.title}</h1>
-          <p className="text-body-md leading-6 text-muted-foreground">{t.intro}</p>
-          <Endpoint url={endpoint} />
-        </div>
+      <WindowToolbar>
         <Button onClick={() => setCreating(true)}>
           <Plus />
           {t.create}
         </Button>
-      </header>
+      </WindowToolbar>
+
+      <div className="space-y-1.5">
+        <Endpoint url={endpoint} />
+        <p className="max-w-2xl text-body-sm leading-6 text-muted-foreground">{t.intro}</p>
+      </div>
 
       <div className="overflow-hidden rounded-xl bg-card shadow-border">
         {keys === null ? (

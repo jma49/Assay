@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { runReportMessages } from "./messages";
 import {
   buildFindingsCsv,
+  changeSummary,
   columnLabel,
   csvCell,
   csvFileName,
@@ -39,7 +40,9 @@ describe("not-found message", () => {
   it("reads as one sentence in each language, with no Chinese in English", () => {
     expect(runReportMessages.en.notFound).toBe("No run with this id.");
     expect(runReportMessages.zh.notFound).toBe("找不到这次执行。");
-    for (const text of Object.values(runReportMessages.en)) expect(text).toMatch(/^[\x20-\x7e]+$/);
+    for (const text of Object.values(runReportMessages.en)) {
+      if (typeof text === "string") expect(text).toMatch(/^[\x20-\x7e]+$/);
+    }
   });
 });
 
@@ -158,5 +161,14 @@ describe("CSV export", () => {
 
   it("names the file after the check and the UTC date", () => {
     expect(csvFileName("orphan_orders", new Date("2026-09-27T23:30:00Z"))).toBe("orphan_orders_findings_2026-09-27.csv");
+  });
+});
+
+describe("changeSummary", () => {
+  it("says what changed in words, not only in counters", () => {
+    expect(changeSummary({ added: 2, still: 1, fixed: 1 }, "en")).toBe("2 rows are new, 1 row is still open, 1 row is fixed.");
+    expect(changeSummary({ added: 0, still: 3, fixed: 0 }, "en")).toBe("The same rows as the previous run: nothing new, nothing fixed.");
+    expect(changeSummary({ added: 0, still: 0, fixed: 1 }, "en")).toBe("1 row is fixed.");
+    expect(changeSummary({ added: 1, still: 0, fixed: 0 }, "zh")).toBe("新增 1 行。");
   });
 });

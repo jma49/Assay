@@ -58,6 +58,15 @@ describe("GET /api/execution-details/[resultId]", () => {
     expect(body.sample.length).toBeGreaterThan(0);
   });
 
+  it("shows the run's change and the check's statement, still without rowKeys", async () => {
+    mocks.run = { ...mocks.run, diff: { added: 2, still: 1, fixed: 0 } };
+    mocks.check = { ...mocks.check, sqlContent: "SELECT 1" };
+    const body = await read(String(id));
+    expect(body.diff).toEqual({ added: 2, still: 1, fixed: 0 });
+    expect(body.sql).toBe("SELECT 1");
+    expect(mocks.runOptions?.projection).not.toHaveProperty("rowKeys");
+  });
+
   it("hides member handles from guests", async () => {
     mocks.guest = true;
     const body = await read(String(id));

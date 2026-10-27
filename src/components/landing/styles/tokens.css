@@ -4,9 +4,9 @@
 :root:has(.lt),
 .lt {
   /* type: faces from next/font (fonts.ts) */
-  --lt-font-display: var(--font-lt-sans), "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
-  --lt-font-lead: var(--font-lt-lead), var(--font-lt-sans), "PingFang SC", sans-serif;
-  --lt-font-mono: var(--font-lt-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --lt-font-display: var(--font-app-sans), "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --lt-font-lead: var(--font-app-lead), var(--font-app-sans), "PingFang SC", sans-serif;
+  --lt-font-mono: var(--font-app-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
 
   /* type sizes: the landing's own scale. CSS reads these with var(); it never writes a literal font size
      (src/lib/type-scale.test.ts). Semantic levels first, then the fixed steps the chrome and proofs use. */

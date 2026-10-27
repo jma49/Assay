@@ -20,6 +20,13 @@ export const runReportMessages = {
     noDataDesc: "This run returned no rows.",
     exportCsv: "Export CSV",
     exportCsvDesc: "Download the rows as a CSV file",
+    compared: "Compared with the previous run",
+    firstRun: "No previous run to compare with",
+    newRows: (n: number) => `${n} new`,
+    stillRows: (n: number) => `${n} still open`,
+    fixedRows: (n: number) => `${n} fixed`,
+    query: "Query",
+    readOnly: "Read-only",
   },
   zh: {
     loadingFailed: "无法加载这次执行",
@@ -42,6 +49,13 @@ export const runReportMessages = {
     noDataDesc: "这次执行没有返回任何行。",
     exportCsv: "导出 CSV",
     exportCsvDesc: "把这些行下载为 CSV 文件",
+    compared: "与上一次执行对比",
+    firstRun: "没有可供对比的上一次执行",
+    newRows: (n: number) => `新增 ${n}`,
+    stillRows: (n: number) => `仍未解决 ${n}`,
+    fixedRows: (n: number) => `已修复 ${n}`,
+    query: "查询",
+    readOnly: "只读",
   },
 };
 

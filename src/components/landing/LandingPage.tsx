@@ -5,7 +5,6 @@ import "./styles/base.css";
 import "./styles/kit.css";
 import { memo, useLayoutEffect } from "react";
 import { currentLanguage } from "@/components/common/LanguageProvider";
-import { ltLead, ltMono, ltSans } from "./fonts";
 import { LandingProvider, Later, laterPending, useLanding } from "./lib/context";
 import type { Release } from "./release";
 import { useCopy } from "./lib/i18n";
@@ -51,7 +50,7 @@ function Room() {
 
   return (
     <MotionGuard language={language}>
-      <div ref={ref} className={`lt ${ltSans.variable} ${ltLead.variable} ${ltMono.variable}`} lang={language === "zh" ? "zh-CN" : "en"}>
+      <div ref={ref} className="lt" lang={language === "zh" ? "zh-CN" : "en"}>
         <Prepaint />
         <a className="skip" href="#main">
           {skip}

@@ -12,7 +12,7 @@ export function RunHistory({ runs, t, language }: { runs: RunListItem[]; t: Copy
     <div className="overflow-x-auto">
       <table className="w-full text-body-sm">
         <thead>
-          <tr className="border-b text-caption text-muted-foreground">
+          <tr className="border-b border-line text-caption text-ink-3">
             <th className="w-8 px-4 py-2" />
             <th className="px-3 py-2 text-left font-medium">{t.run}</th>
             <th className="px-3 py-2 text-left font-medium">{t.trigger}</th>
@@ -25,7 +25,7 @@ export function RunHistory({ runs, t, language }: { runs: RunListItem[]; t: Copy
           {runs.map((run) => (
             <tr
               key={run.runId}
-              className="cursor-pointer border-b transition-[background-color] duration-150 last:border-0 hover:bg-muted/60"
+              className="cursor-pointer border-b border-line transition-[background-color] duration-150 last:border-0 hover:bg-white/50"
               onClick={() => router.push(`/runs/${run.runId}`)}
             >
               <td className="px-4 py-2.5">
@@ -36,22 +36,22 @@ export function RunHistory({ runs, t, language }: { runs: RunListItem[]; t: Copy
                   {formatRelative(run.at, language)}
                 </Link>
               </td>
-              <td className="px-3 py-2.5 text-muted-foreground">{run.trigger ? (t.triggers[run.trigger] ?? run.trigger) : "—"}</td>
+              <td className="px-3 py-2.5 text-ink-3">{run.trigger ? (t.triggers[run.trigger] ?? run.trigger) : "—"}</td>
               <td className="px-3 py-2.5 whitespace-nowrap tabular-nums">
-                {run.outcome === "error" ? <span className="text-failure">{t.queryError}</span> : t.rows(run.rowCount)}
+                {run.outcome === "error" ? <span className="text-failure">{OUTCOME_LABEL.error[language]}</span> : t.rows(run.rowCount)}
               </td>
               <td className="px-3 py-2.5 text-caption whitespace-nowrap max-sm:hidden">
                 {run.diff ? (
                   <span className="space-x-2">
-                    {run.diff.added > 0 && <span className="text-failure">+{run.diff.added}</span>}
+                    {run.diff.added > 0 && <span className="text-attention">+{run.diff.added}</span>}
                     {run.diff.fixed > 0 && <span className="text-success">−{run.diff.fixed}</span>}
-                    {run.diff.added === 0 && run.diff.fixed === 0 && <span className="text-muted-foreground">—</span>}
+                    {run.diff.added === 0 && run.diff.fixed === 0 && <span className="text-ink-3">—</span>}
                   </span>
                 ) : (
-                  <span className="text-muted-foreground">—</span>
+                  <span className="text-ink-3">—</span>
                 )}
               </td>
-              <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums max-sm:hidden">
+              <td className="px-4 py-2.5 text-right text-ink-3 tabular-nums max-sm:hidden">
                 {run.durationMs === null ? "—" : `${(run.durationMs / 1000).toFixed(1)} s`}
               </td>
             </tr>
