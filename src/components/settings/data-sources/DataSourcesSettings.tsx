@@ -5,7 +5,8 @@ import { AlertTriangle, Plus } from "lucide-react";
 import { apiErrorCodeText } from "@/client/api-errors";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { APP_CONTAINER } from "@/components/layout/app-container";
-import { WindowStatusBar } from "@/components/layout/WindowChrome";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { WindowStatusBar, WindowToolbar } from "@/components/layout/WindowChrome";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,20 +55,18 @@ export function DataSourcesSettings() {
   const canAdd = setup.canManage && setup.secretKey;
 
   return (
-    <div className={`${APP_CONTAINER} space-y-8 py-6`}>
+    <div className={`${APP_CONTAINER} space-y-5 py-6`}>
+      <PageHeader title={t.title} />
       <WindowStatusBar>{t.count(sources.length)}</WindowStatusBar>
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="max-w-2xl space-y-1.5">
-          <h1 className="font-editorial text-display-sm">{t.title}</h1>
-          <p className="text-body-md text-muted-foreground">{t.intro}</p>
-        </div>
-        {setup.canManage && (
+      {setup.canManage && (
+        <WindowToolbar>
           <Button onClick={() => setDialog({ open: true, editing: null })} disabled={!canAdd}>
             <Plus />
             {t.add}
           </Button>
-        )}
-      </header>
+        </WindowToolbar>
+      )}
+      <p className="max-w-2xl text-body-sm leading-6 text-muted-foreground">{t.intro}</p>
 
       {(!setup.canManage || !setup.secretKey) && (
         <p className="flex items-start gap-2 rounded-xl bg-attention-soft px-4 py-3 text-body-sm text-attention">

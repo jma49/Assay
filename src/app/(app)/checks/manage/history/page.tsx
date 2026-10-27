@@ -44,9 +44,8 @@ export default function GlobalEditHistoryPage() {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className={`${APP_CONTAINER} py-6`}>
-        <div className="space-y-6 animate-fadeIn">
+    <div className={`${APP_CONTAINER} py-6`}>
+      <div className="space-y-6 animate-fadeIn">
           <PageHeader title={t.pageTitle} description={t.pageDescription} />
           <WindowStatusBar>
             {language === "zh" ? `共 ${totalRecords}${totalCapped ? "+" : ""} 次修改` : `${totalRecords}${totalCapped ? "+" : ""} changes`}
@@ -83,7 +82,6 @@ export default function GlobalEditHistoryPage() {
               />
             )}
           </Card>
-        </div>
       </div>
 
       <EditHistoryDetailDialog

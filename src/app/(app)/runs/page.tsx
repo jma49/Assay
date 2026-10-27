@@ -31,10 +31,8 @@ export default async function RunsPage({ searchParams }: { searchParams: Promise
 
 function RunsView({ search }: { search: string }) {
   return (
-    <div className="min-h-screen">
-      <main className={`${APP_CONTAINER} py-6`}>
-        <Dashboard initialSearch={search} />
-      </main>
+    <div className={`${APP_CONTAINER} py-6`}>
+      <Dashboard initialSearch={search} />
     </div>
   );
 }

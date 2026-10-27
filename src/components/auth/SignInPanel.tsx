@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { useState, useSyncExternalStore, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, BellRing, Bot, ChevronDown, ListChecks, Loader2, ShieldCheck } from "lucide-react";
 import "./sign-in.css";
-import { signInMono, signInSans } from "./fonts";
 import { RowAMark } from "@/components/brand/RowAMark";
 import { GithubMark } from "@/components/common/GithubMark";
 import { SignInBrand } from "./SignInBrand";
@@ -127,12 +126,12 @@ function ProviderButton({ provider, label, icon, busy, disabled, lastUsed, lastU
       size="lg"
       disabled={disabled}
       onClick={() => onClick(provider)}
-      className={cn("relative h-12 w-full justify-center rounded-none border border-rule-strong bg-paper-raised text-body-md shadow-none hover:border-ink-muted", lastUsed && "border-primary")}
+      className={cn("relative h-12 w-full justify-center rounded-sm border border-line-2 bg-face-hi text-body-md text-ink shadow-none hover:border-ink-3", lastUsed && "border-ink")}
     >
       {busy ? <Loader2 className="animate-spin" /> : icon}
       {label}
       {lastUsed && (
-        <span className="absolute -top-2 right-3 bg-primary px-1.5 py-px text-caption font-medium text-primary-foreground">{lastUsedLabel}</span>
+        <span className="lead absolute -top-2 right-3 bg-ink px-1.5 py-1 text-face-hi">{lastUsedLabel}</span>
       )}
     </Button>
   );
@@ -189,40 +188,40 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
   const noProvider = !providers.google && !providers.github && !providers.password;
 
   return (
-    <div className={cn("sign-in grid min-h-screen lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]", signInSans.variable, signInMono.variable)}>
+    <div className={cn("sign-in grid min-h-screen bg-room-950 text-room-ink lg:grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)]")}>
       {/* The pitch, for people who arrive here first. Hidden on small screens, where the form matters most. */}
       <SignInBrand language={language} tagline={t.tagline} points={t.points} footnote={t.openSource} />
 
-      <main className="flex flex-col bg-paper-raised text-foreground">
+      <main className="flex flex-col bg-room-950 text-room-ink">
         {/* On small screens the brand panel shrinks to a slim ruled header. */}
-        <header className="border-b border-rule bg-paper px-5 pt-5 pb-6 text-ink lg:hidden">
+        <header className="border-b border-room-line bg-room-950 px-5 pt-5 pb-6 text-room-ink lg:hidden">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
               <RowAMark className="size-8" />
               <span className="font-display text-title-sm">Assay</span>
             </Link>
-            <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 px-2.5 text-body-sm text-ink-muted hover:text-ink">
+            <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 rounded-sm px-2.5 font-mono text-body-sm text-room-ink-2 hover:text-room-ink">
               {language === "zh" ? "EN" : "中文"}
             </button>
           </div>
-          <p className="font-editorial mt-6 text-display-sm text-balance">{t.tagline}</p>
+          <p className="font-display mt-6 text-display-sm text-balance text-room-ink">{t.tagline}</p>
         </header>
-        <div className="hidden h-16 items-center justify-between border-b border-rule px-8 lg:flex">
-          <Link href="/" className="inline-flex items-center gap-1.5 text-body-sm text-muted-foreground hover:text-foreground">
+        <div className="hidden h-16 items-center justify-between border-b border-room-line px-8 lg:flex">
+          <Link href="/" className="inline-flex items-center gap-1.5 text-body-sm text-room-ink-2 hover:text-room-ink">
             <ArrowLeft className="size-4" />
             {t.home}
           </Link>
-          <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 px-2.5 text-body-sm text-muted-foreground hover:bg-muted hover:text-foreground">
+          <button type="button" onClick={() => setLanguage(language === "zh" ? "en" : "zh")} className="h-8 rounded-sm px-2.5 font-mono text-body-sm text-room-ink-2 hover:bg-room-800 hover:text-room-ink">
             {language === "zh" ? "EN" : "中文"}
           </button>
         </div>
 
-        <div className="flex flex-1 items-start justify-center px-5 pt-10 pb-16 lg:items-center lg:pt-0">
-          <div className="w-full max-w-[400px]">
-            <RowAMark className="hidden size-11 lg:block" />
+        <div className="flex flex-1 items-start justify-center px-4 pt-8 pb-12 lg:items-center lg:px-8 lg:py-10">
+          <div className="app-face w-full max-w-[440px] px-6 py-8 text-ink sm:px-8">
+            <RowAMark className="hidden size-10 text-ink lg:block" />
             <div className="space-y-2 lg:mt-8">
-              <h1 className="text-display-sm">{page.title}</h1>
-              <p className="text-body-md text-muted-foreground">{page.description}</p>
+              <h1 className="text-display-sm text-ink">{page.title}</h1>
+              <p className="text-body-md text-ink-2">{page.description}</p>
             </div>
 
             <div className="mt-8 grid gap-3">
@@ -232,14 +231,14 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
               {providers.github && (
                 <ProviderButton provider="github" label={t.github} icon={<GithubMark />} busy={busy === "github"} disabled={busy !== null} lastUsed={lastUsed === "github"} lastUsedLabel={t.lastUsed} onClick={social} />
               )}
-              {noProvider && <p className="bg-attention-soft px-3.5 py-3 text-body-sm text-attention">{t.none}</p>}
+              {noProvider && <p className="rounded-sm border border-line-2 bg-face-lo px-3.5 py-3 text-body-sm text-ink-2">{t.none}</p>}
               {errorText && (
-                <p role="alert" className="bg-failure-soft px-3.5 py-3 text-body-sm text-failure">
+                <p role="alert" className="rounded-sm border border-line-2 bg-face-lo px-3.5 py-3 text-body-sm text-ink">
                   {errorText}
                 </p>
               )}
               {(providers.google || providers.github) && (
-                <p className="mt-1 flex gap-2 text-caption text-muted-foreground">
+                <p className="mt-1 flex gap-2 text-caption text-ink-2">
                   <ShieldCheck className="mt-px size-3.5 shrink-0" />
                   {t.privacy}
                 </p>
@@ -247,13 +246,13 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
             </div>
 
             {providers.password && (
-              <details className="group mt-6 border border-rule bg-paper-raised" open={!providers.google && !providers.github}>
-                <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3 text-body-sm font-medium text-muted-foreground">
+              <details className="group mt-6 rounded-sm border border-line-2 bg-white/35" open={!providers.google && !providers.github}>
+                <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3 text-body-sm font-medium text-ink-2">
                   {t.devToggle}
                   <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
                 </summary>
                 <form
-                  className="grid gap-2.5 border-t p-3.5"
+                  className="grid gap-2.5 border-t border-line p-3.5"
                   onSubmit={(event) => {
                     event.preventDefault();
                     void devSignIn(false);
@@ -281,17 +280,17 @@ export function SignInPanel({ mode, providers, demo }: { mode: "signIn" | "signU
               </details>
             )}
 
-            <div className="mt-8 space-y-2 border-t pt-6 text-body-sm text-muted-foreground">
+            <div className="mt-8 space-y-2 border-t border-line pt-6 text-body-sm text-ink-2">
               <p>
                 {page.switch}{" "}
-                <Link href={switchHref} className="font-medium text-primary-ink hover:underline">
+                <Link href={switchHref} className="font-medium text-ink underline underline-offset-4">
                   {page.switchLink}
                 </Link>
               </p>
               {demo && (
                 <p>
                   {t.demo}{" "}
-                  <Link href="/demo" className="group inline-flex items-center gap-1 font-medium text-primary-ink hover:underline">
+                  <Link href="/demo" className="group inline-flex items-center gap-1 font-medium text-ink underline underline-offset-4">
                     {t.demoLink}
                     <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
                   </Link>

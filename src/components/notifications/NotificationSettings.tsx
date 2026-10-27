@@ -6,6 +6,7 @@ import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/common/LanguageProvider";
 import { APP_CONTAINER } from "@/components/layout/app-container";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { WindowStatusBar } from "@/components/layout/WindowChrome";
 import { useApi } from "@/client/use-api";
 import { apiErrorCodeText } from "@/client/api-errors";
@@ -63,12 +64,10 @@ export function NotificationSettings() {
   const { destinations, setup } = data;
 
   return (
-    <div className={`${APP_CONTAINER} space-y-8 py-6`}>
+    <div className={`${APP_CONTAINER} space-y-5 py-6`}>
+      <PageHeader title={t.title} />
       <WindowStatusBar>{t.count(destinations.length)}</WindowStatusBar>
-      <header className="max-w-2xl space-y-1.5">
-        <h1 className="font-editorial text-display-sm">{t.title}</h1>
-        <p className="text-body-md leading-6 text-muted-foreground">{t.intro}</p>
-      </header>
+      <p className="max-w-2xl text-body-sm leading-6 text-muted-foreground">{t.intro}</p>
 
       {(!setup.canManage || !setup.secretKey) && (
         <p className="flex items-start gap-2 rounded-xl bg-attention-soft px-4 py-3 text-body-sm text-attention">

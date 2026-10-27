@@ -53,10 +53,10 @@ export default function ApprovalsPage() {
 
   if (!hasLoaded) {
     return (
-      <main className={`${APP_CONTAINER} space-y-6 py-6`} aria-busy="true">
+      <div className={`${APP_CONTAINER} space-y-6 py-6`} aria-busy="true">
         <SkeletonPageHeader />
         <SkeletonCardList />
-      </main>
+      </div>
     );
   }
 
@@ -73,9 +73,8 @@ export default function ApprovalsPage() {
   const listProps = { hasLoaded, language, actionLoading, onDecide: openApprovalDialog };
 
   return (
-    <div className="min-h-screen    ">
-      <div className={`${APP_CONTAINER} py-6`}>
-        <div className="space-y-6">
+    <div className={`${APP_CONTAINER} py-6`}>
+      <div className="space-y-6">
           <WindowStatusBar>
             {language === "zh"
               ? `${pending.totalItems} 项待审批 · ${history.totalItems} 项已处理`
@@ -113,7 +112,6 @@ export default function ApprovalsPage() {
               />
             </TabsContent>
           </Tabs>
-        </div>
       </div>
 
       <ApprovalDecisionDialog
