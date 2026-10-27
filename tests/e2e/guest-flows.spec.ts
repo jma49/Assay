@@ -26,7 +26,7 @@ test("the Issues tile filters the list to checks that found rows", async ({ page
   expect(issues.length, "seeded checks with issues").toBeGreaterThan(0);
 
   await page.goto("/checks");
-  await page.getByRole("button", { name: /^With issues/ }).click();
+  await page.getByRole("button", { name: /^Issues\b/ }).click();
   await expect(page.getByText("Issues found")).toBeVisible();
   await expect(page.getByText("Broken checks")).toHaveCount(0);
   for (const check of issues) await expect(page.getByText(check.name, { exact: true }).first()).toBeVisible();
