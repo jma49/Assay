@@ -48,6 +48,9 @@
   --lt-section-y: clamp(88px, 10.5vw, 152px);
   --lt-wrap: 1280px;
   --lt-gutter: clamp(20px, 5.6vw, 80px);
+  /* the edge a composition shares with the box: 6% of the box's stage (100% wide, or 160svh when the room is taller than
+     it is wide), so copy and footer start as far from the wall as the light stops short of it. Desktop only. */
+  --lt-edge: max(6vw, 9.6svh);
   --lt-nav-h: 56px;
 
   /* radii */

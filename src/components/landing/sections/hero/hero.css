@@ -177,6 +177,29 @@
   max-width: min(28rem, 46vw - var(--lt-gutter));
 }
 
+/* the copy starts at the edge the box leaves rather than inside the text wrap, so the hero reads as one composition:
+   the headline on the wall, the light in the room, each the same distance from its side */
+@media (min-width: 1101px) {
+  .lt .hero-copy.wrap {
+    width: auto;
+    margin-inline: 0;
+    padding-inline: var(--lt-edge);
+  }
+}
+
+/* a very wide desk: the box grows with the room, so the display grows with it; otherwise the copy thins to a corner */
+@media (min-width: 1600px) {
+  .lt:not(:lang(zh)) .hero-copy .display {
+    font-size: clamp(var(--lt-text-h1), 7.6vw, 152px);
+  }
+  .lt:lang(zh) .hero-copy .display {
+    font-size: clamp(var(--lt-text-h1-zh), 6.2vw, 124px);
+  }
+  .lt .hero-copy .lede {
+    max-width: 34rem;
+  }
+}
+
 /* shown to a guest; its space is held while the session loads and for a signed-in reader */
 .lt .hero-copy .note[data-session]:not([data-session="guest"]) {
   visibility: hidden;

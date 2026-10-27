@@ -133,10 +133,12 @@
     -webkit-mask-image: radial-gradient(ellipse 36% 46% at 50% 53%, black 62%, transparent 100%);
     mask-image: radial-gradient(ellipse 36% 46% at 50% 53%, black 62%, transparent 100%);
   }
-  .lt .final-copy {
-    margin: 0 auto;
+  .lt .final-copy.wrap {
+    margin: 0;
+    width: auto;
+    flex: 1;
+    padding-inline: var(--lt-edge);
     text-align: left;
-    width: min(var(--lt-wrap), 100% - 2 * var(--lt-gutter));
   }
   .lt .final-copy > * {
     max-width: min(30rem, 36vw);
