@@ -1,92 +1,115 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Design tokens. Assay is light only: one paper palette for the app, the docs and sign-in (the landing has its own below).
-   Neutrals are warm off-whites ruled with hairlines; status colours are separate from the accent and
-   mean the same thing everywhere: error = the check itself broke, issues = it found rows, clean = it found none. */
+/* Design tokens. Assay is one lit room: a dark warm frame (the rail and top bar) around a lit opal working
+   face, the light box. Suffused light is the only accent, and it means one thing: a row a check returned.
+   Status colours are separate from the accent and mean the same thing everywhere: Broken = the query itself
+   failed (the safelight red), Issues = it returned rows (lumen ink), Clean = it returned none (quiet ink).
+   Light only: the face is the working surface; there is no dark mode, and no green anywhere. */
 :root {
   color-scheme: light;
-  --app-font-sans: var(--font-geist), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+  --app-font-sans: var(--font-app-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC", system-ui, sans-serif;
   /* Headings use the same family, tighter. */
   --app-font-display: var(--app-font-sans);
-  --app-font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  /* Page and document titles; Chinese falls back to a Song face. */
-  --app-font-serif: var(--font-serif), "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", Georgia, serif;
+  --app-font-mono: var(--font-app-mono), ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  /* Lead letters: the condensed face printed on film edges and role plates. Markings only. */
+  --app-font-lead: var(--font-app-lead), var(--app-font-sans), "PingFang SC", "Noto Sans SC", sans-serif;
 
-  /* Square corners everywhere; only status dots, avatars and switch knobs stay round. */
-  --radius: 0px;
+  /* The room: the frame the light box sits in. */
+  --room-950: #0e0a07;
+  --room-900: #19130f;
+  --room-800: #2a211a;
+  --room-ink: #f2ece5;
+  --room-ink-2: #b7aea5;
+  --room-ink-3: #a29a92;
+  --room-line: rgb(242 236 229 / 0.12);
+  --room-line-2: rgb(242 236 229 / 0.24);
 
-  /* Paper: a warm off-white page ruled with hairlines, panels in white, text in ink. */
-  --paper: #f8f7f3;
-  --paper-raised: #ffffff;
-  --rule: #e3e1d8;
-  --rule-strong: #cbc8bc;
-  --ink: #16171b;
-  --ink-muted: #64656b;
+  /* The face: the lit working surface, its ink and hairlines. */
+  --face: #eef2f3;
+  --face-hi: #f7fafa;
+  --face-lo: #e4eaec;
+  --ink: #121619;
+  --ink-2: #4f5356;
+  --ink-3: #5c6063;
+  --line: rgb(18 22 25 / 0.12);
+  --line-2: rgb(18 22 25 / 0.22);
+  /* The safelight: Broken, and nothing else. */
+  --safelight: #a3261f;
+  --safelight-soft: #f6e1de;
+  /* Lumen: light through a row the check returned. Never a link, button, focus ring or decoration. */
+  --lumen: #9fdcff;
+  --lumen-core: #f1fbff;
+  --lumen-ink: #0b5a80;
+  --lit-still: #dff3ff;
+  --lit-edge: #5fc0f5;
 
-  --background: var(--paper);
+  /* Square-ish objects: a small radius for controls, a slightly larger one for a sheet on the face. */
+  --radius: 4px;
+
+  --background: var(--face);
   --foreground: var(--ink);
-  --card: var(--paper-raised);
+  --card: var(--face-hi);
   --card-foreground: var(--ink);
-  --popover: var(--paper-raised);
+  --popover: var(--face-hi);
   --popover-foreground: var(--ink);
-  --primary: #4f63e8;
-  --primary-foreground: #ffffff;
-  --secondary: #f0eee7;
+  --primary: var(--ink);
+  --primary-foreground: var(--face-hi);
+  --secondary: #dfe5e7;
   --secondary-foreground: var(--ink);
-  --muted: #f0eee7;
-  --muted-foreground: var(--ink-muted);
-  --subtle-foreground: #9a988f;
-  --accent: #f0eee7;
+  --muted: #e4eaec;
+  --muted-foreground: var(--ink-2);
+  --subtle-foreground: var(--ink-3);
+  --accent: #e4eaec;
   --accent-foreground: var(--ink);
-  --destructive: #b42a2a;
+  --destructive: var(--safelight);
   --destructive-foreground: #ffffff;
-  --border: var(--rule);
-  --border-strong: var(--rule-strong);
-  --input: var(--rule-strong);
-  --ring: color-mix(in srgb, #4f63e8 45%, transparent);
-  --primary-soft: #eef0fe;
-  --primary-ink: #2b3aae;
+  --border: #d4dcdf;
+  --border-strong: #b9c3c7;
+  --input: var(--border-strong);
+  --ring: rgb(18 22 25 / 0.45);
+  --primary-soft: #dfe5e7;
+  --primary-ink: var(--ink);
 
-  --success: #1f7a52;
-  --success-soft: #e8f5ee;
-  --attention: #8a5a12;
-  --attention-soft: #fbf1de;
-  --failure: #b42a2a;
-  --failure-soft: #fbeaea;
-  --info: #4f63e8;
+  /* Clean is quiet ink, Issues is lumen ink, Broken is the safelight. */
+  --success: #3d4347;
+  --success-soft: #e4eaec;
+  --attention: var(--lumen-ink);
+  --attention-soft: var(--lit-still);
+  --failure: var(--safelight);
+  --failure-soft: var(--safelight-soft);
+  --info: var(--lumen-ink);
 
-  --code-bg: #f4f3ee;
-  /* Syntax colours for code samples: the accent for keywords, the rest kept
-     off the status hues so a string never reads as a failure. */
-  --syntax-keyword: #4153d6;
-  --syntax-string: #a1452b;
-  --syntax-number: #7c3fc4;
-  --syntax-function: #0b7285;
-  --syntax-comment: #6e7282;
-  --syntax-punctuation: #5a5d6b;
-  /* No drop shadows: panels sit on the paper inside a hairline (a ring, so it never shifts layout),
-     and only things that float (menus, popovers, toasts) cast a short shadow. */
-  --shadow-border: 0 0 0 1px var(--rule);
-  --shadow-border-hover: 0 0 0 1px var(--rule-strong);
+  --code-bg: #e4eaec;
+  /* Syntax colours for code samples: ink and one cool accent, kept off the status hues. */
+  --syntax-keyword: #0b5a80;
+  --syntax-string: #8a4b1f;
+  --syntax-number: #5b3a8c;
+  --syntax-function: #2f5d62;
+  --syntax-comment: #5c6063;
+  --syntax-punctuation: #4f5356;
+  /* Panels sit on the face inside a hairline (a ring, so it never shifts layout); only things that
+     float (menus, popovers, toasts) cast a short shadow. */
+  --shadow-border: inset 0 0 0 1px var(--border);
+  --shadow-border-hover: inset 0 0 0 1px var(--border-strong);
   --shadow-sm: 0 0 #0000;
-  --shadow-md: 0 0 0 1px var(--rule-strong), 0 10px 24px -14px rgba(22, 23, 27, 0.22);
+  --shadow-md: 0 0 0 1px var(--border-strong), 0 18px 40px -20px rgb(18 22 25 / 0.45);
 
-  --chart-1: #4f63e8;
+  --chart-1: var(--lumen-ink);
   --chart-2: var(--success);
   --chart-3: var(--attention);
   --chart-4: var(--failure);
-  --chart-5: #9a988f;
+  --chart-5: var(--ink-3);
 
-  --sidebar: var(--paper);
-  --sidebar-foreground: #46474d;
-  --sidebar-primary: #4f63e8;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eef0fe;
-  --sidebar-accent-foreground: var(--primary-ink);
-  --sidebar-border: var(--rule);
-  --sidebar-ring: color-mix(in srgb, #4f63e8 45%, transparent);
+  --sidebar: var(--room-900);
+  --sidebar-foreground: var(--room-ink-2);
+  --sidebar-primary: var(--room-ink);
+  --sidebar-primary-foreground: var(--room-950);
+  --sidebar-accent: var(--room-800);
+  --sidebar-accent-foreground: var(--room-ink);
+  --sidebar-border: var(--room-line);
+  --sidebar-ring: rgb(242 236 229 / 0.45);
 }
 
 /* The landing's light table (src/components/landing): a dark room, a light box and film, its own world apart from
@@ -256,7 +279,7 @@
   --font-sans: var(--app-font-sans);
   --font-display: var(--app-font-display);
   --font-mono: var(--app-font-mono);
-  --font-serif: var(--app-font-serif);
+  --font-lead: var(--app-font-lead);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -268,12 +291,14 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-soft: var(--primary-soft);
   --color-primary-ink: var(--primary-ink);
-  --color-paper: var(--paper);
-  --color-paper-raised: var(--paper-raised);
-  --color-rule: var(--rule);
-  --color-rule-strong: var(--rule-strong);
+  --color-paper: var(--face);
+  --color-paper-raised: var(--face-hi);
+  --color-rule: var(--border);
+  --color-rule-strong: var(--border-strong);
   --color-ink: var(--ink);
-  --color-ink-muted: var(--ink-muted);
+  --color-ink-muted: var(--ink-2);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -296,6 +321,27 @@
   --color-failure-soft: var(--failure-soft);
   --color-info: var(--info);
   --color-code: var(--code-bg);
+
+  /* The room and the light box, as utilities. */
+  --color-room-950: var(--room-950);
+  --color-room-900: var(--room-900);
+  --color-room-800: var(--room-800);
+  --color-room-ink: var(--room-ink);
+  --color-room-ink-2: var(--room-ink-2);
+  --color-room-ink-3: var(--room-ink-3);
+  --color-room-line: var(--room-line);
+  --color-room-line-2: var(--room-line-2);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-face: var(--face);
+  --color-face-hi: var(--face-hi);
+  --color-face-lo: var(--face-lo);
+  --color-lumen: var(--lumen);
+  --color-lumen-core: var(--lumen-core);
+  --color-lumen-ink: var(--lumen-ink);
+  --color-lit-still: var(--lit-still);
+  --color-lit-edge: var(--lit-edge);
+  --color-safelight: var(--safelight);
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -386,7 +432,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-room-950 text-foreground font-sans;
     font-size: var(--text-body-md);
   }
 
@@ -398,7 +444,7 @@
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--primary) 22%, transparent);
+    background: color-mix(in srgb, var(--lumen) 45%, transparent);
   }
 
   /* Titles: the display face, tighter as it gets larger. */
@@ -408,9 +454,17 @@
     text-wrap: balance;
   }
 
+  /* The face's own ink, never lumen; also true on film. */
   :focus-visible {
-    outline: 2px solid var(--primary);
+    outline: 2px solid var(--ink);
     outline-offset: 2px;
+  }
+
+  .bg-room-950 :focus-visible,
+  .bg-room-900 :focus-visible,
+  .film :focus-visible,
+  .sign-in :focus-visible {
+    outline-color: var(--room-ink);
   }
 }
 
@@ -438,7 +492,7 @@
   }
 }
 
-/* Status dot: the one shape that means error / issues / clean everywhere. */
+/* Status dot: the one shape that means Broken / Issues / Clean everywhere. */
 .status-dot {
   display: inline-block;
   flex: none;
@@ -448,18 +502,18 @@
 }
 
 .status-dot-error {
-  background: var(--failure);
+  background: var(--safelight);
   box-shadow: 0 0 0 3px var(--failure-soft);
 }
 
 .status-dot-issues {
-  background: var(--attention);
+  background: var(--lumen-ink);
   box-shadow: 0 0 0 3px var(--attention-soft);
 }
 
 .status-dot-clean {
-  background: var(--success);
-  box-shadow: 0 0 0 3px var(--success-soft);
+  background: var(--ink-3);
+  box-shadow: 0 0 0 3px var(--muted);
 }
 
 .status-dot-idle {
@@ -502,14 +556,14 @@
 }
 
 .docs-prose a {
-  color: var(--primary);
+  color: var(--ink);
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  text-decoration-color: color-mix(in srgb, var(--ink) 35%, transparent);
   text-underline-offset: 0.18em;
 }
 
 .docs-prose a:hover {
-  text-decoration-color: var(--primary);
+  text-decoration-color: var(--ink);
 }
 
 .docs-prose ul,
@@ -539,25 +593,28 @@
 
 .docs-prose :not(pre) > code {
   padding: 0.1em 0.35em;
-  background: var(--code-bg);
-  box-shadow: inset 0 0 0 1px var(--border);
-  font-family: var(--font-mono);
+  background: var(--face-lo);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-family: var(--app-font-mono);
   font-size: 0.86em;
 }
 
+/* Code on the face is printed on film, as SQL is everywhere else in the product. */
 .docs-prose pre {
   overflow-x: auto;
   padding: 0.9rem 1rem;
-  border: 1px solid var(--border);
-  background: var(--code-bg);
-  font-family: var(--font-mono);
+  border-radius: 4px;
+  background: var(--lt-film-900);
+  color: var(--lt-film-print);
+  font-family: var(--app-font-mono);
   font-size: var(--text-body-sm);
   line-height: 1.65;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.4);
 }
 
 .docs-table {
   overflow-x: auto;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line-2);
 }
 
 .docs-prose table {
@@ -567,26 +624,26 @@
 }
 
 .docs-prose th {
-  background: var(--muted);
-  border-bottom: 1px solid var(--border);
+  background: var(--face-lo);
+  border-bottom: 1px solid var(--line);
   padding: 0.5rem 0.75rem;
   text-align: left;
   font-size: var(--text-body-sm);
   font-weight: 500;
-  color: var(--muted-foreground);
+  color: var(--ink-2);
 }
 
 .docs-prose td {
   padding: 0.5rem 0.75rem;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line);
   vertical-align: top;
 }
 
 .docs-note {
   padding: 0.75rem 1rem;
-  border: 1px solid var(--border);
-  border-left: 2px solid var(--primary);
-  background: var(--card);
+  border: 1px solid var(--line-2);
+  border-left: 2px solid var(--ink);
+  background: var(--face-hi);
 }
 
 .docs-note > * + * {
@@ -627,19 +684,19 @@
 }
 
 /* Run statuses as stored today (success / attention_needed / failure) map
-   onto the same dots until runs use error / issues / clean. */
+   onto the same marks until runs use error / issues / clean. */
 .status-dot-success {
-  background: var(--success);
-  box-shadow: 0 0 0 3px var(--success-soft);
+  background: var(--ink-3);
+  box-shadow: 0 0 0 3px var(--muted);
 }
 
 .status-dot-attention_needed {
-  background: var(--attention);
+  background: var(--lumen-ink);
   box-shadow: 0 0 0 3px var(--attention-soft);
 }
 
 .status-dot-failure {
-  background: var(--failure);
+  background: var(--safelight);
   box-shadow: 0 0 0 3px var(--failure-soft);
 }
 
@@ -671,12 +728,350 @@
   letter-spacing: -0.02em;
 }
 
-/* Page and document titles: the serif at regular weight. */
-.font-editorial {
-  font-family: var(--app-font-serif);
-  font-weight: 400;
-  letter-spacing: -0.01em;
+/* ---------- The room and the light box ---------- */
+
+/* The lit face every page is laid on: brighter at the centre, falling off toward its lip. */
+.app-face {
+  border-radius: 7px;
+  background: radial-gradient(120% 80% at 50% 0%, var(--face-hi) 0%, var(--face) 56%, var(--face-lo) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.45),
+    inset 0 1px 0 1px rgb(255 255 255 / 0.5),
+    inset 0 0 36px rgb(150 165 172 / 0.28);
 }
+
+/* Lead letters: the condensed face, capitals only, for markings. Never running text. */
+.lead {
+  font-family: var(--app-font-lead);
+  font-size: var(--text-caption);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* A sheet laid on the face: the side panel, a form, a card that matters. */
+.panel-sheet {
+  border: 1px solid var(--line-2);
+  border-radius: 7px;
+  background: var(--face-hi);
+  box-shadow: 0 18px 40px -26px rgb(18 22 25 / 0.5);
+}
+
+/* An outcome drawn as film: clear film, a lit row, fog. The word is always printed beside it. */
+.outcome-glyph {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 22px;
+  height: 16px;
+  overflow: hidden;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.outcome-glyph-issues,
+.outcome-glyph-clean {
+  background: var(--lt-film-900);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.4);
+}
+
+.outcome-glyph-issues::before,
+.outcome-glyph-clean::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  background: repeating-linear-gradient(180deg, var(--lt-film-700) 0 2px, transparent 2px 4px);
+}
+
+.outcome-glyph-issues::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  right: 2px;
+  left: 2px;
+  height: 4px;
+  border-radius: 1px;
+  background: var(--lumen-core);
+  box-shadow: 0 0 0 1px var(--lumen), 0 0 4px var(--lt-lumen-glow);
+}
+
+.outcome-glyph-error {
+  background: var(--lt-fog);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.25);
+}
+
+.outcome-glyph-error::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(135deg, rgb(233 236 236 / 0.55) 0 1.5px, transparent 1.5px 4px);
+}
+
+.outcome-glyph-none {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+
+.outcome-glyph-lg {
+  width: 30px;
+  height: 22px;
+}
+
+.outcome-glyph-lg.outcome-glyph-issues::after {
+  top: 8px;
+  height: 6px;
+}
+
+/* ---------- Film: the returned rows, lit on the box ---------- */
+
+.film {
+  position: relative;
+  border-radius: 4px;
+  background: var(--lt-film-900);
+  color: var(--lt-film-print);
+  padding: 0 10px 8px;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.4),
+    0 10px 26px -16px rgb(18 22 25 / 0.55);
+}
+
+.film-edge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 2px 8px;
+  color: var(--lt-film-print);
+}
+
+.film-edge-bottom {
+  padding: 8px 2px 2px;
+  color: var(--lt-film-ink-2);
+}
+
+.film-scroll {
+  overflow-x: auto;
+}
+
+.film table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 3px;
+  font-family: var(--app-font-mono);
+  font-size: var(--text-body-sm);
+}
+
+.film th {
+  padding: 2px 12px 4px;
+  border-bottom: 1px solid var(--lt-film-line);
+  color: var(--lt-film-ink-2);
+  font-size: var(--text-caption);
+  font-weight: 400;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.film td {
+  padding: 6px 12px;
+  white-space: nowrap;
+  line-height: 1.35;
+}
+
+.film th.num,
+.film td.num {
+  text-align: right;
+}
+
+.film tr.lit td {
+  background: var(--lit-still);
+  color: var(--ink);
+}
+
+.film tr.lit.new td {
+  background: var(--lumen);
+}
+
+.film tr.lit td:first-child {
+  border-radius: 2px 0 0 2px;
+  box-shadow: inset 3px 0 0 var(--lit-edge);
+}
+
+.film tr.lit.new td:first-child {
+  box-shadow: inset 3px 0 0 #2f9fe0;
+}
+
+.film tr.lit td:last-child {
+  border-radius: 0 2px 2px 0;
+}
+
+.film tr.lit {
+  filter: drop-shadow(0 0 4px rgb(140 210 255 / 0.38));
+}
+
+.film tr.unlit td {
+  background: var(--lt-film-800);
+  color: var(--lt-film-ink-2);
+}
+
+.film tr.unlit td:not(.film-mark) {
+  text-decoration: line-through;
+  text-decoration-color: rgb(198 208 213 / 0.45);
+}
+
+.film tr.unlit td:first-child {
+  box-shadow: inset 3px 0 0 var(--lt-film-700);
+}
+
+.film .tag {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 1px 6px 0;
+  border-radius: 2px;
+  font-family: var(--app-font-lead);
+  font-size: var(--text-caption);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.film .tag-new {
+  background: var(--ink);
+  color: var(--lumen-core);
+}
+
+.film .tag-still {
+  border: 1px solid rgb(18 22 25 / 0.45);
+  color: var(--ink);
+}
+
+.film .tag-fixed {
+  border: 1px solid var(--lt-film-700);
+  color: var(--lt-film-print);
+}
+
+.film .film-more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 8px 2px 0;
+  color: var(--lt-film-ink-2);
+  font-size: var(--text-caption);
+}
+
+.film .film-more button,
+.film .film-more a {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--lt-film-print);
+  font-size: var(--text-caption);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Syntax on film: brighter print, never the status hues. */
+.film .tok-keyword {
+  color: var(--lumen-core);
+}
+.film .tok-string {
+  color: #e9d9b8;
+}
+.film .tok-number,
+.film .tok-flag {
+  color: #d6c3f0;
+}
+.film .tok-function {
+  color: var(--lt-film-print-hi);
+}
+.film .tok-comment {
+  color: var(--lt-film-ink-3);
+}
+.film .tok-punctuation {
+  color: var(--lt-film-print);
+}
+
+/* A SQL slip: the film a statement is printed on, with its read-only stamp. */
+.slip {
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--lt-film-900);
+  color: var(--lt-film-print);
+  box-shadow: 0 10px 26px -18px rgb(18 22 25 / 0.6);
+}
+
+.slip-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--lt-film-line);
+}
+
+.slip pre {
+  margin: 0;
+  overflow-x: auto;
+  padding: 10px 0 12px;
+  font-family: var(--app-font-mono);
+  font-size: var(--text-body-sm);
+  line-height: 1.7;
+  counter-reset: ln;
+}
+
+.slip .ln {
+  display: block;
+  padding: 0 14px 0 0;
+  white-space: pre;
+}
+
+.slip .ln::before {
+  counter-increment: ln;
+  content: counter(ln);
+  display: inline-block;
+  width: 36px;
+  padding-right: 12px;
+  color: var(--lt-film-ink-3);
+  text-align: right;
+}
+
+.slip-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--lt-film-line);
+  color: var(--lt-film-ink-2);
+  font-size: var(--text-caption);
+}
+
+/* The error of a broken run: printed on a dark slip, its title in the safelight. */
+.fog-message {
+  border-radius: 4px;
+  background: var(--lt-film-950);
+  padding: 14px 16px;
+}
+
+.fog-message pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: var(--app-font-mono);
+  font-size: var(--text-body-sm);
+  line-height: 1.6;
+  color: var(--lt-film-print-hi);
+}
+
+/* Empty, loading and error states all sit on the face, not on a card. */
+.face-note {
+  border: 1px dashed var(--line-2);
+  border-radius: 7px;
+  background: rgb(255 255 255 / 0.35);
+}
+
 
 /* Registration marks: a short ink L just outside each corner of a panel that matters. */
 .corners {
@@ -697,4 +1092,71 @@
     linear-gradient(var(--ink), var(--ink)) bottom left / 1px var(--mark) no-repeat,
     linear-gradient(var(--ink), var(--ink)) bottom right / var(--mark) 1px no-repeat,
     linear-gradient(var(--ink), var(--ink)) bottom right / 1px var(--mark) no-repeat;
+}
+
+/* The last 30 runs as one strip of film frames: a lit window means rows came back, fog means the query failed,
+   clear film means it returned none. Empty slots are the runs that have not happened yet. */
+.run-strip {
+  display: grid;
+  grid-template-columns: repeat(30, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.run-frame {
+  position: relative;
+  height: 22px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--lt-film-800);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.22);
+}
+
+.run-frame-issues {
+  background: var(--lt-film-900);
+}
+
+.run-frame-issues::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  right: 3px;
+  left: 3px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--lit-still);
+  box-shadow: 0 0 0 1px var(--lumen);
+}
+
+.run-frame-clean {
+  background: var(--lt-film-900);
+}
+
+.run-frame-clean::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  background: repeating-linear-gradient(180deg, var(--lt-film-800) 0 2px, transparent 2px 4px);
+}
+
+.run-frame-error {
+  background: var(--lt-fog);
+}
+
+.run-frame-error::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(135deg, rgb(233 236 236 / 0.5) 0 1.5px, transparent 1.5px 4px);
+}
+
+.run-frame-empty {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+/* The validator's refusal, marked on the statement itself. */
+.cm-rejected {
+  border-radius: 2px;
+  background: var(--failure-soft);
+  box-shadow: inset 0 -2px 0 var(--safelight);
 }
